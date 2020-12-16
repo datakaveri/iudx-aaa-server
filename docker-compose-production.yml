@@ -1,0 +1,63 @@
+version: '3.7'
+
+networks:
+  overlay-net:
+          external: true      
+          driver: overlay
+
+services:
+
+  prod:
+    image: iudx/aaa-depl:latest
+    environment:
+      - HOSTNAME=server
+      - ZOOKEEPER=zookeeper
+      - RS_URL=https://aaa.iudx.org.in
+    volumes:
+      - ./configs/config-depl.json:/usr/share/app/configs/config.json
+      - ./docs/:/usr/share/app/docs
+      - ./configs/keystore.jks:/usr/share/app/configs/keystore.jks
+      - /tmp/iudx/:/tmp/iudx/
+    depends_on:
+      - "zookeeper"
+    ports:
+      - "80:80"
+      - "9000:9000"
+    restart: on-failure
+    networks: 
+      - overlay-net
+    logging:
+         driver: "json-file"
+         options:
+             max-file: "5"
+             max-size: "100m"
+    command: "java -jar ./fatjar.jar -c configs/config.json"
+
+  dev:
+    image: iudx/aaa-dev:latest
+    environment:
+      - RS_URL=https://aaa.iudx.org.in
+    volumes:
+      - ./configs/config-dev.json:/usr/share/app/configs/config.json
+      - ./configs/keystore.jks:/usr/share/app/configs/keystore.jks
+      - ./docs/:/usr/share/app/docs
+      - /tmp/iudx/:/tmp/iudx/
+    ports:
+      - "8080:80"
+      - "9000:9000"
+    restart: on-failure
+    networks: 
+      - overlay-net
+    logging:
+         driver: "json-file"
+         options:
+             max-file: "5"
+             max-size: "100m"
+    command: "java -jar ./fatjar.jar -c configs/config.json"
+
+  zookeeper:
+    image: zookeeper:latest
+    expose: 
+      - "2181"
+    networks:
+      - overlay-net
