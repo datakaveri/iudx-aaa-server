@@ -19,15 +19,24 @@ Make a config file based on the template in `./configs/config-example.json`
 4. Modify the `docker-compose.yml` file to map the config file you just created
 5. Start the server in production (prod) or development (dev) mode using docker-compose 
    ` docker-compose up prod `
+6. The server will be up in Port 8443 is SSL is true or in Port 8080 if SSL is false.
 
 ### Maven based
 1. Install java 13 and maven
 2. Use the maven exec plugin based starter to start the server 
    `mvn clean compile exec:java@aaa-server`
+3. The server will be up in Port 8443 is SSL is true or in Port 8080 if SSL is false.
 
 ### Testing
 
-### Unit tests
+### TDD based Unit test flow
+1. Run the server through either docker, maven or redeployer
+2. Run the all unit tests for a Service
+   `mvn -Dtest=TIPServiceTest test` 
+3. Run the unit tests for a method in a Service
+   `mvn -Dtest=TIPServiceTest#validateTokenSuccess test` 
+
+### Unit test and Reports
 1. Run the server through either docker, maven or redeployer
 2. Run the unit tests and generate a surefire report 
    `mvn clean test-compile surefire:test surefire-report:report`
