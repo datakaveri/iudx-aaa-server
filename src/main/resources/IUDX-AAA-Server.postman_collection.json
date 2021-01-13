@@ -1,0 +1,636 @@
+{
+	"info": {
+		"_postman_id": "c6555c1f-c559-4ff4-b389-57920baf8bcc",
+		"name": "IUDX-AAA-Server",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Validations",
+			"item": [
+				{
+					"name": "400 Invalid  token request (id field missing)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\":[{\n        \"ids\":\"\"\n    }]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8443/auth/v1/token",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"auth",
+								"v1",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "400 Invalid  token request (api field missing)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\":[{\n        \"id\":\"asdas/asdas/asdad\"\n    }]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8443/auth/v1/token",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"auth",
+								"v1",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "400 invalid revoke request (no token-hashes provided)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8443/auth/v1/token/revoke",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"auth",
+								"v1",
+								"token",
+								"revoke"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "400 invalid revoke request (token-hashes provided is not array)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n   \"token-hashes\":{\n       \"asdasdasd\":\"adasdas\"\n   } \n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8443/auth/v1/token/revoke",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"auth",
+								"v1",
+								"token",
+								"revoke"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "400 invalid revoke-all request (invalid serial)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"serial\":\"5379c47881b51bb65c3a01da22dc175e6ec03e\",\n    \"fingerprint\":\"a0:75:1b:72:7c:77:86:04:47:ce:25:fb:e1:ad:0c:29:db:87:16:71\"\n\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8443/auth/v1/token/revoke-all",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"auth",
+								"v1",
+								"token",
+								"revoke-all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "400 invalid revoke-all request (invalid fingerprint)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"serial\":\"5379c47881b51bb65c3a01da22dc175e6ec03e04\",\n    \"fingerprint\":\"a0:75:1b:72:7c:77:86:04:47:ce:25:fb:e1:ad:0c:29:db:87:16:7/\"\n\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8443/auth/v1/token/revoke-all",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"auth",
+								"v1",
+								"token",
+								"revoke-all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "400 invalid revoke-all request (missing serial)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \n    \"fingerprint\":\"a0:75:1b:72:7c:77:86:04:47:ce:25:fb:e1:ad:0c:29:db:87:16:70\"\n\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8443/auth/v1/token/revoke-all",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"auth",
+								"v1",
+								"token",
+								"revoke-all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "400 invalid revoke-all request (missing fingerprint)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"serial\":\"5379c47881b51bb65c3a01da22dc175e6ec03e04\"\n\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8443/auth/v1/token/revoke-all",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"auth",
+								"v1",
+								"token",
+								"revoke-all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "400 invalid get policy (no provider-email in header)",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "provider-email",
+								"value": "abc@datakaveri.org",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8443/auth/v1/provider/access",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"auth",
+								"v1",
+								"provider",
+								"access"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "400 - invalid user access request (invalid capability)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "provider-email",
+								"value": "abc@datakaveri.org",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"user_email\": \"admin@datakaveri.org\",\n        \"user_role\": \"consumer\",\n        \"item_id\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.org.in/pune-aqm\",\n        \"item_type\": \"resourcegroup\",\n        \"capabilities\": [\n            \"subscription1\"\n        ]\n    }\n]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8443/auth/v1/provider/access",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"auth",
+								"v1",
+								"provider",
+								"access"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "400 - invalid user access request (invalid item_type)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "provider-email",
+								"value": "abc@datakaveri.org",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"user_email\": \"admin@datakaveri.org\",\n        \"user_role\": \"consumer\",\n        \"item_id\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.org.in/pune-aqm\",\n        \"item_type\": \"resourcegroup1\",\n        \"capabilities\": [\n            \"subscription\"\n        ]\n    }\n]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8443/auth/v1/provider/access",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"auth",
+								"v1",
+								"provider",
+								"access"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "400 - invalid user access request (invalid user_role)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "provider-email",
+								"value": "abc@datakaveri.org",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"user_email\": \"admin@datakaveri.org\",\n        \"user_role\": \"consumer_1\",\n        \"item_id\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.org.in/pune-aqm\",\n        \"item_type\": \"resourcegroup\",\n        \"capabilities\": [\n            \"subscription\"\n        ]\n    }\n]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8443/auth/v1/provider/access",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"auth",
+								"v1",
+								"provider",
+								"access"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "400 - delete access policy (invalid id type)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "provider-email",
+								"value": "abc@datakaveri.org",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"id\":\"asda\"\n    }\n]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8443/auth/v1/provider/access",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"auth",
+								"v1",
+								"provider",
+								"access"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "400 - delete access policy (invalid capability)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "provider-email",
+								"value": "abc@datakaveri.org",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"id\":2,\n        \"capabilities\":[\n            \"subs\"\n        ]\n    }\n]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8443/auth/v1/provider/access",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"auth",
+								"v1",
+								"provider",
+								"access"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "400 - provider registration (no name)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n   \n    \"organization\": 7,\n    \"phone\": \"9845596211\",\n    \"csr\": \"-----BEGIN CERTIFICATE REQUEST-----\\nMIIEijCCAnICAQAwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUx\\n=\\n-----END CERTIFICATE REQUEST-----\\n\",\n    \"email\": \"jane.doe@acme.org\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8443/v1/provider/registration",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"v1",
+								"provider",
+								"registration"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "400 - provider registration (no organization)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": {\n        \"title\": \"Ind.\",\n        \"firstName\": \"Jane\",\n        \"lastName\": \"Doe\"\n    },\n    \n    \"phone\": \"9845596211\",\n    \"csr\": \"-----BEGIN CERTIFICATE REQUEST-----\\nMIIEijCCAnICAQAwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUx\\n=\\n-----END CERTIFICATE REQUEST-----\\n\",\n    \"email\": \"jane.doe@acme.org\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8443/v1/provider/registration",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"v1",
+								"provider",
+								"registration"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "400 - provider registration (no phone)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": {\n        \"title\": \"Ind.\",\n        \"firstName\": \"Jane\",\n        \"lastName\": \"Doe\"\n    },\n    \"organization\": 7,\n    \n    \"csr\": \"-----BEGIN CERTIFICATE REQUEST-----\\nMIIEijCCAnICAQAwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUx\\n=\\n-----END CERTIFICATE REQUEST-----\\n\",\n    \"email\": \"jane.doe@acme.org\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8443/v1/provider/registration",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"v1",
+								"provider",
+								"registration"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "400 - provider registration (no csr)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": {\n        \"title\": \"Ind.\",\n        \"firstName\": \"Jane\",\n        \"lastName\": \"Doe\"\n    },\n    \"organization\": 7,\n    \"phone\": \"9845596211\",\n    \n    \"email\": \"jane.doe@acme.org\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8443/v1/provider/registration",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"v1",
+								"provider",
+								"registration"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "400 - provider registration (no email)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": {\n        \"title\": \"Ind.\",\n        \"firstName\": \"Jane\",\n        \"lastName\": \"Doe\"\n    },\n    \"organization\": 7,\n    \"phone\": \"9845596211\",\n    \"csr\": \"-----BEGIN CERTIFICATE REQUEST-----\\nMIIEijCCAnICAQAwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUx\\n=\\n-----END CERTIFICATE REQUEST-----\\n\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8443/v1/provider/registration",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"v1",
+								"provider",
+								"registration"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

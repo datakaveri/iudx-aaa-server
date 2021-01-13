@@ -1,0 +1,54 @@
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "firstName",
+        "lastName"
+      ]
+    },
+    "phone": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "organization": {
+      "type": "integer"
+    },
+    "csr": {
+      "type": "string"
+    },
+    "roles": {
+      "type": "array",
+      "items": [
+        {
+          "type": "string",
+          "enum":["provider","consumer","ingestor"]
+        }
+      ]
+    }
+  },
+  "required": [
+    "name",
+    "phone",
+    "email",
+    "organization",
+    "csr",
+    "roles"
+  ]
+}
+

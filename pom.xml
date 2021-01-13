@@ -1,10 +1,12 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>datakaveri.org</groupId>
-  <artifactId>iudx-aaa-server</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
-  
-  	<properties>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>datakaveri.org</groupId>
+	<artifactId>iudx-aaa-server</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+
+	<properties>
 		<vertx.version>3.9.0</vertx.version>
 		<hazelcast.version>3.6.3</hazelcast.version>
 		<micrometer.version>1.5.2</micrometer.version>
@@ -131,6 +133,20 @@
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-web-api-contract</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.jooq</groupId>
+			<artifactId>jooq</artifactId>
+			<version>3.14.4</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jooq</groupId>
+			<artifactId>jooq-meta</artifactId>
+			<version>3.14.4</version>
+		</dependency>
+		<dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-web-api-contract</artifactId>
+        </dependency>
 	</dependencies>
 
 	<build>
@@ -322,5 +338,5 @@
 			</plugin>
 
 		</plugins>
-	</reporting> 
+	</reporting>
 </project>

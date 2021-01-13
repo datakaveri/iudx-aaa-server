@@ -1,0 +1,46 @@
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "firstName",
+        "lastName"
+      ]
+    },
+    "phone": {
+      "type": "string",
+      "pattern":"^[9876]\\d{9}$"
+    },
+    "email": {
+      "type": "string",
+      "minLength":5,
+      "maxLength":64
+    },
+    "organization": {
+      "type": "integer"
+    },
+    "csr": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "organization",
+    "phone",
+    "csr",
+    "email"
+  ]
+}

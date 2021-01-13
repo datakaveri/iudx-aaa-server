@@ -1,0 +1,19 @@
+{
+  "type": "object",
+  "properties": {
+    "token-hashes": {
+      "type": "array",
+      "items": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    }
+  },
+  "required": [
+    "token-hashes"
+  ]
+}

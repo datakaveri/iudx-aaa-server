@@ -8,6 +8,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import iudx.aaa.server.tip.dto.IntrospectRequest;
 
 /**
  * The TIP Service.
@@ -49,6 +50,6 @@ public interface TIPService {
    */
 
   @Fluent
-  TIPService validateToken(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+  TIPService validateToken(IntrospectRequest token, Handler<AsyncResult<JsonObject>> handler);
 
 }

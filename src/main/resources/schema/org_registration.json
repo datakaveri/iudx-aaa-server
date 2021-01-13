@@ -1,0 +1,39 @@
+{
+  "type": "object",
+  "properties": {
+    "organization": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "website": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "minLength":2,
+          "maxLength":2
+        },
+        "country": {
+          "type": "string",
+          "minLength":2,
+          "maxLength":2
+        }
+      },
+      "required": [
+        "name",
+        "website",
+        "city",
+        "state",
+        "country"
+      ]
+    }
+  },
+  "required": [
+    "organization"
+  ]
+}

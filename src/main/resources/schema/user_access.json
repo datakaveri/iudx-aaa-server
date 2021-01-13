@@ -1,0 +1,46 @@
+{
+	"type": "array",
+	"items": [
+		{
+			"type": "object",
+			"properties": {
+				"user_email": {
+					"type": "string"
+				},
+				"user_role": {
+					"type": "string",
+					"enum": [
+						"consumer",
+						"onboarder",
+						"data ingester",
+						"delegate"
+					]
+				},
+				"item_id": {
+					"type": "string"
+				},
+				"item_type": {
+					"type": "string",
+					"enum": ["resourceGroup"]
+				},
+				"capabilities": {
+					"type": "array",
+					"items": [
+						{
+							"type": "string",
+							"enum": [
+								"subscription",
+								"temporal",
+								"complex"
+							]
+						}
+					]
+				}
+			},
+			"required": [
+				"user_email",
+				"user_role"
+			]
+		}
+	]
+}
