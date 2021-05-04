@@ -28,7 +28,7 @@ public class CatalogueClientTest {
   private static Logger LOGGER = LoggerFactory.getLogger(PolicyServiceTest.class);
 
   private static Vertx vertxObj;
-  private static WebClient client;
+  private static WebMockCatalogueClient client;
   // private static Item item;
 
   @Mock
@@ -42,10 +42,7 @@ public class CatalogueClientTest {
   static void startVertx(Vertx vertx, io.vertx.reactivex.core.Vertx vertx2,
       VertxTestContext testContext) {
 
-    vertxObj = vertx;
-    
-    /* prepare items */
-    catMock = new CatalogueClient();
+    vertxObj = vertx;   
     Set<String> servers = new HashSet<>();
 
     item = new Item();
@@ -54,6 +51,11 @@ public class CatalogueClientTest {
     item.setProviderID("datakaveri.org/f7e044eee8122b5c87dce6e7ad64f3266afa41dc");
     item.setType("iudx:Resource");
     item.setServers(servers);
+    
+    /* prepare items */
+    client = new WebMockCatalogueClient();
+    /* setup webclient */
+    catMock = new CatalogueClient(client.mockWebClient(item));
 
     testContext.completeNow();
   }
@@ -61,7 +63,7 @@ public class CatalogueClientTest {
   @Test
   @DisplayName("Valid FetchItem")
   void fetchItemTest(VertxTestContext testContext) {
-
+    
     String id = item.getId();
     String type = item.getType();
 
@@ -76,7 +78,7 @@ public class CatalogueClientTest {
   @Test
   @DisplayName("Invalid FetchItem")
   void invalidFetchItemTest(VertxTestContext testContext) {
-
+       
     String id = item.getId();
     String type = item.getType();
 
