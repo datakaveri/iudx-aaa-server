@@ -6,10 +6,24 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.stubbing.Answer;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.core.net.JksOptions;
+import io.vertx.ext.web.client.HttpRequest;
+import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
@@ -17,8 +31,15 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.postgres.client.PostgresClient;
+import static org.mockito.Mockito.mock;
+import java.util.HashSet;
+import java.util.Set;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 
-@ExtendWith({VertxExtension.class})
+@ExtendWith({VertxExtension.class, MockitoExtension.class})
 public class PolicyServiceTest {
   private static Logger LOGGER = LoggerFactory.getLogger(PolicyServiceTest.class);
 
@@ -37,7 +58,17 @@ public class PolicyServiceTest {
   private static PostgresClient pgClient;
   private static PolicyService policyService;
   private static Vertx vertxObj;
-
+  private static WebMockCatalogueClient catMock;
+  private static WebClient client;
+  private static Item item;
+  
+  @InjectMocks
+  private static WebMockCatalogueClient fetchItem;
+  
+  @Captor
+  ArgumentCaptor<Item> item2;
+  
+  
   @BeforeAll
   @DisplayName("Deploying Verticle")
   static void startVertx(Vertx vertx, io.vertx.reactivex.core.Vertx vertx2,
@@ -73,9 +104,19 @@ public class PolicyServiceTest {
     pgClient = new PostgresClient(vertx, connectOptions, poolOptions);
 
     policyService = new PolicyServiceImpl(pgClient);
+    
+    catMock = new WebMockCatalogueClient();
+    Set<String> servers = new HashSet<>();
+    
+    item = new Item();
+    item.setId("datakaveri.org/f7e044eee8122b5c87dce6e7ad64f3266afa41dc/rs.iudx.io/aqm-bosch-climo/PuneRailwayStation_28");
+    item.setProviderID("datakaveri.org/f7e044eee8122b5c87dce6e7ad64f3266afa41dc");
+    item.setType("iudx:Resource");
+    item.setServers(servers);
 
     testContext.completeNow();
 
+    
   }
 
   @AfterEach
@@ -107,5 +148,4 @@ public class PolicyServiceTest {
           testContext.completeNow();
         })));
   }
-
 }

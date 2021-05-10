@@ -20,6 +20,7 @@ public class MockCatalogueFactory {
 
     Mockito.when(client.fetchItem(prepareItem1().getId())).thenReturn(prepareItem1());
     Mockito.when(client.fetchItem(prepareItem2().getId())).thenReturn(prepareItem2());
+    Mockito.when(client.fetchItem("suratmunicipal.org/6db486cb4f720e8585ba1f45a931c63c25dbbbda/rs.iudx.org.in/wrong-id")).thenReturn(prepareItem3());
   }
 
   public static Item prepareItem1() {
@@ -51,5 +52,15 @@ public class MockCatalogueFactory {
     item2.setServers(servers2);
 
     return item2;
+  }
+  
+  public static Item prepareItem3() {
+
+    Item item = new Item();
+    item.setId(null);
+    item.setProviderID(null);
+    item.setType(null);
+    item.setServers(null);
+    return item;
   }
 }
