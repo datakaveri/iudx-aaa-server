@@ -64,7 +64,6 @@ public class ApiServerVerticle extends AbstractVerticle {
 
   /** Service addresses */
   private static final String TIP_SERVICE_ADDRESS = "iudx.aaa.tip.service";
-  private static final String CERTIFICATE_SERVICE_ADDRESS = "iudx.aaa.certificate.service";
   private static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
   private static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
   private static final String TOKEN_SERVICE_ADDRESS = "iudx.aaa.token.service";
