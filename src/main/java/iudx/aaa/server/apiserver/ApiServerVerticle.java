@@ -12,10 +12,13 @@ import static iudx.aaa.server.apiserver.Constants.MIME_APPLICATION_JSON;
 import static iudx.aaa.server.apiserver.Constants.MIME_TEXT_HTML;
 import static iudx.aaa.server.apiserver.Constants.ROUTE_DOC;
 import static iudx.aaa.server.apiserver.Constants.ROUTE_STATIC_SPEC;
+
 import java.util.HashSet;
 import java.util.Set;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
@@ -25,7 +28,6 @@ import io.vertx.core.net.JksOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
-import iudx.aaa.server.certificate.CertificateService;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.tip.TIPService;
@@ -69,7 +71,6 @@ public class ApiServerVerticle extends AbstractVerticle {
   private static final String TWOFACTOR_SERVICE_ADDRESS = "iudx.aaa.twofactor.service";
 
   private TIPService tipService;
-  private CertificateService certificateService;
   private PolicyService policyService;
   private RegistrationService registrationService;
   private TokenService tokenService;
@@ -163,7 +164,6 @@ public class ApiServerVerticle extends AbstractVerticle {
     /* Get a handler for the Service Discovery interface. */
 
     tipService = TIPService.createProxy(vertx, TIP_SERVICE_ADDRESS);
-    certificateService = CertificateService.createProxy(vertx, CERTIFICATE_SERVICE_ADDRESS);
     policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
     registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
     tokenService = TokenService.createProxy(vertx, TOKEN_SERVICE_ADDRESS);
