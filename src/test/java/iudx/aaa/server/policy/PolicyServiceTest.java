@@ -1,6 +1,8 @@
 package iudx.aaa.server.policy;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.apache.logging.log4j.LogManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -8,19 +10,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+import org.apache.logging.log4j.Logger;
 import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.postgres.client.PostgresClient;
 
-@ExtendWith({VertxExtension.class})
+@ExtendWith(VertxExtension.class)
 public class PolicyServiceTest {
-  private static Logger LOGGER = LoggerFactory.getLogger(PolicyServiceTest.class);
+  private static Logger LOGGER = LogManager.getLogger(PolicyServiceTest.class);
 
   private static Configuration config;
 

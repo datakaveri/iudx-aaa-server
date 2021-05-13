@@ -8,8 +8,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
@@ -18,9 +19,9 @@ import io.vertx.sqlclient.PoolOptions;
 import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.postgres.client.PostgresClient;
 
-@ExtendWith({VertxExtension.class})
+@ExtendWith(VertxExtension.class)
 public class RegistrationServiceTest {
-  private static Logger LOGGER = LoggerFactory.getLogger(RegistrationServiceTest.class);
+  private static Logger LOGGER = LogManager.getLogger(RegistrationServiceTest.class);
 
   private static Configuration config;
 
