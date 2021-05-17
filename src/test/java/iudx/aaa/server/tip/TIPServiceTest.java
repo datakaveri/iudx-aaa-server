@@ -1,6 +1,8 @@
 package iudx.aaa.server.tip;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.apache.logging.log4j.LogManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -8,19 +10,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+import org.apache.logging.log4j.Logger;
 import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.postgres.client.PostgresClient;
 
 @ExtendWith({VertxExtension.class})
 public class TIPServiceTest {
-  private static Logger LOGGER = LoggerFactory.getLogger(TIPServiceTest.class);
+  private static Logger LOGGER = LogManager.getLogger(TIPServiceTest.class);
 
   private static Configuration config;
 
@@ -40,11 +41,11 @@ public class TIPServiceTest {
 
   @BeforeAll
   @DisplayName("Deploying Verticle")
-  static void startVertx(Vertx vertx, io.vertx.reactivex.core.Vertx vertx2,
+  static void startVertx(Vertx vertx,
       VertxTestContext testContext) {
     config = new Configuration();
     vertxObj = vertx;
-    JsonObject dbConfig = config.configLoader(0, vertx2);
+    JsonObject dbConfig = config.configLoader(0, vertx);
 
     /* Read the configuration and set the postgres client properties. */
     LOGGER.debug("Info : Reading config file");
