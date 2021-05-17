@@ -41,11 +41,11 @@ public class TIPServiceTest {
 
   @BeforeAll
   @DisplayName("Deploying Verticle")
-  static void startVertx(Vertx vertx, io.vertx.reactivex.core.Vertx vertx2,
+  static void startVertx(Vertx vertx,
       VertxTestContext testContext) {
     config = new Configuration();
     vertxObj = vertx;
-    JsonObject dbConfig = config.configLoader(0, vertx2);
+    JsonObject dbConfig = config.configLoader(0, vertx);
 
     /* Read the configuration and set the postgres client properties. */
     LOGGER.debug("Info : Reading config file");
