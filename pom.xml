@@ -8,11 +8,23 @@
 
 	<properties>
 		<vertx.version>4.0.3</vertx.version>
-		<hazelcast.version>3.6.3</hazelcast.version>
-		<micrometer.version>1.5.2</micrometer.version>
-		<curator.version>4.0.1</curator.version>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
+		<hazelcast.version>4.0.2</hazelcast.version>
+		<micrometer.version>1.7.0</micrometer.version>
+		<curator.version>5.1.0</curator.version>
+		<apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
+		<junit-jupiter-engine.version>5.7.1</junit-jupiter-engine.version>
+		<apache-log4j-core.version>2.14.1</apache-log4j-core.version>
+		<lmax-disruptor.version>3.4.4</lmax-disruptor.version>
+		<jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
+		<checkstyle.version>8.42</checkstyle.version>
+		<maven-shade-plugin.version>3.2.4</maven-shade-plugin.version>
+		<maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
+		<exec-maven-plugin.version>3.0.0</exec-maven-plugin.version>
+		<maven-pmd-plugin.version>3.14.0</maven-pmd-plugin.version>
+		<maven-checkstyle-plugin-google.version>3.1.2</maven-checkstyle-plugin-google.version>
+		<maven-surefire-report-plugin.version>3.0.0-M5</maven-surefire-report-plugin.version>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<exec.mainClass>iudx.aaa.server.deploy.Deployer</exec.mainClass>
 		<exec.mainClassDev>iudx.aaa.server.deploy.DeployerDev
@@ -62,23 +74,19 @@
 			<artifactId>vertx-web-client</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>io.vertx</groupId>
-			<artifactId>vertx-rx-java2</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>org.apache.maven.plugins</groupId>
 			<artifactId>maven-checkstyle-plugin</artifactId>
-			<version>3.1.2</version>
+			<version>${maven-checkstyle-plugin-google.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
-			<version>3.12.0</version>
+			<version>${apache-commons-lang3.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
-			<version>5.7.1</version>
+			<version>${junit-jupiter-engine.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.vertx</groupId>
@@ -96,7 +104,7 @@
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
-			<version>2.14.1</version>
+			<version>${apache-log4j-core.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.vertx</groupId>
@@ -115,7 +123,7 @@
 		<dependency>
 			<groupId>com.lmax</groupId>
 			<artifactId>disruptor</artifactId>
-			<version>3.4.4</version>
+			<version>${lmax-disruptor.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.hazelcast</groupId>
@@ -131,23 +139,66 @@
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-web-api-contract</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>io.vertx</groupId>
-			<artifactId>vertx-rx-java</artifactId>
-		</dependency>
 	</dependencies>
 
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>${jacoco-maven-plugin.version}</version>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>post-unit-test</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+						<configuration>
+							<dataFile>target/jacoco.exec</dataFile>
+							<outputDirectory>target/jacoco-site</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+				<configuration>
+					<systemPropertyVariables>
+						<jacoco-agent.destfile>target/jacoco.exec</jacoco-agent.destfile>
+					</systemPropertyVariables>
+					<excludes>
+						<!-- classes are excluded since they are not testable or don't add 
+							any value if test cases are written. -->
+						<!-- ApiServerVerticle testing is covered in integration for now. -->
+						<exclude>iudx/aaa/server/apiserver/ApiServerVerticle.class</exclude>
+						<exclude>**/*VertxEBProxy.class</exclude>
+						<exclude>**/Constants.class</exclude>
+						<exclude>**/*VertxProxyHandler.class</exclude>
+						<exclude>**/*Verticle.class</exclude>
+						<exclude>iudx/aaa/server/deploy/*.class</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
-				<version>3.1.2</version>
+				<version>${maven-checkstyle-plugin-google.version}</version>
 				<dependencies>
 					<dependency>
 						<groupId>com.puppycrawl.tools</groupId>
 						<artifactId>checkstyle</artifactId>
-						<version>8.42</version>
+						<version>${checkstyle.version}</version>
 					</dependency>
 				</dependencies>
 				<configuration>
@@ -163,7 +214,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.2.4</version>
+				<version>${maven-shade-plugin.version}</version>
 				<executions>
 					<execution>
 						<id>dev</id>
@@ -242,16 +293,16 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.2.0</version>
+				<version>${maven-javadoc-plugin.version}</version>
 				<configuration>
-					<source>13</source>
-					<target>13</target>
+					<source>11</source>
+					<target>11</target>
 				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
-				<version>3.0.0</version>
+				<version>${exec-maven-plugin.version}</version>
 				<executions>
 					<execution>
 						<id>aaa-server</id>
@@ -271,7 +322,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.0.0-M5</version>
+				<version>${maven-surefire-report-plugin.version}</version>
 			</plugin>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -289,9 +340,9 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-pmd-plugin</artifactId>
-				<version>3.14.0</version>
+				<version>${maven-pmd-plugin.version}</version>
 				<configuration>
-					<targetJdk>13</targetJdk>
+					<targetJdk>11</targetJdk>
 					<rulesets>
 						<ruleset>/rulesets/java/braces.xml</ruleset>
 						<ruleset>/rulesets/java/naming.xml</ruleset>
@@ -304,7 +355,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
-				<version>3.1.2</version>
+				<version>${maven-checkstyle-plugin-google.version}</version>
 				<configuration>
 					<consoleOutput>true</consoleOutput>
 					<encoding>UTF-8</encoding>
@@ -323,7 +374,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-report-plugin</artifactId>
-				<version>3.0.0-M5</version>
+				<version>${maven-surefire-report-plugin.version}</version>
 				<reportSets>
 					<reportSet>
 						<reports>
@@ -332,7 +383,6 @@
 					</reportSet>
 				</reportSets>
 			</plugin>
-
 		</plugins>
 	</reporting>
 </project>
