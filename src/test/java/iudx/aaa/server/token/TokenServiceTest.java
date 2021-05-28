@@ -8,21 +8,20 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import iudx.aaa.server.configuration.Configuration;
-import iudx.aaa.server.policy.PolicyService;
-import iudx.aaa.server.policy.PolicyServiceImpl;
 import iudx.aaa.server.postgres.client.PostgresClient;
 
 @ExtendWith({VertxExtension.class})
 public class TokenServiceTest {
-  private static Logger LOGGER = LoggerFactory.getLogger(TokenServiceTest.class);
+  private static Logger LOGGER = LogManager.getLogger(TokenServiceTest.class);
 
   private static Configuration config;
 
@@ -42,11 +41,11 @@ public class TokenServiceTest {
 
   @BeforeAll
   @DisplayName("Deploying Verticle")
-  static void startVertx(Vertx vertx, io.vertx.reactivex.core.Vertx vertx2,
+  static void startVertx(Vertx vertx,
       VertxTestContext testContext) {
     config = new Configuration();
     vertxObj = vertx;
-    JsonObject dbConfig = config.configLoader(4, vertx2);
+    JsonObject dbConfig = config.configLoader(3, vertx);
 
     /* Read the configuration and set the postgres client properties. */
     LOGGER.debug("Info : Reading config file");

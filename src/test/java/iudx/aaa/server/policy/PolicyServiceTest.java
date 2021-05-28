@@ -1,151 +1,208 @@
-package iudx.aaa.server.policy;
+/*
+ * Copyright (c) 2018 Mockito contributors
+ * This program is made available under the terms of the MIT License.
+ */
+package org.mockito.junit.jupiter;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.stubbing.Answer;
-import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
-import io.vertx.core.net.JksOptions;
-import io.vertx.ext.web.client.HttpRequest;
-import io.vertx.ext.web.client.HttpResponse;
-import io.vertx.ext.web.client.WebClient;
-import io.vertx.ext.web.client.WebClientOptions;
-import io.vertx.junit5.VertxExtension;
-import io.vertx.junit5.VertxTestContext;
-import io.vertx.pgclient.PgConnectOptions;
-import io.vertx.pgclient.PgPool;
-import io.vertx.sqlclient.PoolOptions;
-import iudx.aaa.server.configuration.Configuration;
-import iudx.aaa.server.postgres.client.PostgresClient;
-import static org.mockito.Mockito.mock;
+import static org.junit.jupiter.api.extension.ExtensionContext.Namespace.create;
+import static org.junit.platform.commons.support.AnnotationSupport.findAnnotation;
+
+import java.lang.reflect.Parameter;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
 
-@ExtendWith({VertxExtension.class, MockitoExtension.class})
-public class PolicyServiceTest {
-  private static Logger LOGGER = LoggerFactory.getLogger(PolicyServiceTest.class);
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
+import org.junit.jupiter.api.extension.ParameterContext;
+import org.junit.jupiter.api.extension.ParameterResolutionException;
+import org.junit.jupiter.api.extension.ParameterResolver;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.MockitoSession;
+import org.mockito.internal.configuration.MockAnnotationProcessor;
+import org.mockito.internal.configuration.plugins.Plugins;
+import org.mockito.internal.session.MockitoSessionLoggerAdapter;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.quality.Strictness;
 
-  private static Configuration config;
+/**
+ * Extension that initializes mocks and handles strict stubbings. This extension is the JUnit Jupiter equivalent
+ * of our JUnit4 {@link MockitoJUnitRunner}.
+ *
+ * Example usage:
+ *
+ * <pre class="code"><code class="java">
+ * <b>&#064;ExtendWith(MockitoExtension.class)</b>
+ * public class ExampleTest {
+ *
+ *     &#064;Mock
+ *     private List&lt;Integer&gt; list;
+ *
+ *     &#064;Test
+ *     public void shouldDoSomething() {
+ *         list.add(100);
+ *     }
+ * }
+ * </code></pre>
+ *
+ * If you would like to configure the used strictness for the test class, use {@link MockitoSettings}.
+ *
+ * <pre class="code"><code class="java">
+ * <b>&#064;MockitoSettings(strictness = Strictness.STRICT_STUBS)</b>
+ * public class ExampleTest {
+ *
+ *     &#064;Mock
+ *     private List&lt;Integer&gt; list;
+ *
+ *     &#064;Test
+ *     public void shouldDoSomething() {
+ *         list.add(100);
+ *     }
+ * }
+ * </code></pre>
+ *
+ * This extension also supports JUnit Jupiter's method parameters.
+ * Use parameters for initialization of mocks that you use only in that specific test method.
+ * In other words, where you would initialize local mocks in JUnit 4 by calling {@link Mockito#mock(Class)},
+ * use the method parameter. This is especially beneficial when initializing a mock with generics, as you no
+ * longer get a warning about "Unchecked assignment".
+ * Please refer to JUnit Jupiter's documentation to learn when method parameters are useful.
+ *
+ * <pre class="code"><code class="java">
+ * <b>&#064;ExtendWith(MockitoExtension.class)</b>
+ * public class ExampleTest {
+ *
+ *     &#064;Mock
+ *     private List&lt;Integer&gt; sharedList;
+ *
+ *     &#064;Test
+ *     public void shouldDoSomething() {
+ *         sharedList.add(100);
+ *     }
+ *
+ *     &#064;Test
+ *     public void hasLocalMockInThisTest(@Mock List&lt;Integer&gt; localList) {
+ *         localList.add(100);
+ *         sharedList.add(100);
+ *     }
+ * }
+ * </code></pre>
+ *
+ * Lastly, the extension supports JUnit Jupiter's constructor parameters.
+ * This allows you to do setup work in the constructor and set
+ * your fields to <code>final</code>.
+ * Please refer to JUnit Jupiter's documentation to learn when constructor parameters are useful.
+ *
+ * <pre class="code"><code class="java">
+ * <b>&#064;ExtendWith(MockitoExtension.class)</b>
+ * public class ExampleTest {
+ *
+ *      private final List&lt;Integer&gt; sharedList;
+ *
+ *      ExampleTest(&#064;Mock sharedList) {
+ *          this.sharedList = sharedList;
+ *      }
+ *
+ *      &#064;Test
+ *      public void shouldDoSomething() {
+ *          sharedList.add(100);
+ *      }
+ * }
+ * </code></pre>
+ */
+public class MockitoExtension implements BeforeEachCallback, AfterEachCallback, ParameterResolver {
 
-  /* Database Properties */
-  private static String databaseIP;
-  private static int databasePort;
-  private static String databaseName;
-  private static String databaseUserName;
-  private static String databasePassword;
-  private static int poolSize;
-  private static PgPool pgclient;
-  private static PoolOptions poolOptions;
-  private static PgConnectOptions connectOptions;
-  private static PostgresClient pgClient;
-  private static PolicyService policyService;
-  private static Vertx vertxObj;
-  private static WebMockCatalogueClient catMock;
-  private static WebClient client;
-  private static Item item;
-  
-  @InjectMocks
-  private static WebMockCatalogueClient fetchItem;
-  
-  @Captor
-  ArgumentCaptor<Item> item2;
-  
-  
-  @BeforeAll
-  @DisplayName("Deploying Verticle")
-  static void startVertx(Vertx vertx, io.vertx.reactivex.core.Vertx vertx2,
-      VertxTestContext testContext) {
-    config = new Configuration();
-    vertxObj = vertx;
-    JsonObject dbConfig = config.configLoader(2, vertx2);
+    private final static Namespace MOCKITO = create("org.mockito");
 
-    /* Read the configuration and set the postgres client properties. */
-    LOGGER.debug("Info : Reading config file");
+    private final static String SESSION = "session", MOCKS = "mocks";
 
-    databaseIP = dbConfig.getString("databaseIP");
-    databasePort = Integer.parseInt(dbConfig.getString("databasePort"));
-    databaseName = dbConfig.getString("databaseName");
-    databaseUserName = dbConfig.getString("databaseUserName");
-    databasePassword = dbConfig.getString("databasePassword");
-    poolSize = Integer.parseInt(dbConfig.getString("poolSize"));
+    private final Strictness strictness;
 
-    /* Set Connection Object */
-    if (connectOptions == null) {
-      connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
-          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword);
+    // This constructor is invoked by JUnit Jupiter via reflection or ServiceLoader
+    @SuppressWarnings("unused")
+    public MockitoExtension() {
+        this(Strictness.STRICT_STUBS);
     }
 
-    /* Pool options */
-    if (poolOptions == null) {
-      poolOptions = new PoolOptions().setMaxSize(poolSize);
+    private MockitoExtension(Strictness strictness) {
+        this.strictness = strictness;
     }
 
-    /* Create the client pool */
-    pgclient = PgPool.pool(vertx, connectOptions, poolOptions);
+    /**
+     * Callback that is invoked <em>before</em> each test is invoked.
+     *
+     * @param context the current extension context; never {@code null}
+     */
+    @Override
+    public void beforeEach(final ExtensionContext context) {
+        List<Object> testInstances = context.getRequiredTestInstances().getAllInstances();
 
-    pgClient = new PostgresClient(vertx, connectOptions, poolOptions);
+        Strictness actualStrictness = this.retrieveAnnotationFromTestClasses(context)
+            .map(MockitoSettings::strictness)
+            .orElse(strictness);
 
-    policyService = new PolicyServiceImpl(pgClient);
-    
-    catMock = new WebMockCatalogueClient();
-    Set<String> servers = new HashSet<>();
-    
-    item = new Item();
-    item.setId("datakaveri.org/f7e044eee8122b5c87dce6e7ad64f3266afa41dc/rs.iudx.io/aqm-bosch-climo/PuneRailwayStation_28");
-    item.setProviderID("datakaveri.org/f7e044eee8122b5c87dce6e7ad64f3266afa41dc");
-    item.setType("iudx:Resource");
-    item.setServers(servers);
+        MockitoSession session = Mockito.mockitoSession()
+            .initMocks(testInstances.toArray())
+            .strictness(actualStrictness)
+            .logger(new MockitoSessionLoggerAdapter(Plugins.getMockitoLogger()))
+            .startMocking();
 
-    testContext.completeNow();
+        context.getStore(MOCKITO).put(MOCKS, new HashSet<>());
+        context.getStore(MOCKITO).put(SESSION, session);
+    }
 
-    
-  }
+    private Optional<MockitoSettings> retrieveAnnotationFromTestClasses(final ExtensionContext context) {
+        ExtensionContext currentContext = context;
+        Optional<MockitoSettings> annotation;
 
-  @AfterEach
-  public void finish(VertxTestContext testContext) {
-    LOGGER.info("Finishing....");
-    vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
-  }
+        do {
+            annotation = findAnnotation(currentContext.getElement(), MockitoSettings.class);
 
-  @Test
-  @DisplayName("Testing Successful policy creation")
-  void createPolicySuccess(VertxTestContext testContext) {
-    JsonObject request = new JsonObject().put("email", "email");
+            if (!currentContext.getParent().isPresent()) {
+                break;
+            }
 
-    policyService.createPolicy(request,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals("success", response.getString("status"));
-          testContext.completeNow();
-        })));
-  }
+            currentContext = currentContext.getParent().get();
+        } while (!annotation.isPresent() && currentContext != context.getRoot());
 
-  @Test
-  @DisplayName("Testing Failure in  policy creation")
-  void createPolicyFailure(VertxTestContext testContext) {
-    JsonObject request = new JsonObject().put("email", "email");
+        return annotation;
+    }
 
-    policyService.createPolicy(request,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals("failed", response.getString("status"));
-          testContext.completeNow();
-        })));
-  }
+    /**
+     * Callback that is invoked <em>after</em> each test has been invoked.
+     *
+     * @param context the current extension context; never {@code null}
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public void afterEach(ExtensionContext context) {
+        context.getStore(MOCKITO).remove(MOCKS, Set.class).forEach(mock -> ((MockedStatic<?>) mock).closeOnDemand());
+        context.getStore(MOCKITO).remove(SESSION, MockitoSession.class)
+                .finishMocking(context.getExecutionException().orElse(null));
+    }
+
+    @Override
+    public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext context) throws ParameterResolutionException {
+        return parameterContext.isAnnotated(Mock.class);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Object resolveParameter(ParameterContext parameterContext, ExtensionContext context) throws ParameterResolutionException {
+        final Parameter parameter = parameterContext.getParameter();
+        Object mock = MockAnnotationProcessor.processAnnotationForMock(
+            parameterContext.findAnnotation(Mock.class).get(),
+            parameter.getType(),
+            parameter::getParameterizedType,
+            parameter.getName());
+        if (mock instanceof MockedStatic<?>) {
+            context.getStore(MOCKITO).get(MOCKS, Set.class).add(mock);
+        }
+        return mock;
+    }
 }
