@@ -73,7 +73,7 @@ public class TokenServiceTest {
 
     pgClient = new PostgresClient(vertx, connectOptions, poolOptions);
 
-    tokenService = new TokenServiceImpl(pgClient);
+    //tokenService = new TokenServiceImpl(pgClient);
 
     testContext.completeNow();
 
