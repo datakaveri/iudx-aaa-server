@@ -5,6 +5,8 @@ public class Constants {
   public static final String TOKEN_SERVICE_ADDRESS = "iudx.aaa.token.service";
   public static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
   
+  public static final int BCRYPT_SALT_LEN = 16;
+  public static final int BCRYPT_LOG_COST = 12;
   public static final String JWT_ALGORITHM = "ES256";
   public static final String CLAIM_ISSUER = "";
   public static final int CLAIM_EXPIRY = 1000; //In Seconds 

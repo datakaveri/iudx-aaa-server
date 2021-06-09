@@ -2,18 +2,21 @@ package iudx.aaa.server.token;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.mindrot.jbcrypt.BCrypt;
+import org.bouncycastle.crypto.generators.BCrypt;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
+import io.vertx.ext.auth.authentication.TokenCredentials;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.postgres.client.PostgresClient;
 import static iudx.aaa.server.token.Constants.*;
+import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.UUID;
 
 /**
@@ -51,11 +54,14 @@ public class TokenServiceImpl implements TokenService {
     
     String clientId = request.getString("clientId");
     String clientSecret = request.getString("clientSecret");
-    String hashedClientSecret = BCrypt.hashpw(clientSecret, BCrypt.gensalt(12));
     
+    byte[] hashed = BCrypt.generate(clientSecret.getBytes(StandardCharsets.UTF_8), genSalt(), BCRYPT_LOG_COST);
+    String hashedClientSecret = new String(hashed, StandardCharsets.UTF_8);
+    // String hashedClientSecret = BCrypt.hashpw(clientSecret, BCrypt.gensalt(12));
+
     String query = CLIENT_VALIDATION.replace("$1", clientId)
                                     .replace("$2", hashedClientSecret);
-    
+
     pgClient.executeAsync(query).onComplete(dbHandler ->{
       if(dbHandler.succeeded()) {
         if(dbHandler.result().size() == 1) {
@@ -63,7 +69,7 @@ public class TokenServiceImpl implements TokenService {
           for(Row each: result) {
             request.put("userId", each.toJson().getString("user_id"));
           }
-          //TODO: handler for verifying the policy and its response.
+          //TODO: handler for verifying the policy and its response. audience/service URI.
           policyService.listPolicy(request, policyHandler -> {
             if (policyHandler.succeeded()) {
               request.put("constraints", policyHandler.result().getJsonObject("constraints"));
@@ -109,6 +115,21 @@ public class TokenServiceImpl implements TokenService {
   public TokenService listToken(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
     // TODO Auto-generated method stub
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+    
+    if(request.containsKey("token")) {
+      TokenCredentials authInfo = new TokenCredentials(request.getString("token"));
+      provider.authenticate(authInfo).onSuccess(a -> {
+        System.out.println(a.principal());
+      }).onFailure(b -> {
+        b.printStackTrace();
+        System.out.println("Failed: " + b.getMessage());
+      });
+      /*
+       * provider.authenticate(authInfo, authHandler ->{ if(authHandler.succeeded()) {
+       * System.out.println(authHandler.result().principal()); } else {
+       * System.out.println("Failed: "+authHandler.); } });
+       */
+    }
 
     JsonObject response = new JsonObject();
     response.put("status", "success");
@@ -143,6 +164,17 @@ public class TokenServiceImpl implements TokenService {
     
     String token = provider.generateToken(claims, options);
     return token;
+  }
+  
+  /**
+   * Generate Salt for Hashing using Bcrypt.
+   * @return saltByte
+   */
+  private byte[] genSalt() {
+    SecureRandom random = new SecureRandom();
+    byte salt[] = new byte[BCRYPT_SALT_LEN];
+    random.nextBytes(salt);
+    return salt;
   }
 
 }

@@ -135,6 +135,9 @@ public class ApiServerVerticle extends AbstractVerticle {
     
     router.post("/v1/token").consumes(MIME_APPLICATION_JSON)
     .handler(this::getToken);
+    
+    router.post("/v1/token/list").consumes(MIME_APPLICATION_JSON)
+    .handler(this::listToken);
 
     /* Read ssl configuration. */
     isSSL = config().getBoolean("ssl");
@@ -177,6 +180,19 @@ public class ApiServerVerticle extends AbstractVerticle {
   private void getToken(RoutingContext context) {
     JsonObject tokenRequestJson = context.getBodyAsJson();
     tokenService.createToken(tokenRequestJson, handler -> {
+      if (handler.succeeded()) {
+        context.response().putHeader("content-type", "application/json").setStatusCode(200)
+        .end(handler.result().toString());
+      } else {
+        context.response().putHeader("content-type", "application/json").setStatusCode(500)
+            .end(handler.cause().getMessage());
+      }
+    });
+  }
+  
+  private void listToken(RoutingContext context) {
+    JsonObject tokenRequestJson = context.getBodyAsJson();
+    tokenService.listToken(tokenRequestJson, handler -> {
       if (handler.succeeded()) {
         context.response().putHeader("content-type", "application/json").setStatusCode(200)
         .end(handler.result().toString());
