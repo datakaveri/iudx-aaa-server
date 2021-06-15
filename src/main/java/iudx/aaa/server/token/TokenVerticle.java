@@ -64,7 +64,6 @@ public class TokenVerticle extends AbstractVerticle {
 
     /* Read the configuration and set the postgres client properties. */
     LOGGER.debug("Info : " + LOGGER.getName() + " : Reading config file");
-
     databaseIP = config().getString("databaseIP");
     databasePort = Integer.parseInt(config().getString("databasePort"));
     databaseName = config().getString("databaseName");
@@ -73,28 +72,33 @@ public class TokenVerticle extends AbstractVerticle {
     poolSize = Integer.parseInt(config().getString("poolSize"));
     keystorePath = config().getString("keystorePath");
     keystorePassword = config().getString("keystorePassword");
+    String issuer = config().getString("authServerDomain","");
+    
+    if(issuer != null && !issuer.isBlank()) {
+      CLAIM_ISSUER = issuer;
+    } else {
+      LOGGER.fatal("Fail: authServerDomain not set");
+      throw new IllegalStateException("authServerDomain not set");
+    }
 
     /* Set Connection Object */
     if (connectOptions == null) {
       connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
-          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword);
+          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
+          .setConnectTimeout(PG_CONNECTION_TIMEOUT);
     }
 
     /* Pool options */
     if (poolOptions == null) {
       poolOptions = new PoolOptions().setMaxSize(poolSize);
     }
-
-    /* Create the client pool */
-    pgclient = PgPool.pool(vertx, connectOptions, poolOptions);
-
+        
+    /* Initializing the services */
+    provider = jwtInitConfig();
     pgClient = new PostgresClient(vertx, connectOptions, poolOptions);
     policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
-    provider = jwtInitConfig();
-
     tokenService = new TokenServiceImpl(pgClient, policyService, provider);
     
-
     new ServiceBinder(vertx).setAddress(TOKEN_SERVICE_ADDRESS).register(TokenService.class,
         tokenService);
 

@@ -6,6 +6,10 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.authentication.TokenCredentials;
+import io.vertx.ext.auth.jwt.JWTAuth;
+import io.vertx.sqlclient.Tuple;
+import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.postgres.client.PostgresClient;
 
 /**
@@ -25,19 +29,82 @@ public class TIPServiceImpl implements TIPService {
   private static final Logger LOGGER = LogManager.getLogger(TIPServiceImpl.class);
 
   private PostgresClient pgClient;
+  private PolicyService policyService;
+  private JWTAuth provider;
 
-  public TIPServiceImpl(PostgresClient pgClient) {
+  public TIPServiceImpl(PostgresClient pgClient, PolicyService policyService, JWTAuth provider) {
     this.pgClient = pgClient;
+    this.policyService = policyService;
+    this.provider = provider;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public TIPService validateToken(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
-    // TODO Auto-generated method stub
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+    
+    if (request.containsKey("access_token")) {
+      TokenCredentials authInfo = new TokenCredentials(request.getString("token"));
+      provider.authenticate(authInfo).onSuccess(jwtDetails -> {
 
-    JsonObject response = new JsonObject();
-    response.put("status", "success");
-    handler.handle(Future.succeededFuture(response));
+        JsonObject accessTokenJwt =
+            jwtDetails.attributes().getJsonObject("token").getJsonObject("accessToken");
+
+        String clientId = accessTokenJwt.getString("sub");
+        String role = accessTokenJwt.getString("role");
+        String itemId = accessTokenJwt.getString("item_id");
+        String itemType = accessTokenJwt.getString("item_type");
+
+        Tuple tuple = Tuple.of(clientId);
+        pgClient.selectUserQuery(tuple, dbHandler -> {
+          if (dbHandler.succeeded()) {
+            if (dbHandler.result().size() == 1) {
+              
+              request.clear();
+              JsonObject result = dbHandler.result().getJsonObject(0);
+              request.put("userId", result.getString("user_id"))
+                     .put("clientId", clientId)
+                     .put("role", role)
+                     .put("itemId", itemId)
+                     .put("itemType", itemType);
+              
+              policyService.verifyPolicy(request, policyHandler -> {
+                if (policyHandler.succeeded()) {
+                  request.clear();
+                  request.mergeIn(accessTokenJwt);
+                  request.put("status", "allow");
+
+                  LOGGER.info("Info: Policy evaluation succeeded");
+                  handler.handle(Future.succeededFuture(request));
+                } else if (policyHandler.failed()) {
+                  LOGGER.error("Fail: Policy evaluation failed; "
+                      + policyHandler.cause().getLocalizedMessage());
+                  handler.handle(
+                      Future.failedFuture(new JsonObject().put("status", "deny").toString()));
+                }
+              });
+            } else {
+              LOGGER.error("Fail: Invalid token clientId");
+              handler
+                  .handle(Future.failedFuture(new JsonObject().put("status", "deny").toString()));
+            }
+          } else {
+            LOGGER.error("Fail: Databse query; " + dbHandler.cause().getMessage());
+            handler.handle(Future.failedFuture(new JsonObject().put("status", "failed")
+                .put("desc", dbHandler.cause().getLocalizedMessage()).toString()));
+          }
+        });
+      }).onFailure(jwtError -> {
+        LOGGER.error("Fail: Token authentication failed; " + jwtError.getLocalizedMessage());
+        handler.handle(Future.failedFuture(new JsonObject().put("status", "deny").toString()));
+      });
+    } else {
+      LOGGER.error("Fail: Unable to parse access_token from request");
+      handler.handle(Future.failedFuture(
+          new JsonObject().put("status", "failed").put("desc", "missing access_token").toString()));
+    }
     return this;
   }
 }

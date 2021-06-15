@@ -2,16 +2,18 @@ package iudx.aaa.server.token;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bouncycastle.crypto.generators.BCrypt;
+import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.authentication.TokenCredentials;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
+import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.postgres.client.PostgresClient;
 import static iudx.aaa.server.token.Constants.*;
@@ -51,52 +53,74 @@ public class TokenServiceImpl implements TokenService {
   @Override
   public TokenService createToken(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
-    
+
     String clientId = request.getString("clientId");
     String clientSecret = request.getString("clientSecret");
-    
-    byte[] hashed = BCrypt.generate(clientSecret.getBytes(StandardCharsets.UTF_8), genSalt(), BCRYPT_LOG_COST);
-    String hashedClientSecret = new String(hashed, StandardCharsets.UTF_8);
-    // String hashedClientSecret = BCrypt.hashpw(clientSecret, BCrypt.gensalt(12));
+    String role = request.getString("role");
+    JsonArray roleArray = request.getJsonArray("roleList");
 
-    String query = CLIENT_VALIDATION.replace("$1", clientId)
-                                    .replace("$2", hashedClientSecret);
+    Tuple tuple = Tuple.of(clientId);
 
-    pgClient.executeAsync(query).onComplete(dbHandler ->{
-      if(dbHandler.succeeded()) {
-        if(dbHandler.result().size() == 1) {
-          RowSet<Row> result = dbHandler.result();
-          for(Row each: result) {
-            request.put("userId", each.toJson().getString("user_id"));
+    pgClient.selectUserQuery(tuple, dbHandler -> {
+      if (dbHandler.succeeded()) {
+        if (dbHandler.result().size() == 1) {
+          JsonObject result = dbHandler.result().getJsonObject(0);
+          String dbClientSecret = result.getString("client_secret");
+
+          boolean valid = false;
+          try {
+            valid = OpenBSDBCrypt.checkPassword(dbClientSecret,
+                clientSecret.getBytes(StandardCharsets.UTF_8));
+          } catch (Exception e) {
+            LOGGER.error("Fail: Invalid clientSecret format; " + e.getLocalizedMessage());
+            handler.handle(Future.failedFuture(new JsonObject().put("status", "failed")
+                .put("desc", "Unauthorized user").toString()));
+            return;
           }
-          //TODO: handler for verifying the policy and its response. audience/service URI.
-          policyService.listPolicy(request, policyHandler -> {
-            if (policyHandler.succeeded()) {
-              request.put("constraints", policyHandler.result().getJsonObject("constraints"));
-              
-              
-              String jwt = getJwt(request);
-              handler.handle(Future
-                  .succeededFuture(new JsonObject().put("status", "success").put("jwt", jwt)));
-              
-            } else if (policyHandler.failed()) {
-              LOGGER.error("Fail: Unauthorized access; Failed policy permission");
+
+          if (valid == Boolean.TRUE) {
+            if (roleArray.contains(role)) {
+              request.put("userId", result.getString("user_id"));
+
+              policyService.verifyPolicy(request, policyHandler -> {
+                if (policyHandler.succeeded()) {
+
+                  request.mergeIn(policyHandler.result(), true);
+                  String jwt = getJwt(request);
+                  
+                  LOGGER.info("Info: Policy evaluation succeeded; JWT generated & signed");
+                  handler.handle(Future
+                      .succeededFuture(new JsonObject().put("status", "success").put("access_token", jwt)));
+
+                } else if (policyHandler.failed()) {
+                  LOGGER.error("Fail: Unauthorized access; Policy evaluation failed");
+                  handler.handle(Future.failedFuture(new JsonObject().put("status", "failed")
+                      .put("desc", "Unauthorized user").toString()));
+                }
+              });
+            } else {
+              LOGGER.error("Fail: Unauthorized access; Role not defined");
               handler.handle(Future.failedFuture(new JsonObject().put("status", "failed")
                   .put("desc", "Unauthorized user").toString()));
             }
-          });
+          } else {
+            LOGGER.error("Fail: Unauthorized access; Invalid clientId/clientSecret");
+            handler.handle(Future.failedFuture(new JsonObject().put("status", "failed")
+                .put("desc", "Invalid clientId/clientSecret").toString()));
+          }
         } else {
-          LOGGER.error("Fail: Invalid clientId/clientSecret");
+          LOGGER.error("Fail: Unauthorized access; Invalid clientId/clientSecret");
           handler.handle(Future.failedFuture(new JsonObject().put("status", "failed")
               .put("desc", "Invalid clientId/clientSecret").toString()));
         }
+
       } else {
         LOGGER.error("Fail: Databse query; " + dbHandler.cause().getMessage());
         handler.handle(Future.failedFuture(new JsonObject().put("status", "failed")
             .put("desc", dbHandler.cause().getLocalizedMessage()).toString()));
       }
     });
-    
+
     return this;
   }
 
@@ -115,28 +139,13 @@ public class TokenServiceImpl implements TokenService {
   public TokenService listToken(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
     // TODO Auto-generated method stub
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
-    
-    if(request.containsKey("token")) {
-      TokenCredentials authInfo = new TokenCredentials(request.getString("token"));
-      provider.authenticate(authInfo).onSuccess(a -> {
-        System.out.println(a.principal());
-      }).onFailure(b -> {
-        b.printStackTrace();
-        System.out.println("Failed: " + b.getMessage());
-      });
-      /*
-       * provider.authenticate(authInfo, authHandler ->{ if(authHandler.succeeded()) {
-       * System.out.println(authHandler.result().principal()); } else {
-       * System.out.println("Failed: "+authHandler.); } });
-       */
-    }
 
     JsonObject response = new JsonObject();
     response.put("status", "success");
     handler.handle(Future.succeededFuture(response));
     return this;
   }
-  
+    
   /**
    * Generates the JWT token using the request data.
    * 
@@ -145,15 +154,17 @@ public class TokenServiceImpl implements TokenService {
    */
   private String getJwt(JsonObject request) {
     String uuid = UUID.randomUUID().toString();
-    long timestamp = System.currentTimeMillis() / 1000;
     JWTOptions options = new JWTOptions().setAlgorithm(JWT_ALGORITHM);
+    
+    long timestamp = System.currentTimeMillis() / 1000;
+    long expiry = timestamp + CLAIM_EXPIRY;
     
     /* Populate the token claims */
     JsonObject claims = new JsonObject();
     claims.put("sub", request.getString("clientId"))
-          .put("iss", request.getString("issuer"))
-          .put("aud", request.getValue("audience"))
-          .put("exp", timestamp + request.getString("expiry"))
+          .put("iss", CLAIM_ISSUER)
+          .put("aud", request.getString("audience"))
+          .put("exp", expiry)
           .put("nbf", timestamp)
           .put("iat", timestamp)
           .put("jti", uuid)

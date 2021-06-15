@@ -86,4 +86,13 @@ public class PolicyServiceImpl implements PolicyService {
     handler.handle(Future.succeededFuture(response));
     return this;
   }
+
+  @Override
+  public PolicyService verifyPolicy(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+    // TODO Auto-generated method stub
+    JsonObject response = new JsonObject();
+    response.put("constraints", new JsonObject()).put("audience", "test.cat.com");
+    handler.handle(Future.succeededFuture(response));
+    return this;
+  }
 }

@@ -96,4 +96,15 @@ public interface PolicyService {
   @Fluent
   PolicyService removeCapabilities(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
 
+  /**
+   * The verifyPolicy implements the verification of the clientId as per Policy.
+   * 
+   * @param request which is a JsonObject
+   * @param handler which is a Request Handler
+   * @return PolicyService which is a Service
+   */
+  
+  @Fluent
+  PolicyService verifyPolicy(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+
 }

@@ -8,12 +8,14 @@ public class Constants {
   public static final int BCRYPT_SALT_LEN = 16;
   public static final int BCRYPT_LOG_COST = 12;
   public static final String JWT_ALGORITHM = "ES256";
-  public static final String CLAIM_ISSUER = "";
-  public static final int CLAIM_EXPIRY = 1000; //In Seconds 
+  public static String CLAIM_ISSUER = "";
+  public static final long CLAIM_EXPIRY = 600; //In Seconds 
+  
+  public static final int PG_CONNECTION_TIMEOUT = 10000;
   
   
   /* SQL Queries */
-  public static final String CLIENT_VALIDATION = "SELECT user_id from user_client "
-      + "where client_id = '$1' and client_secret = '$2'";
+  public static final String GET_CLIENT =
+      "SELECT user_id, client_secret FROM user_clients WHERE client_id = $1";
 
 }

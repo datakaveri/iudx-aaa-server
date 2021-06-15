@@ -3,11 +3,16 @@ package iudx.aaa.server.tip;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.ext.auth.KeyStoreOptions;
+import io.vertx.ext.auth.jwt.JWTAuth;
+import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.serviceproxy.ServiceBinder;
 import io.vertx.sqlclient.PoolOptions;
+import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.postgres.client.PostgresClient;
+import static iudx.aaa.server.tip.Constants.*;
 
 /**
  * The TIP Verticle.
@@ -34,8 +39,12 @@ public class TIPVerticle extends AbstractVerticle {
   private PoolOptions poolOptions;
   private PgConnectOptions connectOptions;
   private PostgresClient pgClient;
-  private static final String TIP_SERVICE_ADDRESS = "iudx.aaa.tip.service";
   private TIPService tipService;
+  private String keystorePath;
+  private String keystorePassword;
+  private JWTAuth provider;
+  private PolicyService policyService;
+  
   private static final Logger LOGGER = LogManager.getLogger(TIPVerticle.class);
 
   /**
@@ -56,6 +65,8 @@ public class TIPVerticle extends AbstractVerticle {
     databaseUserName = config().getString("databaseUserName");
     databasePassword = config().getString("databasePassword");
     poolSize = Integer.parseInt(config().getString("poolSize"));
+    keystorePath = config().getString("keystorePath");
+    keystorePassword = config().getString("keystorePassword");
 
     /* Set Connection Object */
     if (connectOptions == null) {
@@ -70,15 +81,31 @@ public class TIPVerticle extends AbstractVerticle {
 
     /* Create the client pool */
     pgclient = PgPool.pool(vertx, connectOptions, poolOptions);
-
+    
     pgClient = new PostgresClient(vertx, connectOptions, poolOptions);
-
-    tipService = new TIPServiceImpl(pgClient);
+    provider = jwtInitConfig();
+    policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
+    tipService = new TIPServiceImpl(pgClient,policyService, provider);
 
     new ServiceBinder(vertx).setAddress(TIP_SERVICE_ADDRESS).register(TIPService.class, tipService);
 
     LOGGER.debug("Info : " + LOGGER.getName() + " : Started");
 
   }
+  
+  /**
+   * Initializes {@link JWTAuth} to create a Authentication Provider instance for JWT token.
+   * Authentication Provider is used to generate and authenticate JWT token. 
+   * @return provider
+   */
+  public JWTAuth jwtInitConfig() {
+    JWTAuthOptions config = new JWTAuthOptions();
+    config.setKeyStore(
+        new KeyStoreOptions()
+          .setPath(keystorePath)
+          .setPassword(keystorePassword));
 
+    JWTAuth provider = JWTAuth.create(vertx, config);
+    return provider;
+  }
 }
