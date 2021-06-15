@@ -90,7 +90,7 @@ public class TokenServiceImpl implements TokenService {
                   
                   LOGGER.info("Info: Policy evaluation succeeded; JWT generated & signed");
                   handler.handle(Future
-                      .succeededFuture(new JsonObject().put("status", "success").put("access_token", jwt)));
+                      .succeededFuture(new JsonObject().put("status", "success").put("accessToken", jwt)));
 
                 } else if (policyHandler.failed()) {
                   LOGGER.error("Fail: Unauthorized access; Policy evaluation failed");

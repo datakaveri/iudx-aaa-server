@@ -73,7 +73,7 @@ public class TIPServiceTest {
 
     pgClient = new PostgresClient(vertx, connectOptions, poolOptions);
 
-    tipService = new TIPServiceImpl(pgClient);
+    tipService = new TIPServiceImpl(pgClient, null, null);
 
     testContext.completeNow();
 

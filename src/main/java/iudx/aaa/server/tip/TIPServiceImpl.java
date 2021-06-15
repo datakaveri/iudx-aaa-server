@@ -45,12 +45,12 @@ public class TIPServiceImpl implements TIPService {
   public TIPService validateToken(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
     
-    if (request.containsKey("access_token")) {
-      TokenCredentials authInfo = new TokenCredentials(request.getString("token"));
+    if (request.containsKey("accessToken")) {
+      TokenCredentials authInfo = new TokenCredentials(request.getString("accessToken"));
       provider.authenticate(authInfo).onSuccess(jwtDetails -> {
 
         JsonObject accessTokenJwt =
-            jwtDetails.attributes().getJsonObject("token").getJsonObject("accessToken");
+            jwtDetails.attributes().getJsonObject("accessToken");
 
         String clientId = accessTokenJwt.getString("sub");
         String role = accessTokenJwt.getString("role");
@@ -73,10 +73,10 @@ public class TIPServiceImpl implements TIPService {
               policyService.verifyPolicy(request, policyHandler -> {
                 if (policyHandler.succeeded()) {
                   request.clear();
-                  request.mergeIn(accessTokenJwt);
                   request.put("status", "allow");
+                  request.mergeIn(accessTokenJwt);
 
-                  LOGGER.info("Info: Policy evaluation succeeded");
+                  LOGGER.info("Info: Policy evaluation succeeded; Token authenticated");
                   handler.handle(Future.succeededFuture(request));
                 } else if (policyHandler.failed()) {
                   LOGGER.error("Fail: Policy evaluation failed; "
@@ -86,7 +86,7 @@ public class TIPServiceImpl implements TIPService {
                 }
               });
             } else {
-              LOGGER.error("Fail: Invalid token clientId");
+              LOGGER.error("Fail: Invalid accessToken- clientId");
               handler
                   .handle(Future.failedFuture(new JsonObject().put("status", "deny").toString()));
             }
@@ -101,9 +101,9 @@ public class TIPServiceImpl implements TIPService {
         handler.handle(Future.failedFuture(new JsonObject().put("status", "deny").toString()));
       });
     } else {
-      LOGGER.error("Fail: Unable to parse access_token from request");
+      LOGGER.error("Fail: Unable to parse accessToken from request");
       handler.handle(Future.failedFuture(
-          new JsonObject().put("status", "failed").put("desc", "missing access_token").toString()));
+          new JsonObject().put("status", "failed").put("desc", "missing accessToken").toString()));
     }
     return this;
   }
