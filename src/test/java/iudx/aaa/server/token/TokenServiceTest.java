@@ -124,7 +124,7 @@ public class TokenServiceTest {
   void createTokenSuccess(VertxTestContext testContext) {
     
     mockPolicy.setResponse("valid");
-    tokenService.createToken(validPayload,
+    tokenService.createToken(validPayload.copy(),
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals("success", response.getString("status"));
           assertTrue(response.containsKey("accessToken"));
@@ -137,7 +137,7 @@ public class TokenServiceTest {
   void createTokenFailed01(VertxTestContext testContext) {
     
     mockPolicy.setResponse("invalid");
-    tokenService.createToken(validPayload,
+    tokenService.createToken(validPayload.copy(),
         testContext.failing(response -> testContext.verify(() -> {
           JsonObject result = new JsonObject(response.getLocalizedMessage());
           assertEquals("failed", result.getString("status"));
