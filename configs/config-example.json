@@ -47,7 +47,13 @@
             "databasePassword": "iudx@123",
             "poolSize": "5",
             "keystorePath":"configs/keystore-ecc-1.jks",
-            "keystorePassword": "secret"
+            "keystorePassword": "secret",
+            	"keycloakOptions": {
+				"host": "iudx.keycloack.io",
+				"uri": "/auth/realms/demo/protocol/openid-connect/token",
+				"clientId": "keycloackClientId",
+				"clientSecret": "keycloackClientId"
+			}
         },
         {
             "id": "iudx.aaa.server.twofactor.TwoFactorVerticle",
