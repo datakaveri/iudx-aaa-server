@@ -1,70 +1,78 @@
 {
-    "version": "1.0",
-    "zookeepers": [ "zookeeper" ],
-    "clusterId": "iudx-rs-cluster",
-    "host": "server",
-    "modules": [
-        {
-            "id": "iudx.aaa.server.tip.TIPVerticle",
-            "verticleInstances": 1,
-            "databaseIP": "127.0.0.1",
-            "databasePort": "5432",
-            "databaseName": "iudx",
-            "databaseUserName": "iudx-user",
-            "databasePassword": "iudx@123",
-            "poolSize": "5",
-            "keystorePath":"configs/keystore-ecc-1.jks",
-            "keystorePassword": "secret"
-        },
-        {
-            "id": "iudx.aaa.server.policy.PolicyVerticle",
-            "verticleInstances": 1,
-            "databaseIP": "139.59.80.176",
-            "databasePort": "5432",
-            "databaseName": "iudx",
-            "databaseUserName": "iudx_user",
-            "databasePassword": "iudx@123",
-            "poolSize": "5"
-        },
-        {
-            "id": "iudx.aaa.server.registration.RegistrationVerticle",
-            "verticleInstances": 1,
-            "databaseIP": "139.59.80.176",
-            "databasePort": "5432",
-            "databaseName": "iudx",
-            "databaseUserName": "iudx_user",
-            "databasePassword": "iudx@123",
-            "poolSize": "5"
-        },
-        {
-            "id": "iudx.aaa.server.token.TokenVerticle",
-            "verticleInstances": 1,
-            "authServerDomain":"auth.test.com",
-            "databaseIP": "139.59.80.176",
-            "databasePort": "5432",
-            "databaseName": "iudx",
-            "databaseUserName": "iudx_user",
-            "databasePassword": "iudx@123",
-            "poolSize": "5",
-            "keystorePath":"configs/keystore-ecc-1.jks",
-            "keystorePassword": "secret"
-        },
-        {
-            "id": "iudx.aaa.server.twofactor.TwoFactorVerticle",
-            "verticleInstances": 1,
-            "databaseIP": "139.59.80.176",
-            "databasePort": "5432",
-            "databaseName": "iudx",
-            "databaseUserName": "iudx_user",
-            "databasePassword": "iudx@123",
-            "poolSize": "5"
-        },
-        {
-            "id": "iudx.aaa.server.apiserver.ApiServerVerticle",
-            "ssl": true,
-            "keystore": "configs/keystore.jks",
-            "keystorePassword": "password",
-            "verticleInstances": 1
-        }
-    ]
+	"version": "1.0",
+	"zookeepers": [
+		"zookeeper"
+	],
+	"clusterId": "iudx-rs-cluster",
+	"host": "server",
+	"modules": [
+		{
+			"id": "iudx.aaa.server.tip.TIPVerticle",
+			"verticleInstances": 1,
+			"databaseIP": "127.0.0.1",
+			"databasePort": "5432",
+			"databaseName": "iudx",
+			"databaseUserName": "iudx-user",
+			"databasePassword": "iudx@123",
+			"poolSize": "5",
+			"keystorePath": "configs/keystore-ecc-1.jks",
+			"keystorePassword": "secret"
+		},
+		{
+			"id": "iudx.aaa.server.policy.PolicyVerticle",
+			"verticleInstances": 1,
+			"databaseIP": "139.59.80.176",
+			"databasePort": "5432",
+			"databaseName": "iudx",
+			"databaseUserName": "iudx_user",
+			"databasePassword": "iudx@123",
+			"poolSize": "5"
+		},
+		{
+			"id": "iudx.aaa.server.registration.RegistrationVerticle",
+			"verticleInstances": 1,
+			"databaseIP": "139.59.80.176",
+			"databasePort": "5432",
+			"databaseName": "iudx",
+			"databaseUserName": "iudx_user",
+			"databasePassword": "iudx@123",
+			"poolSize": "5"
+		},
+		{
+			"id": "iudx.aaa.server.token.TokenVerticle",
+			"verticleInstances": 1,
+			"authServerDomain": "auth.test.com",
+			"databaseIP": "139.59.80.176",
+			"databasePort": "5432",
+			"databaseName": "iudx",
+			"databaseUserName": "iudx_user",
+			"databasePassword": "iudx@123",
+			"poolSize": "5",
+			"keystorePath": "configs/keystore-ecc-1.jks",
+			"keystorePassword": "secret",
+			"keycloakOptions": {
+				"host": "iudx.keycloack.io",
+				"uri": "/auth/realms/demo/protocol/openid-connect/token",
+				"clientId": "keycloackClientId",
+				"clientSecret": "keycloackClientSecret"
+			}
+		},
+		{
+			"id": "iudx.aaa.server.twofactor.TwoFactorVerticle",
+			"verticleInstances": 1,
+			"databaseIP": "139.59.80.176",
+			"databasePort": "5432",
+			"databaseName": "iudx",
+			"databaseUserName": "iudx_user",
+			"databasePassword": "iudx@123",
+			"poolSize": "5"
+		},
+		{
+			"id": "iudx.aaa.server.apiserver.ApiServerVerticle",
+			"ssl": true,
+			"keystore": "configs/keystore.jks",
+			"keystorePassword": "password",
+			"verticleInstances": 1
+		}
+	]
 }
