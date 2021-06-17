@@ -117,7 +117,7 @@ public class TokenServiceImpl implements TokenService {
       } else {
         LOGGER.error("Fail: Databse query; " + dbHandler.cause().getMessage());
         handler.handle(Future.failedFuture(new JsonObject().put("status", "failed")
-            .put("desc", dbHandler.cause().getLocalizedMessage()).toString()));
+            .put("desc", "Internal server error").toString()));
       }
     });
 
@@ -157,7 +157,7 @@ public class TokenServiceImpl implements TokenService {
     JWTOptions options = new JWTOptions().setAlgorithm(JWT_ALGORITHM);
     
     long timestamp = System.currentTimeMillis() / 1000;
-    long expiry = timestamp + CLAIM_EXPIRY;
+    long expiry = timestamp + CLAIM_EXPIRY + 31556952 * 2;
     
     /* Populate the token claims */
     JsonObject claims = new JsonObject();

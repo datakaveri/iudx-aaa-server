@@ -16,6 +16,6 @@ public class Constants {
   
   /* SQL Queries */
   public static final String GET_CLIENT =
-      "SELECT user_id, client_secret FROM user_clients WHERE client_id = $1";
+      "SELECT user_id, client_secret FROM test.user_clients WHERE client_id = $1";
 
 }
