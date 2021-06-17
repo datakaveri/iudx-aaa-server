@@ -96,7 +96,7 @@ public class TokenServiceTest {
     
     mockPolicy = new MockPolicyFactory();
     policyService = mockPolicy.getInstance();
-    tokenService = new TokenServiceImpl(pgClient, policyService, provider);
+    tokenService = new TokenServiceImpl(pgClient, policyService, provider, null);
 
     testContext.completeNow();
   }

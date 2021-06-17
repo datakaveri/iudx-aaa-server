@@ -3,6 +3,7 @@ package iudx.aaa.server.token;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.KeyStoreOptions;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
@@ -42,6 +43,7 @@ public class TokenVerticle extends AbstractVerticle {
   private String keystorePassword;
   private JWTAuth provider;
   private PolicyService policyService;
+  private HttpWebClient httpWebClient;
   
   private static final Logger LOGGER = LogManager.getLogger(TokenVerticle.class);
 
@@ -65,6 +67,7 @@ public class TokenVerticle extends AbstractVerticle {
     keystorePath = config().getString("keystorePath");
     keystorePassword = config().getString("keystorePassword");
     String issuer = config().getString("authServerDomain","");
+    JsonObject keycloakOptions = config().getJsonObject("keycloakOptions");
     
     if(issuer != null && !issuer.isBlank()) {
       CLAIM_ISSUER = issuer;
@@ -87,9 +90,10 @@ public class TokenVerticle extends AbstractVerticle {
         
     /* Initializing the services */
     provider = jwtInitConfig();
+    httpWebClient = new HttpWebClient(vertx, keycloakOptions);
     pgClient = new PostgresClient(vertx, connectOptions, poolOptions);
     policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
-    tokenService = new TokenServiceImpl(pgClient, policyService, provider);
+    tokenService = new TokenServiceImpl(pgClient, policyService, provider, httpWebClient);
     
     new ServiceBinder(vertx).setAddress(TOKEN_SERVICE_ADDRESS).register(TokenService.class,
         tokenService);

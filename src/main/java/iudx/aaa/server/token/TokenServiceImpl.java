@@ -9,16 +9,12 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
-import io.vertx.ext.auth.authentication.TokenCredentials;
 import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.postgres.client.PostgresClient;
 import static iudx.aaa.server.token.Constants.*;
 import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
 import java.util.UUID;
 
 /**
@@ -40,11 +36,14 @@ public class TokenServiceImpl implements TokenService {
   private PostgresClient pgClient;
   private JWTAuth provider;
   private PolicyService policyService;
+  private HttpWebClient httpWebClient;
 
-  public TokenServiceImpl(PostgresClient pgClient, PolicyService policyService, JWTAuth provider) {
+  public TokenServiceImpl(PostgresClient pgClient, PolicyService policyService, JWTAuth provider,
+      HttpWebClient httpWebClient) {
     this.pgClient = pgClient;
     this.policyService = policyService;
     this.provider = provider;
+    this.httpWebClient = httpWebClient;
   }
 
   /**
@@ -61,7 +60,7 @@ public class TokenServiceImpl implements TokenService {
 
     Tuple tuple = Tuple.of(clientId);
 
-    pgClient.selectUserQuery(tuple, dbHandler -> {
+    pgClient.selectQuery(GET_USER, tuple, dbHandler -> {
       if (dbHandler.succeeded()) {
         if (dbHandler.result().size() == 1) {
           JsonObject result = dbHandler.result().getJsonObject(0);
@@ -124,14 +123,69 @@ public class TokenServiceImpl implements TokenService {
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public TokenService revokeToken(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
-    // TODO Auto-generated method stub
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
-    JsonObject response = new JsonObject();
-    response.put("status", "success");
-    handler.handle(Future.succeededFuture(response));
+    String userId = request.getString("userId");
+    String clientId = request.getString("clientId");
+    String rsUrl = request.getString("rsUrl");
+    
+    if(userId != null && !userId.isBlank()) {
+
+      Tuple clientTuple = Tuple.of(userId);
+      pgClient.selectQuery(GET_CLIENT, clientTuple, dbHandler -> {
+        if (dbHandler.succeeded()) {
+          
+          if (dbHandler.result().size() == 1) {
+            JsonObject dbClientRow = dbHandler.result().getJsonObject(0);
+            String dbClientId = dbClientRow.getString("client_id");
+            
+            if(dbClientId.equals(clientId)) {
+              Tuple rsUrlTuple = Tuple.of(rsUrl);
+
+              pgClient.selectQuery(GET_URL, rsUrlTuple, selectHandler -> {
+                if (selectHandler.succeeded()) {
+                  JsonObject dbExistsRow = selectHandler.result().getJsonObject(0);
+                  boolean flag = dbExistsRow.getBoolean("exists");
+                  if (flag == Boolean.TRUE) {
+                    LOGGER.debug("Info: ResourceServer URL validated");
+                    
+                    JsonObject revokePayload = new JsonObject();
+                    revokePayload.put("user-id", clientId).put("current-token-duration", CLAIM_EXPIRY);
+                    request.put("body", revokePayload);
+                    httpWebClient.httpRevokeRequest(request, httpClient -> {
+                      if(httpClient.succeeded()) {
+                        
+                        System.out.println(httpClient.result());
+                      } else {
+                        System.out.println(httpClient.cause());
+                      }
+                    });
+                  } else {
+                    LOGGER.error("Fail: Incorrect resourceServer; exists: " + flag);
+                    handler.handle(Future.failedFuture(new JsonObject().put("status", "failed")
+                        .put("desc", "Invalid resourceServer").toString()));
+                  }
+                } else {
+                  LOGGER.error("Fail: Databse query; " + selectHandler.cause());
+                  handler.handle(Future.failedFuture(new JsonObject().put("status", "failed")
+                      .put("desc", "Internal server error").toString()));
+                }
+              });
+              
+            } else {
+              LOGGER.error("Fail: Incorrect userId/clientId");
+              handler.handle(Future.failedFuture(new JsonObject().put("status", "failed")
+                  .put("desc", "Invalid userId/clientId").toString()));
+            }
+          }
+        }
+      });
+    }
     return this;
   }
 
@@ -157,7 +211,7 @@ public class TokenServiceImpl implements TokenService {
     JWTOptions options = new JWTOptions().setAlgorithm(JWT_ALGORITHM);
     
     long timestamp = System.currentTimeMillis() / 1000;
-    long expiry = timestamp + CLAIM_EXPIRY + 31556952 * 2;
+    long expiry = timestamp + CLAIM_EXPIRY;
     
     /* Populate the token claims */
     JsonObject claims = new JsonObject();
@@ -176,16 +230,4 @@ public class TokenServiceImpl implements TokenService {
     String token = provider.generateToken(claims, options);
     return token;
   }
-  
-  /**
-   * Generate Salt for Hashing using Bcrypt.
-   * @return saltByte
-   */
-  private byte[] genSalt() {
-    SecureRandom random = new SecureRandom();
-    byte salt[] = new byte[BCRYPT_SALT_LEN];
-    random.nextBytes(salt);
-    return salt;
-  }
-
 }

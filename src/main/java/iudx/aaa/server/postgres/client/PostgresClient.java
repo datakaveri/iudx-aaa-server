@@ -34,9 +34,9 @@ public class PostgresClient {
    * @param handler
    * @return JsonArray Handler
    */
-  public PostgresClient selectUserQuery(Tuple tuple, Handler<AsyncResult<JsonArray>> handler) {
+  public PostgresClient selectQuery(String query, Tuple tuple, Handler<AsyncResult<JsonArray>> handler) {
 
-    Future<RowSet<Row>> future = executeAsync(GET_CLIENT, tuple);
+    Future<RowSet<Row>> future = executeAsync(query, tuple);
     future.onComplete(resultHandler -> {
       if (resultHandler.succeeded()) {
         /* Converts the SQL RowSet to JsonArray. */
@@ -64,7 +64,7 @@ public class PostgresClient {
             promise.complete(handler.result());
           } else {
             pgConnection.close();
-            LOGGER.fatal("Fail : " + handler.cause());
+            LOGGER.fatal("Fail: Databse query; " + handler.cause().getMessage());
             promise.fail(handler.cause());
           }
         });

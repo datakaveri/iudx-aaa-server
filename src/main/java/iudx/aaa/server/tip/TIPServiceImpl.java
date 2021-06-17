@@ -11,6 +11,7 @@ import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.postgres.client.PostgresClient;
+import static iudx.aaa.server.token.Constants.*;
 
 /**
  * The TIP Service Implementation.
@@ -58,7 +59,7 @@ public class TIPServiceImpl implements TIPService {
         String itemType = accessTokenJwt.getString("item_type");
 
         Tuple tuple = Tuple.of(clientId);
-        pgClient.selectUserQuery(tuple, dbHandler -> {
+        pgClient.selectQuery(GET_USER, tuple, dbHandler -> {
           if (dbHandler.succeeded()) {
             if (dbHandler.result().size() == 1) {
               
