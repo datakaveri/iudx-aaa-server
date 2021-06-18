@@ -7,7 +7,6 @@ import io.vertx.ext.auth.KeyStoreOptions;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.pgclient.PgConnectOptions;
-import io.vertx.pgclient.PgPool;
 import io.vertx.serviceproxy.ServiceBinder;
 import io.vertx.sqlclient.PoolOptions;
 import iudx.aaa.server.policy.PolicyService;
@@ -35,7 +34,6 @@ public class TIPVerticle extends AbstractVerticle {
   private String databaseUserName;
   private String databasePassword;
   private int poolSize;
-  private PgPool pgclient;
   private PoolOptions poolOptions;
   private PgConnectOptions connectOptions;
   private PostgresClient pgClient;
@@ -59,14 +57,14 @@ public class TIPVerticle extends AbstractVerticle {
     /* Read the configuration and set the postgres client properties. */
     LOGGER.debug("Info : " + LOGGER.getName() + " : Reading config file");
 
-    databaseIP = config().getString("databaseIP");
-    databasePort = Integer.parseInt(config().getString("databasePort"));
-    databaseName = config().getString("databaseName");
-    databaseUserName = config().getString("databaseUserName");
-    databasePassword = config().getString("databasePassword");
-    poolSize = Integer.parseInt(config().getString("poolSize"));
-    keystorePath = config().getString("keystorePath");
-    keystorePassword = config().getString("keystorePassword");
+    databaseIP = config().getString(DATABASE_IP);
+    databasePort = Integer.parseInt(config().getString(DATABASE_PORT));
+    databaseName = config().getString(DATABASE_NAME);
+    databaseUserName = config().getString(DATABASE_USERNAME);
+    databasePassword = config().getString(DATABASE_PASSWORD);
+    poolSize = Integer.parseInt(config().getString(POOLSIZE));
+    keystorePath = config().getString(KEYSTORE_PATH);
+    keystorePassword = config().getString(KEYSTPRE_PASSWORD);
 
     /* Set Connection Object */
     if (connectOptions == null) {
@@ -79,9 +77,7 @@ public class TIPVerticle extends AbstractVerticle {
       poolOptions = new PoolOptions().setMaxSize(poolSize);
     }
 
-    /* Create the client pool */
-    pgclient = PgPool.pool(vertx, connectOptions, poolOptions);
-    
+    /* Initializing the services */
     pgClient = new PostgresClient(vertx, connectOptions, poolOptions);
     provider = jwtInitConfig();
     policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);

@@ -58,16 +58,16 @@ public class TokenVerticle extends AbstractVerticle {
 
     /* Read the configuration and set the postgres client properties. */
     LOGGER.debug("Info : " + LOGGER.getName() + " : Reading config file");
-    databaseIP = config().getString("databaseIP");
-    databasePort = Integer.parseInt(config().getString("databasePort"));
-    databaseName = config().getString("databaseName");
-    databaseUserName = config().getString("databaseUserName");
-    databasePassword = config().getString("databasePassword");
-    poolSize = Integer.parseInt(config().getString("poolSize"));
-    keystorePath = config().getString("keystorePath");
-    keystorePassword = config().getString("keystorePassword");
-    String issuer = config().getString("authServerDomain","");
-    JsonObject keycloakOptions = config().getJsonObject("keycloakOptions");
+    databaseIP = config().getString(DATABASE_IP);
+    databasePort = Integer.parseInt(config().getString(DATABASE_PORT));
+    databaseName = config().getString(DATABASE_NAME);
+    databaseUserName = config().getString(DATABASE_USERNAME);
+    databasePassword = config().getString(DATABASE_PASSWORD);
+    poolSize = Integer.parseInt(config().getString(POOLSIZE));
+    keystorePath = config().getString(KEYSTORE_PATH);
+    keystorePassword = config().getString(KEYSTPRE_PASSWORD);
+    String issuer = config().getString(AUTHSERVER_DOMAIN,"");
+    JsonObject keycloakOptions = config().getJsonObject(KEYCLOACK_OPTIONS);
     
     if(issuer != null && !issuer.isBlank()) {
       CLAIM_ISSUER = issuer;

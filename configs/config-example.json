@@ -50,6 +50,7 @@
             "keystorePassword": "secret",
             "keycloakOptions": {
             	"host": "iudx.keycloack.io",
+            	"port":8443,
             	"uri": "/auth/realms/demo/protocol/openid-connect/token",
             	"clientId": "keycloackClientId",
             	"clientSecret": "keycloackClientSecret"

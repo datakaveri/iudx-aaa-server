@@ -46,17 +46,17 @@ public class TIPServiceImpl implements TIPService {
   public TIPService validateToken(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
     
-    if (request.containsKey("accessToken")) {
-      TokenCredentials authInfo = new TokenCredentials(request.getString("accessToken"));
+    if (request.containsKey(ACCESS_TOKEN)) {
+      TokenCredentials authInfo = new TokenCredentials(request.getString(ACCESS_TOKEN));
       provider.authenticate(authInfo).onSuccess(jwtDetails -> {
 
         JsonObject accessTokenJwt =
-            jwtDetails.attributes().getJsonObject("accessToken");
+            jwtDetails.attributes().getJsonObject(ACCESS_TOKEN);
 
-        String clientId = accessTokenJwt.getString("sub");
-        String role = accessTokenJwt.getString("role");
-        String itemId = accessTokenJwt.getString("item_id");
-        String itemType = accessTokenJwt.getString("item_type");
+        String clientId = accessTokenJwt.getString(SUB);
+        String role = accessTokenJwt.getString(ROLE);
+        String itemId = accessTokenJwt.getString(ITEM_ID);
+        String itemType = accessTokenJwt.getString(ITEM_TYPE);
 
         Tuple tuple = Tuple.of(clientId);
         pgClient.selectQuery(GET_USER, tuple, dbHandler -> {
@@ -65,7 +65,7 @@ public class TIPServiceImpl implements TIPService {
               
               request.clear();
               JsonObject result = dbHandler.result().getJsonObject(0);
-              request.put("userId", result.getString("user_id"))
+              request.put("userId", result.getString(USER_ID))
                      .put("clientId", clientId)
                      .put("role", role)
                      .put("itemId", itemId)
@@ -74,7 +74,7 @@ public class TIPServiceImpl implements TIPService {
               policyService.verifyPolicy(request, policyHandler -> {
                 if (policyHandler.succeeded()) {
                   request.clear();
-                  request.put("status", "allow");
+                  request.put(STATUS, ALLOW);
                   request.mergeIn(accessTokenJwt);
 
                   LOGGER.info("Info: Policy evaluation succeeded; Token authenticated");
@@ -83,28 +83,28 @@ public class TIPServiceImpl implements TIPService {
                   LOGGER.error("Fail: Policy evaluation failed; "
                       + policyHandler.cause().getLocalizedMessage());
                   handler.handle(
-                      Future.failedFuture(new JsonObject().put("status", "deny").toString()));
+                      Future.failedFuture(new JsonObject().put(STATUS, DENY).toString()));
                 }
               });
             } else {
               LOGGER.error("Fail: Invalid accessToken- clientId");
               handler
-                  .handle(Future.failedFuture(new JsonObject().put("status", "deny").toString()));
+                  .handle(Future.failedFuture(new JsonObject().put(STATUS, DENY).toString()));
             }
           } else {
             LOGGER.error("Fail: Databse query; " + dbHandler.cause().getMessage());
-            handler.handle(Future.failedFuture(new JsonObject().put("status", "failed")
-                .put("desc", dbHandler.cause().getLocalizedMessage()).toString()));
+            handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED)
+                .put(DESC, dbHandler.cause().getLocalizedMessage()).toString()));
           }
         });
       }).onFailure(jwtError -> {
         LOGGER.error("Fail: Token authentication failed; " + jwtError.getLocalizedMessage());
-        handler.handle(Future.failedFuture(new JsonObject().put("status", "deny").toString()));
+        handler.handle(Future.failedFuture(new JsonObject().put(STATUS, DENY).toString()));
       });
     } else {
       LOGGER.error("Fail: Unable to parse accessToken from request");
       handler.handle(Future.failedFuture(
-          new JsonObject().put("status", "failed").put("desc", "missing accessToken").toString()));
+          new JsonObject().put(STATUS, FAILED).put(DESC, "missing accessToken").toString()));
     }
     return this;
   }

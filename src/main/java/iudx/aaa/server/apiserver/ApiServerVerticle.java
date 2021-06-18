@@ -24,10 +24,8 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.JksOptions;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
 import iudx.aaa.server.policy.PolicyService;
@@ -132,12 +130,6 @@ public class ApiServerVerticle extends AbstractVerticle {
       HttpServerResponse response = routingContext.response();
       response.sendFile("docs/apidoc.html");
     });
-    
-    router.post("/v1/token").consumes(MIME_APPLICATION_JSON)
-    .handler(this::getToken);
-    
-    router.post("/v1/token/list").consumes(MIME_APPLICATION_JSON)
-    .handler(this::listToken);
 
     /* Read ssl configuration. */
     isSSL = config().getBoolean("ssl");
@@ -176,30 +168,5 @@ public class ApiServerVerticle extends AbstractVerticle {
     tokenService = TokenService.createProxy(vertx, TOKEN_SERVICE_ADDRESS);
     twoFactorService = TwoFactorService.createProxy(vertx, TWOFACTOR_SERVICE_ADDRESS);
   }
-  
-  private void getToken(RoutingContext context) {
-    JsonObject tokenRequestJson = context.getBodyAsJson();
-    tokenService.createToken(tokenRequestJson, handler -> {
-      if (handler.succeeded()) {
-        context.response().putHeader("content-type", "application/json").setStatusCode(200)
-        .end(handler.result().toString());
-      } else {
-        context.response().putHeader("content-type", "application/json").setStatusCode(500)
-            .end(handler.cause().getMessage());
-      }
-    });
-  }
-  
-  private void listToken(RoutingContext context) {
-    JsonObject tokenRequestJson = context.getBodyAsJson();
-    tokenService.listToken(tokenRequestJson, handler -> {
-      if (handler.succeeded()) {
-        context.response().putHeader("content-type", "application/json").setStatusCode(200)
-        .end(handler.result().toString());
-      } else {
-        context.response().putHeader("content-type", "application/json").setStatusCode(500)
-            .end(handler.cause().getMessage());
-      }
-    });
-  }
+
 }
