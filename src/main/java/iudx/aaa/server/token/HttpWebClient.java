@@ -20,6 +20,12 @@ public class HttpWebClient {
   private WebClient client;
   private JsonObject httpOptions;
 
+  /**
+   * Constructor initializing WebClient.
+   * 
+   * @param vertx which is a Vert.x instance
+   * @param keyCloakOptions which is a JsonObject
+   */
   public HttpWebClient(Vertx vertx, JsonObject keyCloakOptions) {
     
     WebClientOptions clientOptions = new WebClientOptions()
@@ -45,7 +51,7 @@ public class HttpWebClient {
     LOGGER.info("Info: " + LOGGER.getName() + ": procssing token revocation");
 
     httpPostFormAsync(httpOptions).compose(kcHandler -> {
-      request.put("token", kcHandler.getString("access_token"));
+      request.put(TOKEN, kcHandler.getString("access_token"));
       return httpPostAsync(request);
     }).onComplete(reqHandler -> {
       if (reqHandler.succeeded()) {
@@ -70,14 +76,14 @@ public class HttpWebClient {
 
     Promise<JsonObject> promise = Promise.promise();
     RequestOptions options = new RequestOptions();
-    options.setHost(requestBody.getString("rsUrl"));
-    options.setPort(requestBody.getInteger("port",DEFAULT_HTTPS_PORT));
-    options.setURI(requestBody.getString("uri"));
+    options.setHost(requestBody.getString(RS_URL));
+    options.setPort(requestBody.getInteger(PORT,DEFAULT_HTTPS_PORT));
+    options.setURI(requestBody.getString(URI));
 
-    String token = requestBody.getString("token");
-    JsonObject body = requestBody.getJsonObject("body");
+    String token = requestBody.getString(TOKEN);
+    JsonObject body = requestBody.getJsonObject(BODY);
 
-    client.request(HttpMethod.POST, options).putHeader("token", token).sendJsonObject(body,
+    client.request(HttpMethod.POST, options).putHeader(TOKEN, token).sendJsonObject(body,
         reqHandler -> {
           if (reqHandler.succeeded()) {
             LOGGER.debug("Info: ResourceServer request completed");
@@ -101,12 +107,11 @@ public class HttpWebClient {
 
     Promise<JsonObject> promise = Promise.promise();
     RequestOptions options = new RequestOptions(requestBody);
-    options.setPort(8443);
     
     MultiMap bodyForm = MultiMap.caseInsensitiveMultiMap();
-    bodyForm.set("grant_type", "client_credentials")
-            .set("client_id", requestBody.getString("clientId"))
-            .set("client_secret", requestBody.getString("clientSecret"));
+    bodyForm.set(GRANT_TYPE, CLIENT_CREDENTIALS)
+            .set(CLIENT_ID, requestBody.getString("clientId"))
+            .set(CLIENT_SECRET, requestBody.getString("clientSecret"));
     
     client.request(HttpMethod.POST, options).sendForm(bodyForm, reqHandler -> {
       if (reqHandler.succeeded()) {
