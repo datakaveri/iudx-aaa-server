@@ -133,18 +133,18 @@ public class TokenServiceImpl implements TokenService {
     String userId = request.getString("userId");
     String clientId = request.getString("clientId");
     String rsUrl = request.getString("rsUrl");
-    
-    if(userId != null && !userId.isBlank()) {
+
+    if (userId != null && !userId.isBlank()) {
 
       Tuple clientTuple = Tuple.of(userId);
       pgClient.selectQuery(GET_CLIENT, clientTuple, dbHandler -> {
         if (dbHandler.succeeded()) {
-          
+
           if (dbHandler.result().size() == 1) {
             JsonObject dbClientRow = dbHandler.result().getJsonObject(0);
             String dbClientId = dbClientRow.getString("client_id");
-            
-            if(dbClientId.equals(clientId)) {
+
+            if (dbClientId.equals(clientId)) {
               Tuple rsUrlTuple = Tuple.of(rsUrl);
 
               pgClient.selectQuery(GET_URL, rsUrlTuple, selectHandler -> {
@@ -153,16 +153,20 @@ public class TokenServiceImpl implements TokenService {
                   boolean flag = dbExistsRow.getBoolean("exists");
                   if (flag == Boolean.TRUE) {
                     LOGGER.debug("Info: ResourceServer URL validated");
-                    
+
                     JsonObject revokePayload = new JsonObject();
-                    revokePayload.put("user-id", clientId).put("current-token-duration", CLAIM_EXPIRY);
+                    revokePayload.put("user-id", clientId).put("current-token-duration",
+                        CLAIM_EXPIRY);
                     request.put("body", revokePayload);
                     httpWebClient.httpRevokeRequest(request, httpClient -> {
-                      if(httpClient.succeeded()) {
-                        
+                      if (httpClient.succeeded()) {
                         System.out.println(httpClient.result());
+                        handler.handle(
+                            Future.succeededFuture(new JsonObject().put("status", "success")));
                       } else {
                         System.out.println(httpClient.cause());
+                        handler.handle(Future.failedFuture(new JsonObject().put("status", "failed")
+                            .put("desc", "revoke request failed").toString()));
                       }
                     });
                   } else {
@@ -176,15 +180,28 @@ public class TokenServiceImpl implements TokenService {
                       .put("desc", "Internal server error").toString()));
                 }
               });
-              
+
             } else {
               LOGGER.error("Fail: Incorrect userId/clientId");
               handler.handle(Future.failedFuture(new JsonObject().put("status", "failed")
                   .put("desc", "Invalid userId/clientId").toString()));
             }
+          } else {
+            LOGGER.error("Fail: Incorrect resourceServer URL");
+            handler.handle(Future.failedFuture(new JsonObject().put("status", "failed")
+                .put("desc", "Incorrect resourceServer URL").toString()));
+
           }
+        } else {
+          LOGGER.error("Fail: Databse query; " + dbHandler.cause());
+          handler.handle(Future.failedFuture(new JsonObject().put("status", "failed")
+              .put("desc", "Internal server error").toString()));
         }
       });
+    } else {
+      LOGGER.error("Fail: Empty/null userId");
+      handler.handle(Future.failedFuture(
+          new JsonObject().put("status", "failed").put("desc", "Empty/null userId").toString()));
     }
     return this;
   }

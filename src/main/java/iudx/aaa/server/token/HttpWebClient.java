@@ -20,7 +20,7 @@ public class HttpWebClient {
   private WebClient client;
   private JsonObject httpOptions;
 
-  public HttpWebClient(Vertx vertx, JsonObject flinkOptions) {
+  public HttpWebClient(Vertx vertx, JsonObject keyCloakOptions) {
     
     WebClientOptions clientOptions = new WebClientOptions()
         .setSsl(true)
@@ -28,7 +28,7 @@ public class HttpWebClient {
         .setTrustAll(true);
     
     this.client = WebClient.create(vertx,clientOptions);
-    this.httpOptions = flinkOptions;
+    this.httpOptions = keyCloakOptions;
   }
   
   
@@ -41,8 +41,9 @@ public class HttpWebClient {
    * @return future event which upon completion
    */
   HttpWebClient httpRevokeRequest(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
-    
-    LOGGER.info("Info: "+ LOGGER.getName() + ": procssing token revocation");
+
+    LOGGER.info("Info: " + LOGGER.getName() + ": procssing token revocation");
+
     httpPostFormAsync(httpOptions).compose(kcHandler -> {
       request.put("token", kcHandler.getString("access_token"));
       return httpPostAsync(request);
@@ -55,6 +56,7 @@ public class HttpWebClient {
         handler.handle(Future.failedFuture(reqHandler.cause()));
       }
     });
+
     return this;
   }
   
@@ -70,28 +72,21 @@ public class HttpWebClient {
     RequestOptions options = new RequestOptions();
     options.setHost(requestBody.getString("rsUrl"));
     options.setPort(requestBody.getInteger("port",DEFAULT_HTTPS_PORT));
-    options.setURI(requestBody.getString("url"));
-    
+    options.setURI(requestBody.getString("uri"));
+
     String token = requestBody.getString("token");
     JsonObject body = requestBody.getJsonObject("body");
-    
-    client.request(HttpMethod.POST, options).putHeader("token", token).sendJsonObject(body, reqHandler -> {
-      if (reqHandler.succeeded()) {
-        if (reqHandler.result().statusCode() == 200 || reqHandler.result().statusCode() == 202) {
-          LOGGER.debug("Info: Flink request completed");
-          promise.complete(reqHandler.result().bodyAsJsonObject());
-          return;
-        } else {
-          LOGGER.error("Error: Flink request failed; " + reqHandler.result().bodyAsString());
-          promise.fail(reqHandler.result().bodyAsString());
-          return;
-        }
-      } else if (reqHandler.failed()) {
-        LOGGER.debug("Error: Flink request failed; " + reqHandler.cause().getMessage());
-        promise.fail(reqHandler.cause());
-        return;
-      }
-    });
+
+    client.request(HttpMethod.POST, options).putHeader("token", token).sendJsonObject(body,
+        reqHandler -> {
+          if (reqHandler.succeeded()) {
+            LOGGER.debug("Info: ResourceServer request completed");
+            promise.complete(reqHandler.result().bodyAsJsonObject());
+          } else if (reqHandler.failed()) {
+            LOGGER.debug("Error: ResourceServer request failed; " + reqHandler.cause().getMessage());
+            promise.fail(reqHandler.cause());
+          }
+        });
     return promise.future();
   }
   

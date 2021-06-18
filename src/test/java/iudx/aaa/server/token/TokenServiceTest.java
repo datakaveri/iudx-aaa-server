@@ -48,6 +48,9 @@ public class TokenServiceTest {
   private static JWTAuth provider;
   private static PolicyService policyService;
   private static MockPolicyFactory mockPolicy;
+  private static HttpWebClient httpWebClient;
+  private static MockHttpWebClient mockHttpWebClient;
+  
 
   @BeforeAll
   @DisplayName("Deploying Verticle")
@@ -93,10 +96,14 @@ public class TokenServiceTest {
     /* Initializing the services */
     provider = jwtInitConfig(vertx);
     pgClient = new PostgresClient(vertx, connectOptions, poolOptions);
+    //httpWebClient = new HttpWebClient(vertx, keycloakOptions);
     
     mockPolicy = new MockPolicyFactory();
+    mockHttpWebClient = new MockHttpWebClient();
+    httpWebClient = mockHttpWebClient.getMockHttpWebClient();
+    
     policyService = mockPolicy.getInstance();
-    tokenService = new TokenServiceImpl(pgClient, policyService, provider, null);
+    tokenService = new TokenServiceImpl(pgClient, policyService, provider, httpWebClient);
 
     testContext.completeNow();
   }
@@ -177,6 +184,84 @@ public class TokenServiceTest {
     
     mockPolicy.setResponse("valid");
     tokenService.createToken(undefinedRole,
+        testContext.failing(response -> testContext.verify(() -> {
+          JsonObject result = new JsonObject(response.getLocalizedMessage());
+          assertEquals("failed", result.getString("status"));
+          testContext.completeNow();
+        })));
+  }
+  
+  @Test
+  @DisplayName("revokeToken [Success]")
+  void revokeTokenSuccess(VertxTestContext testContext) {
+   
+    mockHttpWebClient.setResponse("valid");
+    tokenService.revokeToken(revokeTokenValidPayload.copy(),
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals("success", response.getString("status"));
+          //assertTrue(response.containsKey("accessToken"));
+          testContext.completeNow();
+        })));
+  }
+  
+  @Test
+  @DisplayName("revokeToken [Failed-01 Failure in KeyClock or RS]")
+  void revokeTokenFailed01(VertxTestContext testContext) {
+   
+    mockHttpWebClient.setResponse("invalid");
+    tokenService.revokeToken(revokeTokenValidPayload.copy(),
+        testContext.failing(response -> testContext.verify(() -> {
+          JsonObject result = new JsonObject(response.getLocalizedMessage());
+          assertEquals("failed", result.getString("status"));
+          testContext.completeNow();
+        })));
+  }
+  
+  @Test
+  @DisplayName("revokeToken [Failed-02 Failure in KeyClock or RS]")
+  void revokeTokenFailed02(VertxTestContext testContext) {
+   
+    mockHttpWebClient.setResponse("invalid");
+    tokenService.revokeToken(revokeTokenValidPayload.copy(),
+        testContext.failing(response -> testContext.verify(() -> {
+          JsonObject result = new JsonObject(response.getLocalizedMessage());
+          assertEquals("failed", result.getString("status"));
+          testContext.completeNow();
+        })));
+  }
+  
+  @Test
+  @DisplayName("revokeToken [Failed-03 emptyUserId]")
+  void revokeTokenFailed03(VertxTestContext testContext) {
+   
+    mockHttpWebClient.setResponse("valid");
+    tokenService.revokeToken(revokeTokenEmptyUserId.copy(),
+        testContext.failing(response -> testContext.verify(() -> {
+          JsonObject result = new JsonObject(response.getLocalizedMessage());
+          assertEquals("failed", result.getString("status"));
+          testContext.completeNow();
+        })));
+  }
+  
+  @Test
+  @DisplayName("revokeToken [Failed-04 invalidUserId]")
+  void revokeTokenFailed04(VertxTestContext testContext) {
+   
+    mockHttpWebClient.setResponse("valid");
+    tokenService.revokeToken(revokeTokenInvalidUserId.copy(),
+        testContext.failing(response -> testContext.verify(() -> {
+          JsonObject result = new JsonObject(response.getLocalizedMessage());
+          assertEquals("failed", result.getString("status"));
+          testContext.completeNow();
+        })));
+  }
+  
+  @Test
+  @DisplayName("revokeToken [Failed-05 invalidUrl]")
+  void revokeTokenFailed05(VertxTestContext testContext) {
+   
+    mockHttpWebClient.setResponse("valid");
+    tokenService.revokeToken(revokeTokenInvalidUrl.copy(),
         testContext.failing(response -> testContext.verify(() -> {
           JsonObject result = new JsonObject(response.getLocalizedMessage());
           assertEquals("failed", result.getString("status"));

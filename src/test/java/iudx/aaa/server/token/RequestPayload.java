@@ -8,6 +8,7 @@ import io.vertx.core.json.JsonObject;
  */
 public class RequestPayload {
   
+  /* Payload for createToken */
   public static JsonObject validPayload = new JsonObject().put("clientId", "349b4b55-0251-490e-bee9-00f3a5d3e643")
       .put("clientSecret","48434da1-411d-42d6-894a-557fd5b9965e")
       .put("itemId", "item-1")
@@ -16,7 +17,21 @@ public class RequestPayload {
       .put("roleList", new JsonArray("[\"delegate\",\"provider\"]"));
   
   public static JsonObject invalidClientId = validPayload.copy().put("clientId", "0343dab6-aa61-4024-a6ff-3b52e8d488f1");
+  
   public static JsonObject invalidClientSecret = validPayload.copy().put("clientSecret", "0343dab6-aa61-4024-a6ff-3b52e8d488f1");
+  
   public static JsonObject undefinedRole = validPayload.copy().put("role", "dev");
+  
+  
+  /* Payload for tokenRevoke */
+  public static JsonObject revokeTokenValidPayload = new JsonObject().put("clientId", "349b4b55-0251-490e-bee9-00f3a5d3e643")
+      .put("rsUrl", "foobar.iudx.io").put("userId", "32a4b979-4f4a-4c44-b0c3-2fe109952b5f");
+  
+  public static JsonObject revokeTokenEmptyUserId = revokeTokenValidPayload.copy().put("userId", "");
+  
+  public static JsonObject revokeTokenInvalidUserId = revokeTokenValidPayload.copy().put("userId", "32a4b979-4f4a-4c44-b0c3-2fe109952b5");
+
+  public static JsonObject revokeTokenInvalidUrl = revokeTokenValidPayload.copy().put("rsUrl", "barfoo.iudx.io");
+  
 }
 
