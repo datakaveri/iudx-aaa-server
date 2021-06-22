@@ -19,5 +19,7 @@ public class Constants {
   // Accept Headers and CORS
   public static final String MIME_APPLICATION_JSON = "application/json";
   public static final String MIME_TEXT_HTML = "text/html";
+  
+  public static final String NIL_UUID = "00000000-0000-0000-0000-000000000000";
 
 }
