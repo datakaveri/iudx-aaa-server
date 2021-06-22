@@ -64,7 +64,7 @@ public class User {
     return roles;
   }
 
-  public void setApprovedRoles(List<Roles> roles) {
+  public void setRoles(List<Roles> roles) {
     this.roles = roles;
   }
 

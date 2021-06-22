@@ -14,7 +14,7 @@ public enum Roles {
       Arrays.stream(Roles.values()).map(r -> r.name()).collect(Collectors.toList());
 
   /* function to check if a string is part of the enum without using try/catch */
-  static boolean exists(String str) {
+  public static boolean exists(String str) {
     if (rolesAsStrings.contains(str)) {
       return true;
     }
