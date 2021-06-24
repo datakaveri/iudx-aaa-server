@@ -45,7 +45,7 @@ public class RegistrationServiceTest {
       VertxTestContext testContext) {
     config = new Configuration();
     vertxObj = vertx;
-    JsonObject dbConfig = config.configLoader(2, vertx);
+    JsonObject dbConfig = config.configLoader(1, vertx);
 
     /* Read the configuration and set the postgres client properties. */
     LOGGER.debug("Info : Reading config file");

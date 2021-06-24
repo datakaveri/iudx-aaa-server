@@ -1,7 +1,7 @@
 {
     "version": "1.0",
     "zookeepers": [ "zookeeper" ],
-    "clusterId": "iudx-rs-cluster",
+    "clusterId": "iudx-aaa-cluster",
     "host": "server",
     "modules": [
         {
@@ -34,7 +34,7 @@
             "databaseUserName": "iudx_user",
             "databasePassword": "iudx@123",
             "poolSize": "5",
-            "keystorePath":"configs/keystore-ecc-1.jks",
+            "keystorePath":"configs/keystore.jks",
             "keystorePassword": "secret",
             "keycloakOptions": {
             	"host": "iudx.keycloack.io",
@@ -58,7 +58,7 @@
             "id": "iudx.aaa.server.apiserver.ApiServerVerticle",
             "ssl": true,
             "keystore": "configs/keystore.jks",
-            "keystorePassword": "password",
+            "keystorePassword": "secret",
             "verticleInstances": 1
         }
     ]

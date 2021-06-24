@@ -61,7 +61,7 @@ public class TokenServiceTest {
 
     config = new Configuration();
     vertxObj = vertx;
-    JsonObject dbConfig = config.configLoader(3, vertx);
+    JsonObject dbConfig = config.configLoader(2, vertx);
 
     /* Read the configuration and set the postgres client properties. */
     LOGGER.debug("Info : Reading config file");

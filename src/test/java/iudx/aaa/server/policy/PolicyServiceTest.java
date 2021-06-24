@@ -45,7 +45,7 @@ public class PolicyServiceTest {
       VertxTestContext testContext) {
     config = new Configuration();
     vertxObj = vertx;
-    JsonObject dbConfig = config.configLoader(1, vertx);
+    JsonObject dbConfig = config.configLoader(0, vertx);
 
     /* Read the configuration and set the postgres client properties. */
     LOGGER.debug("Info : Reading config file");
