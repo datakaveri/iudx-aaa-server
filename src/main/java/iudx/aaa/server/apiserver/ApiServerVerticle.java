@@ -30,7 +30,6 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
-import iudx.aaa.server.tip.TIPService;
 import iudx.aaa.server.token.TokenService;
 import iudx.aaa.server.twofactor.TwoFactorService;
 
@@ -63,13 +62,11 @@ public class ApiServerVerticle extends AbstractVerticle {
   private String keystorePassword;
 
   /** Service addresses */
-  private static final String TIP_SERVICE_ADDRESS = "iudx.aaa.tip.service";
   private static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
   private static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
   private static final String TOKEN_SERVICE_ADDRESS = "iudx.aaa.token.service";
   private static final String TWOFACTOR_SERVICE_ADDRESS = "iudx.aaa.twofactor.service";
 
-  private TIPService tipService;
   private PolicyService policyService;
   private RegistrationService registrationService;
   private TokenService tokenService;
@@ -162,7 +159,6 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     /* Get a handler for the Service Discovery interface. */
 
-    tipService = TIPService.createProxy(vertx, TIP_SERVICE_ADDRESS);
     policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
     registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
     tokenService = TokenService.createProxy(vertx, TOKEN_SERVICE_ADDRESS);
