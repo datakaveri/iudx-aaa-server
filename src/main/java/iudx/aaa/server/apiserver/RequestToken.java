@@ -7,10 +7,10 @@ import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
 @DataObject(generateConverter = true)
-@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
+//@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class RequestToken {
 
-  @JsonAlias("clientId")
+  @JsonAlias({"clientId"})
   private String clientId;
 
   @JsonAlias("clientSecret")

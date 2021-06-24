@@ -15,8 +15,8 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import static iudx.aaa.server.token.Constants.*;
 
-public class HttpWebClient {
-  private static final Logger LOGGER = LogManager.getLogger(HttpWebClient.class);
+public class TokenRevokeService {
+  private static final Logger LOGGER = LogManager.getLogger(TokenRevokeService.class);
   private WebClient client;
   private JsonObject httpOptions;
 
@@ -26,7 +26,7 @@ public class HttpWebClient {
    * @param vertx which is a Vert.x instance
    * @param keyCloakOptions which is a JsonObject
    */
-  public HttpWebClient(Vertx vertx, JsonObject keyCloakOptions) {
+  public TokenRevokeService(Vertx vertx, JsonObject keyCloakOptions) {
     
     WebClientOptions clientOptions = new WebClientOptions()
         .setSsl(true)
@@ -46,9 +46,16 @@ public class HttpWebClient {
    * @param handler which is a AsyncResult Handler
    * @return future event which upon completion
    */
-  HttpWebClient httpRevokeRequest(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+  TokenRevokeService httpRevokeRequest(JsonObject request,
+      Handler<AsyncResult<JsonObject>> handler) {
 
     LOGGER.info("Info: " + LOGGER.getName() + ": procssing token revocation");
+
+    JsonObject rsPayload = new JsonObject();
+    rsPayload.put("user_id", request.getValue("clientId"))
+             .put("current-token-duration",CLAIM_EXPIRY);
+    
+    request.put(BODY, rsPayload).put(URI, RS_REVOKE_URN);
 
     httpPostFormAsync(httpOptions).compose(kcHandler -> {
       request.put(TOKEN, kcHandler.getString("access_token"));
@@ -110,8 +117,8 @@ public class HttpWebClient {
     
     MultiMap bodyForm = MultiMap.caseInsensitiveMultiMap();
     bodyForm.set(GRANT_TYPE, CLIENT_CREDENTIALS)
-            .set(CLIENT_ID, requestBody.getString("clientId"))
-            .set(CLIENT_SECRET, requestBody.getString("clientSecret"));
+            .set("client_id", requestBody.getString(CLIENT_ID))
+            .set("client_secret", requestBody.getString(CLIENT_SECRET));
     
     client.request(HttpMethod.POST, options).sendForm(bodyForm, reqHandler -> {
       if (reqHandler.succeeded()) {

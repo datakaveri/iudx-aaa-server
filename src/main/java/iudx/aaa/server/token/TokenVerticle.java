@@ -8,6 +8,7 @@ import io.vertx.ext.auth.KeyStoreOptions;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.pgclient.PgConnectOptions;
+import io.vertx.pgclient.PgPool;
 import io.vertx.serviceproxy.ServiceBinder;
 import io.vertx.sqlclient.PoolOptions;
 import iudx.aaa.server.policy.PolicyService;
@@ -37,13 +38,13 @@ public class TokenVerticle extends AbstractVerticle {
   private int poolSize;
   private PoolOptions poolOptions;
   private PgConnectOptions connectOptions;
-  private PostgresClient pgClient;
+  private PgPool pgPool;
   private TokenService tokenService;  
   private String keystorePath;
   private String keystorePassword;
   private JWTAuth provider;
   private PolicyService policyService;
-  private HttpWebClient httpWebClient;
+  private TokenRevokeService revokeService;
   
   private static final Logger LOGGER = LogManager.getLogger(TokenVerticle.class);
 
@@ -90,10 +91,10 @@ public class TokenVerticle extends AbstractVerticle {
         
     /* Initializing the services */
     provider = jwtInitConfig();
-    httpWebClient = new HttpWebClient(vertx, keycloakOptions);
-    pgClient = new PostgresClient(vertx, connectOptions, poolOptions);
+    revokeService = new TokenRevokeService(vertx, keycloakOptions);
+    pgPool = PgPool.pool(vertx, connectOptions, poolOptions);
     policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
-    tokenService = new TokenServiceImpl(pgClient, policyService, provider, httpWebClient);
+    tokenService = new TokenServiceImpl(pgPool, policyService, provider, revokeService);
     
     new ServiceBinder(vertx).setAddress(TOKEN_SERVICE_ADDRESS).register(TokenService.class,
         tokenService);

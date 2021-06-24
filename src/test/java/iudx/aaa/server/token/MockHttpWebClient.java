@@ -5,18 +5,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.AdditionalAnswers;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.reflect.Whitebox;
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
-import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.RequestOptions;
@@ -27,16 +21,16 @@ import io.vertx.ext.web.client.WebClient;
 
 public class MockHttpWebClient {
   
-  private static HttpWebClient httpWebClient;
+  private static TokenRevokeService httpWebClient;
   private static WebClient webClient;
   AsyncResult<JsonObject> asyncResult;
   ExecutorService executor1 = Executors.newScheduledThreadPool(10);
   
   
   @SuppressWarnings("unchecked")
-  public HttpWebClient getMockHttpWebClient() {
+  public TokenRevokeService getMockHttpWebClient() {
     if (httpWebClient == null) {
-      httpWebClient = Mockito.mock(HttpWebClient.class);
+      httpWebClient = Mockito.mock(TokenRevokeService.class);
     }
 
     asyncResult = Mockito.mock(AsyncResult.class);

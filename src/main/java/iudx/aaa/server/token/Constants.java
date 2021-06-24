@@ -41,6 +41,13 @@ public class Constants {
   public static final String BODY = "BODY";
   public static final String ROLE_LIST = "roleList";
   public static final String EXISTS = "exists";
+  
+  public static final String ITEM_ID = "itemId";
+  public static final String ITEM_TYPE = "itemType";
+  public static final String CLIENT_ID = "clientId";
+  public static final String CLIENT_SECRET = "clientSecret";
+  public static final String AUDIENCE = "audience";
+  public static final String USER_ID = "userId";
     
   /* JWT Constants & related */
   public static final String TOKEN = "token";
@@ -53,16 +60,9 @@ public class Constants {
   public static final String JTI = "jti";
   public static final String CONSTRAINTS = "constraints";
   public static final String ROLE = "role";
-  public static final String ITEM_ID = "item_id";
-  public static final String ITEM_TYPE = "item_type";
   
-  public static final String USER_ID = "user_id";
   public static final String GRANT_TYPE = "grant_type";
   public static final String CLIENT_CREDENTIALS = "client_credentials";
-  public static final String CLIENT_ID = "client_id";
-  public static final String CLIENT_SECRET = "client_secret";
-  
-  
   
   /* SQL Queries */
   public static final String DB_SCHEMA = "test";

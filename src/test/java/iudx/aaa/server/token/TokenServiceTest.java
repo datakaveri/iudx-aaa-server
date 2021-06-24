@@ -17,10 +17,13 @@ import org.apache.logging.log4j.Logger;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
+import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+import iudx.aaa.server.apiserver.IntrospectToken;
+import iudx.aaa.server.apiserver.User;
+import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.policy.PolicyService;
-import iudx.aaa.server.postgres.client.PostgresClient;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static iudx.aaa.server.token.RequestPayload.*;
 import static iudx.aaa.server.token.Constants.*;
@@ -40,7 +43,7 @@ public class TokenServiceTest {
   private static int poolSize;
   private static PoolOptions poolOptions;
   private static PgConnectOptions connectOptions;
-  private static PostgresClient pgClient;
+  private static PgPool pgPool;
   private static TokenService tokenService;
   private static Vertx vertxObj;
   private static String keystorePath;
@@ -48,14 +51,14 @@ public class TokenServiceTest {
   private static JWTAuth provider;
   private static PolicyService policyService;
   private static MockPolicyFactory mockPolicy;
-  private static HttpWebClient httpWebClient;
+  private static TokenRevokeService httpWebClient;
   private static MockHttpWebClient mockHttpWebClient;
-  
+
 
   @BeforeAll
   @DisplayName("Deploying Verticle")
   static void startVertx(Vertx vertx, VertxTestContext testContext) {
-    
+
     config = new Configuration();
     vertxObj = vertx;
     JsonObject dbConfig = config.configLoader(3, vertx);
@@ -69,12 +72,12 @@ public class TokenServiceTest {
     databaseUserName = dbConfig.getString("databaseUserName");
     databasePassword = dbConfig.getString("databasePassword");
     poolSize = Integer.parseInt(dbConfig.getString("poolSize"));
-    
+
     keystorePath = dbConfig.getString("keystorePath");
     keystorePassword = dbConfig.getString("keystorePassword");
-    String issuer = dbConfig.getString("authServerDomain","");
-    
-    if(issuer != null && !issuer.isBlank()) {
+    String issuer = dbConfig.getString("authServerDomain", "");
+
+    if (issuer != null && !issuer.isBlank()) {
       CLAIM_ISSUER = issuer;
     } else {
       LOGGER.fatal("Fail: authServerDomain not set");
@@ -92,29 +95,26 @@ public class TokenServiceTest {
     if (poolOptions == null) {
       poolOptions = new PoolOptions().setMaxSize(poolSize);
     }
-        
+
     /* Initializing the services */
     provider = jwtInitConfig(vertx);
-    pgClient = new PostgresClient(vertx, connectOptions, poolOptions);
-    //httpWebClient = new HttpWebClient(vertx, keycloakOptions);
-    
+    pgPool = PgPool.pool(vertx, connectOptions, poolOptions);
+    // httpWebClient = new HttpWebClient(vertx, keycloakOptions);
+
     mockPolicy = new MockPolicyFactory();
     mockHttpWebClient = new MockHttpWebClient();
     httpWebClient = mockHttpWebClient.getMockHttpWebClient();
-    
+
     policyService = mockPolicy.getInstance();
-    tokenService = new TokenServiceImpl(pgClient, policyService, provider, httpWebClient);
+    tokenService = new TokenServiceImpl(pgPool, policyService, provider, httpWebClient);
 
     testContext.completeNow();
   }
-  
+
   /* Initializing JwtProvider */
   public static JWTAuth jwtInitConfig(Vertx vertx) {
     JWTAuthOptions config = new JWTAuthOptions();
-    config.setKeyStore(
-        new KeyStoreOptions()
-          .setPath(keystorePath)
-          .setPassword(keystorePassword));
+    config.setKeyStore(new KeyStoreOptions().setPath(keystorePath).setPassword(keystorePassword));
 
     JWTAuth provider = JWTAuth.create(vertx, config);
     return provider;
@@ -129,126 +129,129 @@ public class TokenServiceTest {
   @Test
   @DisplayName("createToken [Success]")
   void createTokenSuccess(VertxTestContext testContext) {
-    
+
     mockPolicy.setResponse("valid");
-    tokenService.createToken(validPayload.copy(),
+    tokenService.createToken(mapToReqToken(validPayload), roleList,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals("success", response.getString("status"));
           assertTrue(response.containsKey("accessToken"));
           testContext.completeNow();
         })));
   }
-  
+
   @Test
   @DisplayName("createToken [Failed-01 invalidPolicy]")
   void createTokenFailed01(VertxTestContext testContext) {
-    
+
     mockPolicy.setResponse("invalid");
-    tokenService.createToken(validPayload.copy(),
+    tokenService.createToken(mapToReqToken(validPayload), roleList,
         testContext.failing(response -> testContext.verify(() -> {
           JsonObject result = new JsonObject(response.getLocalizedMessage());
           assertEquals("failed", result.getString("status"));
           testContext.completeNow();
         })));
   }
-  
+
   @Test
   @DisplayName("createToken [Failed-02 invalidClientSecret]")
   void createTokenFailed02(VertxTestContext testContext) {
-    
+
     mockPolicy.setResponse("valid");
-    tokenService.createToken(invalidClientSecret,
+    tokenService.createToken(mapToReqToken(invalidClientSecret), roleList,
         testContext.failing(response -> testContext.verify(() -> {
           JsonObject result = new JsonObject(response.getLocalizedMessage());
           assertEquals("failed", result.getString("status"));
           testContext.completeNow();
         })));
   }
-  
+
   @Test
   @DisplayName("createToken [Failed-03 invalidClientId]")
   void createTokenFailed03(VertxTestContext testContext) {
-    
+
     mockPolicy.setResponse("valid");
-    tokenService.createToken(invalidClientId,
+    tokenService.createToken(mapToReqToken(invalidClientId), roleList,
         testContext.failing(response -> testContext.verify(() -> {
           JsonObject result = new JsonObject(response.getLocalizedMessage());
           assertEquals("failed", result.getString("status"));
           testContext.completeNow();
         })));
   }
-  
+
   @Test
   @DisplayName("createToken [Failed-04 undefinedRole]")
   void createTokenFailed04(VertxTestContext testContext) {
-    
+
     mockPolicy.setResponse("valid");
-    tokenService.createToken(undefinedRole,
+    tokenService.createToken(mapToReqToken(undefinedRole), roleList,
         testContext.failing(response -> testContext.verify(() -> {
           JsonObject result = new JsonObject(response.getLocalizedMessage());
           assertEquals("failed", result.getString("status"));
           testContext.completeNow();
         })));
   }
-  
+
   @Test
   @DisplayName("revokeToken [Success]")
   void revokeTokenSuccess(VertxTestContext testContext) {
-   
+
     mockHttpWebClient.setResponse("valid");
-    tokenService.revokeToken(revokeTokenValidPayload.copy(),
+    tokenService.revokeToken(mapToRevToken(revokeTokenValidPayload), user("32a4b979-4f4a-4c44-b0c3-2fe109952b5f"),
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals("success", response.getString("status"));
-          //assertTrue(response.containsKey("accessToken"));
+          // assertTrue(response.containsKey("accessToken"));
           testContext.completeNow();
         })));
   }
-  
+
   @Test
   @DisplayName("revokeToken [Failed-01 Failure in KeyClock or RS]")
   void revokeTokenFailed01(VertxTestContext testContext) {
-   
+
     mockHttpWebClient.setResponse("invalid");
-    tokenService.revokeToken(revokeTokenValidPayload.copy(),
+    tokenService.revokeToken(mapToRevToken(revokeTokenValidPayload), user("32a4b979-4f4a-4c44-b0c3-2fe109952b5f"),
         testContext.failing(response -> testContext.verify(() -> {
           JsonObject result = new JsonObject(response.getLocalizedMessage());
           assertEquals("failed", result.getString("status"));
           testContext.completeNow();
         })));
   }
-  
+
   @Test
-  @DisplayName("revokeToken [Failed-02 Failure in KeyClock or RS]")
+  @DisplayName("revokeToken [Failed-02 nullUserId]")
   void revokeTokenFailed02(VertxTestContext testContext) {
-   
-    mockHttpWebClient.setResponse("invalid");
-    tokenService.revokeToken(revokeTokenValidPayload.copy(),
+
+    mockHttpWebClient.setResponse("valid");
+    User.UserBuilder userBuilder = new UserBuilder();
+    User user = new User(userBuilder);
+    
+    tokenService.revokeToken(mapToRevToken(revokeTokenValidPayload), user,
         testContext.failing(response -> testContext.verify(() -> {
           JsonObject result = new JsonObject(response.getLocalizedMessage());
           assertEquals("failed", result.getString("status"));
           testContext.completeNow();
         })));
   }
-  
+
   @Test
-  @DisplayName("revokeToken [Failed-03 emptyUserId]")
+  @DisplayName("revokeToken [Failed-03 invalidUserId]")
   void revokeTokenFailed03(VertxTestContext testContext) {
-   
+
     mockHttpWebClient.setResponse("valid");
-    tokenService.revokeToken(revokeTokenEmptyUserId.copy(),
+    tokenService.revokeToken(mapToRevToken(revokeTokenValidPayload), user("32a4b979-4f4a-4c44-b0c3-2fe109952b53"),
         testContext.failing(response -> testContext.verify(() -> {
           JsonObject result = new JsonObject(response.getLocalizedMessage());
           assertEquals("failed", result.getString("status"));
           testContext.completeNow();
         })));
   }
-  
+
   @Test
-  @DisplayName("revokeToken [Failed-04 invalidUserId]")
+  @DisplayName("revokeToken [Failed-04 invalidUrl]")
   void revokeTokenFailed04(VertxTestContext testContext) {
-   
+
     mockHttpWebClient.setResponse("valid");
-    tokenService.revokeToken(revokeTokenInvalidUserId.copy(),
+    tokenService.revokeToken(mapToRevToken(revokeTokenInvalidUrl), user("32a4b979-4f4a-4c44-b0c3-2fe109952b5f"),
         testContext.failing(response -> testContext.verify(() -> {
           JsonObject result = new JsonObject(response.getLocalizedMessage());
           assertEquals("failed", result.getString("status"));
@@ -257,11 +260,76 @@ public class TokenServiceTest {
   }
   
   @Test
-  @DisplayName("revokeToken [Failed-05 invalidUrl]")
+  @DisplayName("revokeToken [Failed-05 invalidClientId]")
   void revokeTokenFailed05(VertxTestContext testContext) {
-   
+
     mockHttpWebClient.setResponse("valid");
-    tokenService.revokeToken(revokeTokenInvalidUrl.copy(),
+    tokenService.revokeToken(mapToRevToken(revokeTokenInvalidClientId), user("32a4b979-4f4a-4c44-b0c3-2fe109952b5f"),
+        testContext.failing(response -> testContext.verify(() -> {
+          JsonObject result = new JsonObject(response.getLocalizedMessage());
+          assertEquals("failed", result.getString("status"));
+          testContext.completeNow();
+        })));
+  }
+  
+  @Test
+  @DisplayName("validateToken [Success]")
+  void validateTokenSuccess(VertxTestContext testContext) {
+    
+    mockPolicy.setResponse("valid");
+    tokenService.validateToken(mapToInspctToken(validTipPayload), testContext.succeeding(response -> testContext.verify(() -> {
+      assertEquals("allow", response.getString("status"));
+      testContext.completeNow();
+    })));
+  }
+  
+  @Test
+  @DisplayName("validateToken [Failed-01 invalidPolicy]")
+  void validateTokenFailed01(VertxTestContext testContext) {
+
+    mockPolicy.setResponse("invalid");
+    tokenService.validateToken(mapToInspctToken(validTipPayload),
+        testContext.failing(response -> testContext.verify(() -> {
+          JsonObject result = new JsonObject(response.getLocalizedMessage());
+          assertEquals("deny", result.getString("status"));
+          testContext.completeNow();
+        })));
+  }
+  
+  @Test
+  @DisplayName("validateToken [Failed-02 invalidToken]")
+  void validateTokenFailed02(VertxTestContext testContext) {
+
+    mockPolicy.setResponse("valid");
+    tokenService.validateToken(mapToInspctToken(invalidTipPayload),
+        testContext.failing(response -> testContext.verify(() -> {
+          JsonObject result = new JsonObject(response.getLocalizedMessage());
+          assertEquals("deny", result.getString("status"));
+          testContext.completeNow();
+        })));
+  }
+  
+  @Test
+  @DisplayName("validateToken [Failed-03 expiredToken]")
+  void validateTokenFailed03(VertxTestContext testContext) {
+
+    mockPolicy.setResponse("valid");
+    tokenService.validateToken(mapToInspctToken(expiredTipPayload),
+        testContext.failing(response -> testContext.verify(() -> {
+          JsonObject result = new JsonObject(response.getLocalizedMessage());
+          assertEquals("deny", result.getString("status"));
+          testContext.completeNow();
+        })));
+  }
+  
+  @Test
+  @DisplayName("validateToken [Failed-04 missingToken]")
+  void validateTokenFailed04(VertxTestContext testContext) {
+
+    mockPolicy.setResponse("valid");
+    IntrospectToken introspect = new IntrospectToken();
+    
+    tokenService.validateToken(introspect,
         testContext.failing(response -> testContext.verify(() -> {
           JsonObject result = new JsonObject(response.getLocalizedMessage());
           assertEquals("failed", result.getString("status"));
