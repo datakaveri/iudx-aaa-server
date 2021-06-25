@@ -1,5 +1,6 @@
 package iudx.aaa.server.token;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
@@ -18,6 +19,7 @@ import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.IntrospectToken;
 import iudx.aaa.server.apiserver.RequestToken;
 import iudx.aaa.server.apiserver.RevokeToken;
+import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.policy.PolicyService;
 import static iudx.aaa.server.token.Constants.*;
@@ -57,14 +59,13 @@ public class TokenServiceImpl implements TokenService {
    * {@inheritDoc}
    */
   @Override
-  public TokenService createToken(RequestToken requestToken, JsonArray roleList, Handler<AsyncResult<JsonObject>> handler) {
+  public TokenService createToken(RequestToken requestToken, Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
     String clientId = requestToken.getClientId();
     String clientSecret = requestToken.getClientSecret();
-    String role = requestToken.getRole();
+    String role = StringUtils.upperCase(requestToken.getRole());
     
-    JsonArray roleArray = roleList.copy();
     JsonObject request=JsonObject.mapFrom(requestToken);
     Tuple tuple = Tuple.of(clientId);
     
@@ -104,7 +105,7 @@ public class TokenServiceImpl implements TokenService {
           return;
         }
 
-        if (!roleArray.contains(role)) {
+        if (!Roles.exists(role)) {
           LOGGER.error("Fail: Unauthorized access; Role not defined");
           handler.handle(Future.failedFuture(
               new JsonObject().put(STATUS, FAILED).put(DESC, "Unauthorized user").toString()));

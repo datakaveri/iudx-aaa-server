@@ -51,12 +51,11 @@ public interface TokenService {
    * 
    * @param requestToken which is a RequestToken
    * @param handler which is a Request Handler
-   * @param roleList which is a JsonArray
    * @return TokenService which is a Service
    */
 
   @Fluent
-  TokenService createToken(RequestToken requestToke, JsonArray roleList, Handler<AsyncResult<JsonObject>> handler);
+  TokenService createToken(RequestToken requestToke, Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * The revokeToken implements the token revocation operation.

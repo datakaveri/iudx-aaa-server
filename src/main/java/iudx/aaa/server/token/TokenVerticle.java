@@ -12,7 +12,6 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.serviceproxy.ServiceBinder;
 import io.vertx.sqlclient.PoolOptions;
 import iudx.aaa.server.policy.PolicyService;
-import iudx.aaa.server.postgres.client.PostgresClient;
 import static iudx.aaa.server.token.Constants.*;
 
 /**

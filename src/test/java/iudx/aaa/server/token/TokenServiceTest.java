@@ -131,7 +131,7 @@ public class TokenServiceTest {
   void createTokenSuccess(VertxTestContext testContext) {
 
     mockPolicy.setResponse("valid");
-    tokenService.createToken(mapToReqToken(validPayload), roleList,
+    tokenService.createToken(mapToReqToken(validPayload),
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals("success", response.getString("status"));
           assertTrue(response.containsKey("accessToken"));
@@ -144,7 +144,7 @@ public class TokenServiceTest {
   void createTokenFailed01(VertxTestContext testContext) {
 
     mockPolicy.setResponse("invalid");
-    tokenService.createToken(mapToReqToken(validPayload), roleList,
+    tokenService.createToken(mapToReqToken(validPayload),
         testContext.failing(response -> testContext.verify(() -> {
           JsonObject result = new JsonObject(response.getLocalizedMessage());
           assertEquals("failed", result.getString("status"));
@@ -157,7 +157,7 @@ public class TokenServiceTest {
   void createTokenFailed02(VertxTestContext testContext) {
 
     mockPolicy.setResponse("valid");
-    tokenService.createToken(mapToReqToken(invalidClientSecret), roleList,
+    tokenService.createToken(mapToReqToken(invalidClientSecret),
         testContext.failing(response -> testContext.verify(() -> {
           JsonObject result = new JsonObject(response.getLocalizedMessage());
           assertEquals("failed", result.getString("status"));
@@ -170,7 +170,7 @@ public class TokenServiceTest {
   void createTokenFailed03(VertxTestContext testContext) {
 
     mockPolicy.setResponse("valid");
-    tokenService.createToken(mapToReqToken(invalidClientId), roleList,
+    tokenService.createToken(mapToReqToken(invalidClientId),
         testContext.failing(response -> testContext.verify(() -> {
           JsonObject result = new JsonObject(response.getLocalizedMessage());
           assertEquals("failed", result.getString("status"));
@@ -183,7 +183,7 @@ public class TokenServiceTest {
   void createTokenFailed04(VertxTestContext testContext) {
 
     mockPolicy.setResponse("valid");
-    tokenService.createToken(mapToReqToken(undefinedRole), roleList,
+    tokenService.createToken(mapToReqToken(undefinedRole),
         testContext.failing(response -> testContext.verify(() -> {
           JsonObject result = new JsonObject(response.getLocalizedMessage());
           assertEquals("failed", result.getString("status"));
