@@ -8,13 +8,15 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import iudx.aaa.server.apiserver.RegistrationRequest;
+import iudx.aaa.server.apiserver.User;
 
 /**
  * The Registration Service.
  * <h1>Registration Service</h1>
  * <p>
- * The Registration Service in the IUDX AAA Server defines the operations to be performed for User /
- * Organization creation, list, read, update, delete etc.
+ * The Registration Service in the IUDX AAA Server defines the operations to be performed for User
+ * profile creation, updation, read, as well as listing Organizations
  * </p>
  *
  * @version 1.0
@@ -41,15 +43,16 @@ public interface RegistrationService {
   }
 
   /**
-   * The createUser implements the user creation operation.
+   * createUser implements creation of user profile operation.
    * 
-   * @param request which is a JsonObject
-   * @param handler which is a Request Handler
-   * @return RegistrationService which is a Service
+   * @param request the request body in the form of RegistrationRequestDO
+   * @param user the User object i.e. the user calling the API
+   * @param handler the request handler which returns a JsonObject
+   * @return Registration Service which is a service
    */
-
   @Fluent
-  RegistrationService createUser(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+  RegistrationService createUser(RegistrationRequest request, User user,
+      Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * The listUser implements the user list operation.
@@ -60,7 +63,7 @@ public interface RegistrationService {
    */
 
   @Fluent
-  RegistrationService listUser(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+  RegistrationService listUser(User user, Handler<AsyncResult<JsonObject>> handler);
 
 
   /**
@@ -72,7 +75,8 @@ public interface RegistrationService {
    */
 
   @Fluent
-  RegistrationService updateUser(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+  RegistrationService updateUser(RegistrationRequest request, User user,
+      Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * The addRole implements the adding user to a role operation.
@@ -83,39 +87,6 @@ public interface RegistrationService {
    */
 
   @Fluent
-  RegistrationService addRole(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
-
-  /**
-   * The removeRole implements the removing a user from a role operation.
-   * 
-   * @param request which is a JsonObject
-   * @param handler which is a Request Handler
-   * @return RegistrationService which is a Service
-   */
-
-  @Fluent
-  RegistrationService removeRole(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
-
-  /**
-   * The createOrganization implements the creating an organization operation.
-   * 
-   * @param request which is a JsonObject
-   * @param handler which is a Request Handler
-   * @return RegistrationService which is a Service
-   */
-
-  @Fluent
-  RegistrationService createOrganization(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
-
-  /**
-   * The listOrganization implements the listing of an organization operation.
-   * 
-   * @param request which is a JsonObject
-   * @param handler which is a Request Handler
-   * @return RegistrationService which is a Service
-   */
-
-  @Fluent
-  RegistrationService listOrganization(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+  RegistrationService listOrganization(Handler<AsyncResult<JsonObject>> handler);
 
 }
