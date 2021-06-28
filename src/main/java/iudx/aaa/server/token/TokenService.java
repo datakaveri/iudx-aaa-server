@@ -7,7 +7,12 @@ import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import iudx.aaa.server.apiserver.IntrospectToken;
+import iudx.aaa.server.apiserver.RequestToken;
+import iudx.aaa.server.apiserver.RevokeToken;
+import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.registration.RegistrationService;
 
 /**
@@ -44,36 +49,36 @@ public interface TokenService {
   /**
    * The createToken implements the token creation operation.
    * 
-   * @param request which is a JsonObject
+   * @param requestToken which is a RequestToken
    * @param handler which is a Request Handler
    * @return TokenService which is a Service
    */
 
   @Fluent
-  TokenService createToken(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
-
+  TokenService createToken(RequestToken requestToke, Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * The revokeToken implements the token revocation operation.
    * 
-   * @param request which is a JsonObject
+   * @param revokeToken which is a RevokeToken Object
+   * @param user which is User Object
    * @param handler which is a Request Handler
    * @return TokenService which is a Service
    */
-
+  
   @Fluent
-  TokenService revokeToken(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+  TokenService revokeToken(RevokeToken revokeToken, User user, Handler<AsyncResult<JsonObject>> handler);
 
 
   /**
-   * The listToken implements the token list operation.
+   * The validateToken implements the token validation / introspect operation with the database.
    * 
-   * @param request which is a JsonObject
+   * @param introspectToken which is a IntrospectToken object
    * @param handler which is a Request Handler
    * @return TokenService which is a Service
    */
 
   @Fluent
-  TokenService listToken(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+  TokenService validateToken(IntrospectToken introspectToken, Handler<AsyncResult<JsonObject>> handler);
 
 }

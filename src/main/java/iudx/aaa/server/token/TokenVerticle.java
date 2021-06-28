@@ -3,11 +3,16 @@ package iudx.aaa.server.token;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.KeyStoreOptions;
+import io.vertx.ext.auth.jwt.JWTAuth;
+import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.serviceproxy.ServiceBinder;
 import io.vertx.sqlclient.PoolOptions;
-import iudx.aaa.server.postgres.client.PostgresClient;
+import iudx.aaa.server.policy.PolicyService;
+import static iudx.aaa.server.token.Constants.*;
 
 /**
  * The Token Verticle.
@@ -30,12 +35,16 @@ public class TokenVerticle extends AbstractVerticle {
   private String databaseUserName;
   private String databasePassword;
   private int poolSize;
-  private PgPool pgclient;
   private PoolOptions poolOptions;
   private PgConnectOptions connectOptions;
-  private PostgresClient pgClient;
-  private static final String TOKEN_SERVICE_ADDRESS = "iudx.aaa.token.service";
-  private TokenService tokenService;
+  private PgPool pgPool;
+  private TokenService tokenService;  
+  private String keystorePath;
+  private String keystorePassword;
+  private JWTAuth provider;
+  private PolicyService policyService;
+  private TokenRevokeService revokeService;
+  
   private static final Logger LOGGER = LogManager.getLogger(TokenVerticle.class);
 
   /**
@@ -49,37 +58,62 @@ public class TokenVerticle extends AbstractVerticle {
 
     /* Read the configuration and set the postgres client properties. */
     LOGGER.debug("Info : " + LOGGER.getName() + " : Reading config file");
-
-    databaseIP = config().getString("databaseIP");
-    databasePort = Integer.parseInt(config().getString("databasePort"));
-    databaseName = config().getString("databaseName");
-    databaseUserName = config().getString("databaseUserName");
-    databasePassword = config().getString("databasePassword");
-    poolSize = Integer.parseInt(config().getString("poolSize"));
+    databaseIP = config().getString(DATABASE_IP);
+    databasePort = Integer.parseInt(config().getString(DATABASE_PORT));
+    databaseName = config().getString(DATABASE_NAME);
+    databaseUserName = config().getString(DATABASE_USERNAME);
+    databasePassword = config().getString(DATABASE_PASSWORD);
+    poolSize = Integer.parseInt(config().getString(POOLSIZE));
+    keystorePath = config().getString(KEYSTORE_PATH);
+    keystorePassword = config().getString(KEYSTPRE_PASSWORD);
+    String issuer = config().getString(AUTHSERVER_DOMAIN,"");
+    JsonObject keycloakOptions = config().getJsonObject(KEYCLOACK_OPTIONS);
+    
+    if(issuer != null && !issuer.isBlank()) {
+      CLAIM_ISSUER = issuer;
+    } else {
+      LOGGER.fatal("Fail: authServerDomain not set");
+      throw new IllegalStateException("authServerDomain not set");
+    }
 
     /* Set Connection Object */
     if (connectOptions == null) {
       connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
-          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword);
+          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
+          .setConnectTimeout(PG_CONNECTION_TIMEOUT);
     }
 
     /* Pool options */
     if (poolOptions == null) {
       poolOptions = new PoolOptions().setMaxSize(poolSize);
     }
-
-    /* Create the client pool */
-    pgclient = PgPool.pool(vertx, connectOptions, poolOptions);
-
-    pgClient = new PostgresClient(vertx, connectOptions, poolOptions);
-
-    tokenService = new TokenServiceImpl(pgClient);
-
+        
+    /* Initializing the services */
+    provider = jwtInitConfig();
+    revokeService = new TokenRevokeService(vertx, keycloakOptions);
+    pgPool = PgPool.pool(vertx, connectOptions, poolOptions);
+    policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
+    tokenService = new TokenServiceImpl(pgPool, policyService, provider, revokeService);
+    
     new ServiceBinder(vertx).setAddress(TOKEN_SERVICE_ADDRESS).register(TokenService.class,
         tokenService);
 
     LOGGER.debug("Info : " + LOGGER.getName() + " : Started");
-
   }
+  
+  /**
+   * Initializes {@link JWTAuth} to create a Authentication Provider instance for JWT token.
+   * Authentication Provider is used to generate and authenticate JWT token. 
+   * @return provider
+   */
+  public JWTAuth jwtInitConfig() {
+    JWTAuthOptions config = new JWTAuthOptions();
+    config.setKeyStore(
+        new KeyStoreOptions()
+          .setPath(keystorePath)
+          .setPassword(keystorePassword));
 
+    JWTAuth provider = JWTAuth.create(vertx, config);
+    return provider;
+  }
 }

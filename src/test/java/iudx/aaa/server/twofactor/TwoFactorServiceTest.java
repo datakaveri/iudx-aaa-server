@@ -45,7 +45,7 @@ public class TwoFactorServiceTest {
       VertxTestContext testContext) {
     config = new Configuration();
     vertxObj = vertx;
-    JsonObject dbConfig = config.configLoader(4, vertx);
+    JsonObject dbConfig = config.configLoader(3, vertx);
 
     /* Read the configuration and set the postgres client properties. */
     LOGGER.debug("Info : Reading config file");

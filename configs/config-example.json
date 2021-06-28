@@ -1,27 +1,65 @@
 {
     "version": "1.0",
     "zookeepers": [ "zookeeper" ],
-    "clusterId": "iudx-rs-cluster",
+    "clusterId": "iudx-aaa-cluster",
     "host": "server",
     "modules": [
         {
             "id": "iudx.aaa.server.policy.PolicyVerticle",
-            "verticleInstances": 2,
+            "verticleInstances": 1,
             "databaseIP": "139.59.80.176",
             "databasePort": "5432",
             "databaseName": "iudx",
             "databaseUserName": "iudx_user",
             "databasePassword": "iudx@123",
-            "poolSize": "25"
+            "poolSize": "5"
+        },
+        {
+            "id": "iudx.aaa.server.registration.RegistrationVerticle",
+            "verticleInstances": 1,
+            "databaseIP": "139.59.80.176",
+            "databasePort": "5432",
+            "databaseName": "iudx",
+            "databaseUserName": "iudx_user",
+            "databasePassword": "iudx@123",
+            "poolSize": "5"
+        },
+        {
+            "id": "iudx.aaa.server.token.TokenVerticle",
+            "verticleInstances": 1,
+            "authServerDomain":"auth.test.com",
+            "databaseIP": "139.59.80.176",
+            "databasePort": "5432",
+            "databaseName": "iudx",
+            "databaseUserName": "iudx_user",
+            "databasePassword": "iudx@123",
+            "poolSize": "5",
+            "keystorePath":"configs/keystore.jks",
+            "keystorePassword": "secret",
+            "keycloakOptions": {
+            	"host": "iudx.keycloack.io",
+            	"port":8443,
+            	"uri": "/auth/realms/demo/protocol/openid-connect/token",
+            	"clientId": "keycloackClientId",
+            	"clientSecret": "keycloackClientSecret"
+			}
+        },
+        {
+            "id": "iudx.aaa.server.twofactor.TwoFactorVerticle",
+            "verticleInstances": 1,
+            "databaseIP": "139.59.80.176",
+            "databasePort": "5432",
+            "databaseName": "iudx",
+            "databaseUserName": "iudx_user",
+            "databasePassword": "iudx@123",
+            "poolSize": "5"
         },
         {
             "id": "iudx.aaa.server.apiserver.ApiServerVerticle",
-            "ssl": false,
+            "ssl": true,
             "keystore": "configs/keystore.jks",
-            "keystorePassword": "",
-            "rsAdmin": "datakaveri.org/f7e044eee8122b5c87dce6e7ad64f3266afa41dc",
-            "verticleInstances": 2
-
+            "keystorePassword": "secret",
+            "verticleInstances": 1
         }
     ]
-}
+ }
