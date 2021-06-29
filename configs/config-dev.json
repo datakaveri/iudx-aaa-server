@@ -1,6 +1,8 @@
 {
 	"version": "1.0",
-	"zookeepers": ["zookeeper"],
+	"zookeepers": [
+		"zookeeper"
+	],
 	"clusterId": "iudx-aaa-cluster",
 	"host": "server",
 	"modules": [
@@ -22,12 +24,17 @@
 			"databaseName": "iudx",
 			"databaseUserName": "iudx_user",
 			"databasePassword": "iudx@123",
-			"poolSize": "25"
+			"poolSize": "25",
+			"keycloakUrl": "https://127.0.0.1:3000/auth",
+			"keycloakRealm": "some-realm",
+			"keycloakAdminClientId": "some-admin-client-id",
+			"keycloakAdminClientSecret": "f5800be0-258a-4cd2-820f-8128818ed70a",
+			"keycloakAdminPoolSize": "10"
 		},
 		{
 			"id": "iudx.aaa.server.token.TokenVerticle",
 			"verticleInstances": 1,
-			"authServerDomain":"auth.test.com",
+			"authServerDomain": "auth.test.com",
 			"databaseIP": "139.59.80.176",
 			"databasePort": "5432",
 			"databaseName": "iudx",

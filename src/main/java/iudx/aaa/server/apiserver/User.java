@@ -2,6 +2,7 @@ package iudx.aaa.server.apiserver;
 
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,7 +75,7 @@ public class User {
     private UUID userId = UUID.fromString(Constants.NIL_UUID);
     private UUID keycloakId = UUID.fromString(Constants.NIL_UUID);
 
-    private List<Roles> roles;
+    private List<Roles> roles = new ArrayList<Roles>();
 
     public UserBuilder name(String firstName, String lastName) {
       this.name.put("firstName", firstName);

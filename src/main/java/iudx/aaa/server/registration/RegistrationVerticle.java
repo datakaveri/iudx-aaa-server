@@ -1,5 +1,17 @@
 package iudx.aaa.server.registration;
 
+import static iudx.aaa.server.registration.Constants.DATABASE_IP;
+import static iudx.aaa.server.registration.Constants.DB_CONNECT_TIMEOUT;
+import static iudx.aaa.server.registration.Constants.DATABASE_NAME;
+import static iudx.aaa.server.registration.Constants.DATABASE_PASSWORD;
+import static iudx.aaa.server.registration.Constants.DATABASE_POOLSIZE;
+import static iudx.aaa.server.registration.Constants.DATABASE_PORT;
+import static iudx.aaa.server.registration.Constants.DATABASE_USERNAME;
+import static iudx.aaa.server.registration.Constants.KC_ADMIN_CLIENT_ID;
+import static iudx.aaa.server.registration.Constants.KC_ADMIN_CLIENT_SEC;
+import static iudx.aaa.server.registration.Constants.KC_ADMIN_POOLSIZE;
+import static iudx.aaa.server.registration.Constants.KEYCLOAK_REALM;
+import static iudx.aaa.server.registration.Constants.KEYCLOAK_URL;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import io.vertx.core.AbstractVerticle;
@@ -7,7 +19,6 @@ import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.serviceproxy.ServiceBinder;
 import io.vertx.sqlclient.PoolOptions;
-import iudx.aaa.server.postgres.client.PostgresClient;
 
 /**
  * The Registration Verticle.
@@ -30,10 +41,16 @@ public class RegistrationVerticle extends AbstractVerticle {
   private String databaseUserName;
   private String databasePassword;
   private int poolSize;
-  private PgPool pgclient;
+
+  private String keycloakUrl;
+  private String keycloakRealm;
+  private String keycloakAdminClientId;
+  private String keycloakAdminClientSecret;
+  private int keycloakAdminPoolSize;
+
+  private PgPool pool;
   private PoolOptions poolOptions;
   private PgConnectOptions connectOptions;
-  private PostgresClient pgClient;
   private static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
   private RegistrationService registrationService;
   private static final Logger LOGGER = LogManager.getLogger(RegistrationVerticle.class);
@@ -50,17 +67,24 @@ public class RegistrationVerticle extends AbstractVerticle {
     /* Read the configuration and set the postgres client properties. */
     LOGGER.debug("Info : " + LOGGER.getName() + " : Reading config file");
 
-    databaseIP = config().getString("databaseIP");
-    databasePort = Integer.parseInt(config().getString("databasePort"));
-    databaseName = config().getString("databaseName");
-    databaseUserName = config().getString("databaseUserName");
-    databasePassword = config().getString("databasePassword");
-    poolSize = Integer.parseInt(config().getString("poolSize"));
+    databaseIP = config().getString(DATABASE_IP);
+    databasePort = Integer.parseInt(config().getString(DATABASE_PORT));
+    databaseName = config().getString(DATABASE_NAME);
+    databaseUserName = config().getString(DATABASE_USERNAME);
+    databasePassword = config().getString(DATABASE_PASSWORD);
+    poolSize = Integer.parseInt(config().getString(DATABASE_POOLSIZE));
+
+    keycloakUrl = config().getString(KEYCLOAK_URL);
+    keycloakRealm = config().getString(KEYCLOAK_REALM);
+    keycloakAdminClientId = config().getString(KC_ADMIN_CLIENT_ID);
+    keycloakAdminClientSecret = config().getString(KC_ADMIN_CLIENT_SEC);
+    keycloakAdminPoolSize = Integer.parseInt(config().getString(KC_ADMIN_POOLSIZE));
 
     /* Set Connection Object */
     if (connectOptions == null) {
       connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
-          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword);
+          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
+          .setConnectTimeout(DB_CONNECT_TIMEOUT);
     }
 
     /* Pool options */
@@ -69,11 +93,12 @@ public class RegistrationVerticle extends AbstractVerticle {
     }
 
     /* Create the client pool */
-    pgclient = PgPool.pool(vertx, connectOptions, poolOptions);
+    pool = PgPool.pool(vertx, connectOptions, poolOptions);
 
-    pgClient = new PostgresClient(vertx, connectOptions, poolOptions);
+    KcAdmin kcadmin = new KcAdmin(keycloakUrl, keycloakRealm, keycloakAdminClientId,
+        keycloakAdminClientSecret, keycloakAdminPoolSize);
 
-    registrationService = new RegistrationServiceImpl(pgClient);
+    registrationService = new RegistrationServiceImpl(pool, kcadmin);
 
     new ServiceBinder(vertx).setAddress(REGISTRATION_SERVICE_ADDRESS)
         .register(RegistrationService.class, registrationService);
