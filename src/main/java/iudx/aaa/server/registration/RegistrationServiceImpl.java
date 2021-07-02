@@ -5,16 +5,19 @@ import static iudx.aaa.server.registration.Constants.BCRYPT_SALT_LEN;
 import static iudx.aaa.server.registration.Constants.COMPOSE_FAILURE;
 import static iudx.aaa.server.registration.Constants.DEFAULT_CLIENT;
 import static iudx.aaa.server.registration.Constants.EMAIL_HASH_ALG;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_USER_PROFILE;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_ID_REQUIRED;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_NO_EXIST;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_NO_MATCH;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_KC;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_USER_PROFILE;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_ORG_ID_REQUIRED;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_ORG_NO_EXIST;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_ORG_NO_MATCH;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_USER_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_USER_NOT_KC;
+import static iudx.aaa.server.registration.Constants.NIL_PHONE;
 import static iudx.aaa.server.registration.Constants.NIL_UUID;
 import static iudx.aaa.server.registration.Constants.NO_ORG_CHECK;
 import static iudx.aaa.server.registration.Constants.PROVIDER_PENDING_MESG;
@@ -23,16 +26,22 @@ import static iudx.aaa.server.registration.Constants.RESP_CLIENT_ID;
 import static iudx.aaa.server.registration.Constants.RESP_CLIENT_NAME;
 import static iudx.aaa.server.registration.Constants.RESP_CLIENT_SC;
 import static iudx.aaa.server.registration.Constants.RESP_EMAIL;
+import static iudx.aaa.server.registration.Constants.RESP_ORG;
+import static iudx.aaa.server.registration.Constants.RESP_PHONE;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_CLIENT;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_ROLE;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_USER;
 import static iudx.aaa.server.registration.Constants.SQL_FIND_ORG_BY_ID;
 import static iudx.aaa.server.registration.Constants.SQL_FIND_USER_BY_KC_ID;
+import static iudx.aaa.server.registration.Constants.SQL_GET_CLIENTS_FORMATTED;
+import static iudx.aaa.server.registration.Constants.SQL_GET_PHONE_JOIN_ORG;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_CREATED_USER;
+import static iudx.aaa.server.registration.Constants.SUCC_TITLE_USER_READ;
 import static iudx.aaa.server.registration.Constants.URN_ALREADY_EXISTS;
 import static iudx.aaa.server.registration.Constants.URN_INVALID_INPUT;
 import static iudx.aaa.server.registration.Constants.URN_MISSING_INFO;
 import static iudx.aaa.server.registration.Constants.URN_SUCCESS;
+
 import io.vertx.core.AsyncResult;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
@@ -41,13 +50,14 @@ import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
+import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.RegistrationRequest;
 import iudx.aaa.server.apiserver.Response;
+import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
-import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -58,6 +68,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
@@ -248,7 +259,7 @@ public class RegistrationServiceImpl implements RegistrationService {
       Response r = new ResponseBuilder().type(URN_SUCCESS).title(title).status(201)
           .arrayDetail(resp).build();
       handler.handle(Future.succeededFuture(r.toJson()));
-      
+
       LOGGER.info("Created user profile for " + userId.result());
     }).onFailure(e -> {
       if (e.getMessage().equals(COMPOSE_FAILURE)) {
@@ -271,8 +282,69 @@ public class RegistrationServiceImpl implements RegistrationService {
 
   @Override
   public RegistrationService listUser(User user, Handler<AsyncResult<JsonObject>> handler) {
-    // TODO Auto-generated method stub
-    return null;
+    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+
+    if (user.getUserId().equals(NIL_UUID)) {
+      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
+          .title(ERR_TITLE_NO_USER_PROFILE).stringDetail(ERR_DETAIL_NO_USER_PROFILE).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
+
+    Future<JsonObject> phoneOrgDetails =
+        pool.withConnection(conn -> conn.preparedQuery(SQL_GET_PHONE_JOIN_ORG)
+            .execute(Tuple.of(user.getUserId())).map(rows -> rows.iterator().next().toJson()));
+
+    Future<String> email = kc.getEmailId(user.getKeycloakId());
+
+    Collector<Row, ?, List<JsonObject>> clientDetails =
+        Collectors.mapping(row -> row.toJson(), Collectors.toList());
+
+    Future<List<JsonObject>> clientQuery =
+        pool.withConnection(conn -> conn.preparedQuery(SQL_GET_CLIENTS_FORMATTED)
+            .collecting(clientDetails).execute(Tuple.of(user.getUserId())).map(res -> res.value()));
+
+    CompositeFuture.all(phoneOrgDetails, clientQuery, email).onSuccess(obj -> {
+
+      JsonObject details = (JsonObject) obj.list().get(0);
+      @SuppressWarnings("unchecked")
+      List<JsonObject> clients = (List<JsonObject>) obj.list().get(1);
+      String emailId = (String) obj.list().get(2);
+
+      if (emailId.length() == 0) {
+        Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+            .title(ERR_TITLE_USER_NOT_KC).stringDetail(ERR_DETAIL_USER_NOT_KC).build();
+        handler.handle(Future.succeededFuture(r.toJson()));
+        return;
+      }
+
+      JsonObject response = user.toJson();
+      response.put(RESP_EMAIL, emailId);
+      response.put(RESP_CLIENT_ARR, new JsonArray(clients));
+
+      String phone = (String) details.remove("phone");
+      if (!phone.equals(NIL_PHONE)) {
+        response.put(RESP_PHONE, phone);
+      }
+
+      /* details will have only org details or or only null */
+      if (details.getString("url") != null) {
+        response.put(RESP_ORG, details);
+      }
+
+      JsonArray arr = new JsonArray().add(response);
+      Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_USER_READ).status(200)
+          .arrayDetail(arr).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+    }).onFailure(e -> {
+      if (e.getMessage().equals(COMPOSE_FAILURE)) {
+        return; // do nothing
+      }
+      LOGGER.error(e.getMessage());
+      handler.handle(Future.failedFuture("Internal error"));
+    });
+
+    return this;
   }
 
   @Override

@@ -38,6 +38,8 @@ public class Constants {
   public static final String RESP_CLIENT_SC = "clientSecret";
   public static final String RESP_CLIENT_ARR = "clients";
   public static final String RESP_EMAIL = "email";
+  public static final String RESP_PHONE = "phone";
+  public static final String RESP_ORG = "organization";
 
   /* URNs */
   public static final String URN_SUCCESS = "urn:dx:as:Success";
@@ -48,6 +50,10 @@ public class Constants {
   /* Response title and details */
   public static final String SUCC_TITLE_CREATED_USER = "User profile has been created";
   public static final String PROVIDER_PENDING_MESG = ", Provider registration is pending approval";
+  public static final String SUCC_TITLE_USER_READ = "User details";
+  
+  public static final String ERR_TITLE_NO_USER_PROFILE = "User profile does not exist";
+  public static final String ERR_DETAIL_NO_USER_PROFILE = "Please register to create user profile"; 
 
   public static final String ERR_TITLE_ORG_ID_REQUIRED = "Missing Organization ID";
   public static final String ERR_DETAIL_ORG_ID_REQUIRED =
@@ -98,7 +104,7 @@ public class Constants {
       "SELECT client_name as \"clientName\", client_id as \"clientId\" "
           + " FROM test.user_clients WHERE user_id = $1::uuid";
 
-  public static final String SQL_GET_ORG_DETAILS_BY_USER_ID =
-      "SELECT name, url FROM test.organizations JOIN test.users"
+  public static final String SQL_GET_PHONE_JOIN_ORG =
+      "SELECT users.phone, name, url FROM test.organizations RIGHT JOIN test.users"
           + " ON users.organization_id = organizations.id WHERE users.id = $1::uuid";
 }
