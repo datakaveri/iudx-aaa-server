@@ -69,11 +69,12 @@ public class PolicyVerticle extends AbstractVerticle {
     }
 
     /* Create the client pool */
-    pgclient = PgPool.pool(vertx, connectOptions, poolOptions);
+   // pgclient = PgPool.pool(vertx, connectOptions, poolOptions);
 
-    pgClient = new PostgresClient(vertx, connectOptions, poolOptions);
+    //pgClient = new PostgresClient(vertx, connectOptions, poolOptions);
 
-    policyService = new PolicyServiceImpl(pgClient);
+    PgPool pool = PgPool.pool(vertx,connectOptions, poolOptions);
+    policyService = new PolicyServiceImpl(pool);
 
     new ServiceBinder(vertx).setAddress(POLICY_SERVICE_ADDRESS).register(PolicyService.class,
         policyService);
