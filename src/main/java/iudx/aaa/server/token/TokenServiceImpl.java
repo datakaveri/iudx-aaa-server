@@ -245,8 +245,10 @@ public class TokenServiceImpl implements TokenService {
       JsonObject accessTokenJwt = jwtDetails.attributes().getJsonObject(ACCESS_TOKEN);
       String clientId = accessTokenJwt.getString(SUB);
       String role = accessTokenJwt.getString(ROLE);
-      String itemId = accessTokenJwt.getString("item_id");
-      String itemType = accessTokenJwt.getString("item_type");
+      
+      String[] item = accessTokenJwt.getString(IID).split(":");
+      String itemId = item[1];
+      String itemType = ITEM_TYPE_MAP.get(item[0]);
 
       Tuple tuple = Tuple.of(clientId);
       pgSelelctQuery(GET_USER, tuple).onComplete(dbHandler -> {
@@ -298,11 +300,13 @@ public class TokenServiceImpl implements TokenService {
    * @return jwtToken
    */
   private String getJwt(JsonObject request) {
-    String uuid = UUID.randomUUID().toString();
+    //String uuid = UUID.randomUUID().toString();
     JWTOptions options = new JWTOptions().setAlgorithm(JWT_ALGORITHM);
     
     long timestamp = System.currentTimeMillis() / 1000;
     long expiry = timestamp + CLAIM_EXPIRY;
+    String itemType = request.getString(ITEM_TYPE);
+    String iid = ITEM_TYPE_MAP.inverse().get(itemType)+":"+request.getString(ITEM_ID);
     
     /* Populate the token claims */
     JsonObject claims = new JsonObject();
@@ -310,13 +314,10 @@ public class TokenServiceImpl implements TokenService {
           .put(ISS, CLAIM_ISSUER)
           .put(AUD, request.getString(AUDIENCE))
           .put(EXP, expiry)
-          .put(NFB, timestamp)
           .put(IAT, timestamp)
-          .put(JTI, uuid)
-          .put("item_id", request.getString(ITEM_ID))
-          .put("item_type", request.getString(ITEM_TYPE))
+          .put(IID, iid)
           .put(ROLE, request.getString(ROLE))
-          .put(CONSTRAINTS, request.getJsonObject(CONSTRAINTS));
+          .put(CONS, request.getJsonObject(CONSTRAINTS));
     
     String token = provider.generateToken(claims, options);
     return token;

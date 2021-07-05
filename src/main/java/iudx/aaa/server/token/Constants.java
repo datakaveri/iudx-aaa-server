@@ -1,5 +1,8 @@
 package iudx.aaa.server.token;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+
 public class Constants {
   
   public static final String TOKEN_SERVICE_ADDRESS = "iudx.aaa.token.service";
@@ -48,6 +51,7 @@ public class Constants {
   public static final String CLIENT_SECRET = "clientSecret";
   public static final String AUDIENCE = "audience";
   public static final String USER_ID = "userId";
+  public static final String CONSTRAINTS = "constraints";
     
   /* JWT Constants & related */
   public static final String TOKEN = "token";
@@ -58,11 +62,20 @@ public class Constants {
   public static final String NFB = "nbf";
   public static final String IAT = "iat";
   public static final String JTI = "jti";
-  public static final String CONSTRAINTS = "constraints";
   public static final String ROLE = "role";
+  public static final String ITYPE = "ityp";
+  public static final String IID = "iid";
+  public static final String CONS = "cons";
   
   public static final String GRANT_TYPE = "grant_type";
   public static final String CLIENT_CREDENTIALS = "client_credentials";
+  
+  /* Bidrectional itemType map */
+  public static BiMap<String, String> ITEM_TYPE_MAP = HashBiMap.create();
+  static {
+    ITEM_TYPE_MAP.put("ri", "resource");
+    ITEM_TYPE_MAP.put("rg","resourceGroup");
+  }
   
   /* SQL Queries */
   public static final String DB_SCHEMA = "test";
