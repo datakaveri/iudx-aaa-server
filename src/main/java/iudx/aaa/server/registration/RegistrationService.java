@@ -79,7 +79,7 @@ public interface RegistrationService {
       Handler<AsyncResult<JsonObject>> handler);
 
   /**
-   * The addRole implements the adding user to a role operation.
+   * The listOrganization implements listing organzations.
    * 
    * @param request which is a JsonObject
    * @param handler which is a Request Handler

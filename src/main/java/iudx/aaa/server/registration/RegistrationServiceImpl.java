@@ -33,9 +33,11 @@ import static iudx.aaa.server.registration.Constants.SQL_CREATE_ROLE;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_USER;
 import static iudx.aaa.server.registration.Constants.SQL_FIND_ORG_BY_ID;
 import static iudx.aaa.server.registration.Constants.SQL_FIND_USER_BY_KC_ID;
+import static iudx.aaa.server.registration.Constants.SQL_GET_ALL_ORGS;
 import static iudx.aaa.server.registration.Constants.SQL_GET_CLIENTS_FORMATTED;
 import static iudx.aaa.server.registration.Constants.SQL_GET_PHONE_JOIN_ORG;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_CREATED_USER;
+import static iudx.aaa.server.registration.Constants.SUCC_TITLE_ORG_READ;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_USER_READ;
 import static iudx.aaa.server.registration.Constants.URN_ALREADY_EXISTS;
 import static iudx.aaa.server.registration.Constants.URN_INVALID_INPUT;
@@ -356,7 +358,23 @@ public class RegistrationServiceImpl implements RegistrationService {
 
   @Override
   public RegistrationService listOrganization(Handler<AsyncResult<JsonObject>> handler) {
-    // TODO Auto-generated method stub
-    return null;
+    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+
+    Collector<Row, ?, List<JsonObject>> orgCollect =
+        Collectors.mapping(row -> row.toJson(), Collectors.toList());
+
+    pool.withConnection(conn -> conn.preparedQuery(SQL_GET_ALL_ORGS).collecting(orgCollect)
+        .execute().map(rows -> rows.value()).onSuccess(obj -> {
+          JsonArray resp = new JsonArray(obj);
+
+          Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_ORG_READ)
+              .status(200).arrayDetail(resp).build();
+          handler.handle(Future.succeededFuture(r.toJson()));
+        }).onFailure(e -> {
+          LOGGER.error(e.getMessage());
+          handler.handle(Future.failedFuture("Internal error"));
+        }));
+
+    return this;
   }
 }
