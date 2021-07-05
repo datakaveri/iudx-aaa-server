@@ -49,10 +49,10 @@ public class TokenRevokeService {
   TokenRevokeService httpRevokeRequest(JsonObject request,
       Handler<AsyncResult<JsonObject>> handler) {
 
-    LOGGER.info("Info: " + LOGGER.getName() + ": procssing token revocation");
+    LOGGER.info("Info : Procssing token revocation");
 
     JsonObject rsPayload = new JsonObject();
-    rsPayload.put("user_id", request.getValue("clientId"))
+    rsPayload.put("user_id", request.getValue(CLIENT_ID))
              .put("current-token-duration",CLAIM_EXPIRY);
     
     request.put(BODY, rsPayload).put(URI, RS_REVOKE_URN);
@@ -62,10 +62,8 @@ public class TokenRevokeService {
       return httpPostAsync(request);
     }).onComplete(reqHandler -> {
       if (reqHandler.succeeded()) {
-        LOGGER.debug("Info: Token revocation request succedded");
         handler.handle(Future.succeededFuture(reqHandler.result()));
       } else if (reqHandler.failed()) {
-        LOGGER.error("Fail: Token revocation request failed; " + reqHandler.cause().getMessage());
         handler.handle(Future.failedFuture(reqHandler.cause()));
       }
     });

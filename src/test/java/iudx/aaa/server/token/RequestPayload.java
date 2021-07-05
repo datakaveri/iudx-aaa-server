@@ -39,12 +39,11 @@ public class RequestPayload {
   
   /* Payload for TIP */
   public static JsonObject validTipPayload = new JsonObject().put("accessToken", "eyJ0eXAiOiJKV1QiLC"
-      + "JhbGciOiJFUzI1NiJ9.eyJzdWIiOiIzNDliNGI1NS0wMjUxLTQ5MGUtYmVlOS0wMGYzYTVkM2U2NDMiLCJpc3MiO"
-      + "iJhdXRoLnRlc3QuY29tIiwiYXVkIjoidGVzdC5jYXQuY29tIiwiZXhwIjoxNjg3MDIwNTgxLCJuYmYiOjE2MjM5M"
-      + "DYwNzcsImlhdCI6MTYyMzkwNjA3NywianRpIjoiYmJjZGVlMjktNmE4Yy00NTdkLTliNzEtMDA3OGI2ZGJiM2Y5I"
-      + "iwiaXRlbV9pZCI6Iml0ZW0tMSIsIml0ZW1fdHlwZSI6IlJlc291cmNlR3JvdXAiLCJyb2xlIjoicHJvdmlkZXIiL"
-      + "CJjb25zdHJhaW50cyI6e319.UROV2_XdHXTpnWERtdXrfm0sraNClm70j17Gf_IOHaRDBNIs5RGTz9hKs9qZAPKrv"
-      + "RCmFg7DUGkAdsFWdKY8AA");
+      + "JhbGciOiJFUzI1NiJ9.eyJzdWIiOiIzNDliNGI1NS0wMjUxLTQ5MGUtYmVlOS0wMGYzYTVkM2U2NDMiLCJpc3MiOiJh"
+      + "dXRoLnRlc3QuY29tIiwiYXVkIjoidGVzdC5jYXQuY29tIiwiZXhwIjoxNjg4NjA5MzMyLCJpYXQiOjE2MjU0OTQxMzI"
+      + "sImlpZCI6InJpOmRhdGFrYXZlcmkub3JnL2Y3ZTA0NGVlZTgxMjJiNWM4N2RjZTZlN2FkNjRmMzI2NmFmYTQxZGMvcn"
+      + "MuaXVkeC5pby9hcW0tYm9zY2gtY2xpbW8vRldSMDE3Iiwicm9sZSI6InByb3ZpZGVyIiwiY29ucyI6e319.CHivWv6v"
+      + "Oz8FH5jiTfaTq8rQnyG1Pd4pusEj6PBWp4ouRlKHQcsuo50ZLMHvPBv2YQADOXS_XlZfg4OsDAsffg");
   
   public static JsonObject expiredTipPayload = new JsonObject().put("accessToken", "eyJ0eXAiOiJKV1QiL"
       + "CJhbGciOiJFUzI1NiJ9.eyJzdWIiOiIzNDliNGI1NS0wMjUxLTQ5MGUtYmVlOS0wMGYzYTVkM2U2NDMiLCJpc3MiO"

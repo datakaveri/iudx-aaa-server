@@ -18,13 +18,14 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.IntrospectToken;
 import iudx.aaa.server.apiserver.RequestToken;
+import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.RevokeToken;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
+import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.policy.PolicyService;
 import static iudx.aaa.server.token.Constants.*;
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
 
 /**
  * The Token Service Implementation.
@@ -60,7 +61,7 @@ public class TokenServiceImpl implements TokenService {
    */
   @Override
   public TokenService createToken(RequestToken requestToken, Handler<AsyncResult<JsonObject>> handler) {
-    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+    LOGGER.debug(REQ_RECEIVED);
 
     String clientId = requestToken.getClientId();
     String clientSecret = requestToken.getClientSecret();
@@ -69,46 +70,51 @@ public class TokenServiceImpl implements TokenService {
     JsonObject request=JsonObject.mapFrom(requestToken);
     Tuple tuple = Tuple.of(clientId);
     
+    /* Get and verify the clientId from DB*/
     pgSelelctQuery(GET_USER,tuple).onComplete(dbHandler -> {
       if (dbHandler.failed()) {
-        LOGGER.error("Fail: Databse query; " + dbHandler.cause());
-        handler.handle(Future.failedFuture(
-            new JsonObject().put(STATUS, FAILED).put(DESC, "Internal server error").toString()));
+        LOGGER.error(LOG_DB_ERROR + dbHandler.cause());
+        handler.handle(Future.failedFuture(INTERNAL_SVR_ERR));
 
       } else if (dbHandler.succeeded()) {
-
         if (dbHandler.result().size() != 1) {
-          LOGGER.error("Fail: Unauthorized access; Invalid clientId/clientSecret");
-          handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED)
-              .put(DESC, "Invalid clientId/clientSecret").toString()));
+          LOGGER.error(LOG_UNAUTHORIZED + INVALID_CLIENT_ID_SEC);
+          Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+              .title(INVALID_CLIENT_ID_SEC).stringDetail(INVALID_CLIENT_ID_SEC).build();
+          handler.handle(Future.succeededFuture(resp.toJson()));
           return;
         }
 
         JsonObject result = dbHandler.result().getJsonObject(0);
         String dbClientSecret = result.getString("client_secret");
 
+        /* Validating clientSecret hash */
         boolean valid = false;
         try {
           valid = OpenBSDBCrypt.checkPassword(dbClientSecret,
               clientSecret.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
-          LOGGER.error("Fail: Invalid clientSecret format; " + e.getLocalizedMessage());
-          handler.handle(Future.failedFuture(
-              new JsonObject().put(STATUS, FAILED).put(DESC, "Unauthorized user").toString()));
+          LOGGER.error(LOG_USER_SECRET + e.getLocalizedMessage());
+          Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+              .title(INVALID_CLIENT_ID_SEC).stringDetail(INVALID_CLIENT_ID_SEC).build();
+          handler.handle(Future.succeededFuture(resp.toJson()));
           return;
         }
 
         if (valid == Boolean.FALSE) {
-          LOGGER.error("Fail: Unauthorized access; Invalid clientId/clientSecret");
-          handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED)
-              .put(DESC, "Invalid clientId/clientSecret").toString()));
+          LOGGER.error(LOG_UNAUTHORIZED + INVALID_CLIENT_ID_SEC);
+          Response resp = new ResponseBuilder().status(401).type(URN_INVALID_INPUT)
+              .title(INVALID_CLIENT_ID_SEC).stringDetail(INVALID_CLIENT_ID_SEC).build();
+          handler.handle(Future.succeededFuture(resp.toJson()));
           return;
         }
 
+        /* Verify the user role */
         if (!Roles.exists(role)) {
-          LOGGER.error("Fail: Unauthorized access; Role not defined");
-          handler.handle(Future.failedFuture(
-              new JsonObject().put(STATUS, FAILED).put(DESC, "Unauthorized user").toString()));
+          LOGGER.error(LOG_UNAUTHORIZED + INVALID_ROLE);
+          Response resp = new ResponseBuilder().status(400).type(URN_INVALID_ROLE)
+              .title(INVALID_ROLE).stringDetail(INVALID_ROLE).build();
+          handler.handle(Future.succeededFuture(resp.toJson()));
           return;
         }
 
@@ -117,16 +123,18 @@ public class TokenServiceImpl implements TokenService {
           if (policyHandler.succeeded()) {
 
             request.mergeIn(policyHandler.result(), true);
-            String jwt = getJwt(request);
+            JsonObject jwt = getJwt(request);
 
-            LOGGER.info("Info: Policy evaluation succeeded; JWT generated & signed");
-            handler.handle(Future
-                .succeededFuture(new JsonObject().put(STATUS, SUCCESS).put(ACCESS_TOKEN, jwt)));
+            LOGGER.info(LOG_TOKEN_SUCC);
+            Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
+                .arrayDetail(new JsonArray().add(jwt)).build();
+            handler.handle(Future.succeededFuture(resp.toJson()));
 
           } else if (policyHandler.failed()) {
-            LOGGER.error("Fail: Unauthorized access; Policy evaluation failed");
-            handler.handle(Future.failedFuture(
-                new JsonObject().put(STATUS, FAILED).put(DESC, "Unauthorized user").toString()));
+            LOGGER.error(LOG_UNAUTHORIZED + INVALID_POLICY);
+            Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+                .title(INVALID_POLICY).stringDetail(INVALID_POLICY).build();
+            handler.handle(Future.succeededFuture(resp.toJson()));
           }
         });
       }
@@ -142,25 +150,27 @@ public class TokenServiceImpl implements TokenService {
   public TokenService revokeToken(RevokeToken revokeToken, User user,
       Handler<AsyncResult<JsonObject>> handler) {
 
-    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+    LOGGER.debug(REQ_RECEIVED);
 
     String userId = user.getUserId();
     String clientId = revokeToken.getClientId();
     String rsUrl = revokeToken.getRsUrl();
 
     if (userId == null || userId.isBlank()) {
-      LOGGER.error("Fail: Empty/null userId");
-      handler.handle(Future.failedFuture(
-          new JsonObject().put(STATUS, FAILED).put(DESC, "Empty/null userId").toString()));
+      LOGGER.error("Fail: " + INVALID_USERID);
+      Response resp = new ResponseBuilder().status(400).type(URN_MISSING_INFO).title(INVALID_USERID)
+          .stringDetail(INVALID_USERID).build();
+      handler.handle(Future.succeededFuture(resp.toJson()));
       return this;
     }
 
     Tuple clientTuple = Tuple.of(userId);
     pgSelelctQuery(GET_CLIENT, clientTuple).onSuccess(mapper -> {
       if (mapper.size() != 1) {
-        LOGGER.error("Fail: Incorrect resourceServer URL");
-        handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED)
-            .put(DESC, "Incorrect resourceServer URL").toString()));
+        LOGGER.error("Fail: " + INVALID_USER_CLIENT);
+        Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+            .title(INVALID_USER_CLIENT).stringDetail(INVALID_USER_CLIENT).build();
+        handler.handle(Future.succeededFuture(resp.toJson()));
         return;
       }
 
@@ -168,18 +178,18 @@ public class TokenServiceImpl implements TokenService {
       String dbClientId = dbClientRow.getString("client_id");
 
       if (!dbClientId.equals(clientId)) {
-        LOGGER.error("Fail: Incorrect userId/clientId");
-        handler.handle(Future.failedFuture(
-            new JsonObject().put(STATUS, FAILED).put(DESC, "Invalid userId/clientId").toString()));
+        LOGGER.error("Fail: " + INVALID_CLIENT);
+        Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+            .title(INVALID_CLIENT).stringDetail(INVALID_CLIENT).build();
+        handler.handle(Future.succeededFuture(resp.toJson()));
         return;
       }
 
       Tuple tuple = Tuple.of(rsUrl);
       pgSelelctQuery(GET_URL, tuple).onComplete(dbHandler -> {
         if (dbHandler.failed()) {
-          LOGGER.error("Fail: Databse query; " + dbHandler.cause());
-          handler.handle(Future.failedFuture(
-              new JsonObject().put(STATUS, FAILED).put(DESC, "Internal server error").toString()));
+          LOGGER.error(LOG_DB_ERROR + dbHandler.cause());
+          handler.handle(Future.failedFuture(INTERNAL_SVR_ERR));
           return;
         }
 
@@ -188,9 +198,10 @@ public class TokenServiceImpl implements TokenService {
           boolean flag = dbExistsRow.getBoolean(EXISTS);
 
           if (flag == Boolean.FALSE) {
-            LOGGER.error("Fail: Incorrect resourceServer; exists: " + flag);
-            handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED)
-                .put(DESC, "Invalid resourceServer").toString()));
+            LOGGER.error("Fail: " + INVALID_RS_URL);
+            Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+                .title(INVALID_RS_URL).stringDetail(INVALID_RS_URL).build();
+            handler.handle(Future.succeededFuture(resp.toJson()));
             return;
           }
 
@@ -199,23 +210,26 @@ public class TokenServiceImpl implements TokenService {
 
           revokeService.httpRevokeRequest(revokePayload, httpClient -> {
             if (httpClient.succeeded()) {
-              handler.handle(Future.succeededFuture(new JsonObject().put(STATUS, SUCCESS)));
+              LOGGER.info(LOG_REVOKE_REQ);
+              Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS)
+                  .title(TOKEN_REVOKED).arrayDetail(new JsonArray()).build();
+              handler.handle(Future.succeededFuture(resp.toJson()));
               return;
             } else {
-              System.out.println(httpClient.cause());
-             handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED)
-                  .put(DESC, "revoke request failed").toString()));
+              LOGGER.error("Fail: {}; {}", FAILED_REVOKE, httpClient.cause());
+              Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+                  .title(FAILED_REVOKE).stringDetail(FAILED_REVOKE).build();
+              handler.handle(Future.succeededFuture(resp.toJson()));
               return;
             }
           });
         }
       });
     }).onFailure(failureHandler -> {
-      LOGGER.error("Fail: Databse query; " + failureHandler.getMessage());
-      handler.handle(Future.failedFuture(
-          new JsonObject().put(STATUS, FAILED).put(DESC, "Internal server error").toString()));
+      LOGGER.error(LOG_DB_ERROR + failureHandler.getMessage());
+      handler.handle(Future.failedFuture(INTERNAL_SVR_ERR));
     });
-    
+
     return this;
   }
 
@@ -226,20 +240,24 @@ public class TokenServiceImpl implements TokenService {
   public TokenService validateToken(IntrospectToken introspectToken,
       Handler<AsyncResult<JsonObject>> handler) {
 
-    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+    LOGGER.debug(REQ_RECEIVED);
 
     String accessToken = introspectToken.getAccessToken();
     if (accessToken == null || accessToken.isBlank()) {
-      LOGGER.error("Fail: Unable to parse accessToken");
-      handler.handle(Future.failedFuture(
-          new JsonObject().put(STATUS, FAILED).put(DESC, "missing accessToken").toString()));
+      LOGGER.error(LOG_PARSE_TOKEN);
+      Response resp = new ResponseBuilder().status(400).type(URN_MISSING_INFO)
+          .title(MISSING_TOKEN).stringDetail(MISSING_TOKEN).build();
+      handler.handle(Future.succeededFuture(resp.toJson()));
       return this;
     }
 
     TokenCredentials authInfo = new TokenCredentials(accessToken);
     provider.authenticate(authInfo).onFailure(jwtError -> {
-      LOGGER.error("Fail: Token authentication failed; " + jwtError.getLocalizedMessage());
-      handler.handle(Future.failedFuture(new JsonObject().put(STATUS, DENY).toString()));
+      LOGGER.error("Fail: {}; {}", TOKEN_FAILED, jwtError.getLocalizedMessage());
+      Response resp =
+          new ResponseBuilder().status(401).type(URN_INVALID_AUTH_TOKEN).title(TOKEN_FAILED)
+              .arrayDetail(new JsonArray().add(new JsonObject().put(STATUS, DENY))).build();
+      handler.handle(Future.succeededFuture(resp.toJson()));
     }).onSuccess(jwtDetails -> {
 
       JsonObject accessTokenJwt = jwtDetails.attributes().getJsonObject(ACCESS_TOKEN);
@@ -254,14 +272,15 @@ public class TokenServiceImpl implements TokenService {
       pgSelelctQuery(GET_USER, tuple).onComplete(dbHandler -> {
 
         if (dbHandler.failed()) {
-          LOGGER.error("Fail: Databse query; " + dbHandler.cause().getMessage());
-          handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED)
-              .put(DESC, dbHandler.cause().getLocalizedMessage()).toString()));
+          LOGGER.error(LOG_DB_ERROR + dbHandler.cause().getMessage());
+          handler.handle(Future.failedFuture(INTERNAL_SVR_ERR));
         } else if (dbHandler.succeeded()) {
 
           if (dbHandler.result().size() != 1) {
-            LOGGER.error("Fail: Invalid accessToken- clientId");
-            handler.handle(Future.failedFuture(new JsonObject().put(STATUS, DENY).toString()));
+            LOGGER.error(LOG_TOKEN_AUTH + INVALID_CLIENT);
+            Response resp = new ResponseBuilder().status(400).type(URN_INVALID_AUTH_TOKEN)
+                .title(TOKEN_FAILED).stringDetail(INVALID_CLIENT).build();
+            handler.handle(Future.succeededFuture(resp.toJson()));
             return;
           }
 
@@ -276,15 +295,18 @@ public class TokenServiceImpl implements TokenService {
           policyService.verifyPolicy(request, policyHandler -> {
             if (policyHandler.succeeded()) {
               request.clear();
-              request.put(STATUS, ALLOW);
               request.mergeIn(accessTokenJwt);
 
-              LOGGER.info("Info: Policy evaluation succeeded; Token authenticated");
-              handler.handle(Future.succeededFuture(request));
+              Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS)
+                  .title(TOKEN_AUTHENTICATED).arrayDetail(new JsonArray().add(request)).build();
+              LOGGER.info("Info: {}; {}", POLICY_SUCCESS, TOKEN_AUTHENTICATED);
+              handler.handle(Future.succeededFuture(resp.toJson()));
+              
             } else if (policyHandler.failed()) {
-              LOGGER.error(
-                  "Fail: Policy evaluation failed; " + policyHandler.cause().getLocalizedMessage());
-              handler.handle(Future.failedFuture(new JsonObject().put(STATUS, DENY).toString()));
+              LOGGER.error("Fail: {}; {}", INVALID_POLICY, policyHandler.cause().getMessage());
+              Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+                  .title(INVALID_POLICY).stringDetail(INVALID_POLICY).build();
+              handler.handle(Future.succeededFuture(resp.toJson()));
             }
           });
         }
@@ -299,10 +321,9 @@ public class TokenServiceImpl implements TokenService {
    * @param request
    * @return jwtToken
    */
-  private String getJwt(JsonObject request) {
-    //String uuid = UUID.randomUUID().toString();
-    JWTOptions options = new JWTOptions().setAlgorithm(JWT_ALGORITHM);
+  private JsonObject getJwt(JsonObject request) {
     
+    JWTOptions options = new JWTOptions().setAlgorithm(JWT_ALGORITHM);
     long timestamp = System.currentTimeMillis() / 1000;
     long expiry = timestamp + CLAIM_EXPIRY;
     String itemType = request.getString(ITEM_TYPE);
@@ -313,14 +334,18 @@ public class TokenServiceImpl implements TokenService {
     claims.put(SUB, request.getString(CLIENT_ID))
           .put(ISS, CLAIM_ISSUER)
           .put(AUD, request.getString(AUDIENCE))
-          .put(EXP, expiry)
+          .put(EXP, expiry+31536000*2)
           .put(IAT, timestamp)
           .put(IID, iid)
           .put(ROLE, request.getString(ROLE))
           .put(CONS, request.getJsonObject(CONSTRAINTS));
     
     String token = provider.generateToken(claims, options);
-    return token;
+
+    JsonObject tokenResp = new JsonObject();
+    tokenResp.put(ACCESS_TOKEN, token).put("expiry", expiry).put("server",
+        request.getString(AUDIENCE));
+    return tokenResp;
   }
   
   /**
