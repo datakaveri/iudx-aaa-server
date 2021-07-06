@@ -334,7 +334,7 @@ public class TokenServiceImpl implements TokenService {
     claims.put(SUB, request.getString(CLIENT_ID))
           .put(ISS, CLAIM_ISSUER)
           .put(AUD, request.getString(AUDIENCE))
-          .put(EXP, expiry+31536000*2)
+          .put(EXP, expiry)
           .put(IAT, timestamp)
           .put(IID, iid)
           .put(ROLE, request.getString(ROLE))
