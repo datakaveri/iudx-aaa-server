@@ -1,0 +1,131 @@
+package iudx.aaa.server.registration;
+
+import static iudx.aaa.server.registration.Constants.SUCC_TITLE_ORG_READ;
+import static iudx.aaa.server.registration.Constants.URN_SUCCESS;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import io.vertx.core.Future;
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
+import io.vertx.pgclient.PgConnectOptions;
+import io.vertx.pgclient.PgPool;
+import io.vertx.sqlclient.PoolOptions;
+import io.vertx.sqlclient.Tuple;
+import iudx.aaa.server.configuration.Configuration;
+import java.util.List;
+import java.util.UUID;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
+
+@ExtendWith(VertxExtension.class)
+public class ListOrganizationTest {
+
+  private static Logger LOGGER = LogManager.getLogger(ListOrganizationTest.class);
+
+  private static Configuration config;
+
+  /* Database Properties */
+  private static String databaseIP;
+  private static int databasePort;
+  private static String databaseName;
+  private static String databaseUserName;
+  private static String databasePassword;
+  private static int poolSize;
+  private static PgPool pool;
+  private static PoolOptions poolOptions;
+  private static PgConnectOptions connectOptions;
+  private static RegistrationService registrationService;
+  private static Vertx vertxObj;
+
+  private static KcAdmin kc = Mockito.mock(KcAdmin.class);
+
+  /* SQL queries for creating and deleting required data */
+  private static final String SQL_CREATE_ORG =
+      "INSERT INTO test.organizations (name, url, created_at, updated_at) "
+          + "VALUES ($1:: text, $2::text, NOW(), NOW()) RETURNING id";
+  private static final String SQL_DELETE_ORG = "DELETE FROM test.organizations WHERE id = $1::uuid";
+
+  static String name = RandomStringUtils.randomAlphabetic(10).toLowerCase();
+  static String url = name + ".com";
+  static Future<UUID> orgIdFut;
+
+  @BeforeAll
+  @DisplayName("Deploying Verticle")
+  static void startVertx(Vertx vertx, VertxTestContext testContext) {
+    Configuration config = new Configuration();
+    vertxObj = vertx;
+    JsonObject dbConfig = config.configLoader(1, vertx);
+
+    /* Read the configuration and set the postgres client properties. */
+    LOGGER.debug("Info : Reading config file");
+
+    databaseIP = dbConfig.getString("databaseIP");
+    databasePort = Integer.parseInt(dbConfig.getString("databasePort"));
+    databaseName = dbConfig.getString("databaseName");
+    databaseUserName = dbConfig.getString("databaseUserName");
+    databasePassword = dbConfig.getString("databasePassword");
+    poolSize = Integer.parseInt(dbConfig.getString("poolSize"));
+
+    if (connectOptions == null) {
+      connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
+          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword);
+    }
+
+    if (poolOptions == null) {
+      poolOptions = new PoolOptions().setMaxSize(poolSize);
+    }
+
+    pool = PgPool.pool(vertx, connectOptions, poolOptions);
+
+    /* create fake organization */
+    orgIdFut =
+        pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_ORG).execute(Tuple.of(name, url))
+            .map(row -> row.iterator().next().getUUID("id"))).onSuccess(err -> {
+              registrationService = new RegistrationServiceImpl(pool, kc);
+              testContext.completeNow();
+            }).onFailure(err -> testContext.failNow(err.getMessage()));
+  }
+
+  @AfterAll
+  public static void finish(VertxTestContext testContext) {
+    LOGGER.info("Finishing and resetting DB");
+    pool.withConnection(
+        conn -> conn.preparedQuery(SQL_DELETE_ORG).execute(Tuple.of(orgIdFut.result())))
+        .onComplete(x -> {
+          vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
+        });
+  }
+
+  /* TODO add test if empty JSON details returned if org table empty. */
+  @Test
+  @DisplayName("Get added test organization")
+  void getAddedOrganization(VertxTestContext testContext) {
+    registrationService
+        .listOrganization(testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(SUCC_TITLE_ORG_READ, response.getString("title"));
+          assertEquals(URN_SUCCESS, response.getString("type"));
+
+          @SuppressWarnings("unchecked")
+          List<JsonObject> list = response.getJsonArray("detail").getList();
+
+          Boolean exists = list.stream().anyMatch(obj -> {
+            return (obj.getString("name").equals(name)
+                && obj.getString("id").equals(orgIdFut.result().toString())
+                && obj.getString("url").equals(url));
+          });
+
+          assertTrue(exists);
+          testContext.completeNow();
+        })));
+  }
+}

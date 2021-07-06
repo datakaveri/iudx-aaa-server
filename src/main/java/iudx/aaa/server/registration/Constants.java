@@ -51,6 +51,7 @@ public class Constants {
   public static final String SUCC_TITLE_CREATED_USER = "User profile has been created";
   public static final String PROVIDER_PENDING_MESG = ", Provider registration is pending approval";
   public static final String SUCC_TITLE_USER_READ = "User details";
+  public static final String SUCC_TITLE_ORG_READ = "Organizations";
   
   public static final String ERR_TITLE_NO_USER_PROFILE = "User profile does not exist";
   public static final String ERR_DETAIL_NO_USER_PROFILE = "Please register to create user profile"; 
