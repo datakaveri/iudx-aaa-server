@@ -1,5 +1,6 @@
 package iudx.aaa.server.apiserver;
 
+import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -11,10 +12,10 @@ import io.vertx.core.json.JsonObject;
 public class RequestToken {
 
   @JsonAlias({"clientId"})
-  private String clientId;
+  private UUID clientId;
 
   @JsonAlias("clientSecret")
-  private String clientSecret;
+  private UUID clientSecret;
 
   @JsonAlias("role")
   private String role;
@@ -38,19 +39,19 @@ public class RequestToken {
   public RequestToken() {}
 
   public String getClientId() {
-    return clientId;
+    return clientId.toString();
   }
 
   public void setClientId(String clientId) {
-    this.clientId = clientId;
+    this.clientId = UUID.fromString(clientId);
   }
 
   public String getClientSecret() {
-    return clientSecret;
+    return clientSecret.toString();
   }
 
   public void setClientSecret(String clientSecret) {
-    this.clientSecret = clientSecret;
+    this.clientSecret = UUID.fromString(clientSecret);
   }
 
   public String getRole() {

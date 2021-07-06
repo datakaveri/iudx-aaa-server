@@ -133,8 +133,7 @@ public class TokenServiceTest {
     mockPolicy.setResponse("valid");
     tokenService.createToken(mapToReqToken(validPayload),
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals("success", response.getString("status"));
-          assertTrue(response.containsKey("accessToken"));
+          assertEquals(URN_SUCCESS, response.getString("type"));
           testContext.completeNow();
         })));
   }
@@ -145,9 +144,8 @@ public class TokenServiceTest {
 
     mockPolicy.setResponse("invalid");
     tokenService.createToken(mapToReqToken(validPayload),
-        testContext.failing(response -> testContext.verify(() -> {
-          JsonObject result = new JsonObject(response.getLocalizedMessage());
-          assertEquals("failed", result.getString("status"));
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
           testContext.completeNow();
         })));
   }
@@ -158,9 +156,8 @@ public class TokenServiceTest {
 
     mockPolicy.setResponse("valid");
     tokenService.createToken(mapToReqToken(invalidClientSecret),
-        testContext.failing(response -> testContext.verify(() -> {
-          JsonObject result = new JsonObject(response.getLocalizedMessage());
-          assertEquals("failed", result.getString("status"));
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
           testContext.completeNow();
         })));
   }
@@ -171,9 +168,8 @@ public class TokenServiceTest {
 
     mockPolicy.setResponse("valid");
     tokenService.createToken(mapToReqToken(invalidClientId),
-        testContext.failing(response -> testContext.verify(() -> {
-          JsonObject result = new JsonObject(response.getLocalizedMessage());
-          assertEquals("failed", result.getString("status"));
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
           testContext.completeNow();
         })));
   }
@@ -184,9 +180,8 @@ public class TokenServiceTest {
 
     mockPolicy.setResponse("valid");
     tokenService.createToken(mapToReqToken(undefinedRole),
-        testContext.failing(response -> testContext.verify(() -> {
-          JsonObject result = new JsonObject(response.getLocalizedMessage());
-          assertEquals("failed", result.getString("status"));
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_INVALID_ROLE, response.getString(TYPE));
           testContext.completeNow();
         })));
   }
@@ -198,7 +193,7 @@ public class TokenServiceTest {
     mockHttpWebClient.setResponse("valid");
     tokenService.revokeToken(mapToRevToken(revokeTokenValidPayload), user("32a4b979-4f4a-4c44-b0c3-2fe109952b5f"),
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals("success", response.getString("status"));
+          assertEquals(URN_SUCCESS, response.getString(TYPE));
           // assertTrue(response.containsKey("accessToken"));
           testContext.completeNow();
         })));
@@ -210,9 +205,8 @@ public class TokenServiceTest {
 
     mockHttpWebClient.setResponse("invalid");
     tokenService.revokeToken(mapToRevToken(revokeTokenValidPayload), user("32a4b979-4f4a-4c44-b0c3-2fe109952b5f"),
-        testContext.failing(response -> testContext.verify(() -> {
-          JsonObject result = new JsonObject(response.getLocalizedMessage());
-          assertEquals("failed", result.getString("status"));
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
           testContext.completeNow();
         })));
   }
@@ -226,9 +220,8 @@ public class TokenServiceTest {
     User user = new User(userBuilder);
     
     tokenService.revokeToken(mapToRevToken(revokeTokenValidPayload), user,
-        testContext.failing(response -> testContext.verify(() -> {
-          JsonObject result = new JsonObject(response.getLocalizedMessage());
-          assertEquals("failed", result.getString("status"));
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
           testContext.completeNow();
         })));
   }
@@ -239,9 +232,8 @@ public class TokenServiceTest {
 
     mockHttpWebClient.setResponse("valid");
     tokenService.revokeToken(mapToRevToken(revokeTokenValidPayload), user("32a4b979-4f4a-4c44-b0c3-2fe109952b53"),
-        testContext.failing(response -> testContext.verify(() -> {
-          JsonObject result = new JsonObject(response.getLocalizedMessage());
-          assertEquals("failed", result.getString("status"));
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
           testContext.completeNow();
         })));
   }
@@ -252,9 +244,8 @@ public class TokenServiceTest {
 
     mockHttpWebClient.setResponse("valid");
     tokenService.revokeToken(mapToRevToken(revokeTokenInvalidUrl), user("32a4b979-4f4a-4c44-b0c3-2fe109952b5f"),
-        testContext.failing(response -> testContext.verify(() -> {
-          JsonObject result = new JsonObject(response.getLocalizedMessage());
-          assertEquals("failed", result.getString("status"));
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
           testContext.completeNow();
         })));
   }
@@ -265,9 +256,8 @@ public class TokenServiceTest {
 
     mockHttpWebClient.setResponse("valid");
     tokenService.revokeToken(mapToRevToken(revokeTokenInvalidClientId), user("32a4b979-4f4a-4c44-b0c3-2fe109952b5f"),
-        testContext.failing(response -> testContext.verify(() -> {
-          JsonObject result = new JsonObject(response.getLocalizedMessage());
-          assertEquals("failed", result.getString("status"));
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
           testContext.completeNow();
         })));
   }
@@ -278,7 +268,7 @@ public class TokenServiceTest {
     
     mockPolicy.setResponse("valid");
     tokenService.validateToken(mapToInspctToken(validTipPayload), testContext.succeeding(response -> testContext.verify(() -> {
-      assertEquals("allow", response.getString("status"));
+      assertEquals(URN_SUCCESS, response.getString(TYPE));
       testContext.completeNow();
     })));
   }
@@ -289,9 +279,8 @@ public class TokenServiceTest {
 
     mockPolicy.setResponse("invalid");
     tokenService.validateToken(mapToInspctToken(validTipPayload),
-        testContext.failing(response -> testContext.verify(() -> {
-          JsonObject result = new JsonObject(response.getLocalizedMessage());
-          assertEquals("deny", result.getString("status"));
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
           testContext.completeNow();
         })));
   }
@@ -302,9 +291,8 @@ public class TokenServiceTest {
 
     mockPolicy.setResponse("valid");
     tokenService.validateToken(mapToInspctToken(invalidTipPayload),
-        testContext.failing(response -> testContext.verify(() -> {
-          JsonObject result = new JsonObject(response.getLocalizedMessage());
-          assertEquals("deny", result.getString("status"));
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_INVALID_AUTH_TOKEN, response.getString(TYPE));
           testContext.completeNow();
         })));
   }
@@ -315,9 +303,8 @@ public class TokenServiceTest {
 
     mockPolicy.setResponse("valid");
     tokenService.validateToken(mapToInspctToken(expiredTipPayload),
-        testContext.failing(response -> testContext.verify(() -> {
-          JsonObject result = new JsonObject(response.getLocalizedMessage());
-          assertEquals("deny", result.getString("status"));
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_INVALID_AUTH_TOKEN, response.getString(TYPE));
           testContext.completeNow();
         })));
   }
@@ -330,9 +317,8 @@ public class TokenServiceTest {
     IntrospectToken introspect = new IntrospectToken();
     
     tokenService.validateToken(introspect,
-        testContext.failing(response -> testContext.verify(() -> {
-          JsonObject result = new JsonObject(response.getLocalizedMessage());
-          assertEquals("failed", result.getString("status"));
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_MISSING_INFO, response.getString("type"));
           testContext.completeNow();
         })));
   }
