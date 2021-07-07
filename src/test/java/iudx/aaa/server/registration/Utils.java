@@ -42,7 +42,9 @@ public class Utils {
    * 
    * @param pool Postgres PgPool connection to make DB calls
    * @param orgId organization ID. If no org is desired, send NIL_UUID
-   * @param orgUrl the url of the given orgId. If no org is desired, send empty string
+   * @param orgUrl the url of the given orgId. Send the URL of the created organization or send an
+   *        empty string to get a gmail user. If a proper email is desired, send the url of an
+   *        existing organization, but keep orgId as NIL_UUID
    * @param roleMap map of Roles to RoleStatus to set for the user
    * @param needPhone if true, phone number is assigned
    * @return a Future of JsonObject containing user information
@@ -70,11 +72,16 @@ public class Utils {
     if (orgId.toString() == NIL_UUID) {
       orgIdToSet = null;
       resp.put("orgId", null);
-      resp.put("url", null);
-      email = RandomStringUtils.randomAlphabetic(10).toLowerCase() + "@gmail.com";
     } else {
       orgIdToSet = orgId.toString();
       resp.put("orgId", orgId);
+    }
+
+    if (orgUrl == "") {
+      resp.put("url", null);
+      email = RandomStringUtils.randomAlphabetic(10).toLowerCase() + "@gmail.com";
+    } /* consumer may want a email with generated domain, but not be associated with an org */
+    else {
       resp.put("url", orgUrl);
       email = RandomStringUtils.randomAlphabetic(10).toLowerCase() + "@" + orgUrl;
     }
@@ -147,8 +154,8 @@ public class Utils {
   }
 
   /**
-   * Delete list of fake users from DB. Send list of JsonObjects of user details
-   * (strictly userId field must be there in each obj)
+   * Delete list of fake users from DB. Send list of JsonObjects of user details (strictly userId
+   * field must be there in each obj)
    * 
    * @param pool Postgres PgPool connection to make DB calls
    * @param userList list of JsonObjects of users to delete
@@ -159,7 +166,7 @@ public class Utils {
 
     List<UUID> ids = userList.stream().map(obj -> UUID.fromString(obj.getString("userId")))
         .collect(Collectors.toList());
-
+    
     Tuple tuple = Tuple.of(ids.toArray(UUID[]::new));
     pool.withConnection(conn -> conn
         .preparedQuery("DELETE FROM test.users WHERE id = ANY($1::uuid[])").execute(tuple))
