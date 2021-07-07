@@ -1,4 +1,4 @@
-package iudx.aaa.server.twofactor;
+package iudx.aaa.server.admin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.AfterEach;
@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 
@@ -18,10 +19,11 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.postgres.client.PostgresClient;
+import iudx.aaa.server.registration.KcAdmin;
 
 @ExtendWith({VertxExtension.class})
-public class TwoFactorServiceTest {
-  private static Logger LOGGER = LogManager.getLogger(TwoFactorServiceTest.class);
+public class AdminServiceTest {
+  private static Logger LOGGER = LogManager.getLogger(AdminServiceTest.class);
 
   private static Configuration config;
 
@@ -32,13 +34,13 @@ public class TwoFactorServiceTest {
   private static String databaseUserName;
   private static String databasePassword;
   private static int poolSize;
-  private static PgPool pgclient;
+  private static PgPool pool;
   private static PoolOptions poolOptions;
   private static PgConnectOptions connectOptions;
-  private static PostgresClient pgClient;
-  private static TwoFactorService twoFactorService;
+  private static AdminService adminService;
   private static Vertx vertxObj;
 
+  private static KcAdmin kc = Mockito.mock(KcAdmin.class);
   @BeforeAll
   @DisplayName("Deploying Verticle")
   static void startVertx(Vertx vertx,
@@ -69,14 +71,10 @@ public class TwoFactorServiceTest {
     }
 
     /* Create the client pool */
-    pgclient = PgPool.pool(vertx, connectOptions, poolOptions);
-
-    pgClient = new PostgresClient(vertx, connectOptions, poolOptions);
-
-    twoFactorService = new TwoFactorServiceImpl(pgClient);
+    pool = PgPool.pool(vertx, connectOptions, poolOptions);
+    adminService = new AdminServiceImpl(pool, kc);
 
     testContext.completeNow();
-
   }
 
   @AfterEach
@@ -84,29 +82,4 @@ public class TwoFactorServiceTest {
     LOGGER.info("Finishing....");
     vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
   }
-
-  @Test
-  @DisplayName("Testing Successful generate OTP")
-  void generateOTPSuccess(VertxTestContext testContext) {
-    JsonObject request = new JsonObject().put("phone", "number");
-
-    twoFactorService.generateOTP(request,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals("success", response.getString("status"));
-          testContext.completeNow();
-        })));
-  }
-
-  @Test
-  @DisplayName("Testing Failure in generate OTP")
-  void generateOTPFailure(VertxTestContext testContext) {
-    JsonObject request = new JsonObject().put("phone", "number");
-
-    twoFactorService.generateOTP(request,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals("failed", response.getString("status"));
-          testContext.completeNow();
-        })));
-  }
-
 }
