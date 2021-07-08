@@ -52,9 +52,13 @@ public class Constants {
   public static final String PROVIDER_PENDING_MESG = ", Provider registration is pending approval";
   public static final String SUCC_TITLE_USER_READ = "User details";
   public static final String SUCC_TITLE_ORG_READ = "Organizations";
-  
+  public static final String SUCC_TITLE_UPDATED_USER_ROLES = "Registered for requested roles";
+
+  public static final String ERR_TITLE_ROLE_EXISTS = "Already registered for requested role";
+  public static final String ERR_DETAIL_ROLE_EXISTS = "You have already registered as ";
+
   public static final String ERR_TITLE_NO_USER_PROFILE = "User profile does not exist";
-  public static final String ERR_DETAIL_NO_USER_PROFILE = "Please register to create user profile"; 
+  public static final String ERR_DETAIL_NO_USER_PROFILE = "Please register to create user profile";
 
   public static final String ERR_TITLE_ORG_ID_REQUIRED = "Missing Organization ID";
   public static final String ERR_DETAIL_ORG_ID_REQUIRED =
@@ -104,6 +108,9 @@ public class Constants {
   public static final String SQL_GET_CLIENTS_FORMATTED =
       "SELECT client_name as \"clientName\", client_id as \"clientId\" "
           + " FROM test.user_clients WHERE user_id = $1::uuid";
+
+  public static final String SQL_UPDATE_ORG_ID =
+      "UPDATE test.users SET organization_id = $1::uuid WHERE organization_id IS NULL AND id = $2::uuid";
 
   public static final String SQL_GET_PHONE_JOIN_ORG =
       "SELECT users.phone, name, url FROM test.organizations RIGHT JOIN test.users"
