@@ -119,7 +119,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     if (requestedRoles.contains(Roles.PROVIDER) || requestedRoles.contains(Roles.DELEGATE)) {
       if (orgId.toString().equals(NIL_UUID)) {
         Response r = new ResponseBuilder().status(400).type(URN_MISSING_INFO)
-            .title(ERR_TITLE_ORG_ID_REQUIRED).stringDetail(ERR_DETAIL_ORG_ID_REQUIRED).build();
+            .title(ERR_TITLE_ORG_ID_REQUIRED).detail(ERR_DETAIL_ORG_ID_REQUIRED).build();
         handler.handle(Future.succeededFuture(r.toJson()));
         return this;
       }
@@ -164,14 +164,14 @@ public class RegistrationServiceImpl implements RegistrationService {
 
           if (userRow != 0) {
             Response r = new ResponseBuilder().status(409).type(URN_ALREADY_EXISTS)
-                .title(ERR_TITLE_USER_EXISTS).stringDetail(ERR_DETAIL_USER_EXISTS).build();
+                .title(ERR_TITLE_USER_EXISTS).detail(ERR_DETAIL_USER_EXISTS).build();
             handler.handle(Future.succeededFuture(r.toJson()));
             return Future.failedFuture(COMPOSE_FAILURE);
           }
 
           if (emailId.length() == 0) {
             Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                .title(ERR_TITLE_USER_NOT_KC).stringDetail(ERR_DETAIL_USER_NOT_KC).build();
+                .title(ERR_TITLE_USER_NOT_KC).detail(ERR_DETAIL_USER_NOT_KC).build();
             handler.handle(Future.succeededFuture(r.toJson()));
             return Future.failedFuture(COMPOSE_FAILURE);
           }
@@ -180,13 +180,13 @@ public class RegistrationServiceImpl implements RegistrationService {
 
           if (url == null) {
             Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                .title(ERR_TITLE_ORG_NO_EXIST).stringDetail(ERR_DETAIL_ORG_NO_EXIST).build();
+                .title(ERR_TITLE_ORG_NO_EXIST).detail(ERR_DETAIL_ORG_NO_EXIST).build();
             handler.handle(Future.succeededFuture(r.toJson()));
             return Future.failedFuture(COMPOSE_FAILURE);
 
           } else if (!url.equals(emailDomain) && !url.equals(NO_ORG_CHECK)) {
             Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                .title(ERR_TITLE_ORG_NO_MATCH).stringDetail(ERR_DETAIL_ORG_NO_MATCH).build();
+                .title(ERR_TITLE_ORG_NO_MATCH).detail(ERR_DETAIL_ORG_NO_MATCH).build();
             handler.handle(Future.succeededFuture(r.toJson()));
             return Future.failedFuture(COMPOSE_FAILURE);
           }
@@ -258,7 +258,6 @@ public class RegistrationServiceImpl implements RegistrationService {
       JsonArray clients = new JsonArray().add(clientDetails);
       JsonObject payload =
           u.toJson().put(RESP_CLIENT_ARR, clients).put(RESP_EMAIL, validation.result());
-      JsonArray resp = new JsonArray().add(payload);
 
       String title = SUCC_TITLE_CREATED_USER;
       if (requestedRoles.contains(Roles.PROVIDER)) {
@@ -266,7 +265,7 @@ public class RegistrationServiceImpl implements RegistrationService {
       }
 
       Response r = new ResponseBuilder().type(URN_SUCCESS).title(title).status(201)
-          .arrayDetail(resp).build();
+          .objectResults(payload).build();
       handler.handle(Future.succeededFuture(r.toJson()));
 
       LOGGER.info("Created user profile for " + userId.result());
@@ -295,7 +294,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     if (user.getUserId().equals(NIL_UUID)) {
       Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
-          .title(ERR_TITLE_NO_USER_PROFILE).stringDetail(ERR_DETAIL_NO_USER_PROFILE).build();
+          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
@@ -322,7 +321,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
       if (emailId.length() == 0) {
         Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-            .title(ERR_TITLE_USER_NOT_KC).stringDetail(ERR_DETAIL_USER_NOT_KC).build();
+            .title(ERR_TITLE_USER_NOT_KC).detail(ERR_DETAIL_USER_NOT_KC).build();
         handler.handle(Future.succeededFuture(r.toJson()));
         return;
       }
@@ -341,9 +340,8 @@ public class RegistrationServiceImpl implements RegistrationService {
         response.put(RESP_ORG, details);
       }
 
-      JsonArray arr = new JsonArray().add(response);
       Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_USER_READ).status(200)
-          .arrayDetail(arr).build();
+          .objectResults(response).build();
       handler.handle(Future.succeededFuture(r.toJson()));
     }).onFailure(e -> {
       if (e.getMessage().equals(COMPOSE_FAILURE)) {
@@ -363,7 +361,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     if (user.getUserId().equals(NIL_UUID)) {
       Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
-          .title(ERR_TITLE_NO_USER_PROFILE).stringDetail(ERR_DETAIL_NO_USER_PROFILE).build();
+          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
@@ -398,7 +396,7 @@ public class RegistrationServiceImpl implements RegistrationService {
             .collect(Collectors.joining(", "));
 
         Response r = new ResponseBuilder().status(400).type(URN_ALREADY_EXISTS)
-            .title(ERR_TITLE_ROLE_EXISTS).stringDetail(ERR_DETAIL_ROLE_EXISTS + dupRoles).build();
+            .title(ERR_TITLE_ROLE_EXISTS).detail(ERR_DETAIL_ROLE_EXISTS + dupRoles).build();
         handler.handle(Future.succeededFuture(r.toJson()));
         return Future.failedFuture(COMPOSE_FAILURE);
       }
@@ -412,7 +410,7 @@ public class RegistrationServiceImpl implements RegistrationService {
       if (requestedRoles.contains(Roles.PROVIDER) || requestedRoles.contains(Roles.DELEGATE)) {
         if (orgId.toString().equals(NIL_UUID)) {
           Response r = new ResponseBuilder().status(400).type(URN_MISSING_INFO)
-              .title(ERR_TITLE_ORG_ID_REQUIRED).stringDetail(ERR_DETAIL_ORG_ID_REQUIRED).build();
+              .title(ERR_TITLE_ORG_ID_REQUIRED).detail(ERR_DETAIL_ORG_ID_REQUIRED).build();
           handler.handle(Future.succeededFuture(r.toJson()));
           return Future.failedFuture(COMPOSE_FAILURE);
         }
@@ -433,20 +431,20 @@ public class RegistrationServiceImpl implements RegistrationService {
 
       if (emailId.length() == 0) {
         Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-            .title(ERR_TITLE_USER_NOT_KC).stringDetail(ERR_DETAIL_USER_NOT_KC).build();
+            .title(ERR_TITLE_USER_NOT_KC).detail(ERR_DETAIL_USER_NOT_KC).build();
         handler.handle(Future.succeededFuture(r.toJson()));
         return Future.failedFuture(COMPOSE_FAILURE);
       }
 
       if (url == null) {
         Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-            .title(ERR_TITLE_ORG_NO_EXIST).stringDetail(ERR_DETAIL_ORG_NO_EXIST).build();
+            .title(ERR_TITLE_ORG_NO_EXIST).detail(ERR_DETAIL_ORG_NO_EXIST).build();
         handler.handle(Future.succeededFuture(r.toJson()));
         return Future.failedFuture(COMPOSE_FAILURE);
 
       } else if (!url.equals(emailDomain) && !url.equals(NO_ORG_CHECK)) {
         Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-            .title(ERR_TITLE_ORG_NO_MATCH).stringDetail(ERR_DETAIL_ORG_NO_MATCH).build();
+            .title(ERR_TITLE_ORG_NO_MATCH).detail(ERR_DETAIL_ORG_NO_MATCH).build();
         handler.handle(Future.succeededFuture(r.toJson()));
         return Future.failedFuture(COMPOSE_FAILURE);
       }
@@ -513,15 +511,13 @@ public class RegistrationServiceImpl implements RegistrationService {
         response.put(RESP_ORG, details);
       }
 
-      JsonArray resp = new JsonArray().add(response);
-
       String title = SUCC_TITLE_UPDATED_USER_ROLES;
       if (requestedRoles.contains(Roles.PROVIDER)) {
         title = title + PROVIDER_PENDING_MESG;
       }
 
       Response r = new ResponseBuilder().type(URN_SUCCESS).title(title).status(200)
-          .arrayDetail(resp).build();
+          .objectResults(response).build();
       handler.handle(Future.succeededFuture(r.toJson()));
     }).onFailure(e -> {
       if (e.getMessage().equals(COMPOSE_FAILURE)) {
@@ -546,7 +542,7 @@ public class RegistrationServiceImpl implements RegistrationService {
           JsonArray resp = new JsonArray(obj);
 
           Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_ORG_READ)
-              .status(200).arrayDetail(resp).build();
+              .status(200).arrayResults(resp).build();
           handler.handle(Future.succeededFuture(r.toJson()));
         }).onFailure(e -> {
           LOGGER.error(e.getMessage());

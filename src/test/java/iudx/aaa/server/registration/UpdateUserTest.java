@@ -343,29 +343,29 @@ public class UpdateUserTest {
                 response.getString("title"));
             assertEquals(URN_SUCCESS, response.getString("type"));
 
-            JsonObject details = response.getJsonArray("detail").getJsonObject(0);
+            JsonObject result = response.getJsonObject("results");
 
-            JsonObject name = details.getJsonObject("name");
+            JsonObject name = result.getJsonObject("name");
             assertEquals(name.getString("firstName"), userJson.getString("firstName"));
             assertEquals(name.getString("lastName"), userJson.getString("lastName"));
 
             @SuppressWarnings("unchecked")
-            List<String> returnedRoles = details.getJsonArray("roles").getList();
+            List<String> returnedRoles = result.getJsonArray("roles").getList();
             List<String> rolesString = List.of(Roles.CONSUMER.name(), Roles.DELEGATE.name());
             assertTrue(
                 returnedRoles.containsAll(rolesString) && rolesString.containsAll(returnedRoles));
 
-            JsonArray clients = details.getJsonArray(RESP_CLIENT_ARR);
+            JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
             JsonObject defaultClient = clients.getJsonObject(0);
             assertTrue(clients.size() > 0);
             assertEquals(defaultClient.getString(RESP_CLIENT_ID), userJson.getString("clientId"));
 
-            JsonObject org = details.getJsonObject(RESP_ORG);
+            JsonObject org = result.getJsonObject(RESP_ORG);
             assertEquals(org.getString("url"), userJson.getString("url"));
 
-            assertEquals(details.getString(RESP_EMAIL), userJson.getString("email"));
-            assertEquals(details.getString("userId"), userJson.getString("userId"));
-            assertEquals(details.getString("keycloakId"), userJson.getString("keycloakId"));
+            assertEquals(result.getString(RESP_EMAIL), userJson.getString("email"));
+            assertEquals(result.getString("userId"), userJson.getString("userId"));
+            assertEquals(result.getString("keycloakId"), userJson.getString("keycloakId"));
 
             testContext.completeNow();
           })));
@@ -387,10 +387,10 @@ public class UpdateUserTest {
     cons.put(Roles.PROVIDER, RoleStatus.PENDING);
     cons.put(Roles.DELEGATE, RoleStatus.APPROVED);
 
-    /* Create consumer with email of created org domain */
-    Future<JsonObject> consumer = Utils.createFakeUser(pool, NIL_UUID, url, cons, false);
+    Future<JsonObject> provDele =
+        Utils.createFakeUser(pool, orgIdFut.result().toString(), url, cons, false);
 
-    consumer.onSuccess(userJson -> {
+    provDele.onSuccess(userJson -> {
       createdUsers.add(userJson);
 
       User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
@@ -426,10 +426,10 @@ public class UpdateUserTest {
     Map<Roles, RoleStatus> prov = new HashMap<Roles, RoleStatus>();
     prov.put(Roles.PROVIDER, RoleStatus.PENDING);
 
-    Future<JsonObject> consumer =
+    Future<JsonObject> provider =
         Utils.createFakeUser(pool, orgIdFut.result().toString(), url, prov, true);
 
-    consumer.onSuccess(userJson -> {
+    provider.onSuccess(userJson -> {
       createdUsers.add(userJson);
 
       /* Since provider is pending, do not add to user object */
@@ -447,30 +447,30 @@ public class UpdateUserTest {
             assertEquals(SUCC_TITLE_UPDATED_USER_ROLES, response.getString("title"));
             assertEquals(URN_SUCCESS, response.getString("type"));
 
-            JsonObject details = response.getJsonArray("detail").getJsonObject(0);
+            JsonObject result = response.getJsonObject("results");
 
-            JsonObject name = details.getJsonObject("name");
+            JsonObject name = result.getJsonObject("name");
             assertEquals(name.getString("firstName"), userJson.getString("firstName"));
             assertEquals(name.getString("lastName"), userJson.getString("lastName"));
 
             @SuppressWarnings("unchecked")
-            List<String> returnedRoles = details.getJsonArray("roles").getList();
+            List<String> returnedRoles = result.getJsonArray("roles").getList();
             List<String> rolesString = List.of(Roles.CONSUMER.name(), Roles.DELEGATE.name());
             assertTrue(
                 returnedRoles.containsAll(rolesString) && rolesString.containsAll(returnedRoles));
 
-            JsonArray clients = details.getJsonArray(RESP_CLIENT_ARR);
+            JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
             JsonObject defaultClient = clients.getJsonObject(0);
             assertTrue(clients.size() > 0);
             assertEquals(defaultClient.getString(RESP_CLIENT_ID), userJson.getString("clientId"));
 
-            JsonObject org = details.getJsonObject(RESP_ORG);
+            JsonObject org = result.getJsonObject(RESP_ORG);
             assertEquals(org.getString("url"), userJson.getString("url"));
 
-            assertEquals(details.getString(RESP_EMAIL), userJson.getString("email"));
-            assertEquals(details.getString(RESP_PHONE), userJson.getString("phone"));
-            assertEquals(details.getString("userId"), userJson.getString("userId"));
-            assertEquals(details.getString("keycloakId"), userJson.getString("keycloakId"));
+            assertEquals(result.getString(RESP_EMAIL), userJson.getString("email"));
+            assertEquals(result.getString(RESP_PHONE), userJson.getString("phone"));
+            assertEquals(result.getString("userId"), userJson.getString("userId"));
+            assertEquals(result.getString("keycloakId"), userJson.getString("keycloakId"));
 
             testContext.completeNow();
           })));
@@ -518,30 +518,30 @@ public class UpdateUserTest {
               assertEquals(SUCC_TITLE_UPDATED_USER_ROLES, response.getString("title"));
               assertEquals(URN_SUCCESS, response.getString("type"));
 
-              JsonObject details = response.getJsonArray("detail").getJsonObject(0);
+              JsonObject result = response.getJsonObject("results");
 
-              JsonObject name = details.getJsonObject("name");
+              JsonObject name = result.getJsonObject("name");
               assertEquals(name.getString("firstName"), userJson.getString("firstName"));
               assertEquals(name.getString("lastName"), userJson.getString("lastName"));
 
               @SuppressWarnings("unchecked")
-              List<String> returnedRoles = details.getJsonArray("roles").getList();
+              List<String> returnedRoles = result.getJsonArray("roles").getList();
               List<String> rolesString = List.of(Roles.CONSUMER.name(), Roles.PROVIDER.name());
               assertTrue(
                   returnedRoles.containsAll(rolesString) && rolesString.containsAll(returnedRoles));
 
-              JsonArray clients = details.getJsonArray(RESP_CLIENT_ARR);
+              JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
               JsonObject defaultClient = clients.getJsonObject(0);
               assertTrue(clients.size() > 0);
               assertEquals(defaultClient.getString(RESP_CLIENT_ID), userJson.getString("clientId"));
 
-              JsonObject org = details.getJsonObject(RESP_ORG);
+              JsonObject org = result.getJsonObject(RESP_ORG);
               assertEquals(org.getString("url"), userJson.getString("url"));
 
-              assertEquals(details.getString(RESP_EMAIL), userJson.getString("email"));
-              assertEquals(details.getString(RESP_PHONE), userJson.getString("phone"));
-              assertEquals(details.getString("userId"), userJson.getString("userId"));
-              assertEquals(details.getString("keycloakId"), userJson.getString("keycloakId"));
+              assertEquals(result.getString(RESP_EMAIL), userJson.getString("email"));
+              assertEquals(result.getString(RESP_PHONE), userJson.getString("phone"));
+              assertEquals(result.getString("userId"), userJson.getString("userId"));
+              assertEquals(result.getString("keycloakId"), userJson.getString("keycloakId"));
 
               testContext.completeNow();
             })));

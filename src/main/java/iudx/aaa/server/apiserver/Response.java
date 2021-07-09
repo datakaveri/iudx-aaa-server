@@ -3,12 +3,27 @@ package iudx.aaa.server.apiserver;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
+/**
+ * Response object to easily create a JSON response object. Objects must have <b>type</b>, and
+ * <b>title</b> fields mandatorily. For error cases, <b>detail</b> must be set. For success cases,
+ * either <b>arrayResults</b> or <b>objectResults</b> must be set
+ */
 public class Response {
 
-  private String type, title;
-  private JsonArray arrayDetail;
-  private String stringDetail;
+  private String type;
+  private String title;
+  private JsonArray arrayResults;
+  private JsonObject objectResults;
+  private String detail;
   private int status;
+
+  public JsonObject getObjectResults() {
+    return objectResults;
+  }
+
+  public void setObjectResults(JsonObject objectResults) {
+    this.objectResults = objectResults;
+  }
 
   public String getType() {
     return type;
@@ -26,20 +41,20 @@ public class Response {
     this.title = title;
   }
 
-  public JsonArray getarrayDetail() {
-    return arrayDetail;
+  public JsonArray getArrayResults() {
+    return arrayResults;
   }
 
-  public void setarrayDetail(JsonArray arrayDetail) {
-    this.arrayDetail = arrayDetail;
+  public void setArrayResults(JsonArray arrayResults) {
+    this.arrayResults = arrayResults;
   }
 
-  public String getstringDetail() {
-    return stringDetail;
+  public String getDetail() {
+    return detail;
   }
 
-  public void setstringDetail(String stringDetail) {
-    this.stringDetail = stringDetail;
+  public void setDetail(String detail) {
+    this.detail = detail;
   }
 
   public void setStatus(int status) {
@@ -50,14 +65,24 @@ public class Response {
     return this.status;
   }
 
+  /**
+   * Convert Response object to JSON object.
+   * 
+   * @return a JSON object with type, title, status and detail/results
+   */
   public JsonObject toJson() {
     JsonObject j = new JsonObject();
     j.put("type", this.type);
     j.put("title", this.title);
-    if (this.arrayDetail != null)
-      j.put("detail", this.arrayDetail.copy());
-    if (this.stringDetail != null)
-      j.put("detail", this.stringDetail);
+    if (this.arrayResults != null) {
+      j.put("results", this.arrayResults.copy());
+    }
+    if (this.objectResults != null) {
+      j.put("results", this.objectResults.copy());
+    }
+    if (this.detail != null) {
+      j.put("detail", this.detail);
+    }
     j.put("status", this.status);
 
     return j;
@@ -65,16 +90,19 @@ public class Response {
 
   public Response(ResponseBuilder builder) {
     this.type = builder.type;
-    this.stringDetail = builder.stringDetail;
-    this.arrayDetail = builder.arrayDetail;
+    this.detail = builder.detail;
+    this.arrayResults = builder.arrayResults;
+    this.objectResults = builder.objectResults;
     this.title = builder.title;
     this.status = builder.status;
   }
 
   public static class ResponseBuilder {
-    private String type, title;
-    private JsonArray arrayDetail = null;
-    private String stringDetail = null;
+    private String type;
+    private String title;
+    private JsonArray arrayResults = null;
+    private JsonObject objectResults = null;
+    private String detail = null;
     private int status;
 
     public ResponseBuilder type(String type) {
@@ -87,14 +115,20 @@ public class Response {
       return this;
     }
 
-    public ResponseBuilder stringDetail(String detail) {
-      this.stringDetail = detail;
+    public ResponseBuilder detail(String detail) {
+      this.detail = detail;
       return this;
     }
 
-    public ResponseBuilder arrayDetail(JsonArray detail) {
-      this.arrayDetail = new JsonArray();
-      this.arrayDetail = detail.copy();
+    public ResponseBuilder arrayResults(JsonArray arrayResults) {
+      this.arrayResults = new JsonArray();
+      this.arrayResults = arrayResults.copy();
+      return this;
+    }
+
+    public ResponseBuilder objectResults(JsonObject objectResults) {
+      this.objectResults = new JsonObject();
+      this.objectResults = objectResults.copy();
       return this;
     }
 
