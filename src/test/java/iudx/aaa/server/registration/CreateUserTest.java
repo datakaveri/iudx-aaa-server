@@ -190,6 +190,8 @@ public class CreateUserTest {
           assertTrue(result.getString("userId").matches(UUID_REGEX));
           assertEquals(result.getJsonObject("name").getString("firstName"), "Foo");
           assertEquals(result.getJsonObject("name").getString("lastName"), "Bar");
+          assertEquals(result.getString("phone"), "9989989980");
+          assertTrue(!result.containsKey("organization"));
 
           JsonObject client = result.getJsonArray("clients").getJsonObject(0);
           assertTrue(client.getString("clientId").matches(UUID_REGEX));
@@ -231,6 +233,8 @@ public class CreateUserTest {
           assertTrue(result.getString("userId").matches(UUID_REGEX));
           assertEquals(result.getJsonObject("name").getString("firstName"), "Foo");
           assertEquals(result.getJsonObject("name").getString("lastName"), "Bar");
+          assertEquals(result.getString("phone"), "9989989980");
+          assertEquals(result.getJsonObject("organization").getString("url"), url);
 
           JsonObject client = result.getJsonArray("clients").getJsonObject(0);
           assertTrue(client.getString("clientId").matches(UUID_REGEX));
@@ -253,7 +257,7 @@ public class CreateUserTest {
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(email));
 
     JsonObject jsonReq = new JsonObject().put("roles", new JsonArray().add("delegate"))
-        .put("orgId", orgId).put("phone", "9989989980");
+        .put("orgId", orgId);
     RegistrationRequest request = new RegistrationRequest(jsonReq);
 
     User user = new UserBuilder().keycloakId(keycloakId).name("Foo", "Bar").build();
@@ -272,6 +276,8 @@ public class CreateUserTest {
           assertTrue(result.getString("userId").matches(UUID_REGEX));
           assertEquals(result.getJsonObject("name").getString("firstName"), "Foo");
           assertEquals(result.getJsonObject("name").getString("lastName"), "Bar");
+          assertTrue(!result.containsKey("phone"));
+          assertEquals(result.getJsonObject("organization").getString("url"), url);
 
           JsonObject client = result.getJsonArray("clients").getJsonObject(0);
           assertTrue(client.getString("clientId").matches(UUID_REGEX));
@@ -317,6 +323,8 @@ public class CreateUserTest {
           assertTrue(result.getString("userId").matches(UUID_REGEX));
           assertEquals(result.getJsonObject("name").getString("firstName"), "Foo");
           assertEquals(result.getJsonObject("name").getString("lastName"), "Bar");
+          assertEquals(result.getString("phone"), "9989989980");
+          assertEquals(result.getJsonObject("organization").getString("url"), url);
 
           JsonObject client = result.getJsonArray("clients").getJsonObject(0);
           assertTrue(client.getString("clientId").matches(UUID_REGEX));
