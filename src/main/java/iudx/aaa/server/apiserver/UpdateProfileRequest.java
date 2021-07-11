@@ -87,6 +87,10 @@ public class UpdateProfileRequest {
       throw new IllegalArgumentException("Invalid 'roles' array");
     }
 
+    if (set.contains(Roles.PROVIDER.name())) {
+      throw new IllegalArgumentException("Existing user may not register for provider role");
+    }
+
     json.remove("roles");
     json.put("roles", new ArrayList<String>(set));
 

@@ -23,6 +23,7 @@ import static iudx.aaa.server.registration.Constants.URN_INVALID_INPUT;
 import static iudx.aaa.server.registration.Constants.URN_MISSING_INFO;
 import static iudx.aaa.server.registration.Constants.URN_SUCCESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -169,16 +170,20 @@ public class UpdateUserTest {
     assertThrows(IllegalArgumentException.class, () -> new UpdateProfileRequest(badRoleArr));
 
     JsonObject orgNum =
-        new JsonObject().put("roles", new JsonArray().add("provider")).put("orgId", 1234);
+        new JsonObject().put("roles", new JsonArray().add("delegate")).put("orgId", 1234);
     assertThrows(IllegalArgumentException.class, () -> new UpdateProfileRequest(orgNum));
 
-    JsonObject orgArr = new JsonObject().put("roles", new JsonArray().add("provider")).put("orgId",
+    JsonObject orgArr = new JsonObject().put("roles", new JsonArray().add("consumer")).put("orgId",
         new JsonArray());
     assertThrows(IllegalArgumentException.class, () -> new UpdateProfileRequest(orgArr));
 
-    JsonObject orgInvalid = new JsonObject().put("roles", new JsonArray().add("provider"))
+    JsonObject orgInvalid = new JsonObject().put("roles", new JsonArray().add("delegate"))
         .put("orgId", "107f8479-e767-4760-ac5f-d4518ebe3a8");
     assertThrows(IllegalArgumentException.class, () -> new UpdateProfileRequest(orgInvalid));
+
+    JsonObject providerRole = new JsonObject().put("roles", new JsonArray().add("provider"));
+    assertThrows(IllegalArgumentException.class, () -> new UpdateProfileRequest(providerRole));
+
     testContext.completeNow();
   }
 
@@ -188,7 +193,7 @@ public class UpdateUserTest {
     User user = new UserBuilder().keycloakId(UUID.randomUUID()).name("Foo", "Bar").build();
 
     JsonObject req = new JsonObject().put("orgId", orgIdFut.result().toString()).put("roles",
-        new JsonArray().add("provider"));
+        new JsonArray().add("delegate"));
 
     UpdateProfileRequest request = new UpdateProfileRequest(req);
 
@@ -204,9 +209,9 @@ public class UpdateUserTest {
   }
 
   @Test
-  @DisplayName("Test no org ID when consumer requesting provider/delegate")
+  @DisplayName("Test no org ID when consumer requesting delegate")
   void consumerNoOrgId(VertxTestContext testContext) {
-    JsonObject req = new JsonObject().put("roles", new JsonArray().add("provider"));
+    JsonObject req = new JsonObject().put("roles", new JsonArray().add("delegate"));
 
     UpdateProfileRequest request = new UpdateProfileRequest(req);
 
@@ -238,9 +243,9 @@ public class UpdateUserTest {
   }
 
   @Test
-  @DisplayName("Test invalid org Id when getting provider/delegate")
+  @DisplayName("Test invalid org Id when getting delegate")
   void consumerInvalidOrg(VertxTestContext testContext) {
-    JsonObject req = new JsonObject().put("roles", new JsonArray().add("provider")).put("orgId",
+    JsonObject req = new JsonObject().put("roles", new JsonArray().add("delegate")).put("orgId",
         UUID.randomUUID().toString());
 
     UpdateProfileRequest request = new UpdateProfileRequest(req);
@@ -273,10 +278,10 @@ public class UpdateUserTest {
   }
 
   @Test
-  @DisplayName("Test consumer with gmail email cannot become provider/delegate")
+  @DisplayName("Test consumer with gmail email cannot become delegate")
   void consumerDomainMismatch(VertxTestContext testContext) {
 
-    JsonObject req = new JsonObject().put("roles", new JsonArray().add("provider")).put("orgId",
+    JsonObject req = new JsonObject().put("roles", new JsonArray().add("delegate")).put("orgId",
         orgIdFut.result().toString());
 
     UpdateProfileRequest request = new UpdateProfileRequest(req);
@@ -310,11 +315,11 @@ public class UpdateUserTest {
   }
 
   @Test
-  @DisplayName("Test consumer get provider delegate roles")
+  @DisplayName("Test consumer get delegate roles")
   void consumerAddProvDele(VertxTestContext testContext) {
 
-    JsonObject req = new JsonObject().put("roles", new JsonArray().add("provider").add("delegate"))
-        .put("orgId", orgIdFut.result().toString());
+    JsonObject req = new JsonObject().put("roles", new JsonArray().add("delegate")).put("orgId",
+        orgIdFut.result().toString());
 
     UpdateProfileRequest request = new UpdateProfileRequest(req);
 
@@ -339,8 +344,7 @@ public class UpdateUserTest {
       registrationService.updateUser(request, user,
           testContext.succeeding(response -> testContext.verify(() -> {
             assertEquals(200, response.getInteger("status"));
-            assertEquals(SUCC_TITLE_UPDATED_USER_ROLES + PROVIDER_PENDING_MESG,
-                response.getString("title"));
+            assertEquals(SUCC_TITLE_UPDATED_USER_ROLES, response.getString("title"));
             assertEquals(URN_SUCCESS, response.getString("type"));
 
             JsonObject result = response.getJsonObject("results");
@@ -376,8 +380,7 @@ public class UpdateUserTest {
   @DisplayName("Test existing role request")
   void existingRoles(VertxTestContext testContext) {
 
-    JsonObject req = new JsonObject()
-        .put("roles", new JsonArray().add("consumer").add("delegate").add("provider"))
+    JsonObject req = new JsonObject().put("roles", new JsonArray().add("consumer").add("delegate"))
         .put("orgId", orgIdFut.result().toString());
 
     UpdateProfileRequest request = new UpdateProfileRequest(req);
@@ -407,7 +410,7 @@ public class UpdateUserTest {
             assertEquals(ERR_TITLE_ROLE_EXISTS, response.getString("title"));
             assertTrue(response.getString("detail").contains(ERR_DETAIL_ROLE_EXISTS));
             assertTrue(response.getString("detail").contains("delegate"));
-            assertTrue(response.getString("detail").contains("provider"));
+            assertFalse(response.getString("detail").contains("provider"));
             assertEquals(URN_ALREADY_EXISTS, response.getString("type"));
 
             testContext.completeNow();
