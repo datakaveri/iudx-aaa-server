@@ -1,5 +1,7 @@
 package iudx.aaa.server.registration;
 
+import java.util.List;
+import java.util.Map;
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.ProxyGen;
@@ -89,4 +91,16 @@ public interface RegistrationService {
   @Fluent
   RegistrationService listOrganization(Handler<AsyncResult<JsonObject>> handler);
 
+  /**
+   * The getUserDetails implements getting user details. Other services may call this service to get
+   * email and names of users based on their user ID.
+   * 
+   * @param userIds list of user IDs as String in UUID format
+   * @param handler the request handler which returns a JsonObject
+   * @return RegistrationService which is a Service
+   */
+
+  @Fluent
+  RegistrationService getUserDetails(List<String> userIds,
+      Handler<AsyncResult<Map<String, JsonObject>>> handler);
 }

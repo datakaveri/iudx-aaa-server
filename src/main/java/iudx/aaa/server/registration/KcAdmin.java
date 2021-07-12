@@ -2,9 +2,12 @@ package iudx.aaa.server.registration;
 
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.apiserver.Roles;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.ProcessingException;
@@ -17,6 +20,7 @@ import org.keycloak.admin.client.resource.RolesResource;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.RoleRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
 
 /**
  * Keycloak Admin Client to allow a client that has admin capabilities to connect to Keycloak and
@@ -139,6 +143,54 @@ public class KcAdmin {
       p.fail(e.getMessage());
     }
 
+    return p.future();
+  }
+
+  /**
+   * Get email and name details for a list of users in JSON format in a map. If the user is not
+   * found, an empty JSON object is used as the value.
+   * 
+   * @param ids List of String UUIDs of keycloak IDs
+   * @return map of keycloak ID to JSON object with name, email
+   */
+  public Future<Map<String, JsonObject>> getDetails(List<String> ids) {
+    Promise<Map<String, JsonObject>> p = Promise.promise();
+    RealmResource realmResource = null;
+    UsersResource usersResource = null;
+
+    Map<String, JsonObject> map = new HashMap<String, JsonObject>();
+    try {
+      realmResource = keycloak.realm(realm);
+      usersResource = realmResource.users();
+      usersResource.count();
+    } catch (ProcessingException e) {
+      p.fail("Error in Keycloak connection : " + e.getMessage());
+      return p.future();
+    } catch (NotFoundException e) {
+      p.fail("Realm may not exist");
+      return p.future();
+    } catch (Exception e) {
+      p.fail(e.getMessage());
+      return p.future();
+    }
+
+    for (String id : ids) {
+      JsonObject j = new JsonObject();
+      try {
+        UserRepresentation u = usersResource.get(id).toRepresentation();
+        j.put("email", u.getEmail());
+        j.put("name",
+            new JsonObject().put("firstName", u.getFirstName()).put("lastName", u.getLastName()));
+      } catch (NotFoundException e) {
+        // TODO log that the user did not exist on KC
+        // put empty JSON object
+      } catch (Exception e) {
+        p.fail(e.getMessage());
+      }
+      map.put(id, j);
+    }
+
+    p.complete(map);
     return p.future();
   }
 }
