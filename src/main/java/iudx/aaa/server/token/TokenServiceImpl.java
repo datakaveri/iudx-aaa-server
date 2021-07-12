@@ -328,12 +328,13 @@ public class TokenServiceImpl implements TokenService {
     long expiry = timestamp + CLAIM_EXPIRY;
     String itemType = request.getString(ITEM_TYPE);
     String iid = ITEM_TYPE_MAP.inverse().get(itemType)+":"+request.getString(ITEM_ID);
+    String audience = request.getString(URL);
     
     /* Populate the token claims */
     JsonObject claims = new JsonObject();
     claims.put(SUB, request.getString(CLIENT_ID))
           .put(ISS, CLAIM_ISSUER)
-          .put(AUD, request.getString(AUDIENCE))
+          .put(AUD, audience)
           .put(EXP, expiry)
           .put(IAT, timestamp)
           .put(IID, iid)
@@ -344,7 +345,7 @@ public class TokenServiceImpl implements TokenService {
 
     JsonObject tokenResp = new JsonObject();
     tokenResp.put(ACCESS_TOKEN, token).put("expiry", expiry).put("server",
-        request.getString(AUDIENCE));
+        audience);
     return tokenResp;
   }
   

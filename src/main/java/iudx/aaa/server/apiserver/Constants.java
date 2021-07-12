@@ -21,5 +21,10 @@ public class Constants {
   public static final String MIME_TEXT_HTML = "text/html";
   
   public static final String NIL_UUID = "00000000-0000-0000-0000-000000000000";
+  
+  /* API Server Routes */
+  public static final String API_TOKEN="/auth/v1/token";
+  public static final String API_INTROSPECT_TOKEN="/auth/v1/interospect";
+  public static final String API_REVOKE_TOKEN="/auth/v1/token/revoke";
 
 }
