@@ -52,14 +52,19 @@
 			}
 		},
 		{
-			"id": "iudx.aaa.server.twofactor.TwoFactorVerticle",
+			"id": "iudx.aaa.server.admin.AdminVerticle",
 			"verticleInstances": 1,
 			"databaseIP": "139.59.80.176",
 			"databasePort": "5432",
 			"databaseName": "iudx",
 			"databaseUserName": "iudx_user",
 			"databasePassword": "iudx@123",
-			"poolSize": "5"
+			"poolSize": "5",
+			"keycloakUrl": "https://127.0.0.1:3000/auth",
+			"keycloakRealm": "some-realm",
+			"keycloakAdminClientId": "some-admin-client-id",
+			"keycloakAdminClientSecret": "f5800be0-258a-4cd2-820f-8128818ed70a",
+			"keycloakAdminPoolSize": "10"
 		},
 		{
 			"id": "iudx.aaa.server.apiserver.ApiServerVerticle",

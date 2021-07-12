@@ -31,7 +31,7 @@ import io.vertx.ext.web.handler.CorsHandler;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.token.TokenService;
-import iudx.aaa.server.twofactor.TwoFactorService;
+import iudx.aaa.server.admin.AdminService;
 
 /**
  * The AAA Server API Verticle.
@@ -65,12 +65,12 @@ public class ApiServerVerticle extends AbstractVerticle {
   private static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
   private static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
   private static final String TOKEN_SERVICE_ADDRESS = "iudx.aaa.token.service";
-  private static final String TWOFACTOR_SERVICE_ADDRESS = "iudx.aaa.twofactor.service";
+  private static final String ADMIN_SERVICE_ADDRESS = "iudx.aaa.admin.service";
 
   private PolicyService policyService;
   private RegistrationService registrationService;
   private TokenService tokenService;
-  private TwoFactorService twoFactorService;
+  private AdminService adminService;
 
   /**
    * This method is used to start the Verticle. It deploys a verticle in a cluster, reads the
@@ -162,7 +162,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
     registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
     tokenService = TokenService.createProxy(vertx, TOKEN_SERVICE_ADDRESS);
-    twoFactorService = TwoFactorService.createProxy(vertx, TWOFACTOR_SERVICE_ADDRESS);
+    adminService = AdminService.createProxy(vertx, ADMIN_SERVICE_ADDRESS);
   }
 
 }
