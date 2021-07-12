@@ -37,6 +37,7 @@ import static iudx.aaa.server.registration.Constants.SQL_FIND_ORG_BY_ID;
 import static iudx.aaa.server.registration.Constants.SQL_FIND_USER_BY_KC_ID;
 import static iudx.aaa.server.registration.Constants.SQL_GET_ALL_ORGS;
 import static iudx.aaa.server.registration.Constants.SQL_GET_CLIENTS_FORMATTED;
+import static iudx.aaa.server.registration.Constants.SQL_GET_ORG_DETAILS;
 import static iudx.aaa.server.registration.Constants.SQL_GET_PHONE_JOIN_ORG;
 import static iudx.aaa.server.registration.Constants.SQL_GET_REG_ROLES;
 import static iudx.aaa.server.registration.Constants.SQL_UPDATE_ORG_ID;
@@ -134,7 +135,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         roles.put(r, RoleStatus.APPROVED);
       }
     }
-    /* TODO later on, can check if keycloak ID is not NIL_UUID */
+    /* TODO later on, can check if user ID is not NIL_UUID */
     Future<Integer> checkUserExist =
         pool.withConnection(conn -> conn.preparedQuery(SQL_FIND_USER_BY_KC_ID)
             .execute(Tuple.of(user.getKeycloakId())).map(rows -> rows.size()));
@@ -147,8 +148,8 @@ public class RegistrationServiceImpl implements RegistrationService {
     if (roles.containsKey(Roles.PROVIDER) || roles.containsKey(Roles.DELEGATE)) {
       orgIdToSet = request.getOrgId();
       checkOrgExist = pool.withConnection(
-          conn -> conn.preparedQuery(SQL_FIND_ORG_BY_ID).execute(Tuple.of(orgId.toString()))
-              .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().getString("url") : null));
+          conn -> conn.preparedQuery(SQL_GET_ORG_DETAILS).execute(Tuple.of(orgId.toString())).map(
+              rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson().toString() : null));
     } else {
       checkOrgExist = Future.succeededFuture(NO_ORG_CHECK);
       orgIdToSet = null;
@@ -160,7 +161,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
           int userRow = (int) arr.list().get(0);
           String emailId = (String) arr.list().get(1);
-          String url = (String) arr.list().get(2);
+          String orgDetails = (String) arr.list().get(2);
 
           if (userRow != 0) {
             Response r = new ResponseBuilder().status(409).type(URN_ALREADY_EXISTS)
@@ -178,13 +179,18 @@ public class RegistrationServiceImpl implements RegistrationService {
 
           String emailDomain = emailId.split("@")[1];
 
-          if (url == null) {
+          if (orgDetails == null) {
             Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
                 .title(ERR_TITLE_ORG_NO_EXIST).detail(ERR_DETAIL_ORG_NO_EXIST).build();
             handler.handle(Future.succeededFuture(r.toJson()));
             return Future.failedFuture(COMPOSE_FAILURE);
+          } else if (orgDetails == NO_ORG_CHECK) {
+            return Future.succeededFuture(emailId);
+          }
 
-          } else if (!url.equals(emailDomain) && !url.equals(NO_ORG_CHECK)) {
+          String url = new JsonObject(orgDetails).getString("url");
+
+          if (!url.equals(emailDomain)) {
             Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
                 .title(ERR_TITLE_ORG_NO_MATCH).detail(ERR_DETAIL_ORG_NO_MATCH).build();
             handler.handle(Future.succeededFuture(r.toJson()));
@@ -248,9 +254,9 @@ public class RegistrationServiceImpl implements RegistrationService {
             .compose(success -> kc.modifyRoles(user.getKeycloakId(), rolesForKc))));
 
     query.onSuccess(success -> {
-      User u = null;
-      u = new UserBuilder().name(user.getName().get("firstName"), user.getName().get("lastName"))
-          .roles(rolesForKc).keycloakId(user.getKeycloakId()).userId(userId.result()).build();
+      User u =
+          new UserBuilder().name(user.getName().get("firstName"), user.getName().get("lastName"))
+              .roles(rolesForKc).keycloakId(user.getKeycloakId()).userId(userId.result()).build();
 
       JsonObject clientDetails = new JsonObject().put(RESP_CLIENT_NAME, DEFAULT_CLIENT)
           .put(RESP_CLIENT_ID, clientId.toString()).put(RESP_CLIENT_SC, clientSecret.toString());
@@ -258,6 +264,14 @@ public class RegistrationServiceImpl implements RegistrationService {
       JsonArray clients = new JsonArray().add(clientDetails);
       JsonObject payload =
           u.toJson().put(RESP_CLIENT_ARR, clients).put(RESP_EMAIL, validation.result());
+
+      if (phone != NIL_PHONE) {
+        payload.put(RESP_PHONE, phone);
+      }
+
+      if (checkOrgExist.result() != NO_ORG_CHECK) {
+        payload.put(RESP_ORG, new JsonObject(checkOrgExist.result()));
+      }
 
       String title = SUCC_TITLE_CREATED_USER;
       if (requestedRoles.contains(Roles.PROVIDER)) {
