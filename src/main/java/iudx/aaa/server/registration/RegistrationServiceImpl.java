@@ -381,61 +381,46 @@ public class RegistrationServiceImpl implements RegistrationService {
     }
 
     List<Roles> requestedRoles = request.getRoles();
+    List<Roles> registeredRoles = user.getRoles();
     String orgId = request.getOrgId();
 
     Map<Roles, RoleStatus> roles = new HashMap<Roles, RoleStatus>();
 
     for (Roles r : requestedRoles) {
-      if (r == Roles.PROVIDER) {
-        roles.put(r, RoleStatus.PENDING);
-      } else {
-        roles.put(r, RoleStatus.APPROVED);
-      }
+      roles.put(r, RoleStatus.APPROVED);
     }
 
-    Collector<Row, ?, List<Roles>> roleCollect =
-        Collectors.mapping(row -> row.get(Roles.class, "role"), Collectors.toList());
+    List<Roles> duplicate =
+        registeredRoles.stream().filter(requestedRoles::contains).collect(Collectors.toList());
 
-    Future<List<Roles>> getRegisteredRoles =
-        pool.withConnection(conn -> conn.preparedQuery(SQL_GET_REG_ROLES).collecting(roleCollect)
-            .execute(Tuple.of(user.getUserId())).map(rows -> rows.value()));
+    if (duplicate.size() != 0) {
+      String dupRoles =
+          duplicate.stream().map(str -> str.name().toLowerCase()).collect(Collectors.joining(", "));
 
-    Future<String> checkOrgRequired = getRegisteredRoles.compose(registeredRoles -> {
-
-      List<Roles> duplicate =
-          registeredRoles.stream().filter(requestedRoles::contains).collect(Collectors.toList());
-
-      if (duplicate.size() != 0) {
-        String dupRoles = duplicate.stream().map(str -> str.name().toLowerCase())
-            .collect(Collectors.joining(", "));
-
-        Response r = new ResponseBuilder().status(400).type(URN_ALREADY_EXISTS)
-            .title(ERR_TITLE_ROLE_EXISTS).detail(ERR_DETAIL_ROLE_EXISTS + dupRoles).build();
-        handler.handle(Future.succeededFuture(r.toJson()));
-        return Future.failedFuture(COMPOSE_FAILURE);
-      }
-
-      /* If already registered as provider/delegate do not check org ID */
-      if (registeredRoles.contains(Roles.PROVIDER) || registeredRoles.contains(Roles.DELEGATE)) {
-        return Future.succeededFuture(NO_ORG_CHECK);
-      }
-
-      /* If consumer and to add role of provider/delegate, orgId required */
-      if (requestedRoles.contains(Roles.PROVIDER) || requestedRoles.contains(Roles.DELEGATE)) {
-        if (orgId.toString().equals(NIL_UUID)) {
-          Response r = new ResponseBuilder().status(400).type(URN_MISSING_INFO)
-              .title(ERR_TITLE_ORG_ID_REQUIRED).detail(ERR_DETAIL_ORG_ID_REQUIRED).build();
-          handler.handle(Future.succeededFuture(r.toJson()));
-          return Future.failedFuture(COMPOSE_FAILURE);
-        }
-      }
-
-      return pool.withConnection(
-          conn -> conn.preparedQuery(SQL_FIND_ORG_BY_ID).execute(Tuple.of(orgId.toString())).map(
-              rows -> rows.iterator().hasNext() ? rows.iterator().next().getString("url") : null));
-    });
+      Response r = new ResponseBuilder().status(400).type(URN_ALREADY_EXISTS)
+          .title(ERR_TITLE_ROLE_EXISTS).detail(ERR_DETAIL_ROLE_EXISTS + dupRoles).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
 
     Future<String> email = kc.getEmailId(user.getKeycloakId());
+    Future<String> checkOrgRequired;
+
+    /* currently, org_id is needed only when a consumer wants to register as a delegate */
+    if (registeredRoles.containsAll(List.of(Roles.CONSUMER))
+        && requestedRoles.containsAll(List.of(Roles.DELEGATE))) {
+      if (orgId.toString().equals(NIL_UUID)) {
+        Response r = new ResponseBuilder().status(400).type(URN_MISSING_INFO)
+            .title(ERR_TITLE_ORG_ID_REQUIRED).detail(ERR_DETAIL_ORG_ID_REQUIRED).build();
+        handler.handle(Future.succeededFuture(r.toJson()));
+        return this;
+      }
+      checkOrgRequired = pool.withConnection(
+          conn -> conn.preparedQuery(SQL_FIND_ORG_BY_ID).execute(Tuple.of(orgId.toString())).map(
+              rows -> rows.iterator().hasNext() ? rows.iterator().next().getString("url") : null));
+    } else {
+      checkOrgRequired = Future.succeededFuture(NO_ORG_CHECK);
+    }
 
     Future<Void> validateOrg = CompositeFuture.all(checkOrgRequired, email).compose(x -> {
       String url = (String) x.list().get(0);
@@ -525,13 +510,8 @@ public class RegistrationServiceImpl implements RegistrationService {
         response.put(RESP_ORG, details);
       }
 
-      String title = SUCC_TITLE_UPDATED_USER_ROLES;
-      if (requestedRoles.contains(Roles.PROVIDER)) {
-        title = title + PROVIDER_PENDING_MESG;
-      }
-
-      Response r = new ResponseBuilder().type(URN_SUCCESS).title(title).status(200)
-          .objectResults(response).build();
+      Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_UPDATED_USER_ROLES)
+          .status(200).objectResults(response).build();
       handler.handle(Future.succeededFuture(r.toJson()));
     }).onFailure(e -> {
       if (e.getMessage().equals(COMPOSE_FAILURE)) {
