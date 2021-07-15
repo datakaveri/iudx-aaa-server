@@ -1,12 +1,14 @@
 package iudx.aaa.server.token;
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.apiserver.IntrospectToken;
 import iudx.aaa.server.apiserver.RequestToken;
 import iudx.aaa.server.apiserver.RevokeToken;
+import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 
@@ -22,7 +24,7 @@ public class RequestPayload {
       .put("clientSecret","48434da1-411d-42d6-894a-557fd5b9965e")
       .put("itemId", "item-1")
       .put("itemType", "ResourceGroup")
-      .put("role", "provider");
+      .put("role", "consumer");
   
   public static JsonObject invalidClientId = validPayload.copy().put("clientId", "0343dab6-aa61-4024-a6ff-3b52e8d488f1");
   
@@ -62,6 +64,25 @@ public class RequestPayload {
     return new User(userBuilder);
   }
   
+  public static User clientFlowUser() {
+    UUID kid = UUID.fromString("7539b9a4-9484-4efb-9a61-4c6a971df04d");
+    UUID userId = UUID.fromString("32a4b979-4f4a-4c44-b0c3-2fe109952b5f");
+    List<Roles> roles = RequestPayload.processRoles(new JsonArray().add("CONSUMER"));
+    
+    User.UserBuilder userBuilder = new UserBuilder().userId(userId).keycloakId(kid).roles(roles);
+    return new User(userBuilder);
+  }
+  
+  public static User oidcFlowUser() {
+    UUID kid = UUID.fromString("c46e7a5d-7c2d-471e-8222-6a59a5095e7a");
+    UUID userId = UUID.fromString("a13eb955-c691-4fd3-b200-f18bc78810b5");
+    List<Roles> roles = RequestPayload.processRoles(new JsonArray("[\"delegate\",\"provider\"]"));
+
+    User.UserBuilder userBuilder =
+        new UserBuilder().userId(userId).keycloakId(kid).roles(roles).name("good", "bye");
+    return new User(userBuilder);
+  }
+  
   public static RequestToken mapToReqToken(JsonObject request) {
     return request.copy().mapTo(RequestToken.class);
   }
@@ -72,6 +93,15 @@ public class RequestPayload {
   
   public static IntrospectToken mapToInspctToken(JsonObject request) {
     return request.copy().mapTo(IntrospectToken.class);
+  }
+  
+  public static List<Roles> processRoles(JsonArray role) {
+    List<Roles> roles = role.stream()
+        .filter(a -> Roles.exists(a.toString()))
+        .map(a -> Roles.valueOf(a.toString()))
+        .collect(Collectors.toList());
+    
+    return roles;
   }
   
 }

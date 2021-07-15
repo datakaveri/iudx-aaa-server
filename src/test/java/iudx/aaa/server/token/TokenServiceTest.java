@@ -131,7 +131,7 @@ public class TokenServiceTest {
   void createTokenSuccess(VertxTestContext testContext) {
 
     mockPolicy.setResponse("valid");
-    tokenService.createToken(mapToReqToken(validPayload),
+    tokenService.createToken(mapToReqToken(validPayload), clientFlowUser(),
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_SUCCESS, response.getString("type"));
           testContext.completeNow();
@@ -143,31 +143,7 @@ public class TokenServiceTest {
   void createTokenFailed01(VertxTestContext testContext) {
 
     mockPolicy.setResponse("invalid");
-    tokenService.createToken(mapToReqToken(validPayload),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
-          testContext.completeNow();
-        })));
-  }
-
-  @Test
-  @DisplayName("createToken [Failed-02 invalidClientSecret]")
-  void createTokenFailed02(VertxTestContext testContext) {
-
-    mockPolicy.setResponse("valid");
-    tokenService.createToken(mapToReqToken(invalidClientSecret),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
-          testContext.completeNow();
-        })));
-  }
-
-  @Test
-  @DisplayName("createToken [Failed-03 invalidClientId]")
-  void createTokenFailed03(VertxTestContext testContext) {
-
-    mockPolicy.setResponse("valid");
-    tokenService.createToken(mapToReqToken(invalidClientId),
+    tokenService.createToken(mapToReqToken(validPayload),clientFlowUser(),
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
           testContext.completeNow();
@@ -179,7 +155,7 @@ public class TokenServiceTest {
   void createTokenFailed04(VertxTestContext testContext) {
 
     mockPolicy.setResponse("valid");
-    tokenService.createToken(mapToReqToken(undefinedRole),
+    tokenService.createToken(mapToReqToken(undefinedRole), clientFlowUser(),
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_INVALID_ROLE, response.getString(TYPE));
           testContext.completeNow();
@@ -265,12 +241,13 @@ public class TokenServiceTest {
   @Test
   @DisplayName("validateToken [Success]")
   void validateTokenSuccess(VertxTestContext testContext) {
-    
+
     mockPolicy.setResponse("valid");
-    tokenService.validateToken(mapToInspctToken(validTipPayload), testContext.succeeding(response -> testContext.verify(() -> {
-      assertEquals(URN_SUCCESS, response.getString(TYPE));
-      testContext.completeNow();
-    })));
+    tokenService.validateToken(mapToInspctToken(validTipPayload),
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_SUCCESS, response.getString(TYPE));
+          testContext.completeNow();
+        })));
   }
   
   @Test
