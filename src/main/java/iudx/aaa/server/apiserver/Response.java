@@ -77,15 +77,24 @@ public class Response {
     if (this.arrayResults != null) {
       j.put("results", this.arrayResults.copy());
     }
+    
     if (this.objectResults != null) {
       j.put("results", this.objectResults.copy());
     }
+    
     if (this.detail != null) {
       j.put("detail", this.detail);
     }
-    j.put("status", this.status);
+    
+    if(this.status != 0) {
+      j.put("status", this.status); 
+    }
 
     return j;
+  }
+  
+  public String toJsonString() {
+    return toJson().encode();
   }
 
   public Response(ResponseBuilder builder) {

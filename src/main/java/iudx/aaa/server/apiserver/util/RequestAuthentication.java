@@ -1,17 +1,15 @@
 package iudx.aaa.server.apiserver.util;
 
-import static iudx.aaa.server.apiserver.util.Constants.*;
-import java.util.Arrays;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.http.RequestOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
@@ -21,21 +19,29 @@ import io.vertx.ext.auth.oauth2.OAuth2FlowType;
 import io.vertx.ext.auth.oauth2.OAuth2Options;
 import io.vertx.ext.auth.oauth2.providers.KeycloakAuth;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.client.HttpResponse;
-import io.vertx.ext.web.client.WebClient;
-import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.pgclient.PgPool;
-import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
+import iudx.aaa.server.apiserver.Response;
+import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 
+import static iudx.aaa.server.apiserver.util.Constants.*;
+import static iudx.aaa.server.token.Constants.INVALID_CLIENT_ID_SEC;
+import static iudx.aaa.server.token.Constants.LOG_DB_ERROR;
+import static iudx.aaa.server.token.Constants.LOG_UNAUTHORIZED;
+import static iudx.aaa.server.token.Constants.LOG_USER_SECRET;
+import static iudx.aaa.server.token.Constants.URN_INVALID_INPUT;
+
+/**
+ * Handles Authentication of token, clientId, creation of User Objects.
+ *
+ */
 public class RequestAuthentication implements Handler<RoutingContext> {
   
   private static final Logger LOGGER = LogManager.getLogger(RequestAuthentication.class);
   private Vertx vertx;
   private PgPool pgPool;
-  private WebClient client;
   private JsonObject keycloakOptions;
   private OAuth2Auth keycloak;
   
@@ -43,118 +49,160 @@ public class RequestAuthentication implements Handler<RoutingContext> {
     this.vertx = vertx;
     this.pgPool = pgPool;
     this.keycloakOptions = keycloakOptions;
-
-    WebClientOptions clientOptions =
-        new WebClientOptions().setSsl(true).setVerifyHost(false).setTrustAll(true);
-
-    client = WebClient.create(vertx, clientOptions);
     keyCloackAuth();
-
   }
-
-  /*
-   * public static RequestAuthentication create(Vertx vertx, PgPool pgPool) {
-   * RequestAuthentication.vertx = vertx; RequestAuthentication.pgPool = pgPool;
-   * 
-   * WebClientOptions clientOptions = new WebClientOptions() .setSsl(true) .setVerifyHost(false)
-   * .setTrustAll(true);
-   * 
-   * client = WebClient.create(vertx,clientOptions);
-   * 
-   * return new RequestAuthentication(); }
-   */
 
   @Override
   public void handle(RoutingContext routingContext) {
 
-    HttpServerRequest request = routingContext.request();
     String token = routingContext.request().getHeader(HEADER_TOKEN);
     JsonObject requestBody = routingContext.getBodyAsJson();
     JsonObject credentials = new JsonObject().put("access_token", token);
     iudx.aaa.server.apiserver.User.UserBuilder user = new UserBuilder();
 
+    /* Handles OIDC Token Flow */
     if (token != null && !token.isBlank()) {
-      keycloak.authenticate(credentials).compose(mapper -> {
+      keycloak.authenticate(credentials).onFailure(authHandler -> {
+        Response rs = new ResponseBuilder().status(401).type(URN_INVALID_AUTH_TOKEN)
+            .title(TOKEN_FAILED).detail(authHandler.getLocalizedMessage()).build();
+        routingContext.fail(new Throwable(rs.toJsonString()));
+        routingContext.end();
 
-        LOGGER.debug("JWT------- SUccess: " + mapper.attributes());
+      }).compose(mapper -> {
+        LOGGER.info("Info: JWT authenticated");
         User cred = User.create(new JsonObject().put("access_token", token));
         return keycloak.userInfo(cred);
+
       }).compose(mapper -> {
-        String kId = mapper.getString("sub");
-        String[] name = mapper.getString("name").split(" ");
-        
+        LOGGER.debug("Info: UserInfo fetched");
+        String kId = mapper.getString(SUB);
         user.keycloakId(kId);
-        user.name(name[0], name[1]);
+        
+        String[] name = mapper.getString(NAME," ").split(" ");
+        if (name.length == 2) {
+          user.name(name[0], name[1]);
+        } else {
+          user.name(String.join(" ", name).strip(), null);
+        }
+        
         return pgSelectUser(SQL_GET_USER_ROLES, kId);
+        
       }).onComplete(kcHandler -> {
         if (kcHandler.succeeded()) {
           JsonObject result = kcHandler.result();
-          user.userId(result.getString("id"));
-          user.roles(Arrays.asList(Roles.values()));
-          LOGGER.debug("USER----: " +"" );
-          routingContext.next();
-        } else {
-          LOGGER.debug("USER----: " + kcHandler.cause());
-          routingContext.end();
+          
+          if (!result.isEmpty()) {
+            user.userId(result.getString(ID));
+            user.roles(processRoles(result.getJsonArray(ROLES)));
+          }
+          
+          routingContext.put(USER, user.build()).next();
+        } else if(kcHandler.failed()) {
+          LOGGER.error("Fail: Request validation and authentication; " + kcHandler.cause());
+          Response rs = new ResponseBuilder().status(500)
+              .title(INTERNAL_SVR_ERR).detail(kcHandler.cause().getLocalizedMessage()).build();
+          routingContext.fail(new Throwable(rs.toJsonString()));
         }
       });
+      
+      /* Handles ClientId Flow */
+    } else if(requestBody.containsKey(CLIENT_ID)){
+      String clientId = requestBody.getString(CLIENT_ID);
+      String clientSecret = requestBody.getString(CLIENT_SECRET);
+      
+      if(clientId != null && !clientId.isBlank()) {
+        
+        pgSelectUser(SQL_GET_KID_ROLES, clientId).onComplete(dbHandler -> {
+          if (dbHandler.failed()) {
+            LOGGER.error(LOG_DB_ERROR + dbHandler.cause());
+          } else if (dbHandler.succeeded()) {
+            if (dbHandler.result().isEmpty()) {
+              Response rs = new ResponseBuilder().status(401).type(URN_MISSING_AUTH_TOKEN)
+                  .title(TOKEN_FAILED).detail(TOKEN_FAILED).build();
+              routingContext.fail(new Throwable(rs.toJsonString()));
+              routingContext.end();
+            }
+          }
+
+          JsonObject result = dbHandler.result();
+          String dbClientSecret = result.getString("client_secret");
+          
+          /* Validating clientSecret hash */
+          boolean valid = false;
+          try {
+            valid = OpenBSDBCrypt.checkPassword(dbClientSecret,
+                clientSecret.getBytes(StandardCharsets.UTF_8));
+          } catch (Exception e) {
+            LOGGER.error(LOG_USER_SECRET + e.getLocalizedMessage());
+            Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+                .title(INVALID_CLIENT_ID_SEC).detail(INVALID_CLIENT_ID_SEC).build();
+            routingContext.fail(new Throwable(resp.toJson().toString()));
+            return;
+          }
+
+          if (valid == Boolean.FALSE) {
+            LOGGER.error(LOG_UNAUTHORIZED + INVALID_CLIENT_ID_SEC);
+            Response resp = new ResponseBuilder().status(401).type(URN_INVALID_INPUT)
+                .title(INVALID_CLIENT_ID_SEC).detail(INVALID_CLIENT_ID_SEC).build();
+            routingContext.fail(new Throwable(resp.toJson().toString()));
+            return;
+          }
+          
+          user.keycloakId(result.getString(KID))
+              .userId(result.getString(ID))
+              .roles(processRoles(result.getJsonArray(ROLES)));
+          
+          routingContext.put(USER, user.build()).next();
+        });
+      }
     } else {
-      routingContext.end();
+      LOGGER.error("Fail: {}; {}",MISSING_TOKEN_CLIENT,"null clientId/token");
+      Response rs = new ResponseBuilder().status(401).type(URN_MISSING_AUTH_TOKEN)
+          .title(MISSING_TOKEN_CLIENT).detail(MISSING_TOKEN_CLIENT).build();
+      routingContext.fail(new Throwable(rs.toJsonString()));
     }
   }
   
-  Future<JsonObject> httpPostFormAsync(String token) {
-    Promise<JsonObject> promise = Promise.promise();
-    RequestOptions options = new RequestOptions(keycloakOptions);
-
-    options.addHeader("Authorization", "Bearer " + token);
-
-    client.request(HttpMethod.GET, options).send(resHandler -> {
-      if (resHandler.succeeded()) {
-        HttpResponse<Buffer> results = resHandler.result();
-        if (results.statusCode() == 200) {
-          promise.complete(results.bodyAsJsonObject());
-        } else {
-          promise.fail(results.bodyAsString());
-        }
-      } else if (resHandler.failed()) {
-        promise.fail(resHandler.cause());
-      }
-    });
-
-    return null;
-  }
-  
+  /**
+   * Creates KeyCloack provider using configurations.
+   */
   public void keyCloackAuth() {
-    String site = keycloakOptions.getString("site");
+    String site = keycloakOptions.getString(SITE);
     String realm = site.substring(site.lastIndexOf('/') + 1);
     
+    /* Options for OAuth2, KeyCloack. */
     OAuth2Options options = new OAuth2Options()
         .setFlow(OAuth2FlowType.CLIENT)
-        .setClientID(keycloakOptions.getString("clientId"))
-        .setClientSecret(keycloakOptions.getString("clientSecret"))
+        .setClientID(keycloakOptions.getString(CLIENT_ID))
+        .setClientSecret(keycloakOptions.getString(CLIENT_SECRET))
         .setTenant(realm)
         .setSite(site)
-        .setJWTOptions(new JWTOptions().setLeeway(keycloakOptions.getInteger("jwtLeeway")));
+        .setJWTOptions(new JWTOptions().setLeeway(keycloakOptions.getInteger(JWT_LEEWAY)));
     
-    options.getHttpClientOptions().setSsl(true)
-    .setVerifyHost(false)
-    .setTrustAll(true);
+    options.getHttpClientOptions().setSsl(true).setVerifyHost(false).setTrustAll(true);
 
+    /* Discovers the keycloack instance */
     KeycloakAuth.discover(vertx, options, discover -> {
       if (discover.succeeded()) {
         keycloak = discover.result();
       } else {
-        LOGGER.error("JWT ERROR: " + discover.cause());
+        LOGGER.error(LOG_FAILED_DISCOVERY + discover.cause());
       }
     });
   } 
   
-  Future<JsonObject> pgSelectUser(String query, String userId) {
+  /**
+   * Handles database queries.
+   * @param sql query
+   * @param if of the element
+   * @return Future promise which is JsonObject
+   */
+  public Future<JsonObject> pgSelectUser(String query, String id) {
 
     Promise<JsonObject> promise = Promise.promise();
-    pgPool.withConnection(connection -> connection.preparedQuery(query).execute(Tuple.of(userId))
-        .map(rows -> rows.iterator().next().toJson()).onComplete(handler -> {
+    pgPool.withConnection(connection -> connection.preparedQuery(query).execute(Tuple.of(id))
+        .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson() : new JsonObject())
+        .onComplete(handler -> {
           if (handler.succeeded()) {
             JsonObject details = handler.result();
             promise.complete(details);
@@ -163,5 +211,19 @@ public class RequestAuthentication implements Handler<RoutingContext> {
           }
         }));
     return promise.future();
+  }
+  
+  /**
+   * Creates Roles enum.
+   * @param role
+   * @return List having Roles
+   */
+  public List<Roles> processRoles(JsonArray role) {
+    List<Roles> roles = role.stream()
+        .filter(a -> Roles.exists(a.toString()))
+        .map(a -> Roles.valueOf(a.toString()))
+        .collect(Collectors.toList());
+    
+    return roles;
   }
 }

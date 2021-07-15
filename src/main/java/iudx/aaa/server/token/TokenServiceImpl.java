@@ -3,7 +3,6 @@ package iudx.aaa.server.token;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -20,12 +19,13 @@ import iudx.aaa.server.apiserver.IntrospectToken;
 import iudx.aaa.server.apiserver.RequestToken;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.RevokeToken;
-import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.policy.PolicyService;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static iudx.aaa.server.token.Constants.*;
-import java.nio.charset.StandardCharsets;
 
 /**
  * The Token Service Implementation.
@@ -60,86 +60,41 @@ public class TokenServiceImpl implements TokenService {
    * {@inheritDoc}
    */
   @Override
-  public TokenService createToken(RequestToken requestToken, Handler<AsyncResult<JsonObject>> handler) {
+  public TokenService createToken(RequestToken requestToken, User user, Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug(REQ_RECEIVED);
 
-    String clientId = requestToken.getClientId();
-    String clientSecret = requestToken.getClientSecret();
     String role = StringUtils.upperCase(requestToken.getRole());
-    
-    JsonObject request=JsonObject.mapFrom(requestToken);
-    Tuple tuple = Tuple.of(clientId);
-    
-    /* Get and verify the clientId from DB*/
-    pgSelelctQuery(GET_USER,tuple).onComplete(dbHandler -> {
-      if (dbHandler.failed()) {
-        LOGGER.error(LOG_DB_ERROR + dbHandler.cause());
-        handler.handle(Future.failedFuture(INTERNAL_SVR_ERR));
+    List<String> roles = user.getRoles().stream().map(r -> r.name()).collect(Collectors.toList());
+    JsonObject request = JsonObject.mapFrom(requestToken);
 
-      } else if (dbHandler.succeeded()) {
-        if (dbHandler.result().size() != 1) {
-          LOGGER.error(LOG_UNAUTHORIZED + INVALID_CLIENT_ID_SEC);
-          Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-              .title(INVALID_CLIENT_ID_SEC).detail(INVALID_CLIENT_ID_SEC).build();
-          handler.handle(Future.succeededFuture(resp.toJson()));
-          return;
-        }
+    /* Verify the user role */
+    if (!roles.contains(role)) {
+      LOGGER.error(LOG_UNAUTHORIZED + INVALID_ROLE);
+      Response resp = new ResponseBuilder().status(400).type(URN_INVALID_ROLE).title(INVALID_ROLE)
+          .detail(INVALID_ROLE).build();
+      handler.handle(Future.succeededFuture(resp.toJson()));
+      return this;
+    }
 
-        JsonObject result = dbHandler.result().getJsonObject(0);
-        String dbClientSecret = result.getString("client_secret");
+    request.put(USER_ID, user.getUserId());
+    policyService.verifyPolicy(request, policyHandler -> {
+      if (policyHandler.succeeded()) {
 
-        /* Validating clientSecret hash */
-        boolean valid = false;
-        try {
-          valid = OpenBSDBCrypt.checkPassword(dbClientSecret,
-              clientSecret.getBytes(StandardCharsets.UTF_8));
-        } catch (Exception e) {
-          LOGGER.error(LOG_USER_SECRET + e.getLocalizedMessage());
-          Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-              .title(INVALID_CLIENT_ID_SEC).detail(INVALID_CLIENT_ID_SEC).build();
-          handler.handle(Future.succeededFuture(resp.toJson()));
-          return;
-        }
+        request.mergeIn(policyHandler.result(), true);
+        JsonObject jwt = getJwt(request);
 
-        if (valid == Boolean.FALSE) {
-          LOGGER.error(LOG_UNAUTHORIZED + INVALID_CLIENT_ID_SEC);
-          Response resp = new ResponseBuilder().status(401).type(URN_INVALID_INPUT)
-              .title(INVALID_CLIENT_ID_SEC).detail(INVALID_CLIENT_ID_SEC).build();
-          handler.handle(Future.succeededFuture(resp.toJson()));
-          return;
-        }
+        LOGGER.info(LOG_TOKEN_SUCC);
+        Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
+            .arrayResults(new JsonArray().add(jwt)).build();
+        handler.handle(Future.succeededFuture(resp.toJson()));
 
-        /* Verify the user role */
-        if (!Roles.exists(role)) {
-          LOGGER.error(LOG_UNAUTHORIZED + INVALID_ROLE);
-          Response resp = new ResponseBuilder().status(400).type(URN_INVALID_ROLE)
-              .title(INVALID_ROLE).detail(INVALID_ROLE).build();
-          handler.handle(Future.succeededFuture(resp.toJson()));
-          return;
-        }
-
-        request.put(USER_ID, result.getString("user_id"));
-        policyService.verifyPolicy(request, policyHandler -> {
-          if (policyHandler.succeeded()) {
-
-            request.mergeIn(policyHandler.result(), true);
-            JsonObject jwt = getJwt(request);
-
-            LOGGER.info(LOG_TOKEN_SUCC);
-            Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
-                .arrayResults(new JsonArray().add(jwt)).build();
-            handler.handle(Future.succeededFuture(resp.toJson()));
-
-          } else if (policyHandler.failed()) {
-            LOGGER.error(LOG_UNAUTHORIZED + INVALID_POLICY);
-            Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                .title(INVALID_POLICY).detail(INVALID_POLICY).build();
-            handler.handle(Future.succeededFuture(resp.toJson()));
-          }
-        });
+      } else if (policyHandler.failed()) {
+        LOGGER.error(LOG_UNAUTHORIZED + INVALID_POLICY);
+        Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+            .title(INVALID_POLICY).detail(INVALID_POLICY).build();
+        handler.handle(Future.succeededFuture(resp.toJson()));
       }
     });
-    
     return this;
   }
 

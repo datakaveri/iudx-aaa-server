@@ -1,17 +1,14 @@
 package iudx.aaa.server.apiserver;
 
 import static iudx.aaa.server.apiserver.util.Constants.*;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import org.apache.http.client.protocol.RequestAuthCache;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
@@ -25,12 +22,13 @@ import io.vertx.ext.web.handler.CorsHandler;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.User.UserBuilder;
+import iudx.aaa.server.apiserver.util.FailureHandler;
 import iudx.aaa.server.apiserver.util.RequestAuthentication;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.token.TokenService;
-import iudx.aaa.server.admin.AdminService;
 
 /**
  * The AAA Server API Verticle.
@@ -73,12 +71,10 @@ public class ApiServerVerticle extends AbstractVerticle {
   private static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
   private static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
   private static final String TOKEN_SERVICE_ADDRESS = "iudx.aaa.token.service";
-  private static final String ADMIN_SERVICE_ADDRESS = "iudx.aaa.admin.service";
 
   private PolicyService policyService;
   private RegistrationService registrationService;
   private TokenService tokenService;
-  private AdminService adminService;
 
   /**
    * This method is used to start the Verticle. It deploys a verticle in a cluster, reads the
@@ -98,7 +94,6 @@ public class ApiServerVerticle extends AbstractVerticle {
     databaseUserName = config().getString(DATABASE_USERNAME);
     databasePassword = config().getString(DATABASE_PASSWORD);
     poolSize = Integer.parseInt(config().getString(POOLSIZE));
-    keystorePassword = config().getString(KEYSTPRE_PASSWORD);
     JsonObject keycloakOptions = config().getJsonObject(KEYCLOACK_OPTIONS);
     
     /* Set Connection Object */
@@ -143,19 +138,26 @@ public class ApiServerVerticle extends AbstractVerticle {
     router.route().handler(BodyHandler.create());
     
     RequestAuthentication reqAuth = new RequestAuthentication(vertx, pgPool,keycloakOptions);
+    FailureHandler failureHandler = new FailureHandler();
     
     //Create token
-    router.post(API_TOKEN).consumes(MIME_APPLICATION_JSON)
-    .handler(reqAuth)
-    .handler(this::createTokenHandler);
-    
-    //Revoke Token
-    router.post(API_REVOKE_TOKEN).consumes(MIME_APPLICATION_JSON)
-    .handler(this::revokeTokenHandler);
-    
-    //Introspect token
-    router.post(API_INTROSPECT_TOKEN).consumes(MIME_APPLICATION_JSON)
-    .handler(this::validateTokenHandler);
+    router.post(API_TOKEN)
+          .consumes(MIME_APPLICATION_JSON)
+          .handler(reqAuth)
+          .handler(this::createTokenHandler)
+          .failureHandler(failureHandler);
+
+    // Revoke Token
+    router.post(API_REVOKE_TOKEN)
+          .consumes(MIME_APPLICATION_JSON)
+          .handler(this::revokeTokenHandler)
+          .failureHandler(failureHandler);
+
+    // Introspect token
+    router.post(API_INTROSPECT_TOKEN)
+          .consumes(MIME_APPLICATION_JSON)
+          .handler(this::validateTokenHandler)
+          .failureHandler(failureHandler);
 
     /**
      * Documentation routes
@@ -175,18 +177,15 @@ public class ApiServerVerticle extends AbstractVerticle {
     
 
     /* Read ssl configuration. */
-    isSSL = config().getBoolean("ssl");
+    isSSL = config().getBoolean(SSL);
     HttpServerOptions serverOptions = new HttpServerOptions();
 
     if (isSSL) {
       LOGGER.debug("Info: Starting HTTPs server");
 
       /* Read the configuration and set the HTTPs server properties. */
-
-      keystore = config().getString("keystore");
-      keystorePassword = config().getString("keystorePassword");
-
-      /* Setup the HTTPs server properties, APIs and port. */
+      keystore = config().getString(KEYSTORE_PATH);
+      keystorePassword = config().getString(KEYSTPRE_PASSWORD);
 
       serverOptions.setSsl(true)
           .setKeyStoreOptions(new JksOptions().setPath(keystore).setPassword(keystorePassword));
@@ -195,7 +194,6 @@ public class ApiServerVerticle extends AbstractVerticle {
       LOGGER.debug("Info: Starting HTTP server");
 
       /* Setup the HTTP server properties, APIs and port. */
-
       serverOptions.setSsl(false);
     }
 
@@ -207,9 +205,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
     registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
     tokenService = TokenService.createProxy(vertx, TOKEN_SERVICE_ADDRESS);
-    adminService = AdminService.createProxy(vertx, ADMIN_SERVICE_ADDRESS);
   }
-  
   
   /**
    * Handler to handle create token request.
@@ -218,59 +214,55 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void createTokenHandler(RoutingContext context) {
     JsonObject tokenRequestJson = context.getBodyAsJson();
-    
+
+    /* Mapping request body to Object */
     RequestToken requestTokenDTO = tokenRequestJson.mapTo(RequestToken.class);
-    
-    List<Roles> role1 = new ArrayList<Roles>(Arrays.asList(Roles.values()));
-    List<Roles> role = Arrays.asList(Roles.values());
-    User.UserBuilder a = new UserBuilder().roles(role);
-    User user = new User(a);
-    
-    tokenService.createToken(requestTokenDTO, handler -> {
+    User user = context.get(USER);
+
+    tokenService.createToken(requestTokenDTO, user, handler -> {
       if (handler.succeeded()) {
-        context.response().putHeader("content-type", "application/json").setStatusCode(200)
-        .end(handler.result().toString());
+        processResponse(context.response(), handler.result());
       } else {
-        handler.cause().printStackTrace();
-        context.response().putHeader("content-type", "application/json").setStatusCode(500)
-            .end(handler.cause().getMessage());
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
       }
     });
   }
   
-  //TODO: For test purpose; Stub code
+  /**
+   * Handle the Token Introspection.
+   * @param context
+   */
   private void validateTokenHandler(RoutingContext context) {
     JsonObject tokenRequestJson = context.getBodyAsJson();
     IntrospectToken introspectToken = tokenRequestJson.mapTo(IntrospectToken.class);
     
     tokenService.validateToken(introspectToken, handler -> {
       if (handler.succeeded()) {
-        context.response().putHeader("content-type", "application/json").setStatusCode(200)
-        .end(handler.result().toString());
+        processResponse(context.response(), handler.result());
       } else {
-        context.response().putHeader("content-type", "application/json").setStatusCode(500)
-            .end(handler.cause().getLocalizedMessage());
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
       }
     });
   }
   
-  //TODO: For test purpose; Stub code
+  /**
+   * Handles the Token revocation.
+   * @param context
+   */
   private void revokeTokenHandler(RoutingContext context) {
-    
-    UUID usrId = UUID.fromString("32a4b979-4f4a-4c44-b0c3-2fe109952b5f");
-    User.UserBuilder a = new UserBuilder().userId(usrId);
-    User user = new User(a);
-    
-    JsonObject tokenRequestJson = context.getBodyAsJson();
-    RevokeToken revokeToken = tokenRequestJson.mapTo(RevokeToken.class);
-    tokenService.revokeToken(revokeToken, user, handler -> {
-      if (handler.succeeded()) {
-        context.response().putHeader("content-type", "application/json").setStatusCode(200)
-        .end(handler.result().toString());
-      } else {
-        context.response().putHeader("content-type", "application/json").setStatusCode(500)
-            .end(handler.cause().getLocalizedMessage());
-      }
-    });
+
+  }
+  
+  private Future<Void> processResponse(HttpServerResponse response, JsonObject msg) {
+    int status = msg.getInteger(STATUS,400);
+    msg.remove(STATUS);
+    response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON);
+    return response.setStatusCode(status).end(msg.toString());
+  }
+  
+  private Future<Void> processResponse(HttpServerResponse response, String msg) {
+    Response rs = new ResponseBuilder().title(INTERNAL_SVR_ERR).detail(msg).build();
+    response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON);
+    return response.setStatusCode(500).end(rs.toJsonString());
   }
 }
