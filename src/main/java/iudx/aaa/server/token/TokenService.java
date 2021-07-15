@@ -48,12 +48,13 @@ public interface TokenService {
    * The createToken implements the token creation operation.
    * 
    * @param requestToken which is a RequestToken
+   * @param user which is User Object
    * @param handler which is a Request Handler
    * @return TokenService which is a Service
    */
 
   @Fluent
-  TokenService createToken(RequestToken requestToke, Handler<AsyncResult<JsonObject>> handler);
+  TokenService createToken(RequestToken requestToke, User user, Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * The revokeToken implements the token revocation operation.

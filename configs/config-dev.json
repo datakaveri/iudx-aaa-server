@@ -69,9 +69,21 @@
 		{
 			"id": "iudx.aaa.server.apiserver.ApiServerVerticle",
 			"ssl": true,
-			"keystore": "configs/keystore.jks",
+			"keystorePath": "configs/keystore.jks",
 			"keystorePassword": "secret",
-			"verticleInstances": 1
+			"verticleInstances": 1,
+			"databaseIP": "139.59.80.176",
+			"databasePort": "5432",
+			"databaseName": "iudx",
+			"databaseUserName": "iudx_user",
+			"databasePassword": "iudx@123",
+			"poolSize": "5",
+			"keycloakOptions": {
+				"site": "https://<host>:<port>/auth/realms/demo",
+				"clientId": "keycloakClientId",
+				"clientSecret": "keycloakClientSecret",
+				"jwtLeeway": 90
+			}
 		}
 	]
 }

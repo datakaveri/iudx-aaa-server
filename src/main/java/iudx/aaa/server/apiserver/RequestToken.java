@@ -1,6 +1,7 @@
 package iudx.aaa.server.apiserver;
 
 import java.util.UUID;
+import javax.annotation.Nullable;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -9,17 +10,18 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
+import static iudx.aaa.server.apiserver.util.Constants.*;
 
 @DataObject(generateConverter = true)
-//@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonIgnoreProperties(ignoreUnknown = true)
 //@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class RequestToken {
 
   @JsonAlias({"clientId"})
-  private UUID clientId;
+  private UUID clientId = UUID.fromString(NIL_UUID);
 
   @JsonAlias("clientSecret")
-  private UUID clientSecret;
+  private UUID clientSecret = UUID.fromString(NIL_UUID);
 
   @JsonAlias("role")
   private String role;
