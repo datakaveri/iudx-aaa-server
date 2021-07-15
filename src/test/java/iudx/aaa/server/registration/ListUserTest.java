@@ -227,27 +227,27 @@ public class ListUserTest {
       assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
       assertEquals(URN_SUCCESS, response.getString("type"));
 
-      JsonObject details = response.getJsonArray("detail").getJsonObject(0);
+      JsonObject result = response.getJsonObject("results");
 
-      JsonObject name = details.getJsonObject("name");
+      JsonObject name = result.getJsonObject("name");
       assertEquals(name.getString("firstName"), userJson.getString("firstName"));
       assertEquals(name.getString("lastName"), userJson.getString("lastName"));
 
-      List<String> returnedRoles = details.getJsonArray("roles").getList();
+      List<String> returnedRoles = result.getJsonArray("roles").getList();
       assertTrue(returnedRoles.containsAll(rolesString));
 
-      JsonArray clients = details.getJsonArray(RESP_CLIENT_ARR);
+      JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
       JsonObject defaultClient = clients.getJsonObject(0);
       assertTrue(clients.size() > 0);
       assertEquals(defaultClient.getString(RESP_CLIENT_ID), userJson.getString("clientId"));
 
-      JsonObject org = details.getJsonObject(RESP_ORG);
+      JsonObject org = result.getJsonObject(RESP_ORG);
       assertEquals(org.getString("url"), userJson.getString("url"));
 
-      assertEquals(details.getString(RESP_PHONE), userJson.getString("phone"));
-      assertEquals(details.getString(RESP_EMAIL), userJson.getString("email"));
-      assertEquals(details.getString("userId"), userJson.getString("userId"));
-      assertEquals(details.getString("keycloakId"), userJson.getString("keycloakId"));
+      assertEquals(result.getString(RESP_PHONE), userJson.getString("phone"));
+      assertEquals(result.getString(RESP_EMAIL), userJson.getString("email"));
+      assertEquals(result.getString("userId"), userJson.getString("userId"));
+      assertEquals(result.getString("keycloakId"), userJson.getString("keycloakId"));
 
       testContext.completeNow();
     })));
@@ -273,26 +273,26 @@ public class ListUserTest {
       assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
       assertEquals(URN_SUCCESS, response.getString("type"));
 
-      JsonObject details = response.getJsonArray("detail").getJsonObject(0);
+      JsonObject result = response.getJsonObject("results");
 
-      JsonObject name = details.getJsonObject("name");
+      JsonObject name = result.getJsonObject("name");
       assertEquals(name.getString("firstName"), userJson.getString("firstName"));
       assertEquals(name.getString("lastName"), userJson.getString("lastName"));
 
-      List<String> returnedRoles = details.getJsonArray("roles").getList();
+      List<String> returnedRoles = result.getJsonArray("roles").getList();
       assertTrue(returnedRoles.containsAll(rolesString));
 
-      JsonArray clients = details.getJsonArray(RESP_CLIENT_ARR);
+      JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
       JsonObject defaultClient = clients.getJsonObject(0);
       assertTrue(clients.size() > 0);
       assertEquals(defaultClient.getString(RESP_CLIENT_ID), userJson.getString("clientId"));
 
-      assertFalse(details.containsKey(RESP_PHONE));
-      assertFalse(details.containsKey(RESP_ORG));
+      assertFalse(result.containsKey(RESP_PHONE));
+      assertFalse(result.containsKey(RESP_ORG));
 
-      assertEquals(details.getString(RESP_EMAIL), userJson.getString("email"));
-      assertEquals(details.getString("userId"), userJson.getString("userId"));
-      assertEquals(details.getString("keycloakId"), userJson.getString("keycloakId"));
+      assertEquals(result.getString(RESP_EMAIL), userJson.getString("email"));
+      assertEquals(result.getString("userId"), userJson.getString("userId"));
+      assertEquals(result.getString("keycloakId"), userJson.getString("keycloakId"));
 
       testContext.completeNow();
     })));
@@ -317,26 +317,26 @@ public class ListUserTest {
       assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
       assertEquals(URN_SUCCESS, response.getString("type"));
 
-      JsonObject details = response.getJsonArray("detail").getJsonObject(0);
+      JsonObject result = response.getJsonObject("results");
 
-      JsonObject name = details.getJsonObject("name");
+      JsonObject name = result.getJsonObject("name");
       assertEquals(name.getString("firstName"), userJson.getString("firstName"));
       assertEquals(name.getString("lastName"), userJson.getString("lastName"));
 
-      assertTrue(details.getJsonArray("roles").isEmpty());
+      assertTrue(result.getJsonArray("roles").isEmpty());
 
-      JsonArray clients = details.getJsonArray(RESP_CLIENT_ARR);
+      JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
       JsonObject defaultClient = clients.getJsonObject(0);
       assertTrue(clients.size() > 0);
       assertEquals(defaultClient.getString(RESP_CLIENT_ID), userJson.getString("clientId"));
 
-      JsonObject org = details.getJsonObject(RESP_ORG);
+      JsonObject org = result.getJsonObject(RESP_ORG);
       assertEquals(org.getString("url"), userJson.getString("url"));
 
-      assertEquals(details.getString(RESP_PHONE), userJson.getString("phone"));
-      assertEquals(details.getString(RESP_EMAIL), userJson.getString("email"));
-      assertEquals(details.getString("userId"), userJson.getString("userId"));
-      assertEquals(details.getString("keycloakId"), userJson.getString("keycloakId"));
+      assertEquals(result.getString(RESP_PHONE), userJson.getString("phone"));
+      assertEquals(result.getString(RESP_EMAIL), userJson.getString("email"));
+      assertEquals(result.getString("userId"), userJson.getString("userId"));
+      assertEquals(result.getString("keycloakId"), userJson.getString("keycloakId"));
 
       testContext.completeNow();
     })));

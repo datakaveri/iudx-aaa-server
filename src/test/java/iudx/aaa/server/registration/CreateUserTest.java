@@ -180,18 +180,20 @@ public class CreateUserTest {
     registrationService.createUser(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(201, response.getInteger("status"));
-          JsonObject details = response.getJsonArray("detail").getJsonObject(0);
+          JsonObject result = response.getJsonObject("results");
 
           assertEquals(Constants.URN_SUCCESS, response.getString("type"));
           assertEquals(Constants.SUCC_TITLE_CREATED_USER, response.getString("title"));
-          assertTrue(details.getJsonArray("roles").getList().contains(Roles.CONSUMER.name()));
-          assertEquals(details.getString("email"), email);
-          assertEquals(details.getString("keycloakId"), keycloakId);
-          assertTrue(details.getString("userId").matches(UUID_REGEX));
-          assertEquals(details.getJsonObject("name").getString("firstName"), "Foo");
-          assertEquals(details.getJsonObject("name").getString("lastName"), "Bar");
+          assertTrue(result.getJsonArray("roles").getList().contains(Roles.CONSUMER.name()));
+          assertEquals(result.getString("email"), email);
+          assertEquals(result.getString("keycloakId"), keycloakId);
+          assertTrue(result.getString("userId").matches(UUID_REGEX));
+          assertEquals(result.getJsonObject("name").getString("firstName"), "Foo");
+          assertEquals(result.getJsonObject("name").getString("lastName"), "Bar");
+          assertEquals(result.getString("phone"), "9989989980");
+          assertTrue(!result.containsKey("organization"));
 
-          JsonObject client = details.getJsonArray("clients").getJsonObject(0);
+          JsonObject client = result.getJsonArray("clients").getJsonObject(0);
           assertTrue(client.getString("clientId").matches(UUID_REGEX));
           assertTrue(client.getString("clientSecret").matches(UUID_REGEX));
           assertEquals(client.getString("client"), Constants.DEFAULT_CLIENT);
@@ -220,19 +222,21 @@ public class CreateUserTest {
     registrationService.createUser(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(201, response.getInteger("status"));
-          JsonObject details = response.getJsonArray("detail").getJsonObject(0);
+          JsonObject result = response.getJsonObject("results");
 
           assertEquals(Constants.URN_SUCCESS, response.getString("type"));
           assertEquals(Constants.SUCC_TITLE_CREATED_USER + Constants.PROVIDER_PENDING_MESG,
               response.getString("title"));
-          assertTrue(details.getJsonArray("roles").size() == 0);
-          assertEquals(details.getString("email"), email);
-          assertEquals(details.getString("keycloakId"), keycloakId);
-          assertTrue(details.getString("userId").matches(UUID_REGEX));
-          assertEquals(details.getJsonObject("name").getString("firstName"), "Foo");
-          assertEquals(details.getJsonObject("name").getString("lastName"), "Bar");
+          assertTrue(result.getJsonArray("roles").size() == 0);
+          assertEquals(result.getString("email"), email);
+          assertEquals(result.getString("keycloakId"), keycloakId);
+          assertTrue(result.getString("userId").matches(UUID_REGEX));
+          assertEquals(result.getJsonObject("name").getString("firstName"), "Foo");
+          assertEquals(result.getJsonObject("name").getString("lastName"), "Bar");
+          assertEquals(result.getString("phone"), "9989989980");
+          assertEquals(result.getJsonObject("organization").getString("url"), url);
 
-          JsonObject client = details.getJsonArray("clients").getJsonObject(0);
+          JsonObject client = result.getJsonArray("clients").getJsonObject(0);
           assertTrue(client.getString("clientId").matches(UUID_REGEX));
           assertTrue(client.getString("clientSecret").matches(UUID_REGEX));
           assertEquals(client.getString("client"), Constants.DEFAULT_CLIENT);
@@ -253,7 +257,7 @@ public class CreateUserTest {
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(email));
 
     JsonObject jsonReq = new JsonObject().put("roles", new JsonArray().add("delegate"))
-        .put("orgId", orgId).put("phone", "9989989980");
+        .put("orgId", orgId);
     RegistrationRequest request = new RegistrationRequest(jsonReq);
 
     User user = new UserBuilder().keycloakId(keycloakId).name("Foo", "Bar").build();
@@ -262,18 +266,20 @@ public class CreateUserTest {
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(201, response.getInteger("status"));
 
-          JsonObject details = response.getJsonArray("detail").getJsonObject(0);
+          JsonObject result = response.getJsonObject("results");
 
           assertEquals(Constants.URN_SUCCESS, response.getString("type"));
           assertEquals(Constants.SUCC_TITLE_CREATED_USER, response.getString("title"));
-          assertEquals(details.getJsonArray("roles"), new JsonArray().add(Roles.DELEGATE.name()));
-          assertEquals(details.getString("email"), email);
-          assertEquals(details.getString("keycloakId"), keycloakId);
-          assertTrue(details.getString("userId").matches(UUID_REGEX));
-          assertEquals(details.getJsonObject("name").getString("firstName"), "Foo");
-          assertEquals(details.getJsonObject("name").getString("lastName"), "Bar");
+          assertEquals(result.getJsonArray("roles"), new JsonArray().add(Roles.DELEGATE.name()));
+          assertEquals(result.getString("email"), email);
+          assertEquals(result.getString("keycloakId"), keycloakId);
+          assertTrue(result.getString("userId").matches(UUID_REGEX));
+          assertEquals(result.getJsonObject("name").getString("firstName"), "Foo");
+          assertEquals(result.getJsonObject("name").getString("lastName"), "Bar");
+          assertTrue(!result.containsKey("phone"));
+          assertEquals(result.getJsonObject("organization").getString("url"), url);
 
-          JsonObject client = details.getJsonArray("clients").getJsonObject(0);
+          JsonObject client = result.getJsonArray("clients").getJsonObject(0);
           assertTrue(client.getString("clientId").matches(UUID_REGEX));
           assertTrue(client.getString("clientSecret").matches(UUID_REGEX));
           assertEquals(client.getString("client"), Constants.DEFAULT_CLIENT);
@@ -304,21 +310,23 @@ public class CreateUserTest {
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(201, response.getInteger("status"));
 
-          JsonObject details = response.getJsonArray("detail").getJsonObject(0);
-
+          JsonObject result = response.getJsonObject("results");
+          
           assertEquals(Constants.URN_SUCCESS, response.getString("type"));
           assertEquals(Constants.SUCC_TITLE_CREATED_USER + Constants.PROVIDER_PENDING_MESG,
               response.getString("title"));
-          List<String> roles = details.getJsonArray("roles").getList();
+          List<String> roles = result.getJsonArray("roles").getList();
           assertTrue(roles.containsAll(List.of(Roles.DELEGATE.name(), Roles.CONSUMER.name())));
 
-          assertEquals(details.getString("email"), email);
-          assertEquals(details.getString("keycloakId"), keycloakId);
-          assertTrue(details.getString("userId").matches(UUID_REGEX));
-          assertEquals(details.getJsonObject("name").getString("firstName"), "Foo");
-          assertEquals(details.getJsonObject("name").getString("lastName"), "Bar");
+          assertEquals(result.getString("email"), email);
+          assertEquals(result.getString("keycloakId"), keycloakId);
+          assertTrue(result.getString("userId").matches(UUID_REGEX));
+          assertEquals(result.getJsonObject("name").getString("firstName"), "Foo");
+          assertEquals(result.getJsonObject("name").getString("lastName"), "Bar");
+          assertEquals(result.getString("phone"), "9989989980");
+          assertEquals(result.getJsonObject("organization").getString("url"), url);
 
-          JsonObject client = details.getJsonArray("clients").getJsonObject(0);
+          JsonObject client = result.getJsonArray("clients").getJsonObject(0);
           assertTrue(client.getString("clientId").matches(UUID_REGEX));
           assertTrue(client.getString("clientSecret").matches(UUID_REGEX));
           assertEquals(client.getString("client"), Constants.DEFAULT_CLIENT);

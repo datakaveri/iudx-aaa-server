@@ -9,6 +9,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.apiserver.RegistrationRequest;
+import iudx.aaa.server.apiserver.UpdateProfileRequest;
 import iudx.aaa.server.apiserver.User;
 
 /**
@@ -45,7 +46,7 @@ public interface RegistrationService {
   /**
    * createUser implements creation of user profile operation.
    * 
-   * @param request the request body in the form of RegistrationRequestDO
+   * @param request the request body in the form of RegistrationRequest data object
    * @param user the User object i.e. the user calling the API
    * @param handler the request handler which returns a JsonObject
    * @return Registration Service which is a service
@@ -57,8 +58,8 @@ public interface RegistrationService {
   /**
    * The listUser implements the user list operation.
    * 
-   * @param request which is a JsonObject
-   * @param handler which is a Request Handler
+   * @param user the User object i.e. the user calling the API
+   * @param handler the request handler which returns a JsonObject
    * @return RegistrationService which is a Service
    */
 
@@ -67,22 +68,21 @@ public interface RegistrationService {
 
 
   /**
-   * The updateUser implements the user update operation.
+   * The updateUser implements the user update operation. Currently role addition is allowed.
    * 
-   * @param request which is a JsonObject
-   * @param handler which is a Request Handler
+   * @param request the request body in the form of UpdateProfileRequest data object
+   * @param handler the request handler which returns a JsonObject
    * @return RegistrationService which is a Service
    */
 
   @Fluent
-  RegistrationService updateUser(RegistrationRequest request, User user,
+  RegistrationService updateUser(UpdateProfileRequest request, User user,
       Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * The listOrganization implements listing organzations.
    * 
-   * @param request which is a JsonObject
-   * @param handler which is a Request Handler
+   * @param handler the request handler which returns a JsonObject
    * @return RegistrationService which is a Service
    */
 

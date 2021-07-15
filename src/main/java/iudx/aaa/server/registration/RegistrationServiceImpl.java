@@ -9,12 +9,14 @@ import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_USER_PROFILE;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_ID_REQUIRED;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_NO_EXIST;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_NO_MATCH;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ROLE_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_KC;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_USER_PROFILE;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_ORG_ID_REQUIRED;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_ORG_NO_EXIST;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_ORG_NO_MATCH;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_ROLE_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_USER_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_USER_NOT_KC;
 import static iudx.aaa.server.registration.Constants.NIL_PHONE;
@@ -35,9 +37,13 @@ import static iudx.aaa.server.registration.Constants.SQL_FIND_ORG_BY_ID;
 import static iudx.aaa.server.registration.Constants.SQL_FIND_USER_BY_KC_ID;
 import static iudx.aaa.server.registration.Constants.SQL_GET_ALL_ORGS;
 import static iudx.aaa.server.registration.Constants.SQL_GET_CLIENTS_FORMATTED;
+import static iudx.aaa.server.registration.Constants.SQL_GET_ORG_DETAILS;
 import static iudx.aaa.server.registration.Constants.SQL_GET_PHONE_JOIN_ORG;
+import static iudx.aaa.server.registration.Constants.SQL_GET_REG_ROLES;
+import static iudx.aaa.server.registration.Constants.SQL_UPDATE_ORG_ID;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_CREATED_USER;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_ORG_READ;
+import static iudx.aaa.server.registration.Constants.SUCC_TITLE_UPDATED_USER_ROLES;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_USER_READ;
 import static iudx.aaa.server.registration.Constants.URN_ALREADY_EXISTS;
 import static iudx.aaa.server.registration.Constants.URN_INVALID_INPUT;
@@ -59,11 +65,13 @@ import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
+import iudx.aaa.server.apiserver.UpdateProfileRequest;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -112,7 +120,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     if (requestedRoles.contains(Roles.PROVIDER) || requestedRoles.contains(Roles.DELEGATE)) {
       if (orgId.toString().equals(NIL_UUID)) {
         Response r = new ResponseBuilder().status(400).type(URN_MISSING_INFO)
-            .title(ERR_TITLE_ORG_ID_REQUIRED).stringDetail(ERR_DETAIL_ORG_ID_REQUIRED).build();
+            .title(ERR_TITLE_ORG_ID_REQUIRED).detail(ERR_DETAIL_ORG_ID_REQUIRED).build();
         handler.handle(Future.succeededFuture(r.toJson()));
         return this;
       }
@@ -127,7 +135,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         roles.put(r, RoleStatus.APPROVED);
       }
     }
-    /* TODO later on, can check if keycloak ID is not NIL_UUID */
+    /* TODO later on, can check if user ID is not NIL_UUID */
     Future<Integer> checkUserExist =
         pool.withConnection(conn -> conn.preparedQuery(SQL_FIND_USER_BY_KC_ID)
             .execute(Tuple.of(user.getKeycloakId())).map(rows -> rows.size()));
@@ -140,8 +148,8 @@ public class RegistrationServiceImpl implements RegistrationService {
     if (roles.containsKey(Roles.PROVIDER) || roles.containsKey(Roles.DELEGATE)) {
       orgIdToSet = request.getOrgId();
       checkOrgExist = pool.withConnection(
-          conn -> conn.preparedQuery(SQL_FIND_ORG_BY_ID).execute(Tuple.of(orgId.toString()))
-              .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().getString("url") : null));
+          conn -> conn.preparedQuery(SQL_GET_ORG_DETAILS).execute(Tuple.of(orgId.toString())).map(
+              rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson().toString() : null));
     } else {
       checkOrgExist = Future.succeededFuture(NO_ORG_CHECK);
       orgIdToSet = null;
@@ -153,33 +161,38 @@ public class RegistrationServiceImpl implements RegistrationService {
 
           int userRow = (int) arr.list().get(0);
           String emailId = (String) arr.list().get(1);
-          String url = (String) arr.list().get(2);
+          String orgDetails = (String) arr.list().get(2);
 
           if (userRow != 0) {
             Response r = new ResponseBuilder().status(409).type(URN_ALREADY_EXISTS)
-                .title(ERR_TITLE_USER_EXISTS).stringDetail(ERR_DETAIL_USER_EXISTS).build();
+                .title(ERR_TITLE_USER_EXISTS).detail(ERR_DETAIL_USER_EXISTS).build();
             handler.handle(Future.succeededFuture(r.toJson()));
             return Future.failedFuture(COMPOSE_FAILURE);
           }
 
           if (emailId.length() == 0) {
             Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                .title(ERR_TITLE_USER_NOT_KC).stringDetail(ERR_DETAIL_USER_NOT_KC).build();
+                .title(ERR_TITLE_USER_NOT_KC).detail(ERR_DETAIL_USER_NOT_KC).build();
             handler.handle(Future.succeededFuture(r.toJson()));
             return Future.failedFuture(COMPOSE_FAILURE);
           }
 
           String emailDomain = emailId.split("@")[1];
 
-          if (url == null) {
+          if (orgDetails == null) {
             Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                .title(ERR_TITLE_ORG_NO_EXIST).stringDetail(ERR_DETAIL_ORG_NO_EXIST).build();
+                .title(ERR_TITLE_ORG_NO_EXIST).detail(ERR_DETAIL_ORG_NO_EXIST).build();
             handler.handle(Future.succeededFuture(r.toJson()));
             return Future.failedFuture(COMPOSE_FAILURE);
+          } else if (orgDetails == NO_ORG_CHECK) {
+            return Future.succeededFuture(emailId);
+          }
 
-          } else if (!url.equals(emailDomain) && !url.equals(NO_ORG_CHECK)) {
+          String url = new JsonObject(orgDetails).getString("url");
+
+          if (!url.equals(emailDomain)) {
             Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                .title(ERR_TITLE_ORG_NO_MATCH).stringDetail(ERR_DETAIL_ORG_NO_MATCH).build();
+                .title(ERR_TITLE_ORG_NO_MATCH).detail(ERR_DETAIL_ORG_NO_MATCH).build();
             handler.handle(Future.succeededFuture(r.toJson()));
             return Future.failedFuture(COMPOSE_FAILURE);
           }
@@ -241,9 +254,9 @@ public class RegistrationServiceImpl implements RegistrationService {
             .compose(success -> kc.modifyRoles(user.getKeycloakId(), rolesForKc))));
 
     query.onSuccess(success -> {
-      User u = null;
-      u = new UserBuilder().name(user.getName().get("firstName"), user.getName().get("lastName"))
-          .roles(rolesForKc).keycloakId(user.getKeycloakId()).userId(userId.result()).build();
+      User u =
+          new UserBuilder().name(user.getName().get("firstName"), user.getName().get("lastName"))
+              .roles(rolesForKc).keycloakId(user.getKeycloakId()).userId(userId.result()).build();
 
       JsonObject clientDetails = new JsonObject().put(RESP_CLIENT_NAME, DEFAULT_CLIENT)
           .put(RESP_CLIENT_ID, clientId.toString()).put(RESP_CLIENT_SC, clientSecret.toString());
@@ -251,7 +264,14 @@ public class RegistrationServiceImpl implements RegistrationService {
       JsonArray clients = new JsonArray().add(clientDetails);
       JsonObject payload =
           u.toJson().put(RESP_CLIENT_ARR, clients).put(RESP_EMAIL, validation.result());
-      JsonArray resp = new JsonArray().add(payload);
+
+      if (phone != NIL_PHONE) {
+        payload.put(RESP_PHONE, phone);
+      }
+
+      if (checkOrgExist.result() != NO_ORG_CHECK) {
+        payload.put(RESP_ORG, new JsonObject(checkOrgExist.result()));
+      }
 
       String title = SUCC_TITLE_CREATED_USER;
       if (requestedRoles.contains(Roles.PROVIDER)) {
@@ -259,7 +279,7 @@ public class RegistrationServiceImpl implements RegistrationService {
       }
 
       Response r = new ResponseBuilder().type(URN_SUCCESS).title(title).status(201)
-          .arrayDetail(resp).build();
+          .objectResults(payload).build();
       handler.handle(Future.succeededFuture(r.toJson()));
 
       LOGGER.info("Created user profile for " + userId.result());
@@ -288,7 +308,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     if (user.getUserId().equals(NIL_UUID)) {
       Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
-          .title(ERR_TITLE_NO_USER_PROFILE).stringDetail(ERR_DETAIL_NO_USER_PROFILE).build();
+          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
@@ -315,7 +335,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
       if (emailId.length() == 0) {
         Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-            .title(ERR_TITLE_USER_NOT_KC).stringDetail(ERR_DETAIL_USER_NOT_KC).build();
+            .title(ERR_TITLE_USER_NOT_KC).detail(ERR_DETAIL_USER_NOT_KC).build();
         handler.handle(Future.succeededFuture(r.toJson()));
         return;
       }
@@ -334,9 +354,8 @@ public class RegistrationServiceImpl implements RegistrationService {
         response.put(RESP_ORG, details);
       }
 
-      JsonArray arr = new JsonArray().add(response);
       Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_USER_READ).status(200)
-          .arrayDetail(arr).build();
+          .objectResults(response).build();
       handler.handle(Future.succeededFuture(r.toJson()));
     }).onFailure(e -> {
       if (e.getMessage().equals(COMPOSE_FAILURE)) {
@@ -350,10 +369,159 @@ public class RegistrationServiceImpl implements RegistrationService {
   }
 
   @Override
-  public RegistrationService updateUser(RegistrationRequest request, User user,
+  public RegistrationService updateUser(UpdateProfileRequest request, User user,
       Handler<AsyncResult<JsonObject>> handler) {
-    // TODO Auto-generated method stub
-    return null;
+    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+
+    if (user.getUserId().equals(NIL_UUID)) {
+      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
+          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
+
+    List<Roles> requestedRoles = request.getRoles();
+    List<Roles> registeredRoles = user.getRoles();
+    String orgId = request.getOrgId();
+
+    Map<Roles, RoleStatus> roles = new HashMap<Roles, RoleStatus>();
+
+    for (Roles r : requestedRoles) {
+      roles.put(r, RoleStatus.APPROVED);
+    }
+
+    List<Roles> duplicate =
+        registeredRoles.stream().filter(requestedRoles::contains).collect(Collectors.toList());
+
+    if (duplicate.size() != 0) {
+      String dupRoles =
+          duplicate.stream().map(str -> str.name().toLowerCase()).collect(Collectors.joining(", "));
+
+      Response r = new ResponseBuilder().status(400).type(URN_ALREADY_EXISTS)
+          .title(ERR_TITLE_ROLE_EXISTS).detail(ERR_DETAIL_ROLE_EXISTS + dupRoles).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
+
+    Future<String> email = kc.getEmailId(user.getKeycloakId());
+    Future<String> checkOrgRequired;
+
+    /* currently, org_id is needed only when a consumer wants to register as a delegate */
+    if (registeredRoles.containsAll(List.of(Roles.CONSUMER))
+        && requestedRoles.containsAll(List.of(Roles.DELEGATE))) {
+      if (orgId.toString().equals(NIL_UUID)) {
+        Response r = new ResponseBuilder().status(400).type(URN_MISSING_INFO)
+            .title(ERR_TITLE_ORG_ID_REQUIRED).detail(ERR_DETAIL_ORG_ID_REQUIRED).build();
+        handler.handle(Future.succeededFuture(r.toJson()));
+        return this;
+      }
+      checkOrgRequired = pool.withConnection(
+          conn -> conn.preparedQuery(SQL_FIND_ORG_BY_ID).execute(Tuple.of(orgId.toString())).map(
+              rows -> rows.iterator().hasNext() ? rows.iterator().next().getString("url") : null));
+    } else {
+      checkOrgRequired = Future.succeededFuture(NO_ORG_CHECK);
+    }
+
+    Future<Void> validateOrg = CompositeFuture.all(checkOrgRequired, email).compose(x -> {
+      String url = (String) x.list().get(0);
+      String emailId = (String) x.list().get(1);
+
+      String emailDomain = emailId.split("@")[1];
+
+      if (emailId.length() == 0) {
+        Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+            .title(ERR_TITLE_USER_NOT_KC).detail(ERR_DETAIL_USER_NOT_KC).build();
+        handler.handle(Future.succeededFuture(r.toJson()));
+        return Future.failedFuture(COMPOSE_FAILURE);
+      }
+
+      if (url == null) {
+        Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+            .title(ERR_TITLE_ORG_NO_EXIST).detail(ERR_DETAIL_ORG_NO_EXIST).build();
+        handler.handle(Future.succeededFuture(r.toJson()));
+        return Future.failedFuture(COMPOSE_FAILURE);
+
+      } else if (!url.equals(emailDomain) && !url.equals(NO_ORG_CHECK)) {
+        Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+            .title(ERR_TITLE_ORG_NO_MATCH).detail(ERR_DETAIL_ORG_NO_MATCH).build();
+        handler.handle(Future.succeededFuture(r.toJson()));
+        return Future.failedFuture(COMPOSE_FAILURE);
+      }
+
+      return Future.succeededFuture();
+    });
+
+    List<Roles> rolesForKc =
+        requestedRoles.stream().filter(x -> x != Roles.PROVIDER).collect(Collectors.toList());
+
+    List<Tuple> roleDetails = roles.entrySet().stream()
+        .map(p -> Tuple.of(user.getUserId(), p.getKey().name(), p.getValue().name()))
+        .collect(Collectors.toList());
+
+    /* supplier to create tuple for org update */
+    Supplier<Tuple> updateOrgIdTup = () -> {
+      if (checkOrgRequired.result() == NO_ORG_CHECK) {
+        return Tuple.of(null, user.getUserId());
+      }
+      return Tuple.of(request.getOrgId(), user.getUserId());
+    };
+
+    Future<Void> query = validateOrg.compose(res -> pool
+        .withTransaction(conn -> conn.preparedQuery(SQL_CREATE_ROLE).executeBatch(roleDetails)
+            .compose(success -> conn.preparedQuery(SQL_UPDATE_ORG_ID).execute(updateOrgIdTup.get()))
+            .compose(success -> kc.modifyRoles(user.getKeycloakId(), rolesForKc))));
+
+    /* After successful insertion, get user details for response */
+    Future<JsonObject> phoneOrgDetails =
+        query.compose(x -> pool.withConnection(conn -> conn.preparedQuery(SQL_GET_PHONE_JOIN_ORG)
+            .execute(Tuple.of(user.getUserId())).map(rows -> rows.iterator().next().toJson())));
+
+    Collector<Row, ?, List<JsonObject>> clientDetails =
+        Collectors.mapping(row -> row.toJson(), Collectors.toList());
+
+    Future<List<JsonObject>> clientQuery = query.compose(x -> pool.withConnection(
+        conn -> conn.preparedQuery(SQL_GET_CLIENTS_FORMATTED).collecting(clientDetails)
+            .execute(Tuple.of(user.getUserId())).map(res -> res.value())));
+
+    CompositeFuture.all(phoneOrgDetails, clientQuery).onSuccess(obj -> {
+      JsonObject details = (JsonObject) obj.list().get(0);
+      @SuppressWarnings("unchecked")
+      List<JsonObject> clients = (List<JsonObject>) obj.list().get(1);
+
+      List<Roles> approvedRoles = new ArrayList<Roles>();
+      approvedRoles.addAll(user.getRoles());
+      approvedRoles.addAll(rolesForKc);
+
+      User u = new UserBuilder()
+          .name(user.getName().get("firstName"), user.getName().get("lastName"))
+          .roles(approvedRoles).keycloakId(user.getKeycloakId()).userId(user.getUserId()).build();
+
+      JsonObject response = u.toJson();
+      response.put(RESP_EMAIL, email.result());
+      response.put(RESP_CLIENT_ARR, new JsonArray(clients));
+
+      String phone = (String) details.remove("phone");
+      if (!phone.equals(NIL_PHONE)) {
+        response.put(RESP_PHONE, phone);
+      }
+
+      /* details will have only org details or or only null */
+      if (details.getString("url") != null) {
+        response.put(RESP_ORG, details);
+      }
+
+      Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_UPDATED_USER_ROLES)
+          .status(200).objectResults(response).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+    }).onFailure(e -> {
+      if (e.getMessage().equals(COMPOSE_FAILURE)) {
+        return; // do nothing
+      }
+      LOGGER.error(e.getMessage());
+      handler.handle(Future.failedFuture("Internal error"));
+    });
+
+    return this;
   }
 
   @Override
@@ -368,7 +536,7 @@ public class RegistrationServiceImpl implements RegistrationService {
           JsonArray resp = new JsonArray(obj);
 
           Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_ORG_READ)
-              .status(200).arrayDetail(resp).build();
+              .status(200).arrayResults(resp).build();
           handler.handle(Future.succeededFuture(r.toJson()));
         }).onFailure(e -> {
           LOGGER.error(e.getMessage());

@@ -80,7 +80,7 @@ public class TokenServiceImpl implements TokenService {
         if (dbHandler.result().size() != 1) {
           LOGGER.error(LOG_UNAUTHORIZED + INVALID_CLIENT_ID_SEC);
           Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-              .title(INVALID_CLIENT_ID_SEC).stringDetail(INVALID_CLIENT_ID_SEC).build();
+              .title(INVALID_CLIENT_ID_SEC).detail(INVALID_CLIENT_ID_SEC).build();
           handler.handle(Future.succeededFuture(resp.toJson()));
           return;
         }
@@ -96,7 +96,7 @@ public class TokenServiceImpl implements TokenService {
         } catch (Exception e) {
           LOGGER.error(LOG_USER_SECRET + e.getLocalizedMessage());
           Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-              .title(INVALID_CLIENT_ID_SEC).stringDetail(INVALID_CLIENT_ID_SEC).build();
+              .title(INVALID_CLIENT_ID_SEC).detail(INVALID_CLIENT_ID_SEC).build();
           handler.handle(Future.succeededFuture(resp.toJson()));
           return;
         }
@@ -104,7 +104,7 @@ public class TokenServiceImpl implements TokenService {
         if (valid == Boolean.FALSE) {
           LOGGER.error(LOG_UNAUTHORIZED + INVALID_CLIENT_ID_SEC);
           Response resp = new ResponseBuilder().status(401).type(URN_INVALID_INPUT)
-              .title(INVALID_CLIENT_ID_SEC).stringDetail(INVALID_CLIENT_ID_SEC).build();
+              .title(INVALID_CLIENT_ID_SEC).detail(INVALID_CLIENT_ID_SEC).build();
           handler.handle(Future.succeededFuture(resp.toJson()));
           return;
         }
@@ -113,7 +113,7 @@ public class TokenServiceImpl implements TokenService {
         if (!Roles.exists(role)) {
           LOGGER.error(LOG_UNAUTHORIZED + INVALID_ROLE);
           Response resp = new ResponseBuilder().status(400).type(URN_INVALID_ROLE)
-              .title(INVALID_ROLE).stringDetail(INVALID_ROLE).build();
+              .title(INVALID_ROLE).detail(INVALID_ROLE).build();
           handler.handle(Future.succeededFuture(resp.toJson()));
           return;
         }
@@ -127,13 +127,13 @@ public class TokenServiceImpl implements TokenService {
 
             LOGGER.info(LOG_TOKEN_SUCC);
             Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
-                .arrayDetail(new JsonArray().add(jwt)).build();
+                .arrayResults(new JsonArray().add(jwt)).build();
             handler.handle(Future.succeededFuture(resp.toJson()));
 
           } else if (policyHandler.failed()) {
             LOGGER.error(LOG_UNAUTHORIZED + INVALID_POLICY);
             Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                .title(INVALID_POLICY).stringDetail(INVALID_POLICY).build();
+                .title(INVALID_POLICY).detail(INVALID_POLICY).build();
             handler.handle(Future.succeededFuture(resp.toJson()));
           }
         });
@@ -159,7 +159,7 @@ public class TokenServiceImpl implements TokenService {
     if (userId == null || userId.isBlank()) {
       LOGGER.error("Fail: " + INVALID_USERID);
       Response resp = new ResponseBuilder().status(400).type(URN_MISSING_INFO).title(INVALID_USERID)
-          .stringDetail(INVALID_USERID).build();
+          .detail(INVALID_USERID).build();
       handler.handle(Future.succeededFuture(resp.toJson()));
       return this;
     }
@@ -169,7 +169,7 @@ public class TokenServiceImpl implements TokenService {
       if (mapper.size() != 1) {
         LOGGER.error("Fail: " + INVALID_USER_CLIENT);
         Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-            .title(INVALID_USER_CLIENT).stringDetail(INVALID_USER_CLIENT).build();
+            .title(INVALID_USER_CLIENT).detail(INVALID_USER_CLIENT).build();
         handler.handle(Future.succeededFuture(resp.toJson()));
         return;
       }
@@ -180,7 +180,7 @@ public class TokenServiceImpl implements TokenService {
       if (!dbClientId.equals(clientId)) {
         LOGGER.error("Fail: " + INVALID_CLIENT);
         Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-            .title(INVALID_CLIENT).stringDetail(INVALID_CLIENT).build();
+            .title(INVALID_CLIENT).detail(INVALID_CLIENT).build();
         handler.handle(Future.succeededFuture(resp.toJson()));
         return;
       }
@@ -200,7 +200,7 @@ public class TokenServiceImpl implements TokenService {
           if (flag == Boolean.FALSE) {
             LOGGER.error("Fail: " + INVALID_RS_URL);
             Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                .title(INVALID_RS_URL).stringDetail(INVALID_RS_URL).build();
+                .title(INVALID_RS_URL).detail(INVALID_RS_URL).build();
             handler.handle(Future.succeededFuture(resp.toJson()));
             return;
           }
@@ -212,13 +212,13 @@ public class TokenServiceImpl implements TokenService {
             if (httpClient.succeeded()) {
               LOGGER.info(LOG_REVOKE_REQ);
               Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS)
-                  .title(TOKEN_REVOKED).arrayDetail(new JsonArray()).build();
+                  .title(TOKEN_REVOKED).arrayResults(new JsonArray()).build();
               handler.handle(Future.succeededFuture(resp.toJson()));
               return;
             } else {
               LOGGER.error("Fail: {}; {}", FAILED_REVOKE, httpClient.cause());
               Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                  .title(FAILED_REVOKE).stringDetail(FAILED_REVOKE).build();
+                  .title(FAILED_REVOKE).detail(FAILED_REVOKE).build();
               handler.handle(Future.succeededFuture(resp.toJson()));
               return;
             }
@@ -246,7 +246,7 @@ public class TokenServiceImpl implements TokenService {
     if (accessToken == null || accessToken.isBlank()) {
       LOGGER.error(LOG_PARSE_TOKEN);
       Response resp = new ResponseBuilder().status(400).type(URN_MISSING_INFO)
-          .title(MISSING_TOKEN).stringDetail(MISSING_TOKEN).build();
+          .title(MISSING_TOKEN).detail(MISSING_TOKEN).build();
       handler.handle(Future.succeededFuture(resp.toJson()));
       return this;
     }
@@ -256,7 +256,7 @@ public class TokenServiceImpl implements TokenService {
       LOGGER.error("Fail: {}; {}", TOKEN_FAILED, jwtError.getLocalizedMessage());
       Response resp =
           new ResponseBuilder().status(401).type(URN_INVALID_AUTH_TOKEN).title(TOKEN_FAILED)
-              .arrayDetail(new JsonArray().add(new JsonObject().put(STATUS, DENY))).build();
+              .arrayResults(new JsonArray().add(new JsonObject().put(STATUS, DENY))).build();
       handler.handle(Future.succeededFuture(resp.toJson()));
     }).onSuccess(jwtDetails -> {
 
@@ -279,7 +279,7 @@ public class TokenServiceImpl implements TokenService {
           if (dbHandler.result().size() != 1) {
             LOGGER.error(LOG_TOKEN_AUTH + INVALID_CLIENT);
             Response resp = new ResponseBuilder().status(400).type(URN_INVALID_AUTH_TOKEN)
-                .title(TOKEN_FAILED).stringDetail(INVALID_CLIENT).build();
+                .title(TOKEN_FAILED).detail(INVALID_CLIENT).build();
             handler.handle(Future.succeededFuture(resp.toJson()));
             return;
           }
@@ -298,14 +298,14 @@ public class TokenServiceImpl implements TokenService {
               request.mergeIn(accessTokenJwt);
 
               Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS)
-                  .title(TOKEN_AUTHENTICATED).arrayDetail(new JsonArray().add(request)).build();
+                  .title(TOKEN_AUTHENTICATED).arrayResults(new JsonArray().add(request)).build();
               LOGGER.info("Info: {}; {}", POLICY_SUCCESS, TOKEN_AUTHENTICATED);
               handler.handle(Future.succeededFuture(resp.toJson()));
               
             } else if (policyHandler.failed()) {
               LOGGER.error("Fail: {}; {}", INVALID_POLICY, policyHandler.cause().getMessage());
               Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                  .title(INVALID_POLICY).stringDetail(INVALID_POLICY).build();
+                  .title(INVALID_POLICY).detail(INVALID_POLICY).build();
               handler.handle(Future.succeededFuture(resp.toJson()));
             }
           });

@@ -116,7 +116,7 @@ public class ListOrganizationTest {
           assertEquals(URN_SUCCESS, response.getString("type"));
 
           @SuppressWarnings("unchecked")
-          List<JsonObject> list = response.getJsonArray("detail").getList();
+          List<JsonObject> list = response.getJsonArray("results").getList();
 
           Boolean exists = list.stream().anyMatch(obj -> {
             return (obj.getString("name").equals(name)
