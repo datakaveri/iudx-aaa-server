@@ -1,7 +1,18 @@
+
 package iudx.aaa.server.policy;
 
+import static iudx.aaa.server.policy.Constants.*;
+import static iudx.aaa.server.policy.TestRequest.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
@@ -9,26 +20,16 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.registration.RegistrationService;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static iudx.aaa.server.policy.Constants.*;
-import static iudx.aaa.server.policy.TestRequest.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
-public class VerifyPolicyTest {
-    private static Logger LOGGER = LogManager.getLogger(VerifyPolicyTest.class);
+public class ListPolicyTest {
+    private static Logger LOGGER = LogManager.getLogger(iudx.aaa.server.token.TokenServiceTest.class);
 
     private static Configuration config;
 
-    /* Database Properties */
+// Database Properties
+
     private static String databaseIP;
     private static int databasePort;
     private static String databaseName;
@@ -42,16 +43,20 @@ public class VerifyPolicyTest {
     private static RegistrationService registrationService;
 
     private static Vertx vertxObj;
+    private static MockRegistrationFactory mockRegistrationFactory;
+
+
 
     @BeforeAll
     @DisplayName("Deploying Verticle")
-    static void startVertx(Vertx vertx,
-                           VertxTestContext testContext) {
+    static void startVertx(Vertx vertx, VertxTestContext testContext) {
+
         config = new Configuration();
         vertxObj = vertx;
         JsonObject dbConfig = config.configLoader(0, vertx);
 
-        /* Read the configuration and set the postgres client properties. */
+ //Read the configuration and set the postgres client properties.
+
         LOGGER.debug("Info : Reading config file");
 
         databaseIP = dbConfig.getString("databaseIP");
@@ -61,25 +66,30 @@ public class VerifyPolicyTest {
         databasePassword = dbConfig.getString("databasePassword");
         poolSize = Integer.parseInt(dbConfig.getString("poolSize"));
 
-        /* Set Connection Object */
+// Set Connection Object
+
         if (connectOptions == null) {
             connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
                     .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword);
         }
 
-        /* Pool options */
+ //Pool options
+
         if (poolOptions == null) {
             poolOptions = new PoolOptions().setMaxSize(poolSize);
         }
 
-        /* Create the client pool */
+ //Create the client pool
+
         pgclient = PgPool.pool(vertx, connectOptions, poolOptions);
 
+        mockRegistrationFactory = new MockRegistrationFactory();
+        registrationService = mockRegistrationFactory.getInstance();
         policyService = new PolicyServiceImpl(pgclient,registrationService);
-
         testContext.completeNow();
-
     }
+
+
 
     @AfterAll
     public static void finish(VertxTestContext testContext) {
@@ -88,34 +98,52 @@ public class VerifyPolicyTest {
     }
 
     @Test
-    @DisplayName("Testing Successful Policy verification")
-    void verifyPolicySuccess(VertxTestContext testContext) {
-        policyService.verifyPolicy(validVerifyPolicy,
+    @DisplayName("ListPolicy Success provider")
+    void listPolicySuccessProvider(VertxTestContext testContext) {
+
+        mockRegistrationFactory.setResponse("valid");
+        policyService.listPolicy(validListPolicyProvider,
                 testContext.succeeding(response -> testContext.verify(() -> {
-                    assertEquals(SUCCESS, response.getString(STATUS));
+                    assertEquals(POLICY_SUCCESS, response.getString(TYPE));
+                    testContext.completeNow();
+                })));
+    }
+
+
+    @Test
+    @DisplayName("ListPolicy Success consumer")
+    void listPolicySuccessConsumer(VertxTestContext testContext) {
+
+        mockRegistrationFactory.setResponse("valid");
+        policyService.listPolicy(validListPolicyConsumer,
+                testContext.succeeding(response -> testContext.verify(() -> {
+                    assertEquals(POLICY_SUCCESS, response.getString(TYPE));
                     testContext.completeNow();
                 })));
     }
 
     @Test
-    @DisplayName("Testing Failure in  policy verification(no matching role)")
-    void verifyPolicyRoleFailure(VertxTestContext testContext) {
-       policyService.verifyPolicy(policyRoleFailure,
-                testContext.failing(response -> testContext.verify(() -> {
-                    String result = response.getLocalizedMessage();
-                    assertEquals(ROLE_NOT_FOUND, result);
+    @DisplayName("ListPolicy Success no policy")
+    void listPolicySuccess(VertxTestContext testContext) {
+
+        mockRegistrationFactory.setResponse("valid");
+        policyService.listPolicy(invalidListPolicy,
+                testContext.succeeding(response -> testContext.verify(() -> {
+                    assertEquals(POLICY_SUCCESS, response.getString(TYPE));
                     testContext.completeNow();
                 })));
     }
 
     @Test
-    @DisplayName("Testing Failure in  policy verification(no policy defined)")
-    void verifyPolicyFailure(VertxTestContext testContext) {
-        policyService.verifyPolicy(policyFailure,
+    @DisplayName("ListPolicy failure")
+    void listPolicyFailure(VertxTestContext testContext) {
+
+        mockRegistrationFactory.setResponse("invalid");
+        policyService.listPolicy(validListPolicyProvider,
                 testContext.failing(response -> testContext.verify(() -> {
-                    String result = response.getLocalizedMessage();
-                    assertEquals(POLICY_NOT_FOUND, result);
+                    assertEquals(INTERNALERROR, response.getMessage());
                     testContext.completeNow();
                 })));
     }
 }
+

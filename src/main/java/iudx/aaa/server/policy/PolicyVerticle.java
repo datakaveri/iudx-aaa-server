@@ -1,5 +1,7 @@
 package iudx.aaa.server.policy;
 
+import com.hazelcast.spi.impl.eventservice.impl.Registration;
+import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import io.vertx.core.AbstractVerticle;
@@ -8,6 +10,9 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.serviceproxy.ServiceBinder;
 import io.vertx.sqlclient.PoolOptions;
 import iudx.aaa.server.postgres.client.PostgresClient;
+
+import static iudx.aaa.server.policy.Constants.REGISTRATION_SERVICE_ADDRESS;
+import static iudx.aaa.server.token.Constants.POLICY_SERVICE_ADDRESS;
 
 /**
  * The Policy Verticle.
@@ -36,6 +41,7 @@ public class PolicyVerticle extends AbstractVerticle {
   private PostgresClient pgClient;
   private static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
   private PolicyService policyService;
+  private RegistrationService registrationService;
   private static final Logger LOGGER = LogManager.getLogger(PolicyVerticle.class);
 
   /**
@@ -74,7 +80,8 @@ public class PolicyVerticle extends AbstractVerticle {
     //pgClient = new PostgresClient(vertx, connectOptions, poolOptions);
 
     PgPool pool = PgPool.pool(vertx,connectOptions, poolOptions);
-    policyService = new PolicyServiceImpl(pool);
+    registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
+    policyService = new PolicyServiceImpl(pool,registrationService);
 
     new ServiceBinder(vertx).setAddress(POLICY_SERVICE_ADDRESS).register(PolicyService.class,
         policyService);
