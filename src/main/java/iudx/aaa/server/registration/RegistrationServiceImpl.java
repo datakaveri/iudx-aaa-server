@@ -37,6 +37,7 @@ import static iudx.aaa.server.registration.Constants.SQL_FIND_ORG_BY_ID;
 import static iudx.aaa.server.registration.Constants.SQL_FIND_USER_BY_KC_ID;
 import static iudx.aaa.server.registration.Constants.SQL_GET_ALL_ORGS;
 import static iudx.aaa.server.registration.Constants.SQL_GET_CLIENTS_FORMATTED;
+import static iudx.aaa.server.registration.Constants.SQL_GET_KC_ID_FROM_ARR;
 import static iudx.aaa.server.registration.Constants.SQL_GET_ORG_DETAILS;
 import static iudx.aaa.server.registration.Constants.SQL_GET_PHONE_JOIN_ORG;
 import static iudx.aaa.server.registration.Constants.SQL_GET_REG_ROLES;
@@ -49,6 +50,7 @@ import static iudx.aaa.server.registration.Constants.URN_ALREADY_EXISTS;
 import static iudx.aaa.server.registration.Constants.URN_INVALID_INPUT;
 import static iudx.aaa.server.registration.Constants.URN_MISSING_INFO;
 import static iudx.aaa.server.registration.Constants.URN_SUCCESS;
+import static iudx.aaa.server.registration.Constants.UUID_REGEX;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.CompositeFuture;
@@ -73,8 +75,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -542,6 +546,69 @@ public class RegistrationServiceImpl implements RegistrationService {
           LOGGER.error(e.getMessage());
           handler.handle(Future.failedFuture("Internal error"));
         }));
+
+    return this;
+  }
+
+  @Override
+  public RegistrationService getUserDetails(List<String> userIds,
+      Handler<AsyncResult<Map<String, JsonObject>>> handler) {
+    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+
+    if (userIds.isEmpty()) {
+      handler.handle(Future.succeededFuture(new HashMap<String, JsonObject>()));
+      return this;
+    }
+
+    Set<UUID> unique = new HashSet<UUID>();
+    Promise<Map<String, String>> userToKc = Promise.promise();
+
+    for (String id : userIds) {
+      if (id == null || !id.matches(UUID_REGEX)) {
+        handler.handle(Future.failedFuture("Invalid UUID"));
+        return this;
+      }
+      unique.add(UUID.fromString(id));
+    }
+
+    List<UUID> ids = new ArrayList<UUID>(unique);
+
+    Collector<Row, ?, Map<String, String>> collect = Collectors
+        .toMap(row -> row.getUUID("id").toString(), row -> row.getUUID("keycloak_id").toString());
+
+    int size = ids.size();
+    /* Function to complete user-KC map promise and create list of Keycloak IDs */
+    Function<Map<String, String>, Future<List<String>>> getKcIdsList = (u2k) -> {
+      if (u2k.size() != size) {
+        handler.handle(Future.failedFuture("Invalid user ID"));
+        return Future.failedFuture(COMPOSE_FAILURE);
+      }
+
+      userToKc.complete(u2k);
+      List<String> kcIds =
+          u2k.entrySet().stream().map(id -> id.getValue()).collect(Collectors.toList());
+      return Future.succeededFuture(kcIds);
+    };
+
+    Tuple tup = Tuple.of(ids.toArray(UUID[]::new));
+    Future<Map<String, JsonObject>> details = pool.withConnection(conn -> conn
+        .preparedQuery(SQL_GET_KC_ID_FROM_ARR).collecting(collect).execute(tup)
+        .compose(res -> getKcIdsList.apply(res.value())).compose(kcIds -> kc.getDetails(kcIds)));
+
+    /* 'merge' userId-KcId and KcId-details maps */
+    details.onSuccess(kcToDetails -> {
+      Map<String, String> user2kc = userToKc.future().result();
+      Map<String, JsonObject> userDetails = user2kc.entrySet().stream()
+          .collect(Collectors.toMap(id -> id.getKey(), id -> kcToDetails.get(id.getValue())));
+
+      handler.handle(Future.succeededFuture(userDetails));
+    }).onFailure(e -> {
+      if (e.getMessage().equals(COMPOSE_FAILURE)) {
+        return; // do nothing
+      }
+      LOGGER.error(e.getMessage());
+      handler.handle(Future.failedFuture("Internal error"));
+    });
 
     return this;
   }

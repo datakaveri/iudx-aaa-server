@@ -9,6 +9,8 @@ public class Constants {
   public static final String COMPOSE_FAILURE = "COMPOSE_FAILURE";
   public static final String NIL_UUID = "00000000-0000-0000-0000-000000000000";
   public static final String NIL_PHONE = "0000000000";
+  public static final String UUID_REGEX =
+      "^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$";
   public static final String DEFAULT_CLIENT = "default";
   public static final String NO_ORG_CHECK = "NO_ORG_CHECK";
   public static final String EMAIL_HASH_ALG = "SHA-1";
@@ -115,4 +117,7 @@ public class Constants {
   public static final String SQL_GET_PHONE_JOIN_ORG =
       "SELECT users.phone, name, url FROM test.organizations RIGHT JOIN test.users"
           + " ON users.organization_id = organizations.id WHERE users.id = $1::uuid";
+
+  public static final String SQL_GET_KC_ID_FROM_ARR =
+      "SELECT id, keycloak_id FROM test.users WHERE id = ANY($1::uuid[])";
 }
