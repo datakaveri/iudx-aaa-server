@@ -3,7 +3,6 @@ package iudx.aaa.server.token;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -20,12 +19,13 @@ import iudx.aaa.server.apiserver.IntrospectToken;
 import iudx.aaa.server.apiserver.RequestToken;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.RevokeToken;
-import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.policy.PolicyService;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static iudx.aaa.server.token.Constants.*;
-import java.nio.charset.StandardCharsets;
 
 /**
  * The Token Service Implementation.
@@ -60,85 +60,75 @@ public class TokenServiceImpl implements TokenService {
    * {@inheritDoc}
    */
   @Override
-  public TokenService createToken(RequestToken requestToken, Handler<AsyncResult<JsonObject>> handler) {
+  public TokenService createToken(RequestToken requestToken, User user, Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug(REQ_RECEIVED);
 
-    String clientId = requestToken.getClientId();
-    String clientSecret = requestToken.getClientSecret();
     String role = StringUtils.upperCase(requestToken.getRole());
+    List<String> roles = user.getRoles().stream().map(r -> r.name()).collect(Collectors.toList());
     
-    JsonObject request=JsonObject.mapFrom(requestToken);
-    Tuple tuple = Tuple.of(clientId);
+    String itemType = requestToken.getItemType();
+    JsonObject request = JsonObject.mapFrom(requestToken);
+
+    /* Verify the user role */
+    if (!roles.contains(role)) {
+      LOGGER.error(LOG_UNAUTHORIZED + INVALID_ROLE);
+      Response resp = new ResponseBuilder().status(400).type(URN_INVALID_ROLE).title(INVALID_ROLE)
+          .detail(INVALID_ROLE).build();
+      handler.handle(Future.succeededFuture(resp.toJson()));
+      return this;
+    }
     
-    /* Get and verify the clientId from DB*/
-    pgSelelctQuery(GET_USER,tuple).onComplete(dbHandler -> {
-      if (dbHandler.failed()) {
-        LOGGER.error(LOG_DB_ERROR + dbHandler.cause());
-        handler.handle(Future.failedFuture(INTERNAL_SVR_ERR));
-
-      } else if (dbHandler.succeeded()) {
-        if (dbHandler.result().size() != 1) {
-          LOGGER.error(LOG_UNAUTHORIZED + INVALID_CLIENT_ID_SEC);
-          Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-              .title(INVALID_CLIENT_ID_SEC).detail(INVALID_CLIENT_ID_SEC).build();
-          handler.handle(Future.succeededFuture(resp.toJson()));
+    if (RESOURCE_SVR.equals(itemType)) {
+      Tuple tuple = Tuple.of(requestToken.getItemId());
+      pgSelelctQuery(GET_URL, tuple).onComplete(dbHandler -> {
+        if (dbHandler.failed()) {
+          LOGGER.error(LOG_DB_ERROR + dbHandler.cause());
+          handler.handle(Future.failedFuture(INTERNAL_SVR_ERR));
           return;
         }
 
-        JsonObject result = dbHandler.result().getJsonObject(0);
-        String dbClientSecret = result.getString("client_secret");
+        if (dbHandler.succeeded()) {
+          JsonObject dbExistsRow = dbHandler.result().getJsonObject(0);
+          boolean flag = dbExistsRow.getBoolean(EXISTS);
 
-        /* Validating clientSecret hash */
-        boolean valid = false;
-        try {
-          valid = OpenBSDBCrypt.checkPassword(dbClientSecret,
-              clientSecret.getBytes(StandardCharsets.UTF_8));
-        } catch (Exception e) {
-          LOGGER.error(LOG_USER_SECRET + e.getLocalizedMessage());
-          Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-              .title(INVALID_CLIENT_ID_SEC).detail(INVALID_CLIENT_ID_SEC).build();
-          handler.handle(Future.succeededFuture(resp.toJson()));
-          return;
-        }
-
-        if (valid == Boolean.FALSE) {
-          LOGGER.error(LOG_UNAUTHORIZED + INVALID_CLIENT_ID_SEC);
-          Response resp = new ResponseBuilder().status(401).type(URN_INVALID_INPUT)
-              .title(INVALID_CLIENT_ID_SEC).detail(INVALID_CLIENT_ID_SEC).build();
-          handler.handle(Future.succeededFuture(resp.toJson()));
-          return;
-        }
-
-        /* Verify the user role */
-        if (!Roles.exists(role)) {
-          LOGGER.error(LOG_UNAUTHORIZED + INVALID_ROLE);
-          Response resp = new ResponseBuilder().status(400).type(URN_INVALID_ROLE)
-              .title(INVALID_ROLE).detail(INVALID_ROLE).build();
-          handler.handle(Future.succeededFuture(resp.toJson()));
-          return;
-        }
-
-        request.put(USER_ID, result.getString("user_id"));
-        policyService.verifyPolicy(request, policyHandler -> {
-          if (policyHandler.succeeded()) {
-
-            request.mergeIn(policyHandler.result(), true);
-            JsonObject jwt = getJwt(request);
-
-            LOGGER.info(LOG_TOKEN_SUCC);
-            Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
-                .arrayResults(new JsonArray().add(jwt)).build();
-            handler.handle(Future.succeededFuture(resp.toJson()));
-
-          } else if (policyHandler.failed()) {
-            LOGGER.error(LOG_UNAUTHORIZED + INVALID_POLICY);
+          if (flag == Boolean.FALSE) {
+            LOGGER.error("Fail: " + INVALID_RS_URL);
             Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                .title(INVALID_POLICY).detail(INVALID_POLICY).build();
+                .title(INVALID_RS_URL).detail(INVALID_RS_URL).build();
             handler.handle(Future.succeededFuture(resp.toJson()));
+            return;
           }
-        });
-      }
-    });
+          
+          request.put(URL, requestToken.getItemId());
+          JsonObject jwt = getJwt(request);
+          LOGGER.info(LOG_TOKEN_SUCC);
+          Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
+              .arrayResults(new JsonArray().add(jwt)).build();
+          handler.handle(Future.succeededFuture(resp.toJson()));
+          return;
+        }
+      });
+    } else {
+      request.put(USER_ID, user.getUserId());
+      policyService.verifyPolicy(request, policyHandler -> {
+        if (policyHandler.succeeded()) {
+
+          request.mergeIn(policyHandler.result(), true);
+          JsonObject jwt = getJwt(request);
+
+          LOGGER.info(LOG_TOKEN_SUCC);
+          Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
+              .arrayResults(new JsonArray().add(jwt)).build();
+          handler.handle(Future.succeededFuture(resp.toJson()));
+
+        } else if (policyHandler.failed()) {
+          LOGGER.error(LOG_UNAUTHORIZED + INVALID_POLICY);
+          Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+              .title(INVALID_POLICY).detail(INVALID_POLICY).build();
+          handler.handle(Future.succeededFuture(resp.toJson()));
+        }
+      });
+    }
     
     return this;
   }
@@ -294,11 +284,9 @@ public class TokenServiceImpl implements TokenService {
 
           policyService.verifyPolicy(request, policyHandler -> {
             if (policyHandler.succeeded()) {
-              request.clear();
-              request.mergeIn(accessTokenJwt);
 
               Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS)
-                  .title(TOKEN_AUTHENTICATED).arrayResults(new JsonArray().add(request)).build();
+                  .title(TOKEN_AUTHENTICATED).arrayResults(new JsonArray().add(accessTokenJwt)).build();
               LOGGER.info("Info: {}; {}", POLICY_SUCCESS, TOKEN_AUTHENTICATED);
               handler.handle(Future.succeededFuture(resp.toJson()));
               
@@ -328,23 +316,24 @@ public class TokenServiceImpl implements TokenService {
     long expiry = timestamp + CLAIM_EXPIRY;
     String itemType = request.getString(ITEM_TYPE);
     String iid = ITEM_TYPE_MAP.inverse().get(itemType)+":"+request.getString(ITEM_ID);
+    String audience = request.getString(URL);
     
     /* Populate the token claims */
     JsonObject claims = new JsonObject();
     claims.put(SUB, request.getString(CLIENT_ID))
           .put(ISS, CLAIM_ISSUER)
-          .put(AUD, request.getString(AUDIENCE))
+          .put(AUD, audience)
           .put(EXP, expiry)
           .put(IAT, timestamp)
           .put(IID, iid)
           .put(ROLE, request.getString(ROLE))
-          .put(CONS, request.getJsonObject(CONSTRAINTS));
+          .put(CONS, request.getJsonObject(CONSTRAINTS, new JsonObject()));
     
     String token = provider.generateToken(claims, options);
 
     JsonObject tokenResp = new JsonObject();
     tokenResp.put(ACCESS_TOKEN, token).put("expiry", expiry).put("server",
-        request.getString(AUDIENCE));
+        audience);
     return tokenResp;
   }
   

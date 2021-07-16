@@ -51,8 +51,10 @@ public class Constants {
   public static final String CLIENT_ID = "clientId";
   public static final String CLIENT_SECRET = "clientSecret";
   public static final String AUDIENCE = "audience";
+  public static final String URL = "url";
   public static final String USER_ID = "userId";
   public static final String CONSTRAINTS = "constraints";
+  public static final String RESOURCE_SVR = "resource_server";
     
   /* JWT Constants & related */
   public static final String TOKEN = "token";
@@ -75,7 +77,8 @@ public class Constants {
   public static BiMap<String, String> ITEM_TYPE_MAP = HashBiMap.create();
   static {
     ITEM_TYPE_MAP.put("ri", "resource");
-    ITEM_TYPE_MAP.put("rg","resourceGroup");
+    ITEM_TYPE_MAP.put("rg","resource_group");
+    ITEM_TYPE_MAP.put("rs","resource_server");
   }
   
   /* Response Messages */

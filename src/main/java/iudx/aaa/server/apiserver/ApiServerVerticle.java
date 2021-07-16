@@ -1,37 +1,31 @@
 package iudx.aaa.server.apiserver;
 
-import static iudx.aaa.server.apiserver.Constants.HEADER_ACCEPT;
-import static iudx.aaa.server.apiserver.Constants.HEADER_ALLOW_ORIGIN;
-import static iudx.aaa.server.apiserver.Constants.HEADER_CONTENT_LENGTH;
-import static iudx.aaa.server.apiserver.Constants.HEADER_CONTENT_TYPE;
-import static iudx.aaa.server.apiserver.Constants.HEADER_HOST;
-import static iudx.aaa.server.apiserver.Constants.HEADER_ORIGIN;
-import static iudx.aaa.server.apiserver.Constants.HEADER_REFERER;
-import static iudx.aaa.server.apiserver.Constants.HEADER_TOKEN;
-import static iudx.aaa.server.apiserver.Constants.MIME_APPLICATION_JSON;
-import static iudx.aaa.server.apiserver.Constants.MIME_TEXT_HTML;
-import static iudx.aaa.server.apiserver.Constants.ROUTE_DOC;
-import static iudx.aaa.server.apiserver.Constants.ROUTE_STATIC_SPEC;
-
+import static iudx.aaa.server.apiserver.util.Constants.*;
 import java.util.HashSet;
 import java.util.Set;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.JksOptions;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
+import io.vertx.pgclient.PgConnectOptions;
+import io.vertx.pgclient.PgPool;
+import io.vertx.sqlclient.PoolOptions;
+import iudx.aaa.server.apiserver.Response.ResponseBuilder;
+import iudx.aaa.server.apiserver.util.FailureHandler;
+import iudx.aaa.server.apiserver.util.RequestAuthentication;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.token.TokenService;
-import iudx.aaa.server.admin.AdminService;
 
 /**
  * The AAA Server API Verticle.
@@ -60,17 +54,24 @@ public class ApiServerVerticle extends AbstractVerticle {
   private boolean isSSL;
   private String keystore;
   private String keystorePassword;
+  
+  private String databaseIP;
+  private int databasePort;
+  private String databaseName;
+  private String databaseUserName;
+  private String databasePassword;
+  private int poolSize;
+  private PoolOptions poolOptions;
+  private PgConnectOptions connectOptions;
 
   /** Service addresses */
   private static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
   private static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
   private static final String TOKEN_SERVICE_ADDRESS = "iudx.aaa.token.service";
-  private static final String ADMIN_SERVICE_ADDRESS = "iudx.aaa.admin.service";
 
   private PolicyService policyService;
   private RegistrationService registrationService;
   private TokenService tokenService;
-  private AdminService adminService;
 
   /**
    * This method is used to start the Verticle. It deploys a verticle in a cluster, reads the
@@ -83,6 +84,28 @@ public class ApiServerVerticle extends AbstractVerticle {
 
   @Override
   public void start() throws Exception {
+    
+    databaseIP = config().getString(DATABASE_IP);
+    databasePort = Integer.parseInt(config().getString(DATABASE_PORT));
+    databaseName = config().getString(DATABASE_NAME);
+    databaseUserName = config().getString(DATABASE_USERNAME);
+    databasePassword = config().getString(DATABASE_PASSWORD);
+    poolSize = Integer.parseInt(config().getString(POOLSIZE));
+    JsonObject keycloakOptions = config().getJsonObject(KEYCLOACK_OPTIONS);
+    
+    /* Set Connection Object */
+    if (connectOptions == null) {
+      connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
+          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
+          .setConnectTimeout(PG_CONNECTION_TIMEOUT);
+    }
+    
+    /* Pool options */
+    if (poolOptions == null) {
+      poolOptions = new PoolOptions().setMaxSize(poolSize);
+    }
+    
+    PgPool pgPool = PgPool.pool(vertx, connectOptions, poolOptions);
 
     Set<String> allowedHeaders = new HashSet<>();
     allowedHeaders.add(HEADER_ACCEPT);
@@ -103,15 +126,36 @@ public class ApiServerVerticle extends AbstractVerticle {
     allowedMethods.add(HttpMethod.PUT);
 
     /* Create a reference to HazelcastClusterManager. */
-
     router = Router.router(vertx);
 
     /* Define the APIs, methods, endpoints and associated methods. */
-
     router = Router.router(vertx);
     router.route().handler(
         CorsHandler.create("*").allowedHeaders(allowedHeaders).allowedMethods(allowedMethods));
     router.route().handler(BodyHandler.create());
+    
+    RequestAuthentication reqAuth = new RequestAuthentication(vertx, pgPool,keycloakOptions);
+    FailureHandler failureHandler = new FailureHandler();
+    
+    //Create token
+    router.post(API_TOKEN)
+          .consumes(MIME_APPLICATION_JSON)
+          .handler(reqAuth)
+          .handler(this::createTokenHandler)
+          .failureHandler(failureHandler);
+
+    // Revoke Token
+    router.post(API_REVOKE_TOKEN)
+          .consumes(MIME_APPLICATION_JSON)
+          .handler(reqAuth)
+          .handler(this::revokeTokenHandler)
+          .failureHandler(failureHandler);
+
+    // Introspect token
+    router.post(API_INTROSPECT_TOKEN)
+          .consumes(MIME_APPLICATION_JSON)
+          .handler(this::validateTokenHandler)
+          .failureHandler(failureHandler);
 
     /**
      * Documentation routes
@@ -122,25 +166,24 @@ public class ApiServerVerticle extends AbstractVerticle {
       HttpServerResponse response = routingContext.response();
       response.sendFile("docs/openapi.yaml");
     });
+    
     /* Get redoc */
     router.get(ROUTE_DOC).produces(MIME_TEXT_HTML).handler(routingContext -> {
       HttpServerResponse response = routingContext.response();
       response.sendFile("docs/apidoc.html");
     });
+    
 
     /* Read ssl configuration. */
-    isSSL = config().getBoolean("ssl");
+    isSSL = config().getBoolean(SSL);
     HttpServerOptions serverOptions = new HttpServerOptions();
 
     if (isSSL) {
       LOGGER.debug("Info: Starting HTTPs server");
 
       /* Read the configuration and set the HTTPs server properties. */
-
-      keystore = config().getString("keystore");
-      keystorePassword = config().getString("keystorePassword");
-
-      /* Setup the HTTPs server properties, APIs and port. */
+      keystore = config().getString(KEYSTORE_PATH);
+      keystorePassword = config().getString(KEYSTPRE_PASSWORD);
 
       serverOptions.setSsl(true)
           .setKeyStoreOptions(new JksOptions().setPath(keystore).setPassword(keystorePassword));
@@ -149,7 +192,6 @@ public class ApiServerVerticle extends AbstractVerticle {
       LOGGER.debug("Info: Starting HTTP server");
 
       /* Setup the HTTP server properties, APIs and port. */
-
       serverOptions.setSsl(false);
     }
 
@@ -158,11 +200,68 @@ public class ApiServerVerticle extends AbstractVerticle {
     server.requestHandler(router).listen(port);
 
     /* Get a handler for the Service Discovery interface. */
-
     policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
     registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
     tokenService = TokenService.createProxy(vertx, TOKEN_SERVICE_ADDRESS);
-    adminService = AdminService.createProxy(vertx, ADMIN_SERVICE_ADDRESS);
   }
+  
+  /**
+   * Handler to handle create token request.
+   * 
+   * @param context which is RoutingContext
+   */
+  private void createTokenHandler(RoutingContext context) {
 
+    /* Mapping request body to Object */
+    JsonObject tokenRequestJson = context.getBodyAsJson();
+    tokenRequestJson.put(CLIENT_ID, context.get(CLIENT_ID));
+    RequestToken requestTokenDTO = tokenRequestJson.mapTo(RequestToken.class);
+    User user = context.get(USER);
+
+    tokenService.createToken(requestTokenDTO, user, handler -> {
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+  
+  /**
+   * Handle the Token Introspection.
+   * @param context
+   */
+  private void validateTokenHandler(RoutingContext context) {
+    JsonObject tokenRequestJson = context.getBodyAsJson();
+    IntrospectToken introspectToken = tokenRequestJson.mapTo(IntrospectToken.class);
+    
+    tokenService.validateToken(introspectToken, handler -> {
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+  
+  /**
+   * Handles the Token revocation.
+   * @param context
+   */
+  private void revokeTokenHandler(RoutingContext context) {
+
+  }
+  
+  private Future<Void> processResponse(HttpServerResponse response, JsonObject msg) {
+    int status = msg.getInteger(STATUS,400);
+    msg.remove(STATUS);
+    response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON);
+    return response.setStatusCode(status).end(msg.toString());
+  }
+  
+  private Future<Void> processResponse(HttpServerResponse response, String msg) {
+    Response rs = new ResponseBuilder().title(INTERNAL_SVR_ERR).detail(msg).build();
+    response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON);
+    return response.setStatusCode(500).end(rs.toJsonString());
+  }
 }
