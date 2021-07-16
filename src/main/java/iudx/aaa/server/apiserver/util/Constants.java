@@ -74,10 +74,11 @@ public class Constants {
   
   /* SQL Queries */
   public static final String DB_SCHEMA = "test";
-  public static final String SQL_GET_USER_ROLES = "SELECT u.id,  array_agg(r.role) as roles \n" + 
+  public static final String SQL_GET_USER_ROLES = "SELECT u.id, uc.client_id, array_agg(r.role) as roles \n" + 
       "FROM (select id from " + DB_SCHEMA + ".users where keycloak_id = $1) u \n" + 
-      "LEFT JOIN " + DB_SCHEMA+ ".roles r ON u.id = r.user_id\n" + 
-      "where r.status='APPROVED' GROUP BY u.id";
+      "LEFT JOIN " + DB_SCHEMA + ".roles r ON u.id = r.user_id \n" + 
+      "LEFT JOIN " + DB_SCHEMA + ".user_clients uc ON u.id = uc.user_id \n" +
+      "where r.status='APPROVED' GROUP BY u.id, uc.client_id";
   
   public static final String SQL_GET_KID_ROLES = "SELECT u.id, q.keycloak_id as kid, client_secret, array_agg(r.role) as roles\n" + 
       "FROM (select user_id as id, client_secret from " + DB_SCHEMA + ".user_clients where client_id = $1) u\n" + 

@@ -3,10 +3,8 @@ package iudx.aaa.server.apiserver;
 import static iudx.aaa.server.apiserver.util.Constants.*;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
@@ -23,7 +21,6 @@ import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
-import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.apiserver.util.FailureHandler;
 import iudx.aaa.server.apiserver.util.RequestAuthentication;
 import iudx.aaa.server.policy.PolicyService;
@@ -150,6 +147,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     // Revoke Token
     router.post(API_REVOKE_TOKEN)
           .consumes(MIME_APPLICATION_JSON)
+          .handler(reqAuth)
           .handler(this::revokeTokenHandler)
           .failureHandler(failureHandler);
 
@@ -213,9 +211,10 @@ public class ApiServerVerticle extends AbstractVerticle {
    * @param context which is RoutingContext
    */
   private void createTokenHandler(RoutingContext context) {
-    JsonObject tokenRequestJson = context.getBodyAsJson();
 
     /* Mapping request body to Object */
+    JsonObject tokenRequestJson = context.getBodyAsJson();
+    tokenRequestJson.put(CLIENT_ID, context.get(CLIENT_ID));
     RequestToken requestTokenDTO = tokenRequestJson.mapTo(RequestToken.class);
     User user = context.get(USER);
 

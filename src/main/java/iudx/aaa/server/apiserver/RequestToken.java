@@ -20,9 +20,6 @@ public class RequestToken {
   @JsonAlias({"clientId"})
   private UUID clientId = UUID.fromString(NIL_UUID);
 
-  @JsonAlias("clientSecret")
-  private UUID clientSecret = UUID.fromString(NIL_UUID);
-
   @JsonAlias("role")
   private String role;
 
@@ -50,14 +47,6 @@ public class RequestToken {
 
   public void setClientId(String clientId) {
     this.clientId = UUID.fromString(clientId);
-  }
-
-  public String getClientSecret() {
-    return clientSecret.toString();
-  }
-
-  public void setClientSecret(String clientSecret) {
-    this.clientSecret = UUID.fromString(clientSecret);
   }
 
   public String getRole() {

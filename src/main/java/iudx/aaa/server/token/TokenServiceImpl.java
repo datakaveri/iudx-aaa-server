@@ -65,6 +65,8 @@ public class TokenServiceImpl implements TokenService {
 
     String role = StringUtils.upperCase(requestToken.getRole());
     List<String> roles = user.getRoles().stream().map(r -> r.name()).collect(Collectors.toList());
+    
+    String itemType = requestToken.getItemType();
     JsonObject request = JsonObject.mapFrom(requestToken);
 
     /* Verify the user role */
@@ -75,26 +77,59 @@ public class TokenServiceImpl implements TokenService {
       handler.handle(Future.succeededFuture(resp.toJson()));
       return this;
     }
+    
+    if (RESOURCE_SVR.equals(itemType)) {
+      Tuple tuple = Tuple.of(requestToken.getItemId());
+      pgSelelctQuery(GET_URL, tuple).onComplete(dbHandler -> {
+        if (dbHandler.failed()) {
+          LOGGER.error(LOG_DB_ERROR + dbHandler.cause());
+          handler.handle(Future.failedFuture(INTERNAL_SVR_ERR));
+          return;
+        }
 
-    request.put(USER_ID, user.getUserId());
-    policyService.verifyPolicy(request, policyHandler -> {
-      if (policyHandler.succeeded()) {
+        if (dbHandler.succeeded()) {
+          JsonObject dbExistsRow = dbHandler.result().getJsonObject(0);
+          boolean flag = dbExistsRow.getBoolean(EXISTS);
 
-        request.mergeIn(policyHandler.result(), true);
-        JsonObject jwt = getJwt(request);
+          if (flag == Boolean.FALSE) {
+            LOGGER.error("Fail: " + INVALID_RS_URL);
+            Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+                .title(INVALID_RS_URL).detail(INVALID_RS_URL).build();
+            handler.handle(Future.succeededFuture(resp.toJson()));
+            return;
+          }
+          
+          request.put(URL, requestToken.getItemId());
+          JsonObject jwt = getJwt(request);
+          LOGGER.info(LOG_TOKEN_SUCC);
+          Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
+              .arrayResults(new JsonArray().add(jwt)).build();
+          handler.handle(Future.succeededFuture(resp.toJson()));
+          return;
+        }
+      });
+    } else {
+      request.put(USER_ID, user.getUserId());
+      policyService.verifyPolicy(request, policyHandler -> {
+        if (policyHandler.succeeded()) {
 
-        LOGGER.info(LOG_TOKEN_SUCC);
-        Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
-            .arrayResults(new JsonArray().add(jwt)).build();
-        handler.handle(Future.succeededFuture(resp.toJson()));
+          request.mergeIn(policyHandler.result(), true);
+          JsonObject jwt = getJwt(request);
 
-      } else if (policyHandler.failed()) {
-        LOGGER.error(LOG_UNAUTHORIZED + INVALID_POLICY);
-        Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-            .title(INVALID_POLICY).detail(INVALID_POLICY).build();
-        handler.handle(Future.succeededFuture(resp.toJson()));
-      }
-    });
+          LOGGER.info(LOG_TOKEN_SUCC);
+          Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
+              .arrayResults(new JsonArray().add(jwt)).build();
+          handler.handle(Future.succeededFuture(resp.toJson()));
+
+        } else if (policyHandler.failed()) {
+          LOGGER.error(LOG_UNAUTHORIZED + INVALID_POLICY);
+          Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+              .title(INVALID_POLICY).detail(INVALID_POLICY).build();
+          handler.handle(Future.succeededFuture(resp.toJson()));
+        }
+      });
+    }
+    
     return this;
   }
 
@@ -249,11 +284,9 @@ public class TokenServiceImpl implements TokenService {
 
           policyService.verifyPolicy(request, policyHandler -> {
             if (policyHandler.succeeded()) {
-              request.clear();
-              request.mergeIn(accessTokenJwt);
 
               Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS)
-                  .title(TOKEN_AUTHENTICATED).arrayResults(new JsonArray().add(request)).build();
+                  .title(TOKEN_AUTHENTICATED).arrayResults(new JsonArray().add(accessTokenJwt)).build();
               LOGGER.info("Info: {}; {}", POLICY_SUCCESS, TOKEN_AUTHENTICATED);
               handler.handle(Future.succeededFuture(resp.toJson()));
               
@@ -294,7 +327,7 @@ public class TokenServiceImpl implements TokenService {
           .put(IAT, timestamp)
           .put(IID, iid)
           .put(ROLE, request.getString(ROLE))
-          .put(CONS, request.getJsonObject(CONSTRAINTS));
+          .put(CONS, request.getJsonObject(CONSTRAINTS, new JsonObject()));
     
     String token = provider.generateToken(claims, options);
 

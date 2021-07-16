@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
@@ -55,13 +56,13 @@ public class RequestAuthentication implements Handler<RoutingContext> {
   @Override
   public void handle(RoutingContext routingContext) {
 
-    String token = routingContext.request().getHeader(HEADER_TOKEN);
-    JsonObject requestBody = routingContext.getBodyAsJson();
-    JsonObject credentials = new JsonObject().put("access_token", token);
+    MultiMap headers = routingContext.request().headers();
+    String token = headers.get(HEADER_TOKEN);    
     iudx.aaa.server.apiserver.User.UserBuilder user = new UserBuilder();
 
     /* Handles OIDC Token Flow */
     if (token != null && !token.isBlank()) {
+      JsonObject credentials = new JsonObject().put("access_token", token);
       keycloak.authenticate(credentials).onFailure(authHandler -> {
         Response rs = new ResponseBuilder().status(401).type(URN_INVALID_AUTH_TOKEN)
             .title(TOKEN_FAILED).detail(authHandler.getLocalizedMessage()).build();
@@ -96,6 +97,7 @@ public class RequestAuthentication implements Handler<RoutingContext> {
             user.roles(processRoles(result.getJsonArray(ROLES)));
           }
           
+          routingContext.put(CLIENT_ID, result.getString("client_id"));
           routingContext.put(USER, user.build()).next();
         } else if(kcHandler.failed()) {
           LOGGER.error("Fail: Request validation and authentication; " + kcHandler.cause());
@@ -106,9 +108,9 @@ public class RequestAuthentication implements Handler<RoutingContext> {
       });
       
       /* Handles ClientId Flow */
-    } else if(requestBody.containsKey(CLIENT_ID)){
-      String clientId = requestBody.getString(CLIENT_ID);
-      String clientSecret = requestBody.getString(CLIENT_SECRET);
+    } else if(headers.contains(CLIENT_ID) && headers.contains(CLIENT_SECRET)){
+      String clientId = headers.get(CLIENT_ID);
+      String clientSecret = headers.get(CLIENT_SECRET);
       
       if(clientId != null && !clientId.isBlank()) {
         
@@ -152,6 +154,7 @@ public class RequestAuthentication implements Handler<RoutingContext> {
               .userId(result.getString(ID))
               .roles(processRoles(result.getJsonArray(ROLES)));
           
+          routingContext.put(CLIENT_ID, clientId);
           routingContext.put(USER, user.build()).next();
         });
       }
