@@ -8,6 +8,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import iudx.aaa.server.apiserver.CreateOrgRequest;
 import iudx.aaa.server.apiserver.User;
 import java.util.List;
 
@@ -68,9 +69,12 @@ public interface AdminService {
   /**
    * The createOrganization implements the Organization creation operation.
    * 
-   * @param handler
+   * @param request CreateOrgRequest data object
+   * @param user the User object
+   * @param handler which is a request handler
    * @return AdminService which is a Service
    */
   @Fluent
-  AdminService createOrganization(Handler<AsyncResult<JsonObject>> handler);
+  AdminService createOrganization(CreateOrgRequest request, User user,
+      Handler<AsyncResult<JsonObject>> handler);
 }

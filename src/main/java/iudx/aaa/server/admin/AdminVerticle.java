@@ -14,6 +14,7 @@ import static iudx.aaa.server.admin.Constants.KEYCLOAK_REALM;
 import static iudx.aaa.server.admin.Constants.KEYCLOAK_URL;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.serviceproxy.ServiceBinder;
@@ -43,17 +44,18 @@ public class AdminVerticle extends AbstractVerticle {
   private String databaseUserName;
   private String databasePassword;
   private int poolSize;
-  
+
   private String keycloakUrl;
   private String keycloakRealm;
   private String keycloakAdminClientId;
   private String keycloakAdminClientSecret;
   private int keycloakAdminPoolSize;
-  
+
   private PgPool pool;
   private PoolOptions poolOptions;
   private PgConnectOptions connectOptions;
   private static final String ADMIN_SERVICE_ADDRESS = "iudx.aaa.admin.service";
+  private static JsonObject options;
   private AdminService adminService;
   private static final Logger LOGGER = LogManager.getLogger(AdminVerticle.class);
 
@@ -82,6 +84,8 @@ public class AdminVerticle extends AbstractVerticle {
     keycloakAdminClientSecret = config().getString(KC_ADMIN_CLIENT_SEC);
     keycloakAdminPoolSize = Integer.parseInt(config().getString(KC_ADMIN_POOLSIZE));
 
+    options = config().getJsonObject("options");
+
     /* Set Connection Object */
     if (connectOptions == null) {
       connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
@@ -100,7 +104,7 @@ public class AdminVerticle extends AbstractVerticle {
     KcAdmin kcadmin = new KcAdmin(keycloakUrl, keycloakRealm, keycloakAdminClientId,
         keycloakAdminClientSecret, keycloakAdminPoolSize);
 
-    adminService = new AdminServiceImpl(pool, kcadmin);
+    adminService = new AdminServiceImpl(pool, kcadmin, options);
 
     new ServiceBinder(vertx).setAddress(ADMIN_SERVICE_ADDRESS).register(AdminService.class,
         adminService);
