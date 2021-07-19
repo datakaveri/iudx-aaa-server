@@ -3,7 +3,6 @@ package iudx.aaa.server.registration;
 import static iudx.aaa.server.registration.Constants.BCRYPT_LOG_COST;
 import static iudx.aaa.server.registration.Constants.BCRYPT_SALT_LEN;
 import static iudx.aaa.server.registration.Constants.DEFAULT_CLIENT;
-import static iudx.aaa.server.registration.Constants.EMAIL_HASH_ALG;
 import static iudx.aaa.server.registration.Constants.NIL_PHONE;
 import static iudx.aaa.server.registration.Constants.NIL_UUID;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_CLIENT;
@@ -17,8 +16,6 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
@@ -99,14 +96,7 @@ public class Utils {
     Promise<UUID> genUserId = Promise.promise();
 
     Function<String, Tuple> createUserTup = (emailId) -> {
-      MessageDigest md = null;
-      try {
-        md = MessageDigest.getInstance(EMAIL_HASH_ALG);
-      } catch (NoSuchAlgorithmException e) {
-        throw new RuntimeException(e.getMessage());
-      }
-
-      String hash = DigestUtils.sha1Hex(md.digest(emailId.getBytes()));
+      String hash = DigestUtils.sha1Hex(emailId.getBytes());
       String emailHash = emailId.split("@")[1] + '/' + hash;
       return Tuple.of(phone, orgIdToSet, emailHash, keycloakId);
     };

@@ -13,7 +13,6 @@ public class Constants {
       "^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$";
   public static final String DEFAULT_CLIENT = "default";
   public static final String NO_ORG_CHECK = "NO_ORG_CHECK";
-  public static final String EMAIL_HASH_ALG = "SHA-1";
 
   /* Config related */
   public static final String DATABASE_IP = "databaseIP";
