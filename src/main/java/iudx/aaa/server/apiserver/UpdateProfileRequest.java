@@ -28,9 +28,17 @@ public class UpdateProfileRequest {
     this.roles = roles;
   }
 
-  public UpdateProfileRequest(JsonObject json) {
+  public static UpdateProfileRequest validatedObj(JsonObject json) {
+    return new UpdateProfileRequest(validateJsonObject(json));
+  }
 
-    UpdateProfileRequestConverter.fromJson(validateJsonObject(json), this);
+  /**
+   * <b>Do not use this constructor for creating object.
+   * Use validatedObj function</b>
+   * @param json
+   */
+  public UpdateProfileRequest(JsonObject json) {
+    UpdateProfileRequestConverter.fromJson(json, this);
   }
 
   public JsonObject toJson() {
@@ -47,7 +55,7 @@ public class UpdateProfileRequest {
     this.orgId = UUID.fromString(orgId);
   }
 
-  private JsonObject validateJsonObject(JsonObject json) throws IllegalArgumentException {
+  private static JsonObject validateJsonObject(JsonObject json) throws IllegalArgumentException {
 
     if (!json.containsKey("roles") || !(json.getValue("roles") instanceof JsonArray)) {
       throw new IllegalArgumentException("'roles' array is required");

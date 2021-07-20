@@ -29,9 +29,17 @@ public class RegistrationRequest {
     this.roles = roles;
   }
 
-  public RegistrationRequest(JsonObject json) {
+  static public RegistrationRequest validatedObj(JsonObject json) {
+    return new RegistrationRequest(validateJsonObject(json));
+  }
 
-    RegistrationRequestConverter.fromJson(validateJsonObject(json), this);
+  /**
+   * <b>Do not use this constructor for creating object.
+   * Use validatedObj function</b>
+   * @param json
+   */
+  public RegistrationRequest(JsonObject json) {
+    RegistrationRequestConverter.fromJson(json, this);
   }
 
   public JsonObject toJson() {
@@ -56,7 +64,7 @@ public class RegistrationRequest {
     this.orgId = UUID.fromString(orgId);
   }
 
-  private JsonObject validateJsonObject(JsonObject json) throws IllegalArgumentException {
+  private static JsonObject validateJsonObject(JsonObject json) throws IllegalArgumentException {
 
     if (!json.containsKey("roles") || !(json.getValue("roles") instanceof JsonArray)) {
       throw new IllegalArgumentException("'roles' array is required");
