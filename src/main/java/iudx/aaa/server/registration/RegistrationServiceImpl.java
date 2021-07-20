@@ -4,7 +4,6 @@ import static iudx.aaa.server.registration.Constants.BCRYPT_LOG_COST;
 import static iudx.aaa.server.registration.Constants.BCRYPT_SALT_LEN;
 import static iudx.aaa.server.registration.Constants.COMPOSE_FAILURE;
 import static iudx.aaa.server.registration.Constants.DEFAULT_CLIENT;
-import static iudx.aaa.server.registration.Constants.EMAIL_HASH_ALG;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_USER_PROFILE;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_ID_REQUIRED;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_NO_EXIST;
@@ -40,7 +39,6 @@ import static iudx.aaa.server.registration.Constants.SQL_GET_CLIENTS_FORMATTED;
 import static iudx.aaa.server.registration.Constants.SQL_GET_KC_ID_FROM_ARR;
 import static iudx.aaa.server.registration.Constants.SQL_GET_ORG_DETAILS;
 import static iudx.aaa.server.registration.Constants.SQL_GET_PHONE_JOIN_ORG;
-import static iudx.aaa.server.registration.Constants.SQL_GET_REG_ROLES;
 import static iudx.aaa.server.registration.Constants.SQL_UPDATE_ORG_ID;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_CREATED_USER;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_ORG_READ;
@@ -70,8 +68,6 @@ import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.UpdateProfileRequest;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -217,14 +213,7 @@ public class RegistrationServiceImpl implements RegistrationService {
      * Function to form tuple for create user query. The email ID of the user is taken as input
      */
     Function<String, Tuple> createUserTup = (emailId) -> {
-      MessageDigest md = null;
-      try {
-        md = MessageDigest.getInstance(EMAIL_HASH_ALG);
-      } catch (NoSuchAlgorithmException e) {
-        throw new RuntimeException(e.getMessage());
-      }
-
-      String hash = DigestUtils.sha1Hex(md.digest(emailId.getBytes()));
+      String hash = DigestUtils.sha1Hex(emailId.getBytes());
       String emailHash = emailId.split("@")[1] + '/' + hash;
       return Tuple.of(phone, orgIdToSet, emailHash, user.getKeycloakId());
     };
