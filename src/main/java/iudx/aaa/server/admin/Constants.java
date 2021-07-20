@@ -28,8 +28,14 @@ public class Constants {
   public static final String URN_INVALID_INPUT = "urn:dx:as:InvalidInput";
   public static final String URN_ALREADY_EXISTS = "urn:dx:as:AlreadyExists";
 
+  /* Response fields */
+  public static final String RESP_USERID = "userId";
+  public static final String RESP_STATUS = "status";
+  public static final String RESP_ORG = "organization";
+
   /* Response title and details */
   public static final String SUCC_TITLE_CREATED_ORG = "Organization has been created";
+  public static final String SUCC_TITLE_PROVIDER_REGS = "Provider registrations";
 
   public static final String ERR_TITLE_INVALID_DOMAIN = "Invalid URL";
   public static final String ERR_DETAIL_INVALID_DOMAIN = "The domain is invalid";
@@ -51,5 +57,12 @@ public class Constants {
 
   public static final String SQL_CHECK_ADMIN_OF_SERVER =
       "SELECT id FROM test.resource_server WHERE owner_id = $1::uuid AND url = $2::text";
+
+  public static final String SQL_GET_PROVIDERS_BY_STATUS =
+      "SELECT users.id, keycloak_id, organization_id FROM test.users JOIN test.roles ON users.id = roles.user_id "
+          + "WHERE roles.role = 'PROVIDER' AND roles.status = $1::test.role_status_enum";
+
+  public static final String SQL_GET_ORG_DETAILS =
+      "SELECT id, name, url FROM test.organizations WHERE id = ANY($1::uuid[])";
 
 }
