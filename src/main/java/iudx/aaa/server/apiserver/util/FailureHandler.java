@@ -1,5 +1,6 @@
 package iudx.aaa.server.apiserver.util;
 
+import static iudx.aaa.server.apiserver.util.Constants.ERR_TITLE_BAD_REQUEST;
 import static iudx.aaa.server.apiserver.util.Constants.HEADER_CONTENT_TYPE;
 import static iudx.aaa.server.apiserver.util.Constants.INVALID_JSON;
 import static iudx.aaa.server.apiserver.util.Constants.MIME_APPLICATION_JSON;
@@ -22,13 +23,15 @@ public class FailureHandler implements Handler<RoutingContext> {
 
   @Override
   public void handle(RoutingContext context) {
-    LOGGER.error("Fail: Handling unexpected error: "+ context.failure().getLocalizedMessage());
+    LOGGER.error("Fail: Handling unexpected error: " + context.failure().getLocalizedMessage());
     Throwable failure = context.failure();
     HttpServerResponse response = context.response();
     response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON);
 
     if (failure instanceof DecodeException) {
       processResponse(response, URN_INVALID_INPUT, INVALID_JSON);
+    } else if (failure instanceof IllegalArgumentException) {
+      processResponse(response, URN_INVALID_INPUT, failure.getLocalizedMessage());
     } else if (failure instanceof NullPointerException) {
       response.setStatusCode(500).end();
       return;
@@ -48,5 +51,12 @@ public class FailureHandler implements Handler<RoutingContext> {
   private Future<Void> processResponse(HttpServerResponse response, String type, String title) {
     Response rs = new ResponseBuilder().type(type).title(title).detail(title).build();
     return response.setStatusCode(500).end(rs.toJson().toString());
+  }
+
+  /* Using this function for 400 Bad Request */
+  private Future<Void> processResponse(HttpServerResponse response, String detail) {
+    Response rs = new ResponseBuilder().type(URN_INVALID_INPUT).title(ERR_TITLE_BAD_REQUEST)
+        .detail(detail).build();
+    return response.setStatusCode(400).end(rs.toJson().toString());
   }
 }

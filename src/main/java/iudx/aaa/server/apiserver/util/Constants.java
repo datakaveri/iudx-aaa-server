@@ -11,7 +11,7 @@ public class Constants {
   public static final String HEADER_REFERER = "Referer";
   public static final String HEADER_ALLOW_ORIGIN = "Access-Control-Allow-Origin";
   public static final String HEADER_OPTIONS = "options";
-  
+
   /* Configuration & related */
   public static final String DATABASE_IP = "databaseIP";
   public static final String DATABASE_PORT = "databasePort";
@@ -32,14 +32,20 @@ public class Constants {
   // Accept Headers and CORS
   public static final String MIME_APPLICATION_JSON = "application/json";
   public static final String MIME_TEXT_HTML = "text/html";
-  
+
   public static final String NIL_UUID = "00000000-0000-0000-0000-000000000000";
-  
+
   /* API Server Routes */
-  public static final String API_TOKEN="/auth/v1/token";
-  public static final String API_INTROSPECT_TOKEN="/auth/v1/interospect";
-  public static final String API_REVOKE_TOKEN="/auth/v1/token/revoke";
-  
+  public static final String API_TOKEN = "/auth/v1/token";
+  public static final String API_INTROSPECT_TOKEN = "/auth/v1/introspect";
+  public static final String API_REVOKE_TOKEN = "/auth/v1/token/revoke";
+  public static final String API_USER_PROFILE = "/auth/v1/user/profile";
+  public static final String API_ORGANIZATION = "/auth/v1/organizations";
+  public static final String API_ADMIN_PROVIDER_REG = "/auth/v1/admin/provider/registrations";
+
+  /* Query Params */
+  public static final String QUERY_FILTER = "filter";
+
   /* Response Messages */
   public static final String URN_SUCCESS = "urn:dx:as:Success";
   public static final String URN_MISSING_INFO = "urn:dx:as:MissingInformation";
@@ -48,16 +54,18 @@ public class Constants {
   public static final String URN_INVALID_ROLE = "urn:dx:as:InvalidRole";
   public static final String URN_INVALID_AUTH_TOKEN = "urn:dx:as:InvalidAuthenticationToken";
   public static final String URN_MISSING_AUTH_TOKEN = "urn:dx:as:MissingAuthenticationToken";
-  
+
   public static final String TOKEN_FAILED = "Token authentication failed";
   public static final String MISSING_TOKEN = "Missing accessToken";
   public static final String INTERNAL_SVR_ERR = "Internal server error";
   public static final String MISSING_TOKEN_CLIENT = "Missing auth details";
   public static final String INVALID_JSON = "Invalid Json";
-  
+  public static final String ERR_TITLE_BAD_REQUEST = "Missing or malformed parameters";
+  public static final String ERR_DETAIL_BAD_FILTER = "Invalid 'filter' value";
+
   public static final String LOG_FAILED_DISCOVERY = "Fail: Unable to discover keycloak instance; ";
-  
-  /* General */ 
+
+  /* General */
   public static final String NAME = "name";
   public static final String SUB = "sub";
   public static final String ID = "id";
@@ -70,20 +78,25 @@ public class Constants {
   public static final String JWT_LEEWAY = "jwtLeeway";
   public static final String STATUS = "status";
   public static final String SSL = "ssl";
-  
-  
+
+  /* Compose failure due to invalid token */
+  public static final String INVALID_TOKEN_FAILED_COMPOSE = "INVALID_TOKEN";
+
   /* SQL Queries */
   public static final String DB_SCHEMA = "test";
-  public static final String SQL_GET_USER_ROLES = "SELECT u.id, uc.client_id, array_agg(r.role) as roles \n" + 
-      "FROM (select id from " + DB_SCHEMA + ".users where keycloak_id = $1) u \n" + 
-      "LEFT JOIN " + DB_SCHEMA + ".roles r ON u.id = r.user_id \n" + 
-      "LEFT JOIN " + DB_SCHEMA + ".user_clients uc ON u.id = uc.user_id \n" +
-      "where r.status='APPROVED' GROUP BY u.id, uc.client_id";
-  
-  public static final String SQL_GET_KID_ROLES = "SELECT u.id, q.keycloak_id as kid, client_secret, array_agg(r.role) as roles\n" + 
-      "FROM (select user_id as id, client_secret from " + DB_SCHEMA + ".user_clients where client_id = $1) u\n" + 
-      "LEFT JOIN " + DB_SCHEMA + ".roles r ON u.id = r.user_id\n" + 
-      "LEFT JOIN " + DB_SCHEMA + ".users q ON u.id = q.id\n" + 
-      "where r.status='APPROVED' GROUP BY u.id, client_secret, keycloak_id";
+  public static final String SQL_GET_USER_ROLES =
+      "SELECT u.id, uc.client_id, array_agg(r.role) as roles \n" + "FROM (select id from "
+          + DB_SCHEMA + ".users where keycloak_id = $1) u \n" + "LEFT JOIN " + DB_SCHEMA
+          + ".roles r ON u.id = r.user_id \n" + "LEFT JOIN " + DB_SCHEMA
+          + ".user_clients uc ON u.id = uc.user_id \n"
+          + "where r.status='APPROVED' GROUP BY u.id, uc.client_id";
+
+  public static final String SQL_GET_KID_ROLES =
+      "SELECT u.id, q.keycloak_id as kid, client_secret, array_agg(r.role) as roles\n"
+          + "FROM (select user_id as id, client_secret from " + DB_SCHEMA
+          + ".user_clients where client_id = $1) u\n" + "LEFT JOIN " + DB_SCHEMA
+          + ".roles r ON u.id = r.user_id\n" + "LEFT JOIN " + DB_SCHEMA
+          + ".users q ON u.id = q.id\n"
+          + "where r.status='APPROVED' GROUP BY u.id, client_secret, keycloak_id";
 
 }
