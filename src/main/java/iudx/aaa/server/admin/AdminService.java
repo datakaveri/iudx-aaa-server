@@ -9,6 +9,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.apiserver.CreateOrgRequest;
+import iudx.aaa.server.apiserver.ProviderUpdateRequest;
 import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.User;
 import java.util.List;
@@ -53,20 +54,20 @@ public interface AdminService {
    * @return AdminService which is a Service
    */
   @Fluent
-  AdminService getProviderRegistrations(
-      RoleStatus filter, User user,
+  AdminService getProviderRegistrations(RoleStatus filter, User user,
       Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * The updateProviderRegistrations implements the operation to approve/reject Provider
    * registrations.
    * 
-   * @param request which is a JsonObject
+   * @param request which is a List of ProviderUpdateRequest data objects
+   * @param user which is the User object
    * @param handler which is a Request Handler
    * @return AdminService which is a Service
    */
   @Fluent
-  AdminService updateProviderRegistrationStatus(List<ProviderUpdateRequest> request,
+  AdminService updateProviderRegistrationStatus(List<ProviderUpdateRequest> request, User user,
       Handler<AsyncResult<JsonObject>> handler);
 
   /**
