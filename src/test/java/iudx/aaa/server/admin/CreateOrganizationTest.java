@@ -168,32 +168,32 @@ public class CreateOrganizationTest {
   void validations(VertxTestContext testContext) {
 
     JsonObject empty = new JsonObject();
-    assertThrows(IllegalArgumentException.class, () -> new CreateOrgRequest(empty));
+    assertThrows(IllegalArgumentException.class, () -> CreateOrgRequest.validatedObj(empty));
 
     JsonObject invalidUrl = new JsonObject().put("url", new JsonArray());
-    assertThrows(IllegalArgumentException.class, () -> new CreateOrgRequest(invalidUrl));
+    assertThrows(IllegalArgumentException.class, () -> CreateOrgRequest.validatedObj(invalidUrl));
 
     JsonObject invalidName = new JsonObject().put("name", new JsonArray());
-    assertThrows(IllegalArgumentException.class, () -> new CreateOrgRequest(invalidName));
+    assertThrows(IllegalArgumentException.class, () -> CreateOrgRequest.validatedObj(invalidName));
 
     JsonObject missingUrl = new JsonObject().put("name", "");
-    assertThrows(IllegalArgumentException.class, () -> new CreateOrgRequest(missingUrl));
+    assertThrows(IllegalArgumentException.class, () -> CreateOrgRequest.validatedObj(missingUrl));
 
     JsonObject blank = new JsonObject().put("name", "").put("url", "");
-    assertThrows(IllegalArgumentException.class, () -> new CreateOrgRequest(blank));
+    assertThrows(IllegalArgumentException.class, () -> CreateOrgRequest.validatedObj(blank));
 
     JsonObject longName = new JsonObject().put("name", RandomStringUtils.randomAlphabetic(101))
         .put("url", RandomStringUtils.randomAlphabetic(10));
-    assertThrows(IllegalArgumentException.class, () -> new CreateOrgRequest(longName));
+    assertThrows(IllegalArgumentException.class, () -> CreateOrgRequest.validatedObj(longName));
 
     JsonObject specialCharName =
         new JsonObject().put("name", RandomStringUtils.randomAlphabetic(10) + "@").put("url",
             RandomStringUtils.randomAlphabetic(10));
-    assertThrows(IllegalArgumentException.class, () -> new CreateOrgRequest(specialCharName));
+    assertThrows(IllegalArgumentException.class, () -> CreateOrgRequest.validatedObj(specialCharName));
 
     JsonObject longUrl = new JsonObject().put("url", RandomStringUtils.randomAlphabetic(101))
         .put("name", RandomStringUtils.randomAlphabetic(10));
-    assertThrows(IllegalArgumentException.class, () -> new CreateOrgRequest(longUrl));
+    assertThrows(IllegalArgumentException.class, () -> CreateOrgRequest.validatedObj(longUrl));
 
     testContext.completeNow();
   }
@@ -204,7 +204,7 @@ public class CreateOrganizationTest {
     JsonObject userJson = adminAuthUser.result();
 
     JsonObject json = new JsonObject().put("url", "foo.bar").put("name", "bar");
-    CreateOrgRequest request = new CreateOrgRequest(json);
+    CreateOrgRequest request = CreateOrgRequest.validatedObj(json);
     User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
         .name(userJson.getString("firstName"), userJson.getString("lastName"))
         .roles(List.of(Roles.ADMIN)).build();
@@ -225,7 +225,7 @@ public class CreateOrganizationTest {
     JsonObject userJson = adminOtherUser.result();
 
     JsonObject json = new JsonObject().put("url", "foo.bar").put("name", "bar");
-    CreateOrgRequest request = new CreateOrgRequest(json);
+    CreateOrgRequest request = CreateOrgRequest.validatedObj(json);
     User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
         .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
         .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
@@ -246,7 +246,7 @@ public class CreateOrganizationTest {
     JsonObject userJson = consumerUser.result();
 
     JsonObject json = new JsonObject().put("url", "foo.bar").put("name", "bar");
-    CreateOrgRequest request = new CreateOrgRequest(json);
+    CreateOrgRequest request = CreateOrgRequest.validatedObj(json);
     User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
         .userId(userJson.getString("userId")).roles(List.of(Roles.CONSUMER))
         .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
@@ -275,7 +275,7 @@ public class CreateOrganizationTest {
     Checkpoint specialChars = testContext.checkpoint();
 
     JsonObject json = new JsonObject().put("url", "https://example.com").put("name", "bar");
-    CreateOrgRequest request = new CreateOrgRequest(json);
+    CreateOrgRequest request = CreateOrgRequest.validatedObj(json);
     adminService.createOrganization(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 400);
@@ -286,7 +286,7 @@ public class CreateOrganizationTest {
         })));
 
     json.clear().put("url", "example.com/path/1/2").put("name", "bar");
-    request = new CreateOrgRequest(json);
+    request = CreateOrgRequest.validatedObj(json);
     adminService.createOrganization(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 400);
@@ -297,7 +297,7 @@ public class CreateOrganizationTest {
         })));
 
     json.clear().put("url", "example.abcd").put("name", "bar");
-    request = new CreateOrgRequest(json);
+    request = CreateOrgRequest.validatedObj(json);
     adminService.createOrganization(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 400);
@@ -308,7 +308,7 @@ public class CreateOrganizationTest {
         })));
 
     json.clear().put("url", "example#@.abcd").put("name", "bar");
-    request = new CreateOrgRequest(json);
+    request = CreateOrgRequest.validatedObj(json);
     adminService.createOrganization(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 400);
@@ -328,7 +328,7 @@ public class CreateOrganizationTest {
     String url = name + ".com";
 
     JsonObject json = new JsonObject().put("url", url).put("name", name);
-    CreateOrgRequest request = new CreateOrgRequest(json);
+    CreateOrgRequest request = CreateOrgRequest.validatedObj(json);
     User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
         .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
         .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
@@ -356,7 +356,7 @@ public class CreateOrganizationTest {
     String url = name + ".com";
 
     JsonObject json = new JsonObject().put("url", url).put("name", name);
-    CreateOrgRequest request = new CreateOrgRequest(json);
+    CreateOrgRequest request = CreateOrgRequest.validatedObj(json);
     User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
         .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
         .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
@@ -398,10 +398,10 @@ public class CreateOrganizationTest {
     String url = "mail." + mainDomain;
 
     JsonObject json = new JsonObject().put("url", url).put("name", name);
-    CreateOrgRequest request = new CreateOrgRequest(json);
+    CreateOrgRequest request = CreateOrgRequest.validatedObj(json);
 
     json.clear().put("url", "subdomain." + url).put("name", name);
-    CreateOrgRequest requestSub = new CreateOrgRequest(json);
+    CreateOrgRequest requestSub = CreateOrgRequest.validatedObj(json);
 
     User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
         .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))

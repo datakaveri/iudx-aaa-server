@@ -154,35 +154,41 @@ public class UpdateUserTest {
   void validations(VertxTestContext testContext) {
 
     JsonObject empty = new JsonObject();
-    assertThrows(IllegalArgumentException.class, () -> new UpdateProfileRequest(empty));
+    assertThrows(IllegalArgumentException.class, () -> UpdateProfileRequest.validatedObj(empty));
 
     JsonObject invalidRole = new JsonObject().put("roles", new JsonArray().add("hello"));
-    assertThrows(IllegalArgumentException.class, () -> new UpdateProfileRequest(invalidRole));
+    assertThrows(IllegalArgumentException.class,
+        () -> UpdateProfileRequest.validatedObj(invalidRole));
 
     JsonObject adminRole = new JsonObject().put("roles", new JsonArray().add("admin"));
-    assertThrows(IllegalArgumentException.class, () -> new UpdateProfileRequest(adminRole));
+    assertThrows(IllegalArgumentException.class,
+        () -> UpdateProfileRequest.validatedObj(adminRole));
 
     JsonObject stringRole = new JsonObject().put("roles", "admin");
-    assertThrows(IllegalArgumentException.class, () -> new UpdateProfileRequest(stringRole));
+    assertThrows(IllegalArgumentException.class,
+        () -> UpdateProfileRequest.validatedObj(stringRole));
 
     JsonObject badRoleArr =
         new JsonObject().put("roles", new JsonArray().add(1).add(new JsonObject()));
-    assertThrows(IllegalArgumentException.class, () -> new UpdateProfileRequest(badRoleArr));
+    assertThrows(IllegalArgumentException.class,
+        () -> UpdateProfileRequest.validatedObj(badRoleArr));
 
     JsonObject orgNum =
         new JsonObject().put("roles", new JsonArray().add("delegate")).put("orgId", 1234);
-    assertThrows(IllegalArgumentException.class, () -> new UpdateProfileRequest(orgNum));
+    assertThrows(IllegalArgumentException.class, () -> UpdateProfileRequest.validatedObj(orgNum));
 
     JsonObject orgArr = new JsonObject().put("roles", new JsonArray().add("consumer")).put("orgId",
         new JsonArray());
-    assertThrows(IllegalArgumentException.class, () -> new UpdateProfileRequest(orgArr));
+    assertThrows(IllegalArgumentException.class, () -> UpdateProfileRequest.validatedObj(orgArr));
 
     JsonObject orgInvalid = new JsonObject().put("roles", new JsonArray().add("delegate"))
         .put("orgId", "107f8479-e767-4760-ac5f-d4518ebe3a8");
-    assertThrows(IllegalArgumentException.class, () -> new UpdateProfileRequest(orgInvalid));
+    assertThrows(IllegalArgumentException.class,
+        () -> UpdateProfileRequest.validatedObj(orgInvalid));
 
     JsonObject providerRole = new JsonObject().put("roles", new JsonArray().add("provider"));
-    assertThrows(IllegalArgumentException.class, () -> new UpdateProfileRequest(providerRole));
+    assertThrows(IllegalArgumentException.class,
+        () -> UpdateProfileRequest.validatedObj(providerRole));
 
     testContext.completeNow();
   }
@@ -195,7 +201,7 @@ public class UpdateUserTest {
     JsonObject req = new JsonObject().put("orgId", orgIdFut.result().toString()).put("roles",
         new JsonArray().add("delegate"));
 
-    UpdateProfileRequest request = new UpdateProfileRequest(req);
+    UpdateProfileRequest request = UpdateProfileRequest.validatedObj(req);
 
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture("email@gmail.com"));
 
@@ -213,7 +219,7 @@ public class UpdateUserTest {
   void consumerNoOrgId(VertxTestContext testContext) {
     JsonObject req = new JsonObject().put("roles", new JsonArray().add("delegate"));
 
-    UpdateProfileRequest request = new UpdateProfileRequest(req);
+    UpdateProfileRequest request = UpdateProfileRequest.validatedObj(req);
 
     List<Roles> roles = List.of(Roles.CONSUMER);
     Map<Roles, RoleStatus> cons = new HashMap<Roles, RoleStatus>();
@@ -248,7 +254,7 @@ public class UpdateUserTest {
     JsonObject req = new JsonObject().put("roles", new JsonArray().add("delegate")).put("orgId",
         UUID.randomUUID().toString());
 
-    UpdateProfileRequest request = new UpdateProfileRequest(req);
+    UpdateProfileRequest request = UpdateProfileRequest.validatedObj(req);
 
     List<Roles> roles = List.of(Roles.CONSUMER);
     Map<Roles, RoleStatus> cons = new HashMap<Roles, RoleStatus>();
@@ -284,7 +290,7 @@ public class UpdateUserTest {
     JsonObject req = new JsonObject().put("roles", new JsonArray().add("delegate")).put("orgId",
         orgIdFut.result().toString());
 
-    UpdateProfileRequest request = new UpdateProfileRequest(req);
+    UpdateProfileRequest request = UpdateProfileRequest.validatedObj(req);
 
     List<Roles> roles = List.of(Roles.CONSUMER);
     Map<Roles, RoleStatus> cons = new HashMap<Roles, RoleStatus>();
@@ -321,7 +327,7 @@ public class UpdateUserTest {
     JsonObject req = new JsonObject().put("roles", new JsonArray().add("delegate")).put("orgId",
         orgIdFut.result().toString());
 
-    UpdateProfileRequest request = new UpdateProfileRequest(req);
+    UpdateProfileRequest request = UpdateProfileRequest.validatedObj(req);
 
     List<Roles> roles = List.of(Roles.CONSUMER);
     Map<Roles, RoleStatus> cons = new HashMap<Roles, RoleStatus>();
@@ -383,7 +389,7 @@ public class UpdateUserTest {
     JsonObject req = new JsonObject().put("roles", new JsonArray().add("consumer").add("delegate"))
         .put("orgId", orgIdFut.result().toString());
 
-    UpdateProfileRequest request = new UpdateProfileRequest(req);
+    UpdateProfileRequest request = UpdateProfileRequest.validatedObj(req);
 
     List<Roles> roles = List.of(Roles.DELEGATE, Roles.PROVIDER);
     Map<Roles, RoleStatus> cons = new HashMap<Roles, RoleStatus>();
@@ -424,7 +430,7 @@ public class UpdateUserTest {
 
     JsonObject req = new JsonObject().put("roles", new JsonArray().add("consumer").add("delegate"));
 
-    UpdateProfileRequest request = new UpdateProfileRequest(req);
+    UpdateProfileRequest request = UpdateProfileRequest.validatedObj(req);
 
     Map<Roles, RoleStatus> prov = new HashMap<Roles, RoleStatus>();
     prov.put(Roles.PROVIDER, RoleStatus.PENDING);
@@ -486,7 +492,7 @@ public class UpdateUserTest {
 
     JsonObject req = new JsonObject().put("roles", new JsonArray().add("consumer"));
 
-    UpdateProfileRequest request = new UpdateProfileRequest(req);
+    UpdateProfileRequest request = UpdateProfileRequest.validatedObj(req);
 
     List<Roles> roles = List.of(Roles.PROVIDER);
     Map<Roles, RoleStatus> prov = new HashMap<Roles, RoleStatus>();

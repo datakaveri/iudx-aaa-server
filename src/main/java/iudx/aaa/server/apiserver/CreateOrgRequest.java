@@ -33,9 +33,17 @@ public class CreateOrgRequest {
     this.url = url;
   }
 
-  public CreateOrgRequest(JsonObject json) {
+  public static CreateOrgRequest validatedObj(JsonObject json) {
+    return new CreateOrgRequest(validateJsonObject(json));
+  }
 
-    CreateOrgRequestConverter.fromJson(validateJsonObject(json), this);
+  /**
+   * <b>Do not use this constructor for creating object.
+   * Use validatedObj function</b>
+   * @param json
+   */
+  public CreateOrgRequest(JsonObject json) {
+    CreateOrgRequestConverter.fromJson(json, this);
   }
 
   public JsonObject toJson() {
@@ -44,7 +52,7 @@ public class CreateOrgRequest {
     return obj;
   }
 
-  private JsonObject validateJsonObject(JsonObject json) throws IllegalArgumentException {
+  private static JsonObject validateJsonObject(JsonObject json) throws IllegalArgumentException {
     if (!json.containsKey("name") || !(json.getValue("name") instanceof String)) {
       throw new IllegalArgumentException("'name' is required");
     }
