@@ -2,6 +2,7 @@ package iudx.aaa.server.apiserver;
 
 import static iudx.aaa.server.apiserver.util.Constants.*;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,6 +21,7 @@ import io.vertx.ext.web.handler.CorsHandler;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+import iudx.aaa.server.admin.AdminService;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.util.FailureHandler;
 import iudx.aaa.server.apiserver.util.RequestAuthentication;
@@ -54,7 +56,7 @@ public class ApiServerVerticle extends AbstractVerticle {
   private boolean isSSL;
   private String keystore;
   private String keystorePassword;
-  
+
   private String databaseIP;
   private int databasePort;
   private String databaseName;
@@ -68,10 +70,12 @@ public class ApiServerVerticle extends AbstractVerticle {
   private static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
   private static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
   private static final String TOKEN_SERVICE_ADDRESS = "iudx.aaa.token.service";
+  private static final String ADMIN_SERVICE_ADDRESS = "iudx.aaa.admin.service";
 
   private PolicyService policyService;
   private RegistrationService registrationService;
   private TokenService tokenService;
+  private AdminService adminService;
 
   /**
    * This method is used to start the Verticle. It deploys a verticle in a cluster, reads the
@@ -84,7 +88,7 @@ public class ApiServerVerticle extends AbstractVerticle {
 
   @Override
   public void start() throws Exception {
-    
+
     databaseIP = config().getString(DATABASE_IP);
     databasePort = Integer.parseInt(config().getString(DATABASE_PORT));
     databaseName = config().getString(DATABASE_NAME);
@@ -92,19 +96,19 @@ public class ApiServerVerticle extends AbstractVerticle {
     databasePassword = config().getString(DATABASE_PASSWORD);
     poolSize = Integer.parseInt(config().getString(POOLSIZE));
     JsonObject keycloakOptions = config().getJsonObject(KEYCLOACK_OPTIONS);
-    
+
     /* Set Connection Object */
     if (connectOptions == null) {
       connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
           .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
           .setConnectTimeout(PG_CONNECTION_TIMEOUT);
     }
-    
+
     /* Pool options */
     if (poolOptions == null) {
       poolOptions = new PoolOptions().setMaxSize(poolSize);
     }
-    
+
     PgPool pgPool = PgPool.pool(vertx, connectOptions, poolOptions);
 
     Set<String> allowedHeaders = new HashSet<>();
@@ -133,29 +137,45 @@ public class ApiServerVerticle extends AbstractVerticle {
     router.route().handler(
         CorsHandler.create("*").allowedHeaders(allowedHeaders).allowedMethods(allowedMethods));
     router.route().handler(BodyHandler.create());
-    
-    RequestAuthentication reqAuth = new RequestAuthentication(vertx, pgPool,keycloakOptions);
+
+    RequestAuthentication reqAuth = new RequestAuthentication(vertx, pgPool, keycloakOptions);
     FailureHandler failureHandler = new FailureHandler();
-    
-    //Create token
-    router.post(API_TOKEN)
-          .consumes(MIME_APPLICATION_JSON)
-          .handler(reqAuth)
-          .handler(this::createTokenHandler)
-          .failureHandler(failureHandler);
+
+    // Create token
+    router.post(API_TOKEN).consumes(MIME_APPLICATION_JSON).handler(reqAuth)
+        .handler(this::createTokenHandler).failureHandler(failureHandler);
 
     // Revoke Token
-    router.post(API_REVOKE_TOKEN)
-          .consumes(MIME_APPLICATION_JSON)
-          .handler(reqAuth)
-          .handler(this::revokeTokenHandler)
-          .failureHandler(failureHandler);
+    router.post(API_REVOKE_TOKEN).consumes(MIME_APPLICATION_JSON).handler(reqAuth)
+        .handler(this::revokeTokenHandler).failureHandler(failureHandler);
 
     // Introspect token
-    router.post(API_INTROSPECT_TOKEN)
-          .consumes(MIME_APPLICATION_JSON)
-          .handler(this::validateTokenHandler)
-          .failureHandler(failureHandler);
+    router.post(API_INTROSPECT_TOKEN).consumes(MIME_APPLICATION_JSON)
+        .handler(this::validateTokenHandler).failureHandler(failureHandler);
+
+    // Create user profile
+    router.post(API_USER_PROFILE).handler(reqAuth).handler(this::createUserProfile)
+        .failureHandler(failureHandler);
+
+    // List user profile
+    router.get(API_USER_PROFILE).handler(reqAuth).handler(this::listUserProfile)
+        .failureHandler(failureHandler);
+
+    // Update user
+    router.put(API_USER_PROFILE).consumes(MIME_APPLICATION_JSON).handler(reqAuth)
+        .handler(this::updateUserProfile).failureHandler(failureHandler);
+
+    // List organizations
+    router.get(API_ORGANIZATION).handler(reqAuth).handler(this::listOrganization)
+        .failureHandler(failureHandler);
+
+    // Admin create organization
+    router.post(API_ORGANIZATION).consumes(MIME_APPLICATION_JSON).handler(reqAuth)
+        .handler(this::adminCreateOrganization).failureHandler(failureHandler);
+
+    // Admin list provider reg
+    router.post(API_ADMIN_PROVIDER_REG).handler(reqAuth).handler(this::adminGetProviderReg)
+        .failureHandler(failureHandler);
 
     /**
      * Documentation routes
@@ -166,13 +186,13 @@ public class ApiServerVerticle extends AbstractVerticle {
       HttpServerResponse response = routingContext.response();
       response.sendFile("docs/openapi.yaml");
     });
-    
+
     /* Get redoc */
     router.get(ROUTE_DOC).produces(MIME_TEXT_HTML).handler(routingContext -> {
       HttpServerResponse response = routingContext.response();
       response.sendFile("docs/apidoc.html");
     });
-    
+
 
     /* Read ssl configuration. */
     isSSL = config().getBoolean(SSL);
@@ -203,8 +223,9 @@ public class ApiServerVerticle extends AbstractVerticle {
     policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
     registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
     tokenService = TokenService.createProxy(vertx, TOKEN_SERVICE_ADDRESS);
+    adminService = AdminService.createProxy(vertx, ADMIN_SERVICE_ADDRESS);
   }
-  
+
   /**
    * Handler to handle create token request.
    * 
@@ -226,15 +247,16 @@ public class ApiServerVerticle extends AbstractVerticle {
       }
     });
   }
-  
+
   /**
    * Handle the Token Introspection.
+   * 
    * @param context
    */
   private void validateTokenHandler(RoutingContext context) {
     JsonObject tokenRequestJson = context.getBodyAsJson();
     IntrospectToken introspectToken = tokenRequestJson.mapTo(IntrospectToken.class);
-    
+
     tokenService.validateToken(introspectToken, handler -> {
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
@@ -243,22 +265,143 @@ public class ApiServerVerticle extends AbstractVerticle {
       }
     });
   }
-  
+
   /**
    * Handles the Token revocation.
+   * 
    * @param context
    */
   private void revokeTokenHandler(RoutingContext context) {
 
   }
-  
+
+  /**
+   * Handles user profile creation.
+   * 
+   * @param context
+   */
+  private void createUserProfile(RoutingContext context) {
+    JsonObject jsonRequest = context.getBodyAsJson();
+    RegistrationRequest request = RegistrationRequest.validatedObj(jsonRequest);
+    User user = context.get(USER);
+
+    registrationService.createUser(request, user, handler -> {
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+
+  /**
+   * Handles listing user profile.
+   * 
+   * @param context
+   */
+  private void listUserProfile(RoutingContext context) {
+    User user = context.get(USER);
+
+    registrationService.listUser(user, handler -> {
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+
+  /**
+   * Handles user profile update.
+   * 
+   * @param context
+   */
+  private void updateUserProfile(RoutingContext context) {
+    JsonObject jsonRequest = context.getBodyAsJson();
+    UpdateProfileRequest request = UpdateProfileRequest.validatedObj(jsonRequest);
+    User user = context.get(USER);
+
+    registrationService.updateUser(request, user, handler -> {
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+
+  }
+
+  /**
+   * Handles organization listing.
+   * 
+   * @param context
+   */
+  private void listOrganization(RoutingContext context) {
+    registrationService.listOrganization(handler -> {
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+
+  /**
+   * Handles org creation by admin user.
+   * 
+   * @param context
+   */
+  private void adminCreateOrganization(RoutingContext context) {
+    JsonObject jsonRequest = context.getBodyAsJson();
+    CreateOrgRequest request = CreateOrgRequest.validatedObj(jsonRequest);
+    User user = context.get(USER);
+
+    adminService.createOrganization(request, user, handler -> {
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+
+  /**
+   * Handles list provider registrations by admin.
+   * 
+   * @param context
+   */
+  private void adminGetProviderReg(RoutingContext context) {
+    List<String> filterList = context.queryParam(QUERY_FILTER);
+    RoleStatus filter;
+
+    if (filterList.size() > 0) {
+      String value = filterList.get(0).toUpperCase();
+      if (RoleStatus.exists(value)) {
+        filter = RoleStatus.valueOf(value);
+      } else {
+        throw new IllegalArgumentException(ERR_DETAIL_BAD_FILTER);
+      }
+    } else {
+      filter = RoleStatus.PENDING;
+    }
+
+    User user = context.get(USER);
+    adminService.getProviderRegistrations(filter, user, handler -> {
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+
   private Future<Void> processResponse(HttpServerResponse response, JsonObject msg) {
-    int status = msg.getInteger(STATUS,400);
+    int status = msg.getInteger(STATUS, 400);
     msg.remove(STATUS);
     response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON);
     return response.setStatusCode(status).end(msg.toString());
   }
-  
+
   private Future<Void> processResponse(HttpServerResponse response, String msg) {
     Response rs = new ResponseBuilder().title(INTERNAL_SVR_ERR).detail(msg).build();
     response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON);
