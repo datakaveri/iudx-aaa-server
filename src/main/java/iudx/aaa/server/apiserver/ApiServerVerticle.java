@@ -142,57 +142,82 @@ public class ApiServerVerticle extends AbstractVerticle {
     FailureHandler failureHandler = new FailureHandler();
 
     // Create token
-    router.post(API_TOKEN).consumes(MIME_APPLICATION_JSON).handler(reqAuth)
-        .handler(this::createTokenHandler).failureHandler(failureHandler);
+    router.post(API_TOKEN)
+          .consumes(MIME_APPLICATION_JSON)
+          .handler(reqAuth)
+          .handler(this::createTokenHandler)
+          .failureHandler(failureHandler);
 
     // Revoke Token
-    router.post(API_REVOKE_TOKEN).consumes(MIME_APPLICATION_JSON).handler(reqAuth)
-        .handler(this::revokeTokenHandler).failureHandler(failureHandler);
+    router.post(API_REVOKE_TOKEN)
+          .consumes(MIME_APPLICATION_JSON)
+          .handler(reqAuth)
+          .handler(this::revokeTokenHandler)
+          .failureHandler(failureHandler);
 
     // Introspect token
-    router.post(API_INTROSPECT_TOKEN).consumes(MIME_APPLICATION_JSON)
-        .handler(this::validateTokenHandler).failureHandler(failureHandler);
+    router.post(API_INTROSPECT_TOKEN)
+          .consumes(MIME_APPLICATION_JSON)
+          .handler(this::validateTokenHandler)
+          .failureHandler(failureHandler);
 
     // Create user profile
-    router.post(API_USER_PROFILE).handler(reqAuth).handler(this::createUserProfile)
-        .failureHandler(failureHandler);
+    router.post(API_USER_PROFILE)
+          .handler(reqAuth)
+          .handler(this::createUserProfile)
+          .failureHandler(failureHandler);
 
     // List user profile
-    router.get(API_USER_PROFILE).handler(reqAuth).handler(this::listUserProfile)
-        .failureHandler(failureHandler);
+    router.get(API_USER_PROFILE)
+          .handler(reqAuth)
+          .handler(this::listUserProfile)
+          .failureHandler(failureHandler);
 
     // Update user
-    router.put(API_USER_PROFILE).consumes(MIME_APPLICATION_JSON).handler(reqAuth)
-        .handler(this::updateUserProfile).failureHandler(failureHandler);
+    router.put(API_USER_PROFILE)
+          .consumes(MIME_APPLICATION_JSON)
+          .handler(reqAuth)
+          .handler(this::updateUserProfile)
+          .failureHandler(failureHandler);
 
     // List organizations
-    router.get(API_ORGANIZATION).handler(reqAuth).handler(this::listOrganization)
-        .failureHandler(failureHandler);
+    router.get(API_ORGANIZATION)
+          .handler(reqAuth)
+          .handler(this::listOrganization)
+          .failureHandler(failureHandler);
 
     // Admin create organization
-    router.post(API_ORGANIZATION).consumes(MIME_APPLICATION_JSON).handler(reqAuth)
-        .handler(this::adminCreateOrganization).failureHandler(failureHandler);
+    router.post(API_ORGANIZATION)
+          .consumes(MIME_APPLICATION_JSON)
+          .handler(reqAuth)
+          .handler(this::adminCreateOrganization)
+          .failureHandler(failureHandler);
 
     // Admin list provider reg
-    router.post(API_ADMIN_PROVIDER_REG).handler(reqAuth).handler(this::adminGetProviderReg)
-        .failureHandler(failureHandler);
+    router.post(API_ADMIN_PROVIDER_REG)
+          .handler(reqAuth)
+          .handler(this::adminGetProviderReg)
+          .failureHandler(failureHandler);
 
     /**
      * Documentation routes
      */
     /* Static Resource Handler */
     /* Get openapiv3 spec */
-    router.get(ROUTE_STATIC_SPEC).produces(MIME_APPLICATION_JSON).handler(routingContext -> {
-      HttpServerResponse response = routingContext.response();
-      response.sendFile("docs/openapi.yaml");
-    });
+    router.get(ROUTE_STATIC_SPEC)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(routingContext -> {
+            HttpServerResponse response = routingContext.response();
+            response.sendFile("docs/openapi.yaml");
+           });
 
     /* Get redoc */
-    router.get(ROUTE_DOC).produces(MIME_TEXT_HTML).handler(routingContext -> {
-      HttpServerResponse response = routingContext.response();
-      response.sendFile("docs/apidoc.html");
-    });
-
+    router.get(ROUTE_DOC)
+          .produces(MIME_TEXT_HTML)
+          .handler(routingContext -> {
+            HttpServerResponse response = routingContext.response();
+            response.sendFile("docs/apidoc.html");
+          });
 
     /* Read ssl configuration. */
     isSSL = config().getBoolean(SSL);
@@ -272,7 +297,28 @@ public class ApiServerVerticle extends AbstractVerticle {
    * @param context
    */
   private void revokeTokenHandler(RoutingContext context) {
+    /* Mapping request body to Object */
+    JsonObject tokenRequestJson = context.getBodyAsJson();
+    RevokeToken revokeTokenDTO = tokenRequestJson.mapTo(RevokeToken.class);
+    
+    String dbClientId = context.get(CLIENT_ID);
+    User user = context.get(USER);
+    
+    if (!dbClientId.equals(revokeTokenDTO.getClientId())) {
+      LOGGER.error("Fail: " + INVALID_CLIENT);
+      Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+          .title(INVALID_CLIENT).detail(INVALID_CLIENT).build();
+      processResponse(context.response(), resp.toJson());
+      return;
+    }
 
+    tokenService.revokeToken(revokeTokenDTO, user, handler -> {
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
   }
 
   /**

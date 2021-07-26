@@ -62,7 +62,7 @@ public class Constants {
   public static final String INVALID_JSON = "Invalid Json";
   public static final String ERR_TITLE_BAD_REQUEST = "Missing or malformed parameters";
   public static final String ERR_DETAIL_BAD_FILTER = "Invalid 'filter' value";
-
+  public static final String INVALID_CLIENT = "Invalid clientId";
   public static final String LOG_FAILED_DISCOVERY = "Fail: Unable to discover keycloak instance; ";
 
   /* General */
