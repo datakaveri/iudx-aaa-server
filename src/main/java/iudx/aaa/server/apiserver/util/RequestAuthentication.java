@@ -140,6 +140,10 @@ public class RequestAuthentication implements Handler<RoutingContext> {
         pgSelectUser(SQL_GET_KID_ROLES, clientId).onComplete(dbHandler -> {
           if (dbHandler.failed()) {
             LOGGER.error(LOG_DB_ERROR + dbHandler.cause());
+            Response rs = new ResponseBuilder().title(INTERNAL_SVR_ERR).status(500)
+                .detail(dbHandler.cause().getLocalizedMessage()).build();
+            routingContext.fail(new Throwable(rs.toJsonString()));
+            return;
           } else if (dbHandler.succeeded()) {
             if (dbHandler.result().isEmpty()) {
               Response rs = new ResponseBuilder().status(401).type(URN_MISSING_AUTH_TOKEN)
