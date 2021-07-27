@@ -142,82 +142,47 @@ public class TokenServiceImpl implements TokenService {
 
     LOGGER.debug(REQ_RECEIVED);
 
-    String userId = user.getUserId();
-    String clientId = revokeToken.getClientId();
     String rsUrl = revokeToken.getRsUrl();
+    Tuple tuple = Tuple.of(rsUrl);
 
-    if (userId == null || userId.isBlank()) {
-      LOGGER.error("Fail: " + INVALID_USERID);
-      Response resp = new ResponseBuilder().status(400).type(URN_MISSING_INFO).title(INVALID_USERID)
-          .detail(INVALID_USERID).build();
-      handler.handle(Future.succeededFuture(resp.toJson()));
-      return this;
-    }
-
-    Tuple clientTuple = Tuple.of(userId);
-    pgSelelctQuery(GET_CLIENT, clientTuple).onSuccess(mapper -> {
-      if (mapper.size() != 1) {
-        LOGGER.error("Fail: " + INVALID_USER_CLIENT);
-        Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-            .title(INVALID_USER_CLIENT).detail(INVALID_USER_CLIENT).build();
-        handler.handle(Future.succeededFuture(resp.toJson()));
+    pgSelelctQuery(GET_URL, tuple).onComplete(dbHandler -> {
+      if (dbHandler.failed()) {
+        LOGGER.error(LOG_DB_ERROR + dbHandler.cause());
+        handler.handle(Future.failedFuture(INTERNAL_SVR_ERR));
         return;
       }
 
-      JsonObject dbClientRow = mapper.getJsonObject(0);
-      String dbClientId = dbClientRow.getString("client_id");
+      if (dbHandler.succeeded()) {
+        JsonObject dbExistsRow = dbHandler.result().getJsonObject(0);
+        boolean flag = dbExistsRow.getBoolean(EXISTS);
 
-      if (!dbClientId.equals(clientId)) {
-        LOGGER.error("Fail: " + INVALID_CLIENT);
-        Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-            .title(INVALID_CLIENT).detail(INVALID_CLIENT).build();
-        handler.handle(Future.succeededFuture(resp.toJson()));
-        return;
-      }
-
-      Tuple tuple = Tuple.of(rsUrl);
-      pgSelelctQuery(GET_URL, tuple).onComplete(dbHandler -> {
-        if (dbHandler.failed()) {
-          LOGGER.error(LOG_DB_ERROR + dbHandler.cause());
-          handler.handle(Future.failedFuture(INTERNAL_SVR_ERR));
+        if (flag == Boolean.FALSE) {
+          LOGGER.error("Fail: " + INVALID_RS_URL);
+          Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+              .title(INVALID_RS_URL).detail(INVALID_RS_URL).build();
+          handler.handle(Future.succeededFuture(resp.toJson()));
           return;
         }
 
-        if (dbHandler.succeeded()) {
-          JsonObject dbExistsRow = dbHandler.result().getJsonObject(0);
-          boolean flag = dbExistsRow.getBoolean(EXISTS);
+        LOGGER.debug("Info: ResourceServer URL validated");
+        JsonObject revokePayload = JsonObject.mapFrom(revokeToken);
 
-          if (flag == Boolean.FALSE) {
-            LOGGER.error("Fail: " + INVALID_RS_URL);
+        revokeService.httpRevokeRequest(revokePayload, httpClient -> {
+          if (httpClient.succeeded()) {
+            LOGGER.info(LOG_REVOKE_REQ);
+            Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_REVOKED)
+                .arrayResults(new JsonArray()).build();
+            handler.handle(Future.succeededFuture(resp.toJson()));
+            return;
+          } else {
+            LOGGER.error("Fail: {}; {}", FAILED_REVOKE, httpClient.cause());
             Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                .title(INVALID_RS_URL).detail(INVALID_RS_URL).build();
+                .title(FAILED_REVOKE).detail(FAILED_REVOKE).build();
             handler.handle(Future.succeededFuture(resp.toJson()));
             return;
           }
-
-          LOGGER.debug("Info: ResourceServer URL validated");
-          JsonObject revokePayload = JsonObject.mapFrom(revokeToken);
-
-          revokeService.httpRevokeRequest(revokePayload, httpClient -> {
-            if (httpClient.succeeded()) {
-              LOGGER.info(LOG_REVOKE_REQ);
-              Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS)
-                  .title(TOKEN_REVOKED).arrayResults(new JsonArray()).build();
-              handler.handle(Future.succeededFuture(resp.toJson()));
-              return;
-            } else {
-              LOGGER.error("Fail: {}; {}", FAILED_REVOKE, httpClient.cause());
-              Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                  .title(FAILED_REVOKE).detail(FAILED_REVOKE).build();
-              handler.handle(Future.succeededFuture(resp.toJson()));
-              return;
-            }
-          });
-        }
-      });
-    }).onFailure(failureHandler -> {
-      LOGGER.error(LOG_DB_ERROR + failureHandler.getMessage());
-      handler.handle(Future.failedFuture(INTERNAL_SVR_ERR));
+        });
+      }
     });
 
     return this;
