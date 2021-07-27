@@ -34,7 +34,12 @@ public class ProviderUpdateRequest {
 
   public static List<ProviderUpdateRequest> validatedList(JsonArray json) {
     List<ProviderUpdateRequest> arr = new ArrayList<ProviderUpdateRequest>();
-    json.forEach(obj -> arr.add(ProviderUpdateRequest.validatedObj((JsonObject) obj)));
+    json.forEach(obj -> {
+      if (!(obj instanceof JsonObject)) {
+        throw new IllegalArgumentException("Invalid JSON array");
+      }
+      arr.add(ProviderUpdateRequest.validatedObj((JsonObject) obj));
+    });
     return arr;
   }
 

@@ -1,5 +1,6 @@
 package iudx.aaa.server.registration;
 
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
@@ -100,6 +101,31 @@ public class KcAdmin {
     } catch (Exception e) {
       p.fail(e.getMessage());
     }
+
+    return p.future();
+  }
+  
+  /**
+   * Add provider role for users. Reuses the modifyRoles method.
+   * 
+   * @param ids list of keycloak IDs of the users. Must be in UUID format
+   * @return void future
+   */
+  public Future<Void> approveProvider(List<String> ids) {
+
+    Promise<Void> p = Promise.promise();
+
+    /*
+     * call modifyRoles for all IDs, return list of futures. CompositeFuture cannot accept a list of
+     * parameterized futures, so use raw type and suppress warning
+     */
+    @SuppressWarnings("rawtypes")
+    List<Future> futures = ids.stream().map(id -> modifyRoles(id, List.of(Roles.PROVIDER)))
+        .collect(Collectors.toList());
+
+    CompositeFuture.all(futures).onSuccess(success -> {
+      p.complete();
+    }).onFailure(err -> p.fail(err.getMessage()));
 
     return p.future();
   }

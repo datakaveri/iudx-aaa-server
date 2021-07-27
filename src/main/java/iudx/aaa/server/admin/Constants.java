@@ -43,7 +43,7 @@ public class Constants {
   public static final String ERR_DETAIL_INVALID_DOMAIN = "The domain is invalid";
 
   public static final String ERR_TITLE_INVALID_USER = "Invalid User ID";
-  public static final String ERR_DETAIL_INVALID_USER = "User is not a provider/pending provider";
+  public static final String ERR_DETAIL_INVALID_USER = "User is not a provider/pending provider : ";
 
   public static final String ERR_TITLE_NO_USER_PROFILE = "User profile does not exist";
   public static final String ERR_DETAIL_NO_USER_PROFILE = "Please register to create user profile";
