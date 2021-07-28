@@ -330,4 +330,12 @@ public class PolicyServiceImpl implements PolicyService {
 
     return this;
   }
+
+  @Override
+  public PolicyService setDefaultProviderPolicies(List<String> userIds,
+      Handler<AsyncResult<JsonObject>> handler) {
+    // TODO Auto-generated method stub
+    handler.handle(Future.succeededFuture(new JsonObject()));
+    return this;
+  }
 }

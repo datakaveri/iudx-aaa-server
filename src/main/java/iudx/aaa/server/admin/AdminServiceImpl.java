@@ -3,11 +3,15 @@ package iudx.aaa.server.admin;
 import static iudx.aaa.server.admin.Constants.COMPOSE_FAILURE;
 import static iudx.aaa.server.admin.Constants.CONFIG_AUTH_URL;
 import static iudx.aaa.server.admin.Constants.ERR_DETAIL_DOMAIN_EXISTS;
+import static iudx.aaa.server.admin.Constants.ERR_DETAIL_DUPLICATES;
 import static iudx.aaa.server.admin.Constants.ERR_DETAIL_INVALID_DOMAIN;
+import static iudx.aaa.server.admin.Constants.ERR_DETAIL_INVALID_USER;
 import static iudx.aaa.server.admin.Constants.ERR_DETAIL_NOT_AUTH_ADMIN;
 import static iudx.aaa.server.admin.Constants.ERR_DETAIL_NO_USER_PROFILE;
 import static iudx.aaa.server.admin.Constants.ERR_TITLE_DOMAIN_EXISTS;
+import static iudx.aaa.server.admin.Constants.ERR_TITLE_DUPLICATES;
 import static iudx.aaa.server.admin.Constants.ERR_TITLE_INVALID_DOMAIN;
+import static iudx.aaa.server.admin.Constants.ERR_TITLE_INVALID_USER;
 import static iudx.aaa.server.admin.Constants.ERR_TITLE_NOT_AUTH_ADMIN;
 import static iudx.aaa.server.admin.Constants.ERR_TITLE_NO_USER_PROFILE;
 import static iudx.aaa.server.admin.Constants.NIL_UUID;
@@ -18,8 +22,11 @@ import static iudx.aaa.server.admin.Constants.SQL_CHECK_ADMIN_OF_SERVER;
 import static iudx.aaa.server.admin.Constants.SQL_CREATE_ORG_IF_NOT_EXIST;
 import static iudx.aaa.server.admin.Constants.SQL_GET_ORG_DETAILS;
 import static iudx.aaa.server.admin.Constants.SQL_GET_PROVIDERS_BY_STATUS;
+import static iudx.aaa.server.admin.Constants.SQL_GET_PENDING_PROVIDERS;
+import static iudx.aaa.server.admin.Constants.SQL_UPDATE_ROLE_STATUS;
 import static iudx.aaa.server.admin.Constants.SUCC_TITLE_CREATED_ORG;
 import static iudx.aaa.server.admin.Constants.SUCC_TITLE_PROVIDER_REGS;
+import static iudx.aaa.server.admin.Constants.SUCC_TITLE_PROV_STATUS_UPDATE;
 import static iudx.aaa.server.admin.Constants.URN_ALREADY_EXISTS;
 import static iudx.aaa.server.admin.Constants.URN_INVALID_INPUT;
 import static iudx.aaa.server.admin.Constants.URN_INVALID_ROLE;
@@ -39,14 +46,18 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.CreateOrgRequest;
+import iudx.aaa.server.apiserver.ProviderUpdateRequest;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
+import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.KcAdmin;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collector;
@@ -69,10 +80,13 @@ public class AdminServiceImpl implements AdminService {
   private static String AUTH_SERVER_URL;
   private PgPool pool;
   private KcAdmin kc;
+  private PolicyService policyService;
 
-  public AdminServiceImpl(PgPool pool, KcAdmin kc, JsonObject options) {
+  public AdminServiceImpl(PgPool pool, KcAdmin kc, PolicyService policyService,
+      JsonObject options) {
     this.pool = pool;
     this.kc = kc;
+    this.policyService = policyService;
     AUTH_SERVER_URL = options.getString(CONFIG_AUTH_URL);
   }
 
@@ -178,9 +192,121 @@ public class AdminServiceImpl implements AdminService {
 
   @Override
   public AdminService updateProviderRegistrationStatus(List<ProviderUpdateRequest> request,
-      Handler<AsyncResult<JsonObject>> handler) {
-    // TODO Auto-generated method stub
-    return null;
+      User user, Handler<AsyncResult<JsonObject>> handler) {
+    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+
+    if (user.getUserId().equals(NIL_UUID)) {
+      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
+          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
+
+    Future<Boolean> checkAdmin = checkAdminServer(user, AUTH_SERVER_URL).compose(res -> {
+      if (res) {
+        return Future.succeededFuture(true);
+      }
+      Response r = new ResponseBuilder().status(401).type(URN_INVALID_ROLE)
+          .title(ERR_TITLE_NOT_AUTH_ADMIN).detail(ERR_DETAIL_NOT_AUTH_ADMIN).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return Future.failedFuture(COMPOSE_FAILURE);
+    });
+
+    Set<UUID> ids =
+        request.stream().map(obj -> UUID.fromString(obj.getUserId())).collect(Collectors.toSet());
+
+    if (ids.size() != request.size()) {
+      Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+          .title(ERR_TITLE_DUPLICATES).detail(ERR_DETAIL_DUPLICATES).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
+
+    Collector<Row, ?, Map<UUID, UUID>> collect =
+        Collectors.toMap(row -> row.getUUID("id"), row -> row.getUUID("keycloak_id"));
+
+    Future<Map<UUID, UUID>> pendingKcIds = checkAdmin.compose(success -> pool
+        .withConnection(conn -> conn.preparedQuery(SQL_GET_PENDING_PROVIDERS).collecting(collect)
+            .execute(Tuple.of(ids.toArray(UUID[]::new))).map(row -> row.value())));
+
+    Future<Map<UUID, UUID>> checkRes = pendingKcIds.compose(res -> {
+      if (res.size() != ids.size()) {
+        /* Get index of first missing userId and send in response */
+        Set<UUID> missing = new HashSet<UUID>(ids);
+        Set<UUID> uids = res.keySet();
+        missing.removeAll(uids);
+
+        String first = missing.iterator().next().toString();
+        int index = 0;
+        for (ProviderUpdateRequest obj : request) {
+          if (obj.getUserId().equals(first)) {
+            break;
+          }
+          index++;
+        }
+
+        Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+            .title(ERR_TITLE_INVALID_USER).detail(ERR_DETAIL_INVALID_USER + index).build();
+        handler.handle(Future.succeededFuture(r.toJson()));
+        return Future.failedFuture(COMPOSE_FAILURE);
+      }
+      return Future.succeededFuture(res);
+    });
+
+    List<UUID> toBeApproved =
+        request.stream().filter(obj -> obj.getStatus().equals(RoleStatus.APPROVED))
+            .map(obj -> UUID.fromString(obj.getUserId())).collect(Collectors.toList());
+
+    /* Function to get Keycloak IDs of approved providers */
+    Function<Map<UUID, UUID>, List<String>> getKcIdToApprove = (map) -> {
+      return toBeApproved.stream().map(uid -> map.get(uid).toString()).collect(Collectors.toList());
+    };
+
+    /* Function to get all Keycloak IDs */
+    Function<Map<UUID, UUID>, List<String>> getKcIds = (map) -> {
+      return ids.stream().map(uid -> map.get(uid).toString()).collect(Collectors.toList());
+    };
+
+    List<Tuple> tuple = request.stream()
+        .map(obj -> Tuple.of(obj.getStatus().name(), UUID.fromString(obj.getUserId())))
+        .collect(Collectors.toList());
+
+    Future<Map<String, JsonObject>> result = checkRes.compose(uidToKc -> pool
+        .withTransaction(conn -> conn.preparedQuery(SQL_UPDATE_ROLE_STATUS).executeBatch(tuple))
+        .compose(cc -> kc.approveProvider(getKcIdToApprove.apply(uidToKc)))
+        .compose(success -> callPolicyProvider(toBeApproved))
+        .compose(r -> kc.getDetails(getKcIds.apply(uidToKc))));
+
+    result.onSuccess(details -> {
+      JsonArray resp = new JsonArray();
+      Map<UUID, UUID> uidKc = checkRes.result();
+
+      request.forEach(obj -> {
+        JsonObject j = obj.toJson();
+        UUID kc = uidKc.get(UUID.fromString(obj.getUserId()));
+        j.mergeIn(details.get(kc.toString()));
+        resp.add(j);
+      });
+
+      Response r = new ResponseBuilder().status(200).type(URN_SUCCESS)
+          .title(SUCC_TITLE_PROV_STATUS_UPDATE).arrayResults(resp).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+    }).onFailure(e -> {
+      if (e.getMessage().equals(COMPOSE_FAILURE)) {
+        return; // do nothing
+      }
+      LOGGER.error(e.getMessage());
+      handler.handle(Future.failedFuture("Internal error"));
+    });
+
+    return this;
+  }
+
+  private Future<JsonObject> callPolicyProvider(List<UUID> userIds) {
+    Promise<JsonObject> res = Promise.promise();
+    List<String> list = userIds.stream().map(id -> id.toString()).collect(Collectors.toList());
+    policyService.setDefaultProviderPolicies(list, res);
+    return res.future();
   }
 
   @Override

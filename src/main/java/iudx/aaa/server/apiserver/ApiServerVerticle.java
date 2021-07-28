@@ -12,6 +12,7 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.JksOptions;
 import io.vertx.ext.web.Router;
@@ -198,6 +199,10 @@ public class ApiServerVerticle extends AbstractVerticle {
           .handler(reqAuth)
           .handler(this::adminGetProviderReg)
           .failureHandler(failureHandler);
+
+    // Admin update provider reg
+    router.put(API_ADMIN_PROVIDER_REG).handler(reqAuth).handler(this::adminUpdateProviderReg)
+        .failureHandler(failureHandler);
 
     /**
      * Documentation routes
@@ -433,6 +438,25 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     User user = context.get(USER);
     adminService.getProviderRegistrations(filter, user, handler -> {
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+
+  /**
+   * Handles update provider registrations by admin.
+   * 
+   * @param context
+   */
+  private void adminUpdateProviderReg(RoutingContext context) {
+    JsonArray jsonRequest = context.getBodyAsJsonArray();
+    List<ProviderUpdateRequest> request = ProviderUpdateRequest.validatedList(jsonRequest);
+
+    User user = context.get(USER);
+    adminService.updateProviderRegistrationStatus(request, user, handler -> {
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {
