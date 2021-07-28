@@ -40,14 +40,14 @@ public class FailureHandler implements Handler<RoutingContext> {
       response.setStatusCode(500).end();
       return;
     } else if (failure instanceof ParameterProcessorException) {
-      processResponse(response, URN_MISSING_INFO, failure.getLocalizedMessage());
-      // Something went wrong while parsing/validating a parameter
+      processResponse(response, failure.getLocalizedMessage());
+      
     } else if (failure instanceof BodyProcessorException) {
-      processResponse(response, URN_MISSING_INFO, failure.getLocalizedMessage());
-      // Something went wrong while parsing/validating the body
+      processResponse(response, failure.getLocalizedMessage());
+      
     } else if (failure instanceof RequestPredicateException) {
-      // A request predicate is unsatisfied
-      processResponse(response, URN_MISSING_INFO, failure.getLocalizedMessage());
+      processResponse(response, failure.getLocalizedMessage());
+      
     } else {
       processResponse(response, failure);
       return;
