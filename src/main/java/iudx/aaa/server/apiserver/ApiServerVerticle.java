@@ -18,6 +18,8 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
+import io.vertx.ext.web.openapi.RouterBuilder;
+import io.vertx.ext.web.openapi.RouterBuilderOptions;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
@@ -141,45 +143,6 @@ public class ApiServerVerticle extends AbstractVerticle {
     RequestAuthentication reqAuth = new RequestAuthentication(vertx, pgPool, keycloakOptions);
     FailureHandler failureHandler = new FailureHandler();
 
-    // Create token
-    router.post(API_TOKEN)
-          .consumes(MIME_APPLICATION_JSON)
-          .handler(reqAuth)
-          .handler(this::createTokenHandler)
-          .failureHandler(failureHandler);
-
-    // Revoke Token
-    router.post(API_REVOKE_TOKEN)
-          .consumes(MIME_APPLICATION_JSON)
-          .handler(reqAuth)
-          .handler(this::revokeTokenHandler)
-          .failureHandler(failureHandler);
-
-    // Introspect token
-    router.post(API_INTROSPECT_TOKEN)
-          .consumes(MIME_APPLICATION_JSON)
-          .handler(this::validateTokenHandler)
-          .failureHandler(failureHandler);
-
-    // Create user profile
-    router.post(API_USER_PROFILE)
-          .handler(reqAuth)
-          .handler(this::createUserProfile)
-          .failureHandler(failureHandler);
-
-    // List user profile
-    router.get(API_USER_PROFILE)
-          .handler(reqAuth)
-          .handler(this::listUserProfile)
-          .failureHandler(failureHandler);
-
-    // Update user
-    router.put(API_USER_PROFILE)
-          .consumes(MIME_APPLICATION_JSON)
-          .handler(reqAuth)
-          .handler(this::updateUserProfile)
-          .failureHandler(failureHandler);
-
     // List organizations
     router.get(API_ORGANIZATION)
           .handler(reqAuth)
@@ -199,26 +162,7 @@ public class ApiServerVerticle extends AbstractVerticle {
           .handler(this::adminGetProviderReg)
           .failureHandler(failureHandler);
 
-    /**
-     * Documentation routes
-     */
-    /* Static Resource Handler */
-    /* Get openapiv3 spec */
-    router.get(ROUTE_STATIC_SPEC)
-          .produces(MIME_APPLICATION_JSON)
-          .handler(routingContext -> {
-            HttpServerResponse response = routingContext.response();
-            response.sendFile("docs/openapi.yaml");
-           });
-
-    /* Get redoc */
-    router.get(ROUTE_DOC)
-          .produces(MIME_TEXT_HTML)
-          .handler(routingContext -> {
-            HttpServerResponse response = routingContext.response();
-            response.sendFile("docs/apidoc.html");
-          });
-
+    
     /* Read ssl configuration. */
     isSSL = config().getBoolean(SSL);
     HttpServerOptions serverOptions = new HttpServerOptions();
@@ -235,14 +179,79 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     } else {
       LOGGER.debug("Info: Starting HTTP server");
-
-      /* Setup the HTTP server properties, APIs and port. */
       serverOptions.setSsl(false);
     }
 
-    serverOptions.setCompressionSupported(true).setCompressionLevel(5);
-    server = vertx.createHttpServer(serverOptions);
-    server.requestHandler(router).listen(port);
+    RouterBuilder.create(vertx, "docs/openapi.yaml").onFailure(Throwable::printStackTrace)
+        .onSuccess(routerBuilder -> {
+          RouterBuilderOptions factoryOptions = new RouterBuilderOptions()
+              .setMountResponseContentTypeHandler(true)
+              .setRequireSecurityHandlers(false);
+          
+          routerBuilder.setOptions(factoryOptions);
+                   
+          routerBuilder.operation("post-auth-v1-token")
+                       .handler(reqAuth)
+                       .handler(this::createTokenHandler)
+                       .failureHandler(failureHandler);
+                   
+          routerBuilder.operation("post-auth-v1-introspect")
+                       .handler(this::validateTokenHandler)
+                       .failureHandler(failureHandler);
+                   
+          routerBuilder.operation("post-auth-v1-revoke")
+                       .handler(reqAuth)
+                       .handler(this::revokeTokenHandler)
+                       .failureHandler(failureHandler);
+                   
+          routerBuilder.operation("post-auth-v1-user-profile")
+                       .handler(reqAuth)
+                       .handler(this::createUserProfile)
+                       .failureHandler(failureHandler);
+          
+          routerBuilder.operation("get-auth-v1-user-profile")
+                       .handler(reqAuth)
+                       .handler(this::listUserProfile)
+                       .failureHandler(failureHandler);
+          
+          routerBuilder.operation("put-auth-v1-user-profile")
+                       .handler(reqAuth)
+                       .handler(this::updateUserProfile)
+                       .failureHandler(failureHandler);
+          
+          router = routerBuilder.createRouter();
+          
+          /**
+           * Documentation routes
+           */
+          /* Static Resource Handler */
+          /* Get openapiv3 spec */
+          router.get(ROUTE_STATIC_SPEC)
+                .produces(MIME_APPLICATION_JSON)
+                .handler(routingContext -> {
+                  HttpServerResponse response = routingContext.response();
+                  response.sendFile("docs/openapi.yaml");
+                 });
+
+          /* Get redoc */
+          router.get(ROUTE_DOC)
+                .produces(MIME_TEXT_HTML)
+                .handler(routingContext -> {
+                  HttpServerResponse response = routingContext.response();
+                  response.sendFile("docs/apidoc.html");
+                });
+          
+       // List user profile
+          router.get(API_USER_PROFILE)
+                .handler(reqAuth)
+                .handler(this::listUserProfile)
+                .failureHandler(failureHandler);
+                   
+          
+          serverOptions.setCompressionSupported(true).setCompressionLevel(5);
+          server = vertx.createHttpServer(serverOptions);
+          server.requestHandler(router).listen(port);
+    });
 
     /* Get a handler for the Service Discovery interface. */
     policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
@@ -441,6 +450,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     });
   }
 
+  
   private Future<Void> processResponse(HttpServerResponse response, JsonObject msg) {
     int status = msg.getInteger(STATUS, 400);
     msg.remove(STATUS);

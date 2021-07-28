@@ -5,6 +5,9 @@ info:
   description: 'API specification for IUDX AAA Server. These APIs are used by users manage tokens, policy etc. These APIs requires valid token or client details for authentication.'
   license:
     name: MIT
+  contact:
+    name: Md Adil
+    email: md.adil@datakaveir.org
 servers:
   - url: 'http://localhost:3000'
 paths:
@@ -50,14 +53,6 @@ paths:
                   - type
                   - title
                   - results
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:Success'
-                    title: Token created
-                    results:
-                      - accessToken: eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJzdWIiOiIzNDliNGI1NS0wMjUxLTQ5MGUtYmVlOS0wMGYzYTVkM2U2NDMiLCJpc3MiOiJhdXRoLnRlc3QuY29tIiwiYXVkIjoiZm9vYmFyLml1ZHguaW8iLCJleHAiOjE2MjY4MzY3ODQsImlhdCI6MTYyNjc5MzU4NCwiaWlkIjoicmc6ZXhhbXBsZS5jb20vNzllN2JmYTYyZmFkNmM3NjViYWM2OTE1NGMyZjI0Yzk0Yzk1MjIwYS9yZXNvdXJjZS1ncm91cCIsInJvbGUiOiJjb25zdW1lciIsImNvbnMiOnt9fQ.eAWKamrRdV4c1MPuoLU6j0bWB6iiM_of5F3LA-_DZGhyu_6aFP4cmCI1Y3ZN2ZRklOSGcrL5aHC8Ccga6dtTrg
-                        expiry: 1626836784
-                        server: foobar.iudx.io
               examples:
                 General Structure:
                   value:
@@ -93,11 +88,6 @@ paths:
                   - type
                   - title
                   - detail
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:InvalidRole'
-                    title: Role not defined
-                    detail: Role not defined
               examples:
                 Invalid Role:
                   value:
@@ -125,11 +115,6 @@ paths:
                   - type
                   - title
                   - detail
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:MissingAuthenticationToken'
-                    title: Missing auth details
-                    detail: Missing auth details
               examples:
                 Missing Authentication Details:
                   value:
@@ -153,8 +138,9 @@ paths:
         - schema:
             type: string
             format: uuid
-            minLength: 1
+            minLength: 36
             maxLength: 36
+            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
           in: header
           name: clientId
           description: Keycloak Issued clientId
@@ -162,7 +148,8 @@ paths:
             type: string
             format: uuid
             maxLength: 36
-            minLength: 1
+            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+            minLength: 36
           in: header
           description: Keycloak Issued clientSecret
           name: clientSecret
@@ -172,11 +159,6 @@ paths:
             schema:
               description: ''
               type: object
-              x-examples:
-                example-1:
-                  itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cf91/resource-group
-                  itemType: resource_group
-                  role: admin
               properties:
                 itemId:
                   type: string
@@ -227,19 +209,6 @@ paths:
               schema:
                 description: ''
                 type: object
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:Success'
-                    title: Token authenticated
-                    results:
-                      - sub: 349b4b55-0251-490e-bee9-00f3a5d3e643
-                        iss: auth.test.com
-                        aud: foobar.iudx.io
-                        exp: 1626837909
-                        iat: 1626794709
-                        iid: 'rg:example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group'
-                        role: consumer
-                        cons: {}
                 properties:
                   type:
                     type: string
@@ -323,11 +292,6 @@ paths:
                   - type
                   - title
                   - detail
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:InvalidRole'
-                    title: Role not defined
-                    detail: Role not defined
               examples:
                 Invalid/missing information:
                   value:
@@ -363,12 +327,6 @@ paths:
                   - type
                   - title
                   - results
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:InvalidAuthenticationToken'
-                    title: Token authentication failed
-                    results:
-                      - status: deny
               examples:
                 Unauthorized token:
                   value:
@@ -382,15 +340,12 @@ paths:
             schema:
               description: ''
               type: object
-              x-examples:
-                example-1:
-                  accessToken: eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJzdWIiOiJhM2U3ZTM0Yy00NGJmLTQxZmYtYWQ4Ni0yZWUwNGE5NTQ0MTgiLCJpc3MiOiJhdXRoLnRlc3QuY29tIiwiYXVkIjoiZm9vYmFyLml1ZHguaW8iLCJleHAiOjE2MjY0NzMwNDgsImlhdCI6MTYyNjQyOTg0OCwiaWlkIjoicmc6ZXhhbXBsZS5jb20vOGQ0YjIwZWM0YmYyMWVmYjM2M2U3MjY3MWUxYjViZDc3ZmQ2Y2Y5MS9yZXNvdXJjZS1ncm91cCIsInJvbGUiOiJhZG1pbiIsImNvbnMiOnt9fQ.iyQXw21_4cXixVHm45rlHpzYjDz2PfTDRORbdQz9EHlLP_mQ-oBHZaWg1IWcuuoPS4FTRgNXWwM_uLhyxTDcuw
               properties:
                 accessToken:
                   type: string
                   minLength: 1
                   maxLength: 512
-                  format: JWT
+                  example: JWT
               required:
                 - accessToken
             examples:
@@ -414,11 +369,6 @@ paths:
               schema:
                 description: ''
                 type: object
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:Success'
-                    title: Token revoked
-                    results: []
                 properties:
                   type:
                     type: string
@@ -459,11 +409,6 @@ paths:
                   - type
                   - title
                   - detail
-                x-examples:
-                  example-1:
-                    type: string
-                    title: string
-                    detail: string
               examples:
                 Bad request:
                   value:
@@ -491,11 +436,6 @@ paths:
                   - type
                   - title
                   - detail
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:MissingAuthenticationToken'
-                    title: Missing auth details
-                    detail: Missing auth details
               examples:
                 Unauthorized:
                   value:
@@ -517,16 +457,18 @@ paths:
         - schema:
             type: string
             format: uuid
-            minLength: 1
             maxLength: 36
+            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+            minLength: 36
           in: header
           name: clientId
           description: Keycloak Issued clientId
         - schema:
             type: string
             format: uuid
-            minLength: 1
             maxLength: 36
+            minLength: 36
+            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
           in: header
           name: clientSecret
           description: Keycloak Issued clientSecret
@@ -536,10 +478,6 @@ paths:
             schema:
               description: ''
               type: object
-              x-examples:
-                example-1:
-                  clientId: 349b4b55-0251-490e-bee9-00f3a5d3e643
-                  rsUrl: foobar.iudx.io
               properties:
                 clientId:
                   type: string
@@ -576,22 +514,6 @@ paths:
               schema:
                 description: ''
                 type: object
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:Success'
-                    title: User profile has been created
-                    results:
-                      - name: firstName lastName
-                        roles: consumer
-                        keycloakId: 894777b1-e82a-4cf8-b99a-86fc3d7d707b
-                        userId: 134777b1-e82a-4cf8-b19a-86fc3d7d702b
-                        email: ''
-                        phone: ''
-                        organization: {}
-                        clients:
-                          - client: default
-                            clientId: ''
-                            clientSecret: ''
                 properties:
                   type:
                     type: string
@@ -697,6 +619,250 @@ paths:
                   - type
                   - title
                   - detail
+              examples:
+                example-1:
+                  value:
+                    type: string
+                    title: string
+                    detail: string
+        '401':
+          description: Unauthorized
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+                properties:
+                  type:
+                    type: string
+                    minLength: 1
+                  title:
+                    type: string
+                    minLength: 1
+                  detail:
+                    type: string
+                    minLength: 1
+                required:
+                  - type
+                  - title
+                  - detail
+              examples:
+                example-1:
+                  value:
+                    type: string
+                    title: string
+                    detail: string
+      parameters:
+        - schema:
+            type: string
+            maxLength: 1500
+            minLength: 1
+            example: Bearer <JWT>
+          in: header
+          name: Authorization
+          description: Keycloak Issued token
+        - schema:
+            type: string
+            format: uuid
+            maxLength: 36
+            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+            minLength: 36
+          in: header
+          name: clientId
+          description: Keycloak Issued clientId
+        - schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+          in: header
+          name: clientSecret
+          description: Keycloak Issued clientSecret
+      description: Create a profile of a new User associated with aOrganization.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              description: ''
+              type: object
+              properties:
+                roles:
+                  type: array
+                  minItems: 1
+                  maxItems: 4
+                  uniqueItems: true
+                  items:
+                    type: string
+                    enum:
+                      - provider
+                      - consumer
+                      - delegate
+                      - admin
+                    minLength: 5
+                    maxLength: 10
+                orgId:
+                  type: string
+                  format: uuid
+                  minLength: 36
+                  maxLength: 36
+                  pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+                phone:
+                  type: string
+                  example: '9900990099'
+                  pattern: '^[9876]\d{9}$'
+                  minLength: 10
+                  maxLength: 10
+              required:
+                - roles
+                - orgId
+            examples:
+              Create UserProfile:
+                value:
+                  roles:
+                    - provider
+                    - consumer
+                    - delegate
+                  orgId: 123e4567-e89b-12d3-a456-426614174000
+        description: No other role is allowed along with admin role.
+      tags:
+        - User APIs
+    get:
+      summary: Get User Profile
+      operationId: get-auth-v1-user-profile
+      responses:
+        '200':
+          description: Successfully list user profile
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+                x-examples:
+                  example-1:
+                    type: 'urn:dx:as:Success'
+                    title: User details
+                    results:
+                      keycloakId: 72b9f514-7992-422a-9d15-2ac75982ee93
+                      name: {}
+                      roles:
+                        - CONSUMER
+                      userId: 32a4b979-4f4a-4c44-b0c3-2fe109952b5f
+                      email: alice@gmail.com
+                      clients:
+                        - clientName: default
+                          clientId: 349b4b55-0251-490e-bee9-00f3a5d3e643
+                properties:
+                  type:
+                    type: string
+                    minLength: 1
+                  title:
+                    type: string
+                    minLength: 1
+                  results:
+                    type: object
+                    required:
+                      - keycloakId
+                      - name
+                      - roles
+                      - userId
+                      - email
+                      - clients
+                    properties:
+                      keycloakId:
+                        type: string
+                        minLength: 1
+                      name:
+                        type: object
+                      roles:
+                        type: array
+                        items:
+                          type: string
+                      userId:
+                        type: string
+                        minLength: 1
+                      email:
+                        type: string
+                        minLength: 1
+                      clients:
+                        type: array
+                        uniqueItems: true
+                        minItems: 1
+                        items:
+                          type: object
+                          properties:
+                            clientName:
+                              type: string
+                              minLength: 1
+                            clientId:
+                              type: string
+                              minLength: 1
+                          required:
+                            - clientName
+                            - clientId
+                required:
+                  - type
+                  - title
+                  - results
+              examples:
+                example-1:
+                  value:
+                    type: string
+                    title: string
+                    results:
+                      keycloakId: string
+                      name: {}
+                      roles: []
+                      userId: string
+                      email: string
+                      clients:
+                        - clientName: string
+                          clientId: string
+                ListProfile:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: User details
+                    results:
+                      keycloakId: 72b9f514-7992-422a-9d15-2ac75982ee93
+                      name: {}
+                      roles:
+                        - CONSUMER
+                      userId: 167b4b55-0251-490e-bcc9-00f3a5d5c843
+                      email: alice@gmail.com
+                      clients:
+                        - clientName: default
+                          clientId: 167b4b55-0251-490e-bcc9-00f3a5d5c843
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+                properties:
+                  type:
+                    type: string
+                    minLength: 1
+                  title:
+                    type: string
+                    minLength: 1
+                  detail:
+                    type: string
+                    minLength: 1
+                required:
+                  - type
+                  - title
+                  - detail
                 x-examples:
                   example-1:
                     type: string
@@ -708,6 +874,11 @@ paths:
                     type: string
                     title: string
                     detail: string
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
         '401':
           description: Unauthorized
           headers:
@@ -757,20 +928,142 @@ paths:
         - schema:
             type: string
             format: uuid
-            minLength: 1
             maxLength: 36
+            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+            minLength: 36
           in: header
           name: clientId
           description: Keycloak Issued clientId
         - schema:
             type: string
             format: uuid
-            minLength: 1
             maxLength: 36
+            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+            minLength: 36
           in: header
           name: clientSecret
           description: Keycloak Issued clientSecret
-      description: Create a profile of a new User associated with aOrganization.
+      description: Listing user profile
+      tags:
+        - User APIs
+    put:
+      summary: 'Update User Profile [Role]'
+      operationId: put-auth-v1-user-profile
+      responses:
+        '200':
+          description: Successfully updating the user role.
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+                x-examples:
+                  example-1:
+                    type: string
+                    title: string
+                    results:
+                      keycloakId: string
+                      name: {}
+                      roles: []
+                      userId: string
+                      email: string
+                      clients:
+                        - clientName: string
+                          clientId: string
+                properties:
+                  type:
+                    type: string
+                    minLength: 1
+                  title:
+                    type: string
+                    minLength: 1
+                  results:
+                    type: object
+                    required:
+                      - keycloakId
+                      - name
+                      - roles
+                      - userId
+                      - email
+                      - clients
+                    properties:
+                      keycloakId:
+                        type: string
+                        minLength: 1
+                      name:
+                        type: object
+                      roles:
+                        type: array
+                        items:
+                          type: string
+                      userId:
+                        type: string
+                        minLength: 1
+                      email:
+                        type: string
+                        minLength: 1
+                      clients:
+                        type: array
+                        uniqueItems: true
+                        minItems: 1
+                        items:
+                          type: object
+                          properties:
+                            clientName:
+                              type: string
+                              minLength: 1
+                            clientId:
+                              type: string
+                              minLength: 1
+                          required:
+                            - clientName
+                            - clientId
+                required:
+                  - type
+                  - title
+                  - results
+              examples:
+                example-1:
+                  value:
+                    type: string
+                    title: string
+                    results:
+                      keycloakId: string
+                      name: {}
+                      roles: []
+                      userId: string
+                      email: string
+                      clients:
+                        - clientName: string
+                          clientId: string
+      description: 'Update user profile [Roles].'
+      parameters:
+        - schema:
+            type: string
+            maxLength: 1500
+            minLength: 1
+            example: Bearer <JWT>
+          in: header
+          name: Authorization
+          description: Keycloak Issued token
+        - schema:
+            type: string
+            format: uuid
+            maxLength: 36
+            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+            minLength: 36
+          in: header
+          name: clientId
+          description: Keycloak Issued clientId
+        - schema:
+            type: string
+            format: uuid
+            maxLength: 36
+            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+            minLength: 36
+          in: header
+          name: clientSecret
+          description: Keycloak Issued clientSecret
       requestBody:
         content:
           application/json:
@@ -783,7 +1076,7 @@ paths:
                     - provider
                     - consumer
                     - delegate
-                  orgId: 894777b1-e82a-4cf8-b99a-86fc3d7d707b
+                  orgId: 123e4567-e89b-12d3-a456-426614174000
               properties:
                 roles:
                   type: array
@@ -805,23 +1098,18 @@ paths:
                   minLength: 36
                   maxLength: 36
                   pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-                phone:
-                  type: string
-                  example: '9900990099'
-                  pattern: '^[9876]\d{9}$'
-                  minLength: 10
-                  maxLength: 10
               required:
                 - roles
                 - orgId
             examples:
-              Create UserProfile:
+              Update UserProfile:
                 value:
                   roles:
                     - provider
                     - consumer
                     - delegate
                   orgId: 123e4567-e89b-12d3-a456-426614174000
+        description: Updating role
       tags:
         - User APIs
 components:
@@ -843,12 +1131,6 @@ components:
         - itemId
         - itemType
         - role
-      x-examples:
-        example-1:
-          value:
-            itemId: string
-            itemType: string
-            role: string
       title: RequestToken
     RevokeToken:
       description: ''
@@ -863,10 +1145,5 @@ components:
       required:
         - clientId
         - rsUrl
-      x-examples:
-        example-1:
-          value:
-            clientId: string
-            rsUrl: string
   securitySchemes: {}
 security: []
