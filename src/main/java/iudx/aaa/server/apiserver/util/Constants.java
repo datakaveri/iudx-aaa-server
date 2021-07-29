@@ -42,6 +42,7 @@ public class Constants {
   public static final String API_USER_PROFILE = "/auth/v1/user/profile";
   public static final String API_ORGANIZATION = "/auth/v1/organizations";
   public static final String API_ADMIN_PROVIDER_REG = "/auth/v1/admin/provider/registrations";
+  public static final String API_ADMIN_CREATE_ORG = "/auth/v1/admin/organizations";
 
   /* Query Params */
   public static final String QUERY_FILTER = "filter";
