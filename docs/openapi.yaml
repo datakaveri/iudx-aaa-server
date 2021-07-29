@@ -1394,7 +1394,7 @@ paths:
       description: Listing the details of registered Organization
   /auth/v1/admin/organizations:
     post:
-      summary: 'Create Organization [Admin]'
+      summary: 'Create Organization'
       operationId: post-auth-v1-admin-organizations
       responses:
         '201':
