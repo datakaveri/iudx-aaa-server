@@ -12,6 +12,7 @@ import static iudx.aaa.server.admin.Constants.KC_ADMIN_CLIENT_SEC;
 import static iudx.aaa.server.admin.Constants.KC_ADMIN_POOLSIZE;
 import static iudx.aaa.server.admin.Constants.KEYCLOAK_REALM;
 import static iudx.aaa.server.admin.Constants.KEYCLOAK_URL;
+import static iudx.aaa.server.admin.Constants.POLICY_SERVICE_ADDRESS;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.json.JsonObject;
@@ -19,6 +20,7 @@ import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.serviceproxy.ServiceBinder;
 import io.vertx.sqlclient.PoolOptions;
+import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.KcAdmin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -59,6 +61,7 @@ public class AdminVerticle extends AbstractVerticle {
   private AdminService adminService;
   private static final Logger LOGGER = LogManager.getLogger(AdminVerticle.class);
 
+  private PolicyService policyService;
   /**
    * This method is used to start the Verticle. It deploys a verticle in a cluster, registers the
    * service with the Event bus against an address, publishes the service with the service discovery
@@ -104,7 +107,8 @@ public class AdminVerticle extends AbstractVerticle {
     KcAdmin kcadmin = new KcAdmin(keycloakUrl, keycloakRealm, keycloakAdminClientId,
         keycloakAdminClientSecret, keycloakAdminPoolSize);
 
-    adminService = new AdminServiceImpl(pool, kcadmin, options);
+    policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
+    adminService = new AdminServiceImpl(pool, kcadmin, policyService, options);
 
     new ServiceBinder(vertx).setAddress(ADMIN_SERVICE_ADDRESS).register(AdminService.class,
         adminService);

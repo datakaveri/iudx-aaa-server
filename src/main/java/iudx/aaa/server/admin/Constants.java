@@ -4,6 +4,7 @@ public class Constants {
 
   public static final String NIL_UUID = "00000000-0000-0000-0000-000000000000";
   public static final String COMPOSE_FAILURE = "COMPOSE_FAILURE";
+  public static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
 
   /* Config related */
   public static final String CONFIG_AUTH_URL = "authServerDomain";
@@ -36,9 +37,13 @@ public class Constants {
   /* Response title and details */
   public static final String SUCC_TITLE_CREATED_ORG = "Organization has been created";
   public static final String SUCC_TITLE_PROVIDER_REGS = "Provider registrations";
+  public static final String SUCC_TITLE_PROV_STATUS_UPDATE = "Provider status updated";
 
   public static final String ERR_TITLE_INVALID_DOMAIN = "Invalid URL";
   public static final String ERR_DETAIL_INVALID_DOMAIN = "The domain is invalid";
+
+  public static final String ERR_TITLE_INVALID_USER = "Invalid User ID";
+  public static final String ERR_DETAIL_INVALID_USER = "User is not a provider/pending provider : ";
 
   public static final String ERR_TITLE_NO_USER_PROFILE = "User profile does not exist";
   public static final String ERR_DETAIL_NO_USER_PROFILE = "Please register to create user profile";
@@ -49,6 +54,9 @@ public class Constants {
   public static final String ERR_TITLE_DOMAIN_EXISTS = "Domains exists";
   public static final String ERR_DETAIL_DOMAIN_EXISTS =
       "An organization exists with the given domain";
+
+  public static final String ERR_TITLE_DUPLICATES = "Duplicate user IDs";
+  public static final String ERR_DETAIL_DUPLICATES = "Duplicate user IDs in request";
 
   /* SQL */
   public static final String SQL_CREATE_ORG_IF_NOT_EXIST =
@@ -65,4 +73,10 @@ public class Constants {
   public static final String SQL_GET_ORG_DETAILS =
       "SELECT id, name, url FROM test.organizations WHERE id = ANY($1::uuid[])";
 
+  public static final String SQL_UPDATE_ROLE_STATUS =
+      "UPDATE test.roles SET status = $1::test.role_status_enum, updated_at = NOW() WHERE user_id = $2::uuid";
+
+  public static final String SQL_GET_PENDING_PROVIDERS =
+      "SELECT users.id, keycloak_id FROM test.users JOIN test.roles ON users.id = roles.user_id "
+          + "WHERE role = 'PROVIDER' AND status = 'PENDING' AND user_id = ANY ($1::uuid[])";
 }

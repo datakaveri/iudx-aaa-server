@@ -12,6 +12,7 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.JksOptions;
 import io.vertx.ext.web.Router;
@@ -159,7 +160,6 @@ public class ApiServerVerticle extends AbstractVerticle {
           .handler(this::adminGetProviderReg)
           .failureHandler(failureHandler);
 
-    
     /* Read ssl configuration. */
     isSSL = config().getBoolean(SSL);
     HttpServerOptions serverOptions = new HttpServerOptions();
@@ -450,7 +450,25 @@ public class ApiServerVerticle extends AbstractVerticle {
     });
   }
 
-  
+  /**
+   * Handles update provider registrations by admin.
+   * 
+   * @param context
+   */
+  private void adminUpdateProviderReg(RoutingContext context) {
+    JsonArray jsonRequest = context.getBodyAsJsonArray();
+    List<ProviderUpdateRequest> request = ProviderUpdateRequest.validatedList(jsonRequest);
+
+    User user = context.get(USER);
+    adminService.updateProviderRegistrationStatus(request, user, handler -> {
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+
   private Future<Void> processResponse(HttpServerResponse response, JsonObject msg) {
     int status = msg.getInteger(STATUS, 400);
     msg.remove(STATUS);

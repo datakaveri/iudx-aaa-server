@@ -23,6 +23,7 @@ import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.configuration.Configuration;
+import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.KcAdmin;
 import iudx.aaa.server.registration.Utils;
 import java.util.ArrayList;
@@ -60,6 +61,7 @@ public class CreateOrganizationTest {
   private static Vertx vertxObj;
 
   private static KcAdmin kc = Mockito.mock(KcAdmin.class);
+  private static PolicyService policyService = Mockito.mock(PolicyService.class);
   private static Future<JsonObject> adminAuthUser;
   private static Future<JsonObject> adminOtherUser;
   private static Future<JsonObject> consumerUser;
@@ -140,7 +142,7 @@ public class CreateOrganizationTest {
       return pool
           .withConnection(conn -> conn.preparedQuery(SQL_CREATE_ADMIN_SERVER).executeBatch(tup));
     }).onSuccess(res -> {
-      adminService = new AdminServiceImpl(pool, kc, options);
+      adminService = new AdminServiceImpl(pool, kc, policyService, options);
       testContext.completeNow();
     }).onFailure(err -> testContext.failNow(err.getMessage()));
   }
@@ -189,7 +191,8 @@ public class CreateOrganizationTest {
     JsonObject specialCharName =
         new JsonObject().put("name", RandomStringUtils.randomAlphabetic(10) + "@").put("url",
             RandomStringUtils.randomAlphabetic(10));
-    assertThrows(IllegalArgumentException.class, () -> CreateOrgRequest.validatedObj(specialCharName));
+    assertThrows(IllegalArgumentException.class,
+        () -> CreateOrgRequest.validatedObj(specialCharName));
 
     JsonObject longUrl = new JsonObject().put("url", RandomStringUtils.randomAlphabetic(101))
         .put("name", RandomStringUtils.randomAlphabetic(10));

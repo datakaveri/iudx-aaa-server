@@ -86,4 +86,16 @@ public interface PolicyService {
   @Fluent
   PolicyService verifyPolicy(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
 
+  /**
+   * The setDefaultProviderPolicies implements setting default provider policies when they are
+   * approved by an auth server admin.
+   *
+   * @param userIds a list of Strings (as UUIDs) of user IDs
+   * @param handler which is a Request Handler
+   * @return PolicyService which is a Service
+   */
+
+  @Fluent
+  PolicyService setDefaultProviderPolicies(List<String> userIds,
+      Handler<AsyncResult<JsonObject>> handler);
 }
