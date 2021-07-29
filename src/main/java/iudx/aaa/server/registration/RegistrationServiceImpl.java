@@ -390,7 +390,7 @@ public class RegistrationServiceImpl implements RegistrationService {
       String dupRoles =
           duplicate.stream().map(str -> str.name().toLowerCase()).collect(Collectors.joining(", "));
 
-      Response r = new ResponseBuilder().status(400).type(URN_ALREADY_EXISTS)
+      Response r = new ResponseBuilder().status(409).type(URN_ALREADY_EXISTS)
           .title(ERR_TITLE_ROLE_EXISTS).detail(ERR_DETAIL_ROLE_EXISTS + dupRoles).build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
