@@ -144,10 +144,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     FailureHandler failureHandler = new FailureHandler();
 
     // List organizations
-    router.get(API_ORGANIZATION)
-          .handler(reqAuth)
-          .handler(this::listOrganization)
-          .failureHandler(failureHandler);
+
 
     // Admin create organization
     router.post(API_ORGANIZATION)
@@ -221,30 +218,33 @@ public class ApiServerVerticle extends AbstractVerticle {
           
           router = routerBuilder.createRouter();
           
-          /**
-           * Documentation routes
+          /*
+           * Static Resource Handler 
+           * Get openapiv3 spec
            */
-          /* Static Resource Handler */
-          /* Get openapiv3 spec */
           router.get(ROUTE_STATIC_SPEC)
                 .produces(MIME_APPLICATION_JSON)
                 .handler(routingContext -> {
                   HttpServerResponse response = routingContext.response();
                   response.sendFile("docs/openapi.yaml");
-                 });
+                });
 
           /* Get redoc */
-          router.get(ROUTE_DOC)
-                .produces(MIME_TEXT_HTML)
-                .handler(routingContext -> {
-                  HttpServerResponse response = routingContext.response();
-                  response.sendFile("docs/apidoc.html");
-                });
+          router.get(ROUTE_DOC).produces(MIME_TEXT_HTML).handler(routingContext -> {
+            HttpServerResponse response = routingContext.response();
+            response.sendFile("docs/apidoc.html");
+          });
+
+          router.get(API_ORGANIZATION)
+          .handler(reqAuth)
+          .handler(this::listOrganization)
+          .failureHandler(failureHandler);
           
-       // List user profile
-          router.get(API_USER_PROFILE)
+          // Admin create organization
+          router.post(API_ORGANIZATION)
+                .consumes(MIME_APPLICATION_JSON)
                 .handler(reqAuth)
-                .handler(this::listUserProfile)
+                .handler(this::adminCreateOrganization)
                 .failureHandler(failureHandler);
                    
           
