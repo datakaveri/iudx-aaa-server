@@ -195,7 +195,7 @@ public class ApiServerVerticle extends AbstractVerticle {
           .failureHandler(failureHandler);
 
     // Admin list provider reg
-    router.post(API_ADMIN_PROVIDER_REG)
+    router.get(API_ADMIN_PROVIDER_REG)
           .handler(reqAuth)
           .handler(this::adminGetProviderReg)
           .failureHandler(failureHandler);
