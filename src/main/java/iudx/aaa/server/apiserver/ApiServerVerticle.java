@@ -19,6 +19,8 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
+import io.vertx.ext.web.openapi.RouterBuilder;
+import io.vertx.ext.web.openapi.RouterBuilderOptions;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
@@ -130,130 +132,127 @@ public class ApiServerVerticle extends AbstractVerticle {
     allowedMethods.add(HttpMethod.PATCH);
     allowedMethods.add(HttpMethod.PUT);
 
-    /* Create a reference to HazelcastClusterManager. */
-    router = Router.router(vertx);
-
-    /* Define the APIs, methods, endpoints and associated methods. */
-    router = Router.router(vertx);
-    router.route().handler(
-        CorsHandler.create("*").allowedHeaders(allowedHeaders).allowedMethods(allowedMethods));
-    router.route().handler(BodyHandler.create());
-
     RequestAuthentication reqAuth = new RequestAuthentication(vertx, pgPool, keycloakOptions);
     FailureHandler failureHandler = new FailureHandler();
 
-    // Create token
-    router.post(API_TOKEN)
-          .consumes(MIME_APPLICATION_JSON)
-          .handler(reqAuth)
-          .handler(this::createTokenHandler)
-          .failureHandler(failureHandler);
+    RouterBuilder.create(vertx, "docs/openapi.yaml").onFailure(Throwable::printStackTrace)
+        .onSuccess(routerBuilder -> {
+          LOGGER.debug("Info: Mouting routes from OpenApi3 spec");
+          
+          RouterBuilderOptions factoryOptions = new RouterBuilderOptions()
+              .setMountResponseContentTypeHandler(true)
+              .setRequireSecurityHandlers(false);
+          routerBuilder.setOptions(factoryOptions);
+           
+          // Post token create
+          routerBuilder.operation("post-auth-v1-token")
+                       .handler(reqAuth)
+                       .handler(this::createTokenHandler)
+                       .failureHandler(failureHandler);
 
-    // Revoke Token
-    router.post(API_REVOKE_TOKEN)
-          .consumes(MIME_APPLICATION_JSON)
-          .handler(reqAuth)
-          .handler(this::revokeTokenHandler)
-          .failureHandler(failureHandler);
+          // Post token introspect
+          routerBuilder.operation("post-auth-v1-introspect")
+                       .handler(this::validateTokenHandler)
+                       .failureHandler(failureHandler);
+                   
+          // Post token revoke
+          routerBuilder.operation("post-auth-v1-revoke")
+                       .handler(reqAuth)
+                       .handler(this::revokeTokenHandler)
+                       .failureHandler(failureHandler);
+           
+          // Post user profile
+          routerBuilder.operation("post-auth-v1-user-profile")
+                       .handler(reqAuth)
+                       .handler(this::createUserProfileHandler)
+                       .failureHandler(failureHandler);
 
-    // Introspect token
-    router.post(API_INTROSPECT_TOKEN)
-          .consumes(MIME_APPLICATION_JSON)
-          .handler(this::validateTokenHandler)
-          .failureHandler(failureHandler);
+          // Get user profile
+          routerBuilder.operation("get-auth-v1-user-profile")
+                       .handler(reqAuth)
+                       .handler(this::listUserProfileHandler)
+                       .failureHandler(failureHandler);
+          
+          // Update user profile          
+          routerBuilder.operation("put-auth-v1-user-profile")
+                       .handler(reqAuth)
+                       .handler(this::updateUserProfileHandler)
+                       .failureHandler(failureHandler);
+          
+          // Get Organization Details           
+          routerBuilder.operation("get-auth-v1-organizations")
+                       .handler(reqAuth)
+                       .handler(this::listOrganizationHandler)
+                       .failureHandler(failureHandler);
 
-    // Create user profile
-    router.post(API_USER_PROFILE)
-          .handler(reqAuth)
-          .handler(this::createUserProfile)
-          .failureHandler(failureHandler);
+          // Post Create Organization
+          routerBuilder.operation("post-auth-v1-admin-organizations")
+                       .handler(reqAuth)
+                       .handler(this::adminCreateOrganizationHandler)
+                       .failureHandler(failureHandler);
+          
+          // Get Provider registrations
+          routerBuilder.operation("get-auth-v1-admin-provider-registrations")
+                       .handler(reqAuth)
+                       .handler(this::adminGetProviderRegHandler)
+                       .failureHandler(failureHandler);
+          
+          // Update Provider registration status
+          routerBuilder.operation("put-auth-v1-admin-provider-registrations")
+                       .handler(reqAuth)
+                       .handler(this::adminUpdateProviderRegHandler)
+                       .failureHandler(failureHandler);
+          
+          // Router configuration- CORS, methods and headers
+          router = routerBuilder.createRouter();
+          router.route().handler(CorsHandler.create("*").allowedHeaders(allowedHeaders)
+              .allowedMethods(allowedMethods));
+          router.route().handler(BodyHandler.create());
 
-    // List user profile
-    router.get(API_USER_PROFILE)
-          .handler(reqAuth)
-          .handler(this::listUserProfile)
-          .failureHandler(failureHandler);
+          // Static Resource Handler.Get openapiv3 spec
+          router.get(ROUTE_STATIC_SPEC)
+                .produces(MIME_APPLICATION_JSON)
+                .handler(routingContext -> {
+                  HttpServerResponse response = routingContext.response();
+                  response.sendFile("docs/openapi.yaml");
+                });
 
-    // Update user
-    router.put(API_USER_PROFILE)
-          .consumes(MIME_APPLICATION_JSON)
-          .handler(reqAuth)
-          .handler(this::updateUserProfile)
-          .failureHandler(failureHandler);
+          // Get redoc
+          router.get(ROUTE_DOC).produces(MIME_TEXT_HTML)
+                .handler(routingContext -> {
+                  HttpServerResponse response = routingContext.response();
+                  response.sendFile("docs/apidoc.html");
+                });
 
-    // List organizations
-    router.get(API_ORGANIZATION)
-          .handler(reqAuth)
-          .handler(this::listOrganization)
-          .failureHandler(failureHandler);
+          /* Read ssl configuration. */
+          isSSL = config().getBoolean(SSL);
+          HttpServerOptions serverOptions = new HttpServerOptions();
 
-    // Admin create organization
-    router.post(API_ADMIN_CREATE_ORG)
-          .consumes(MIME_APPLICATION_JSON)
-          .handler(reqAuth)
-          .handler(this::adminCreateOrganization)
-          .failureHandler(failureHandler);
+          if (isSSL) {
+            LOGGER.debug("Info: Starting HTTPs server");
 
-    // Admin list provider reg
-    router.get(API_ADMIN_PROVIDER_REG)
-          .handler(reqAuth)
-          .handler(this::adminGetProviderReg)
-          .failureHandler(failureHandler);
+            /* Read the configuration and set the HTTPs server properties. */
+            keystore = config().getString(KEYSTORE_PATH);
+            keystorePassword = config().getString(KEYSTPRE_PASSWORD);
 
-    // Admin update provider reg
-    router.put(API_ADMIN_PROVIDER_REG).handler(reqAuth).handler(this::adminUpdateProviderReg)
-        .failureHandler(failureHandler);
+            serverOptions.setSsl(true).setKeyStoreOptions(
+                new JksOptions().setPath(keystore).setPassword(keystorePassword));
 
-    /**
-     * Documentation routes
-     */
-    /* Static Resource Handler */
-    /* Get openapiv3 spec */
-    router.get(ROUTE_STATIC_SPEC)
-          .produces(MIME_APPLICATION_JSON)
-          .handler(routingContext -> {
-            HttpServerResponse response = routingContext.response();
-            response.sendFile("docs/openapi.yaml");
-           });
+          } else {
+            LOGGER.debug("Info: Starting HTTP server");
+            serverOptions.setSsl(false);
+          }
 
-    /* Get redoc */
-    router.get(ROUTE_DOC)
-          .produces(MIME_TEXT_HTML)
-          .handler(routingContext -> {
-            HttpServerResponse response = routingContext.response();
-            response.sendFile("docs/apidoc.html");
-          });
+          serverOptions.setCompressionSupported(true).setCompressionLevel(5);
+          server = vertx.createHttpServer(serverOptions);
+          server.requestHandler(router).listen(port);
 
-    /* Read ssl configuration. */
-    isSSL = config().getBoolean(SSL);
-    HttpServerOptions serverOptions = new HttpServerOptions();
-
-    if (isSSL) {
-      LOGGER.debug("Info: Starting HTTPs server");
-
-      /* Read the configuration and set the HTTPs server properties. */
-      keystore = config().getString(KEYSTORE_PATH);
-      keystorePassword = config().getString(KEYSTPRE_PASSWORD);
-
-      serverOptions.setSsl(true)
-          .setKeyStoreOptions(new JksOptions().setPath(keystore).setPassword(keystorePassword));
-
-    } else {
-      LOGGER.debug("Info: Starting HTTP server");
-
-      /* Setup the HTTP server properties, APIs and port. */
-      serverOptions.setSsl(false);
-    }
-
-    serverOptions.setCompressionSupported(true).setCompressionLevel(5);
-    server = vertx.createHttpServer(serverOptions);
-    server.requestHandler(router).listen(port);
-
-    /* Get a handler for the Service Discovery interface. */
-    policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
-    registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
-    tokenService = TokenService.createProxy(vertx, TOKEN_SERVICE_ADDRESS);
-    adminService = AdminService.createProxy(vertx, ADMIN_SERVICE_ADDRESS);
+          /* Get a handler for the Service Discovery interface. */
+          policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
+          registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
+          tokenService = TokenService.createProxy(vertx, TOKEN_SERVICE_ADDRESS);
+          adminService = AdminService.createProxy(vertx, ADMIN_SERVICE_ADDRESS);
+    });
   }
 
   /**
@@ -305,10 +304,10 @@ public class ApiServerVerticle extends AbstractVerticle {
     /* Mapping request body to Object */
     JsonObject tokenRequestJson = context.getBodyAsJson();
     RevokeToken revokeTokenDTO = tokenRequestJson.mapTo(RevokeToken.class);
-    
+
     String dbClientId = context.get(CLIENT_ID);
     User user = context.get(USER);
-    
+
     if (!dbClientId.equals(revokeTokenDTO.getClientId())) {
       LOGGER.error("Fail: " + INVALID_CLIENT);
       Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
@@ -331,7 +330,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    * 
    * @param context
    */
-  private void createUserProfile(RoutingContext context) {
+  private void createUserProfileHandler(RoutingContext context) {
     JsonObject jsonRequest = context.getBodyAsJson();
     RegistrationRequest request = RegistrationRequest.validatedObj(jsonRequest);
     User user = context.get(USER);
@@ -350,7 +349,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    * 
    * @param context
    */
-  private void listUserProfile(RoutingContext context) {
+  private void listUserProfileHandler(RoutingContext context) {
     User user = context.get(USER);
 
     registrationService.listUser(user, handler -> {
@@ -367,7 +366,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    * 
    * @param context
    */
-  private void updateUserProfile(RoutingContext context) {
+  private void updateUserProfileHandler(RoutingContext context) {
     JsonObject jsonRequest = context.getBodyAsJson();
     UpdateProfileRequest request = UpdateProfileRequest.validatedObj(jsonRequest);
     User user = context.get(USER);
@@ -379,7 +378,6 @@ public class ApiServerVerticle extends AbstractVerticle {
         processResponse(context.response(), handler.cause().getLocalizedMessage());
       }
     });
-
   }
 
   /**
@@ -387,7 +385,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    * 
    * @param context
    */
-  private void listOrganization(RoutingContext context) {
+  private void listOrganizationHandler(RoutingContext context) {
     registrationService.listOrganization(handler -> {
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
@@ -402,7 +400,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    * 
    * @param context
    */
-  private void adminCreateOrganization(RoutingContext context) {
+  private void adminCreateOrganizationHandler(RoutingContext context) {
     JsonObject jsonRequest = context.getBodyAsJson();
     CreateOrgRequest request = CreateOrgRequest.validatedObj(jsonRequest);
     User user = context.get(USER);
@@ -421,7 +419,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    * 
    * @param context
    */
-  private void adminGetProviderReg(RoutingContext context) {
+  private void adminGetProviderRegHandler(RoutingContext context) {
     List<String> filterList = context.queryParam(QUERY_FILTER);
     RoleStatus filter;
 
@@ -451,7 +449,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    * 
    * @param context
    */
-  private void adminUpdateProviderReg(RoutingContext context) {
+  private void adminUpdateProviderRegHandler(RoutingContext context) {
     JsonArray jsonRequest = context.getBodyAsJsonArray();
     List<ProviderUpdateRequest> request = ProviderUpdateRequest.validatedList(jsonRequest);
 

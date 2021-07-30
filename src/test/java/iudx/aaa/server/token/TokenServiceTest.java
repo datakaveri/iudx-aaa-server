@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -188,6 +189,7 @@ public class TokenServiceTest {
   }
 
   @Test
+  @Disabled
   @DisplayName("revokeToken [Failed-02 nullUserId]")
   void revokeTokenFailed02(VertxTestContext testContext) {
 
@@ -203,6 +205,7 @@ public class TokenServiceTest {
   }
 
   @Test
+  @Disabled
   @DisplayName("revokeToken [Failed-03 invalidUserId]")
   void revokeTokenFailed03(VertxTestContext testContext) {
 

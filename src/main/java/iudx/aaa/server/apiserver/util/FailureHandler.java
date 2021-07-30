@@ -6,6 +6,7 @@ import static iudx.aaa.server.apiserver.util.Constants.INVALID_JSON;
 import static iudx.aaa.server.apiserver.util.Constants.MIME_APPLICATION_JSON;
 import static iudx.aaa.server.apiserver.util.Constants.STATUS;
 import static iudx.aaa.server.apiserver.util.Constants.URN_INVALID_INPUT;
+import static iudx.aaa.server.apiserver.util.Constants.URN_MISSING_INFO;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import io.vertx.core.Future;
@@ -14,6 +15,9 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.validation.BodyProcessorException;
+import io.vertx.ext.web.validation.ParameterProcessorException;
+import io.vertx.ext.web.validation.RequestPredicateException;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 
@@ -35,6 +39,15 @@ public class FailureHandler implements Handler<RoutingContext> {
     } else if (failure instanceof NullPointerException) {
       response.setStatusCode(500).end();
       return;
+    } else if (failure instanceof ParameterProcessorException) {
+      processResponse(response, failure.getLocalizedMessage());
+      
+    } else if (failure instanceof BodyProcessorException) {
+      processResponse(response, failure.getLocalizedMessage());
+      
+    } else if (failure instanceof RequestPredicateException) {
+      processResponse(response, failure.getLocalizedMessage());
+      
     } else {
       processResponse(response, failure);
       return;
