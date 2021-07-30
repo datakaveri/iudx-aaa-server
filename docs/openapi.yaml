@@ -709,7 +709,6 @@ paths:
                       - provider
                       - consumer
                       - delegate
-                      - admin
                     minLength: 5
                     maxLength: 10
                 orgId:
@@ -1167,7 +1166,6 @@ paths:
 
         ## Add roles
         A user may add `consumer` and `delegate` roles to their user profile. **The `provider` role cannot be added**.
-        If the role is `admin`, no othere role is accepted.
       parameters:
         - schema:
             type: string
@@ -1217,10 +1215,8 @@ paths:
                   items:
                     type: string
                     enum:
-                      - provider
                       - consumer
                       - delegate
-                      - admin
                     minLength: 5
                     maxLength: 10
                 orgId:
@@ -1394,7 +1390,7 @@ paths:
       description: Listing the details of registered Organization
   /auth/v1/admin/organizations:
     post:
-      summary: 'Create Organization'
+      summary: Create Organization
       operationId: post-auth-v1-admin-organizations
       responses:
         '201':
