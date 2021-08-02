@@ -181,7 +181,8 @@ paths:
                   itemType: resource_server
                   role: admin
         description: ''
-      description: Request for a JWT (token). One can generate token using either by providing token header or providing clientId/clientSecret in the header.
+        required: true
+      description: 'Request for a JWT (token). One can generate token using either by providing token header or providing clientId/clientSecret in the header. '
       tags:
         - Token APIs
   /auth/v1/introspect:
@@ -304,6 +305,7 @@ paths:
                 value:
                   accessToken: eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJzdWIiOiJhM2U3ZTM0Yy00NGJmLTQxZmYtYWQ4Ni0yZWUwNGE5NTQ0MTgiLCJpc3MiOiJhdXRoLnRlc3QuY29tIiwiYXVkIjoiZm9vYmFyLml1ZHguaW8iLCJleHAiOjE2MjY0NzMwNDgsImlhdCI6MTYyNjQyOTg0OCwiaWlkIjoicmc6ZXhhbXBsZS5jb20vOGQ0YjIwZWM0YmYyMWVmYjM2M2U3MjY3MWUxYjViZDc3ZmQ2Y2Y5MS9yZXNvdXJjZS1ncm91cCIsInJvbGUiOiJhZG1pbiIsImNvbnMiOnt9fQ.iyQXw21_4cXixVHm45rlHpzYjDz2PfTDRORbdQz9EHlLP_mQ-oBHZaWg1IWcuuoPS4FTRgNXWwM_uLhyxTDcuw
         description: ''
+        required: true
       description: Introspect already generated JWT (token).
       tags:
         - Token APIs
@@ -434,6 +436,7 @@ paths:
                 value:
                   clientId: 123e4567-e89b-12d3-a456-426614174000
                   rsUrl: string
+        required: true
     parameters: []
   /auth/v1/user/profile:
     post:
@@ -592,28 +595,18 @@ paths:
           content:
             application/json:
               schema:
-                description: ''
-                type: object
-                properties:
-                  type:
-                    type: string
-                    minLength: 1
-                  title:
-                    type: string
-                    minLength: 1
-                  detail:
-                    type: string
-                    minLength: 1
-                required:
-                  - type
-                  - title
-                  - detail
+                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
               examples:
-                example-1:
+                Invalid roles array:
                   value:
-                    type: string
-                    title: string
-                    detail: string
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Missing or malformed parameters
+                    detail: Invalid 'roles' array
+                orgId does not exist:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Organization does not exist
+                    detail: Organization ID does not correspond to an organization
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
@@ -628,11 +621,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Unauthorized'
               examples:
-                example-1:
+                Example:
                   value:
-                    type: string
-                    title: string
-                    detail: string
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
         '409':
           description: A user profile already exists for the user
           content:
@@ -738,6 +731,7 @@ paths:
           - `orgId` is a valid organization ID obtain from the `GET /auth/v1/organizations` API
           - **`orgId` is required for `provider` and `delegate` roles**
           - **The domain of the email address of the registering user must match the organization domain**
+        required: true
       tags:
         - User APIs
     get:
@@ -898,43 +892,6 @@ paths:
               schema:
                 type: string
               description: application/json
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                description: ''
-                type: object
-                properties:
-                  type:
-                    type: string
-                    minLength: 1
-                  title:
-                    type: string
-                    minLength: 1
-                  detail:
-                    type: string
-                    minLength: 1
-                required:
-                  - type
-                  - title
-                  - detail
-                x-examples:
-                  example-1:
-                    type: string
-                    title: string
-                    detail: string
-              examples:
-                example-1:
-                  value:
-                    type: string
-                    title: string
-                    detail: string
-          headers:
-            Content-Type:
-              schema:
-                type: string
-              description: application/json
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
@@ -949,17 +906,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/Unauthorized'
               examples:
-                example-1:
+                Example:
                   value:
-                    type: string
-                    title: string
-                    detail: string
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
         '404':
           description: A user profile for the user does not exist.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Example:
+                  value:
+                    type: 'urn:dx:as:MissingInformation'
+                    title: User profile does not exist
+                    detail: Please register to create user profile
       parameters:
         - schema:
             type: string
@@ -987,7 +950,7 @@ paths:
           in: header
           name: clientSecret
           description: Keycloak Issued clientSecret
-      description: Listing user profile
+      description: 'Get user profile. The response contains user details such as roles, name, email. It also lists the client ID of the user.'
       tags:
         - User APIs
     put:
@@ -995,7 +958,7 @@ paths:
       operationId: put-auth-v1-user-profile
       responses:
         '200':
-          description: Successfully updating the user role.
+          description: Successfully updated the user roles.
           content:
             application/json:
               schema:
@@ -1135,11 +1098,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
-                example-1:
+                orgId does not exist:
                   value:
-                    type: string
-                    title: string
-                    detail: string
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Organization does not exist
+                    detail: Organization ID does not correspond to an organization
+                Invalid roles array:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Missing or malformed parameters
+                    detail: Invalid 'roles' array
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
@@ -1148,6 +1116,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Unauthorized'
+              examples:
+                Example:
+                  value:
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
         '404':
           description: A user profile for the user does not exist.
           content:
@@ -1155,11 +1129,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
-                example-1:
+                Example:
                   value:
-                    type: string
-                    title: string
-                    detail: string
+                    type: 'urn:dx:as:MissingInformation'
+                    title: User profile does not exist
+                    detail: Please register to create user profile
       description: |-
         Update an existing user profile. Currently a user may use this API to:
         - Add roles to their user profile
@@ -1232,13 +1206,13 @@ paths:
               Update UserProfile:
                 value:
                   roles:
-                    - provider
                     - consumer
                     - delegate
                   orgId: 123e4567-e89b-12d3-a456-426614174000
         description: |-
           - `orgId` is a valid organization ID obtain from the `GET /auth/v1/organizations` API
           - **`orgId` is required for `delegate` roles**
+        required: true
       tags:
         - User APIs
   /auth/v1/organizations:
@@ -1287,14 +1261,6 @@ paths:
                   - title
                   - results
               examples:
-                example-1:
-                  value:
-                    type: string
-                    title: string
-                    results:
-                      - id: string
-                        name: string
-                        url: string
                 Get Organization Details:
                   value:
                     type: 'urn:dx:as:Success'
@@ -1303,43 +1269,6 @@ paths:
                       - id: bc51dfff-ee8b-4438-8c0c-5881a482e124
                         name: example
                         url: example.com
-        '400':
-          description: Bad Request
-          headers:
-            Content-Type:
-              schema:
-                type: string
-              description: application/json
-          content:
-            application/json:
-              schema:
-                description: ''
-                type: object
-                properties:
-                  type:
-                    type: string
-                    minLength: 1
-                  title:
-                    type: string
-                    minLength: 1
-                  detail:
-                    type: string
-                    minLength: 1
-                required:
-                  - type
-                  - title
-                  - detail
-                x-examples:
-                  example-1:
-                    type: string
-                    title: string
-                    detail: string
-              examples:
-                example-1:
-                  value:
-                    type: string
-                    title: string
-                    detail: string
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
@@ -1354,11 +1283,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Unauthorized'
               examples:
-                example-1:
+                Example:
                   value:
-                    type: string
-                    title: string
-                    detail: string
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
       operationId: get-auth-v1-organizations
       parameters:
         - schema:
@@ -1394,7 +1323,7 @@ paths:
       operationId: post-auth-v1-admin-organizations
       responses:
         '201':
-          description: Succefully Orgnization created
+          description: An organization has been created successfully
           content:
             application/json:
               schema:
@@ -1449,7 +1378,9 @@ paths:
                 type: string
               description: application/json
         '400':
-          description: Missing or invalid Input request.
+          description: |-
+            - Malformed or missing data
+            - Invalid `url`
           headers:
             Content-Type:
               schema:
@@ -1459,10 +1390,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Invalid url:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Invalid URL
+                    detail: The domain is invalid
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
             - Unauthorized - `clientId` & `clientSecret` invalid/not match
+            - User is not an admin of IUDX AAA server
           headers:
             Content-Type:
               schema:
@@ -1472,8 +1410,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Unauthorized'
+              examples:
+                Example:
+                  value:
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
+                User is not admin of AAA:
+                  value:
+                    type: 'urn:dx:as:InvalidRole'
+                    title: Not admin of auth server
+                    detail: You are not an admin of the auth server
         '409':
-          description: If organization is already created. The Domain already exists.
+          description: If an organization with the requested `url`/domain already exists
           headers:
             Content-Type:
               schema:
@@ -1483,7 +1432,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserAlreadyExists'
-      description: Register an Organization. User should be `admin` of the server.
+              examples:
+                Example:
+                  value:
+                    type: 'urn:dx:as:AlreadyExists'
+                    title: Domains exists
+                    detail: An organization exists with the given domain
+      description: 'Register an Organization. This operation can be performed by an `admin` of the IUDX AAA server. '
       parameters:
         - schema:
             type: string
@@ -1537,11 +1492,13 @@ paths:
             examples:
               Create Organization:
                 value:
-                  name: string
-                  url: string
+                  name: Data Kaveri
+                  url: datakaveri.org
         description: |-
           - The payload must have `name` and `url` to create a Organization.
+          - `url` must be a **valid domain/hostname**. This domain must match the domain used in the email addresses of the particular organization.
           - The authentication details must be `admin` oriented. It must be the owner of the server.
+        required: true
       tags:
         - Admin APIs
   /auth/v1/admin/provider/registrations:
@@ -1626,32 +1583,55 @@ paths:
                   - title
                   - results
               examples:
-                Provider Approved:
+                List of approved providers:
                   value:
                     type: 'urn:dx:as:Success'
                     title: Provider registrations
                     results:
-                      - userId: 543e251b-532b-46e6-9247-f76f1f70a664
+                      - userId: 844e251b-574b-46e6-9247-f76f1f70a637
                         status: APPROVED
-                        email: test@gmail.com
+                        email: xy@iisc.ac.in
                         name:
-                          firstName: First
-                          lastName: Last
+                          firstName: X
+                          lastName: 'Y'
                         organization:
-                          name: Foo
-                          url: foo.bar.in
-                Provider Rejected:
+                          name: IISc
+                          url: iisc.ac.in
+                      - userId: a13eb955-c691-4fd3-b200-f18bc78810b5
+                        status: APPROVED
+                        email: someone@example.com
+                        name:
+                          firstName: Someone
+                          lastName: Person
+                        organization:
+                          name: example
+                          url: example.com
+                      - userId: d34b1547-7281-4f66-b550-ed79f9bb0c36
+                        status: APPROVED
+                        email: individual@example.com
+                        name:
+                          firstName: Indiv
+                          lastName: Vidual
+                        organization:
+                          name: example
+                          url: example.com
+                List of rejected providers:
                   value:
                     type: 'urn:dx:as:Success'
                     title: Provider registrations
                     results:
-                      - userId: 1fc430c2-2288-41c7-bf87-3e55eec6a21a
+                      - userId: e5bf3f6f-f22b-463d-aacb-cd62fbd8056f
                         status: REJECTED
                         organization:
-                          name: Foo bar
-                          url: first.com
+                          name: lmwohberob
+                          url: lmwohberob.com
+                      - userId: fd0dfa08-d87a-4a51-86ce-060424f981c5
+                        status: REJECTED
+                        organization:
+                          name: fufwcudijj
+                          url: fufwcudijj.com
         '400':
-          description: 'Bad Request, Exceptions'
+          description: '- Invalid filter value'
           headers:
             Content-Type:
               schema:
@@ -1661,10 +1641,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Example:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Invalid 'filter' value
+                    detail: Invalid 'filter' value
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
             - Unauthorized - `clientId` & `clientSecret` invalid/not match
+            - User is not admin of IUDX AAA server
           headers:
             Content-Type:
               schema:
@@ -1674,6 +1661,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Unauthorized'
+              examples:
+                Example:
+                  value:
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
+                Not admin of AAA:
+                  value:
+                    type: 'urn:dx:as:InvalidRole'
+                    title: Not admin of auth server
+                    detail: You are not an admin of the auth server
       operationId: get-auth-v1-admin-provider-registrations
       parameters:
         - schema:
@@ -1715,11 +1713,12 @@ paths:
           name: filter
           description: Filter the status of the Registration
       description: |-
-        Get all the provider registation details. The request can be filtered based on the status of registration.
+        Get all the provider registration details. This operation can be performed by an `admin` of the IUDX AAA server. 
+        The request can be filtered based on the status of registration using the query param `filter`.
         The various statuses are:
-        - pending
-        - approved
-        - rejected
+        - `pending`
+        - `approved`
+        - `rejected`
 
         If no `filter` value is given, registrations with status `pending` is returned.
     put:
@@ -1805,33 +1804,48 @@ paths:
                           lastName: Last
         '400':
           description: |-
-            - Bad Request, Exceptions
-            - Duplicate objects in request.
-            - Invalid `userId`, User is not provider/pending provider.
+            - Missing or malformed data
+            - Duplicate `userId`s in request.
+            - Invalid `userId`or User is not provider/pending provider.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                User ID not pending/userId does not exist:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Invalid User ID
+                    detail: 'User is not a provider/pending provider : 0'
+                Duplicate userIds in request:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Duplicate user IDs
+                    detail: Duplicate user IDs in request
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
             - Unauthorized - `clientId` & `clientSecret` invalid/not match
+            - User is not admin of IUDX AAA server
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Unauthorized'
-        '404':
-          description: Missing or malformed input
-          headers:
-            Content-Type:
-              schema:
-                type: string
-              description: application/json
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-      description: 'Update the status of the Provider registration to `pending` or `approved`. The API takes the user ID (obtained from the GET /auth/v1/admin/provider/registrations API), and the status to update to as query parameters.'
+              examples:
+                Example:
+                  value:
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
+                User is not admin of AAA:
+                  value:
+                    type: 'urn:dx:as:InvalidRole'
+                    title: Not admin of auth server
+                    detail: You are not an admin of the auth server
+      description: |-
+        Update the status of multiple Provider registrations to `approved` or `rejected`.This operation can be performed by an `admin` of the IUDX AAA server.
+
+        The API takes the user ID (obtained from the `GET /auth/v1/admin/provider/registrations` API) and the status to update.
       parameters:
         - schema:
             type: string
@@ -1895,6 +1909,7 @@ paths:
                 value:
                   - userId: c34b1565-7281-4f66-b220-ed79f9bb0a31
                     status: approved
+        required: true
       tags:
         - Admin APIs
 components:
@@ -1986,6 +2001,22 @@ components:
         detail:
           type: string
           minLength: 1
+      required:
+        - type
+        - title
+        - detail
+    IUDX-AAA-Server_Error-Response:
+      title: Error-Response
+      type: object
+      x-examples: {}
+      properties:
+        type:
+          type: string
+          description: A URN
+        title:
+          type: string
+        detail:
+          type: string
       required:
         - type
         - title
