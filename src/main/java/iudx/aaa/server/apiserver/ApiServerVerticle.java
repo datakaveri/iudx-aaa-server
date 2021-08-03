@@ -332,7 +332,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void createUserProfileHandler(RoutingContext context) {
     JsonObject jsonRequest = context.getBodyAsJson();
-    RegistrationRequest request = RegistrationRequest.validatedObj(jsonRequest);
+    RegistrationRequest request = new RegistrationRequest(jsonRequest);
     User user = context.get(USER);
 
     registrationService.createUser(request, user, handler -> {
