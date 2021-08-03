@@ -216,15 +216,15 @@ public class TokenServiceImpl implements TokenService {
     }).onSuccess(jwtDetails -> {
 
       JsonObject accessTokenJwt = jwtDetails.attributes().getJsonObject(ACCESS_TOKEN);
-      String clientId = accessTokenJwt.getString(SUB);
+      String userId = accessTokenJwt.getString(SUB);
       String role = accessTokenJwt.getString(ROLE);
       
       String[] item = accessTokenJwt.getString(IID).split(":");
       String itemId = item[1];
       String itemType = ITEM_TYPE_MAP.get(item[0]);
 
-      Tuple tuple = Tuple.of(clientId);
-      pgSelelctQuery(GET_USER, tuple).onComplete(dbHandler -> {
+      Tuple tuple = Tuple.of(userId);
+      pgSelelctQuery(CHECK_USER, tuple).onComplete(dbHandler -> {
 
         if (dbHandler.failed()) {
           LOGGER.error(LOG_DB_ERROR + dbHandler.cause().getMessage());
@@ -232,17 +232,15 @@ public class TokenServiceImpl implements TokenService {
         } else if (dbHandler.succeeded()) {
 
           if (dbHandler.result().size() != 1) {
-            LOGGER.error(LOG_TOKEN_AUTH + INVALID_CLIENT);
+            LOGGER.error(LOG_TOKEN_AUTH + INVALID_SUB);
             Response resp = new ResponseBuilder().status(400).type(URN_INVALID_AUTH_TOKEN)
-                .title(TOKEN_FAILED).detail(INVALID_CLIENT).build();
+                .title(TOKEN_FAILED).detail(INVALID_SUB).build();
             handler.handle(Future.succeededFuture(resp.toJson()));
             return;
           }
 
-          JsonObject result = dbHandler.result().getJsonObject(0);
           JsonObject request = new JsonObject();
-          request.put(USER_ID, result.getString("user_id"))
-                 .put(CLIENT_ID, clientId)
+          request.put(USER_ID, userId)
                  .put(ROLE, role)
                  .put(ITEM_ID, itemId)
                  .put(ITEM_TYPE, itemType);
@@ -285,7 +283,7 @@ public class TokenServiceImpl implements TokenService {
     
     /* Populate the token claims */
     JsonObject claims = new JsonObject();
-    claims.put(SUB, request.getString(CLIENT_ID))
+    claims.put(SUB, request.getString(USER_ID))
           .put(ISS, CLAIM_ISSUER)
           .put(AUD, audience)
           .put(EXP, expiry)

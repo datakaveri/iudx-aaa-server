@@ -113,12 +113,12 @@ public class Constants {
   public static final String MISSING_TOKEN = "Missing accessToken";
   public static final String TOKEN_FAILED = "Token authentication failed";
   public static final String POLICY_SUCCESS =  "Policy evaluation succeeded";
-  
+  public static final String INVALID_SUB = "Invalid subject ID";
   
   /* SQL Queries */
   public static final String DB_SCHEMA = "test";
-  public static final String GET_USER =
-      "SELECT user_id, client_secret FROM " + DB_SCHEMA + ".user_clients WHERE client_id = $1";
+  public static final String CHECK_USER =
+      "SELECT EXISTS (SELECT 1 FROM " + DB_SCHEMA + ".user_clients WHERE user_id = $1)";
 
   public static final String GET_CLIENT =
       "SELECT client_id FROM " + DB_SCHEMA + ".user_clients WHERE user_id = $1";
