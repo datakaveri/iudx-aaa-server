@@ -61,7 +61,8 @@ public class Constants {
   public static final String INTERNAL_SVR_ERR = "Internal server error";
   public static final String MISSING_TOKEN_CLIENT = "Missing auth details";
   public static final String INVALID_JSON = "Invalid Json";
-  public static final String ERR_TITLE_BAD_REQUEST = "Missing or malformed parameters";
+  public static final String ERR_TITLE_BAD_REQUEST =
+      "Malformed request/missing or malformed request parameters";
   public static final String ERR_DETAIL_BAD_FILTER = "Invalid 'filter' value";
   public static final String INVALID_CLIENT = "Invalid clientId";
   public static final String LOG_FAILED_DISCOVERY = "Fail: Unable to discover keycloak instance; ";
