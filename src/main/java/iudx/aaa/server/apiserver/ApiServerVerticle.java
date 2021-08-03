@@ -402,7 +402,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void adminCreateOrganizationHandler(RoutingContext context) {
     JsonObject jsonRequest = context.getBodyAsJson();
-    CreateOrgRequest request = CreateOrgRequest.validatedObj(jsonRequest);
+    CreateOrgRequest request = new CreateOrgRequest(jsonRequest);
     User user = context.get(USER);
 
     adminService.createOrganization(request, user, handler -> {

@@ -33,15 +33,6 @@ public class CreateOrgRequest {
     this.url = url;
   }
 
-  public static CreateOrgRequest validatedObj(JsonObject json) {
-    return new CreateOrgRequest(validateJsonObject(json));
-  }
-
-  /**
-   * <b>Do not use this constructor for creating object.
-   * Use validatedObj function</b>
-   * @param json
-   */
   public CreateOrgRequest(JsonObject json) {
     CreateOrgRequestConverter.fromJson(json, this);
   }
@@ -50,29 +41,6 @@ public class CreateOrgRequest {
     JsonObject obj = new JsonObject();
     CreateOrgRequestConverter.toJson(this, obj);
     return obj;
-  }
-
-  private static JsonObject validateJsonObject(JsonObject json) throws IllegalArgumentException {
-    if (!json.containsKey("name") || !(json.getValue("name") instanceof String)) {
-      throw new IllegalArgumentException("'name' is required");
-    }
-
-    if (!json.containsKey("url") || !(json.getValue("url") instanceof String)) {
-      throw new IllegalArgumentException("'url' is required");
-    }
-
-    String name = json.getString("name");
-    String url = json.getString("url");
-
-    if (name.length() > 100 || name.isBlank() || name.isEmpty()
-        || !name.matches("^[a-zA-Z0-9]+(?:(?: |[' -])[a-zA-Z0-9]+)*$")) {
-      throw new IllegalArgumentException("Invalid 'name'");
-    }
-
-    if (url.length() > 100 || url.isBlank() || url.isEmpty()) {
-      throw new IllegalArgumentException("Invalid 'url'");
-    }
-    return json;
   }
 
   /**
