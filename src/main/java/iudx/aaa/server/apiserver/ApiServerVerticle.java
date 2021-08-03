@@ -451,7 +451,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void adminUpdateProviderRegHandler(RoutingContext context) {
     JsonArray jsonRequest = context.getBodyAsJsonArray();
-    List<ProviderUpdateRequest> request = ProviderUpdateRequest.validatedList(jsonRequest);
+    List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(jsonRequest);
 
     User user = context.get(USER);
     adminService.updateProviderRegistrationStatus(request, user, handler -> {
