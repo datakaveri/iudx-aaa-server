@@ -368,7 +368,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void updateUserProfileHandler(RoutingContext context) {
     JsonObject jsonRequest = context.getBodyAsJson();
-    UpdateProfileRequest request = UpdateProfileRequest.validatedObj(jsonRequest);
+    UpdateProfileRequest request = new UpdateProfileRequest(jsonRequest);
     User user = context.get(USER);
 
     registrationService.updateUser(request, user, handler -> {
