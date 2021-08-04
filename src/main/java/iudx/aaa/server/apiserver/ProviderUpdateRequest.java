@@ -28,17 +28,10 @@ public class ProviderUpdateRequest {
     this.status = status;
   }
 
-  public static ProviderUpdateRequest validatedObj(JsonObject json) {
-    return new ProviderUpdateRequest(validateJsonObject(json));
-  }
-
-  public static List<ProviderUpdateRequest> validatedList(JsonArray json) {
+  public static List<ProviderUpdateRequest> jsonArrayToList(JsonArray json) {
     List<ProviderUpdateRequest> arr = new ArrayList<ProviderUpdateRequest>();
     json.forEach(obj -> {
-      if (!(obj instanceof JsonObject)) {
-        throw new IllegalArgumentException("Invalid JSON array");
-      }
-      arr.add(ProviderUpdateRequest.validatedObj((JsonObject) obj));
+      arr.add(new ProviderUpdateRequest(statusToUpperCase((JsonObject) obj)));
     });
     return arr;
   }
@@ -53,31 +46,11 @@ public class ProviderUpdateRequest {
     return obj;
   }
 
-  private static JsonObject validateJsonObject(JsonObject json) throws IllegalArgumentException {
-    if (!json.containsKey("userId") || !(json.getValue("userId") instanceof String)) {
-      throw new IllegalArgumentException("'userId' is required");
-    }
-
-    String castedUserId = json.getString("userId").toLowerCase();
-    if (!castedUserId
-        .matches("^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$")) {
-      throw new IllegalArgumentException("Invalid 'userId'");
-    }
-
-    if (!json.containsKey("status") || !(json.getValue("status") instanceof String)) {
-      throw new IllegalArgumentException("'status' is required");
-    }
-
+  private static JsonObject statusToUpperCase(JsonObject json) {
     String castedStatus = json.getString("status").toUpperCase();
-
-    if (!RoleStatus.exists(castedStatus) || castedStatus.equals(RoleStatus.PENDING.name())) {
-      throw new IllegalArgumentException("Invalid 'status'");
-    }
-
     json.remove("status");
     json.put("status", castedStatus);
 
     return json;
   }
-
 }

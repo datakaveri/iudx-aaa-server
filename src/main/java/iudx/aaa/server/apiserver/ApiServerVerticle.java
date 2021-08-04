@@ -332,7 +332,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void createUserProfileHandler(RoutingContext context) {
     JsonObject jsonRequest = context.getBodyAsJson();
-    RegistrationRequest request = RegistrationRequest.validatedObj(jsonRequest);
+    RegistrationRequest request = new RegistrationRequest(jsonRequest);
     User user = context.get(USER);
 
     registrationService.createUser(request, user, handler -> {
@@ -368,7 +368,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void updateUserProfileHandler(RoutingContext context) {
     JsonObject jsonRequest = context.getBodyAsJson();
-    UpdateProfileRequest request = UpdateProfileRequest.validatedObj(jsonRequest);
+    UpdateProfileRequest request = new UpdateProfileRequest(jsonRequest);
     User user = context.get(USER);
 
     registrationService.updateUser(request, user, handler -> {
@@ -402,7 +402,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void adminCreateOrganizationHandler(RoutingContext context) {
     JsonObject jsonRequest = context.getBodyAsJson();
-    CreateOrgRequest request = CreateOrgRequest.validatedObj(jsonRequest);
+    CreateOrgRequest request = new CreateOrgRequest(jsonRequest);
     User user = context.get(USER);
 
     adminService.createOrganization(request, user, handler -> {
@@ -451,7 +451,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void adminUpdateProviderRegHandler(RoutingContext context) {
     JsonArray jsonRequest = context.getBodyAsJsonArray();
-    List<ProviderUpdateRequest> request = ProviderUpdateRequest.validatedList(jsonRequest);
+    List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(jsonRequest);
 
     User user = context.get(USER);
     adminService.updateProviderRegistrationStatus(request, user, handler -> {

@@ -119,53 +119,6 @@ public class CreateUserTest {
   }
 
   @Test
-  @DisplayName("JSON body validation")
-  void validations(VertxTestContext testContext) {
-
-    JsonObject empty = new JsonObject();
-    assertThrows(IllegalArgumentException.class, () -> RegistrationRequest.validatedObj(empty));
-
-    JsonObject invalidRole = new JsonObject().put("roles", new JsonArray().add("hello"));
-    assertThrows(IllegalArgumentException.class,
-        () -> RegistrationRequest.validatedObj(invalidRole));
-
-    JsonObject adminRole = new JsonObject().put("roles", new JsonArray().add("admin"));
-    assertThrows(IllegalArgumentException.class, () -> RegistrationRequest.validatedObj(adminRole));
-
-    JsonObject stringRole = new JsonObject().put("roles", "admin");
-    assertThrows(IllegalArgumentException.class,
-        () -> RegistrationRequest.validatedObj(stringRole));
-
-    JsonObject badRoleArr =
-        new JsonObject().put("roles", new JsonArray().add(1).add(new JsonObject()));
-    assertThrows(IllegalArgumentException.class,
-        () -> RegistrationRequest.validatedObj(badRoleArr));
-
-    JsonObject invalidPhone =
-        new JsonObject().put("roles", new JsonArray().add("consumer")).put("phone", "665544");
-    assertThrows(IllegalArgumentException.class,
-        () -> RegistrationRequest.validatedObj(invalidPhone));
-
-    JsonObject numPhone =
-        new JsonObject().put("roles", new JsonArray().add("consumer")).put("phone", 9845598);
-    assertThrows(IllegalArgumentException.class, () -> RegistrationRequest.validatedObj(numPhone));
-
-    JsonObject orgNum =
-        new JsonObject().put("roles", new JsonArray().add("provider")).put("orgId", 1234);
-    assertThrows(IllegalArgumentException.class, () -> RegistrationRequest.validatedObj(orgNum));
-
-    JsonObject orgArr = new JsonObject().put("roles", new JsonArray().add("provider")).put("orgId",
-        new JsonArray());
-    assertThrows(IllegalArgumentException.class, () -> RegistrationRequest.validatedObj(orgArr));
-
-    JsonObject orgInvalid = new JsonObject().put("roles", new JsonArray().add("provider"))
-        .put("orgId", "107f8479-e767-4760-ac5f-d4518ebe3a8");
-    assertThrows(IllegalArgumentException.class,
-        () -> RegistrationRequest.validatedObj(orgInvalid));
-    testContext.completeNow();
-  }
-
-  @Test
   @DisplayName("Test successful consumer registration")
   void createConsumerSuccess(VertxTestContext testContext) {
 
@@ -177,7 +130,7 @@ public class CreateUserTest {
 
     JsonObject jsonReq =
         new JsonObject().put("roles", new JsonArray().add("Consumer")).put("phone", "9989989980");
-    RegistrationRequest request = RegistrationRequest.validatedObj(jsonReq);
+    RegistrationRequest request = new RegistrationRequest(jsonReq);
 
     User user = new UserBuilder().keycloakId(keycloakId).name("Foo", "Bar").build();
 
@@ -219,7 +172,7 @@ public class CreateUserTest {
 
     JsonObject jsonReq = new JsonObject().put("roles", new JsonArray().add("provider"))
         .put("orgId", orgId).put("phone", "9989989980");
-    RegistrationRequest request = RegistrationRequest.validatedObj(jsonReq);
+    RegistrationRequest request = new RegistrationRequest(jsonReq);
 
     User user = new UserBuilder().keycloakId(keycloakId).name("Foo", "Bar").build();
 
@@ -262,7 +215,7 @@ public class CreateUserTest {
 
     JsonObject jsonReq =
         new JsonObject().put("roles", new JsonArray().add("delegate")).put("orgId", orgId);
-    RegistrationRequest request = RegistrationRequest.validatedObj(jsonReq);
+    RegistrationRequest request = new RegistrationRequest(jsonReq);
 
     User user = new UserBuilder().keycloakId(keycloakId).name("Foo", "Bar").build();
 
@@ -306,7 +259,7 @@ public class CreateUserTest {
     JsonObject jsonReq = new JsonObject()
         .put("roles", new JsonArray().add("delegate").add("provider").add("consumer"))
         .put("orgId", orgId).put("phone", "9989989980");
-    RegistrationRequest request = RegistrationRequest.validatedObj(jsonReq);
+    RegistrationRequest request = new RegistrationRequest(jsonReq);
 
     User user = new UserBuilder().keycloakId(keycloakId).name("Foo", "Bar").build();
 
@@ -351,7 +304,7 @@ public class CreateUserTest {
 
     JsonObject jsonReq =
         new JsonObject().put("roles", new JsonArray().add("provider")).put("orgId", orgId);
-    RegistrationRequest request = RegistrationRequest.validatedObj(jsonReq);
+    RegistrationRequest request = new RegistrationRequest(jsonReq);
 
     User user = new UserBuilder().keycloakId(keycloakId).name("Foo", "Bar").build();
 
@@ -377,7 +330,7 @@ public class CreateUserTest {
 
     JsonObject jsonReq =
         new JsonObject().put("roles", new JsonArray().add("provider").add("delegate"));
-    RegistrationRequest request = RegistrationRequest.validatedObj(jsonReq);
+    RegistrationRequest request = new RegistrationRequest(jsonReq);
 
     User user = new UserBuilder().keycloakId(keycloakId).name("Foo", "Bar").build();
 
@@ -404,7 +357,7 @@ public class CreateUserTest {
 
     JsonObject jsonReq =
         new JsonObject().put("roles", new JsonArray().add("provider")).put("orgId", orgId);
-    RegistrationRequest request = RegistrationRequest.validatedObj(jsonReq);
+    RegistrationRequest request = new RegistrationRequest(jsonReq);
 
     User user = new UserBuilder().keycloakId(keycloakId).name("Foo", "Bar").build();
     registrationService.createUser(request, user,
@@ -431,7 +384,7 @@ public class CreateUserTest {
 
     JsonObject jsonReq =
         new JsonObject().put("roles", new JsonArray().add("provider")).put("orgId", orgId);
-    RegistrationRequest request = RegistrationRequest.validatedObj(jsonReq);
+    RegistrationRequest request = new RegistrationRequest(jsonReq);
 
     User user = new UserBuilder().keycloakId(keycloakId).name("Foo", "Bar").build();
 
@@ -468,7 +421,7 @@ public class CreateUserTest {
 
     JsonObject jsonReq =
         new JsonObject().put("roles", new JsonArray().add("provider")).put("orgId", orgId);
-    RegistrationRequest request = RegistrationRequest.validatedObj(jsonReq);
+    RegistrationRequest request = new RegistrationRequest(jsonReq);
 
     User user = new UserBuilder().keycloakId(keycloakId).name("Foo", "Bar").build();
 
@@ -493,7 +446,7 @@ public class CreateUserTest {
     Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.failedFuture("fail"));
 
     JsonObject jsonReq = new JsonObject().put("roles", new JsonArray().add("consumer"));
-    RegistrationRequest request = RegistrationRequest.validatedObj(jsonReq);
+    RegistrationRequest request = new RegistrationRequest(jsonReq);
 
     User user = new UserBuilder().keycloakId(keycloakId).name("Foo", "Bar").build();
 
