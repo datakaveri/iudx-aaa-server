@@ -6,10 +6,9 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.registration.Constants;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Vert.x data object for the updateUser API in Registration service.
@@ -28,17 +27,8 @@ public class UpdateProfileRequest {
     this.roles = roles;
   }
 
-  public static UpdateProfileRequest validatedObj(JsonObject json) {
-    return new UpdateProfileRequest(validateJsonObject(json));
-  }
-
-  /**
-   * <b>Do not use this constructor for creating object.
-   * Use validatedObj function</b>
-   * @param json
-   */
   public UpdateProfileRequest(JsonObject json) {
-    UpdateProfileRequestConverter.fromJson(json, this);
+    UpdateProfileRequestConverter.fromJson(rolesToUpperCase(json), this);
   }
 
   public JsonObject toJson() {
@@ -55,52 +45,11 @@ public class UpdateProfileRequest {
     this.orgId = UUID.fromString(orgId);
   }
 
-  private static JsonObject validateJsonObject(JsonObject json) throws IllegalArgumentException {
-
-    if (!json.containsKey("roles") || !(json.getValue("roles") instanceof JsonArray)) {
-      throw new IllegalArgumentException("'roles' array is required");
-    }
-
-    if (json.containsKey("orgId")) {
-      Object orgId = json.getValue("orgId");
-
-      if (!(orgId instanceof String)) {
-        throw new IllegalArgumentException("Invalid 'orgId'");
-      }
-
-      String castedOrgId = String.valueOf(orgId).toLowerCase();
-      if (!castedOrgId
-          .matches("^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$")) {
-        throw new IllegalArgumentException("Invalid 'orgId'");
-      }
-    }
-
+  private static JsonObject rolesToUpperCase(JsonObject json) {
     JsonArray roles = json.getJsonArray("roles");
-    Set<String> set = new HashSet<String>();
-
-    roles.forEach(x -> {
-      if (!(x instanceof String)) {
-        throw new IllegalArgumentException("Invalid 'roles' array");
-      }
-
-      String str = ((String) x).toUpperCase();
-
-      if (!Roles.exists(str)) {
-        throw new IllegalArgumentException("Invalid 'roles' array");
-      }
-      set.add(str);
-    });
-
-    if (set.contains(Roles.ADMIN.name())) {
-      throw new IllegalArgumentException("Invalid 'roles' array");
-    }
-
-    if (set.contains(Roles.PROVIDER.name())) {
-      throw new IllegalArgumentException("Existing user may not register for provider role");
-    }
-
     json.remove("roles");
-    json.put("roles", new ArrayList<String>(set));
+    json.put("roles",
+        roles.stream().map(i -> ((String) i).toUpperCase()).collect(Collectors.toList()));
 
     return json;
   }

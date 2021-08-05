@@ -6,10 +6,9 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.registration.Constants;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Vert.x data object for the createUser API in Registration service.
@@ -29,17 +28,8 @@ public class RegistrationRequest {
     this.roles = roles;
   }
 
-  static public RegistrationRequest validatedObj(JsonObject json) {
-    return new RegistrationRequest(validateJsonObject(json));
-  }
-
-  /**
-   * <b>Do not use this constructor for creating object.
-   * Use validatedObj function</b>
-   * @param json
-   */
   public RegistrationRequest(JsonObject json) {
-    RegistrationRequestConverter.fromJson(json, this);
+    RegistrationRequestConverter.fromJson(rolesToUpperCase(json), this);
   }
 
   public JsonObject toJson() {
@@ -64,61 +54,11 @@ public class RegistrationRequest {
     this.orgId = UUID.fromString(orgId);
   }
 
-  private static JsonObject validateJsonObject(JsonObject json) throws IllegalArgumentException {
-
-    if (!json.containsKey("roles") || !(json.getValue("roles") instanceof JsonArray)) {
-      throw new IllegalArgumentException("'roles' array is required");
-    }
-
-    if (json.containsKey("orgId")) {
-      Object orgId = json.getValue("orgId");
-
-      if (!(orgId instanceof String)) {
-        throw new IllegalArgumentException("Invalid 'orgId'");
-      }
-
-      String castedOrgId = String.valueOf(orgId).toLowerCase();
-      if (!castedOrgId
-          .matches("^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$")) {
-        throw new IllegalArgumentException("Invalid 'orgId'");
-      }
-    }
-
-    if (json.containsKey("phone")) {
-      Object phone = json.getValue("phone");
-
-      if (!(phone instanceof String)) {
-        throw new IllegalArgumentException("Invalid 'phone'");
-      }
-
-      String castedPhone = String.valueOf(phone).toLowerCase();
-      if (!castedPhone.matches("^[9876]\\d{9}$")) {
-        throw new IllegalArgumentException("Invalid 'phone'");
-      }
-    }
-
+  private static JsonObject rolesToUpperCase(JsonObject json) {
     JsonArray roles = json.getJsonArray("roles");
-    Set<String> set = new HashSet<String>();
-
-    roles.forEach(x -> {
-      if (!(x instanceof String)) {
-        throw new IllegalArgumentException("Invalid 'roles' array");
-      }
-
-      String str = ((String) x).toUpperCase();
-
-      if (!Roles.exists(str)) {
-        throw new IllegalArgumentException("Invalid 'roles' array");
-      }
-      set.add(str);
-    });
-
-    if (set.contains(Roles.ADMIN.name())) {
-      throw new IllegalArgumentException("Invalid 'roles' array");
-    }
-
     json.remove("roles");
-    json.put("roles", new ArrayList<String>(set));
+    json.put("roles",
+        roles.stream().map(i -> ((String) i).toUpperCase()).collect(Collectors.toList()));
 
     return json;
   }

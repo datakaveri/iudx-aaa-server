@@ -24,6 +24,8 @@ public class Constants {
   public static final String AUTHSERVER_DOMAIN = "authServerDomain";
   public static final String KEYCLOACK_OPTIONS = "keycloakOptions";
   public static final int PG_CONNECTION_TIMEOUT = 10000;
+  public static final String SERVER_TIMEOUT_MS = "serverTimeoutMs";
+  public static final String CORS_REGEX = "corsRegexString";
 
   // API Documentation endpoint
   public static final String ROUTE_STATIC_SPEC = "/apis/spec";
@@ -73,6 +75,18 @@ public class Constants {
   public static final String ERR_DETAIL_BAD_FILTER = "Invalid 'filter' value";
   public static final String INVALID_CLIENT = "Invalid clientId";
   public static final String LOG_FAILED_DISCOVERY = "Fail: Unable to discover keycloak instance; ";
+  public static final String ERR_TIMEOUT = "Service unavailable";
+  public static final String ERR_TITLE_NO_SUCH_API = "No such API/method";
+  public static final String ERR_DETAIL_NO_SUCH_API =
+      "Refer to the " + ROUTE_DOC + " endpoint for documentation";
+
+  /* Static JSON responses */
+  public static final String JSON_TIMEOUT = "{\"type\":\"" + URN_MISSING_INFO + "\", \"title\":\""
+      + ERR_TIMEOUT + "\", \"detail\":\"" + ERR_TIMEOUT + "\"}";
+
+  public static final String JSON_NOT_FOUND =
+      "{\"type\":\"" + URN_INVALID_INPUT + "\", \"title\":\"" + ERR_TITLE_NO_SUCH_API
+          + "\", \"detail\":\"" + ERR_DETAIL_NO_SUCH_API + "\"}";
 
   /* General */
   public static final String NAME = "name";

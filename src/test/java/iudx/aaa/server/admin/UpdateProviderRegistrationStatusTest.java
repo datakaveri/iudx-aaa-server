@@ -206,36 +206,6 @@ public class UpdateProviderRegistrationStatusTest {
   }
 
   @Test
-  @DisplayName("Test validations")
-  void validations(VertxTestContext testContext)
-  {
-    JsonArray req = new JsonArray().add("1");
-    assertThrows(IllegalArgumentException.class,() -> ProviderUpdateRequest.validatedList(req));
-
-    req.clear().add(new JsonObject());
-    assertThrows(IllegalArgumentException.class,() -> ProviderUpdateRequest.validatedList(req));
-    
-    req.clear().add(new JsonObject().put("userId","1234-5678").put("status", "approved"));
-    assertThrows(IllegalArgumentException.class,() -> ProviderUpdateRequest.validatedList(req));
-    
-    req.clear().add(new JsonObject().put("userId", UUID.randomUUID()));
-    assertThrows(IllegalArgumentException.class,() -> ProviderUpdateRequest.validatedList(req));
-    
-    req.clear().add(new JsonObject().put("userId", UUID.randomUUID()).put("status", new JsonObject()));
-    assertThrows(IllegalArgumentException.class,() -> ProviderUpdateRequest.validatedList(req));
-    
-    req.clear().add(new JsonObject().put("userId", UUID.randomUUID()).put("status", "pending"));
-    assertThrows(IllegalArgumentException.class,() -> ProviderUpdateRequest.validatedList(req));
-
-    req.clear().add(new JsonObject().put("userId", UUID.randomUUID()).put("status", "abcd"));
-    assertThrows(IllegalArgumentException.class,() -> ProviderUpdateRequest.validatedList(req));
-
-    req.add(7);
-    assertThrows(IllegalArgumentException.class,() -> ProviderUpdateRequest.validatedList(req));
-    testContext.completeNow();
-  }
-  
-  @Test
   @DisplayName("Test no user profile")
   void noUserProfile(VertxTestContext testContext) {
     JsonObject userJson = adminAuthUser.result();
@@ -248,7 +218,7 @@ public class UpdateProviderRegistrationStatusTest {
 
     JsonArray req = new JsonArray().add(
         new JsonObject().put("userId", providerJson.getString("userId")).put("status", "approved"));
-    List<ProviderUpdateRequest> request = ProviderUpdateRequest.validatedList(req);
+    List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
     adminService.updateProviderRegistrationStatus(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
@@ -273,7 +243,7 @@ public class UpdateProviderRegistrationStatusTest {
 
     JsonArray req = new JsonArray().add(
         new JsonObject().put("userId", providerJson.getString("userId")).put("status", "approved"));
-    List<ProviderUpdateRequest> request = ProviderUpdateRequest.validatedList(req);
+    List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
     adminService.updateProviderRegistrationStatus(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
@@ -298,7 +268,7 @@ public class UpdateProviderRegistrationStatusTest {
 
     JsonArray req = new JsonArray().add(
         new JsonObject().put("userId", providerJson.getString("userId")).put("status", "approved"));
-    List<ProviderUpdateRequest> request = ProviderUpdateRequest.validatedList(req);
+    List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
     adminService.updateProviderRegistrationStatus(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
@@ -335,7 +305,7 @@ public class UpdateProviderRegistrationStatusTest {
 
     JsonArray req = new JsonArray().add(
         new JsonObject().put("userId", providerJson.getString("userId")).put("status", "approved"));
-    List<ProviderUpdateRequest> request = ProviderUpdateRequest.validatedList(req);
+    List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
     /** MOCKS -> mock PolicyService, kc.getDetails and kc.approveProvider **/
     Mockito.doAnswer(i -> {
@@ -390,7 +360,7 @@ public class UpdateProviderRegistrationStatusTest {
     JsonObject j =
         new JsonObject().put("userId", providerJson.getString("userId")).put("status", "approved");
     JsonArray req = new JsonArray().add(j).add(j);
-    List<ProviderUpdateRequest> request = ProviderUpdateRequest.validatedList(req);
+    List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
     /** MOCKS -> mock PolicyService, kc.getDetails and kc.approveProvider **/
     Mockito.doAnswer(i -> {
@@ -432,7 +402,7 @@ public class UpdateProviderRegistrationStatusTest {
 
     JsonArray req = new JsonArray().add(
         new JsonObject().put("userId", providerJson.getString("userId")).put("status", "approved"));
-    List<ProviderUpdateRequest> request = ProviderUpdateRequest.validatedList(req);
+    List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
     /** MOCKS -> mock PolicyService, kc.getDetails and kc.approveProvider **/
     Mockito.doAnswer(i -> {
@@ -474,7 +444,7 @@ public class UpdateProviderRegistrationStatusTest {
 
     JsonArray req = new JsonArray().add(
         new JsonObject().put("userId", providerJson.getString("userId")).put("status", "rejected"));
-    List<ProviderUpdateRequest> request = ProviderUpdateRequest.validatedList(req);
+    List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
     /** MOCKS -> mock PolicyService, kc.getDetails and kc.approveProvider **/
     Mockito.doAnswer(i -> {
