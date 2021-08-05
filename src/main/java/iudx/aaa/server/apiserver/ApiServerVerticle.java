@@ -149,64 +149,82 @@ public class ApiServerVerticle extends AbstractVerticle {
               .setMountResponseContentTypeHandler(true)
               .setRequireSecurityHandlers(false);
           routerBuilder.setOptions(factoryOptions);
-           
+          
           // Post token create
-          routerBuilder.operation("post-auth-v1-token")
+          routerBuilder.operation(CREATE_TOKEN)
                        .handler(reqAuth)
                        .handler(this::createTokenHandler)
                        .failureHandler(failureHandler);
 
           // Post token introspect
-          routerBuilder.operation("post-auth-v1-introspect")
+          routerBuilder.operation(TIP_TOKEN)
                        .handler(this::validateTokenHandler)
                        .failureHandler(failureHandler);
                    
           // Post token revoke
-          routerBuilder.operation("post-auth-v1-revoke")
+          routerBuilder.operation(REVOKE_TOKEN)
                        .handler(reqAuth)
                        .handler(this::revokeTokenHandler)
                        .failureHandler(failureHandler);
            
           // Post user profile
-          routerBuilder.operation("post-auth-v1-user-profile")
+          routerBuilder.operation(CREATE_USER_PROFILE)
                        .handler(reqAuth)
                        .handler(this::createUserProfileHandler)
                        .failureHandler(failureHandler);
 
           // Get user profile
-          routerBuilder.operation("get-auth-v1-user-profile")
+          routerBuilder.operation(GET_USER_PROFILE)
                        .handler(reqAuth)
                        .handler(this::listUserProfileHandler)
                        .failureHandler(failureHandler);
           
           // Update user profile          
-          routerBuilder.operation("put-auth-v1-user-profile")
+          routerBuilder.operation(UPDATE_USER_PROFILE)
                        .handler(reqAuth)
                        .handler(this::updateUserProfileHandler)
                        .failureHandler(failureHandler);
           
           // Get Organization Details           
-          routerBuilder.operation("get-auth-v1-organizations")
+          routerBuilder.operation(GET_ORGANIZATIONS)
                        .handler(reqAuth)
                        .handler(this::listOrganizationHandler)
                        .failureHandler(failureHandler);
 
           // Post Create Organization
-          routerBuilder.operation("post-auth-v1-admin-organizations")
+          routerBuilder.operation(CREATE_ORGANIZATIONS)
                        .handler(reqAuth)
                        .handler(this::adminCreateOrganizationHandler)
                        .failureHandler(failureHandler);
           
           // Get Provider registrations
-          routerBuilder.operation("get-auth-v1-admin-provider-registrations")
+          routerBuilder.operation(GET_PVDR_REGISTRATION)
                        .handler(reqAuth)
                        .handler(this::adminGetProviderRegHandler)
                        .failureHandler(failureHandler);
           
           // Update Provider registration status
-          routerBuilder.operation("put-auth-v1-admin-provider-registrations")
+          routerBuilder.operation(UPDATE_PVDR_REGISTRATION)
                        .handler(reqAuth)
                        .handler(this::adminUpdateProviderRegHandler)
+                       .failureHandler(failureHandler);
+          
+          // Get/lists the User policies
+          routerBuilder.operation(GET_POLICIES)
+                       .handler(reqAuth)
+                       .handler(this::listPolicyHandler)
+                       .failureHandler(failureHandler);
+          
+          // Create a new User policies
+          routerBuilder.operation(CREATE_POLICIES)
+                       .handler(reqAuth)
+                       .handler(this::createPolicyHandler)
+                       .failureHandler(failureHandler);
+          
+          // Delete a User policies
+          routerBuilder.operation(DELETE_POLICIES)
+                       .handler(reqAuth)
+                       .handler(this::deletePolicyHandler)
                        .failureHandler(failureHandler);
           
           /* TimeoutHandler needs to be added as rootHandler */
@@ -233,6 +251,11 @@ public class ApiServerVerticle extends AbstractVerticle {
                   response.sendFile("docs/apidoc.html");
                 });
           
+          // Get PublicKey
+          router.get(PUBLIC_KEY_ROUTE)
+                .produces(MIME_APPLICATION_JSON)
+                .handler(this::signCertHandler);
+
           /* In case API/method not implemented, this last route is triggered */
           router.route().last().handler(routingContext-> {
             HttpServerResponse response = routingContext.response();
@@ -477,6 +500,51 @@ public class ApiServerVerticle extends AbstractVerticle {
         processResponse(context.response(), handler.cause().getLocalizedMessage());
       }
     });
+  }
+
+  /**
+   * Lists Policy associated with a User.
+   * 
+   * @param context
+   */
+  private void listPolicyHandler(RoutingContext context) {
+    User user = context.get(USER);
+    policyService.listPolicy(user, handler -> {
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+
+  /**
+   * Create a Policy for a User.
+   * 
+   * @param context
+   */
+  private void createPolicyHandler(RoutingContext context) {
+
+    context.response().end("Not Implemented");
+  }
+
+  /**
+   * Delete a policy assoicated with a User.
+   * 
+   * @param context
+   */
+  private void deletePolicyHandler(RoutingContext context) {
+
+    context.response().end("Not Implemented");
+  }
+  
+  /**
+   * Lists JWT signing public key.
+   * 
+   * @param context
+   */
+  private void signCertHandler(RoutingContext context) {
+    context.response().end("Not Implemented");
   }
 
   private Future<Void> processResponse(HttpServerResponse response, JsonObject msg) {
