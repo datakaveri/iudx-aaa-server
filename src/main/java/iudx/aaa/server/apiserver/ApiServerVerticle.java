@@ -19,6 +19,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
+import io.vertx.ext.web.handler.TimeoutHandler;
 import io.vertx.ext.web.openapi.RouterBuilder;
 import io.vertx.ext.web.openapi.RouterBuilderOptions;
 import io.vertx.pgclient.PgConnectOptions;
@@ -69,6 +70,9 @@ public class ApiServerVerticle extends AbstractVerticle {
   private PoolOptions poolOptions;
   private PgConnectOptions connectOptions;
 
+  private long serverTimeout;
+  private String corsRegex;
+
   /** Service addresses */
   private static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
   private static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
@@ -99,6 +103,8 @@ public class ApiServerVerticle extends AbstractVerticle {
     databasePassword = config().getString(DATABASE_PASSWORD);
     poolSize = Integer.parseInt(config().getString(POOLSIZE));
     JsonObject keycloakOptions = config().getJsonObject(KEYCLOACK_OPTIONS);
+    serverTimeout = Long.parseLong(config().getString(SERVER_TIMEOUT_MS));
+    corsRegex = config().getString(CORS_REGEX);
 
     /* Set Connection Object */
     if (connectOptions == null) {
@@ -203,9 +209,12 @@ public class ApiServerVerticle extends AbstractVerticle {
                        .handler(this::adminUpdateProviderRegHandler)
                        .failureHandler(failureHandler);
           
+          /* TimeoutHandler needs to be added as rootHandler */
+          routerBuilder.rootHandler(TimeoutHandler.create(serverTimeout));
+
           // Router configuration- CORS, methods and headers
           router = routerBuilder.createRouter();
-          router.route().handler(CorsHandler.create("*").allowedHeaders(allowedHeaders)
+          router.route().handler(CorsHandler.create(corsRegex).allowedHeaders(allowedHeaders)
               .allowedMethods(allowedMethods));
           router.route().handler(BodyHandler.create());
 
@@ -223,7 +232,14 @@ public class ApiServerVerticle extends AbstractVerticle {
                   HttpServerResponse response = routingContext.response();
                   response.sendFile("docs/apidoc.html");
                 });
-
+          
+          /* In case API/method not implemented, this last route is triggered */
+          router.route().last().handler(routingContext-> {
+            HttpServerResponse response = routingContext.response();
+            response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+            .setStatusCode(404).end(JSON_NOT_FOUND);
+          });
+          
           /* Read ssl configuration. */
           isSSL = config().getBoolean(SSL);
           HttpServerOptions serverOptions = new HttpServerOptions();
