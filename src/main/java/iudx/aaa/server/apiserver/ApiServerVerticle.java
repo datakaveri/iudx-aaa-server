@@ -145,78 +145,78 @@ public class ApiServerVerticle extends AbstractVerticle {
           routerBuilder.setOptions(factoryOptions);
           
           // Post token create
-          routerBuilder.operation("post-auth-v1-token")
+          routerBuilder.operation(CREATE_TOKEN)
                        .handler(reqAuth)
                        .handler(this::createTokenHandler)
                        .failureHandler(failureHandler);
 
           // Post token introspect
-          routerBuilder.operation("post-auth-v1-introspect")
+          routerBuilder.operation(TIP_TOKEN)
                        .handler(this::validateTokenHandler)
                        .failureHandler(failureHandler);
                    
           // Post token revoke
-          routerBuilder.operation("post-auth-v1-revoke")
+          routerBuilder.operation(REVOKE_TOKEN)
                        .handler(reqAuth)
                        .handler(this::revokeTokenHandler)
                        .failureHandler(failureHandler);
            
           // Post user profile
-          routerBuilder.operation("post-auth-v1-user-profile")
+          routerBuilder.operation(CREATE_USER_PROFILE)
                        .handler(reqAuth)
                        .handler(this::createUserProfileHandler)
                        .failureHandler(failureHandler);
 
           // Get user profile
-          routerBuilder.operation("get-auth-v1-user-profile")
+          routerBuilder.operation(GET_USER_PROFILE)
                        .handler(reqAuth)
                        .handler(this::listUserProfileHandler)
                        .failureHandler(failureHandler);
           
           // Update user profile          
-          routerBuilder.operation("put-auth-v1-user-profile")
+          routerBuilder.operation(UPDATE_USER_PROFILE)
                        .handler(reqAuth)
                        .handler(this::updateUserProfileHandler)
                        .failureHandler(failureHandler);
           
           // Get Organization Details           
-          routerBuilder.operation("get-auth-v1-organizations")
+          routerBuilder.operation(GET_ORGANIZATIONS)
                        .handler(reqAuth)
                        .handler(this::listOrganizationHandler)
                        .failureHandler(failureHandler);
 
           // Post Create Organization
-          routerBuilder.operation("post-auth-v1-admin-organizations")
+          routerBuilder.operation(CREATE_ORGANIZATIONS)
                        .handler(reqAuth)
                        .handler(this::adminCreateOrganizationHandler)
                        .failureHandler(failureHandler);
           
           // Get Provider registrations
-          routerBuilder.operation("get-auth-v1-admin-provider-registrations")
+          routerBuilder.operation(GET_PVDR_REGISTRATION)
                        .handler(reqAuth)
                        .handler(this::adminGetProviderRegHandler)
                        .failureHandler(failureHandler);
           
           // Update Provider registration status
-          routerBuilder.operation("put-auth-v1-admin-provider-registrations")
+          routerBuilder.operation(UPDATE_PVDR_REGISTRATION)
                        .handler(reqAuth)
                        .handler(this::adminUpdateProviderRegHandler)
                        .failureHandler(failureHandler);
           
           // Get/lists the User policies
-          routerBuilder.operation("get-auth-v1-policies")
+          routerBuilder.operation(GET_POLICIES)
                        .handler(reqAuth)
                        .handler(this::listPolicyHandler)
                        .failureHandler(failureHandler);
           
           // Create a new User policies
-          routerBuilder.operation("post-auth-v1-policies")
+          routerBuilder.operation(CREATE_POLICIES)
                        .handler(reqAuth)
                        .handler(this::createPolicyHandler)
                        .failureHandler(failureHandler);
           
           // Delete a User policies
-          routerBuilder.operation("delete-auth-v1-policies")
+          routerBuilder.operation(DELETE_POLICIES)
                        .handler(reqAuth)
                        .handler(this::deletePolicyHandler)
                        .failureHandler(failureHandler);

@@ -2106,6 +2106,10 @@ paths:
               schema:
                 type: string
               description: application/json
+          content:
+            application/json:
+              schema:
+                type: object
         '400':
           description: Bad Request- Error or exceptions
           content:
@@ -2157,8 +2161,29 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties: {}
+              type: array
+              description: ''
+              minItems: 1
+              uniqueItems: true
+              x-examples:
+                example-1:
+                  - id: 1e435fcb-11ce-4f4d-94c0-adf339932ba4
+                  - id: 7d50c547-9f36-4daa-bdc6-cca3c932379d
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    minLength: 36
+                    format: uuid
+                    maxLength: 36
+                required:
+                  - id
+            examples:
+              Delete Policies:
+                value:
+                  - id: 231f6eca-6276-4993-bfeb-53cbbbba6f06
+        description: Request body is a JsonArray having one or multiple ID Objects to delete policies.
       tags:
         - Policies APIs
     post:
@@ -2207,9 +2232,86 @@ paths:
         content:
           application/json:
             schema:
+              type: array
+              description: ''
+              minItems: 1
+              uniqueItems: true
+              x-examples:
+                example-1:
+                  - user_id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                    res_id: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cf91/resource-group
+                    res_type: resource_group
+                    expiry_time: '2022-08-04T20:00:19+0000'
+                    constraints: {}
+                  - user_id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                    res_id: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cf91/resource-group
+                    res_type: resource_group
+                    expiry_time: '2022-08-04T20:00:19+0000'
+                    constraints: {}
+                  - user_id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                    res_id: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cf91/resource-group
+                    res_type: resource_group
+                    expiry_time: '2022-08-04T20:00:19+0000'
+                    constraints: {}
+              items:
+                type: object
+                properties:
+                  user_id:
+                    type: string
+                    minLength: 36
+                    format: uuid
+                    maxLength: 36
+                  res_id:
+                    type: string
+                    minLength: 1
+                  res_type:
+                    type: string
+                    minLength: 1
+                    enum:
+                      - resource_server
+                      - resource
+                      - resource_group
+                  expiry_time:
+                    type: string
+                    minLength: 1
+                  constraints:
+                    type: object
+                required:
+                  - user_id
+                  - res_id
+                  - res_type
+                  - expiry_time
+                  - constraints
+            examples:
+              Create MultiplePolicies:
+                value:
+                  - user_id: b34eb955-c691-4fd3-b200-f18bc78810a2
+                    res_id: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
+                    res_type: resource_group
+                    expiry_time: '2022-08-04T20:00:19+0000'
+                    constraints: {}
+                  - user_id: b34eb955-c691-4fd3-b200-f18bc78810a2
+                    res_id: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cq21/resource-group
+                    res_type: resource_group
+                    expiry_time: '2022-08-04T20:00:19+0000'
+                    constraints: {}
+                  - user_id: b34eb955-c691-4fd3-b200-f18bc78810a2
+                    res_id: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cf31/resource-group
+                    res_type: resource_group
+                    expiry_time: '2022-08-04T20:00:19+0000'
+                    constraints: {}
+              Create SinglePolicies:
+                value:
+                  - user_id: b34eb955-c691-4fd3-b200-f18bc78810a2
+                    res_id: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
+                    res_type: resource_group
+                    expiry_time: '2022-08-04T20:00:19+0000'
+                    constraints: {}
+          application/xml:
+            schema:
               type: object
               properties: {}
-        description: ''
+        description: Request body will be JsonArray having or many objects
       tags:
         - Policies APIs
 components:

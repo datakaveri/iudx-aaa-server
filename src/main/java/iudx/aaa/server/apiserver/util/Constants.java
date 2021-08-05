@@ -37,7 +37,19 @@ public class Constants {
   public static final String NIL_UUID = "00000000-0000-0000-0000-000000000000";
 
   /* API Server Operations/Routes */
-  
+  public static final String CREATE_TOKEN = "post-auth-v1-token";
+  public static final String TIP_TOKEN = "post-auth-v1-introspect"; 
+  public static final String REVOKE_TOKEN = "post-auth-v1-revoke";
+  public static final String CREATE_USER_PROFILE = "post-auth-v1-user-profile";
+  public static final String GET_USER_PROFILE = "get-auth-v1-user-profile";
+  public static final String UPDATE_USER_PROFILE = "put-auth-v1-user-profile";
+  public static final String GET_ORGANIZATIONS = "get-auth-v1-organizations";
+  public static final String CREATE_ORGANIZATIONS = "post-auth-v1-admin-organizations";
+  public static final String GET_PVDR_REGISTRATION = "get-auth-v1-admin-provider-registrations";
+  public static final String UPDATE_PVDR_REGISTRATION = "put-auth-v1-admin-provider-registrations";
+  public static final String GET_POLICIES = "get-auth-v1-policies";
+  public static final String CREATE_POLICIES = "post-auth-v1-policies";
+  public static final String DELETE_POLICIES = "delete-auth-v1-policies";
 
   /* Query Params */
   public static final String QUERY_FILTER = "filter";
