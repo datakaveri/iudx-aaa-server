@@ -81,6 +81,8 @@
 			"databaseUserName": "iudx_user",
 			"databasePassword": "iudx@123",
 			"poolSize": "5",
+			"serverTimeoutMs": 5000,
+			"corsRegexString":"*",
 			"keycloakOptions": {
 				"site": "https://<host>:<port>/auth/realms/demo",
 				"clientId": "keycloakClientId",

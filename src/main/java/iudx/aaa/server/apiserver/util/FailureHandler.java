@@ -3,6 +3,7 @@ package iudx.aaa.server.apiserver.util;
 import static iudx.aaa.server.apiserver.util.Constants.ERR_TITLE_BAD_REQUEST;
 import static iudx.aaa.server.apiserver.util.Constants.HEADER_CONTENT_TYPE;
 import static iudx.aaa.server.apiserver.util.Constants.INVALID_JSON;
+import static iudx.aaa.server.apiserver.util.Constants.JSON_TIMEOUT;
 import static iudx.aaa.server.apiserver.util.Constants.MIME_APPLICATION_JSON;
 import static iudx.aaa.server.apiserver.util.Constants.STATUS;
 import static iudx.aaa.server.apiserver.util.Constants.URN_INVALID_INPUT;
@@ -27,10 +28,17 @@ public class FailureHandler implements Handler<RoutingContext> {
 
   @Override
   public void handle(RoutingContext context) {
-    LOGGER.error("Fail: Handling unexpected error: " + context.failure().getLocalizedMessage());
-    Throwable failure = context.failure();
     HttpServerResponse response = context.response();
     response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON);
+
+    /* If timeout handler is triggered */
+    if (context.failure() == null && context.statusCode() == 503) {
+      LOGGER.error("Fail: Handling unexpected error: Timeout");
+      response.setStatusCode(503).end(JSON_TIMEOUT);
+    }
+
+    LOGGER.error("Fail: Handling unexpected error: " + context.failure().getLocalizedMessage());
+    Throwable failure = context.failure();
 
     if (failure instanceof DecodeException) {
       processResponse(response, URN_INVALID_INPUT, INVALID_JSON);
