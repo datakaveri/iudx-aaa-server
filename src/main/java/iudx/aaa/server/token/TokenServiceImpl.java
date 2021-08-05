@@ -290,8 +290,15 @@ public class TokenServiceImpl implements TokenService {
           .put(IAT, timestamp)
           .put(IID, iid)
           .put(ROLE, request.getString(ROLE))
-          .put(CONS, request.getJsonObject(CONSTRAINTS, new JsonObject()));
-    
+          //.put(CONS, request.getJsonObject(CONSTRAINTS, new JsonObject()));
+          .put(CONS, new JsonObject("{\n" + 
+              "        \"access\": [\n" + 
+              "            \"api\",\n" + 
+              "            \"subs\",\n" + 
+              "            \"ingest\",\n" + 
+              "            \"file\"\n" + 
+              "        ]\n" + 
+              "    }"));
     String token = provider.generateToken(claims, options);
 
     JsonObject tokenResp = new JsonObject();

@@ -28,6 +28,7 @@ public class Constants {
   // API Documentation endpoint
   public static final String ROUTE_STATIC_SPEC = "/apis/spec";
   public static final String ROUTE_DOC = "/apis";
+  public static final String PUBLIC_KEY_ROUTE = "/auth/v1/cert";
 
   // Accept Headers and CORS
   public static final String MIME_APPLICATION_JSON = "application/json";
@@ -35,14 +36,8 @@ public class Constants {
 
   public static final String NIL_UUID = "00000000-0000-0000-0000-000000000000";
 
-  /* API Server Routes */
-  public static final String API_TOKEN = "/auth/v1/token";
-  public static final String API_INTROSPECT_TOKEN = "/auth/v1/introspect";
-  public static final String API_REVOKE_TOKEN = "/auth/v1/token/revoke";
-  public static final String API_USER_PROFILE = "/auth/v1/user/profile";
-  public static final String API_ORGANIZATION = "/auth/v1/organizations";
-  public static final String API_ADMIN_PROVIDER_REG = "/auth/v1/admin/provider/registrations";
-  public static final String API_ADMIN_CREATE_ORG = "/auth/v1/admin/organizations";
+  /* API Server Operations/Routes */
+  
 
   /* Query Params */
   public static final String QUERY_FILTER = "filter";

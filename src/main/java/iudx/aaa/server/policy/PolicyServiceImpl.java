@@ -11,6 +11,7 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.Response;
+import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -68,12 +69,12 @@ public class PolicyServiceImpl implements PolicyService {
   }
 
   @Override
-  public PolicyService listPolicy(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+  public PolicyService listPolicy(User user, Handler<AsyncResult<JsonObject>> handler) {
     // TODO Auto-generated method stub
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
     JsonObject response = new JsonObject();
 
-    UUID user_id = UUID.fromString(request.getString(USERID));
+    UUID user_id = UUID.fromString(user.getUserId());
 
     Collector<Row, ?, List<JsonObject>> policyCollector =
         Collectors.mapping(row -> row.toJson(), Collectors.toList());

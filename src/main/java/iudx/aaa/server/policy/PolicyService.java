@@ -8,7 +8,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-
+import iudx.aaa.server.apiserver.User;
 import java.util.List;
 
 /**
@@ -67,13 +67,13 @@ public interface PolicyService {
   /**
    * The listPolicy implements the policy list operation.
    * 
-   * @param request which is a JsonObject
+   * @param user which is a User DataObject
    * @param handler which is a Request Handler
    * @return PolicyService which is a Service
    */
 
   @Fluent
-  PolicyService listPolicy(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+  PolicyService listPolicy(User user, Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * The verifyPolicy implements the policy list operation.

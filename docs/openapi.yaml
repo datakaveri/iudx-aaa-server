@@ -394,24 +394,7 @@ paths:
           in: header
           name: Authorization
           description: Keycloak Issued token
-        - schema:
-            type: string
-            format: uuid
-            maxLength: 36
-            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-            minLength: 36
-          in: header
-          name: clientId
-          description: Keycloak Issued clientId
-        - schema:
-            type: string
-            format: uuid
-            maxLength: 36
-            minLength: 36
-            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-          in: header
-          name: clientSecret
-          description: Keycloak Issued clientSecret
+          required: true
       requestBody:
         content:
           application/json:
@@ -652,24 +635,7 @@ paths:
           in: header
           name: Authorization
           description: Keycloak Issued token
-        - schema:
-            type: string
-            format: uuid
-            maxLength: 36
-            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-            minLength: 36
-          in: header
-          name: clientId
-          description: Keycloak Issued clientId
-        - schema:
-            type: string
-            format: uuid
-            minLength: 36
-            maxLength: 36
-            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-          in: header
-          name: clientSecret
-          description: Keycloak Issued clientSecret
+          required: true
       description: |-
         Create a new user profile. Users are required to have a user profile in order to interact with the IUDX AAA Server. During creation, they may specify what roles they would like to obtain. Current valid roles are:
         - **consumer**, which allows users to access to secure resource via tokens
@@ -892,6 +858,17 @@ paths:
               schema:
                 type: string
               description: application/json
+        '400':
+          description: Bad Request
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
@@ -932,24 +909,7 @@ paths:
           in: header
           name: Authorization
           description: Keycloak Issued token
-        - schema:
-            type: string
-            format: uuid
-            maxLength: 36
-            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-            minLength: 36
-          in: header
-          name: clientId
-          description: Keycloak Issued clientId
-        - schema:
-            type: string
-            format: uuid
-            maxLength: 36
-            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-            minLength: 36
-          in: header
-          name: clientSecret
-          description: Keycloak Issued clientSecret
+          required: true
       description: 'Get user profile. The response contains user details such as roles, name, email. It also lists the client ID of the user.'
       tags:
         - User APIs
@@ -1149,24 +1109,7 @@ paths:
           in: header
           name: Authorization
           description: Keycloak Issued token
-        - schema:
-            type: string
-            format: uuid
-            maxLength: 36
-            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-            minLength: 36
-          in: header
-          name: clientId
-          description: Keycloak Issued clientId
-        - schema:
-            type: string
-            format: uuid
-            maxLength: 36
-            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-            minLength: 36
-          in: header
-          name: clientSecret
-          description: Keycloak Issued clientSecret
+          required: true
       requestBody:
         content:
           application/json:
@@ -1298,24 +1241,7 @@ paths:
           in: header
           name: Authorization
           description: Keycloak Issued token
-        - schema:
-            type: string
-            format: uuid
-            maxLength: 36
-            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-            minLength: 36
-          in: header
-          name: clientId
-          description: Keycloak Issued clientId
-        - schema:
-            type: string
-            format: uuid
-            minLength: 36
-            maxLength: 36
-            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-          in: header
-          name: clientSecret
-          description: Keycloak Issued clientSecret
+          required: true
       description: Listing the details of registered Organization
   /auth/v1/admin/organizations:
     post:
@@ -1323,7 +1249,7 @@ paths:
       operationId: post-auth-v1-admin-organizations
       responses:
         '201':
-          description: An organization has been created successfully
+          description: An organization has been created successfully.
           content:
             application/json:
               schema:
@@ -1448,24 +1374,7 @@ paths:
           in: header
           name: Authorization
           description: Keycloak Issued token
-        - schema:
-            type: string
-            format: uuid
-            maxLength: 36
-            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-            minLength: 36
-          in: header
-          name: clientId
-          description: Keycloak Issued clientId
-        - schema:
-            type: string
-            format: uuid
-            maxLength: 36
-            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-            minLength: 36
-          in: header
-          name: clientSecret
-          description: Keycloak Issued clientSecret
+          required: true
       requestBody:
         content:
           application/json:
@@ -1682,24 +1591,7 @@ paths:
           in: header
           name: Authorization
           description: Keycloak Issued token
-        - schema:
-            type: string
-            format: uuid
-            maxLength: 36
-            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-            minLength: 36
-          in: header
-          name: clientId
-          description: Keycloak Issued clientId
-        - schema:
-            type: string
-            format: uuid
-            maxLength: 36
-            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-            minLength: 36
-          in: header
-          name: clientSecret
-          description: Keycloak Issued clientSecret
+          required: true
         - schema:
             type: string
             enum:
@@ -1855,24 +1747,7 @@ paths:
           in: header
           name: Authorization
           description: Keycloak Issued token
-        - schema:
-            type: string
-            format: uuid
-            maxLength: 36
-            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-            minLength: 36
-          in: header
-          name: clientId
-          description: Keycloak Issued clientId
-        - schema:
-            type: string
-            format: uuid
-            maxLength: 36
-            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-            minLength: 36
-          in: header
-          name: clientSecret
-          description: Keycloak Issued clientSecret
+          required: true
       requestBody:
         content:
           application/json:
@@ -1912,6 +1787,431 @@ paths:
         required: true
       tags:
         - Admin APIs
+  /auth/v1/policies:
+    get:
+      summary: Get User Policies
+      tags:
+        - Policies APIs
+      responses:
+        '200':
+          description: Successfully listing the User policies
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+                x-examples:
+                  example-1:
+                    type: 'urn:dx:as:Success'
+                    title: Policy read
+                    results:
+                      policyBy:
+                        - user_id: a13eb132-c691-4fd3-b455-f18bc78819a2
+                          owner_id: a12cd922-c691-4fc6-b200-f18bc78810b5
+                          item_id: 04617a43-7e5d-4118-8773-1b6c85da14ed
+                          item_type: RESOURCE_GROUP
+                          expiry_time: '2022-06-15T09:07:16.034289'
+                          constraints: {}
+                          cat_id: example.com/79e7bfa62fad6c765bac69154c2f24c94c95221a/resource-group
+                          user_details:
+                            email: someone@example.com
+                            name:
+                              firstName: Someone
+                              lastName: Person
+                          owner_details:
+                            email: someone@example.com
+                            name:
+                              firstName: Someone
+                              lastName: Person
+                      policyFor:
+                        - user_id: a13eb132-c691-4fd3-b455-f18bc78819a2
+                          owner_id: a12cd922-c691-4fc6-b200-f18bc78810b5
+                          item_id: 04617a43-7e5d-4118-8773-1b6c85da14ed
+                          item_type: RESOURCE_GROUP
+                          expiry_time: '2022-06-15T09:07:16.034289'
+                          constraints: {}
+                          cat_id: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group
+                          user_details:
+                            email: someone@example.com
+                            name:
+                              firstName: Someone
+                              lastName: Person
+                          owner_details:
+                            email: someone@example.com
+                            name:
+                              firstName: Someone
+                              lastName: Person
+                properties:
+                  type:
+                    type: string
+                    minLength: 1
+                  title:
+                    type: string
+                    minLength: 1
+                  results:
+                    type: object
+                    required:
+                      - policyBy
+                      - policyFor
+                    properties:
+                      policyBy:
+                        type: array
+                        uniqueItems: true
+                        minItems: 1
+                        items:
+                          type: object
+                          properties:
+                            user_id:
+                              type: string
+                              minLength: 1
+                            owner_id:
+                              type: string
+                              minLength: 1
+                            item_id:
+                              type: string
+                              minLength: 1
+                            item_type:
+                              type: string
+                              minLength: 1
+                            expiry_time:
+                              type: string
+                              minLength: 1
+                            constraints:
+                              type: object
+                            cat_id:
+                              type: string
+                              minLength: 1
+                            user_details:
+                              type: object
+                              properties:
+                                email:
+                                  type: string
+                                  minLength: 1
+                                name:
+                                  type: object
+                                  required:
+                                    - firstName
+                                    - lastName
+                                  properties:
+                                    firstName:
+                                      type: string
+                                      minLength: 1
+                                    lastName:
+                                      type: string
+                                      minLength: 1
+                              required:
+                                - email
+                                - name
+                            owner_details:
+                              type: object
+                              properties:
+                                email:
+                                  type: string
+                                  minLength: 1
+                                name:
+                                  type: object
+                                  required:
+                                    - firstName
+                                    - lastName
+                                  properties:
+                                    firstName:
+                                      type: string
+                                      minLength: 1
+                                    lastName:
+                                      type: string
+                                      minLength: 1
+                              required:
+                                - email
+                                - name
+                          required:
+                            - user_id
+                            - owner_id
+                            - item_id
+                            - item_type
+                            - expiry_time
+                            - cat_id
+                      policyFor:
+                        type: array
+                        uniqueItems: true
+                        minItems: 1
+                        items:
+                          type: object
+                          properties:
+                            user_id:
+                              type: string
+                              minLength: 1
+                            owner_id:
+                              type: string
+                              minLength: 1
+                            item_id:
+                              type: string
+                              minLength: 1
+                            item_type:
+                              type: string
+                              minLength: 1
+                            expiry_time:
+                              type: string
+                              minLength: 1
+                            constraints:
+                              type: object
+                            cat_id:
+                              type: string
+                              minLength: 1
+                            user_details:
+                              type: object
+                              properties:
+                                email:
+                                  type: string
+                                  minLength: 1
+                                name:
+                                  type: object
+                                  required:
+                                    - firstName
+                                    - lastName
+                                  properties:
+                                    firstName:
+                                      type: string
+                                      minLength: 1
+                                    lastName:
+                                      type: string
+                                      minLength: 1
+                              required:
+                                - email
+                                - name
+                            owner_details:
+                              type: object
+                              properties:
+                                email:
+                                  type: string
+                                  minLength: 1
+                                name:
+                                  type: object
+                                  required:
+                                    - firstName
+                                    - lastName
+                                  properties:
+                                    firstName:
+                                      type: string
+                                      minLength: 1
+                                    lastName:
+                                      type: string
+                                      minLength: 1
+                              required:
+                                - email
+                                - name
+                          required:
+                            - user_id
+                            - owner_id
+                            - item_id
+                            - item_type
+                            - expiry_time
+                            - cat_id
+                required:
+                  - type
+                  - title
+                  - results
+              examples:
+                ListPolicies-Success:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: Policy read
+                    results:
+                      policyBy:
+                        - user_id: a13eb132-c691-4fd3-b455-f18bc78819a2
+                          owner_id: a12cd922-c691-4fc6-b200-f18bc78810b5
+                          item_id: 04617a43-7e5d-4118-8773-1b6c85da14ed
+                          item_type: RESOURCE_GROUP
+                          expiry_time: '2022-06-15T09:07:16.034289'
+                          constraints: {}
+                          cat_id: example.com/79e7bfa62fad6c765bac69154c2f24c94c95221a/resource-group
+                          user_details:
+                            email: someone@example.com
+                            name:
+                              firstName: Someone
+                              lastName: Person
+                          owner_details:
+                            email: someone@example.com
+                            name:
+                              firstName: Someone
+                              lastName: Person
+                      policyFor:
+                        - user_id: a13eb132-c691-4fd3-b455-f18bc78819a2
+                          owner_id: a12cd922-c691-4fc6-b200-f18bc78810b5
+                          item_id: 04617a43-7e5d-4118-8773-1b6c85da14ed
+                          item_type: RESOURCE_GROUP
+                          expiry_time: '2022-06-15T09:07:16.034289'
+                          constraints: {}
+                          cat_id: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group
+                          user_details:
+                            email: someone@example.com
+                            name:
+                              firstName: Someone
+                              lastName: Person
+                          owner_details:
+                            email: someone@example.com
+                            name:
+                              firstName: Someone
+                              lastName: Person
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+        '400':
+          description: Bad Request
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: |-
+            - Unauthorized - `token` invalid/expired
+            - Unauthorized - `clientId` & `clientSecret` invalid/not match
+            - User is not admin of IUDX AAA server
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+      operationId: get-auth-v1-policies
+      description: Get all related policies of an authenticated User
+      parameters:
+        - schema:
+            type: string
+            maxLength: 1500
+            minLength: 1
+            example: Bearer <JWT>
+          in: header
+          name: Authorization
+          description: Keycloak Issued token
+          required: true
+    parameters: []
+    delete:
+      summary: Delete User Policies
+      operationId: delete-auth-v1-policies
+      responses:
+        '200':
+          description: Successfully deleted the User Policies
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+        '400':
+          description: Bad Request- Error or exceptions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+        '401':
+          description: |-
+            - Unauthorized - `token` invalid/expired
+            - Unauthorized - `clientId` & `clientSecret` invalid/not match
+            - User is not admin of IUDX AAA server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+        '404':
+          description: If the requested policies not exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+      description: Delete policies of an authenticated User.
+      parameters:
+        - schema:
+            type: string
+            maxLength: 1500
+            minLength: 1
+            example: Bearer <JWT>
+          in: header
+          name: Authorization
+          description: Keycloak Issued token
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      tags:
+        - Policies APIs
+    post:
+      summary: Create user Policies
+      operationId: post-auth-v1-policies
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+        '401':
+          description: |-
+            - Unauthorized - `token` invalid/expired
+            - Unauthorized - `clientId` & `clientSecret` invalid/not match
+            - User is not admin of IUDX AAA server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+      description: Create new policies of an authenticated User
+      parameters:
+        - schema:
+            type: string
+            maxLength: 1500
+            minLength: 1
+            example: Bearer <JWT>
+          in: header
+          name: Authorization
+          description: Keycloak Issued token
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+        description: ''
+      tags:
+        - Policies APIs
 components:
   schemas:
     RequestToken:

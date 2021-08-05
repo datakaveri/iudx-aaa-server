@@ -143,7 +143,7 @@ public class ApiServerVerticle extends AbstractVerticle {
               .setMountResponseContentTypeHandler(true)
               .setRequireSecurityHandlers(false);
           routerBuilder.setOptions(factoryOptions);
-           
+          
           // Post token create
           routerBuilder.operation("post-auth-v1-token")
                        .handler(reqAuth)
@@ -203,6 +203,24 @@ public class ApiServerVerticle extends AbstractVerticle {
                        .handler(this::adminUpdateProviderRegHandler)
                        .failureHandler(failureHandler);
           
+          // Get/lists the User policies
+          routerBuilder.operation("get-auth-v1-policies")
+                       .handler(reqAuth)
+                       .handler(this::listPolicyHandler)
+                       .failureHandler(failureHandler);
+          
+          // Create a new User policies
+          routerBuilder.operation("post-auth-v1-policies")
+                       .handler(reqAuth)
+                       .handler(this::createPolicyHandler)
+                       .failureHandler(failureHandler);
+          
+          // Delete a User policies
+          routerBuilder.operation("delete-auth-v1-policies")
+                       .handler(reqAuth)
+                       .handler(this::deletePolicyHandler)
+                       .failureHandler(failureHandler);
+          
           // Router configuration- CORS, methods and headers
           router = routerBuilder.createRouter();
           router.route().handler(CorsHandler.create("*").allowedHeaders(allowedHeaders)
@@ -223,6 +241,11 @@ public class ApiServerVerticle extends AbstractVerticle {
                   HttpServerResponse response = routingContext.response();
                   response.sendFile("docs/apidoc.html");
                 });
+          
+          // Get PublicKey
+          router.get(PUBLIC_KEY_ROUTE)
+                .produces(MIME_APPLICATION_JSON)
+                .handler(this::signCertHandler);
 
           /* Read ssl configuration. */
           isSSL = config().getBoolean(SSL);
@@ -461,6 +484,51 @@ public class ApiServerVerticle extends AbstractVerticle {
         processResponse(context.response(), handler.cause().getLocalizedMessage());
       }
     });
+  }
+
+  /**
+   * Lists Policy associated with a User.
+   * 
+   * @param context
+   */
+  private void listPolicyHandler(RoutingContext context) {
+    User user = context.get(USER);
+    policyService.listPolicy(user, handler -> {
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+
+  /**
+   * Create a Policy for a User.
+   * 
+   * @param context
+   */
+  private void createPolicyHandler(RoutingContext context) {
+
+    context.response().end("Not Implemented");
+  }
+
+  /**
+   * Delete a policy assoicated with a User.
+   * 
+   * @param context
+   */
+  private void deletePolicyHandler(RoutingContext context) {
+
+    context.response().end("Not Implemented");
+  }
+  
+  /**
+   * Lists JWT signing public key.
+   * 
+   * @param context
+   */
+  private void signCertHandler(RoutingContext context) {
+    context.response().end("Not Implemented");
   }
 
   private Future<Void> processResponse(HttpServerResponse response, JsonObject msg) {
