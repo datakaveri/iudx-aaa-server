@@ -79,6 +79,7 @@ public class Constants {
   public static final String ERR_TITLE_NO_SUCH_API = "No such API/method";
   public static final String ERR_DETAIL_NO_SUCH_API =
       "Refer to the " + ROUTE_DOC + " endpoint for documentation";
+  public static final String KS_PARSE_ERROR = "Unable to parse KeyStore";
 
   /* Static JSON responses */
   public static final String JSON_TIMEOUT = "{\"type\":\"" + URN_MISSING_INFO + "\", \"title\":\""
@@ -101,6 +102,8 @@ public class Constants {
   public static final String JWT_LEEWAY = "jwtLeeway";
   public static final String STATUS = "status";
   public static final String SSL = "ssl";
+  public static final String KS_ALIAS = "ES256";
+  public static final String PUB_KEY = "publicKey";
 
   /* Compose failure due to invalid token */
   public static final String INVALID_TOKEN_FAILED_COMPOSE = "INVALID_TOKEN";

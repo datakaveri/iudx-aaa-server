@@ -68,6 +68,7 @@ public class TokenServiceImpl implements TokenService {
     
     String itemType = requestToken.getItemType();
     JsonObject request = JsonObject.mapFrom(requestToken);
+    request.put(USER_ID, user.getUserId());
 
     /* Verify the user role */
     if (!roles.contains(role)) {
@@ -109,7 +110,6 @@ public class TokenServiceImpl implements TokenService {
         }
       });
     } else {
-      request.put(USER_ID, user.getUserId());
       policyService.verifyPolicy(request, policyHandler -> {
         if (policyHandler.succeeded()) {
 
@@ -235,6 +235,14 @@ public class TokenServiceImpl implements TokenService {
             LOGGER.error(LOG_TOKEN_AUTH + INVALID_SUB);
             Response resp = new ResponseBuilder().status(400).type(URN_INVALID_AUTH_TOKEN)
                 .title(TOKEN_FAILED).detail(INVALID_SUB).build();
+            handler.handle(Future.succeededFuture(resp.toJson()));
+            return;
+          }
+          
+          if (RESOURCE_SVR.equals(itemType)) {
+            Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS)
+                .title(TOKEN_AUTHENTICATED).arrayResults(new JsonArray().add(accessTokenJwt)).build();
+            LOGGER.info("Info: {}; {}", POLICY_SUCCESS, TOKEN_AUTHENTICATED);
             handler.handle(Future.succeededFuture(resp.toJson()));
             return;
           }

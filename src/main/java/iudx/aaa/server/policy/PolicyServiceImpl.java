@@ -10,6 +10,8 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
+import iudx.aaa.server.apiserver.CreatePolicyRequest;
+import iudx.aaa.server.apiserver.DeletePolicyRequest;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.registration.RegistrationService;
@@ -46,9 +48,10 @@ public class PolicyServiceImpl implements PolicyService {
     this.pool = pool;
     this.registrationService = registrationService;
   }
-
+  
   @Override
-  public PolicyService createPolicy(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+  public PolicyService createPolicy(List<CreatePolicyRequest> request, User user,
+      Handler<AsyncResult<JsonObject>> handler) {
     // TODO Auto-generated method stub
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
     JsonObject response = new JsonObject();
@@ -57,8 +60,10 @@ public class PolicyServiceImpl implements PolicyService {
     return this;
   }
 
+
   @Override
-  public PolicyService deletePolicy(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+  public PolicyService deletePolicy(List<DeletePolicyRequest> request, User user,
+      Handler<AsyncResult<JsonObject>> handler) {
     // TODO Auto-generated method stub
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 

@@ -1,9 +1,12 @@
 package iudx.aaa.server.apiserver;
 
 import static iudx.aaa.server.apiserver.util.Constants.*;
+import java.security.KeyStore;
+import java.security.cert.Certificate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import io.vertx.core.AbstractVerticle;
@@ -31,6 +34,7 @@ import iudx.aaa.server.apiserver.util.FailureHandler;
 import iudx.aaa.server.apiserver.util.RequestAuthentication;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
+import iudx.aaa.server.token.Constants;
 import iudx.aaa.server.token.TokenService;
 
 /**
@@ -254,7 +258,7 @@ public class ApiServerVerticle extends AbstractVerticle {
           // Get PublicKey
           router.get(PUBLIC_KEY_ROUTE)
                 .produces(MIME_APPLICATION_JSON)
-                .handler(this::signCertHandler);
+                .handler(this::pubCertHandler);
 
           /* In case API/method not implemented, this last route is triggered */
           router.route().last().handler(routingContext-> {
@@ -525,7 +529,17 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void createPolicyHandler(RoutingContext context) {
 
-    context.response().end("Not Implemented");
+    JsonArray jsonRequest = context.getBodyAsJsonArray();
+    List<CreatePolicyRequest> request = CreatePolicyRequest.jsonArrayToList(jsonRequest);
+    User user = context.get(USER);
+
+    policyService.createPolicy(request, user, handler -> {
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
   }
 
   /**
@@ -535,7 +549,17 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void deletePolicyHandler(RoutingContext context) {
 
-    context.response().end("Not Implemented");
+    JsonArray jsonRequest = context.getBodyAsJsonArray();
+    List<DeletePolicyRequest> request = DeletePolicyRequest.jsonArrayToList(jsonRequest);
+    User user = context.get(USER);
+
+    policyService.deletePolicy(request, user, handler -> {
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
   }
   
   /**
@@ -543,10 +567,27 @@ public class ApiServerVerticle extends AbstractVerticle {
    * 
    * @param context
    */
-  private void signCertHandler(RoutingContext context) {
-    context.response().end("Not Implemented");
+  private void pubCertHandler(RoutingContext context) {
+
+    JksOptions options = new JksOptions().setPath(Constants.keystorePath).setPassword(Constants.keystorePassword);
+    try {
+      KeyStore a = options.loadKeyStore(vertx);
+      Certificate cert = a.getCertificate(KS_ALIAS);
+      String pubKey = Base64.encodeBase64String(cert.getPublicKey().getEncoded());
+
+      context.response().putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+          .end(new JsonObject().put(PUB_KEY, pubKey).encode());
+    } catch (Exception e) {
+      processResponse(context.response(), KS_PARSE_ERROR);
+    }
   }
 
+  /**
+   * HTTP Response Wrapper
+   * @param response
+   * @param msg JsonObject
+   * @return context response
+   */
   private Future<Void> processResponse(HttpServerResponse response, JsonObject msg) {
     int status = msg.getInteger(STATUS, 400);
     msg.remove(STATUS);
