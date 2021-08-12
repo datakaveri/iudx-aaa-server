@@ -252,7 +252,6 @@ public class PolicyServiceImpl implements PolicyService {
                         .map(res -> res.value()))
             .onFailure(
                 obj -> {
-                    System.out.println("");
                   LOGGER.error("failed getResGrpPolicy  " + obj.getMessage());
                   handler.handle(Future.failedFuture(INTERNALERROR));
                 });
@@ -266,7 +265,6 @@ public class PolicyServiceImpl implements PolicyService {
                         .map(res -> res.value()))
             .onFailure(
                 obj -> {
-                    System.out.println("");
                     LOGGER.error("failed getResIdPolicy  " + obj.getMessage());
                   handler.handle(Future.failedFuture(INTERNALERROR));
                 });
@@ -281,7 +279,6 @@ public class PolicyServiceImpl implements PolicyService {
                         .map(res -> res.value()))
             .onFailure(
                 obj -> {
-                    System.out.println("");
                   LOGGER.error(obj.getMessage());
                   handler.handle(Future.failedFuture(INTERNALERROR));
                 });
@@ -295,7 +292,6 @@ public class PolicyServiceImpl implements PolicyService {
                     .map(res -> res.value()))
         .onFailure(
             obj -> {
-                System.out.println("");
               LOGGER.error(obj.getMessage());
               handler.handle(Future.failedFuture(INTERNALERROR));
             });
@@ -303,7 +299,6 @@ public class PolicyServiceImpl implements PolicyService {
       CompositeFuture.all(getResGrpPolicy, getResIdPolicy, getGrpPolicy, getIdPolicy)
         .onSuccess(
             obj -> {
-                System.out.println("In composite Future");
               List<JsonObject> policies = new ArrayList<>();
 
               if (obj.list().get(0) != null) {
@@ -346,7 +341,6 @@ public class PolicyServiceImpl implements PolicyService {
                     userId,
                     res -> {
                       if (res.succeeded()) {
-                          System.out.println("after reg service success");
                         String uid;
                         String oid;
                         JsonObject object;
@@ -384,7 +378,6 @@ public class PolicyServiceImpl implements PolicyService {
                                 .build();
                         handler.handle(Future.succeededFuture(r.toJson()));
                       } else if (res.failed()) {
-                         System.out.println("Registration failure :" + res.cause());
                           LOGGER.error("Registration failure :" + res.cause());
                         handler.handle(Future.failedFuture(INTERNALERROR));
                       }
@@ -404,7 +397,6 @@ public class PolicyServiceImpl implements PolicyService {
             })
         .onFailure(
             obj -> {
-                System.out.println("Composite fail");
               LOGGER.error(obj.getMessage());
               handler.handle(Future.failedFuture(INTERNALERROR));
             });
