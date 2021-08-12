@@ -553,7 +553,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     List<DeletePolicyRequest> request = DeletePolicyRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
 
-    policyService.deletePolicy(request, user, handler -> {
+    policyService.deletePolicy(jsonRequest, user, handler -> {
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {
