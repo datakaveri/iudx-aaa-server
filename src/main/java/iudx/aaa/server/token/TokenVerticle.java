@@ -39,8 +39,6 @@ public class TokenVerticle extends AbstractVerticle {
   private PgConnectOptions connectOptions;
   private PgPool pgPool;
   private TokenService tokenService;  
-  private String keystorePath;
-  private String keystorePassword;
   private JWTAuth provider;
   private PolicyService policyService;
   private TokenRevokeService revokeService;

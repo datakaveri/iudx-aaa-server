@@ -9,6 +9,8 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import iudx.aaa.server.apiserver.CreatePolicyRequest;
+import iudx.aaa.server.apiserver.DeletePolicyRequest;
 import iudx.aaa.server.apiserver.User;
 
 import java.util.List;
@@ -44,12 +46,13 @@ public interface PolicyService {
   static PolicyService createProxy(Vertx vertx, String address) {
     return new PolicyServiceVertxEBProxy(vertx, address);
   }
-
+  
   /**
    * The createPolicy implements the policy creation operation.
    * 
-   * @param request which is a JsonObject
-   * @param handler which is a Request Handler
+   * @param request which is a list of DataObject
+   * @param user which is a DataObject
+   * @param handler handler which is a Request Handler
    * @return PolicyService which is a Service
    */
 
@@ -59,24 +62,25 @@ public interface PolicyService {
   /**
    * The deletePolicy implements the policy delete operation.
    * 
-   * @param request which is a JsonObject
-   * @param handler which is a Request Handler
+   * @param request which is a JsonArray
+   * @param user which is a DataObject
+   * @param handler handler which is a Request Handler
    * @return PolicyService which is a Service
    */
-
+  
   @Fluent
   PolicyService deletePolicy(JsonArray request, User user, Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * The listPolicy implements the policy list operation.
    * 
-   * @param request which is a JsonObject
+   * @param user which is a DataObject
    * @param handler which is a Request Handler
    * @return PolicyService which is a Service
    */
 
   @Fluent
-  PolicyService listPolicy(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+  PolicyService listPolicy(User user, Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * The verifyPolicy implements the policy list operation.

@@ -45,6 +45,8 @@ public class Constants {
   public static final String ROLE_LIST = "roleList";
   public static final String EXISTS = "exists";
   public static final String TYPE = "type";
+  public static String keystorePath = null;
+  public static String keystorePassword = null;
   
   public static final String ITEM_ID = "itemId";
   public static final String ITEM_TYPE = "itemType";
