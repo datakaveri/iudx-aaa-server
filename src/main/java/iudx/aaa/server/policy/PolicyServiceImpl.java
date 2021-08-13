@@ -240,7 +240,7 @@ public class PolicyServiceImpl implements PolicyService {
     // TODO Auto-generated method stub
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
     JsonObject response = new JsonObject();
-
+    
     UUID user_id = UUID.fromString(user.getUserId());
 
     Collector<Row, ?, List<JsonObject>> policyCollector =
@@ -255,7 +255,7 @@ public class PolicyServiceImpl implements PolicyService {
                         .map(res -> res.value()))
             .onFailure(
                 obj -> {
-                  LOGGER.error(obj.getMessage());
+                  LOGGER.error("failed getResGrpPolicy  " + obj.getMessage());
                   handler.handle(Future.failedFuture(INTERNALERROR));
                 });
 
@@ -268,7 +268,7 @@ public class PolicyServiceImpl implements PolicyService {
                         .map(res -> res.value()))
             .onFailure(
                 obj -> {
-                  LOGGER.error(obj.getMessage());
+                    LOGGER.error("failed getResIdPolicy  " + obj.getMessage());
                   handler.handle(Future.failedFuture(INTERNALERROR));
                 });
 
@@ -381,9 +381,21 @@ public class PolicyServiceImpl implements PolicyService {
                                 .build();
                         handler.handle(Future.succeededFuture(r.toJson()));
                       } else if (res.failed()) {
+                          LOGGER.error("Registration failure :" + res.cause());
                         handler.handle(Future.failedFuture(INTERNALERROR));
                       }
                     });
+              }
+              else
+              {
+                  Response r =
+                          new Response.ResponseBuilder()
+                                  .type(POLICY_SUCCESS)
+                                  .title(SUCC_TITLE_POLICY_READ)
+                                  .status(200)
+                                  .detail("no policies")
+                                  .build();
+                  handler.handle(Future.succeededFuture(r.toJson()));
               }
             })
         .onFailure(
