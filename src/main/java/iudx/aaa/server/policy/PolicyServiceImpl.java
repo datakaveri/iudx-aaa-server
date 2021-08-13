@@ -10,6 +10,8 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
+import iudx.aaa.server.apiserver.CreatePolicyRequest;
+import iudx.aaa.server.apiserver.DeletePolicyRequest;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
@@ -51,7 +53,7 @@ public class PolicyServiceImpl implements PolicyService {
     this.registrationService = registrationService;
     this.deletePolicy = new deletePolicy(pool);
   }
-
+  
   @Override
   public PolicyService createPolicy(
       List<CreatePolicyRequest> request, User user, Handler<AsyncResult<JsonObject>> handler) {
@@ -60,9 +62,10 @@ public class PolicyServiceImpl implements PolicyService {
     return this;
   }
 
+
   @Override
-  public PolicyService deletePolicy(
-      JsonArray request, User user, Handler<AsyncResult<JsonObject>> handler) {
+  public PolicyService deletePolicy(JsonArray request, User user,
+      Handler<AsyncResult<JsonObject>> handler) {
     // TODO Auto-generated method stub
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
     // check if all req items exist to delete;
@@ -233,12 +236,12 @@ public class PolicyServiceImpl implements PolicyService {
   }
 
   @Override
-  public PolicyService listPolicy(User request, Handler<AsyncResult<JsonObject>> handler) {
+  public PolicyService listPolicy(User user, Handler<AsyncResult<JsonObject>> handler) {
     // TODO Auto-generated method stub
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
     JsonObject response = new JsonObject();
-
-    UUID user_id = UUID.fromString(request.getUserId());
+    
+    UUID user_id = UUID.fromString(user.getUserId());
 
     Collector<Row, ?, List<JsonObject>> policyCollector =
         Collectors.mapping(row -> row.toJson(), Collectors.toList());
