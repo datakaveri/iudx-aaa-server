@@ -1,26 +1,28 @@
 package iudx.aaa.server.apiserver.util;
 
-import java.nio.charset.StandardCharsets;
+import static iudx.aaa.server.apiserver.util.Constants.*;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.authentication.Credentials;
 import io.vertx.ext.auth.oauth2.OAuth2Auth;
 import io.vertx.ext.auth.oauth2.OAuth2FlowType;
 import io.vertx.ext.auth.oauth2.OAuth2Options;
 import io.vertx.ext.auth.oauth2.providers.KeycloakAuth;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.AuthenticationHandler;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.Response;
@@ -28,26 +30,15 @@ import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 
-import static iudx.aaa.server.apiserver.util.Constants.*;
-import static iudx.aaa.server.token.Constants.INVALID_CLIENT_ID_SEC;
-import static iudx.aaa.server.token.Constants.LOG_DB_ERROR;
-import static iudx.aaa.server.token.Constants.LOG_UNAUTHORIZED;
-import static iudx.aaa.server.token.Constants.LOG_USER_SECRET;
-import static iudx.aaa.server.token.Constants.URN_INVALID_INPUT;
+public class OIDCAuthentication implements AuthenticationHandler {
 
-/**
- * Handles Authentication of token, clientId, creation of User Objects.
- *
- */
-public class RequestAuthentication implements Handler<RoutingContext> {
-
-  private static final Logger LOGGER = LogManager.getLogger(RequestAuthentication.class);
+  private static final Logger LOGGER = LogManager.getLogger(OIDCAuthentication.class);
   private Vertx vertx;
   private PgPool pgPool;
   private JsonObject keycloakOptions;
   private OAuth2Auth keycloak;
 
-  public RequestAuthentication(Vertx vertx, PgPool pgPool, JsonObject keycloakOptions) {
+  public OIDCAuthentication(Vertx vertx, PgPool pgPool, JsonObject keycloakOptions) {
     this.vertx = vertx;
     this.pgPool = pgPool;
     this.keycloakOptions = keycloakOptions;
@@ -56,14 +47,15 @@ public class RequestAuthentication implements Handler<RoutingContext> {
 
   @Override
   public void handle(RoutingContext routingContext) {
-
-    MultiMap headers = routingContext.request().headers();
+    
+    final HttpServerRequest request = routingContext.request();
+    final String authorization = request.headers().get(HttpHeaders.AUTHORIZATION);
+    String tokenPath = request.path();
     String token;
-    String authorization = headers.get(HttpHeaders.AUTHORIZATION);
 
     if (authorization != null && !authorization.isBlank()) {
       String[] contents = authorization.split(" ");
-      if (contents.length != 2 || !contents[0].equals("Bearer")) {
+      if (contents.length != 2 || !contents[0].equals(BEARER)) {
         token = null;
       } else {
         token = contents[1];
@@ -131,60 +123,12 @@ public class RequestAuthentication implements Handler<RoutingContext> {
       });
 
       /* Handles ClientId Flow */
-    } else if (headers.contains(CLIENT_ID) && headers.contains(CLIENT_SECRET)) {
-      String clientId = headers.get(CLIENT_ID);
-      String clientSecret = headers.get(CLIENT_SECRET);
-
-      if (clientId != null && !clientId.isBlank()) {
-
-        pgSelectUser(SQL_GET_KID_ROLES, clientId).onComplete(dbHandler -> {
-          if (dbHandler.failed()) {
-            LOGGER.error(LOG_DB_ERROR + dbHandler.cause());
-            Response rs = new ResponseBuilder().title(INTERNAL_SVR_ERR).status(500)
-                .detail(dbHandler.cause().getLocalizedMessage()).build();
-            routingContext.fail(new Throwable(rs.toJsonString()));
-            return;
-          } else if (dbHandler.succeeded()) {
-            if (dbHandler.result().isEmpty()) {
-              Response rs = new ResponseBuilder().status(401).type(URN_MISSING_AUTH_TOKEN)
-                  .title(TOKEN_FAILED).detail(TOKEN_FAILED).build();
-              routingContext.fail(new Throwable(rs.toJsonString()));
-              routingContext.end();
-            }
-          }
-
-          JsonObject result = dbHandler.result();
-          String dbClientSecret = result.getString("client_secret");
-
-          /* Validating clientSecret hash */
-          boolean valid = false;
-          try {
-            valid = OpenBSDBCrypt.checkPassword(dbClientSecret,
-                clientSecret.getBytes(StandardCharsets.UTF_8));
-          } catch (Exception e) {
-            LOGGER.error(LOG_USER_SECRET + e.getLocalizedMessage());
-            Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                .title(INVALID_CLIENT_ID_SEC).detail(INVALID_CLIENT_ID_SEC).build();
-            routingContext.fail(new Throwable(resp.toJson().toString()));
-            return;
-          }
-
-          if (valid == Boolean.FALSE) {
-            LOGGER.error(LOG_UNAUTHORIZED + INVALID_CLIENT_ID_SEC);
-            Response resp = new ResponseBuilder().status(401).type(URN_INVALID_INPUT)
-                .title(INVALID_CLIENT_ID_SEC).detail(INVALID_CLIENT_ID_SEC).build();
-            routingContext.fail(new Throwable(resp.toJson().toString()));
-            return;
-          }
-
-          user.keycloakId(result.getString(KID)).userId(result.getString(ID))
-              .roles(processRoles(result.getJsonArray(ROLES)));
-
-          routingContext.put(CLIENT_ID, clientId);
-          routingContext.put(USER, user.build()).next();
-        });
-      }
     } else {
+      if (TOKEN_ROUTE.equals(tokenPath)) {
+        routingContext.next();
+        return;
+      }
+
       LOGGER.error("Fail: {}; {}", MISSING_TOKEN_CLIENT, "null clientId/token");
       Response rs = new ResponseBuilder().status(401).type(URN_MISSING_AUTH_TOKEN)
           .title(MISSING_TOKEN_CLIENT).detail(MISSING_TOKEN_CLIENT).build();
@@ -251,5 +195,10 @@ public class RequestAuthentication implements Handler<RoutingContext> {
         .map(a -> Roles.valueOf(a.toString())).collect(Collectors.toList());
 
     return roles;
+  }
+
+  @Override
+  public void parseCredentials(RoutingContext context, Handler<AsyncResult<Credentials>> handler) {
+    handler.handle(Future.succeededFuture());
   }
 }

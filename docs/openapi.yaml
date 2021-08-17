@@ -185,6 +185,8 @@ paths:
       description: 'Request for a JWT (token). One can generate token using either by providing token header or providing clientId/clientSecret in the header. '
       tags:
         - Token APIs
+      security:
+        - authorization: []
   /auth/v1/introspect:
     post:
       summary: Introspect Token
@@ -420,6 +422,8 @@ paths:
                   clientId: 123e4567-e89b-12d3-a456-426614174000
                   rsUrl: string
         required: true
+      security:
+        - authorization: []
     parameters: []
   /auth/v1/user/profile:
     post:
@@ -700,6 +704,8 @@ paths:
         required: true
       tags:
         - User APIs
+      security:
+        - authorization: []
     get:
       summary: Get User Profile
       operationId: get-auth-v1-user-profile
@@ -913,6 +919,8 @@ paths:
       description: 'Get user profile. The response contains user details such as roles, name, email. It also lists the client ID of the user.'
       tags:
         - User APIs
+      security:
+        - authorization: []
     put:
       summary: 'Update User Profile [Role]'
       operationId: put-auth-v1-user-profile
@@ -1158,6 +1166,8 @@ paths:
         required: true
       tags:
         - User APIs
+      security:
+        - authorization: []
   /auth/v1/organizations:
     get:
       summary: Get Organization Details
@@ -1243,6 +1253,8 @@ paths:
           description: Keycloak Issued token
           required: true
       description: Listing the details of registered Organization
+      security:
+        - authorization: []
   /auth/v1/admin/organizations:
     post:
       summary: Create Organization
@@ -1410,6 +1422,8 @@ paths:
         required: true
       tags:
         - Admin APIs
+      security:
+        - authorization: []
   /auth/v1/admin/provider/registrations:
     get:
       summary: Get Provider Registrations
@@ -1613,6 +1627,8 @@ paths:
         - `rejected`
 
         If no `filter` value is given, registrations with status `pending` is returned.
+      security:
+        - authorization: []
     put:
       summary: Update Provider Registration status
       operationId: put-auth-v1-admin-provider-registrations
@@ -1787,6 +1803,8 @@ paths:
         required: true
       tags:
         - Admin APIs
+      security:
+        - authorization: []
   /auth/v1/policies:
     get:
       summary: Get User Policies
@@ -2094,6 +2112,8 @@ paths:
           name: Authorization
           description: Keycloak Issued token
           required: true
+      security:
+        - authorization: []
     parameters: []
     delete:
       summary: Delete User Policies
@@ -2186,6 +2206,8 @@ paths:
         description: Request body is a JsonArray having one or multiple ID Objects to delete policies.
       tags:
         - Policies APIs
+      security:
+        - authorization: []
     post:
       summary: Create user Policies
       operationId: post-auth-v1-policies
@@ -2314,6 +2336,8 @@ paths:
         description: Request body will be JsonArray having or many objects
       tags:
         - Policies APIs
+      security:
+        - authorization: []
 components:
   schemas:
     RequestToken:
@@ -2423,6 +2447,9 @@ components:
         - type
         - title
         - detail
-  securitySchemes: {}
+  securitySchemes:
+    authorization:
+      type: http
+      scheme: bearer
   responses: {}
 security: []

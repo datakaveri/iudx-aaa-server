@@ -30,8 +30,9 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import iudx.aaa.server.admin.AdminService;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
+import iudx.aaa.server.apiserver.util.ClientAuthentication;
 import iudx.aaa.server.apiserver.util.FailureHandler;
-import iudx.aaa.server.apiserver.util.RequestAuthentication;
+import iudx.aaa.server.apiserver.util.OIDCAuthentication;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.token.Constants;
@@ -142,21 +143,24 @@ public class ApiServerVerticle extends AbstractVerticle {
     allowedMethods.add(HttpMethod.PATCH);
     allowedMethods.add(HttpMethod.PUT);
 
-    RequestAuthentication reqAuth = new RequestAuthentication(vertx, pgPool, keycloakOptions);
+    OIDCAuthentication oidcFlow = new OIDCAuthentication(vertx, pgPool, keycloakOptions);
+    ClientAuthentication clientFlow = new ClientAuthentication(pgPool);
     FailureHandler failureHandler = new FailureHandler();
-
+    
     RouterBuilder.create(vertx, "docs/openapi.yaml").onFailure(Throwable::printStackTrace)
         .onSuccess(routerBuilder -> {
           LOGGER.debug("Info: Mouting routes from OpenApi3 spec");
           
           RouterBuilderOptions factoryOptions = new RouterBuilderOptions()
-              .setMountResponseContentTypeHandler(true)
-              .setRequireSecurityHandlers(false);
+              .setMountResponseContentTypeHandler(true);
+            //  .setRequireSecurityHandlers(false);
           routerBuilder.setOptions(factoryOptions);
+          routerBuilder.securityHandler("authorization", oidcFlow);
+          
           
           // Post token create
           routerBuilder.operation(CREATE_TOKEN)
-                       .handler(reqAuth)
+                       .handler(clientFlow)
                        .handler(this::createTokenHandler)
                        .failureHandler(failureHandler);
 
@@ -167,67 +171,56 @@ public class ApiServerVerticle extends AbstractVerticle {
                    
           // Post token revoke
           routerBuilder.operation(REVOKE_TOKEN)
-                       .handler(reqAuth)
                        .handler(this::revokeTokenHandler)
                        .failureHandler(failureHandler);
            
           // Post user profile
           routerBuilder.operation(CREATE_USER_PROFILE)
-                       .handler(reqAuth)
                        .handler(this::createUserProfileHandler)
                        .failureHandler(failureHandler);
 
           // Get user profile
           routerBuilder.operation(GET_USER_PROFILE)
-                       .handler(reqAuth)
                        .handler(this::listUserProfileHandler)
                        .failureHandler(failureHandler);
           
           // Update user profile          
           routerBuilder.operation(UPDATE_USER_PROFILE)
-                       .handler(reqAuth)
                        .handler(this::updateUserProfileHandler)
                        .failureHandler(failureHandler);
           
           // Get Organization Details           
           routerBuilder.operation(GET_ORGANIZATIONS)
-                       .handler(reqAuth)
                        .handler(this::listOrganizationHandler)
                        .failureHandler(failureHandler);
 
           // Post Create Organization
           routerBuilder.operation(CREATE_ORGANIZATIONS)
-                       .handler(reqAuth)
                        .handler(this::adminCreateOrganizationHandler)
                        .failureHandler(failureHandler);
           
           // Get Provider registrations
           routerBuilder.operation(GET_PVDR_REGISTRATION)
-                       .handler(reqAuth)
                        .handler(this::adminGetProviderRegHandler)
                        .failureHandler(failureHandler);
           
           // Update Provider registration status
           routerBuilder.operation(UPDATE_PVDR_REGISTRATION)
-                       .handler(reqAuth)
                        .handler(this::adminUpdateProviderRegHandler)
                        .failureHandler(failureHandler);
           
           // Get/lists the User policies
           routerBuilder.operation(GET_POLICIES)
-                       .handler(reqAuth)
                        .handler(this::listPolicyHandler)
                        .failureHandler(failureHandler);
           
           // Create a new User policies
           routerBuilder.operation(CREATE_POLICIES)
-                       .handler(reqAuth)
                        .handler(this::createPolicyHandler)
                        .failureHandler(failureHandler);
           
           // Delete a User policies
           routerBuilder.operation(DELETE_POLICIES)
-                       .handler(reqAuth)
                        .handler(this::deletePolicyHandler)
                        .failureHandler(failureHandler);
           
@@ -570,13 +563,23 @@ public class ApiServerVerticle extends AbstractVerticle {
   private void pubCertHandler(RoutingContext context) {
 
     JksOptions options = new JksOptions().setPath(Constants.keystorePath).setPassword(Constants.keystorePassword);
+    
     try {
-      KeyStore a = options.loadKeyStore(vertx);
-      Certificate cert = a.getCertificate(KS_ALIAS);
-      String pubKey = Base64.encodeBase64String(cert.getPublicKey().getEncoded());
+      KeyStore ks = options.loadKeyStore(vertx);
+      if (ks.containsAlias(KS_ALIAS)) {
+        Certificate cert = ks.getCertificate(KS_ALIAS);
+        String pubKeyCertEncoded = Base64.encodeBase64String(cert.getEncoded());
+        
+        String certKeyString = "-----BEGIN CERTIFICATE-----\n"
+                               + pubKeyCertEncoded
+                               + "\n-----END CERTIFICATE-----";
 
-      context.response().putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-          .end(new JsonObject().put(PUB_KEY, pubKey).encode());
+        context.response().putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+            .end(new JsonObject().put(CERTIFICATE, certKeyString).encode());
+
+      } else {
+        processResponse(context.response(), KS_PARSE_ERROR);
+      }
     } catch (Exception e) {
       processResponse(context.response(), KS_PARSE_ERROR);
     }
