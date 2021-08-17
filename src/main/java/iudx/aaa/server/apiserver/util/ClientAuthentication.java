@@ -19,7 +19,6 @@ import static iudx.aaa.server.token.Constants.URN_INVALID_INPUT;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
