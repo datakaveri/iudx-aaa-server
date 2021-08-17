@@ -640,70 +640,6 @@
 					"name": "Revoke Token",
 					"item": [
 						{
-							"name": "Revoke Token- ClientId [200]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {\r",
-											"    pm.response.to.have.status(200);\r",
-											"});\r",
-											"\r",
-											"pm.test(\"Check response header\", function () {\r",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");\r",
-											"});\r",
-											"\r",
-											"pm.test(\"Check response body\", function () {    \r",
-											"    const body = pm.response.json();\r",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");\r",
-											"});\r",
-											"\r",
-											""
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "clientId",
-										"value": "{{clientId}}",
-										"type": "text"
-									},
-									{
-										"key": "clientSecret",
-										"value": "{{clientSecret}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\r\n    \"clientId\" :\"349b4b55-0251-490e-bee9-00f3a5d3e643\",\r\n    \"rsUrl\" :\"foobar.iudx.io\"\r\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "http://{{host}}:{{port}}{{base}}/token/revoke",
-									"protocol": "http",
-									"host": [
-										"{{host}}"
-									],
-									"port": "{{port}}{{base}}",
-									"path": [
-										"token",
-										"revoke"
-									]
-								}
-							},
-							"response": []
-						},
-						{
 							"name": "Revoke Token- token [200]",
 							"event": [
 								{
@@ -790,13 +726,8 @@
 								"method": "POST",
 								"header": [
 									{
-										"key": "clientId",
-										"value": "{{clientId}}",
-										"type": "text"
-									},
-									{
-										"key": "clientSecret",
-										"value": "{{clientSecret}}",
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
 										"type": "text"
 									}
 								],
@@ -854,13 +785,8 @@
 								"method": "POST",
 								"header": [
 									{
-										"key": "clientId",
-										"value": "{{clientId}}",
-										"type": "text"
-									},
-									{
-										"key": "clientSecret",
-										"value": "{{clientSecret}}",
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
 										"type": "text"
 									}
 								],
@@ -938,7 +864,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"roles\": [\n        \"provider\",\n        \"consumer\",\n        \"delegate\"\n    ],\n    \"orgId\": \"894777b1-e82a-4cf8-b99a-86fc3d7d707b\"\n}",
+									"raw": "{\n    \"roles\": [\n        \"provider\",\n        \"consumer\",\n        \"delegate\"\n    ],\n    \"orgId\": \"ea51dfff-dd8b-4528-8c0c-5881a482e825\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1308,18 +1234,6 @@
 								"method": "PUT",
 								"header": [
 									{
-										"key": "clientId",
-										"value": "{{clientId}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
-										"key": "clientSecret",
-										"value": "{{clientSecret}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
 										"key": "Authorization",
 										"value": "Bearer {{token}}",
 										"type": "text"
@@ -1381,18 +1295,6 @@
 								},
 								"method": "PUT",
 								"header": [
-									{
-										"key": "clientId",
-										"value": "{{clientId}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
-										"key": "clientSecret",
-										"value": "{{clientSecret}}",
-										"type": "text",
-										"disabled": true
-									},
 									{
 										"key": "Authorization",
 										"value": "Bearer {{token}}",
@@ -1709,20 +1611,9 @@
 								"method": "GET",
 								"header": [
 									{
-										"key": "clientId",
-										"value": "{{clientId}}",
-										"type": "text"
-									},
-									{
-										"key": "clientSecret",
-										"value": "{{clientSecret}}",
-										"type": "text"
-									},
-									{
 										"key": "Authorization",
 										"value": "Bearer {{token}}",
-										"type": "text",
-										"disabled": true
+										"type": "text"
 									}
 								],
 								"url": {
@@ -1773,18 +1664,6 @@
 								"method": "GET",
 								"header": [
 									{
-										"key": "clientId",
-										"value": "{{clientId}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
-										"key": "clientSecret",
-										"value": "{{clientSecret}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
 										"key": "Authorization",
 										"value": "Bearer {{token}}",
 										"type": "text"
@@ -1812,71 +1691,6 @@
 		{
 			"name": "Organization",
 			"item": [
-				{
-					"name": "Organization details- clientId [200]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {\r",
-									"    pm.response.to.have.status(200);\r",
-									"});\r",
-									"\r",
-									"pm.test(\"Check response header\", function () {\r",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");\r",
-									"});\r",
-									"\r",
-									"pm.test(\"Check response body\", function () {    \r",
-									"    const body = pm.response.json();\r",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");\r",
-									"});\r",
-									"\r",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "noauth"
-						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}",
-								"type": "text",
-								"disabled": true
-							},
-							{
-								"key": "clientId",
-								"value": "{{clientId}}",
-								"type": "text"
-							},
-							{
-								"key": "clientSecret",
-								"value": "{{clientSecret}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "http://{{host}}:{{port}}/auth/v1/organizations",
-							"protocol": "http",
-							"host": [
-								"{{host}}"
-							],
-							"port": "{{port}}",
-							"path": [
-								"auth",
-								"v1",
-								"organizations"
-							]
-						}
-					},
-					"response": []
-				},
 				{
 					"name": "Organization details- token[200]",
 					"event": [
@@ -1970,18 +1784,6 @@
 								"method": "POST",
 								"header": [
 									{
-										"key": "clientId",
-										"value": "{{clientId}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
-										"key": "clientSecret",
-										"value": "{{clientSecret}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
 										"key": "Authorization",
 										"value": "Bearer {{token}}",
 										"type": "text"
@@ -2043,18 +1845,6 @@
 								},
 								"method": "POST",
 								"header": [
-									{
-										"key": "clientId",
-										"value": "{{clientId}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
-										"key": "clientSecret",
-										"value": "{{clientSecret}}",
-										"type": "text",
-										"disabled": true
-									},
 									{
 										"key": "Authorization",
 										"value": "Bearer {{token}}",
@@ -2118,18 +1908,6 @@
 								"method": "POST",
 								"header": [
 									{
-										"key": "clientId",
-										"value": "{{clientId}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
-										"key": "clientSecret",
-										"value": "{{clientSecret}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
 										"key": "Authorization",
 										"value": "Bearer {{token}}",
 										"type": "text"
@@ -2192,18 +1970,6 @@
 								"method": "POST",
 								"header": [
 									{
-										"key": "clientId",
-										"value": "{{clientId}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
-										"key": "clientSecret",
-										"value": "{{clientSecret}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
 										"key": "Authorization",
 										"value": "Bearer {{token}}",
 										"type": "text"
@@ -2265,18 +2031,6 @@
 								},
 								"method": "POST",
 								"header": [
-									{
-										"key": "clientId",
-										"value": "{{clientId}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
-										"key": "clientSecret",
-										"value": "{{clientSecret}}",
-										"type": "text",
-										"disabled": true
-									},
 									{
 										"key": "Authorization",
 										"value": "Bearer {{token}}",
@@ -2345,18 +2099,6 @@
 								"method": "PUT",
 								"header": [
 									{
-										"key": "clientId",
-										"value": "{{clientId}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
-										"key": "clientSecret",
-										"value": "{{clientSecret}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
 										"key": "Authorization",
 										"value": "Bearer {{token}}",
 										"type": "text"
@@ -2417,18 +2159,6 @@
 								},
 								"method": "PUT",
 								"header": [
-									{
-										"key": "clientId",
-										"value": "{{clientId}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
-										"key": "clientSecret",
-										"value": "{{clientSecret}}",
-										"type": "text",
-										"disabled": true
-									},
 									{
 										"key": "Authorization",
 										"value": "Bearer {{token}}",
@@ -2491,18 +2221,6 @@
 								"method": "PUT",
 								"header": [
 									{
-										"key": "clientId",
-										"value": "{{clientId}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
-										"key": "clientSecret",
-										"value": "{{clientSecret}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
 										"key": "Authorization",
 										"value": "Bearer {{token}}",
 										"type": "text"
@@ -2563,18 +2281,6 @@
 								},
 								"method": "PUT",
 								"header": [
-									{
-										"key": "clientId",
-										"value": "{{clientId}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
-										"key": "clientSecret",
-										"value": "{{clientSecret}}",
-										"type": "text",
-										"disabled": true
-									},
 									{
 										"key": "Authorization",
 										"value": "Bearer {{token}}",
@@ -2637,18 +2343,6 @@
 								"method": "PUT",
 								"header": [
 									{
-										"key": "clientId",
-										"value": "{{clientId}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
-										"key": "clientSecret",
-										"value": "{{clientSecret}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
 										"key": "Authorization",
 										"value": "Bearer {{token}}",
 										"type": "text"
@@ -2710,18 +2404,6 @@
 								"method": "PUT",
 								"header": [
 									{
-										"key": "clientId",
-										"value": "{{clientId}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
-										"key": "clientSecret",
-										"value": "{{clientSecret}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
 										"key": "Authorization",
 										"value": "Bearer {{token}}",
 										"type": "text"
@@ -2782,18 +2464,6 @@
 								},
 								"method": "PUT",
 								"header": [
-									{
-										"key": "clientId",
-										"value": "{{clientId}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
-										"key": "clientSecret",
-										"value": "{{clientSecret}}",
-										"type": "text",
-										"disabled": true
-									},
 									{
 										"key": "Authorization",
 										"value": "Bearer {{token}}",
@@ -2863,18 +2533,6 @@
 								"method": "GET",
 								"header": [
 									{
-										"key": "clientId",
-										"value": "{{clientId}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
-										"key": "clientSecret",
-										"value": "{{clientSecret}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
 										"key": "Authorization",
 										"value": "Bearer {{token}}",
 										"type": "text"
@@ -2934,18 +2592,6 @@
 								},
 								"method": "GET",
 								"header": [
-									{
-										"key": "clientId",
-										"value": "{{clientId}}",
-										"type": "text",
-										"disabled": true
-									},
-									{
-										"key": "clientSecret",
-										"value": "{{clientSecret}}",
-										"type": "text",
-										"disabled": true
-									},
 									{
 										"key": "Authorization",
 										"value": "Bearer {{token}}",
