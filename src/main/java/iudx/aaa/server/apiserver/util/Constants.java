@@ -11,6 +11,7 @@ public class Constants {
   public static final String HEADER_REFERER = "Referer";
   public static final String HEADER_ALLOW_ORIGIN = "Access-Control-Allow-Origin";
   public static final String HEADER_OPTIONS = "options";
+  public static final String BEARER = "Bearer";
 
   /* Configuration & related */
   public static final String DATABASE_IP = "databaseIP";
@@ -52,6 +53,8 @@ public class Constants {
   public static final String GET_POLICIES = "get-auth-v1-policies";
   public static final String CREATE_POLICIES = "post-auth-v1-policies";
   public static final String DELETE_POLICIES = "delete-auth-v1-policies";
+  
+  public static final String TOKEN_ROUTE = "/auth/v1/token";
 
   /* Query Params */
   public static final String QUERY_FILTER = "filter";
@@ -104,6 +107,7 @@ public class Constants {
   public static final String SSL = "ssl";
   public static final String KS_ALIAS = "ES256";
   public static final String PUB_KEY = "publicKey";
+  public static final String CERTIFICATE = "cert";
 
   /* Compose failure due to invalid token */
   public static final String INVALID_TOKEN_FAILED_COMPOSE = "INVALID_TOKEN";
