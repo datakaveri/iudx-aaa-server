@@ -1768,38 +1768,44 @@ paths:
         content:
           application/json:
             schema:
-              type: array
+              type: object
               description: ''
-              minItems: 1
-              uniqueItems: true
               x-examples:
                 example-1:
                   - userId: d34b1547-7281-4f66-b550-ed79f9bb0c36
                     status: approved
-              items:
-                type: object
-                properties:
-                  userId:
-                    type: string
-                    minLength: 36
-                    format: uuid
-                    maxLength: 36
-                    pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-                  status:
-                    type: string
-                    minLength: 7
-                    enum:
-                      - approved
-                      - rejected
-                    maxLength: 8
-                required:
-                  - userId
-                  - status
+              properties:
+                request:
+                  type: array
+                  uniqueItems: true
+                  minItems: 1
+                  items:
+                    type: object
+                    properties:
+                      userId:
+                        type: string
+                        format: uuid
+                        pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+                        minLength: 36
+                        maxLength: 36
+                      status:
+                        type: string
+                        enum:
+                          - approved
+                          - rejected
+                        minLength: 7
+                        maxLength: 8
+                    required:
+                      - userId
+                      - status
+              required:
+                - request
             examples:
               Updating Registration status:
                 value:
-                  - userId: c34b1565-7281-4f66-b220-ed79f9bb0a31
-                    status: approved
+                  request:
+                    - userId: c34b1565-7281-4f66-b220-ed79f9bb0a31
+                      status: approved
         required: true
       tags:
         - Admin APIs
@@ -2453,3 +2459,4 @@ components:
       scheme: bearer
   responses: {}
 security: []
+
