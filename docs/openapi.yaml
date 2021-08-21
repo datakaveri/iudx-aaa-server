@@ -18,7 +18,7 @@ paths:
       operationId: post-auth-v1-token
       responses:
         '200':
-          description: Token has been successfully generated upon requed validation and authentication.
+          description: Token has been successfully generated upon required validation and authentication.
           content:
             application/json:
               schema:
@@ -371,9 +371,7 @@ paths:
                     title: string
                     detail: string
         '401':
-          description: |-
-            - Unauthorized - `token` invalid/expired
-            - Unauthorized - `clientId` & `clientSecret` invalid/not match
+          description: '- Unauthorized - `token` invalid/expired'
           content:
             application/json:
               schema:
@@ -384,7 +382,9 @@ paths:
                     type: string
                     title: string
                     detail: string
-      description: Revoke the token associated with clientId. Revoke token requires either token header or clientId/clientSecret header.
+      description: |-
+        Revoke the token associated with clientId. 
+        <!--- (Commented out) Revoke token requires either token header or clientId/clientSecret header.---!>
       tags:
         - Token APIs
       parameters:
@@ -479,8 +479,6 @@ paths:
                       - userId
                       - clients
                       - email
-                      - phone
-                      - organization
                     properties:
                       keycloakId:
                         type: string
@@ -595,9 +593,7 @@ paths:
                     title: Organization does not exist
                     detail: Organization ID does not correspond to an organization
         '401':
-          description: |-
-            - Unauthorized - `token` invalid/expired
-            - Unauthorized - `clientId` & `clientSecret` invalid/not match
+          description: '- Unauthorized - `token` invalid/expired'
           headers:
             Content-Type:
               schema:
@@ -664,8 +660,8 @@ paths:
                 roles:
                   type: array
                   minItems: 1
-                  maxItems: 4
                   uniqueItems: true
+                  maxItems: 3
                   items:
                     type: string
                     enum:
@@ -688,7 +684,6 @@ paths:
                   maxLength: 10
               required:
                 - roles
-                - orgId
             examples:
               Create UserProfile:
                 value:
@@ -754,8 +749,6 @@ paths:
                       - userId
                       - email
                       - clients
-                      - phone
-                      - organization
                     properties:
                       keycloakId:
                         type: string
@@ -818,7 +811,7 @@ paths:
                   - title
                   - results
               examples:
-                ListProfile:
+                Success:
                   value:
                     type: 'urn:dx:as:Success'
                     title: User details
@@ -839,26 +832,6 @@ paths:
                       organization:
                         name: example
                         url: example.com
-                example-3:
-                  value:
-                    type: string
-                    title: string
-                    results:
-                      keycloakId: string
-                      name:
-                        firstName: string
-                        lastName: string
-                      roles:
-                        - string
-                      userId: string
-                      email: string
-                      clients:
-                        - clientName: string
-                          clientId: string
-                      phone: string
-                      organization:
-                        name: string
-                        url: string
           headers:
             Content-Type:
               schema:
@@ -876,9 +849,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
-          description: |-
-            - Unauthorized - `token` invalid/expired
-            - Unauthorized - `clientId` & `clientSecret` invalid/not match
+          description: '- Unauthorized - `token` invalid/expired'
           headers:
             Content-Type:
               schema:
@@ -969,8 +940,6 @@ paths:
                       - userId
                       - clients
                       - email
-                      - phone
-                      - organization
                     properties:
                       keycloakId:
                         type: string
@@ -1033,7 +1002,7 @@ paths:
                   - title
                   - results
               examples:
-                Update User Profile:
+                Updated User Profile:
                   value:
                     type: 'urn:dx:as:Success'
                     title: Registered for requested roles
@@ -1077,9 +1046,7 @@ paths:
                     title: Missing or malformed parameters
                     detail: Invalid 'roles' array
         '401':
-          description: |-
-            - Unauthorized - `token` invalid/expired
-            - Unauthorized - `clientId` & `clientSecret` invalid/expired
+          description: '- Unauthorized - `token` invalid/expired'
           content:
             application/json:
               schema:
@@ -1135,8 +1102,8 @@ paths:
                 roles:
                   type: array
                   minItems: 1
-                  maxItems: 4
                   uniqueItems: true
+                  maxItems: 2
                   items:
                     type: string
                     enum:
@@ -1152,7 +1119,6 @@ paths:
                   pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
               required:
                 - roles
-                - orgId
             examples:
               Update UserProfile:
                 value:
@@ -1223,9 +1189,7 @@ paths:
                         name: example
                         url: example.com
         '401':
-          description: |-
-            - Unauthorized - `token` invalid/expired
-            - Unauthorized - `clientId` & `clientSecret` invalid/not match
+          description: '- Unauthorized - `token` invalid/expired'
           headers:
             Content-Type:
               schema:
@@ -1337,7 +1301,6 @@ paths:
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
-            - Unauthorized - `clientId` & `clientSecret` invalid/not match
             - User is not an admin of IUDX AAA server
           headers:
             Content-Type:
@@ -1573,7 +1536,6 @@ paths:
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
-            - Unauthorized - `clientId` & `clientSecret` invalid/not match
             - User is not admin of IUDX AAA server
           headers:
             Content-Type:
@@ -1645,6 +1607,17 @@ paths:
               schema:
                 description: ''
                 type: object
+                x-examples:
+                  example-1:
+                    type: 'urn:dx:as:Success'
+                    title: Provider status updated
+                    results:
+                      - status: APPROVED
+                        userId: 844e251b-574b-46e6-9247-f76f1f70a637
+                        email: bryanrobert@iisc.ac.in
+                        name:
+                          firstName: B
+                          lastName: Robert
                 properties:
                   type:
                     type: string
@@ -1657,10 +1630,7 @@ paths:
                     uniqueItems: true
                     minItems: 1
                     items:
-                      required:
-                        - status
-                        - userId
-                        - email
+                      type: object
                       properties:
                         status:
                           type: string
@@ -1673,6 +1643,9 @@ paths:
                           minLength: 1
                         name:
                           type: object
+                          required:
+                            - firstName
+                            - lastName
                           properties:
                             firstName:
                               type: string
@@ -1680,24 +1653,15 @@ paths:
                             lastName:
                               type: string
                               minLength: 1
-                          required:
-                            - firstName
-                            - lastName
+                      required:
+                        - status
+                        - userId
+                        - email
+                        - name
                 required:
                   - type
                   - title
                   - results
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:Success'
-                    title: Provider status updated
-                    results:
-                      - status: APPROVED
-                        userId: 844e251b-574b-46e6-9247-f76f1f70a637
-                        email: bryanrobert@iisc.ac.in
-                        name:
-                          firstName: B
-                          lastName: Robert
               examples:
                 Provider Status Update:
                   value:
@@ -1733,7 +1697,6 @@ paths:
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
-            - Unauthorized - `clientId` & `clientSecret` invalid/not match
             - User is not admin of IUDX AAA server
           content:
             application/json:
@@ -1753,7 +1716,7 @@ paths:
       description: |-
         Update the status of multiple Provider registrations to `approved` or `rejected`.This operation can be performed by an `admin` of the IUDX AAA server.
 
-        The API takes the user ID (obtained from the `GET /auth/v1/admin/provider/registrations` API) and the status to update.
+        The API takes the provider's user ID (obtained from the `GET /auth/v1/admin/provider/registrations` API) and the status to update.
       parameters:
         - schema:
             type: string
@@ -1807,6 +1770,7 @@ paths:
                     - userId: c34b1565-7281-4f66-b220-ed79f9bb0a31
                       status: approved
         required: true
+        description: The request is an object with key `request` having value as an array of objects containing the provider's `userId` and the `status` to be updated for said provider
       tags:
         - Admin APIs
       security:
@@ -2093,10 +2057,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
-          description: |-
-            - Unauthorized - `token` invalid/expired
-            - Unauthorized - `clientId` & `clientSecret` invalid/not match
-            - User is not admin of IUDX AAA server
+          description: '- Unauthorized - `token` invalid/expired'
           headers:
             Content-Type:
               schema:
@@ -2148,10 +2109,7 @@ paths:
                 type: string
               description: application/json
         '401':
-          description: |-
-            - Unauthorized - `token` invalid/expired
-            - Unauthorized - `clientId` & `clientSecret` invalid/not match
-            - User is not admin of IUDX AAA server
+          description: '- Unauthorized - `token` invalid/expired'
           content:
             application/json:
               schema:
@@ -2232,10 +2190,7 @@ paths:
                 type: string
               description: application/json
         '401':
-          description: |-
-            - Unauthorized - `token` invalid/expired
-            - Unauthorized - `clientId` & `clientSecret` invalid/not match
-            - User is not admin of IUDX AAA server
+          description: '- Unauthorized - `token` invalid/expired'
           content:
             application/json:
               schema:
@@ -2459,4 +2414,3 @@ components:
       scheme: bearer
   responses: {}
 security: []
-
