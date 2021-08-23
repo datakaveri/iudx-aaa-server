@@ -223,6 +223,21 @@ public class ApiServerVerticle extends AbstractVerticle {
           routerBuilder.operation(DELETE_POLICIES)
                        .handler(this::deletePolicyHandler)
                        .failureHandler(failureHandler);
+
+          // Lists all the policies related requests for user/provider
+          routerBuilder.operation(GET_POLICIES_REQUEST)
+                       .handler(this::getPolicyNotificationHandler)
+                       .failureHandler(failureHandler);
+          
+          // Creates new policy request for user
+          routerBuilder.operation(POST_POLICIES_REQUEST)
+                       .handler(this::createPolicyNotificationHandler)
+                       .failureHandler(failureHandler);
+
+          // Updates the policy request by provider/delegate
+          routerBuilder.operation(PUT_POLICIES_REQUEST)
+                       .handler(this::updatePolicyNotificationHandler)
+                       .failureHandler(failureHandler);          
           
           /* TimeoutHandler needs to be added as rootHandler */
           routerBuilder.rootHandler(TimeoutHandler.create(serverTimeout));
@@ -541,6 +556,66 @@ public class ApiServerVerticle extends AbstractVerticle {
    * @param context
    */
   private void deletePolicyHandler(RoutingContext context) {
+
+    JsonArray jsonRequest = context.getBodyAsJsonArray();
+    List<DeletePolicyRequest> request = DeletePolicyRequest.jsonArrayToList(jsonRequest);
+    User user = context.get(USER);
+
+    policyService.deletePolicy(jsonRequest, user, handler -> {
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+  
+  /**
+   * Get all the resource access requests by user to provider/delegate.
+   * 
+   * @param context
+   */
+  private void getPolicyNotificationHandler(RoutingContext context) {
+
+    JsonArray jsonRequest = context.getBodyAsJsonArray();
+    List<DeletePolicyRequest> request = DeletePolicyRequest.jsonArrayToList(jsonRequest);
+    User user = context.get(USER);
+
+    policyService.deletePolicy(jsonRequest, user, handler -> {
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+  
+  /**
+   * Create the resource access requests by user to provider/delegate.
+   * 
+   * @param context
+   */
+  private void createPolicyNotificationHandler(RoutingContext context) {
+
+    JsonArray jsonRequest = context.getBodyAsJsonArray();
+    List<DeletePolicyRequest> request = DeletePolicyRequest.jsonArrayToList(jsonRequest);
+    User user = context.get(USER);
+
+    policyService.deletePolicy(jsonRequest, user, handler -> {
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+  
+  /**
+   * Update the access status, expiry of resources by provider/delegate for user.
+   * 
+   * @param context
+   */
+  private void updatePolicyNotificationHandler(RoutingContext context) {
 
     JsonArray jsonRequest = context.getBodyAsJsonArray();
     List<DeletePolicyRequest> request = DeletePolicyRequest.jsonArrayToList(jsonRequest);

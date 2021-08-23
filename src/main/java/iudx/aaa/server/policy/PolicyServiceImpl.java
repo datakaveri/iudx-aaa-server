@@ -507,10 +507,46 @@ public class PolicyServiceImpl implements PolicyService {
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public PolicyService setDefaultProviderPolicies(
       List<String> userIds, Handler<AsyncResult<JsonObject>> handler) {
     // TODO Auto-generated method stub
+    handler.handle(Future.succeededFuture(new JsonObject()));
+    return this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public PolicyService createPolicyNotification(JsonObject request,
+      Handler<AsyncResult<JsonObject>> handler) {
+    
+    handler.handle(Future.succeededFuture(new JsonObject()));
+    return this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public PolicyService listPolicyNotification(JsonObject request,
+      Handler<AsyncResult<JsonObject>> handler) {
+   
+    handler.handle(Future.succeededFuture(new JsonObject()));
+    return this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public PolicyService updatelistPolicyNotification(JsonObject request,
+      Handler<AsyncResult<JsonObject>> handler) {
+   
     handler.handle(Future.succeededFuture(new JsonObject()));
     return this;
   }

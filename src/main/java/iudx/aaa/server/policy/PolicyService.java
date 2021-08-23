@@ -105,4 +105,37 @@ public interface PolicyService {
   @Fluent
   PolicyService setDefaultProviderPolicies(List<String> userIds,
       Handler<AsyncResult<JsonObject>> handler);
+  
+  /**
+   * The createPolicyNotification implements the creating request for user policies.
+   *
+   * @param request which is a JsonObject
+   * @param handler which is a Request Handler
+   * @return PolicyService which is a Service
+   */
+
+  @Fluent
+  PolicyService createPolicyNotification(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+  
+  /**
+   * The listPolicyNotification implements the listing request for user and provider/delegate.
+   *
+   * @param request which is a JsonObject
+   * @param handler which is a Request Handler
+   * @return PolicyService which is a Service
+   */
+
+  @Fluent
+  PolicyService listPolicyNotification(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+  
+  /**
+   * The updatePolicyNotification implements the updating resources access/status by provider/delegate.
+   *
+   * @param request which is a JsonObject
+   * @param handler which is a Request Handler
+   * @return PolicyService which is a Service
+   */
+
+  @Fluent
+  PolicyService updatelistPolicyNotification(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
 }
