@@ -111,6 +111,7 @@ public class Constants {
   public static final String KS_ALIAS = "ES256";
   public static final String PUB_KEY = "publicKey";
   public static final String CERTIFICATE = "cert";
+  public static final String REQUEST = "request";
 
   /* Compose failure due to invalid token */
   public static final String INVALID_TOKEN_FAILED_COMPOSE = "INVALID_TOKEN";
