@@ -577,11 +577,9 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void getPolicyNotificationHandler(RoutingContext context) {
 
-    JsonArray jsonRequest = context.getBodyAsJsonArray();
-    List<DeletePolicyRequest> request = DeletePolicyRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
 
-    policyService.deletePolicy(jsonRequest, user, handler -> {
+    policyService.listPolicyNotification(user, handler -> {
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {
@@ -589,7 +587,7 @@ public class ApiServerVerticle extends AbstractVerticle {
       }
     });
   }
-  
+
   /**
    * Create the resource access requests by user to provider/delegate.
    * 
@@ -598,10 +596,10 @@ public class ApiServerVerticle extends AbstractVerticle {
   private void createPolicyNotificationHandler(RoutingContext context) {
 
     JsonArray jsonRequest = context.getBodyAsJsonArray();
-    List<DeletePolicyRequest> request = DeletePolicyRequest.jsonArrayToList(jsonRequest);
+    List<CreatePolicyNotification> request = CreatePolicyNotification.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
 
-    policyService.deletePolicy(jsonRequest, user, handler -> {
+    policyService.createPolicyNotification(request, user, handler -> {
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {
@@ -609,7 +607,7 @@ public class ApiServerVerticle extends AbstractVerticle {
       }
     });
   }
-  
+
   /**
    * Update the access status, expiry of resources by provider/delegate for user.
    * 
@@ -618,10 +616,10 @@ public class ApiServerVerticle extends AbstractVerticle {
   private void updatePolicyNotificationHandler(RoutingContext context) {
 
     JsonArray jsonRequest = context.getBodyAsJsonArray();
-    List<DeletePolicyRequest> request = DeletePolicyRequest.jsonArrayToList(jsonRequest);
+    List<UpdatePolicyNotification> request = UpdatePolicyNotification.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
 
-    policyService.deletePolicy(jsonRequest, user, handler -> {
+    policyService.updatelistPolicyNotification(request, user, handler -> {
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {
@@ -629,7 +627,7 @@ public class ApiServerVerticle extends AbstractVerticle {
       }
     });
   }
-  
+
   /**
    * Lists JWT signing public key.
    * 

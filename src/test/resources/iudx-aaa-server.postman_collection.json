@@ -2625,6 +2625,107 @@
 			]
 		},
 		{
+			"name": "Notifications",
+			"item": [
+				{
+					"name": "Update PoliciesRequests",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\r\n  {\r\n    \"requestId\": \"e4619679-f5d9-4eff-9f79-bbded6130bb1\",\r\n    \"status\": \"approved\",\r\n    \"expiryDuration\": \"string\",\r\n    \"constraints\": {}\r\n  }\r\n]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{host}}:{{port}}{{base}}/policies/requests",
+							"protocol": "http",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"policies",
+								"requests"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create PoliciesRequests",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\r\n    {\r\n        \"itemId\": \"string\",\r\n        \"itemType\": \"resource_server\",\r\n        \"expiryDuration\": \"string\",\r\n        \"constraints\": {\r\n            \"access\": [\r\n                \"api\",\r\n                \"subs\",\r\n                \"ingest\",\r\n                \"file\"\r\n            ]\r\n        }\r\n    }\r\n]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{host}}:{{port}}{{base}}/policies/requests",
+							"protocol": "http",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"policies",
+								"requests"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List PoliciesRequests",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{host}}:{{port}}{{base}}/policies/requests",
+							"protocol": "http",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"policies",
+								"requests"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Get KeyCloak Token [To set the ENV token]",
 			"request": {
 				"auth": {
@@ -2721,6 +2822,25 @@
 					]
 				},
 				"description": "This API will Generate KeyCloack JWT.\nThe JWT will be used to generate token from iudx-aaa-server."
+			},
+			"response": []
+		},
+		{
+			"name": "Get Certificate [JWT Authentication]",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}{{base}}/cert",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}{{base}}",
+					"path": [
+						"cert"
+					]
+				}
 			},
 			"response": []
 		}
