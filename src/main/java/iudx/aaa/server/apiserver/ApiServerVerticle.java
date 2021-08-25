@@ -596,7 +596,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void createPolicyNotificationHandler(RoutingContext context) {
 
-    JsonArray jsonRequest = context.getBodyAsJsonArray();
+    JsonArray jsonRequest = context.getBodyAsJson().getJsonArray(REQUEST);
     List<CreatePolicyNotification> request = CreatePolicyNotification.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
 
@@ -616,7 +616,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void updatePolicyNotificationHandler(RoutingContext context) {
 
-    JsonArray jsonRequest = context.getBodyAsJsonArray();
+    JsonArray jsonRequest = context.getBodyAsJson().getJsonArray(REQUEST);
     List<UpdatePolicyNotification> request = UpdatePolicyNotification.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
 

@@ -2470,46 +2470,52 @@ paths:
         content:
           application/json:
             schema:
-              type: array
               description: ''
-              minItems: 1
-              uniqueItems: true
+              type: object
               x-examples:
                 example-1:
-                  - itemId: string
-                    itemType: resource_server
-                    expiryDuration: string
-                    constraints: {}
-              items:
-                type: object
-                properties:
-                  itemId:
-                    type: string
-                    minLength: 1
-                  itemType:
-                    type: string
-                    minLength: 1
-                    enum:
-                      - resource_server
-                      - resource_group
-                      - resource
-                  expiryDuration:
-                    type: string
-                    minLength: 1
-                  constraints:
+                  request:
+                    - itemId: string
+                      itemType: resource_server
+                      expiryDuration: string
+                      constraints: {}
+              properties:
+                request:
+                  type: array
+                  uniqueItems: true
+                  minItems: 1
+                  items:
                     type: object
-                required:
-                  - itemId
-                  - itemType
-                  - expiryDuration
-                  - constraints
+                    properties:
+                      itemId:
+                        type: string
+                        minLength: 1
+                      itemType:
+                        type: string
+                        minLength: 1
+                        enum:
+                          - resource_server
+                          - resource_group
+                          - resource
+                      expiryDuration:
+                        type: string
+                        minLength: 1
+                      constraints:
+                        type: object
+                    required:
+                      - itemId
+                      - itemType
+                      - expiryDuration
+              required:
+                - request
             examples:
               Example:
                 value:
-                  - itemId: string
-                    itemType: resource_server
-                    expiryDuration: string
-                    constraints: {}
+                  request:
+                    - itemId: string
+                      itemType: resource_server
+                      expiryDuration: string
+                      constraints: {}
       tags:
         - Notifications APIs
       parameters: []
@@ -2557,46 +2563,53 @@ paths:
         content:
           application/json:
             schema:
-              type: array
               description: ''
-              minItems: 1
-              uniqueItems: true
+              type: object
               x-examples:
                 example-1:
-                  - requestId: e4619679-f5d9-4eff-9f79-bbded6130bb1
-                    status: approved
-                    expiryDuration: string
-                    constraints: {}
-              items:
-                type: object
-                properties:
-                  requestId:
-                    type: string
-                    minLength: 1
-                    format: uuid
-                  status:
-                    type: string
-                    minLength: 1
-                    enum:
-                      - approved
-                      - rejected
-                  expiryDuration:
-                    type: string
-                    minLength: 1
-                  constraints:
+                  request:
+                    - requestId: e4619679-f5d9-4eff-9f79-bbded6130bb1
+                      status: approved
+                      expiryDuration: string
+                      constraints: {}
+              properties:
+                request:
+                  type: array
+                  uniqueItems: true
+                  minItems: 1
+                  items:
                     type: object
-                required:
-                  - requestId
-                  - status
-                  - expiryDuration
-                  - constraints
+                    properties:
+                      requestId:
+                        type: string
+                        minLength: 36
+                        format: uuid
+                        maxLength: 36
+                      status:
+                        type: string
+                        minLength: 1
+                        enum:
+                          - approved
+                          - rejected
+                      expiryDuration:
+                        type: string
+                        minLength: 1
+                      constraints:
+                        type: object
+                    required:
+                      - requestId
+                      - status
+                      - expiryDuration
+              required:
+                - request
             examples:
               Example:
                 value:
-                  - requestId: e4619679-f5d9-4eff-9f79-bbded6130bb1
-                    status: approved
-                    expiryDuration: string
-                    constraints: {}
+                  request:
+                    - requestId: e4619679-f5d9-4eff-9f79-bbded6130bb1
+                      status: approved
+                      expiryDuration: string
+                      constraints: {}
       tags:
         - Notifications APIs
 components:
