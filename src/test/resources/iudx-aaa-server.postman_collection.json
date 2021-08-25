@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "539171c8-3bd4-471f-91fd-55e3542b1ee1",
+		"_postman_id": "7c492d9a-51d3-4546-8d25-9c4445708012",
 		"name": "iudx-aaa-server",
 		"description": "# Introduction\nWhat does your API do?\n\n# Overview\nThings that the developers should know about\n\n# Authentication\nWhat is the preferred way of using the API?\n\n# Error Codes\nWhat errors and status codes can a user expect?\n\n# Rate limit\nIs there a limit to the number of requests an user can send?",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -2106,7 +2106,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"844e251b-574b-46e6-9247-f76f1f70a637\",\n            \"status\": \"approved\"\n        }\n    ]\n}",
+									"raw": "[\n    {\n        \"userId\": \"844e251b-574b-46e6-9247-f76f1f70a637\",\n        \"status\": \"approved\"\n    }\n]",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -2167,7 +2167,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"844e251b-574b-46e6-9247-f76f1f70a637\",\n            \"status\": \"approved\"\n        }\n    ]\n}",
+									"raw": "[\n    {\n        \"userId\": \"844e251b-574b-46e6-9247-f76f1f70a637\",\n        \"status\": \"approved\"\n    }\n]",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -2289,7 +2289,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"844e251b-574b-46e6-9247-f76f1f70a637\",\n            \"status\": \"aa\"\n        }\n    ]\n}",
+									"raw": "[\n    {\n        \"userId\": \"844e251b-574b-46e6-9247-f76f1f70a637\",\n        \"status\": \"aa\"\n    }\n]",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -2350,7 +2350,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"844e251b-574b-46e6-9247-f76f1f70a637\"\n        }\n    ]\n}",
+									"raw": "[\n    {\n        \"userId\": \"844e251b-574b-46e6-9247-f76f1f70a637\"\n    }\n]",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -2411,7 +2411,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"844e251b-574b-46e6-9247-f76f1f70a1q\",\n            \"status\": \"approved\"\n        }\n    ]\n}",
+									"raw": "[\n    {\n        \"userId\": \"844e251b-574b-46e6-9247-f76f1f70a1q\",\n        \"status\": \"approved\"\n    }\n]",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -2472,7 +2472,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"status\": \"approved\"\n        }\n    ]\n}",
+									"raw": "[\n    {\n        \"status\": \"approved\"\n    }\n]",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -2625,6 +2625,107 @@
 			]
 		},
 		{
+			"name": "Notifications",
+			"item": [
+				{
+					"name": "Update PoliciesRequests",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"request\": [\r\n        {\r\n            \"requestId\": \"e4619679-f5d9-4eff-9f79-bbded6130bb1\",\r\n            \"status\": \"approved\",\r\n            \"expiryDuration\": \"string\",\r\n            \"constraints\": {}\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{host}}:{{port}}{{base}}/policies/requests",
+							"protocol": "http",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"policies",
+								"requests"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create PoliciesRequests",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"request\": [\r\n        {\r\n            \"itemId\": \"string\",\r\n            \"itemType\": \"resource_server\",\r\n            \"expiryDuration\": \"string\",\r\n            \"constraints\": {\r\n                \"access\": [\r\n                    \"api\",\r\n                    \"subs\",\r\n                    \"ingest\",\r\n                    \"file\"\r\n                ]\r\n            }\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{host}}:{{port}}{{base}}/policies/requests",
+							"protocol": "http",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"policies",
+								"requests"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List PoliciesRequests",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{host}}:{{port}}{{base}}/policies/requests",
+							"protocol": "http",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"policies",
+								"requests"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Get KeyCloak Token [To set the ENV token]",
 			"request": {
 				"auth": {
@@ -2721,6 +2822,25 @@
 					]
 				},
 				"description": "This API will Generate KeyCloack JWT.\nThe JWT will be used to generate token from iudx-aaa-server."
+			},
+			"response": []
+		},
+		{
+			"name": "Get Certificate [JWT Authentication]",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}{{base}}/cert",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}{{base}}",
+					"path": [
+						"cert"
+					]
+				}
 			},
 			"response": []
 		}

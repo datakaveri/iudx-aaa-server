@@ -2299,6 +2299,319 @@ paths:
         - Policies APIs
       security:
         - authorization: []
+  /auth/v1/policies/requests:
+    get:
+      summary: List Requests
+      responses:
+        '200':
+          description: Successfully listing all the requests of a Consumer or of a providers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessRequest'
+              examples:
+                Example:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: User permission requests
+                    results:
+                      - requestId: e4619679-f5d9-4eff-9f79-bbded6130bb1
+                        itemId: string
+                        itemType: resource_server
+                        status: pending
+                        expiryDuration: string
+                        constraints: {}
+                        user:
+                          id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                          email: user@example.com
+                          name:
+                            firstName: string
+                            lastName: string
+                        owner:
+                          id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                          email: user@example.com
+                          name:
+                            firstName: string
+                            lastName: string
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+        '401':
+          description: |-
+            - Unauthorized - `token` invalid/expired
+            - Unauthorized - `providerId` in case of delegate/provider
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+              examples:
+                example-1:
+                  value:
+                    type: string
+                    title: string
+                    detail: string
+        '404':
+          description: No request associated with the User or delegate
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Example:
+                  value:
+                    type: 'urn:dx:as:MissingInformation'
+                    title: string
+                    detail: string
+      operationId: get-auth-v1-policies-requests
+      description: 'Lists all the requests of that user. In case of provider or auth delegate, the requests which pertain to the items which are owned by the provider are returned. In case of consumer, the requests which are created by the consumer are returned.'
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+          in: header
+          name: providerId
+          description: Required only if the caller is an auth delegate
+      security:
+        - authorization: []
+      tags:
+        - Notifications APIs
+    parameters: []
+    post:
+      summary: Create Requests
+      operationId: post-auth-v1-policies-requests
+      responses:
+        '201':
+          description: Created
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessRequest'
+              examples:
+                Example:
+                  value:
+                    type: string
+                    title: string
+                    results:
+                      - requestId: string
+                        itemId: string
+                        itemType: string
+                        status: string
+                        expiryDuration: string
+                        constraints: {}
+                        user:
+                          id: string
+                          email: string
+                          name:
+                            firstName: string
+                            lastName: string
+                        owner:
+                          id: string
+                          email: string
+                          name:
+                            firstName: string
+                            lastName: string
+        '400':
+          description: 'Bad Request- Schema validation, missing or incorrect fields & values'
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Example:
+                  value:
+                    type: string
+                    title: string
+                    detail: string
+        '401':
+          description: '- Unauthorized - `token` invalid/expired'
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+              examples:
+                Example:
+                  value:
+                    type: string
+                    title: string
+                    detail: string
+      description: The access request API called by consumers which will show up on the provider/auth delegate dashboards for approval or rejection. Can be called with unique multiple requests in a single API call.
+      security:
+        - authorization: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              description: ''
+              type: object
+              x-examples:
+                example-1:
+                  request:
+                    - itemId: string
+                      itemType: resource_server
+                      expiryDuration: string
+                      constraints: {}
+              properties:
+                request:
+                  type: array
+                  uniqueItems: true
+                  minItems: 1
+                  items:
+                    type: object
+                    properties:
+                      itemId:
+                        type: string
+                        minLength: 1
+                      itemType:
+                        type: string
+                        minLength: 1
+                        enum:
+                          - resource_server
+                          - resource_group
+                          - resource
+                      expiryDuration:
+                        type: string
+                        minLength: 1
+                      constraints:
+                        type: object
+                    required:
+                      - itemId
+                      - itemType
+                      - expiryDuration
+              required:
+                - request
+            examples:
+              Example:
+                value:
+                  request:
+                    - itemId: string
+                      itemType: resource_server
+                      expiryDuration: string
+                      constraints: {}
+      tags:
+        - Notifications APIs
+      parameters: []
+    put:
+      summary: Update Requests
+      operationId: put-auth-v1-policies-requests
+      responses:
+        '201':
+          description: Created
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessRequest'
+        '400':
+          description: 'Bad Request- Schema validation, missing or incorrect fields & values'
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: '- Unauthorized - `token` invalid/expired'
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+      description: This endpoint is used by the provider or an auth delegate to grant access to a consumer for a particular item that they own. This API automatically createed the required policy also.
+      security:
+        - authorization: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              description: ''
+              type: object
+              x-examples:
+                example-1:
+                  request:
+                    - requestId: e4619679-f5d9-4eff-9f79-bbded6130bb1
+                      status: approved
+                      expiryDuration: string
+                      constraints: {}
+              properties:
+                request:
+                  type: array
+                  uniqueItems: true
+                  minItems: 1
+                  items:
+                    type: object
+                    properties:
+                      requestId:
+                        type: string
+                        minLength: 36
+                        format: uuid
+                        maxLength: 36
+                      status:
+                        type: string
+                        minLength: 1
+                        enum:
+                          - approved
+                          - rejected
+                      expiryDuration:
+                        type: string
+                        minLength: 1
+                      constraints:
+                        type: object
+                    required:
+                      - requestId
+                      - status
+                      - expiryDuration
+              required:
+                - request
+            examples:
+              Example:
+                value:
+                  request:
+                    - requestId: e4619679-f5d9-4eff-9f79-bbded6130bb1
+                      status: approved
+                      expiryDuration: string
+                      constraints: {}
+      tags:
+        - Notifications APIs
 components:
   schemas:
     RequestToken:
@@ -2408,6 +2721,138 @@ components:
         - type
         - title
         - detail
+    AccessRequest:
+      description: ''
+      type: object
+      x-examples:
+        Example:
+          type: 'urn:dx:as:Success'
+          title: User permission requests
+          results:
+            - requestId: e4619679-f5d9-4eff-9f79-bbded6130bb1
+              itemId: string
+              itemType: resource_server
+              status: pending
+              expiryDuration: string
+              constraints: {}
+              user:
+                id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                email: user@example.com
+                name:
+                  firstName: string
+                  lastName: string
+              owner:
+                id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                email: user@example.com
+                name:
+                  firstName: string
+                  lastName: string
+          value:
+            type: 'urn:dx:as:Success'
+            title: User permission requests
+            results:
+              - requestId: e4619679-f5d9-4eff-9f79-bbded6130bb1
+                itemId: string
+                itemType: resource_server
+                status: pending
+                expiryDuration: string
+                constraints: {}
+                user:
+                  id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                  email: user@example.com
+                  name:
+                    firstName: string
+                    lastName: string
+                owner:
+                  id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                  email: user@example.com
+                  name:
+                    firstName: string
+                    lastName: string
+      properties:
+        type:
+          type: string
+          minLength: 1
+        title:
+          type: string
+          minLength: 1
+        results:
+          type: array
+          uniqueItems: true
+          minItems: 1
+          items:
+            type: object
+            properties:
+              requestId:
+                type: string
+                minLength: 1
+              itemId:
+                type: string
+                minLength: 1
+              itemType:
+                type: string
+                minLength: 1
+              status:
+                type: string
+                minLength: 1
+              expiryDuration:
+                type: string
+                minLength: 1
+              constraints:
+                type: object
+              user:
+                $ref: '#/components/schemas/User'
+              owner:
+                $ref: '#/components/schemas/User'
+            required:
+              - requestId
+              - itemId
+              - itemType
+              - status
+              - expiryDuration
+      required:
+        - type
+        - title
+        - results
+    User:
+      description: ''
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          minLength: 1
+        name:
+          type: object
+          properties:
+            firstName:
+              type: string
+              minLength: 1
+            lastName:
+              type: string
+              minLength: 1
+          required:
+            - firstName
+            - lastName
+      required:
+        - id
+        - email
+        - name
+      x-examples:
+        Example:
+          id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+          email: user@example.com
+          name:
+            firstName: string
+            lastName: string
+          value:
+            id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+            email: user@example.com
+            name:
+              firstName: string
+              lastName: string
   securitySchemes:
     authorization:
       type: http

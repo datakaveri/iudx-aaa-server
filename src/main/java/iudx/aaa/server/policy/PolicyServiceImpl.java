@@ -10,10 +10,12 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
+import iudx.aaa.server.apiserver.CreatePolicyNotification;
 import iudx.aaa.server.apiserver.CreatePolicyRequest;
 import iudx.aaa.server.apiserver.DeletePolicyRequest;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Roles;
+import iudx.aaa.server.apiserver.UpdatePolicyNotification;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
@@ -507,6 +509,9 @@ public class PolicyServiceImpl implements PolicyService {
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public PolicyService setDefaultProviderPolicies(
       List<String> userIds, Handler<AsyncResult<JsonObject>> handler) {
@@ -514,4 +519,37 @@ public class PolicyServiceImpl implements PolicyService {
     handler.handle(Future.succeededFuture(new JsonObject()));
     return this;
   }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public PolicyService createPolicyNotification(List<CreatePolicyNotification> request, User user,
+      Handler<AsyncResult<JsonObject>> handler) {
+
+    handler.handle(Future.succeededFuture(new JsonObject()));
+    return this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public PolicyService listPolicyNotification(User user, Handler<AsyncResult<JsonObject>> handler) {
+    
+    handler.handle(Future.succeededFuture(new JsonObject()));
+    return this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public PolicyService updatelistPolicyNotification(List<UpdatePolicyNotification> request, User user,
+      Handler<AsyncResult<JsonObject>> handler) {
+   
+    handler.handle(Future.succeededFuture(new JsonObject()));
+    return this;
+  }
+
 }

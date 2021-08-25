@@ -9,8 +9,10 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import iudx.aaa.server.apiserver.CreatePolicyNotification;
 import iudx.aaa.server.apiserver.CreatePolicyRequest;
 import iudx.aaa.server.apiserver.DeletePolicyRequest;
+import iudx.aaa.server.apiserver.UpdatePolicyNotification;
 import iudx.aaa.server.apiserver.User;
 
 import java.util.List;
@@ -105,4 +107,39 @@ public interface PolicyService {
   @Fluent
   PolicyService setDefaultProviderPolicies(List<String> userIds,
       Handler<AsyncResult<JsonObject>> handler);
+  
+  /**
+   * The createPolicyNotification implements the creating request for user policies.
+   * 
+   * @param request which is a list of {@link CreatePolicyNotification} DataObject
+   * @param user which is a {@link User} DataObect
+   * @param handler which is a Request Handler
+   * @return PolicyService which is a Service
+   */
+  
+  @Fluent
+  PolicyService createPolicyNotification(List<CreatePolicyNotification> request, User user, Handler<AsyncResult<JsonObject>> handler);
+  
+  /**
+   * The listPolicyNotification implements the listing request for user and provider/delegate.
+   * 
+   * @param user which is a {@link User} DataObect
+   * @param handler which is a Request Handler
+   * @return PolicyService which is a Service
+   */
+
+  @Fluent
+  PolicyService listPolicyNotification(User user, Handler<AsyncResult<JsonObject>> handler);
+
+  /**
+   * The updatePolicyNotification implements the updating resources access/status by provider/delegate.
+   * 
+   * @param request which is a list of {@link UpdatePolicyNotification} DataObject
+   * @param user which is a {@link User} DataObect
+   * @param handler which is a Request Handler
+   * @return PolicyService which is a Service
+   */
+  
+  @Fluent
+  PolicyService updatelistPolicyNotification(List<UpdatePolicyNotification> request, User user, Handler<AsyncResult<JsonObject>> handler);
 }
