@@ -542,7 +542,8 @@ public class ApiServerVerticle extends AbstractVerticle {
     List<CreatePolicyRequest> request = CreatePolicyRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
 
-    policyService.createPolicy(request, user, handler -> {
+    policyService.createPolicy(request,user, handler -> {
+
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {

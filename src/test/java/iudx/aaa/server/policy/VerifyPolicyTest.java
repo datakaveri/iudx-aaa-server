@@ -40,6 +40,7 @@ public class VerifyPolicyTest {
     private static PgConnectOptions connectOptions;
     private static PolicyService policyService;
     private static RegistrationService registrationService;
+    private static CatalogueClient catalogueClient;
 
     private static Vertx vertxObj;
 
@@ -75,7 +76,7 @@ public class VerifyPolicyTest {
         /* Create the client pool */
         pgclient = PgPool.pool(vertx, connectOptions, poolOptions);
 
-        policyService = new PolicyServiceImpl(pgclient,registrationService);
+        policyService = new PolicyServiceImpl(pgclient,registrationService,catalogueClient);
 
         testContext.completeNow();
 

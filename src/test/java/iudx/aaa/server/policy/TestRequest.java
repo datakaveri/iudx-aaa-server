@@ -2,9 +2,11 @@ package iudx.aaa.server.policy;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import iudx.aaa.server.apiserver.CreatePolicyRequest;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 
+import java.util.List;
 import java.util.UUID;
 
 /** Structures the JsonObject required for test cases. */
@@ -49,7 +51,7 @@ public class TestRequest {
 
   // res does not exist
   public static User allRolesUser =
-      new User(new JsonObject().put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5"));
+      new User(new JsonObject().put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5")  .put("roles", new JsonArray().add(Roles.ADMIN)));
   public static JsonObject obj1 = new JsonObject().put("id", UUID.randomUUID());
   public static JsonObject obj2 = new JsonObject().put("id", UUID.randomUUID());
   public static JsonArray ResExistFail = new JsonArray().add(obj1).add(obj2);
@@ -99,4 +101,38 @@ public class TestRequest {
           + "(user_id,item_id,item_type,owner_id,status,expiry_time,constraints,created_at,updated_at) "
           + "values('32a4b979-4f4a-4c44-b0c3-2fe109952b5f','604cec16-0ba3-4eb9-bdcf-d2b98f1fddab','RESOURCE', "
           + " 'a13eb955-c691-4fd3-b200-f18bc78810b5','ACTIVE','2022-06-15 09:07:16.034289','{}', NOW(), NOW()) returning id";
+
+  // create policy
+
+  public static User consumerUser =
+      new User(
+          new JsonObject()
+              .put("userId", "d34b1547-7281-4f66-b550-ed79f9bb0c36")
+              .put("roles", new JsonArray().add(Roles.CONSUMER))
+              .put("keycloakId", "04617f23-7e5d-4118-8773-1b6c85da14ed"));
+  public static User AdminUser =
+      new User(
+          new JsonObject()
+              .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5")
+              .put("roles", new JsonArray().add(Roles.ADMIN))
+              .put("keycloakId", "04617f23-7e5d-4118-8773-1b6c85da14ed"));
+  public static User ProviderUserCreate =
+      new User(
+          new JsonObject()
+              .put("userId", "d34b1547-7281-4f66-b550-ed79f9bb0c36")
+              .put("roles", new JsonArray().add(Roles.PROVIDER))
+              .put("keycloakId", "04617f23-7e5d-4118-8773-1b6c85da14ed"));
+
+  public static JsonObject constraints = new JsonObject();
+
+  public static JsonObject emptyCreateObject =
+      new JsonObject()
+          .put("userId", "")
+          .put("resId", "")
+          .put("resType", "")
+          .put("expiry_time", "")
+          .put("constraints", constraints);
+
+  public static List<CreatePolicyRequest> roleFailureReq =
+      CreatePolicyRequest.jsonArrayToList(new JsonArray().add(emptyCreateObject));
 }

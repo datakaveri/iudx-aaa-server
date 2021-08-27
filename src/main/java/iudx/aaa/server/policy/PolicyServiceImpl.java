@@ -10,21 +10,12 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
-import iudx.aaa.server.apiserver.CreatePolicyNotification;
-import iudx.aaa.server.apiserver.CreatePolicyRequest;
-import iudx.aaa.server.apiserver.DeletePolicyRequest;
-import iudx.aaa.server.apiserver.Response;
-import iudx.aaa.server.apiserver.Roles;
-import iudx.aaa.server.apiserver.UpdatePolicyNotification;
-import iudx.aaa.server.apiserver.User;
+import iudx.aaa.server.apiserver.*;
 import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -48,19 +39,165 @@ public class PolicyServiceImpl implements PolicyService {
   private final PgPool pool;
   private final RegistrationService registrationService;
   private final deletePolicy deletePolicy;
+  private final createPolicy createPolicy;
+  private final CatalogueClient catalogueClient;
+
   // Create the pooled client
 
-  public PolicyServiceImpl(PgPool pool, RegistrationService registrationService) {
+  public PolicyServiceImpl(
+      PgPool pool, RegistrationService registrationService, CatalogueClient catalogueClient) {
     this.pool = pool;
     this.registrationService = registrationService;
+    this.catalogueClient = catalogueClient;
     this.deletePolicy = new deletePolicy(pool);
+    this.createPolicy = new createPolicy(pool);
   }
   
   @Override
   public PolicyService createPolicy(
       List<CreatePolicyRequest> request, User user, Handler<AsyncResult<JsonObject>> handler) {
-    JsonObject resp = new JsonObject();
-    handler.handle(Future.succeededFuture(resp));
+
+    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+    List<Roles> roles = user.getRoles();
+
+    if (!roles.contains(Roles.ADMIN)
+        && !roles.contains(Roles.PROVIDER)
+        && !roles.contains(Roles.DELEGATE)) {
+      // 403 not allowed to create policy
+      Response r =
+          new Response.ResponseBuilder()
+              .type(INVALID_ROLE)
+              .title(URN_INVALID_ROLE)
+              .detail(INVALID_ROLE)
+              .status(403)
+              .build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
+
+    Set<UUID> users =
+        request.stream().map(e -> UUID.fromString(e.getUserId())).collect(Collectors.toSet());
+
+    Future<Set<UUID>> UserExist = createPolicy.checkUserExist(users);
+
+    List<String> exp =
+        request.stream()
+            .filter(tagObject -> !tagObject.getExpiryTime().isEmpty())
+            .map(CreatePolicyRequest::getExpiryTime)
+            .collect(Collectors.toList());
+
+    Future<Void> validateExp = createPolicy.validateExpiry(exp);
+
+    List<String> resServerIds =
+        request.stream()
+            .filter(
+                tagObject ->
+                    tagObject
+                        .getItemType()
+                        .toUpperCase()
+                        .equals(itemTypes.RESOURCE_SERVER.toString()))
+            .map(CreatePolicyRequest::getItemId)
+            .collect(Collectors.toList());
+
+    List<String> resGrpIds =
+        request.stream()
+            .filter(
+                tagObject ->
+                    tagObject
+                        .getItemType()
+                        .toUpperCase()
+                        .equals(itemTypes.RESOURCE_GROUP.toString()))
+            .map(CreatePolicyRequest::getItemId)
+            .collect(Collectors.toList());
+
+    List<String> resIds =
+        request.stream()
+            .filter(
+                tagObject ->
+                    tagObject.getItemType().toUpperCase().equals(itemTypes.RESOURCE.toString()))
+            .map(CreatePolicyRequest::getItemId)
+            .collect(Collectors.toList());
+
+    Map<String, List<String>> catItem = new HashMap<>();
+
+    if (resServerIds.size() > 0) catItem.put(RES_SERVER, resServerIds);
+    else {
+      if (resGrpIds.size() > 0) catItem.put(RES_GRP, resGrpIds);
+      if (resIds.size() > 0) catItem.put(RES, resIds);
+    }
+
+    Future<Map<String, UUID>> reqItemDetail =
+        catalogueClient.checkReqItems(catItem, user.getUserId());
+
+    Future<Boolean> ItemChecks =
+        CompositeFuture.all(UserExist, validateExp, reqItemDetail)
+            .compose(
+                obj -> {
+                  if (!users.equals(UserExist.result())) {
+                    LOGGER.debug("UserExist fail:: " + UserExist.result().toString());
+                    return Future.failedFuture(INVALID_USER + UserExist.result());
+                  }
+
+                  if (catItem.containsKey(RES_SERVER)) return Future.succeededFuture(false);
+                  return Future.succeededFuture(true);
+                });
+
+    Future<Boolean> checkAuthPolicy =
+        ItemChecks.compose(
+            obj -> {
+              if (ItemChecks.result().equals(false)) return Future.succeededFuture(false);
+              return catalogueClient.checkAuthPolicy(user.getUserId());
+            });
+
+    Future<List<UUID>> checkOwner =
+        checkAuthPolicy.compose(
+            succ -> {
+              if (succ.equals(false)) return Future.succeededFuture(new ArrayList<>());
+              return catalogueClient.checkOwner(catItem, user.getUserId());
+            });
+
+    Future<List<UUID>> checkDelegate =
+        checkOwner.compose(
+            checkOwn -> {
+              if (checkOwn.isEmpty()) return Future.succeededFuture(new ArrayList<>());
+              return catalogueClient.checkDelegate(checkOwn, user.getUserId());
+            });
+
+    Future<Map<String, UUID>> getOwner =
+        checkDelegate.compose(
+            checkDel -> {
+              if (checkDel.size() < checkOwner.result().size())
+                return Future.failedFuture(UNAUTHORIZED);
+
+              if (catItem.containsKey(RES_SERVER)) return Future.succeededFuture(new HashMap<>());
+
+              return catalogueClient.getOwnerId(catItem);
+            });
+
+    Future<Boolean> insertPolicy =
+        getOwner.compose(
+            succ -> {
+              return createPolicy.insertPolicy(
+                  request, reqItemDetail.result(), getOwner.result(), user);
+            });
+
+    insertPolicy
+        .onSuccess(
+            succ -> {
+              Response r =
+                  new Response.ResponseBuilder()
+                      .type(POLICY_SUCCESS)
+                      .title("added policies")
+                      .status(200)
+                      .build();
+              handler.handle(Future.succeededFuture(r.toJson()));
+            })
+        .onFailure(
+            obj -> {
+              obj.printStackTrace();
+              Response r = createPolicy.getRespObj(obj.getLocalizedMessage());
+              handler.handle(Future.succeededFuture(r.toJson()));
+            });
     return this;
   }
 
@@ -270,11 +407,11 @@ public class PolicyServiceImpl implements PolicyService {
                         .map(res -> res.value()))
             .onFailure(
                 obj -> {
-                    LOGGER.error("failed getResIdPolicy  " + obj.getMessage());
+                  LOGGER.error("failed getResIdPolicy  " + obj.getMessage());
                   handler.handle(Future.failedFuture(INTERNALERROR));
                 });
 
-      Future<List<JsonObject>> getGrpPolicy =
+    Future<List<JsonObject>> getGrpPolicy =
         pool.withConnection(
                 conn ->
                     conn.preparedQuery(
@@ -288,7 +425,7 @@ public class PolicyServiceImpl implements PolicyService {
                   handler.handle(Future.failedFuture(INTERNALERROR));
                 });
 
-      Future<List<JsonObject>> getIdPolicy = Future.succeededFuture();
+    Future<List<JsonObject>> getIdPolicy = Future.succeededFuture();
     pool.withConnection(
             conn ->
                 conn.preparedQuery(GET_POLICIES + itemTypes.RESOURCE + GET_POLICIES_JOIN_OWNER)
@@ -301,7 +438,7 @@ public class PolicyServiceImpl implements PolicyService {
               handler.handle(Future.failedFuture(INTERNALERROR));
             });
 
-      CompositeFuture.all(getResGrpPolicy, getResIdPolicy, getGrpPolicy, getIdPolicy)
+    CompositeFuture.all(getResGrpPolicy, getResIdPolicy, getGrpPolicy, getIdPolicy)
         .onSuccess(
             obj -> {
               List<JsonObject> policies = new ArrayList<>();
@@ -383,21 +520,19 @@ public class PolicyServiceImpl implements PolicyService {
                                 .build();
                         handler.handle(Future.succeededFuture(r.toJson()));
                       } else if (res.failed()) {
-                          LOGGER.error("Registration failure :" + res.cause());
+                        LOGGER.error("Registration failure :" + res.cause());
                         handler.handle(Future.failedFuture(INTERNALERROR));
                       }
                     });
-              }
-              else
-              {
-                  Response r =
-                          new Response.ResponseBuilder()
-                                  .type(POLICY_SUCCESS)
-                                  .title(SUCC_TITLE_POLICY_READ)
-                                  .status(200)
-                                  .detail("no policies")
-                                  .build();
-                  handler.handle(Future.succeededFuture(r.toJson()));
+              } else {
+                Response r =
+                    new Response.ResponseBuilder()
+                        .type(POLICY_SUCCESS)
+                        .title(SUCC_TITLE_POLICY_READ)
+                        .status(200)
+                        .detail("no policies")
+                        .build();
+                handler.handle(Future.succeededFuture(r.toJson()));
               }
             })
         .onFailure(

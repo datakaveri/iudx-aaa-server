@@ -41,6 +41,7 @@ public class ListPolicyTest {
     private static PgConnectOptions connectOptions;
     private static PolicyService policyService;
     private static RegistrationService registrationService;
+    private static CatalogueClient catalogueClient;
 
     private static Vertx vertxObj;
     private static MockRegistrationFactory mockRegistrationFactory;
@@ -85,7 +86,7 @@ public class ListPolicyTest {
 
         mockRegistrationFactory = new MockRegistrationFactory();
         registrationService = mockRegistrationFactory.getInstance();
-        policyService = new PolicyServiceImpl(pgclient,registrationService);
+        policyService = new PolicyServiceImpl(pgclient,registrationService,catalogueClient);
         testContext.completeNow();
     }
 
