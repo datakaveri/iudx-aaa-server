@@ -11,6 +11,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.apiserver.CreatePolicyNotification;
 import iudx.aaa.server.apiserver.CreatePolicyRequest;
+import iudx.aaa.server.apiserver.DeleteDelegationRequest;
 import iudx.aaa.server.apiserver.UpdatePolicyNotification;
 import iudx.aaa.server.apiserver.User;
 
@@ -143,4 +144,36 @@ public interface PolicyService {
   
   @Fluent
   PolicyService updatelistPolicyNotification(List<UpdatePolicyNotification> request, User user, Handler<AsyncResult<JsonObject>> handler);
+
+  /**
+   * listDelegation implements the ability for a provider to view the delegations they have created.
+   * It allows auth delegates to perform the same on behalf of a provider (although an auth delegate
+   * may not view auth delegate-related information). Additionally, delegates may view the
+   * delegations assigned to them by providers.
+   * 
+   * @param user which is a {@link User} DataObject
+   * @param authDelegateDetails which contains details of the provider, etc. in case the caller is
+   *        an auth delegate
+   * @param handler which is a Request Handler
+   * @return PolicyService which is a Service
+   */
+  @Fluent
+  PolicyService listDelegation(User user, JsonObject authDelegateDetails,
+      Handler<AsyncResult<JsonObject>> handler);
+
+  /**
+   * deleteDelegation implements the ability for a provider to delete the delegations they have
+   * created. It allows auth delegates to perform the same on behalf of a provider (although an auth
+   * delegate may not delete aauth delegate-related information).
+   * 
+   * @param request which is a list of DeleteDelegationRequest objects
+   * @param user which is a {@link User} DataObject
+   * @param authDelegateDetails which contains details of the provider, etc. in case the caller is
+   *        an auth delegate
+   * @param handler which is a Request Handler
+   * @return PolicyService which is a Service
+   */
+  @Fluent
+  PolicyService deleteDelegation(List<DeleteDelegationRequest> request, User user,
+      JsonObject authDelegateDetails, Handler<AsyncResult<JsonObject>> handler);
 }

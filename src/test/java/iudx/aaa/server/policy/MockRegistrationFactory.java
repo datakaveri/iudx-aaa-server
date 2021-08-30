@@ -3,6 +3,7 @@ package iudx.aaa.server.policy;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.registration.RegistrationService;
 import org.mockito.Mockito;
@@ -61,6 +62,18 @@ public class MockRegistrationFactory {
       Mockito.when(asyncResult.succeeded()).thenReturn(false);
       Mockito.when(asyncResult.failed()).thenReturn(true);
     }
+  }
+  
+  /**
+   * Returns expected Map result as an AsyncResult to show successful
+   * flow.
+   * 
+   * @param response is void
+   */
+  public void setResponse(Map<String, JsonObject> response) {
+    Mockito.when(asyncResult.result()).thenReturn(response);
+    Mockito.when(asyncResult.failed()).thenReturn(false);
+    Mockito.when(asyncResult.succeeded()).thenReturn(true);
   }
 }
 
