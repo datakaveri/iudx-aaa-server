@@ -1,98 +1,98 @@
 {
-	"version": "1.0",
-	"zookeepers": [
-		"zookeeper"
-	],
-	"clusterId": "iudx-aaa-cluster",
-	"host": "server",
-	"modules": [
-		{
-			"id": "iudx.aaa.server.policy.PolicyVerticle",
-			"verticleInstances": 1,
-			"databaseIP": "159.89.164.71",
-			"databasePort": "5432",
-			"databaseName": "postgres",
-			"databaseUserName": "auth",
-			"databasePassword": "fd585a96fc2e2896b18575a20e3d0ac3e3d87cf5edea452f5b3c6bb57101f3ec",
-			"poolSize": "25",
-			"catalogueOptions": {
-			 	"catServerHost": "api.catalogue.iudx.io",
-			 	"catServerPort": "443"
-			 	}
-		},
-		{
-			"id": "iudx.aaa.server.registration.RegistrationVerticle",
-			"verticleInstances": 1,
-			"databaseIP": "139.59.80.176",
-			"databasePort": "5432",
-			"databaseName": "iudx",
-			"databaseUserName": "iudx_user",
-			"databasePassword": "iudx@123",
-			"poolSize": "25",
-			"keycloakUrl": "https://127.0.0.1:3000/auth",
-			"keycloakRealm": "some-realm",
-			"keycloakAdminClientId": "some-admin-client-id",
-			"keycloakAdminClientSecret": "f5800be0-258a-4cd2-820f-8128818ed70a",
-			"keycloakAdminPoolSize": "10"
-		},
-		{
-			"id": "iudx.aaa.server.token.TokenVerticle",
-			"verticleInstances": 1,
-			"authServerDomain": "auth.test.com",
-			"databaseIP": "159.89.164.71",
-			"databasePort": "5432",
-			"databaseName": "postgres",
-			"databaseUserName": "auth",
-			"databasePassword": "fd585a96fc2e2896b18575a20e3d0ac3e3d87cf5edea452f5b3c6bb57101f3ec",
-			"poolSize": "5",
-			"keystorePath": "configs/keystore.jks",
-			"keystorePassword": "secret",
-			"keycloakOptions": {
-				"host": "keycloakHost",
-				"port": 8443,
-				"uri": "/auth/realms/demo/protocol/openid-connect/token",
-				"clientId": "keycloackClientId",
-				"clientSecret": "keycloackClientSecret"
-			}
-		},
-		{
-			"id": "iudx.aaa.server.admin.AdminVerticle",
-			"verticleInstances": 1,
-			"options": {
-				"authServerDomain": "foobar.iudx.io"
-			},
-			"databaseIP": "139.59.80.176",
-			"databasePort": "5432",
-			"databaseName": "iudx",
-			"databaseUserName": "iudx_user",
-			"databasePassword": "iudx@123",
-			"poolSize": "25",
-			"keycloakUrl": "https://127.0.0.1:3000/auth",
-			"keycloakRealm": "some-realm",
-			"keycloakAdminClientId": "some-admin-client-id",
-			"keycloakAdminClientSecret": "f5800be0-258a-4cd2-820f-8128818ed70a",
-			"keycloakAdminPoolSize": "10"
-		},
-		{
-			"id": "iudx.aaa.server.apiserver.ApiServerVerticle",
-			"ssl": true,
-			"keystorePath": "configs/keystore.jks",
-			"keystorePassword": "secret",
-			"verticleInstances": 1,
-			"databaseIP": "139.59.80.176",
-			"databasePort": "5432",
-			"databaseName": "iudx",
-			"databaseUserName": "iudx_user",
-			"databasePassword": "iudx@123",
-			"poolSize": "5",
-			"serverTimeoutMs": 5000,
-			"corsRegexString":"*",
-			"keycloakOptions": {
-				"site": "https://<host>:<port>/auth/realms/demo",
-				"clientId": "keycloakClientId",
-				"clientSecret": "keycloakClientSecret",
-				"jwtLeeway":90
-			}
-		}
-	]
+  "version": "1.0",
+  "zookeepers": [
+    "zookeeper"
+  ],
+  "clusterId": "iudx-aaa-cluster",
+  "host": "server",
+  "modules": [
+    {
+      "id": "iudx.aaa.server.policy.PolicyVerticle",
+      "verticleInstances": 1,
+      "databaseIP": "139.59.80.176",
+      "databasePort": "5432",
+      "databaseName": "iudx",
+      "databaseUserName": "iudx_user",
+      "databasePassword": "iudx@123",
+      "poolSize": "25",
+      "catalogueOptions": {
+        "catServerHost": "api.catalogue.iudx.io",
+        "catServerPort": "443"
+      }
+    },
+    {
+      "id": "iudx.aaa.server.registration.RegistrationVerticle",
+      "verticleInstances": 1,
+      "databaseIP": "139.59.80.176",
+      "databasePort": "5432",
+      "databaseName": "iudx",
+      "databaseUserName": "iudx_user",
+      "databasePassword": "iudx@123",
+      "poolSize": "25",
+      "keycloakUrl": "https://127.0.0.1:3000/auth",
+      "keycloakRealm": "some-realm",
+      "keycloakAdminClientId": "some-admin-client-id",
+      "keycloakAdminClientSecret": "f5800be0-258a-4cd2-820f-8128818ed70a",
+      "keycloakAdminPoolSize": "10"
+    },
+    {
+      "id": "iudx.aaa.server.token.TokenVerticle",
+      "verticleInstances": 1,
+      "authServerDomain": "auth.test.com",
+      "databaseIP": "139.59.80.176",
+      "databasePort": "5432",
+      "databaseName": "iudx",
+      "databaseUserName": "iudx_user",
+      "databasePassword": "iudx@123",
+      "poolSize": "5",
+      "keystorePath": "configs/keystore.jks",
+      "keystorePassword": "secret",
+      "keycloakOptions": {
+        "host": "keycloakHost",
+        "port": 8443,
+        "uri": "/auth/realms/demo/protocol/openid-connect/token",
+        "clientId": "keycloackClientId",
+        "clientSecret": "keycloackClientSecret"
+      }
+    },
+    {
+      "id": "iudx.aaa.server.admin.AdminVerticle",
+      "verticleInstances": 1,
+      "options": {
+        "authServerDomain": "foobar.iudx.io"
+      },
+      "databaseIP": "139.59.80.176",
+      "databasePort": "5432",
+      "databaseName": "iudx",
+      "databaseUserName": "iudx_user",
+      "databasePassword": "iudx@123",
+      "poolSize": "25",
+      "keycloakUrl": "https://127.0.0.1:3000/auth",
+      "keycloakRealm": "some-realm",
+      "keycloakAdminClientId": "some-admin-client-id",
+      "keycloakAdminClientSecret": "f5800be0-258a-4cd2-820f-8128818ed70a",
+      "keycloakAdminPoolSize": "10"
+    },
+    {
+      "id": "iudx.aaa.server.apiserver.ApiServerVerticle",
+      "ssl": true,
+      "keystorePath": "configs/keystore.jks",
+      "keystorePassword": "secret",
+      "verticleInstances": 1,
+      "databaseIP": "139.59.80.176",
+      "databasePort": "5432",
+      "databaseName": "iudx",
+      "databaseUserName": "iudx_user",
+      "databasePassword": "iudx@123",
+      "poolSize": "5",
+      "serverTimeoutMs": 5000,
+      "corsRegexString": "*",
+      "keycloakOptions": {
+        "site": "https://<host>:<port>/auth/realms/demo",
+        "clientId": "keycloakClientId",
+        "clientSecret": "keycloakClientSecret",
+        "jwtLeeway": 90
+      }
+    }
+  ]
 }
