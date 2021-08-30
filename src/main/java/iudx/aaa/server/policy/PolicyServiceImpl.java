@@ -375,7 +375,7 @@ public class PolicyServiceImpl implements PolicyService {
   }
 
   @Override
-  public PolicyService listPolicy(User user, Handler<AsyncResult<JsonObject>> handler) {
+  public PolicyService listPolicy(User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler) {
     // TODO Auto-generated method stub
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
     JsonObject response = new JsonObject();
@@ -670,9 +670,9 @@ public class PolicyServiceImpl implements PolicyService {
    * {@inheritDoc}
    */
   @Override
-  public PolicyService listPolicyNotification(User user, Handler<AsyncResult<JsonObject>> handler) {
+  public PolicyService listPolicyNotification(User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler) {
     
-    handler.handle(Future.succeededFuture(new JsonObject()));
+    handler.handle(Future.succeededFuture(data));
     return this;
   }
 

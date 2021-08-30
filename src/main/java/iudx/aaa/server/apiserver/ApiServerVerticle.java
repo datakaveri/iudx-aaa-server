@@ -5,6 +5,7 @@ import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.logging.log4j.LogManager;
@@ -33,6 +34,7 @@ import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.util.ClientAuthentication;
 import iudx.aaa.server.apiserver.util.FailureHandler;
 import iudx.aaa.server.apiserver.util.OIDCAuthentication;
+import iudx.aaa.server.apiserver.util.ProviderAuthentication;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.token.Constants;
@@ -145,6 +147,7 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     OIDCAuthentication oidcFlow = new OIDCAuthentication(vertx, pgPool, keycloakOptions);
     ClientAuthentication clientFlow = new ClientAuthentication(pgPool);
+    ProviderAuthentication providerAuth = new ProviderAuthentication(pgPool);
     FailureHandler failureHandler = new FailureHandler();
     
     RouterBuilder.create(vertx, "docs/openapi.yaml").onFailure(Throwable::printStackTrace)
@@ -211,6 +214,7 @@ public class ApiServerVerticle extends AbstractVerticle {
           
           // Get/lists the User policies
           routerBuilder.operation(GET_POLICIES)
+                       .handler(providerAuth)
                        .handler(this::listPolicyHandler)
                        .failureHandler(failureHandler);
           
@@ -226,6 +230,7 @@ public class ApiServerVerticle extends AbstractVerticle {
 
           // Lists all the policies related requests for user/provider
           routerBuilder.operation(GET_POLICIES_REQUEST)
+                       .handler(providerAuth)
                        .handler(this::getPolicyNotificationHandler)
                        .failureHandler(failureHandler);
           
@@ -522,7 +527,9 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void listPolicyHandler(RoutingContext context) {
     User user = context.get(USER);
-    policyService.listPolicy(user, handler -> {
+    JsonObject data = Optional.ofNullable((JsonObject)context.get(DATA)).orElse(new JsonObject());
+    
+    policyService.listPolicy(user, data, handler -> {
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {
@@ -580,8 +587,9 @@ public class ApiServerVerticle extends AbstractVerticle {
   private void getPolicyNotificationHandler(RoutingContext context) {
 
     User user = context.get(USER);
-
-    policyService.listPolicyNotification(user, handler -> {
+    JsonObject data = Optional.ofNullable((JsonObject)context.get(DATA)).orElse(new JsonObject());
+    
+    policyService.listPolicyNotification(user, data, handler -> {
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {

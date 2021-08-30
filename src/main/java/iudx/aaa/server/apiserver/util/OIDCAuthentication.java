@@ -76,7 +76,6 @@ public class OIDCAuthentication implements AuthenticationHandler {
         routingContext.end();
 
       }).compose(mapper -> {
-        LOGGER.info("Info: JWT authenticated");
         User cred = User.create(new JsonObject().put("access_token", token));
         return keycloak.userInfo(cred);
         /*
@@ -90,7 +89,7 @@ public class OIDCAuthentication implements AuthenticationHandler {
         routingContext.end();
 
       }).compose(mapper -> {
-        LOGGER.debug("Info: UserInfo fetched");
+        LOGGER.debug("Info: JWT authenticated; UserInfo fetched");
         String kId = mapper.getString(SUB);
         user.keycloakId(kId);
 

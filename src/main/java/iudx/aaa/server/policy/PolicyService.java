@@ -75,12 +75,13 @@ public interface PolicyService {
    * The listPolicy implements the policy list operation.
    * 
    * @param user which is a DataObject
+   * @param data which is a JsonObject
    * @param handler which is a Request Handler
    * @return PolicyService which is a Service
    */
 
   @Fluent
-  PolicyService listPolicy(User user, Handler<AsyncResult<JsonObject>> handler);
+  PolicyService listPolicy(User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * The verifyPolicy implements the policy list operation.
@@ -122,12 +123,13 @@ public interface PolicyService {
    * The listPolicyNotification implements the listing request for user and provider/delegate.
    * 
    * @param user which is a {@link User} DataObect
+   * @Param data which is a {@link JsonObject}
    * @param handler which is a Request Handler
    * @return PolicyService which is a Service
    */
 
   @Fluent
-  PolicyService listPolicyNotification(User user, Handler<AsyncResult<JsonObject>> handler);
+  PolicyService listPolicyNotification(User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * The updatePolicyNotification implements the updating resources access/status by provider/delegate.
