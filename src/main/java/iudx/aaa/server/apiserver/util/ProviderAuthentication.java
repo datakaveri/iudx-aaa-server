@@ -56,7 +56,8 @@ public class ProviderAuthentication implements Handler<RoutingContext> {
             .detail(dbHandler.cause().getLocalizedMessage()).build();
         routingContext.fail(new Throwable(rs.toJsonString()));
       } else if (dbHandler.succeeded()) {
-        if (dbHandler.result().isEmpty() || dbHandler.result().size() != 1) {
+        JsonObject results = dbHandler.result();
+        if (results.isEmpty()) {
           Response rs = new ResponseBuilder().status(401).type(URN_MISSING_AUTH_TOKEN)
               .title(ERR_DELEGATE).detail(ERR_DELEGATE).build();
           routingContext.fail(new Throwable(rs.toJsonString()));

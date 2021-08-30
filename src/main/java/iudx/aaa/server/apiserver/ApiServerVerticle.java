@@ -79,6 +79,7 @@ public class ApiServerVerticle extends AbstractVerticle {
 
   private long serverTimeout;
   private String corsRegex;
+  private String authServerDomain;
 
   /** Service addresses */
   private static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
@@ -112,6 +113,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     JsonObject keycloakOptions = config().getJsonObject(KEYCLOACK_OPTIONS);
     serverTimeout = Long.parseLong(config().getString(SERVER_TIMEOUT_MS));
     corsRegex = config().getString(CORS_REGEX);
+    authServerDomain = config().getString(AUTHSERVER_DOMAIN);
 
     /* Set Connection Object */
     if (connectOptions == null) {
