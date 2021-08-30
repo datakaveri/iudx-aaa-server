@@ -383,7 +383,7 @@ paths:
                     title: string
                     detail: string
       description: |-
-        Revoke the token associated with clientId. 
+        Revoke the token associated with clientId.
         <!--- (Commented out) Revoke token requires either token header or clientId/clientSecret header.---!>
       tags:
         - Token APIs
@@ -644,7 +644,7 @@ paths:
           - manage catalogue items
           - manage data on resource servers
           - manage policies
-          
+
         ## Client ID and Client Secret
         On successful creation of the user profile, the user would receive a client ID and a client secret. The client ID and client secret can be used instead of the OIDC flow to request for tokens. **The client secret is ONLY shown to the user here and can never be obtained again.**
 
@@ -1581,7 +1581,7 @@ paths:
           name: filter
           description: Filter the status of the Registration
       description: |-
-        Get all the provider registration details. This operation can be performed by an `admin` of the IUDX AAA server. 
+        Get all the provider registration details. This operation can be performed by an `admin` of the IUDX AAA server.
         The request can be filtered based on the status of registration using the query param `filter`.
         The various statuses are:
         - `pending`
@@ -2040,6 +2040,47 @@ paths:
                             name:
                               firstName: Someone
                               lastName: Person
+                example-2:
+                  value:
+                    type: string
+                    title: string
+                    results:
+                      policyBy:
+                        - user_id: string
+                          owner_id: string
+                          item_id: string
+                          item_type: string
+                          expiry_time: string
+                          constraints: {}
+                          cat_id: string
+                          user_details:
+                            email: string
+                            name:
+                              firstName: string
+                              lastName: string
+                          owner_details:
+                            email: string
+                            name:
+                              firstName: string
+                              lastName: string
+                      policyFor:
+                        - user_id: string
+                          owner_id: string
+                          item_id: string
+                          item_type: string
+                          expiry_time: string
+                          constraints: {}
+                          cat_id: string
+                          user_details:
+                            email: string
+                            name:
+                              firstName: string
+                              lastName: string
+                          owner_details:
+                            email: string
+                            name:
+                              firstName: string
+                              lastName: string
           headers:
             Content-Type:
               schema:
@@ -2221,74 +2262,52 @@ paths:
               uniqueItems: true
               x-examples:
                 example-1:
-                  - user_id: a13eb955-c691-4fd3-b200-f18bc78810b5
-                    res_id: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cf91/resource-group
-                    res_type: resource_group
-                    expiry_time: '2022-08-04T20:00:19+0000'
-                    constraints: {}
-                  - user_id: a13eb955-c691-4fd3-b200-f18bc78810b5
-                    res_id: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cf91/resource-group
-                    res_type: resource_group
-                    expiry_time: '2022-08-04T20:00:19+0000'
-                    constraints: {}
-                  - user_id: a13eb955-c691-4fd3-b200-f18bc78810b5
-                    res_id: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cf91/resource-group
-                    res_type: resource_group
-                    expiry_time: '2022-08-04T20:00:19+0000'
+                  - userId: 89bbe934-5f18-4f57-b68e-fb821ba77291
+                    itemId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-abcd
+                    itemType: resource_group
+                    expiryTime: '2021-08-30T21:10:06.834292'
                     constraints: {}
               items:
                 type: object
                 properties:
-                  user_id:
-                    type: string
-                    minLength: 36
-                    format: uuid
-                    maxLength: 36
-                  res_id:
+                  userId:
                     type: string
                     minLength: 1
-                  res_type:
+                  itemId:
                     type: string
                     minLength: 1
-                    enum:
-                      - resource_server
-                      - resource
-                      - resource_group
-                  expiry_time:
+                  itemType:
+                    type: string
+                    minLength: 1
+                  expiryTime:
                     type: string
                     minLength: 1
                   constraints:
                     type: object
                 required:
-                  - user_id
-                  - res_id
-                  - res_type
-                  - expiry_time
+                  - userId
+                  - itemId
+                  - itemType
                   - constraints
             examples:
               Create MultiplePolicies:
                 value:
-                  - user_id: b34eb955-c691-4fd3-b200-f18bc78810a2
-                    res_id: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
-                    res_type: resource_group
-                    expiry_time: '2022-08-04T20:00:19+0000'
+                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
+                    itemType: resource_group
+                    expiryTime: '2022-08-04T20:00:19+0000'
                     constraints: {}
-                  - user_id: b34eb955-c691-4fd3-b200-f18bc78810a2
-                    res_id: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cq21/resource-group
-                    res_type: resource_group
-                    expiry_time: '2022-08-04T20:00:19+0000'
-                    constraints: {}
-                  - user_id: b34eb955-c691-4fd3-b200-f18bc78810a2
-                    res_id: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cf31/resource-group
-                    res_type: resource_group
-                    expiry_time: '2022-08-04T20:00:19+0000'
+                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cq21/resource-group
+                    itemType: resource_group
+                    expiryTime: '2022-08-04T20:00:19+0000'
                     constraints: {}
               Create SinglePolicies:
                 value:
-                  - user_id: b34eb955-c691-4fd3-b200-f18bc78810a2
-                    res_id: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
-                    res_type: resource_group
-                    expiry_time: '2022-08-04T20:00:19+0000'
+                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
+                    itemType: resource_group
+                    expiryTime: '2022-08-04T20:00:19+0000'
                     constraints: {}
           application/xml:
             schema:

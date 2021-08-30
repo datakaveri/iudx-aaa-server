@@ -10,6 +10,7 @@ import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import iudx.aaa.server.configuration.Configuration;
+import iudx.aaa.server.registration.KcAdmin;
 import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,18 +19,20 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.UUID;
 
-import static iudx.aaa.server.policy.Constants.*;
+import static iudx.aaa.server.policy.Constants.URN_INVALID_ROLE;
 import static iudx.aaa.server.policy.TestRequest.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
-public class DeletePolicyTest {
-  static Future<UUID> policyId;
+public class CreatePolicyTest {
   private static final Logger LOGGER = LogManager.getLogger(VerifyPolicyTest.class);
+  static Future<UUID> policyId;
   private static Configuration config;
   /* Database Properties */
   private static String databaseIP;
@@ -43,7 +46,7 @@ public class DeletePolicyTest {
   private static PgConnectOptions connectOptions;
   private static PolicyService policyService;
   private static RegistrationService registrationService;
-  private static CatalogueClient  catalogueClient;
+  private static CatalogueClient catalogueClient = Mockito.mock(CatalogueClient.class);
   private static Vertx vertxObj;
 
   @BeforeAll
@@ -104,88 +107,21 @@ public class DeletePolicyTest {
   }
 
   @Test
-  @DisplayName("Testing Failure(ID not present))")
+  @DisplayName("Testing Failure(Role is consumer))")
   void resExistFailure(VertxTestContext testContext) {
-
-    policyService.deletePolicy(
-        ResExistFail,
-        allRolesUser,
+    policyService.createPolicy(
+            roleFailureReq,
+        consumerUser,
         testContext.succeeding(
             response ->
                 testContext.verify(
                     () -> {
                       JsonObject result = response;
-                      assertEquals(ID_NOT_PRESENT, result.getString("title"));
+                      assertEquals(URN_INVALID_ROLE, result.getString("title"));
                       testContext.completeNow();
                     })));
   }
 
-  @Test
-  @DisplayName("Testing Failure(user does not own resource)")
-  void resOwnFailure(VertxTestContext testContext) {
 
-    policyService.deletePolicy(
-        ResOwnFail,
-        ProviderUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      JsonObject result = response;
-                      assertEquals(INVALID_ROLE, result.getString("title"));
-                      testContext.completeNow();
-                    })));
-  }
 
-  @Test
-  @DisplayName("Testing Failure (delegate policy not present)")
-  void delPolicyFailure(VertxTestContext testContext) {
-
-    policyService.deletePolicy(
-        DelPolFail,
-        DelegateUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      JsonObject result = response;
-                      assertEquals(INVALID_DELEGATE_POL, result.getString("title"));
-                      testContext.completeNow();
-                    })));
-  }
-
-  @Test
-  @DisplayName("Testing Failure (not a delegate for owner)")
-  void delFailure(VertxTestContext testContext) {
-
-    policyService.deletePolicy(
-        DelFail,
-        DelegateUserFail,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      JsonObject result = response;
-                      assertEquals(INVALID_DELEGATE, result.getString("title"));
-                      testContext.completeNow();
-                    })));
-  }
-
-  @Test
-  @DisplayName("Testing successful deletion ")
-  void SuccessDel(VertxTestContext testContext) {
-    JsonObject obj = new JsonObject().put("id", policyId.result().toString());
-    JsonArray req = new JsonArray().add(obj);
-    policyService.deletePolicy(
-        req,
-        successProvider,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      JsonObject result = response;
-                      assertEquals(SUCC_TITLE_POLICY_DEL, result.getString("title"));
-                      testContext.completeNow();
-                    })));
-  }
 }

@@ -1,80 +1,78 @@
 package iudx.aaa.server.apiserver;
 
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import iudx.aaa.server.policy.CreatePolicyRequestConverter;
 
-/**
- * DataObjects for creating Policy for a User.
- *
- */
 @DataObject(generateConverter = true)
 public class CreatePolicyRequest {
+    private UUID userId;
+    private String itemId;
+    private String itemType;
+    private String expiryTime;
+    private JsonObject constraints;
 
-  UUID userId;
-  String resId;
-  String resType;
-  String expiryTime;
-  JsonObject constraints;
+    public String getUserId() {
+        return userId.toString();
+    }
 
-  public static List<CreatePolicyRequest> jsonArrayToList(JsonArray json) {
-    List<CreatePolicyRequest> arr = new ArrayList<CreatePolicyRequest>();
-    json.forEach(obj -> {
-      arr.add(new CreatePolicyRequest((JsonObject) obj));
-    });
-    return arr;
-  }
+    public void setUserId(String userId) {
+        this.userId = UUID.fromString(userId);
+    }
 
-  public CreatePolicyRequest(JsonObject json) {
-    CreatePolicyRequestConverter.fromJson(json, this);
-  }
+    public String getItemId() {
+        return itemId;
+    }
 
-  public JsonObject toJson() {
-    JsonObject obj = new JsonObject();
-    CreatePolicyRequestConverter.toJson(this, obj);
-    return obj;
-  }
+    public void setItemId(String itemId) {
+        this.itemId = itemId;
+    }
 
-  public UUID getUserId() {
-    return userId;
-  }
+    public String getItemType() {
+        return itemType;
+    }
 
-  public void setUserId(UUID userId) {
-    this.userId = userId;
-  }
+    public void setItemType(String itemType) {
+        this.itemType = itemType;
+    }
 
-  public String getResId() {
-    return resId;
-  }
+    public String getExpiryTime() {
+        return expiryTime;
+    }
 
-  public void setResId(String resId) {
-    this.resId = resId;
-  }
+    public void setExpiryTime(String expiryTime) {
+        this.expiryTime = expiryTime;
+    }
 
-  public String getResType() {
-    return resType;
-  }
+    public JsonObject getConstraints() {
+        return constraints;
+    }
 
-  public void setResType(String resType) {
-    this.resType = resType;
-  }
+    public void setConstraints(JsonObject constraints) {
+        this.constraints = constraints;
+    }
 
-  public String getExpiryTime() {
-    return expiryTime;
-  }
+    public CreatePolicyRequest(JsonObject json) {
+        CreatePolicyRequestConverter.fromJson(json, this);
+    }
 
-  public void setExpiryTime(String expiryTime) {
-    this.expiryTime = expiryTime;
-  }
+    public JsonObject toJson() {
+        JsonObject obj = new JsonObject();
+        CreatePolicyRequestConverter.toJson(this, obj);
+        return obj;
+    }
 
-  public JsonObject getConstraints() {
-    return constraints;
-  }
+    public static List<CreatePolicyRequest> jsonArrayToList(JsonArray json) {
+        List<CreatePolicyRequest> reg = new ArrayList<CreatePolicyRequest>();
+        json.forEach(obj -> {
+            reg.add(new CreatePolicyRequest((JsonObject) obj));
+        });
+        return reg;
+    }
 
-  public void setConstraints(JsonObject constraints) {
-    this.constraints = constraints;
-  }
 }

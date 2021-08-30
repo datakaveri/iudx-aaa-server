@@ -1,6 +1,7 @@
 package iudx.aaa.server.policy;
 
 import com.hazelcast.spi.impl.eventservice.impl.Registration;
+import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,10 +39,12 @@ public class PolicyVerticle extends AbstractVerticle {
   private PgPool pgclient;
   private PoolOptions poolOptions;
   private PgConnectOptions connectOptions;
+  private JsonObject catalogueOptions;
   private PostgresClient pgClient;
   private static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
   private PolicyService policyService;
   private RegistrationService registrationService;
+  private CatalogueClient catalogueClient;
   private static final Logger LOGGER = LogManager.getLogger(PolicyVerticle.class);
 
   /**
@@ -62,6 +65,8 @@ public class PolicyVerticle extends AbstractVerticle {
     databaseUserName = config().getString("databaseUserName");
     databasePassword = config().getString("databasePassword");
     poolSize = Integer.parseInt(config().getString("poolSize"));
+    catalogueOptions = config().getJsonObject("catalogueOptions");
+    //get options for catalogue client
 
     /* Set Connection Object */
     if (connectOptions == null) {
@@ -81,7 +86,8 @@ public class PolicyVerticle extends AbstractVerticle {
 
     PgPool pool = PgPool.pool(vertx,connectOptions, poolOptions);
     registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
-    policyService = new PolicyServiceImpl(pool,registrationService);
+    catalogueClient = new CatalogueClient(vertx,pool,catalogueOptions);
+    policyService = new PolicyServiceImpl(pool,registrationService,catalogueClient);
 
     new ServiceBinder(vertx).setAddress(POLICY_SERVICE_ADDRESS).register(PolicyService.class,
         policyService);
