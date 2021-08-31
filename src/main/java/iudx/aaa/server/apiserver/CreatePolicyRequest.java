@@ -7,7 +7,6 @@ import java.util.UUID;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import iudx.aaa.server.policy.CreatePolicyRequestConverter;
 
 @DataObject(generateConverter = true)
 public class CreatePolicyRequest {

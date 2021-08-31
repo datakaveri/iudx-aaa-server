@@ -86,6 +86,9 @@ public class Constants {
   public static final String ERR_DETAIL_NO_SUCH_API =
       "Refer to the " + ROUTE_DOC + " endpoint for documentation";
   public static final String KS_PARSE_ERROR = "Unable to parse KeyStore";
+  public static final String ERR_PROVDERID = "General request- Delegate";
+  public static final String INVALID_PROVERID = "Invalid providerId";
+  public static final String ERR_DELEGATE = "Invalid delegate request";
 
   /* Static JSON responses */
   public static final String JSON_TIMEOUT = "{\"type\":\"" + URN_MISSING_INFO + "\", \"title\":\""
@@ -112,6 +115,8 @@ public class Constants {
   public static final String PUB_KEY = "publicKey";
   public static final String CERTIFICATE = "cert";
   public static final String REQUEST = "request";
+  public static final String PROVIDER_ID = "providerId";
+  public static final String DATA = "data";
 
   /* Compose failure due to invalid token */
   public static final String INVALID_TOKEN_FAILED_COMPOSE = "INVALID_TOKEN";
@@ -132,5 +137,15 @@ public class Constants {
           + ".roles r ON u.id = r.user_id\n" + "LEFT JOIN " + DB_SCHEMA
           + ".users q ON u.id = q.id\n"
           + "where r.status='APPROVED' GROUP BY u.id, client_secret, keycloak_id";
+  
+  public static final String CHECK_DELEGATE =
+      "SELECT * FROM test.policies pol "
+      + "INNER JOIN test.delegations del ON "
+      + "pol.owner_id = del.owner_id AND pol.user_id = del.user_id "
+      + "WHERE del.user_id = $1 AND "
+      + "del.owner_id = $2 AND "
+      + "del.resource_server_id = pol.item_id AND "
+      + "pol.status = 'ACTIVE' AND "
+      + "pol.expiry_time > now()";
 
 }
