@@ -13,26 +13,100 @@ import java.util.UUID;
 public class TestRequest {
 
   // Requests for verify policy
-  public static JsonObject validVerifyPolicy =
+
+  public static JsonObject roleFailure =
+      new JsonObject()
+          .put("itemId", "example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group")
+          .put("itemType", "resource_group")
+          .put("role", "consumer")
+          .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+
+  public static JsonObject resFailure =
+      new JsonObject()
+          .put("itemId", "example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group/123")
+          .put("itemType", "resource")
+          .put("role", "provider")
+          .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5");
+
+  public static JsonObject resGrpFailure =
+      new JsonObject()
+          .put("itemId", "example.com/79e7bfa62fad6c765bac69154c2f24c94c95220b/resource-group")
+          .put("itemType", "resource_group")
+          .put("role", "provider")
+          .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5");
+
+  public static JsonObject consumerVerification =
+      new JsonObject()
+          .put("itemId", "example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group")
+          .put("itemType", "resource_group")
+          .put("role", "consumer")
+          .put("userId", "41afd50c-f1d8-40e3-8a6b-f983f2f477ad");
+
+  public static JsonObject providerUserFailure =
+      new JsonObject()
+          .put(
+              "itemId",
+              "example.com/79e7bfa62fad6c765bac69154c2f24c94c95220b/catalogue.iudx.io/catalogue/crud")
+          .put("itemType", "catalogue")
+          .put("role", "provider")
+          .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5");
+
+  public static JsonObject NoCataloguePolicy =
+      new JsonObject()
+          .put(
+              "itemId",
+              "datakaveri.org/f8dc5bbb151968101ad4596819a248d3e0ea20c0/catalogue.iudx.io/catalogue/crud")
+          .put("itemType", "catalogue")
+          .put("role", "provider")
+          .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+
+  public static JsonObject validProviderCat =
+      new JsonObject()
+          .put(
+              "itemId",
+              "example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/catalogue.iudx.io/catalogue/crud")
+          .put("itemType", "catalogue")
+          .put("role", "provider")
+          .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5");
+
+  public static JsonObject validProviderVerification =
+      new JsonObject()
+          .put("itemId", "example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group")
+          .put("itemType", "resource_group")
+          .put("role", "provider")
+          .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5");
+
+  public static JsonObject invalidCatDelegate =
+      new JsonObject()
+          .put(
+              "itemId",
+              "example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/catalogue.iudx.io/catalogue/crud")
+          .put("itemType", "resource_group")
+          .put("role", "delegate")
+          .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+
+  public static JsonObject invalidDelegate =
+      new JsonObject()
+          .put("itemId", "example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group")
+          .put("itemType", "resource_group")
+          .put("role", "delegate")
+          .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+
+  public static JsonObject NoCatalogueProviderPolicy =
+      new JsonObject()
+          .put(
+              "itemId",
+              "datakaveri.org/f8dc5bbb151968101ad4596819a248d3e0ea20c0/catalogue.iudx.io/catalogue/crud")
+          .put("itemType", "catalogue")
+          .put("role", "delegate")
+          .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+
+  public static JsonObject validDelegateVerification =
       new JsonObject()
           .put("itemId", "example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group")
           .put("itemType", "resource_group")
           .put("role", "delegate")
           .put("userId", "d34b1547-7281-4f66-b550-ed79f9bb0c36");
-
-  public static JsonObject policyRoleFailure =
-      new JsonObject()
-          .put("itemId", "example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group")
-          .put("itemType", "resource_group")
-          .put("role", "consumer")
-          .put("userId", "d03dba66-cf23-473f-93fd-db0a26265ef");
-
-  public static JsonObject policyFailure =
-      new JsonObject()
-          .put("itemId", "example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group")
-          .put("itemType", "resource_group")
-          .put("role", "consumer")
-          .put("userId", "e71ba781-78c1-4de1-ab62-65c19dc9ef55");
 
   // Requests for List Policy
   // List as a provider
@@ -51,7 +125,10 @@ public class TestRequest {
 
   // res does not exist
   public static User allRolesUser =
-      new User(new JsonObject().put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5")  .put("roles", new JsonArray().add(Roles.ADMIN)));
+      new User(
+          new JsonObject()
+              .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5")
+              .put("roles", new JsonArray().add(Roles.ADMIN)));
   public static JsonObject obj1 = new JsonObject().put("id", UUID.randomUUID());
   public static JsonObject obj2 = new JsonObject().put("id", UUID.randomUUID());
   public static JsonArray ResExistFail = new JsonArray().add(obj1).add(obj2);
@@ -127,7 +204,7 @@ public class TestRequest {
 
   public static JsonObject emptyCreateObject =
       new JsonObject()
-          .put("userId", "")
+          .put("userId", "d34b1547-7281-4f66-b550-ed79f9bb0c36")
           .put("resId", "")
           .put("resType", "")
           .put("expiry_time", "")

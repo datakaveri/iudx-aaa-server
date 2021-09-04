@@ -24,99 +24,196 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
 public class VerifyPolicyTest {
-    private static Logger LOGGER = LogManager.getLogger(VerifyPolicyTest.class);
+  private static Logger LOGGER = LogManager.getLogger(VerifyPolicyTest.class);
 
-    private static Configuration config;
+  private static Configuration config;
 
-    /* Database Properties */
-    private static String databaseIP;
-    private static int databasePort;
-    private static String databaseName;
-    private static String databaseUserName;
-    private static String databasePassword;
-    private static int poolSize;
-    private static PgPool pgclient;
-    private static PoolOptions poolOptions;
-    private static PgConnectOptions connectOptions;
-    private static PolicyService policyService;
-    private static RegistrationService registrationService;
-    private static CatalogueClient catalogueClient;
+  /* Database Properties */
+  private static String databaseIP;
+  private static int databasePort;
+  private static String databaseName;
+  private static String databaseUserName;
+  private static String databasePassword;
+  private static int poolSize;
+  private static PgPool pgclient;
+  private static PoolOptions poolOptions;
+  private static PgConnectOptions connectOptions;
+  private static PolicyService policyService;
+  private static RegistrationService registrationService;
+  private static CatalogueClient catalogueClient;
 
-    private static Vertx vertxObj;
+  private static Vertx vertxObj;
 
-    @BeforeAll
-    @DisplayName("Deploying Verticle")
-    static void startVertx(Vertx vertx,
-                           VertxTestContext testContext) {
-        config = new Configuration();
-        vertxObj = vertx;
-        JsonObject dbConfig = config.configLoader(0, vertx);
+  @BeforeAll
+  @DisplayName("Deploying Verticle")
+  static void startVertx(Vertx vertx, VertxTestContext testContext) {
+    config = new Configuration();
+    vertxObj = vertx;
+    JsonObject dbConfig = config.configLoader(0, vertx);
 
-        /* Read the configuration and set the postgres client properties. */
-        LOGGER.debug("Info : Reading config file");
+    /* Read the configuration and set the postgres client properties. */
+    LOGGER.debug("Info : Reading config file");
 
-        databaseIP = dbConfig.getString("databaseIP");
-        databasePort = Integer.parseInt(dbConfig.getString("databasePort"));
-        databaseName = dbConfig.getString("databaseName");
-        databaseUserName = dbConfig.getString("databaseUserName");
-        databasePassword = dbConfig.getString("databasePassword");
-        poolSize = Integer.parseInt(dbConfig.getString("poolSize"));
+    databaseIP = dbConfig.getString("databaseIP");
+    databasePort = Integer.parseInt(dbConfig.getString("databasePort"));
+    databaseName = dbConfig.getString("databaseName");
+    databaseUserName = dbConfig.getString("databaseUserName");
+    databasePassword = dbConfig.getString("databasePassword");
+    poolSize = Integer.parseInt(dbConfig.getString("poolSize"));
 
-        /* Set Connection Object */
-        if (connectOptions == null) {
-            connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
-                    .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword);
-        }
-
-        /* Pool options */
-        if (poolOptions == null) {
-            poolOptions = new PoolOptions().setMaxSize(poolSize);
-        }
-
-        /* Create the client pool */
-        pgclient = PgPool.pool(vertx, connectOptions, poolOptions);
-
-        policyService = new PolicyServiceImpl(pgclient,registrationService,catalogueClient);
-
-        testContext.completeNow();
-
+    /* Set Connection Object */
+    if (connectOptions == null) {
+      connectOptions =
+          new PgConnectOptions()
+              .setPort(databasePort)
+              .setHost(databaseIP)
+              .setDatabase(databaseName)
+              .setUser(databaseUserName)
+              .setPassword(databasePassword);
     }
 
-    @AfterAll
-    public static void finish(VertxTestContext testContext) {
-        LOGGER.info("Finishing....");
-        vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
+    /* Pool options */
+    if (poolOptions == null) {
+      poolOptions = new PoolOptions().setMaxSize(poolSize);
     }
 
-    @Test
-    @DisplayName("Testing Successful Policy verification")
-    void verifyPolicySuccess(VertxTestContext testContext) {
-        policyService.verifyPolicy(validVerifyPolicy,
-                testContext.succeeding(response -> testContext.verify(() -> {
-                    assertEquals(SUCCESS, response.getString(STATUS));
-                    testContext.completeNow();
-                })));
-    }
+    /* Create the client pool */
+    pgclient = PgPool.pool(vertx, connectOptions, poolOptions);
 
-    @Test
-    @DisplayName("Testing Failure in  policy verification(no matching role)")
-    void verifyPolicyRoleFailure(VertxTestContext testContext) {
-       policyService.verifyPolicy(policyRoleFailure,
-                testContext.failing(response -> testContext.verify(() -> {
-                    String result = response.getLocalizedMessage();
-                    assertEquals(ROLE_NOT_FOUND, result);
-                    testContext.completeNow();
-                })));
-    }
+    policyService = new PolicyServiceImpl(pgclient, registrationService, catalogueClient);
 
-    @Test
-    @DisplayName("Testing Failure in  policy verification(no policy defined)")
-    void verifyPolicyFailure(VertxTestContext testContext) {
-        policyService.verifyPolicy(policyFailure,
-                testContext.failing(response -> testContext.verify(() -> {
-                    String result = response.getLocalizedMessage();
-                    assertEquals(POLICY_NOT_FOUND, result);
-                    testContext.completeNow();
-                })));
-    }
+    testContext.completeNow();
+  }
+
+  @AfterAll
+  public static void finish(VertxTestContext testContext) {
+    LOGGER.info("Finishing....");
+    vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
+  }
+
+  @Test
+  @DisplayName("role does not match - failure")
+  void roleFailure(VertxTestContext testContext) {
+    policyService.verifyPolicy(
+        roleFailure,
+        testContext.failing(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(ROLE_NOT_FOUND, response.getLocalizedMessage());
+                      testContext.completeNow();
+                    })));
+  }
+
+  @Test
+  @DisplayName("Testing Successful Policy verification consumer")
+  void consumerPolicySuccess(VertxTestContext testContext) {
+    policyService.verifyPolicy(
+        consumerVerification,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(SUCCESS, response.getString(STATUS));
+                      testContext.completeNow();
+                    })));
+  }
+
+  @Test
+  @DisplayName("no match for email hash")
+  void InvalidProviderUser(VertxTestContext testContext) {
+    policyService.verifyPolicy(
+        providerUserFailure,
+        testContext.failing(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(NO_USER, response.getLocalizedMessage());
+                      testContext.completeNow();
+                    })));
+  }
+
+  @Test
+  @DisplayName("no policy by catalogue admin")
+  void NoAdminPolicy(VertxTestContext testContext) {
+    policyService.verifyPolicy(
+        NoCataloguePolicy,
+        testContext.failing(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(NO_ADMIN_POLICY, response.getLocalizedMessage());
+                      testContext.completeNow();
+                    })));
+  }
+
+  @Test
+  @DisplayName("Successful provider catalogue policy verification")
+  void ProviderCatPolicySuccess(VertxTestContext testContext) {
+    policyService.verifyPolicy(
+        validProviderCat,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(SUCCESS, response.getString(STATUS));
+                      testContext.completeNow();
+                    })));
+  }
+
+  @Test
+  @DisplayName("Successful provider  policy verification")
+  void ProviderPolicySuccess(VertxTestContext testContext) {
+    policyService.verifyPolicy(
+        validProviderVerification,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(SUCCESS, response.getString(STATUS));
+                      testContext.completeNow();
+                    })));
+  }
+
+  @Test
+  @DisplayName("not a delegate for the resource owner")
+  void InvalidDelegate(VertxTestContext testContext) {
+    policyService.verifyPolicy(
+        invalidDelegate,
+        testContext.failing(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(UNAUTHORIZED_DELEGATE, response.getLocalizedMessage());
+                      testContext.completeNow();
+                    })));
+  }
+
+  @Test
+  @DisplayName("not policy for user by cat admin")
+  void noCatAdminPolicy(VertxTestContext testContext) {
+    policyService.verifyPolicy(
+        NoCatalogueProviderPolicy,
+        testContext.failing(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(NO_ADMIN_POLICY, response.getLocalizedMessage());
+                      testContext.completeNow();
+                    })));
+  }
+
+  @Test
+  @DisplayName("testing successful delegate verification")
+  void validCatVerification(VertxTestContext testContext) {
+    policyService.verifyPolicy(
+        validDelegateVerification,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(SUCCESS, response.getString(STATUS));
+                      testContext.completeNow();
+                    })));
+  }
 }

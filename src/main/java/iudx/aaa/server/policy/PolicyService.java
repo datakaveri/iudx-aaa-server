@@ -83,6 +83,7 @@ public interface PolicyService {
   @Fluent
   PolicyService listPolicy(User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler);
 
+
   /**
    * The verifyPolicy implements the policy list operation.
    *
