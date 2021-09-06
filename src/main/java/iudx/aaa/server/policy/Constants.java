@@ -48,6 +48,7 @@ public class Constants {
   public static final String RESULTS = "results";
   public static final String CAT_ITEM_PATH = "/iudx/cat/v1/item";
   public static final String PROVIDER_ID = "provider_id";
+  public static final String NIL_UUID = "00000000-0000-0000-0000-000000000000";
 
   // catalogue result
   public static final String IUDX_RES_GRP = "iudx:ResourceGroup";
@@ -69,16 +70,26 @@ public class Constants {
   // Title
   public static final String SUCC_TITLE_POLICY_READ = "policy read";
   public static final String SUCC_TITLE_POLICY_DEL = "policy deleted";
+  public static final String SUCC_TITLE_LIST_DELEGS = "Delegations";
+  public static final String SUCC_TITLE_DELETE_DELE = "Deleted requested delegations";
   public static final String DELETE_FAILURE = "Cannot delete policy";
   public static final String INVALID_ROLE = "invalid role to perform operation";
   public static final String INVALID_DELEGATE_POL = "user does not have access to auth server";
   public static final String INVALID_DELEGATE = "user does not have access to resource";
+  public static final String ERR_TITLE_INVALID_ID = "Invalid delegation ID";
+  public static final String ERR_TITLE_INVALID_ROLES = "User does not have roles to use API";
+  public static final String ERR_TITLE_AUTH_DELE_DELETE = "Auth delegate may not delete auth delegations";
+  public static final String ERR_DETAIL_DEL_DELEGATE_ROLES =
+      "User with provider role or is an auth delegate may call the API";
+  public static final String ERR_DETAIL_LIST_DELEGATE_ROLES =
+      "User with provider/delegate role or is an auth delegate may call the API";
   // URN
   public static final String ID_NOT_PRESENT = "id does not exist";
   public static final String POLICY_SUCCESS = "urn:dx:as:Success";
   public static final String POLICY_FAILURE = "urn:dx:as:Failure";
   public static final String URN_INVALID_ROLE = "urn:dx:as:InvalidRole";
   public static final String URN_INVALID_DELEGATE = "urn:dx:as:InvalidDelegate";
+  public static final String URN_INVALID_INPUT = "urn:dx:as:InvalidInput";
   // future failure messages
   public static final String BAD_REQUEST = "bad request:";
   public static final String SERVER_NOT_PRESENT = "servers not present:";
@@ -92,6 +103,8 @@ public class Constants {
   public static final String NOT_RES_OWNER = "does not own the resource";
   public static final String NO_ADMIN_POLICY = "No admin policy";
   public static final String UNAUTHORIZED_DELEGATE = "Unauthorized";
+  public static final String COMPOSE_FAILURE = "COMPOSE_FAILURE";
+
   // verify policy queries
   public static final String GET_FROM_ROLES_TABLE =
           "Select role from test.roles where user_id = $1::UUID "
@@ -234,6 +247,27 @@ public class Constants {
           "select id from test.policies where user_id =$1::UUID "
                   + " and item_id =$2::UUID and item_type = $3::test.item_enum and owner_id = $4::UUID "
                   + " and status = $5::test.policy_status_enum and expiry_time > now()";
+
+  public static final String LIST_DELEGATE_AUTH_DELEGATE =
+      "SELECT d.id, d.owner_id, d.user_id, url, name AS server "
+          + "FROM test.delegations AS d JOIN test.resource_server ON"
+          + " d.resource_server_id = resource_server.id WHERE d.owner_id = $1::uuid AND url != $2::text AND d.status = 'ACTIVE'";
+
+  public static final String LIST_DELEGATE_AS_PROVIDER_DELEGATE =
+      "SELECT d.id, d.owner_id, d.user_id, url, name AS server "
+          + "FROM test.delegations AS d JOIN test.resource_server ON"
+          + " d.resource_server_id = resource_server.id"
+          + " WHERE d.status = 'ACTIVE' AND (d.owner_id = $1::uuid OR d.user_id = $1::uuid)";
+
+  public static final String GET_DELEGATIONS_BY_ID =
+      "SELECT d.id, url FROM test.delegations AS d JOIN test.resource_server ON"
+          + " d.resource_server_id = resource_server.id"
+          + " WHERE d.owner_id = $1::uuid AND d.id = ANY($2::uuid[]) AND d.status = 'ACTIVE'";
+
+  public static final String DELETE_DELEGATIONS =
+      "UPDATE test.delegations SET status = 'DELETED', updated_at = NOW()"
+      + " WHERE owner_id = $1::uuid AND id = ANY($2::uuid[])";
+
   // item types
   public enum itemTypes {
     RESOURCE_SERVER("RESOURCE_SERVER"),

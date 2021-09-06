@@ -245,7 +245,19 @@ public class ApiServerVerticle extends AbstractVerticle {
           routerBuilder.operation(PUT_POLICIES_REQUEST)
                        .handler(this::updatePolicyNotificationHandler)
                        .failureHandler(failureHandler);          
-          
+
+          // Get delegations by provider/delegate/auth delegate
+          routerBuilder.operation(GET_DELEGATIONS)
+                       .handler(providerAuth)
+                       .handler(this::listDelegationsHandler)
+                       .failureHandler(failureHandler);          
+
+          // Delete delegations by provider/delegate/auth delegate
+          routerBuilder.operation(DELETE_DELEGATIONS)
+                       .handler(providerAuth)
+                       .handler(this::deleteDelegationsHandler)
+                       .failureHandler(failureHandler);          
+
           /* TimeoutHandler needs to be added as rootHandler */
           routerBuilder.rootHandler(TimeoutHandler.create(serverTimeout));
 
@@ -632,6 +644,50 @@ public class ApiServerVerticle extends AbstractVerticle {
     User user = context.get(USER);
 
     policyService.updatelistPolicyNotification(request, user, handler -> {
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+
+  /**
+   * List delegations for provider/delegate/auth delegate
+   * 
+   * @param context
+   */
+  private void listDelegationsHandler(RoutingContext context) {
+
+    User user = context.get(USER);
+    JsonObject authDelegateDetails =
+        Optional.ofNullable((JsonObject) context.get(DATA)).orElse(new JsonObject());
+
+    policyService.listDelegation(user, authDelegateDetails, handler -> {
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+
+  /**
+   * 
+   * @param context
+   */
+
+  private void deleteDelegationsHandler(RoutingContext context) {
+
+    JsonObject jsonRequest = context.getBodyAsJson();
+    JsonArray arr = jsonRequest.getJsonArray(REQUEST); 
+    List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(arr);
+
+    User user = context.get(USER);
+    JsonObject authDelegateDetails =
+        Optional.ofNullable((JsonObject) context.get(DATA)).orElse(new JsonObject());
+
+    policyService.deleteDelegation(request, user, authDelegateDetails, handler -> {
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {
