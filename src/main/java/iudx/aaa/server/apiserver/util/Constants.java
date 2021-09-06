@@ -2,7 +2,7 @@ package iudx.aaa.server.apiserver.util;
 
 public class Constants {
   // Header params
-  public static final String HEADER_TOKEN = "token";
+  public static final String HEADER_AUTHORIZATION = "Authorization";
   public static final String HEADER_HOST = "Host";
   public static final String HEADER_ACCEPT = "Accept";
   public static final String HEADER_CONTENT_LENGTH = "Content-Length";
