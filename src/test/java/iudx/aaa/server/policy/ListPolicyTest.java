@@ -103,7 +103,7 @@ public class ListPolicyTest {
     void listPolicySuccessProvider(VertxTestContext testContext) {
 
         mockRegistrationFactory.setResponse("valid");
-        policyService.listPolicy(validListPolicyProvider,
+        policyService.listPolicy(validListPolicyProvider, new JsonObject(),
                 testContext.succeeding(response -> testContext.verify(() -> {
                     assertEquals(POLICY_SUCCESS, response.getString(TYPE));
                     testContext.completeNow();
@@ -116,7 +116,7 @@ public class ListPolicyTest {
     void listPolicySuccessConsumer(VertxTestContext testContext) {
 
         mockRegistrationFactory.setResponse("valid");
-        policyService.listPolicy(validListPolicyConsumer,
+        policyService.listPolicy(validListPolicyConsumer, new JsonObject(),
                 testContext.succeeding(response -> testContext.verify(() -> {
                     assertEquals(POLICY_SUCCESS, response.getString(TYPE));
                     testContext.completeNow();
@@ -128,7 +128,7 @@ public class ListPolicyTest {
     void listPolicySuccess(VertxTestContext testContext) {
 
         mockRegistrationFactory.setResponse("valid");
-        policyService.listPolicy(invalidListPolicy,
+        policyService.listPolicy(invalidListPolicy, new JsonObject(),
                 testContext.succeeding(response -> testContext.verify(() -> {
                     assertEquals(POLICY_SUCCESS, response.getString(TYPE));
                     testContext.completeNow();
@@ -140,7 +140,7 @@ public class ListPolicyTest {
     void listPolicyFailure(VertxTestContext testContext) {
 
         mockRegistrationFactory.setResponse("invalid");
-        policyService.listPolicy(validListPolicyProvider,
+        policyService.listPolicy(validListPolicyProvider, new JsonObject(),
                 testContext.failing(response -> testContext.verify(() -> {
                     assertEquals(INTERNALERROR, response.getMessage());
                     testContext.completeNow();
