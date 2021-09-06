@@ -383,7 +383,7 @@ paths:
                     title: string
                     detail: string
       description: |-
-        Revoke the token associated with clientId.
+        Revoke the token associated with clientId. 
         <!--- (Commented out) Revoke token requires either token header or clientId/clientSecret header.---!>
       tags:
         - Token APIs
@@ -644,7 +644,7 @@ paths:
           - manage catalogue items
           - manage data on resource servers
           - manage policies
-
+          
         ## Client ID and Client Secret
         On successful creation of the user profile, the user would receive a client ID and a client secret. The client ID and client secret can be used instead of the OIDC flow to request for tokens. **The client secret is ONLY shown to the user here and can never be obtained again.**
 
@@ -1581,7 +1581,7 @@ paths:
           name: filter
           description: Filter the status of the Registration
       description: |-
-        Get all the provider registration details. This operation can be performed by an `admin` of the IUDX AAA server.
+        Get all the provider registration details. This operation can be performed by an `admin` of the IUDX AAA server. 
         The request can be filtered based on the status of registration using the query param `filter`.
         The various statuses are:
         - `pending`
@@ -1788,47 +1788,6 @@ paths:
               schema:
                 description: ''
                 type: object
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:Success'
-                    title: Policy read
-                    results:
-                      policyBy:
-                        - user_id: a13eb132-c691-4fd3-b455-f18bc78819a2
-                          owner_id: a12cd922-c691-4fc6-b200-f18bc78810b5
-                          item_id: 04617a43-7e5d-4118-8773-1b6c85da14ed
-                          item_type: RESOURCE_GROUP
-                          expiry_time: '2022-06-15T09:07:16.034289'
-                          constraints: {}
-                          cat_id: example.com/79e7bfa62fad6c765bac69154c2f24c94c95221a/resource-group
-                          user_details:
-                            email: someone@example.com
-                            name:
-                              firstName: Someone
-                              lastName: Person
-                          owner_details:
-                            email: someone@example.com
-                            name:
-                              firstName: Someone
-                              lastName: Person
-                      policyFor:
-                        - user_id: a13eb132-c691-4fd3-b455-f18bc78819a2
-                          owner_id: a12cd922-c691-4fc6-b200-f18bc78810b5
-                          item_id: 04617a43-7e5d-4118-8773-1b6c85da14ed
-                          item_type: RESOURCE_GROUP
-                          expiry_time: '2022-06-15T09:07:16.034289'
-                          constraints: {}
-                          cat_id: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group
-                          user_details:
-                            email: someone@example.com
-                            name:
-                              firstName: Someone
-                              lastName: Person
-                          owner_details:
-                            email: someone@example.com
-                            name:
-                              firstName: Someone
-                              lastName: Person
                 properties:
                   type:
                     type: string
@@ -1837,209 +1796,137 @@ paths:
                     type: string
                     minLength: 1
                   results:
-                    type: object
-                    required:
-                      - policyBy
-                      - policyFor
-                    properties:
-                      policyBy:
-                        type: array
-                        uniqueItems: true
-                        minItems: 1
-                        items:
+                    type: array
+                    uniqueItems: true
+                    minItems: 1
+                    items:
+                      required:
+                        - id
+                        - item_id
+                        - item_type
+                        - expiry_time
+                        - cat_id
+                      properties:
+                        id:
+                          type: string
+                          minLength: 1
+                        item_id:
+                          type: string
+                          minLength: 1
+                        item_type:
+                          type: string
+                          minLength: 1
+                        expiry_time:
+                          type: string
+                          minLength: 1
+                        constraints:
+                          type: object
+                          properties: {}
+                          required: []
+                        cat_id:
+                          type: string
+                          minLength: 1
+                        owner:
                           type: object
                           properties:
-                            user_id:
+                            email:
                               type: string
                               minLength: 1
-                            owner_id:
-                              type: string
-                              minLength: 1
-                            item_id:
-                              type: string
-                              minLength: 1
-                            item_type:
-                              type: string
-                              minLength: 1
-                            expiry_time:
-                              type: string
-                              minLength: 1
-                            constraints:
-                              type: object
-                            cat_id:
-                              type: string
-                              minLength: 1
-                            user_details:
+                            name:
                               type: object
                               properties:
-                                email:
+                                firstName:
                                   type: string
                                   minLength: 1
-                                name:
-                                  type: object
-                                  required:
-                                    - firstName
-                                    - lastName
-                                  properties:
-                                    firstName:
-                                      type: string
-                                      minLength: 1
-                                    lastName:
-                                      type: string
-                                      minLength: 1
-                              required:
-                                - email
-                                - name
-                            owner_details:
-                              type: object
-                              properties:
-                                email:
+                                lastName:
                                   type: string
                                   minLength: 1
-                                name:
-                                  type: object
-                                  required:
-                                    - firstName
-                                    - lastName
-                                  properties:
-                                    firstName:
-                                      type: string
-                                      minLength: 1
-                                    lastName:
-                                      type: string
-                                      minLength: 1
                               required:
-                                - email
-                                - name
+                                - firstName
+                                - lastName
+                            id:
+                              type: string
+                              minLength: 1
                           required:
-                            - user_id
-                            - owner_id
-                            - item_id
-                            - item_type
-                            - expiry_time
-                            - cat_id
-                      policyFor:
-                        type: array
-                        uniqueItems: true
-                        minItems: 1
-                        items:
+                            - email
+                            - name
+                            - id
+                        user:
                           type: object
                           properties:
-                            user_id:
+                            email:
                               type: string
                               minLength: 1
-                            owner_id:
-                              type: string
-                              minLength: 1
-                            item_id:
-                              type: string
-                              minLength: 1
-                            item_type:
-                              type: string
-                              minLength: 1
-                            expiry_time:
-                              type: string
-                              minLength: 1
-                            constraints:
-                              type: object
-                            cat_id:
-                              type: string
-                              minLength: 1
-                            user_details:
+                            name:
                               type: object
                               properties:
-                                email:
+                                firstName:
                                   type: string
                                   minLength: 1
-                                name:
-                                  type: object
-                                  required:
-                                    - firstName
-                                    - lastName
-                                  properties:
-                                    firstName:
-                                      type: string
-                                      minLength: 1
-                                    lastName:
-                                      type: string
-                                      minLength: 1
-                              required:
-                                - email
-                                - name
-                            owner_details:
-                              type: object
-                              properties:
-                                email:
+                                lastName:
                                   type: string
                                   minLength: 1
-                                name:
-                                  type: object
-                                  required:
-                                    - firstName
-                                    - lastName
-                                  properties:
-                                    firstName:
-                                      type: string
-                                      minLength: 1
-                                    lastName:
-                                      type: string
-                                      minLength: 1
                               required:
-                                - email
-                                - name
+                                - firstName
+                                - lastName
+                            id:
+                              type: string
+                              minLength: 1
                           required:
-                            - user_id
-                            - owner_id
-                            - item_id
-                            - item_type
-                            - expiry_time
-                            - cat_id
+                            - email
+                            - name
+                            - id
                 required:
                   - type
                   - title
                   - results
+                x-examples:
+                  example-1:
+                    type: 'urn:dx:as:Success'
+                    title: Delegations
+                    results:
+                      - id: 5882036e-a731-42fe-a77c-ecf3f3148999
+                        item_id: 04617a43-7e5d-4118-8773-1b6c85da14ed
+                        item_type: RESOURCE_GROUP
+                        expiry_time: '2022-06-15T09:07:16.034289'
+                        constraints: {}
+                        cat_id: example.com/79e7bfa62fad6c765bac69154c2f24c94c95221a/resource-group
+                        owner:
+                          email: someone@example.com
+                          name:
+                            firstName: Someone
+                            lastName: Person
+                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                        user:
+                          email: aman.asif@datakaveri.org
+                          name:
+                            firstName: Aman
+                            lastName: Asif
+                          id: d1262b13-1cbe-4b66-a9b2-96df86437683
               examples:
                 ListPolicies-Success:
                   value:
                     type: 'urn:dx:as:Success'
-                    title: Policy read
+                    title: Delegations
                     results:
-                      policyBy:
-                        - user_id: a13eb132-c691-4fd3-b455-f18bc78819a2
-                          owner_id: a12cd922-c691-4fc6-b200-f18bc78810b5
-                          item_id: 04617a43-7e5d-4118-8773-1b6c85da14ed
-                          item_type: RESOURCE_GROUP
-                          expiry_time: '2022-06-15T09:07:16.034289'
-                          constraints: {}
-                          cat_id: example.com/79e7bfa62fad6c765bac69154c2f24c94c95221a/resource-group
-                          user_details:
-                            email: someone@example.com
-                            name:
-                              firstName: Someone
-                              lastName: Person
-                          owner_details:
-                            email: someone@example.com
-                            name:
-                              firstName: Someone
-                              lastName: Person
-                      policyFor:
-                        - user_id: a13eb132-c691-4fd3-b455-f18bc78819a2
-                          owner_id: a12cd922-c691-4fc6-b200-f18bc78810b5
-                          item_id: 04617a43-7e5d-4118-8773-1b6c85da14ed
-                          item_type: RESOURCE_GROUP
-                          expiry_time: '2022-06-15T09:07:16.034289'
-                          constraints: {}
-                          cat_id: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group
-                          user_details:
-                            email: someone@example.com
-                            name:
-                              firstName: Someone
-                              lastName: Person
-                          owner_details:
-                            email: someone@example.com
-                            name:
-                              firstName: Someone
-                              lastName: Person
+                      - id: 5882036e-a731-42fe-a77c-ecf3f3148999
+                        item_id: 04617a43-7e5d-4118-8773-1b6c85da14ed
+                        item_type: RESOURCE_GROUP
+                        expiry_time: '2022-06-15T09:07:16.034289'
+                        constraints: {}
+                        cat_id: example.com/79e7bfa62fad6c765bac69154c2f24c94c95221a/resource-group
+                        owner:
+                          email: someone@example.com
+                          name:
+                            firstName: Someone
+                            lastName: Person
+                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                        user:
+                          email: aman.asif@datakaveri.org
+                          name:
+                            firstName: Aman
+                            lastName: Asif
+                          id: d1262b13-1cbe-4b66-a9b2-96df86437683
                 example-2:
                   value:
                     type: string
@@ -2120,6 +2007,11 @@ paths:
           name: Authorization
           description: Keycloak Issued token
           required: true
+        - schema:
+            type: string
+          in: header
+          description: 'User ID of the provider, if an auth delegate wishes to view delegations of their provider'
+          name: providerId
       security:
         - authorization: []
     parameters: []
@@ -2318,6 +2210,532 @@ paths:
         - Policies APIs
       security:
         - authorization: []
+  /auth/v1/policies/delegations:
+    get:
+      summary: Get Delegations
+      responses:
+        '200':
+          description: 'Successfully list delegations. If the user does not have any valid delegations, the `results` array is empty.'
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+                x-examples:
+                  example-1:
+                    type: 'urn:dx:as:Success'
+                    title: Delegations
+                    results:
+                      - id: 0bb3cd2b-331a-474c-8107-becdcbdb0b41
+                        url: foobar.iudx.io
+                        resource_server: Foobar
+                        owner:
+                          email: someone@example.com
+                          name:
+                            firstName: Someone
+                            lastName: Person
+                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                        user:
+                          email: individual@example.com
+                          name:
+                            firstName: Indiv
+                            lastName: Vidual
+                          id: d34b1547-7281-4f66-b550-ed79f9bb0c36
+                      - id: 8f79dec9-a327-439c-b00b-731fea264af4
+                        url: foobar.iudx.io
+                        resource_server: Foobar
+                        owner:
+                          email: someone@example.com
+                          name:
+                            firstName: Someone
+                            lastName: Person
+                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                        user:
+                          email: someone@example.com
+                          name:
+                            firstName: Someone
+                            lastName: Person
+                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                properties:
+                  type:
+                    type: string
+                    minLength: 1
+                  title:
+                    type: string
+                    minLength: 1
+                  results:
+                    type: array
+                    uniqueItems: true
+                    minItems: 0
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          minLength: 1
+                        url:
+                          type: string
+                          minLength: 1
+                        server:
+                          type: string
+                          minLength: 1
+                        owner:
+                          type: object
+                          properties:
+                            email:
+                              type: string
+                              minLength: 1
+                            name:
+                              type: object
+                              required:
+                                - firstName
+                                - lastName
+                              properties:
+                                firstName:
+                                  type: string
+                                  minLength: 1
+                                lastName:
+                                  type: string
+                                  minLength: 1
+                            id:
+                              type: string
+                              minLength: 1
+                          required:
+                            - email
+                            - name
+                            - id
+                        user:
+                          type: object
+                          properties:
+                            email:
+                              type: string
+                              minLength: 1
+                            name:
+                              type: object
+                              required:
+                                - firstName
+                                - lastName
+                              properties:
+                                firstName:
+                                  type: string
+                                  minLength: 1
+                                lastName:
+                                  type: string
+                                  minLength: 1
+                            id:
+                              type: string
+                              minLength: 1
+                          required:
+                            - email
+                            - name
+                            - id
+                      required:
+                        - id
+                        - url
+                        - server
+                required:
+                  - type
+                  - title
+                  - results
+              examples:
+                Success:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: Delegations
+                    results:
+                      - id: 0bb3cd2b-331a-474c-8107-becdcbdb0b41
+                        url: foobar.iudx.io
+                        server: Foobar
+                        owner:
+                          email: someone@example.com
+                          name:
+                            firstName: Someone
+                            lastName: Person
+                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                        user:
+                          email: individual@example.com
+                          name:
+                            firstName: Indiv
+                            lastName: Vidual
+                          id: d34b1547-7281-4f66-b550-ed79f9bb0c36
+                      - id: 8f79dec9-a327-439c-b00b-731fea264af4
+                        url: foobar.iudx.io
+                        server: Foobar
+                        owner:
+                          email: someone@example.com
+                          name:
+                            firstName: Someone
+                            lastName: Person
+                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                        user:
+                          email: someone@example.com
+                          name:
+                            firstName: Someone
+                            lastName: Person
+                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                User does not have any valid delegations:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: Delegations
+                    results: []
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+        '400':
+          description: '- Invalid `providerId` header'
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Example:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Malformed request/missing or malformed request parameters
+                    detail: '[Bad Request] Validation error for parameter providerId in location HEADER: provided string should have size >= 36'
+        '401':
+          description: |-
+            - Unauthorized - `token` invalid/expired
+            - `providerId` does not match a provider who has assigned the user as a Auth delegate OR is blank
+            - User does have the `provider` or `delegate` roles
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+              examples:
+                Invalid.expired token:
+                  value:
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
+                Invalid providerId - no delegation exists:
+                  value:
+                    type: 'urn:dx:as:MissingAuthenticationToken'
+                    title: Invalid delegate request
+                    detail: Invalid delegate request
+                User does not have required roles:
+                  value:
+                    type: 'urn:dx:as:InvalidRole'
+                    title: User does not have roles to use API
+                    detail: User with provider/delegate role or is an auth delegate may call the API
+      operationId: get-auth-v1-policies-delegations
+      description: |-
+        Get delegations related to a particular user. The response depends upon the roles that the user has:
+        - `provider` : returns all delegations created by the provider/auth delegate of the provider
+        - `delegate` : returns all providers who have assigned them as delegates for certain servers
+
+        ## Auth delegate
+        An auth delegate may use the API to view delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
+
+        **NOTE: An auth delegate may not view any delegations related to the auth server.**
+      parameters:
+        - schema:
+            type: string
+            maxLength: 1500
+            minLength: 1
+            example: Bearer <JWT>
+          in: header
+          name: Authorization
+          description: Keycloak Issued token
+          required: true
+        - schema:
+            type: string
+            format: uuid
+            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+            minLength: 36
+            maxLength: 36
+          in: header
+          name: providerId
+          description: 'User ID of the provider, if an auth delegate wishes to view delegations of their provider'
+      security:
+        - authorization: []
+      tags:
+        - Delegation APIs
+    parameters: []
+    delete:
+      summary: Delete Delegations
+      operationId: delete-auth-v1-policies-delegations
+      responses:
+        '200':
+          description: Successfully deleted the requested delegations
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+                x-examples:
+                  example-1:
+                    type: 'urn:dx:as:Success'
+                    title: Deleted requested delegations
+                    results: {}
+                properties:
+                  type:
+                    type: string
+                    minLength: 1
+                  title:
+                    type: string
+                    minLength: 1
+                  results:
+                    type: object
+                required:
+                  - type
+                  - title
+              examples:
+                Example:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: Deleted requested delegations
+                    results: {}
+        '400':
+          description: |-
+            - Invalid `providerId` header
+            - Invalid or malformed request
+            - An invalid/deleted delegation ID is sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Bad providerId header:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Malformed request/missing or malformed request parameters
+                    detail: '[Bad Request] Validation error for parameter providerId in location HEADER: provided string should have size >= 36'
+                Invalid/deleted delegation ID:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Invalid delegation ID
+                    detail: 5dd1c776-8ba6-4272-b157-0a5de2035355
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+        '401':
+          description: |-
+            - Unauthorized - `token` invalid/expired
+            - `providerId` does not match a provider who has assigned the user as a Auth delegate OR is blank
+            - User does have the `provider` role or is not an auth delegate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+              examples:
+                Invalid/Expired token:
+                  value:
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
+                Invalid providerId - no delegation exists:
+                  value:
+                    type: 'urn:dx:as:MissingAuthenticationToken'
+                    title: Invalid delegate request
+                    detail: Invalid delegate request
+                User does not have valid roles:
+                  value:
+                    type: 'urn:dx:as:InvalidRole'
+                    title: User does not have roles to use API
+                    detail: User with provider role or is an auth delegate may call the API
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+        '403':
+          description: '- If an auth delegate attempts to delete an auth delegation'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Example:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Auth delegate may not delete auth delegations
+                    detail: 8ff57971-10d9-4bc6-ab3b-87dc328c72ce
+      description: |
+        A provider may delete delegations created by them. 
+
+        ## Auth delegate
+        An auth delegate may use the API to delete delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
+
+        **NOTE: An auth delegate may not delete any delegations related to the auth server.**
+      parameters:
+        - schema:
+            type: string
+            maxLength: 1500
+            minLength: 1
+            example: Bearer <JWT>
+          in: header
+          name: Authorization
+          description: Keycloak Issued token
+          required: true
+        - schema:
+            type: string
+            format: uuid
+          in: header
+          name: providerId
+          description: 'User ID of the provider, if an auth delegate wishes to view delegations of their provider'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ''
+              x-examples:
+                example-1:
+                  - id: 1e435fcb-11ce-4f4d-94c0-adf339932ba4
+                  - id: 7d50c547-9f36-4daa-bdc6-cca3c932379d
+              properties:
+                request:
+                  type: array
+                  minItems: 1
+                  uniqueItems: true
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+                        minLength: 36
+                        maxLength: 36
+                        format: uuid
+                    required:
+                      - id
+              required:
+                - request
+            examples:
+              Example:
+                value:
+                  request:
+                    - id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+        description: The body is a JSON object with a JSON array containing the delegation IDs. The IDs can be obtained from the `GET /auth/v1/policies/delegations` API
+      security:
+        - authorization: []
+      tags:
+        - Delegation APIs
+    post:
+      summary: Create Delegations - DRAFT
+      operationId: post-auth-v1-policies-delegations
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+        '401':
+          description: '- Unauthorized - `token` invalid/expired'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+      description: Create new delegations
+      parameters:
+        - schema:
+            type: string
+            maxLength: 1500
+            minLength: 1
+            example: Bearer <JWT>
+          in: header
+          name: Authorization
+          description: Keycloak Issued token
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              description: ''
+              minItems: 1
+              uniqueItems: true
+              x-examples:
+                example-1:
+                  - userId: 89bbe934-5f18-4f57-b68e-fb821ba77291
+                    itemId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-abcd
+                    itemType: resource_group
+                    expiryTime: '2021-08-30T21:10:06.834292'
+                    constraints: {}
+              items:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                    minLength: 1
+                  itemId:
+                    type: string
+                    minLength: 1
+                  itemType:
+                    type: string
+                    minLength: 1
+                  expiryTime:
+                    type: string
+                    minLength: 1
+                  constraints:
+                    type: object
+                required:
+                  - userId
+                  - itemId
+                  - itemType
+                  - constraints
+            examples:
+              Create MultiplePolicies:
+                value:
+                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
+                    itemType: resource_group
+                    expiryTime: '2022-08-04T20:00:19+0000'
+                    constraints: {}
+                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cq21/resource-group
+                    itemType: resource_group
+                    expiryTime: '2022-08-04T20:00:19+0000'
+                    constraints: {}
+              Create SinglePolicies:
+                value:
+                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
+                    itemType: resource_group
+                    expiryTime: '2022-08-04T20:00:19+0000'
+                    constraints: {}
+          application/xml:
+            schema:
+              type: object
+              properties: {}
+        description: Request body will be JsonArray having or many objects
+      security:
+        - authorization: []
+      tags:
+        - Delegation APIs
   /auth/v1/policies/requests:
     get:
       summary: List Requests
