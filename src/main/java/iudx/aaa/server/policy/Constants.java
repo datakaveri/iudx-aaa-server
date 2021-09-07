@@ -22,7 +22,7 @@ public class Constants {
   public static final String POLICYBY = "policyBy";
   public static final String POLICYFOR = "policyFor";
   public static final String DESCRIPTION = "description";
-  public static final String INTERNALERROR = "internal server error";
+  public static final String INTERNALERROR = "Internal server error";
   public static final String TYPE = "type";
   public static final String ID = "id";
   public static final String RES_SERVER = "resServer";
@@ -104,6 +104,8 @@ public class Constants {
   public static final String NO_ADMIN_POLICY = "No admin policy";
   public static final String UNAUTHORIZED_DELEGATE = "Unauthorized";
   public static final String COMPOSE_FAILURE = "COMPOSE_FAILURE";
+  
+  public static final String LOG_DB_ERROR = "Fail: Databse query; ";
 
   // verify policy queries
   public static final String GET_FROM_ROLES_TABLE =
@@ -267,6 +269,13 @@ public class Constants {
   public static final String DELETE_DELEGATIONS =
       "UPDATE test.delegations SET status = 'DELETED', updated_at = NOW()"
       + " WHERE owner_id = $1::uuid AND id = ANY($2::uuid[])";
+  
+  public static final String DB_SCHEMA = "test";
+  public static final String CREATE_NOTIFI_POLICY_REQUEST =
+      "INSERT INTO "+ DB_SCHEMA +".access_requests (user_id, item_id,item_type, owner_id, status, "
+      + "expiry_duration, constraints, created_at, updated_at)\n"
+      + "VALUES ($1::UUID, $2::UUID, $3::test.item_enum,$4::UUID,$5::test.acc_reqs_status_enum,"
+      + "$6,$7::jsonb, now() ,now());";
 
   // item types
   public enum itemTypes {

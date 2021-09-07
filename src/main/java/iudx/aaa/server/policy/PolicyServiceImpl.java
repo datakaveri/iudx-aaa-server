@@ -18,12 +18,15 @@ import iudx.aaa.server.apiserver.DeleteDelegationRequest;
 import iudx.aaa.server.apiserver.DeletePolicyRequest;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
+import iudx.aaa.server.apiserver.RoleStatus;
+import iudx.aaa.server.policy.Constants.itemTypes;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.UpdatePolicyNotification;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.common.base.CaseFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.HashMap;
@@ -33,8 +36,12 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
-
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.Duration;
 import static iudx.aaa.server.policy.Constants.*;
+import static iudx.aaa.server.token.Constants.INVALID_RS_URL;
+import static iudx.aaa.server.token.Constants.URN_INVALID_INPUT;
 
 /**
  * The Policy Service Implementation.
@@ -952,8 +959,79 @@ public class PolicyServiceImpl implements PolicyService {
   @Override
   public PolicyService createPolicyNotification(
       List<CreatePolicyNotification> request, User user, Handler<AsyncResult<JsonObject>> handler) {
+    
+    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+    
+    List<Roles> roles = user.getRoles();
 
-    handler.handle(Future.succeededFuture(new JsonObject()));
+    if (!roles.contains(Roles.DELEGATE) && !roles.contains(Roles.CONSUMER)) {
+      Response r = new Response.ResponseBuilder().type(INVALID_ROLE).title(URN_INVALID_ROLE)
+          .detail(INVALID_ROLE).status(403).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
+
+    List<String> resServerIds = request.stream()
+        .filter(tagObject -> tagObject.getItemType().toUpperCase()
+            .equals(itemTypes.RESOURCE_SERVER.toString()))
+        .map(CreatePolicyNotification::getItemId)
+        .collect(Collectors.toList());
+
+    List<String> resGrpIds = request.stream()
+        .filter(tagObject -> tagObject.getItemType().toUpperCase()
+            .equals(itemTypes.RESOURCE_GROUP.toString()))
+        .map(CreatePolicyNotification::getItemId)
+        .collect(Collectors.toList());
+    
+
+    List<String> resIds = request.stream()
+        .filter(tagObject -> tagObject.getItemType().toUpperCase().equals(itemTypes.RESOURCE.toString()))
+        .map(CreatePolicyNotification::getItemId)
+        .collect(Collectors.toList());
+
+    Map<String, List<String>> catItem = new HashMap<>();
+
+    if (resServerIds.size() > 0) {
+      catItem.put(RES_SERVER, resServerIds);
+    } else {
+      if (resGrpIds.size() > 0) {
+        catItem.put(RES_GRP, resGrpIds);
+      }
+      if (resIds.size() > 0) {
+        catItem.put(RES, resIds);
+      }
+    }
+    
+    Future<Map<String, UUID>> reqCatItem =
+        catalogueClient.checkReqItems(catItem, user.getUserId());
+    Future<Map<String, UUID>> ownerId = catalogueClient.getOwnerId(catItem);
+    
+    CompositeFuture.all(reqCatItem, ownerId).onComplete(dbHandler -> {
+      
+      if (dbHandler.failed()) {
+        LOGGER.error("Fail: " + NO_RES_SERVER);
+        Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+            .title(NO_RES_SERVER).detail(NO_RES_SERVER).build();
+        handler.handle(Future.succeededFuture(resp.toJson()));
+        return;
+      }
+
+      if (dbHandler.succeeded()) {
+        Future<List<Tuple>> tuples = mapTuple(request, reqCatItem.result(), ownerId.result(), user);
+        tuples.onSuccess(resHandler -> {
+          pool.withTransaction(conn -> conn.preparedQuery(CREATE_NOTIFI_POLICY_REQUEST)
+              .executeBatch(resHandler).onFailure(insertHandler -> {
+                System.out.println(insertHandler);
+              }));
+        }).onFailure(failureHandler -> {
+          LOGGER.error(LOG_DB_ERROR + failureHandler.getLocalizedMessage());
+          Response resp = new ResponseBuilder().status(500).type(URN_INVALID_INPUT)
+              .title(INTERNALERROR).detail(INTERNALERROR).build();
+          handler.handle(Future.succeededFuture(resp.toJson()));
+          return;
+        });
+      }
+    });
     return this;
   }
 
@@ -1122,6 +1200,45 @@ public class PolicyServiceImpl implements PolicyService {
         });
 
     return this;
+  }
+  
+  /**
+   * Create/map objects, fields to List<tuple>.
+   * 
+   * @param request
+   * @param resourceId
+   * @param ownerId
+   * @param user
+   * @return List<Tuple>
+   */
+  Future<List<Tuple>> mapTuple(List<CreatePolicyNotification> request, Map<String, UUID> resourceId,
+      Map<String, UUID> ownerIds, User user) {
+
+    Promise<List<Tuple>> promise = Promise.promise();
+    List<Tuple> tuples = new ArrayList<>();
+
+    String userId = user.getUserId();
+    try {
+      for (CreatePolicyNotification each : request) {
+
+        String catId = each.getItemId();
+        UUID itemId = resourceId.get(catId);
+        UUID ownerId = ownerIds.get(catId);
+
+        String status = RoleStatus.PENDING.name();
+        String itemType = each.getItemType().toUpperCase();
+        
+        Duration duration = DatatypeFactory.newInstance().newDuration(each.getExpiryDuration());
+        JsonObject constraints = each.getConstraints();
+
+        tuples.add(Tuple.of(userId, itemId, itemType, ownerId, status, each.getExpiryDuration(), constraints));
+      }
+    } catch (DatatypeConfigurationException e) {
+      promise.fail(e.getLocalizedMessage());
+    }
+
+    promise.complete(tuples);
+    return promise.future();
   }
 
 }
