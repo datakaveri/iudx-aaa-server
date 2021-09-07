@@ -51,7 +51,8 @@ import iudx.aaa.server.registration.Utils;
 
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
 public class ListDelegationTest {
-  private static Logger LOGGER = LogManager.getLogger(iudx.aaa.server.policy.ListDelegationTest.class);
+  private static Logger LOGGER =
+      LogManager.getLogger(iudx.aaa.server.policy.ListDelegationTest.class);
 
   private static Configuration config;
 
@@ -164,7 +165,7 @@ public class ListDelegationTest {
      */
 
     mockRegistrationFactory = new MockRegistrationFactory();
-    CompositeFuture.all(orgIdFut, providerAdmin, delegate, consumer).onSuccess(res -> {
+    CompositeFuture.all(orgIdFut, providerAdmin, delegate, consumer).compose(res -> {
 
       UUID apId = UUID.fromString(providerAdmin.result().getString("userId"));
       UUID deleId = UUID.fromString(delegate.result().getString("userId"));
@@ -175,9 +176,9 @@ public class ListDelegationTest {
       Collector<Row, ?, Map<String, UUID>> serverIds =
           Collectors.toMap(row -> row.getString("url"), row -> row.getUUID("id"));
 
-      pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_ADMIN_SERVER).executeBatch(servers)
-          .compose(succ -> conn.preparedQuery(SQL_GET_SERVER_IDS).collecting(serverIds)
-              .execute(getServId).map(r -> r.value()))
+      return pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_ADMIN_SERVER)
+          .executeBatch(servers).compose(succ -> conn.preparedQuery(SQL_GET_SERVER_IDS)
+              .collecting(serverIds).execute(getServId).map(r -> r.value()))
           .map(i -> {
 
             return List.of(Tuple.of(apId, deleId, i.get(DUMMY_SERVER), status.ACTIVE.toString()),
@@ -185,6 +186,8 @@ public class ListDelegationTest {
                 Tuple.of(apId, deleId, i.get(AUTH_SERVER_URL), status.ACTIVE.toString()));
 
           }).compose(j -> conn.preparedQuery(SQL_CREATE_DELEG).executeBatch(j)));
+
+    }).onSuccess(r -> {
 
       registrationService = mockRegistrationFactory.getInstance();
       policyService = new PolicyServiceImpl(pool, registrationService, catalogueClient);
