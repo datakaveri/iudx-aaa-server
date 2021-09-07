@@ -256,7 +256,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
       JsonArray clients = new JsonArray().add(clientDetails);
       JsonObject payload =
-          u.toJson().put(RESP_CLIENT_ARR, clients).put(RESP_EMAIL, validation.result());
+          u.toJsonResponse().put(RESP_CLIENT_ARR, clients).put(RESP_EMAIL, validation.result());
 
       if (phone != NIL_PHONE) {
         payload.put(RESP_PHONE, phone);
@@ -275,7 +275,8 @@ public class RegistrationServiceImpl implements RegistrationService {
           .objectResults(payload).build();
       handler.handle(Future.succeededFuture(r.toJson()));
 
-      LOGGER.info("Created user profile for " + userId.result());
+      LOGGER.info("Created user profile for " + userId.result() + " with roles "
+          + request.getRoles().toString());
     }).onFailure(e -> {
       if (e.getMessage().equals(COMPOSE_FAILURE)) {
         return; // do nothing
@@ -333,7 +334,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         return;
       }
 
-      JsonObject response = user.toJson();
+      JsonObject response = user.toJsonResponse();
       response.put(RESP_EMAIL, emailId);
       response.put(RESP_CLIENT_ARR, new JsonArray(clients));
 
@@ -489,7 +490,7 @@ public class RegistrationServiceImpl implements RegistrationService {
           .name(user.getName().get("firstName"), user.getName().get("lastName"))
           .roles(approvedRoles).keycloakId(user.getKeycloakId()).userId(user.getUserId()).build();
 
-      JsonObject response = u.toJson();
+      JsonObject response = u.toJsonResponse();
       response.put(RESP_EMAIL, email.result());
       response.put(RESP_CLIENT_ARR, new JsonArray(clients));
 
@@ -502,6 +503,9 @@ public class RegistrationServiceImpl implements RegistrationService {
       if (details.getString("url") != null) {
         response.put(RESP_ORG, details);
       }
+
+      LOGGER.info("Updated user profile for " + u.getUserId().toString() + " with roles "
+          + request.getRoles().toString());
 
       Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_UPDATED_USER_ROLES)
           .status(200).objectResults(response).build();

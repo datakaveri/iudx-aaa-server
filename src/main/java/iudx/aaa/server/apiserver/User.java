@@ -46,6 +46,21 @@ public class User {
     return obj;
   }
 
+  /**
+   * Used when the User object needs to be sent in the
+   * response, so that roles are changed to lowercase.
+   * 
+   * @return JsonObject the User object in JSON
+   */
+  public JsonObject toJsonResponse() {
+    JsonObject obj = this.toJson();
+    @SuppressWarnings("unchecked")
+    List<String> roles = obj.getJsonArray("roles").getList();
+    roles.replaceAll(String::toLowerCase);
+    obj.put("roles", roles);
+    return obj;
+  }
+
   public Map<String, String> getName() {
     return name;
   }
