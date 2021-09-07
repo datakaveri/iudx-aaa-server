@@ -1434,6 +1434,10 @@ paths:
                         status:
                           type: string
                           minLength: 1
+                          enum:
+                            - approved
+                            - rejected
+                            - pending
                         email:
                           type: string
                           minLength: 1
@@ -1475,7 +1479,7 @@ paths:
                     title: Provider registrations
                     results:
                       - userId: 844e251b-574b-46e6-9247-f76f1f70a637
-                        status: APPROVED
+                        status: approved
                         email: xy@iisc.ac.in
                         name:
                           firstName: X
@@ -1484,7 +1488,7 @@ paths:
                           name: IISc
                           url: iisc.ac.in
                       - userId: a13eb955-c691-4fd3-b200-f18bc78810b5
-                        status: APPROVED
+                        status: approved
                         email: someone@example.com
                         name:
                           firstName: Someone
@@ -1493,7 +1497,7 @@ paths:
                           name: example
                           url: example.com
                       - userId: d34b1547-7281-4f66-b550-ed79f9bb0c36
-                        status: APPROVED
+                        status: approved
                         email: individual@example.com
                         name:
                           firstName: Indiv
@@ -1507,12 +1511,12 @@ paths:
                     title: Provider registrations
                     results:
                       - userId: e5bf3f6f-f22b-463d-aacb-cd62fbd8056f
-                        status: REJECTED
+                        status: rejected
                         organization:
                           name: lmwohberob
                           url: lmwohberob.com
                       - userId: fd0dfa08-d87a-4a51-86ce-060424f981c5
-                        status: REJECTED
+                        status: rejected
                         organization:
                           name: fufwcudijj
                           url: fufwcudijj.com
@@ -1635,6 +1639,9 @@ paths:
                         status:
                           type: string
                           minLength: 1
+                          enum:
+                            - approved
+                            - rejected
                         userId:
                           type: string
                           minLength: 1
@@ -1668,7 +1675,7 @@ paths:
                     type: 'urn:dx:as:Success'
                     title: Provider status updated
                     results:
-                      - status: APPROVED
+                      - status: approved
                         userId: 355e251b-574b-46e6-9247-f76f1f70a123
                         email: test@gmail.com
                         name:
@@ -1676,8 +1683,8 @@ paths:
                           lastName: Last
         '400':
           description: |-
-            - Missing or malformed data
-            - Duplicate `userId`s in request.
+            - Missing or malformed request
+            - Duplicate `userId`s in request
             - Invalid `userId`or User is not provider/pending provider.
           content:
             application/json:
@@ -1687,13 +1694,8 @@ paths:
                 User ID not pending/userId does not exist:
                   value:
                     type: 'urn:dx:as:InvalidInput'
-                    title: Invalid User ID
-                    detail: 'User is not a provider/pending provider : 0'
-                Duplicate userIds in request:
-                  value:
-                    type: 'urn:dx:as:InvalidInput'
-                    title: Duplicate user IDs
-                    detail: Duplicate user IDs in request
+                    title: 'Invalid User ID, not a provider/pending provider'
+                    detail: c34b1565-7281-4f66-b220-ed79f9bb0a31
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired

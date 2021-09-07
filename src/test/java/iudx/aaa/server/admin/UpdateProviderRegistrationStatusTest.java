@@ -334,7 +334,8 @@ public class UpdateProviderRegistrationStatusTest {
             JsonObject j = (JsonObject) i;
             if (j.getString("userId").equals(providerJson.getString("userId"))) {
 
-              assertEquals(j.getString(Constants.RESP_STATUS), RoleStatus.APPROVED.name());
+              assertEquals(j.getString(Constants.RESP_STATUS),
+                  RoleStatus.APPROVED.name().toLowerCase());
 
               assertEquals(j.getString("email"), providerJson.getString("email"));
               assertEquals(j.getString("userId"), providerJson.getString("userId"));
@@ -344,48 +345,6 @@ public class UpdateProviderRegistrationStatusTest {
         })));
   }
 
-  @Test
-  @DisplayName("Test duplicates")
-  void duplicateuserIds(VertxTestContext testContext) {
-    JsonObject providerJson = providerApproved.result();
-    JsonObject details = new JsonObject().put("email", providerJson.getString("email")).put("name",
-        new JsonObject().put("firstName", providerJson.getString("firstName")).put("lastName",
-            providerJson.getString("lastName")));
-
-    JsonObject userJson = adminAuthUser.result();
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
-
-    JsonObject j =
-        new JsonObject().put("userId", providerJson.getString("userId")).put("status", "approved");
-    JsonArray req = new JsonArray().add(j).add(j);
-    List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
-
-    /** MOCKS -> mock PolicyService, kc.getDetails and kc.approveProvider **/
-    Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(1);
-      p.complete(new JsonObject());
-      return i.getMock();
-    }).when(policyService).setDefaultProviderPolicies(any(), any());
-
-    @SuppressWarnings("unchecked")
-    Map<String, JsonObject> resp = Mockito.mock(Map.class);
-    Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
-    Mockito.when(resp.get(anyString())).thenReturn(new JsonObject());
-    Mockito.when(resp.get(providerJson.getString("keycloakId"))).thenReturn(details);
-
-    Mockito.when(kc.approveProvider(any())).thenReturn(Future.succeededFuture());
-    /***********************************************************************/
-
-    adminService.updateProviderRegistrationStatus(request, user,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getString("type"), Constants.URN_INVALID_INPUT);
-          assertEquals(response.getString("title"), Constants.ERR_TITLE_DUPLICATES);
-          assertEquals(response.getString("detail"), Constants.ERR_DETAIL_DUPLICATES);
-          testContext.completeNow();
-        })));
-  }
 
   @Test
   @DisplayName("Test fail already approved")
@@ -424,7 +383,7 @@ public class UpdateProviderRegistrationStatusTest {
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getString("type"), Constants.URN_INVALID_INPUT);
           assertEquals(response.getString("title"), Constants.ERR_TITLE_INVALID_USER);
-          assertEquals(response.getString("detail"), Constants.ERR_DETAIL_INVALID_USER + "0");
+          assertEquals(response.getString("detail"), providerJson.getString("userId"));
           testContext.completeNow();
         })));
   }
@@ -476,7 +435,8 @@ public class UpdateProviderRegistrationStatusTest {
             JsonObject j = (JsonObject) i;
             if (j.getString("userId").equals(providerJson.getString("userId"))) {
 
-              assertEquals(j.getString(Constants.RESP_STATUS), RoleStatus.REJECTED.name());
+              assertEquals(j.getString(Constants.RESP_STATUS),
+                  RoleStatus.REJECTED.name().toLowerCase());
 
               assertEquals(j.getString("email"), providerJson.getString("email"));
               assertEquals(j.getString("userId"), providerJson.getString("userId"));
@@ -488,7 +448,7 @@ public class UpdateProviderRegistrationStatusTest {
               testContext.succeeding(r -> testContext.verify(() -> {
                 assertEquals(r.getString("type"), Constants.URN_INVALID_INPUT);
                 assertEquals(r.getString("title"), Constants.ERR_TITLE_INVALID_USER);
-                assertEquals(r.getString("detail"), Constants.ERR_DETAIL_INVALID_USER + "0");
+                assertEquals(r.getString("detail"), providerJson.getString("userId"));
                 fail.flag();
               })));
         })));

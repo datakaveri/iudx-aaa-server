@@ -291,7 +291,8 @@ public class GetProviderRegistrationsTest {
             JsonObject j = (JsonObject) i;
             if (j.getString("userId").equals(providerJson.getString("userId"))) {
 
-              assertEquals(j.getString(Constants.RESP_STATUS), RoleStatus.PENDING.name());
+              assertEquals(j.getString(Constants.RESP_STATUS),
+                  RoleStatus.PENDING.name().toLowerCase());
               JsonObject org = j.getJsonObject(Constants.RESP_ORG);
               assertEquals(org.getString("url"), providerJson.getString("url"));
 
@@ -333,7 +334,8 @@ public class GetProviderRegistrationsTest {
             JsonObject j = (JsonObject) i;
             if (j.getString("userId").equals(providerJson.getString("userId"))) {
 
-              assertEquals(j.getString(Constants.RESP_STATUS), RoleStatus.APPROVED.name());
+              assertEquals(j.getString(Constants.RESP_STATUS),
+                  RoleStatus.APPROVED.name().toLowerCase());
               JsonObject org = j.getJsonObject(Constants.RESP_ORG);
               assertEquals(org.getString("url"), providerJson.getString("url"));
 
@@ -375,7 +377,8 @@ public class GetProviderRegistrationsTest {
             JsonObject j = (JsonObject) i;
             if (j.getString("userId").equals(providerJson.getString("userId"))) {
 
-              assertEquals(j.getString(Constants.RESP_STATUS), RoleStatus.REJECTED.name());
+              assertEquals(j.getString(Constants.RESP_STATUS),
+                  RoleStatus.REJECTED.name().toLowerCase());
               JsonObject org = j.getJsonObject(Constants.RESP_ORG);
               assertEquals(org.getString("url"), providerJson.getString("url"));
 
