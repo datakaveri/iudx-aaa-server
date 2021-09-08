@@ -317,7 +317,8 @@ public class UpdateUserTest {
 
             @SuppressWarnings("unchecked")
             List<String> returnedRoles = result.getJsonArray("roles").getList();
-            List<String> rolesString = List.of(Roles.CONSUMER.name(), Roles.DELEGATE.name());
+            List<String> rolesString =
+                List.of(Roles.CONSUMER.name().toLowerCase(), Roles.DELEGATE.name().toLowerCase());
             assertTrue(
                 returnedRoles.containsAll(rolesString) && rolesString.containsAll(returnedRoles));
 
@@ -420,7 +421,8 @@ public class UpdateUserTest {
 
             @SuppressWarnings("unchecked")
             List<String> returnedRoles = result.getJsonArray("roles").getList();
-            List<String> rolesString = List.of(Roles.CONSUMER.name(), Roles.DELEGATE.name());
+            List<String> rolesString =
+                List.of(Roles.CONSUMER.name().toLowerCase(), Roles.DELEGATE.name().toLowerCase());
             assertTrue(
                 returnedRoles.containsAll(rolesString) && rolesString.containsAll(returnedRoles));
 
@@ -491,7 +493,8 @@ public class UpdateUserTest {
 
               @SuppressWarnings("unchecked")
               List<String> returnedRoles = result.getJsonArray("roles").getList();
-              List<String> rolesString = List.of(Roles.CONSUMER.name(), Roles.PROVIDER.name());
+              List<String> rolesString =
+                  List.of(Roles.CONSUMER.name().toLowerCase(), Roles.PROVIDER.name().toLowerCase());
               assertTrue(
                   returnedRoles.containsAll(rolesString) && rolesString.containsAll(returnedRoles));
 

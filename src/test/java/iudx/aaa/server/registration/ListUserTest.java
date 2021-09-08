@@ -1,30 +1,21 @@
 package iudx.aaa.server.registration;
 
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_USER_PROFILE;
-import static iudx.aaa.server.registration.Constants.*;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_KC;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_USER_PROFILE;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_USER_NOT_KC;
 import static iudx.aaa.server.registration.Constants.RESP_CLIENT_ARR;
 import static iudx.aaa.server.registration.Constants.RESP_CLIENT_ID;
 import static iudx.aaa.server.registration.Constants.RESP_EMAIL;
 import static iudx.aaa.server.registration.Constants.RESP_ORG;
 import static iudx.aaa.server.registration.Constants.RESP_PHONE;
+import static iudx.aaa.server.registration.Constants.SUCC_TITLE_USER_READ;
+import static iudx.aaa.server.registration.Constants.URN_SUCCESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
+
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -42,6 +33,19 @@ import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.configuration.Configuration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 
 @ExtendWith(VertxExtension.class)
 public class ListUserTest {
@@ -113,7 +117,7 @@ public class ListUserTest {
      * create fake organization, and create 2 mock users. One user has an organization + phone
      * number other does not
      */
-    
+
     orgIdFut = pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_ORG)
         .execute(Tuple.of(name, url)).map(row -> row.iterator().next().getUUID("id")));
 
@@ -213,7 +217,8 @@ public class ListUserTest {
 
     JsonObject userJson = userWithOrg.result();
     List<Roles> roles = List.of(Roles.DELEGATE, Roles.PROVIDER);
-    List<String> rolesString = List.of(Roles.DELEGATE.name(), Roles.PROVIDER.name());
+    List<String> rolesString =
+        List.of(Roles.DELEGATE.name().toLowerCase(), Roles.PROVIDER.name().toLowerCase());
 
     User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
         .userId(userJson.getString("userId")).roles(roles)
@@ -259,7 +264,8 @@ public class ListUserTest {
 
     JsonObject userJson = userNoOrg.result();
     List<Roles> roles = List.of(Roles.CONSUMER, Roles.ADMIN);
-    List<String> rolesString = List.of(Roles.CONSUMER.name(), Roles.ADMIN.name());
+    List<String> rolesString =
+        List.of(Roles.CONSUMER.name().toLowerCase(), Roles.ADMIN.name().toLowerCase());
 
     User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
         .userId(userJson.getString("userId")).roles(roles)

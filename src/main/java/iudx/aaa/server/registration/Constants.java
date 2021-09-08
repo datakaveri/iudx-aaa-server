@@ -34,7 +34,7 @@ public class Constants {
   public static final int BCRYPT_SALT_LEN = 16;
 
   /* Response fields */
-  public static final String RESP_CLIENT_NAME = "client";
+  public static final String RESP_CLIENT_NAME = "clientName";
   public static final String RESP_CLIENT_ID = "clientId";
   public static final String RESP_CLIENT_SC = "clientSecret";
   public static final String RESP_CLIENT_ARR = "clients";
