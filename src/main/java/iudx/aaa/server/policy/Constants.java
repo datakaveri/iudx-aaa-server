@@ -148,8 +148,8 @@ public class Constants {
           + " and expiry_time > now()";
   // List Policy queries
   public static final String GET_POLICIES =
-          "Select a.id as policy_id, a.user_id, a.owner_id, a.item_id ,a.item_type ,"
-                  + " a.expiry_time  ,a.constraints,b.cat_id  from test.policies a INNER JOIN test.";
+      "Select a.id as  \"policyId\", a.user_id, a.owner_id, a.item_id as \"itemId\" ,a.item_type as \"itemType\" ,"
+          + " a.expiry_time as \"expiryTime\" ,a.constraints, b.cat_id  as \"catId\" from test.policies a INNER JOIN test.";
   public static final String GET_POLICIES_JOIN =
           " b on a.item_id = b.id "
                   + "where a.owner_id = $1::UUID AND a.item_type = $2::test.item_enum  "

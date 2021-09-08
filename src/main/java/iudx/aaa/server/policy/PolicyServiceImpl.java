@@ -539,7 +539,6 @@ public class PolicyServiceImpl implements PolicyService {
         .onSuccess(
             obj -> {
               List<JsonObject> policies = new ArrayList<>();
-
               if (obj.list().get(0) != null) {
                 policies.addAll((List<JsonObject>) obj.list().get(0));
               }
@@ -587,8 +586,8 @@ public class PolicyServiceImpl implements PolicyService {
                         for (JsonObject ar : finalPolicies) {
                           uid = ar.getString(USER_ID);
                           oid = ar.getString(OWNER_ID);
-                          itemType = ar.getString("item_type");
-                          ar.put("item_type", itemType.toLowerCase());
+                          itemType = ar.getString("itemType");
+                          ar.put("itemType", itemType.toLowerCase());
                           if (res.result().containsKey(uid)) {
                             ar.remove(USER_ID);
                             object = res.result().get(uid);

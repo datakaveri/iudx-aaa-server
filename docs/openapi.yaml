@@ -1790,7 +1790,30 @@ paths:
               schema:
                 description: ''
                 type: object
-                x-examples: null
+                x-examples:
+                  example-1:
+                    type: 'urn:dx:as:Success'
+                    title: policy read
+                    results:
+                      result:
+                        - policyId: b268d557-cc98-4337-833d-6ad34e7eb51f
+                          itemId: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
+                          itemType: resource
+                          expiryTime: '2022-06-15T09:07:16.034289'
+                          constraints: {}
+                          catId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group/resource
+                          user:
+                            email: alice@gmail.com
+                            name:
+                              firstName: Alice
+                              lastName: Bob
+                            id: 32a4b979-4f4a-4c44-b0c3-2fe109952b5f
+                          owner:
+                            email: someone@example.com
+                            name:
+                              firstName: Someone
+                              lastName: Person
+                            id: a13eb955-c691-4fd3-b200-f18bc78810b5
                 properties:
                   type:
                     type: string
@@ -1810,21 +1833,21 @@ paths:
                         items:
                           type: object
                           properties:
-                            policy_id:
+                            policyId:
                               type: string
                               minLength: 1
-                            item_id:
+                            itemId:
                               type: string
                               minLength: 1
-                            item_type:
+                            itemType:
                               type: string
                               minLength: 1
-                            expiry_time:
+                            expiryTime:
                               type: string
                               minLength: 1
                             constraints:
                               type: object
-                            cat_id:
+                            catId:
                               type: string
                               minLength: 1
                             user:
@@ -1878,12 +1901,12 @@ paths:
                                 - name
                                 - id
                           required:
-                            - policy_id
-                            - item_id
-                            - item_type
-                            - expiry_time
+                            - policyId
+                            - itemId
+                            - itemType
+                            - expiryTime
                             - constraints
-                            - cat_id
+                            - catId
                 required:
                   - type
                   - title
@@ -1895,12 +1918,12 @@ paths:
                     title: policy read
                     results:
                       result:
-                        - policy_id: e4995fef-b850-48cc-82d0-6eef9ffb9531
-                          item_id: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
-                          item_type: resource
-                          expiry_time: '2022-06-15T09:07:16.034289'
+                        - policyId: b268d557-cc98-4337-833d-6ad34e7eb51f
+                          itemId: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
+                          itemType: resource
+                          expiryTime: '2022-06-15T09:07:16.034289'
                           constraints: {}
-                          cat_id: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group/resource
+                          catId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group/resource
                           user:
                             email: alice@gmail.com
                             name:
@@ -2023,29 +2046,33 @@ paths:
         content:
           application/json:
             schema:
-              type: array
               description: ''
-              minItems: 1
-              uniqueItems: true
+              type: object
+              properties:
+                request:
+                  type: array
+                  uniqueItems: true
+                  minItems: 1
+                  items:
+                    required:
+                      - id
+                    properties:
+                      id:
+                        type: string
+              required:
+                - request
               x-examples:
                 example-1:
-                  - id: 1e435fcb-11ce-4f4d-94c0-adf339932ba4
-                  - id: 7d50c547-9f36-4daa-bdc6-cca3c932379d
-              items:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    minLength: 36
-                    format: uuid
-                    maxLength: 36
-                required:
-                  - id
+                  request:
+                    - id: ''
+                    - id: ''
             examples:
               Delete Policies:
                 value:
-                  - id: 231f6eca-6276-4993-bfeb-53cbbbba6f06
-        description: Request body is a JsonArray having one or multiple ID Objects to delete policies.
+                  request:
+                    - id: 231f6eca-6276-4993-bfeb-53cbbbba6f06
+                    - id: 231f6eca-6276-4993-bfeb-53cbbbba6f0b
+        description: Request body is a JsonObject containing a JsonArray having one or multiple ID Objects to delete policies.
       tags:
         - Policies APIs
       security:
@@ -2093,64 +2120,76 @@ paths:
         content:
           application/json:
             schema:
-              type: array
               description: ''
-              minItems: 1
-              uniqueItems: true
+              type: object
               x-examples:
                 example-1:
-                  - userId: 89bbe934-5f18-4f57-b68e-fb821ba77291
-                    itemId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-abcd
-                    itemType: resource_group
-                    expiryTime: '2021-08-30T21:10:06.834292'
-                    constraints: {}
-              items:
-                type: object
-                properties:
-                  userId:
-                    type: string
-                    minLength: 1
-                  itemId:
-                    type: string
-                    minLength: 1
-                  itemType:
-                    type: string
-                    minLength: 1
-                  expiryTime:
-                    type: string
-                    minLength: 1
-                  constraints:
+                  request:
+                    - userId: 89bbe934-5f18-4f57-b68e-fb821ba77291
+                      itemId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group
+                      itemType: resource_group
+                      expiryTime: '2023-08-30T21:10:06.834292'
+                      constraints: {}
+                    - userId: 89bbe934-5f18-4f57-b68e-fb821ba77292
+                      itemId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group
+                      itemType: resource_group
+                      expiryTime: '2023-08-30T21:10:06.834292'
+                      constraints: {}
+              properties:
+                request:
+                  type: array
+                  uniqueItems: true
+                  minItems: 1
+                  items:
                     type: object
-                required:
-                  - userId
-                  - itemId
-                  - itemType
-                  - constraints
+                    properties:
+                      userId:
+                        type: string
+                        minLength: 1
+                      itemId:
+                        type: string
+                        minLength: 1
+                      itemType:
+                        type: string
+                        minLength: 1
+                      expiryTime:
+                        type: string
+                        minLength: 1
+                      constraints:
+                        type: object
+                    required:
+                      - userId
+                      - itemId
+                      - itemType
+              required:
+                - request
             examples:
               Create MultiplePolicies:
                 value:
-                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
-                    itemType: resource_group
-                    expiryTime: '2022-08-04T20:00:19+0000'
-                    constraints: {}
-                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cq21/resource-group
-                    itemType: resource_group
-                    expiryTime: '2022-08-04T20:00:19+0000'
-                    constraints: {}
+                  request:
+                    - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                      itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
+                      itemType: resource_group
+                      expiryTime: '2022-08-04T20:00:19+0000'
+                      constraints: {}
+                    - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                      itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cq21/resource-group
+                      itemType: resource_group
+                      expiryTime: '2022-08-04T20:00:19+0000'
+                      constraints: {}
               Create SinglePolicies:
                 value:
-                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
-                    itemType: resource_group
-                    expiryTime: '2022-08-04T20:00:19+0000'
-                    constraints: {}
+                  request:
+                    - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                      itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
+                      itemType: resource_group
+                      expiryTime: '2022-08-04T20:00:19+0000'
+                      constraints: {}
           application/xml:
             schema:
               type: object
               properties: {}
-        description: Request body will be JsonArray having or many objects
+        description: Request body will be an JsonObject containing JsonArray of requests
       tags:
         - Policies APIs
       security:
