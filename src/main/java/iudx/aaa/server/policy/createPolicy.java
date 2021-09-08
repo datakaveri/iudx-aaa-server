@@ -26,9 +26,11 @@ public class createPolicy {
   private static final Logger LOGGER = LogManager.getLogger(createPolicy.class);
 
   private final PgPool pool;
+  private final JsonObject options;
 
-  public createPolicy(PgPool pool) {
+  public createPolicy(PgPool pool, JsonObject options) {
     this.pool = pool;
+    this.options = options;
   }
 
   /**
@@ -152,7 +154,15 @@ public class createPolicy {
         LocalDateTime expiryTime;
         if (!obj.getExpiryTime().isEmpty())
           expiryTime = LocalDateTime.parse(expTime, DateTimeFormatter.ISO_DATE_TIME);
-        else expiryTime = LocalDateTime.now(ZoneOffset.UTC).plusYears(1); // default exp, one year
+        else {
+          if (itemType.equals(itemTypes.RESOURCE_SERVER.toString()))
+            expiryTime =
+                LocalDateTime.now(ZoneOffset.UTC)
+                    .plusMonths(options.getInteger("adminPolicyExpiry"));
+          else
+            expiryTime =
+                LocalDateTime.now(ZoneOffset.UTC).plusMonths(options.getInteger("PolicyExpiry"));
+        }
         JsonObject constraints = obj.getConstraints();
         tuples.add(Tuple.of(userId, itemId, itemType, providerId, status, expiryTime, constraints));
       }

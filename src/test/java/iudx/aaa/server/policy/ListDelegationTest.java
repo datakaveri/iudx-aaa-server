@@ -69,6 +69,8 @@ public class ListDelegationTest {
   private static PgConnectOptions connectOptions;
   private static PolicyService policyService;
   private static RegistrationService registrationService;
+  private static JsonObject authOptions;
+  private static JsonObject catOptions;
 
   private static Vertx vertxObj;
   private static MockRegistrationFactory mockRegistrationFactory;
@@ -129,6 +131,8 @@ public class ListDelegationTest {
     databaseUserName = dbConfig.getString("databaseUserName");
     databasePassword = dbConfig.getString("databasePassword");
     poolSize = Integer.parseInt(dbConfig.getString("poolSize"));
+    authOptions = dbConfig.getJsonObject("authOptions");
+    catOptions = dbConfig.getJsonObject("catOptions");
 
     // Set Connection Object
     if (connectOptions == null) {
@@ -190,7 +194,7 @@ public class ListDelegationTest {
     }).onSuccess(r -> {
 
       registrationService = mockRegistrationFactory.getInstance();
-      policyService = new PolicyServiceImpl(pool, registrationService, catalogueClient);
+      policyService = new PolicyServiceImpl(pool, registrationService, catalogueClient,authOptions,catOptions);
       testContext.completeNow();
     });
   }

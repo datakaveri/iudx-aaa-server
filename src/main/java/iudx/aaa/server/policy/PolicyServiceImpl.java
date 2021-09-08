@@ -11,11 +11,9 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.SqlResult;
 import io.vertx.sqlclient.Tuple;
-
 import iudx.aaa.server.apiserver.CreatePolicyNotification;
 import iudx.aaa.server.apiserver.CreatePolicyRequest;
 import iudx.aaa.server.apiserver.DeleteDelegationRequest;
-import iudx.aaa.server.apiserver.DeletePolicyRequest;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.Roles;
@@ -24,9 +22,10 @@ import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,7 +33,80 @@ import java.util.UUID;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-import static iudx.aaa.server.policy.Constants.*;
+import static iudx.aaa.server.policy.Constants.AUTH_DEL_FAIL;
+import static iudx.aaa.server.policy.Constants.CAT_ID;
+import static iudx.aaa.server.policy.Constants.CHECK_ADMIN_POLICY;
+import static iudx.aaa.server.policy.Constants.CHECK_DELEGATOINS_VERIFY;
+import static iudx.aaa.server.policy.Constants.CHECK_POLICY;
+import static iudx.aaa.server.policy.Constants.COMPOSE_FAILURE;
+import static iudx.aaa.server.policy.Constants.CONSUMER_ROLE;
+import static iudx.aaa.server.policy.Constants.DELEGATE_ROLE;
+import static iudx.aaa.server.policy.Constants.DELETE_DELEGATIONS;
+import static iudx.aaa.server.policy.Constants.DELETE_FAILURE;
+import static iudx.aaa.server.policy.Constants.ERR_DETAIL_DEL_DELEGATE_ROLES;
+import static iudx.aaa.server.policy.Constants.ERR_DETAIL_LIST_DELEGATE_ROLES;
+import static iudx.aaa.server.policy.Constants.ERR_TITLE_AUTH_DELE_DELETE;
+import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ID;
+import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ROLES;
+import static iudx.aaa.server.policy.Constants.GET_CONSUMER_CONSTRAINTS;
+import static iudx.aaa.server.policy.Constants.GET_DELEGATIONS_BY_ID;
+import static iudx.aaa.server.policy.Constants.GET_FROM_ROLES_TABLE;
+import static iudx.aaa.server.policy.Constants.GET_POLICIES;
+import static iudx.aaa.server.policy.Constants.GET_POLICIES_JOIN;
+import static iudx.aaa.server.policy.Constants.GET_POLICIES_JOIN_OWNER;
+import static iudx.aaa.server.policy.Constants.GET_RES_DETAIL;
+import static iudx.aaa.server.policy.Constants.GET_RES_DETAIL_JOIN;
+import static iudx.aaa.server.policy.Constants.GET_RES_OWNER;
+import static iudx.aaa.server.policy.Constants.GET_RES_SERVER_OWNER;
+import static iudx.aaa.server.policy.Constants.GET_RES_SER_OWNER;
+import static iudx.aaa.server.policy.Constants.GET_RES_SER_OWNER_JOIN;
+import static iudx.aaa.server.policy.Constants.GET_URL;
+import static iudx.aaa.server.policy.Constants.ID;
+import static iudx.aaa.server.policy.Constants.ID_NOT_PRESENT;
+import static iudx.aaa.server.policy.Constants.INTERNALERROR;
+import static iudx.aaa.server.policy.Constants.INVALID_DELEGATE;
+import static iudx.aaa.server.policy.Constants.INVALID_DELEGATE_POL;
+import static iudx.aaa.server.policy.Constants.INVALID_ROLE;
+import static iudx.aaa.server.policy.Constants.INVALID_USER;
+import static iudx.aaa.server.policy.Constants.ITEMID;
+import static iudx.aaa.server.policy.Constants.ITEMNOTFOUND;
+import static iudx.aaa.server.policy.Constants.ITEMTYPE;
+import static iudx.aaa.server.policy.Constants.LIST_DELEGATE_AS_PROVIDER_DELEGATE;
+import static iudx.aaa.server.policy.Constants.LIST_DELEGATE_AUTH_DELEGATE;
+import static iudx.aaa.server.policy.Constants.NOT_RES_OWNER;
+import static iudx.aaa.server.policy.Constants.NO_ADMIN_POLICY;
+import static iudx.aaa.server.policy.Constants.NO_RES_SERVER;
+import static iudx.aaa.server.policy.Constants.NO_USER;
+import static iudx.aaa.server.policy.Constants.OWNER_DETAILS;
+import static iudx.aaa.server.policy.Constants.OWNER_ID;
+import static iudx.aaa.server.policy.Constants.POLICY_FAILURE;
+import static iudx.aaa.server.policy.Constants.POLICY_SUCCESS;
+import static iudx.aaa.server.policy.Constants.PROVIDER_ID;
+import static iudx.aaa.server.policy.Constants.PROVIDER_ROLE;
+import static iudx.aaa.server.policy.Constants.RES;
+import static iudx.aaa.server.policy.Constants.RESOURCE_SERVER_ID;
+import static iudx.aaa.server.policy.Constants.RES_GRP;
+import static iudx.aaa.server.policy.Constants.RES_SERVER;
+import static iudx.aaa.server.policy.Constants.ROLE;
+import static iudx.aaa.server.policy.Constants.ROLE_NOT_FOUND;
+import static iudx.aaa.server.policy.Constants.STATUS;
+import static iudx.aaa.server.policy.Constants.SUCCESS;
+import static iudx.aaa.server.policy.Constants.SUCC_TITLE_DELETE_DELE;
+import static iudx.aaa.server.policy.Constants.SUCC_TITLE_LIST_DELEGS;
+import static iudx.aaa.server.policy.Constants.SUCC_TITLE_POLICY_DEL;
+import static iudx.aaa.server.policy.Constants.SUCC_TITLE_POLICY_READ;
+import static iudx.aaa.server.policy.Constants.UNAUTHORIZED;
+import static iudx.aaa.server.policy.Constants.UNAUTHORIZED_DELEGATE;
+import static iudx.aaa.server.policy.Constants.URL;
+import static iudx.aaa.server.policy.Constants.URN_INVALID_DELEGATE;
+import static iudx.aaa.server.policy.Constants.URN_INVALID_INPUT;
+import static iudx.aaa.server.policy.Constants.URN_INVALID_ROLE;
+import static iudx.aaa.server.policy.Constants.USERID;
+import static iudx.aaa.server.policy.Constants.USER_DETAILS;
+import static iudx.aaa.server.policy.Constants.USER_ID;
+import static iudx.aaa.server.policy.Constants.itemTypes;
+import static iudx.aaa.server.policy.Constants.roles;
+import static iudx.aaa.server.policy.Constants.status;
 
 /**
  * The Policy Service Implementation.
@@ -56,16 +128,24 @@ public class PolicyServiceImpl implements PolicyService {
   private final deletePolicy deletePolicy;
   private final createPolicy createPolicy;
   private final CatalogueClient catalogueClient;
+  private final JsonObject authOptions;
+  private final JsonObject catServerOptions;
 
   // Create the pooled client
 
   public PolicyServiceImpl(
-      PgPool pool, RegistrationService registrationService, CatalogueClient catalogueClient) {
+      PgPool pool,
+      RegistrationService registrationService,
+      CatalogueClient catalogueClient,
+      JsonObject authOptions,
+      JsonObject catServerOptions) {
     this.pool = pool;
     this.registrationService = registrationService;
     this.catalogueClient = catalogueClient;
-    this.deletePolicy = new deletePolicy(pool);
-    this.createPolicy = new createPolicy(pool);
+    this.authOptions = authOptions;
+    this.catServerOptions = catServerOptions;
+    this.deletePolicy = new deletePolicy(pool, authOptions);
+    this.createPolicy = new createPolicy(pool, authOptions);
   }
 
   @Override
@@ -191,10 +271,9 @@ public class PolicyServiceImpl implements PolicyService {
 
     Future<Boolean> insertPolicy =
         getOwner.compose(
-            succ -> {
-              return createPolicy.insertPolicy(
-                  request, reqItemDetail.result(), getOwner.result(), user);
-            });
+            succ ->
+                createPolicy.insertPolicy(
+                    request, reqItemDetail.result(), getOwner.result(), user));
 
     insertPolicy
         .onSuccess(
@@ -389,17 +468,16 @@ public class PolicyServiceImpl implements PolicyService {
   }
 
   @Override
-  public PolicyService listPolicy(User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler) {
+  public PolicyService listPolicy(
+      User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler) {
     // TODO Auto-generated method stub
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
     JsonArray respPolicies = new JsonArray();
     JsonObject response = new JsonObject();
 
     UUID user_id;
-     if(data.containsKey(USER_ID))
-         user_id = UUID.fromString(data.getString(USER_ID));
-    else
-         user_id = UUID.fromString(user.getUserId());
+    if (data.containsKey(USER_ID)) user_id = UUID.fromString(data.getString(USER_ID));
+    else user_id = UUID.fromString(user.getUserId());
 
     Collector<Row, ?, List<JsonObject>> policyCollector =
         Collectors.mapping(Row::toJson, Collectors.toList());
@@ -564,22 +642,19 @@ public class PolicyServiceImpl implements PolicyService {
   Future<JsonObject> verifyConsumerPolicy(
       UUID userId, String itemId, String itemType, String role, JsonObject res) {
     Promise<JsonObject> p = Promise.promise();
-
-    Future<String> getConstraints =
+    Future<JsonObject> getConstraints =
         pool.withConnection(
                 conn ->
                     conn.preparedQuery(GET_CONSUMER_CONSTRAINTS)
                         .execute(
                             Tuple.of(
-                                userId,
-                                res.getString(ITEM_ID),
-                                itemType.toUpperCase(),
-                                status.ACTIVE)))
+                                userId, res.getString(ID), itemType.toUpperCase(), status.ACTIVE))
+                        .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson() : null))
             .compose(
                 ar -> {
-                  if (ar.toString().isEmpty()) return Future.failedFuture("policy does not exist");
+                  if (ar == null) return Future.failedFuture("policy does not exist");
                   else {
-                    return Future.succeededFuture(ar.toString());
+                    return Future.succeededFuture(ar);
                   }
                 });
 
@@ -587,12 +662,15 @@ public class PolicyServiceImpl implements PolicyService {
         pool.withConnection(
                 conn ->
                     conn.preparedQuery(GET_URL)
-                        .execute(Tuple.of(res.getString(RESOURCE_SERVER_ID))))
+                        .execute(Tuple.of(res.getString(RESOURCE_SERVER_ID)))
+                        .map(
+                            rows ->
+                                rows.rowCount() > 0 ? rows.iterator().next().getString(URL) : null))
             .compose(
                 ar -> {
-                  if (ar.rowCount() <= 0) return Future.failedFuture(NO_RES_SERVER);
+                  if (ar == null) return Future.failedFuture(NO_RES_SERVER);
                   else {
-                    return Future.succeededFuture(ar.value().toString());
+                    return Future.succeededFuture(ar);
                   }
                 });
 
@@ -601,7 +679,7 @@ public class PolicyServiceImpl implements PolicyService {
             success -> {
               if (!getConstraints.result().isEmpty() && !getUrl.result().isEmpty()) {
                 JsonObject details = new JsonObject();
-                details.put(CONSTRAINTS, getConstraints.result());
+                details.mergeIn(getConstraints.result());
                 details.put(STATUS, SUCCESS);
                 details.put(CAT_ID, itemId);
                 details.put(URL, getUrl.result());
@@ -639,7 +717,7 @@ public class PolicyServiceImpl implements PolicyService {
                 return pool.withConnection(
                     conn ->
                         conn.preparedQuery(GET_RES_SERVER_OWNER)
-                            .execute(Tuple.of(CAT_SERVER_URL))
+                            .execute(Tuple.of(catServerOptions.getString("catURL")))
                             .map(
                                 rows ->
                                     rows.rowCount() > 0 ? rows.iterator().next().toJson() : null));
@@ -731,7 +809,7 @@ public class PolicyServiceImpl implements PolicyService {
                 return pool.withConnection(
                     conn ->
                         conn.preparedQuery(GET_RES_SERVER_OWNER)
-                            .execute(Tuple.of(CAT_SERVER_URL))
+                            .execute(Tuple.of(catServerOptions.getString("catURL")))
                             .map(
                                 rows ->
                                     rows.rowCount() > 0 ? rows.iterator().next().toJson() : null));
@@ -783,7 +861,7 @@ public class PolicyServiceImpl implements PolicyService {
                                   Tuple.of(
                                       userId,
                                       getOwner.result(),
-                                      res.getString("id"),
+                                      res.getString(ID),
                                       status.ACTIVE.toString()))
                               .map(
                                   rows ->
@@ -864,8 +942,9 @@ public class PolicyServiceImpl implements PolicyService {
                         }));
 
     if (itemId.split("/").length == 5
-        && itemId.split("/")[2].equals(CAT_SERVER_URL)
-        && (itemId.split("/")[3] + "/" + itemId.split("/")[4]).equals(CAT_ITEM)) {
+        && itemId.split("/")[2].equals(catServerOptions.getString("catURL"))
+        && (itemId.split("/")[3] + "/" + itemId.split("/")[4])
+            .equals(catServerOptions.getString("catItem"))) {
       isCatalogue = true;
     }
 
@@ -881,7 +960,9 @@ public class PolicyServiceImpl implements PolicyService {
                       .compose(
                           ar -> {
                             if (ar.size() <= 0) return Future.failedFuture(ITEMNOTFOUND);
-                            else return Future.succeededFuture(ar);
+                            else {
+                              return Future.succeededFuture(ar);
+                            }
                           }));
     } else getResDetail = Future.succeededFuture(new JsonObject());
 
@@ -959,8 +1040,9 @@ public class PolicyServiceImpl implements PolicyService {
 
   /** {@inheritDoc} */
   @Override
-  public PolicyService listPolicyNotification(User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler) {
-    
+  public PolicyService listPolicyNotification(
+      User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler) {
+
     handler.handle(Future.succeededFuture(data));
 
     return this;
@@ -976,17 +1058,22 @@ public class PolicyServiceImpl implements PolicyService {
   }
 
   @Override
-  public PolicyService listDelegation(User user, JsonObject authDelegateDetails,
-      Handler<AsyncResult<JsonObject>> handler) {
+  public PolicyService listDelegation(
+      User user, JsonObject authDelegateDetails, Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
     boolean isAuthDelegate = !authDelegateDetails.isEmpty();
 
-    if (!(isAuthDelegate || user.getRoles().contains(Roles.PROVIDER)
+    if (!(isAuthDelegate
+        || user.getRoles().contains(Roles.PROVIDER)
         || user.getRoles().contains(Roles.DELEGATE))) {
       Response r =
-          new Response.ResponseBuilder().type(URN_INVALID_ROLE).title(ERR_TITLE_INVALID_ROLES)
-              .detail(ERR_DETAIL_LIST_DELEGATE_ROLES).status(401).build();
+          new Response.ResponseBuilder()
+              .type(URN_INVALID_ROLE)
+              .title(ERR_TITLE_INVALID_ROLES)
+              .detail(ERR_DETAIL_LIST_DELEGATE_ROLES)
+              .status(401)
+              .build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
@@ -998,7 +1085,7 @@ public class PolicyServiceImpl implements PolicyService {
     if (isAuthDelegate) {
       UUID providerUserId = UUID.fromString(authDelegateDetails.getString("providerId"));
       query = LIST_DELEGATE_AUTH_DELEGATE;
-      queryTup = Tuple.of(providerUserId, AUTH_SERVER_URL);
+      queryTup = Tuple.of(providerUserId, authOptions.getString("authServerUrl"));
     } else {
       query = LIST_DELEGATE_AS_PROVIDER_DELEGATE;
       queryTup = Tuple.of(UUID.fromString(user.getUserId()));
@@ -1007,56 +1094,82 @@ public class PolicyServiceImpl implements PolicyService {
     Collector<Row, ?, List<JsonObject>> collect =
         Collectors.mapping(row -> row.toJson(), Collectors.toList());
 
-    Future<List<JsonObject>> data = pool.withConnection(conn -> conn.preparedQuery(query)
-        .collecting(collect).execute(queryTup).map(res -> res.value()));
+    Future<List<JsonObject>> data =
+        pool.withConnection(
+            conn ->
+                conn.preparedQuery(query)
+                    .collecting(collect)
+                    .execute(queryTup)
+                    .map(res -> res.value()));
 
-    Future<Map<String, JsonObject>> userInfo = data.compose(result -> {
-      Set<String> ss = new HashSet<String>();
-      result.forEach(obj -> {
-        ss.add(obj.getString("owner_id"));
-        ss.add(obj.getString("user_id"));
-      });
+    Future<Map<String, JsonObject>> userInfo =
+        data.compose(
+            result -> {
+              Set<String> ss = new HashSet<String>();
+              result.forEach(
+                  obj -> {
+                    ss.add(obj.getString("owner_id"));
+                    ss.add(obj.getString("user_id"));
+                  });
 
-      Promise<Map<String, JsonObject>> userDetails = Promise.promise();
-      registrationService.getUserDetails(new ArrayList<String>(ss), userDetails);
-      return userDetails.future();
-    });
+              Promise<Map<String, JsonObject>> userDetails = Promise.promise();
+              registrationService.getUserDetails(new ArrayList<String>(ss), userDetails);
+              return userDetails.future();
+            });
 
-    userInfo.onSuccess(details -> {
-      List<JsonObject> deleRes = data.result();
+    userInfo
+        .onSuccess(
+            details -> {
+              List<JsonObject> deleRes = data.result();
 
-      deleRes.forEach(obj -> {
-        JsonObject ownerDet = details.get(obj.getString("owner_id"));
-        ownerDet.put("id", obj.remove("owner_id"));
+              deleRes.forEach(
+                  obj -> {
+                    JsonObject ownerDet = details.get(obj.getString("owner_id"));
+                    ownerDet.put("id", obj.remove("owner_id"));
 
-        JsonObject userDet = details.get(obj.getString("user_id"));
-        userDet.put("id", obj.remove("user_id"));
+                    JsonObject userDet = details.get(obj.getString("user_id"));
+                    userDet.put("id", obj.remove("user_id"));
 
-        obj.put("owner", ownerDet);
-        obj.put("user", userDet);
-      });
-      Response r = new ResponseBuilder().type(POLICY_SUCCESS).title(SUCC_TITLE_LIST_DELEGS)
-          .arrayResults(new JsonArray(deleRes)).status(200).build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-    }).onFailure(e -> {
-      LOGGER.error(e.getMessage());
-      handler.handle(Future.failedFuture("Internal error"));
-    });
+                    obj.put("owner", ownerDet);
+                    obj.put("user", userDet);
+                  });
+              Response r =
+                  new ResponseBuilder()
+                      .type(POLICY_SUCCESS)
+                      .title(SUCC_TITLE_LIST_DELEGS)
+                      .arrayResults(new JsonArray(deleRes))
+                      .status(200)
+                      .build();
+              handler.handle(Future.succeededFuture(r.toJson()));
+            })
+        .onFailure(
+            e -> {
+              LOGGER.error(e.getMessage());
+              handler.handle(Future.failedFuture("Internal error"));
+            });
     return this;
   }
 
   @Override
-  public PolicyService deleteDelegation(List<DeleteDelegationRequest> request, User user,
-      JsonObject authDelegateDetails, Handler<AsyncResult<JsonObject>> handler) {
+  public PolicyService deleteDelegation(
+      List<DeleteDelegationRequest> request,
+      User user,
+      JsonObject authDelegateDetails,
+      Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
     boolean isAuthDelegate = !authDelegateDetails.isEmpty();
 
     if (!(isAuthDelegate || user.getRoles().contains(Roles.PROVIDER))) {
-        Response r = new Response.ResponseBuilder().type(URN_INVALID_ROLE)
-            .title(ERR_TITLE_INVALID_ROLES).detail(ERR_DETAIL_DEL_DELEGATE_ROLES).status(401).build();
-        handler.handle(Future.succeededFuture(r.toJson()));
-        return this;
+      Response r =
+          new Response.ResponseBuilder()
+              .type(URN_INVALID_ROLE)
+              .title(ERR_TITLE_INVALID_ROLES)
+              .detail(ERR_DETAIL_DEL_DELEGATE_ROLES)
+              .status(401)
+              .build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
     }
 
     Tuple queryTup;
@@ -1075,53 +1188,80 @@ public class PolicyServiceImpl implements PolicyService {
         Collectors.toMap(row -> row.getUUID("id"), row -> row.getString("url"));
 
     Future<Map<UUID, String>> idServerMap =
-        pool.withConnection(conn -> conn.preparedQuery(GET_DELEGATIONS_BY_ID).collecting(collect)
-            .execute(queryTup).map(res -> res.value()));
+        pool.withConnection(
+            conn ->
+                conn.preparedQuery(GET_DELEGATIONS_BY_ID)
+                    .collecting(collect)
+                    .execute(queryTup)
+                    .map(res -> res.value()));
 
-    Future<Void> validate = idServerMap.compose(data -> {
-      if (data.size() != ids.size()) {
-        List<UUID> badIds =
-            ids.stream().filter(id -> !data.containsKey(id)).collect(Collectors.toList());
+    Future<Void> validate =
+        idServerMap.compose(
+            data -> {
+              if (data.size() != ids.size()) {
+                List<UUID> badIds =
+                    ids.stream().filter(id -> !data.containsKey(id)).collect(Collectors.toList());
 
-        Response r = new Response.ResponseBuilder().type(URN_INVALID_INPUT)
-            .title(ERR_TITLE_INVALID_ID).detail(badIds.get(0).toString()).status(400).build();
-        handler.handle(Future.succeededFuture(r.toJson()));
-        return Future.failedFuture(COMPOSE_FAILURE);
-      }
+                Response r =
+                    new Response.ResponseBuilder()
+                        .type(URN_INVALID_INPUT)
+                        .title(ERR_TITLE_INVALID_ID)
+                        .detail(badIds.get(0).toString())
+                        .status(400)
+                        .build();
+                handler.handle(Future.succeededFuture(r.toJson()));
+                return Future.failedFuture(COMPOSE_FAILURE);
+              }
 
-      if (!isAuthDelegate) {
-        return Future.succeededFuture();
-      }
+              if (!isAuthDelegate) {
+                return Future.succeededFuture();
+              }
 
-      List<UUID> authDelegs =
-          data.entrySet().stream().filter(obj -> obj.getValue().equals(AUTH_SERVER_URL))
-              .map(obj -> obj.getKey()).collect(Collectors.toList());
-      
-      if (!authDelegs.isEmpty()) {
-        Response r = new Response.ResponseBuilder().type(URN_INVALID_INPUT)
-            .title(ERR_TITLE_AUTH_DELE_DELETE).detail(authDelegs.get(0).toString()).status(403)
-            .build();
-        handler.handle(Future.succeededFuture(r.toJson()));
-        return Future.failedFuture(COMPOSE_FAILURE);
-      }
-      return Future.succeededFuture();
-    });
+              List<UUID> authDelegs =
+                  data.entrySet().stream()
+                      .filter(obj -> obj.getValue().equals(authOptions.getString("authServerUrl")))
+                      .map(obj -> obj.getKey())
+                      .collect(Collectors.toList());
 
-    validate.compose(
-        i -> pool.withTransaction(conn -> conn.preparedQuery(DELETE_DELEGATIONS).execute(queryTup)))
-        .onSuccess(res -> {
-          Response r = new Response.ResponseBuilder().type(POLICY_SUCCESS)
-              .title(SUCC_TITLE_DELETE_DELE).objectResults(new JsonObject()).status(200).build();
-          handler.handle(Future.succeededFuture(r.toJson()));
-        }).onFailure(e -> {
-          if (e.getMessage().equals(COMPOSE_FAILURE)) {
-            return; // do nothing
-          }
-          LOGGER.error(e.getMessage());
-          handler.handle(Future.failedFuture("Internal error"));
-        });
+              if (!authDelegs.isEmpty()) {
+                Response r =
+                    new Response.ResponseBuilder()
+                        .type(URN_INVALID_INPUT)
+                        .title(ERR_TITLE_AUTH_DELE_DELETE)
+                        .detail(authDelegs.get(0).toString())
+                        .status(403)
+                        .build();
+                handler.handle(Future.succeededFuture(r.toJson()));
+                return Future.failedFuture(COMPOSE_FAILURE);
+              }
+              return Future.succeededFuture();
+            });
+
+    validate
+        .compose(
+            i ->
+                pool.withTransaction(
+                    conn -> conn.preparedQuery(DELETE_DELEGATIONS).execute(queryTup)))
+        .onSuccess(
+            res -> {
+              Response r =
+                  new Response.ResponseBuilder()
+                      .type(POLICY_SUCCESS)
+                      .title(SUCC_TITLE_DELETE_DELE)
+                      .objectResults(new JsonObject())
+                      .status(200)
+                      .build();
+              handler.handle(Future.succeededFuture(r.toJson()));
+            })
+        .onFailure(
+            e -> {
+              if (e.getMessage().equals(COMPOSE_FAILURE)) {
+                return; // do nothing
+              }
+              LOGGER.error(e.getMessage());
+              handler.handle(Future.failedFuture("Internal error"));
+            });
 
     return this;
   }
-
 }
