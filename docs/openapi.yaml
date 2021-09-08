@@ -117,7 +117,7 @@ paths:
         - schema:
             type: string
             minLength: 1
-            maxLength: 1500
+            maxLength: 2000
             example: Bearer <JWT>
           in: header
           name: Authorization
@@ -390,7 +390,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -629,7 +629,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -880,7 +880,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -1078,7 +1078,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -1209,7 +1209,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -1343,7 +1343,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -1565,7 +1565,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -1722,7 +1722,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -1945,7 +1945,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -2012,7 +2012,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -2082,7 +2082,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -2388,7 +2388,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -2525,7 +2525,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -2608,7 +2608,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -3239,5 +3239,6 @@ components:
     authorization:
       type: http
       scheme: bearer
+      description: ''
   responses: {}
 security: []
