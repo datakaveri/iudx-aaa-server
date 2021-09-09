@@ -27,7 +27,7 @@ public class CatalogueClient {
   private String catHost;
   private Integer catPort;
   private String catItemPath;
-  private String auth_URL;
+  private String authUrl;
 
   public CatalogueClient(Vertx vertx, PgPool pool, JsonObject options) {
 
@@ -39,6 +39,7 @@ public class CatalogueClient {
     this.catHost = options.getString("catServerHost");
     this.catPort = Integer.parseInt(options.getString("catServerPort"));
     this.catItemPath = Constants.CAT_ITEM_PATH;
+    this.authUrl = options.getString("authServerUrl");
   }
 
   /**
@@ -711,7 +712,7 @@ public class CatalogueClient {
               conn.preparedQuery(CHECK_DELEGATION)
                   .collecting(idCollector)
                   .execute(
-                      Tuple.of(auth_URL, UUID.fromString(userId))
+                      Tuple.of(authUrl, UUID.fromString(userId))
                           .addArrayOfUUID(provider_ids.toArray(UUID[]::new)))
                   .onSuccess(obj -> p.complete(obj.value()))
                   .onFailure(
@@ -840,7 +841,7 @@ public class CatalogueClient {
     pool.withConnection(
         conn ->
             conn.preparedQuery(CHECK_AUTH_POLICY)
-                .execute(Tuple.of(userId, auth_URL, status.ACTIVE))
+                .execute(Tuple.of(userId, authUrl, status.ACTIVE))
                 .onFailure(
                     obj -> {
                       LOGGER.error("checkAuthPolicy db fail :: " + obj.getLocalizedMessage());
