@@ -148,8 +148,8 @@ public class Constants {
           + " and expiry_time > now()";
   // List Policy queries
   public static final String GET_POLICIES =
-          "Select a.id as policy_id, a.user_id, a.owner_id, a.item_id ,a.item_type ,"
-                  + " a.expiry_time  ,a.constraints,b.cat_id  from test.policies a INNER JOIN test.";
+      "Select a.id as  \"policyId\", a.user_id, a.owner_id, a.item_id as \"itemId\" ,a.item_type as \"itemType\" ,"
+          + " a.expiry_time as \"expiryTime\" ,a.constraints, b.cat_id  as \"catId\" from test.policies a INNER JOIN test.";
   public static final String GET_POLICIES_JOIN =
           " b on a.item_id = b.id "
                   + "where a.owner_id = $1::UUID AND a.item_type = $2::test.item_enum  "
@@ -185,8 +185,8 @@ public class Constants {
   public static final String CHECKUSEREXIST =
           "select id from test.users where id = any($1::uuid[])";
   public static final String CHECK_RES_SER =
-          "select name as cat_id,id from test.resource_server "
-                  + "where owner_id = $1::UUID and name = ANY($2::text[])";
+          "select url as cat_id,id from test.resource_server "
+                  + "where owner_id = $1::UUID and url = ANY($2::text[])";
   public static final String CHECKRESGRP =
           "select cat_id from test.resource_group where cat_id = ANY($1::text[]) ";
   public static final String CHECK_AUTH_POLICY =
@@ -202,7 +202,7 @@ public class Constants {
                   + " and cat_id = any($2::text[])";
   public static final String CHECK_DELEGATION =
           "Select a.id from test.delegations a inner join test.resource_server b "
-                  + " on a.resource_server_id = b.id where b.name = $1::text "
+                  + " on a.resource_server_id = b.id where b.url = $1::text "
                   + " and a.user_id = $2::UUID and a.owner_id = any($3::UUID[]) ";
 
 

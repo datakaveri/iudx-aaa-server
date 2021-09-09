@@ -42,6 +42,8 @@ public class ListPolicyTest {
     private static PolicyService policyService;
     private static RegistrationService registrationService;
     private static CatalogueClient catalogueClient;
+    private static JsonObject authOptions;
+    private static JsonObject catOptions;
 
     private static Vertx vertxObj;
     private static MockRegistrationFactory mockRegistrationFactory;
@@ -66,6 +68,8 @@ public class ListPolicyTest {
         databaseUserName = dbConfig.getString("databaseUserName");
         databasePassword = dbConfig.getString("databasePassword");
         poolSize = Integer.parseInt(dbConfig.getString("poolSize"));
+        authOptions = dbConfig.getJsonObject("authOptions");
+        catOptions = dbConfig.getJsonObject("catOptions");
 
 // Set Connection Object
 
@@ -86,7 +90,7 @@ public class ListPolicyTest {
 
         mockRegistrationFactory = new MockRegistrationFactory();
         registrationService = mockRegistrationFactory.getInstance();
-        policyService = new PolicyServiceImpl(pgclient,registrationService,catalogueClient);
+        policyService = new PolicyServiceImpl(pgclient,registrationService,catalogueClient,authOptions,catOptions);
         testContext.completeNow();
     }
 

@@ -40,6 +40,8 @@ public class PolicyVerticle extends AbstractVerticle {
   private PoolOptions poolOptions;
   private PgConnectOptions connectOptions;
   private JsonObject catalogueOptions;
+  private JsonObject authOptions;
+  private JsonObject catOptions;
   private PostgresClient pgClient;
   private static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
   private PolicyService policyService;
@@ -66,6 +68,10 @@ public class PolicyVerticle extends AbstractVerticle {
     databasePassword = config().getString("databasePassword");
     poolSize = Integer.parseInt(config().getString("poolSize"));
     catalogueOptions = config().getJsonObject("catalogueOptions");
+    authOptions = config().getJsonObject("authOptions");
+    catOptions = config().getJsonObject("catOptions");
+
+
     //get options for catalogue client
 
     /* Set Connection Object */
@@ -87,7 +93,7 @@ public class PolicyVerticle extends AbstractVerticle {
     PgPool pool = PgPool.pool(vertx,connectOptions, poolOptions);
     registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
     catalogueClient = new CatalogueClient(vertx,pool,catalogueOptions);
-    policyService = new PolicyServiceImpl(pool,registrationService,catalogueClient);
+    policyService = new PolicyServiceImpl(pool,registrationService,catalogueClient,authOptions,catOptions);
 
     new ServiceBinder(vertx).setAddress(POLICY_SERVICE_ADDRESS).register(PolicyService.class,
         policyService);

@@ -558,7 +558,8 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void createPolicyHandler(RoutingContext context) {
 
-    JsonArray jsonRequest = context.getBodyAsJsonArray();
+    JsonObject arr = context.getBodyAsJson();
+    JsonArray jsonRequest = arr.getJsonArray(REQUEST);
     List<CreatePolicyRequest> request = CreatePolicyRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
 
@@ -579,7 +580,8 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void deletePolicyHandler(RoutingContext context) {
 
-    JsonArray jsonRequest = context.getBodyAsJsonArray();
+    JsonObject arr = context.getBodyAsJson();
+    JsonArray jsonRequest = arr.getJsonArray(REQUEST);
     List<DeletePolicyRequest> request = DeletePolicyRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
 
