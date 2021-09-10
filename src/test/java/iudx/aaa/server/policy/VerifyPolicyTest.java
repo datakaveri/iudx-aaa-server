@@ -41,6 +41,9 @@ public class VerifyPolicyTest {
   private static PolicyService policyService;
   private static RegistrationService registrationService;
   private static CatalogueClient catalogueClient;
+  private static JsonObject catalogueOptions;
+  private static JsonObject authOptions;
+  private static JsonObject catOptions;
 
   private static Vertx vertxObj;
 
@@ -60,8 +63,11 @@ public class VerifyPolicyTest {
     databaseUserName = dbConfig.getString("databaseUserName");
     databasePassword = dbConfig.getString("databasePassword");
     poolSize = Integer.parseInt(dbConfig.getString("poolSize"));
+    authOptions = dbConfig.getJsonObject("authOptions");
+    catOptions = dbConfig.getJsonObject("catOptions");
 
-    /* Set Connection Object */
+
+      /* Set Connection Object */
     if (connectOptions == null) {
       connectOptions =
           new PgConnectOptions()
@@ -80,7 +86,7 @@ public class VerifyPolicyTest {
     /* Create the client pool */
     pgclient = PgPool.pool(vertx, connectOptions, poolOptions);
 
-    policyService = new PolicyServiceImpl(pgclient, registrationService, catalogueClient);
+    policyService = new PolicyServiceImpl(pgclient, registrationService, catalogueClient,authOptions,catOptions);
 
     testContext.completeNow();
   }
@@ -212,6 +218,7 @@ public class VerifyPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
+                        System.out.println("response" + response);
                       assertEquals(SUCCESS, response.getString(STATUS));
                       testContext.completeNow();
                     })));

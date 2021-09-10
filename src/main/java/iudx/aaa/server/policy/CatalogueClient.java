@@ -27,6 +27,7 @@ public class CatalogueClient {
   private String catHost;
   private Integer catPort;
   private String catItemPath;
+  private String authUrl;
 
   public CatalogueClient(Vertx vertx, PgPool pool, JsonObject options) {
 
@@ -38,6 +39,7 @@ public class CatalogueClient {
     this.catHost = options.getString("catServerHost");
     this.catPort = Integer.parseInt(options.getString("catServerPort"));
     this.catItemPath = Constants.CAT_ITEM_PATH;
+    this.authUrl = options.getString("authServerUrl");
   }
 
   /**
@@ -430,7 +432,7 @@ public class CatalogueClient {
             obj -> {
               JsonObject res = obj.bodyAsJsonObject();
 
-              if (res.getString(STATUS).equals(status.SUCCESS.toString()))
+              if (res.getString(STATUS).equals(status.SUCCESS.toString().toLowerCase()))
                 p.complete(obj.bodyAsJsonObject().getJsonArray(RESULTS).getJsonObject(0));
               else p.fail(ITEMNOTFOUND + id);
             });
@@ -710,7 +712,7 @@ public class CatalogueClient {
               conn.preparedQuery(CHECK_DELEGATION)
                   .collecting(idCollector)
                   .execute(
-                      Tuple.of(AUTH_SERVER_URL, UUID.fromString(userId))
+                      Tuple.of(authUrl, UUID.fromString(userId))
                           .addArrayOfUUID(provider_ids.toArray(UUID[]::new)))
                   .onSuccess(obj -> p.complete(obj.value()))
                   .onFailure(
@@ -839,7 +841,7 @@ public class CatalogueClient {
     pool.withConnection(
         conn ->
             conn.preparedQuery(CHECK_AUTH_POLICY)
-                .execute(Tuple.of(userId, AUTH_SERVER_URL, status.ACTIVE))
+                .execute(Tuple.of(userId, authUrl, status.ACTIVE))
                 .onFailure(
                     obj -> {
                       LOGGER.error("checkAuthPolicy db fail :: " + obj.getLocalizedMessage());

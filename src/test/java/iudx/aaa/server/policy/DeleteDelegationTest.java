@@ -1,19 +1,6 @@
 
 package iudx.aaa.server.policy;
 
-import static iudx.aaa.server.policy.Constants.AUTH_SERVER_URL;
-import static iudx.aaa.server.policy.Constants.ERR_DETAIL_DEL_DELEGATE_ROLES;
-import static iudx.aaa.server.policy.Constants.ERR_TITLE_AUTH_DELE_DELETE;
-import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ID;
-import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ROLES;
-import static iudx.aaa.server.policy.Constants.NIL_UUID;
-import static iudx.aaa.server.policy.Constants.POLICY_SUCCESS;
-import static iudx.aaa.server.policy.Constants.SUCC_TITLE_DELETE_DELE;
-import static iudx.aaa.server.policy.Constants.TYPE;
-import static iudx.aaa.server.policy.Constants.URN_INVALID_INPUT;
-import static iudx.aaa.server.policy.Constants.URN_INVALID_ROLE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -37,11 +24,6 @@ import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.policy.Constants.status;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.registration.Utils;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -55,6 +37,25 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+
+import static iudx.aaa.server.policy.Constants.AUTH_SERVER_URL;
+import static iudx.aaa.server.policy.Constants.ERR_DETAIL_DEL_DELEGATE_ROLES;
+import static iudx.aaa.server.policy.Constants.ERR_TITLE_AUTH_DELE_DELETE;
+import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ID;
+import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ROLES;
+import static iudx.aaa.server.policy.Constants.NIL_UUID;
+import static iudx.aaa.server.policy.Constants.POLICY_SUCCESS;
+import static iudx.aaa.server.policy.Constants.SUCC_TITLE_DELETE_DELE;
+import static iudx.aaa.server.policy.Constants.TYPE;
+import static iudx.aaa.server.policy.Constants.URN_INVALID_INPUT;
+import static iudx.aaa.server.policy.Constants.URN_INVALID_ROLE;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
 @TestMethodOrder(OrderAnnotation.class)
@@ -77,6 +78,9 @@ public class DeleteDelegationTest {
   private static PgConnectOptions connectOptions;
   private static PolicyService policyService;
   private static RegistrationService registrationService;
+  private static JsonObject catalogueOptions;
+  private static JsonObject authOptions;
+  private static JsonObject catOptions;
 
   private static Vertx vertxObj;
   private static MockRegistrationFactory mockRegistrationFactory;
@@ -143,6 +147,8 @@ public class DeleteDelegationTest {
     databaseUserName = dbConfig.getString("databaseUserName");
     databasePassword = dbConfig.getString("databasePassword");
     poolSize = Integer.parseInt(dbConfig.getString("poolSize"));
+    authOptions = dbConfig.getJsonObject("authOptions");
+    catOptions = dbConfig.getJsonObject("catOptions");
 
     // Set Connection Object
     if (connectOptions == null) {
@@ -208,7 +214,7 @@ public class DeleteDelegationTest {
           .map(val -> val.value()).onSuccess(s -> {
             delegationId.complete(s);
             registrationService = mockRegistrationFactory.getInstance();
-            policyService = new PolicyServiceImpl(pool, registrationService, catalogueClient);
+            policyService = new PolicyServiceImpl(pool, registrationService, catalogueClient,authOptions,catOptions);
             testContext.completeNow();
           }));
     });

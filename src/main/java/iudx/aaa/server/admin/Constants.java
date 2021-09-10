@@ -42,8 +42,8 @@ public class Constants {
   public static final String ERR_TITLE_INVALID_DOMAIN = "Invalid URL";
   public static final String ERR_DETAIL_INVALID_DOMAIN = "The domain is invalid";
 
-  public static final String ERR_TITLE_INVALID_USER = "Invalid User ID";
-  public static final String ERR_DETAIL_INVALID_USER = "User is not a provider/pending provider : ";
+  public static final String ERR_TITLE_INVALID_USER =
+      "Invalid User ID, not a provider/pending provider";
 
   public static final String ERR_TITLE_NO_USER_PROFILE = "User profile does not exist";
   public static final String ERR_DETAIL_NO_USER_PROFILE = "Please register to create user profile";
@@ -54,9 +54,6 @@ public class Constants {
   public static final String ERR_TITLE_DOMAIN_EXISTS = "Domains exists";
   public static final String ERR_DETAIL_DOMAIN_EXISTS =
       "An organization exists with the given domain";
-
-  public static final String ERR_TITLE_DUPLICATES = "Duplicate user IDs";
-  public static final String ERR_DETAIL_DUPLICATES = "Duplicate user IDs in request";
 
   /* SQL */
   public static final String SQL_CREATE_ORG_IF_NOT_EXIST =

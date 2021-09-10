@@ -45,6 +45,8 @@ public class DeletePolicyTest {
   private static RegistrationService registrationService;
   private static CatalogueClient  catalogueClient;
   private static Vertx vertxObj;
+    private static JsonObject authOptions;
+    private static JsonObject catOptions;
 
   @BeforeAll
   @DisplayName("Deploying Verticle")
@@ -62,6 +64,8 @@ public class DeletePolicyTest {
     databaseUserName = dbConfig.getString("databaseUserName");
     databasePassword = dbConfig.getString("databasePassword");
     poolSize = Integer.parseInt(dbConfig.getString("poolSize"));
+      authOptions = dbConfig.getJsonObject("authOptions");
+      catOptions = dbConfig.getJsonObject("catOptions");
 
     /* Set Connection Object */
     if (connectOptions == null) {
@@ -91,7 +95,7 @@ public class DeletePolicyTest {
                         .map(row -> row.iterator().next().getUUID("id")))
             .onSuccess(
                 obj -> {
-                  policyService = new PolicyServiceImpl(pgclient, registrationService,catalogueClient);
+                  policyService = new PolicyServiceImpl(pgclient, registrationService,catalogueClient,authOptions,catOptions);
                   testContext.completeNow();
                 })
             .onFailure(err -> testContext.failNow(err.getMessage()));

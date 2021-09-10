@@ -2,6 +2,7 @@ package iudx.aaa.server.policy;
 
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
@@ -20,9 +21,11 @@ public class deletePolicy {
   private static final Logger LOGGER = LogManager.getLogger(deletePolicy.class);
 
   private PgPool pool;
+  private JsonObject options;
 
-  public deletePolicy(PgPool pool) {
+  public deletePolicy(PgPool pool,JsonObject options) {
     this.pool = pool;
+    this.options = options;
   }
 
   public Future<List<UUID>> checkResExist(List<UUID> req) {
@@ -130,7 +133,7 @@ public class deletePolicy {
                   conn.preparedQuery(CHECK_DELPOLICY)
                       .execute(
                           Tuple.of(
-                              userId, itemTypes.RESOURCE_SERVER, AUTH_SERVER_URL, status.ACTIVE))
+                              userId, itemTypes.RESOURCE_SERVER,options.getString("authServerUrl") , status.ACTIVE))
                       .compose(
                           obj -> {
                             if (obj.rowCount() > 0) {

@@ -131,7 +131,7 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     Set<String> allowedHeaders = new HashSet<>();
     allowedHeaders.add(HEADER_ACCEPT);
-    allowedHeaders.add(HEADER_TOKEN);
+    allowedHeaders.add(HEADER_AUTHORIZATION);
     allowedHeaders.add(HEADER_CONTENT_LENGTH);
     allowedHeaders.add(HEADER_CONTENT_TYPE);
     allowedHeaders.add(HEADER_HOST);
@@ -161,7 +161,6 @@ public class ApiServerVerticle extends AbstractVerticle {
             //  .setRequireSecurityHandlers(false);
           routerBuilder.setOptions(factoryOptions);
           routerBuilder.securityHandler("authorization", oidcFlow);
-          
           
           // Post token create
           routerBuilder.operation(CREATE_TOKEN)
@@ -262,10 +261,10 @@ public class ApiServerVerticle extends AbstractVerticle {
           routerBuilder.rootHandler(TimeoutHandler.create(serverTimeout));
 
           // Router configuration- CORS, methods and headers
-          router = routerBuilder.createRouter();
-          router.route().handler(CorsHandler.create(corsRegex).allowedHeaders(allowedHeaders)
+          routerBuilder.rootHandler(CorsHandler.create(corsRegex).allowedHeaders(allowedHeaders)
               .allowedMethods(allowedMethods));
-          router.route().handler(BodyHandler.create());
+
+          router = routerBuilder.createRouter();
 
           // Static Resource Handler.Get openapiv3 spec
           router.get(ROUTE_STATIC_SPEC)
@@ -559,7 +558,8 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void createPolicyHandler(RoutingContext context) {
 
-    JsonArray jsonRequest = context.getBodyAsJsonArray();
+    JsonObject arr = context.getBodyAsJson();
+    JsonArray jsonRequest = arr.getJsonArray(REQUEST);
     List<CreatePolicyRequest> request = CreatePolicyRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
 
@@ -580,7 +580,8 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void deletePolicyHandler(RoutingContext context) {
 
-    JsonArray jsonRequest = context.getBodyAsJsonArray();
+    JsonObject arr = context.getBodyAsJson();
+    JsonArray jsonRequest = arr.getJsonArray(REQUEST);
     List<DeletePolicyRequest> request = DeletePolicyRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
 

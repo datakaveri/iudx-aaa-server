@@ -3,13 +3,10 @@ package iudx.aaa.server.admin;
 import static iudx.aaa.server.admin.Constants.COMPOSE_FAILURE;
 import static iudx.aaa.server.admin.Constants.CONFIG_AUTH_URL;
 import static iudx.aaa.server.admin.Constants.ERR_DETAIL_DOMAIN_EXISTS;
-import static iudx.aaa.server.admin.Constants.ERR_DETAIL_DUPLICATES;
 import static iudx.aaa.server.admin.Constants.ERR_DETAIL_INVALID_DOMAIN;
-import static iudx.aaa.server.admin.Constants.ERR_DETAIL_INVALID_USER;
 import static iudx.aaa.server.admin.Constants.ERR_DETAIL_NOT_AUTH_ADMIN;
 import static iudx.aaa.server.admin.Constants.ERR_DETAIL_NO_USER_PROFILE;
 import static iudx.aaa.server.admin.Constants.ERR_TITLE_DOMAIN_EXISTS;
-import static iudx.aaa.server.admin.Constants.ERR_TITLE_DUPLICATES;
 import static iudx.aaa.server.admin.Constants.ERR_TITLE_INVALID_DOMAIN;
 import static iudx.aaa.server.admin.Constants.ERR_TITLE_INVALID_USER;
 import static iudx.aaa.server.admin.Constants.ERR_TITLE_NOT_AUTH_ADMIN;
@@ -170,7 +167,7 @@ public class AdminServiceImpl implements AdminService {
         UUID orgId = list.get(OrgIndex);
 
         obj.put(RESP_USERID, userId.toString());
-        obj.put(RESP_STATUS, filter.name());
+        obj.put(RESP_STATUS, filter.name().toLowerCase());
         obj.mergeIn(nameDet.get(keycloakId));
         obj.put(RESP_ORG, orgDet.get(orgId));
         resp.add(obj);
@@ -215,13 +212,6 @@ public class AdminServiceImpl implements AdminService {
     Set<UUID> ids =
         request.stream().map(obj -> UUID.fromString(obj.getUserId())).collect(Collectors.toSet());
 
-    if (ids.size() != request.size()) {
-      Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-          .title(ERR_TITLE_DUPLICATES).detail(ERR_DETAIL_DUPLICATES).build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
-    }
-
     Collector<Row, ?, Map<UUID, UUID>> collect =
         Collectors.toMap(row -> row.getUUID("id"), row -> row.getUUID("keycloak_id"));
 
@@ -231,22 +221,10 @@ public class AdminServiceImpl implements AdminService {
 
     Future<Map<UUID, UUID>> checkRes = pendingKcIds.compose(res -> {
       if (res.size() != ids.size()) {
-        /* Get index of first missing userId and send in response */
-        Set<UUID> missing = new HashSet<UUID>(ids);
-        Set<UUID> uids = res.keySet();
-        missing.removeAll(uids);
-
-        String first = missing.iterator().next().toString();
-        int index = 0;
-        for (ProviderUpdateRequest obj : request) {
-          if (obj.getUserId().equals(first)) {
-            break;
-          }
-          index++;
-        }
+        UUID firstMissing = ids.stream().filter(id -> !res.containsKey(id)).findFirst().get();
 
         Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-            .title(ERR_TITLE_INVALID_USER).detail(ERR_DETAIL_INVALID_USER + index).build();
+            .title(ERR_TITLE_INVALID_USER).detail(firstMissing.toString()).build();
         handler.handle(Future.succeededFuture(r.toJson()));
         return Future.failedFuture(COMPOSE_FAILURE);
       }
@@ -285,7 +263,9 @@ public class AdminServiceImpl implements AdminService {
         JsonObject j = obj.toJson();
         UUID kc = uidKc.get(UUID.fromString(obj.getUserId()));
         j.mergeIn(details.get(kc.toString()));
+        j.put(RESP_STATUS, j.remove(RESP_STATUS).toString().toLowerCase());
         resp.add(j);
+        LOGGER.info("Changed status of " + obj.getUserId() + " to " + obj.getStatus());
       });
 
       Response r = new ResponseBuilder().status(200).type(URN_SUCCESS)

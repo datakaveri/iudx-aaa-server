@@ -13,7 +13,7 @@ public class CreatePolicyRequest {
     private UUID userId;
     private String itemId;
     private String itemType;
-    private String expiryTime;
+    private String expiryTime = "";
     private JsonObject constraints;
 
     public String getUserId() {

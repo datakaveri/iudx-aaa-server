@@ -117,7 +117,7 @@ paths:
         - schema:
             type: string
             minLength: 1
-            maxLength: 1500
+            maxLength: 2000
             example: Bearer <JWT>
           in: header
           name: Authorization
@@ -390,7 +390,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -509,7 +509,7 @@ paths:
                         items:
                           type: object
                           properties:
-                            client:
+                            clientName:
                               type: string
                               minLength: 1
                             clientId:
@@ -519,7 +519,7 @@ paths:
                               type: string
                               minLength: 1
                           required:
-                            - client
+                            - clientName
                             - clientId
                             - clientSecret
                       email:
@@ -530,9 +530,6 @@ paths:
                         minLength: 1
                       organization:
                         type: object
-                        required:
-                          - name
-                          - url
                         properties:
                           name:
                             type: string
@@ -540,6 +537,9 @@ paths:
                           url:
                             type: string
                             minLength: 1
+                        required:
+                          - name
+                          - url
                 required:
                   - type
                   - title
@@ -555,10 +555,10 @@ paths:
                         firstName: Foo
                         lastName: Bar
                       roles:
-                        - CONSUMER
+                        - consumer
                       userId: 67194fc9-495e-40f7-b016-4470c1d4397f
                       clients:
-                        - client: default
+                        - clientName: default
                           clientId: 6d0b58c3-c0c4-48af-bca2-4f255c0e73a7
                           clientSecret: a18cb9fc-06b3-4ae5-8220-86fc4e89a1a6
                       email: ngoaf@chspomvjuq.com
@@ -629,7 +629,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -821,8 +821,8 @@ paths:
                         firstName: B
                         lastName: c
                       roles:
-                        - PROVIDER
-                        - CONSUMER
+                        - provider
+                        - consumer
                       userId: a13eb955-c691-4fd3-b200-f18bc78810b5
                       email: bye@example.com
                       clients:
@@ -880,7 +880,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -970,14 +970,14 @@ paths:
                         items:
                           type: object
                           properties:
-                            client:
+                            clientName:
                               type: string
                               minLength: 1
                             clientId:
                               type: string
                               minLength: 1
                           required:
-                            - client
+                            - clientName
                             - clientId
                       email:
                         type: string
@@ -987,9 +987,6 @@ paths:
                         minLength: 1
                       organization:
                         type: object
-                        required:
-                          - name
-                          - url
                         properties:
                           name:
                             type: string
@@ -997,6 +994,9 @@ paths:
                           url:
                             type: string
                             minLength: 1
+                        required:
+                          - name
+                          - url
                 required:
                   - type
                   - title
@@ -1012,11 +1012,11 @@ paths:
                         firstName: Foo
                         lastName: Bar
                       roles:
-                        - CONSUMER
-                        - DELEGATE
+                        - consumer
+                        - delegate
                       userId: 67194fc9-495e-40f7-b016-4470c1d4397f
                       clients:
-                        - client: default
+                        - clientName: default
                           clientId: 6d0b58c3-c0c4-48af-bca2-4f255c0e73a7
                       email: ngoaf@chspomvjuq.com
                       phone: '9989967899'
@@ -1078,7 +1078,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -1209,7 +1209,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -1343,7 +1343,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -1434,6 +1434,10 @@ paths:
                         status:
                           type: string
                           minLength: 1
+                          enum:
+                            - approved
+                            - rejected
+                            - pending
                         email:
                           type: string
                           minLength: 1
@@ -1475,7 +1479,7 @@ paths:
                     title: Provider registrations
                     results:
                       - userId: 844e251b-574b-46e6-9247-f76f1f70a637
-                        status: APPROVED
+                        status: approved
                         email: xy@iisc.ac.in
                         name:
                           firstName: X
@@ -1484,7 +1488,7 @@ paths:
                           name: IISc
                           url: iisc.ac.in
                       - userId: a13eb955-c691-4fd3-b200-f18bc78810b5
-                        status: APPROVED
+                        status: approved
                         email: someone@example.com
                         name:
                           firstName: Someone
@@ -1493,7 +1497,7 @@ paths:
                           name: example
                           url: example.com
                       - userId: d34b1547-7281-4f66-b550-ed79f9bb0c36
-                        status: APPROVED
+                        status: approved
                         email: individual@example.com
                         name:
                           firstName: Indiv
@@ -1507,12 +1511,12 @@ paths:
                     title: Provider registrations
                     results:
                       - userId: e5bf3f6f-f22b-463d-aacb-cd62fbd8056f
-                        status: REJECTED
+                        status: rejected
                         organization:
                           name: lmwohberob
                           url: lmwohberob.com
                       - userId: fd0dfa08-d87a-4a51-86ce-060424f981c5
-                        status: REJECTED
+                        status: rejected
                         organization:
                           name: fufwcudijj
                           url: fufwcudijj.com
@@ -1561,7 +1565,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -1635,6 +1639,9 @@ paths:
                         status:
                           type: string
                           minLength: 1
+                          enum:
+                            - approved
+                            - rejected
                         userId:
                           type: string
                           minLength: 1
@@ -1668,7 +1675,7 @@ paths:
                     type: 'urn:dx:as:Success'
                     title: Provider status updated
                     results:
-                      - status: APPROVED
+                      - status: approved
                         userId: 355e251b-574b-46e6-9247-f76f1f70a123
                         email: test@gmail.com
                         name:
@@ -1676,8 +1683,8 @@ paths:
                           lastName: Last
         '400':
           description: |-
-            - Missing or malformed data
-            - Duplicate `userId`s in request.
+            - Missing or malformed request
+            - Duplicate `userId`s in request
             - Invalid `userId`or User is not provider/pending provider.
           content:
             application/json:
@@ -1687,13 +1694,8 @@ paths:
                 User ID not pending/userId does not exist:
                   value:
                     type: 'urn:dx:as:InvalidInput'
-                    title: Invalid User ID
-                    detail: 'User is not a provider/pending provider : 0'
-                Duplicate userIds in request:
-                  value:
-                    type: 'urn:dx:as:InvalidInput'
-                    title: Duplicate user IDs
-                    detail: Duplicate user IDs in request
+                    title: 'Invalid User ID, not a provider/pending provider'
+                    detail: c34b1565-7281-4f66-b220-ed79f9bb0a31
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
@@ -1720,7 +1722,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -1788,7 +1790,30 @@ paths:
               schema:
                 description: ''
                 type: object
-                x-examples: null
+                x-examples:
+                  example-1:
+                    type: 'urn:dx:as:Success'
+                    title: policy read
+                    results:
+                      result:
+                        - policyId: b268d557-cc98-4337-833d-6ad34e7eb51f
+                          itemId: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
+                          itemType: resource
+                          expiryTime: '2022-06-15T09:07:16.034289'
+                          constraints: {}
+                          catId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group/resource
+                          user:
+                            email: alice@gmail.com
+                            name:
+                              firstName: Alice
+                              lastName: Bob
+                            id: 32a4b979-4f4a-4c44-b0c3-2fe109952b5f
+                          owner:
+                            email: someone@example.com
+                            name:
+                              firstName: Someone
+                              lastName: Person
+                            id: a13eb955-c691-4fd3-b200-f18bc78810b5
                 properties:
                   type:
                     type: string
@@ -1808,21 +1833,21 @@ paths:
                         items:
                           type: object
                           properties:
-                            policy_id:
+                            policyId:
                               type: string
                               minLength: 1
-                            item_id:
+                            itemId:
                               type: string
                               minLength: 1
-                            item_type:
+                            itemType:
                               type: string
                               minLength: 1
-                            expiry_time:
+                            expiryTime:
                               type: string
                               minLength: 1
                             constraints:
                               type: object
-                            cat_id:
+                            catId:
                               type: string
                               minLength: 1
                             user:
@@ -1876,12 +1901,12 @@ paths:
                                 - name
                                 - id
                           required:
-                            - policy_id
-                            - item_id
-                            - item_type
-                            - expiry_time
+                            - policyId
+                            - itemId
+                            - itemType
+                            - expiryTime
                             - constraints
-                            - cat_id
+                            - catId
                 required:
                   - type
                   - title
@@ -1893,12 +1918,12 @@ paths:
                     title: policy read
                     results:
                       result:
-                        - policy_id: e4995fef-b850-48cc-82d0-6eef9ffb9531
-                          item_id: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
-                          item_type: resource
-                          expiry_time: '2022-06-15T09:07:16.034289'
+                        - policyId: b268d557-cc98-4337-833d-6ad34e7eb51f
+                          itemId: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
+                          itemType: resource
+                          expiryTime: '2022-06-15T09:07:16.034289'
                           constraints: {}
-                          cat_id: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group/resource
+                          catId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group/resource
                           user:
                             email: alice@gmail.com
                             name:
@@ -1943,7 +1968,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -2010,7 +2035,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -2021,29 +2046,33 @@ paths:
         content:
           application/json:
             schema:
-              type: array
               description: ''
-              minItems: 1
-              uniqueItems: true
+              type: object
+              properties:
+                request:
+                  type: array
+                  uniqueItems: true
+                  minItems: 1
+                  items:
+                    required:
+                      - id
+                    properties:
+                      id:
+                        type: string
+              required:
+                - request
               x-examples:
                 example-1:
-                  - id: 1e435fcb-11ce-4f4d-94c0-adf339932ba4
-                  - id: 7d50c547-9f36-4daa-bdc6-cca3c932379d
-              items:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    minLength: 36
-                    format: uuid
-                    maxLength: 36
-                required:
-                  - id
+                  request:
+                    - id: ''
+                    - id: ''
             examples:
               Delete Policies:
                 value:
-                  - id: 231f6eca-6276-4993-bfeb-53cbbbba6f06
-        description: Request body is a JsonArray having one or multiple ID Objects to delete policies.
+                  request:
+                    - id: 231f6eca-6276-4993-bfeb-53cbbbba6f06
+                    - id: 231f6eca-6276-4993-bfeb-53cbbbba6f0b
+        description: Request body is a JsonObject containing a JsonArray having one or multiple ID Objects to delete policies.
       tags:
         - Policies APIs
       security:
@@ -2080,7 +2109,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -2091,64 +2120,76 @@ paths:
         content:
           application/json:
             schema:
-              type: array
               description: ''
-              minItems: 1
-              uniqueItems: true
+              type: object
               x-examples:
                 example-1:
-                  - userId: 89bbe934-5f18-4f57-b68e-fb821ba77291
-                    itemId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-abcd
-                    itemType: resource_group
-                    expiryTime: '2021-08-30T21:10:06.834292'
-                    constraints: {}
-              items:
-                type: object
-                properties:
-                  userId:
-                    type: string
-                    minLength: 1
-                  itemId:
-                    type: string
-                    minLength: 1
-                  itemType:
-                    type: string
-                    minLength: 1
-                  expiryTime:
-                    type: string
-                    minLength: 1
-                  constraints:
+                  request:
+                    - userId: 89bbe934-5f18-4f57-b68e-fb821ba77291
+                      itemId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group
+                      itemType: resource_group
+                      expiryTime: '2023-08-30T21:10:06.834292'
+                      constraints: {}
+                    - userId: 89bbe934-5f18-4f57-b68e-fb821ba77292
+                      itemId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group
+                      itemType: resource_group
+                      expiryTime: '2023-08-30T21:10:06.834292'
+                      constraints: {}
+              properties:
+                request:
+                  type: array
+                  uniqueItems: true
+                  minItems: 1
+                  items:
                     type: object
-                required:
-                  - userId
-                  - itemId
-                  - itemType
-                  - constraints
+                    properties:
+                      userId:
+                        type: string
+                        minLength: 1
+                      itemId:
+                        type: string
+                        minLength: 1
+                      itemType:
+                        type: string
+                        minLength: 1
+                      expiryTime:
+                        type: string
+                        minLength: 1
+                      constraints:
+                        type: object
+                    required:
+                      - userId
+                      - itemId
+                      - itemType
+              required:
+                - request
             examples:
               Create MultiplePolicies:
                 value:
-                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
-                    itemType: resource_group
-                    expiryTime: '2022-08-04T20:00:19+0000'
-                    constraints: {}
-                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cq21/resource-group
-                    itemType: resource_group
-                    expiryTime: '2022-08-04T20:00:19+0000'
-                    constraints: {}
+                  request:
+                    - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                      itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
+                      itemType: resource_group
+                      expiryTime: '2022-08-04T20:00:19+0000'
+                      constraints: {}
+                    - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                      itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cq21/resource-group
+                      itemType: resource_group
+                      expiryTime: '2022-08-04T20:00:19+0000'
+                      constraints: {}
               Create SinglePolicies:
                 value:
-                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
-                    itemType: resource_group
-                    expiryTime: '2022-08-04T20:00:19+0000'
-                    constraints: {}
+                  request:
+                    - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                      itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
+                      itemType: resource_group
+                      expiryTime: '2022-08-04T20:00:19+0000'
+                      constraints: {}
           application/xml:
             schema:
               type: object
               properties: {}
-        description: Request body will be JsonArray having or many objects
+        description: Request body will be an JsonObject containing JsonArray of requests
       tags:
         - Policies APIs
       security:
@@ -2386,7 +2427,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -2523,7 +2564,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -2606,7 +2647,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 1500
+            maxLength: 2000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -3237,5 +3278,6 @@ components:
     authorization:
       type: http
       scheme: bearer
+      description: ''
   responses: {}
 security: []

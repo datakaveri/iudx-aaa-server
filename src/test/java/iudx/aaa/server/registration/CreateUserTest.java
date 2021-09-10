@@ -1,20 +1,29 @@
 package iudx.aaa.server.registration;
 
+import static iudx.aaa.server.registration.Constants.DEFAULT_CLIENT;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_ID_REQUIRED;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_NO_EXIST;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_NO_MATCH;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_EXISTS;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_KC;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_ORG_ID_REQUIRED;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_ORG_NO_EXIST;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_ORG_NO_MATCH;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_USER_EXISTS;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_USER_NOT_KC;
+import static iudx.aaa.server.registration.Constants.PROVIDER_PENDING_MESG;
+import static iudx.aaa.server.registration.Constants.RESP_CLIENT_ID;
+import static iudx.aaa.server.registration.Constants.RESP_CLIENT_NAME;
+import static iudx.aaa.server.registration.Constants.RESP_CLIENT_SC;
+import static iudx.aaa.server.registration.Constants.SUCC_TITLE_CREATED_USER;
+import static iudx.aaa.server.registration.Constants.URN_ALREADY_EXISTS;
+import static iudx.aaa.server.registration.Constants.URN_INVALID_INPUT;
+import static iudx.aaa.server.registration.Constants.URN_MISSING_INFO;
+import static iudx.aaa.server.registration.Constants.URN_SUCCESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import java.util.List;
-import java.util.UUID;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
+
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -31,6 +40,17 @@ import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.configuration.Configuration;
+import java.util.List;
+import java.util.UUID;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 
 @ExtendWith(VertxExtension.class)
 public class CreateUserTest {
@@ -139,9 +159,10 @@ public class CreateUserTest {
           assertEquals(201, response.getInteger("status"));
           JsonObject result = response.getJsonObject("results");
 
-          assertEquals(Constants.URN_SUCCESS, response.getString("type"));
-          assertEquals(Constants.SUCC_TITLE_CREATED_USER, response.getString("title"));
-          assertTrue(result.getJsonArray("roles").getList().contains(Roles.CONSUMER.name()));
+          assertEquals(URN_SUCCESS, response.getString("type"));
+          assertEquals(SUCC_TITLE_CREATED_USER, response.getString("title"));
+          assertTrue(
+              result.getJsonArray("roles").getList().contains(Roles.CONSUMER.name().toLowerCase()));
           assertEquals(result.getString("email"), email);
           assertEquals(result.getString("keycloakId"), keycloakId);
           assertTrue(result.getString("userId").matches(UUID_REGEX));
@@ -151,9 +172,9 @@ public class CreateUserTest {
           assertTrue(!result.containsKey("organization"));
 
           JsonObject client = result.getJsonArray("clients").getJsonObject(0);
-          assertTrue(client.getString("clientId").matches(UUID_REGEX));
-          assertTrue(client.getString("clientSecret").matches(UUID_REGEX));
-          assertEquals(client.getString("client"), Constants.DEFAULT_CLIENT);
+          assertTrue(client.getString(RESP_CLIENT_ID).matches(UUID_REGEX));
+          assertTrue(client.getString(RESP_CLIENT_SC).matches(UUID_REGEX));
+          assertEquals(client.getString(RESP_CLIENT_NAME), DEFAULT_CLIENT);
 
           testContext.completeNow();
         })));
@@ -181,8 +202,8 @@ public class CreateUserTest {
           assertEquals(201, response.getInteger("status"));
           JsonObject result = response.getJsonObject("results");
 
-          assertEquals(Constants.URN_SUCCESS, response.getString("type"));
-          assertEquals(Constants.SUCC_TITLE_CREATED_USER + Constants.PROVIDER_PENDING_MESG,
+          assertEquals(URN_SUCCESS, response.getString("type"));
+          assertEquals(SUCC_TITLE_CREATED_USER + PROVIDER_PENDING_MESG,
               response.getString("title"));
           assertTrue(result.getJsonArray("roles").size() == 0);
           assertEquals(result.getString("email"), email);
@@ -194,9 +215,9 @@ public class CreateUserTest {
           assertEquals(result.getJsonObject("organization").getString("url"), url);
 
           JsonObject client = result.getJsonArray("clients").getJsonObject(0);
-          assertTrue(client.getString("clientId").matches(UUID_REGEX));
-          assertTrue(client.getString("clientSecret").matches(UUID_REGEX));
-          assertEquals(client.getString("client"), Constants.DEFAULT_CLIENT);
+          assertTrue(client.getString(RESP_CLIENT_ID).matches(UUID_REGEX));
+          assertTrue(client.getString(RESP_CLIENT_SC).matches(UUID_REGEX));
+          assertEquals(client.getString(RESP_CLIENT_NAME), DEFAULT_CLIENT);
 
           testContext.completeNow();
         })));
@@ -225,9 +246,9 @@ public class CreateUserTest {
 
           JsonObject result = response.getJsonObject("results");
 
-          assertEquals(Constants.URN_SUCCESS, response.getString("type"));
-          assertEquals(Constants.SUCC_TITLE_CREATED_USER, response.getString("title"));
-          assertEquals(result.getJsonArray("roles"), new JsonArray().add(Roles.DELEGATE.name()));
+          assertEquals(URN_SUCCESS, response.getString("type"));
+          assertEquals(SUCC_TITLE_CREATED_USER, response.getString("title"));
+          assertTrue(result.getJsonArray("roles").contains(Roles.DELEGATE.name().toLowerCase()));
           assertEquals(result.getString("email"), email);
           assertEquals(result.getString("keycloakId"), keycloakId);
           assertTrue(result.getString("userId").matches(UUID_REGEX));
@@ -237,9 +258,9 @@ public class CreateUserTest {
           assertEquals(result.getJsonObject("organization").getString("url"), url);
 
           JsonObject client = result.getJsonArray("clients").getJsonObject(0);
-          assertTrue(client.getString("clientId").matches(UUID_REGEX));
-          assertTrue(client.getString("clientSecret").matches(UUID_REGEX));
-          assertEquals(client.getString("client"), Constants.DEFAULT_CLIENT);
+          assertTrue(client.getString(RESP_CLIENT_ID).matches(UUID_REGEX));
+          assertTrue(client.getString(RESP_CLIENT_SC).matches(UUID_REGEX));
+          assertEquals(client.getString(RESP_CLIENT_NAME), DEFAULT_CLIENT);
 
           testContext.completeNow();
         })));
@@ -269,11 +290,13 @@ public class CreateUserTest {
 
           JsonObject result = response.getJsonObject("results");
 
-          assertEquals(Constants.URN_SUCCESS, response.getString("type"));
-          assertEquals(Constants.SUCC_TITLE_CREATED_USER + Constants.PROVIDER_PENDING_MESG,
+          assertEquals(URN_SUCCESS, response.getString("type"));
+          assertEquals(SUCC_TITLE_CREATED_USER + PROVIDER_PENDING_MESG,
               response.getString("title"));
+          @SuppressWarnings("unchecked")
           List<String> roles = result.getJsonArray("roles").getList();
-          assertTrue(roles.containsAll(List.of(Roles.DELEGATE.name(), Roles.CONSUMER.name())));
+          assertTrue(roles.containsAll(
+              List.of(Roles.DELEGATE.name().toLowerCase(), Roles.CONSUMER.name().toLowerCase())));
 
           assertEquals(result.getString("email"), email);
           assertEquals(result.getString("keycloakId"), keycloakId);
@@ -284,9 +307,9 @@ public class CreateUserTest {
           assertEquals(result.getJsonObject("organization").getString("url"), url);
 
           JsonObject client = result.getJsonArray("clients").getJsonObject(0);
-          assertTrue(client.getString("clientId").matches(UUID_REGEX));
-          assertTrue(client.getString("clientSecret").matches(UUID_REGEX));
-          assertEquals(client.getString("client"), Constants.DEFAULT_CLIENT);
+          assertTrue(client.getString(RESP_CLIENT_ID).matches(UUID_REGEX));
+          assertTrue(client.getString(RESP_CLIENT_SC).matches(UUID_REGEX));
+          assertEquals(client.getString(RESP_CLIENT_NAME), DEFAULT_CLIENT);
 
           testContext.completeNow();
         })));
@@ -310,10 +333,10 @@ public class CreateUserTest {
 
     registrationService.createUser(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(Constants.URN_INVALID_INPUT, response.getString("type"));
+          assertEquals(URN_INVALID_INPUT, response.getString("type"));
           assertEquals(400, response.getInteger("status"));
-          assertEquals(Constants.ERR_DETAIL_ORG_NO_EXIST, response.getString("detail"));
-          assertEquals(Constants.ERR_TITLE_ORG_NO_EXIST, response.getString("title"));
+          assertEquals(ERR_DETAIL_ORG_NO_EXIST, response.getString("detail"));
+          assertEquals(ERR_TITLE_ORG_NO_EXIST, response.getString("title"));
 
           testContext.completeNow();
         })));
@@ -336,10 +359,10 @@ public class CreateUserTest {
 
     registrationService.createUser(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(Constants.URN_MISSING_INFO, response.getString("type"));
+          assertEquals(URN_MISSING_INFO, response.getString("type"));
           assertEquals(400, response.getInteger("status"));
-          assertEquals(Constants.ERR_DETAIL_ORG_ID_REQUIRED, response.getString("detail"));
-          assertEquals(Constants.ERR_TITLE_ORG_ID_REQUIRED, response.getString("title"));
+          assertEquals(ERR_DETAIL_ORG_ID_REQUIRED, response.getString("detail"));
+          assertEquals(ERR_TITLE_ORG_ID_REQUIRED, response.getString("title"));
 
           testContext.completeNow();
         })));
@@ -362,10 +385,10 @@ public class CreateUserTest {
     User user = new UserBuilder().keycloakId(keycloakId).name("Foo", "Bar").build();
     registrationService.createUser(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(Constants.URN_INVALID_INPUT, response.getString("type"));
+          assertEquals(URN_INVALID_INPUT, response.getString("type"));
           assertEquals(400, response.getInteger("status"));
-          assertEquals(Constants.ERR_DETAIL_ORG_NO_MATCH, response.getString("detail"));
-          assertEquals(Constants.ERR_TITLE_ORG_NO_MATCH, response.getString("title"));
+          assertEquals(ERR_DETAIL_ORG_NO_MATCH, response.getString("detail"));
+          assertEquals(ERR_TITLE_ORG_NO_MATCH, response.getString("title"));
 
           testContext.completeNow();
         })));
@@ -391,7 +414,7 @@ public class CreateUserTest {
     Promise<Void> completeReg = Promise.promise();
     registrationService.createUser(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(Constants.URN_SUCCESS, response.getString("type"));
+          assertEquals(URN_SUCCESS, response.getString("type"));
           assertEquals(201, response.getInteger("status"));
           completeReg.complete();
         })));
@@ -400,10 +423,10 @@ public class CreateUserTest {
 
       registrationService.createUser(request, user,
           testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(Constants.URN_ALREADY_EXISTS, response.getString("type"));
+            assertEquals(URN_ALREADY_EXISTS, response.getString("type"));
             assertEquals(409, response.getInteger("status"));
-            assertEquals(Constants.ERR_DETAIL_USER_EXISTS, response.getString("detail"));
-            assertEquals(Constants.ERR_TITLE_USER_EXISTS, response.getString("title"));
+            assertEquals(ERR_DETAIL_USER_EXISTS, response.getString("detail"));
+            assertEquals(ERR_TITLE_USER_EXISTS, response.getString("title"));
             testContext.completeNow();
           })));
     });
@@ -427,10 +450,10 @@ public class CreateUserTest {
 
     registrationService.createUser(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(Constants.URN_INVALID_INPUT, response.getString("type"));
+          assertEquals(URN_INVALID_INPUT, response.getString("type"));
           assertEquals(400, response.getInteger("status"));
-          assertEquals(Constants.ERR_DETAIL_USER_NOT_KC, response.getString("detail"));
-          assertEquals(Constants.ERR_TITLE_USER_NOT_KC, response.getString("title"));
+          assertEquals(ERR_DETAIL_USER_NOT_KC, response.getString("detail"));
+          assertEquals(ERR_TITLE_USER_NOT_KC, response.getString("title"));
           testContext.completeNow();
         })));
   }
@@ -461,7 +484,7 @@ public class CreateUserTest {
 
       registrationService.createUser(request, user,
           testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(Constants.URN_SUCCESS, response.getString("type"));
+            assertEquals(URN_SUCCESS, response.getString("type"));
             assertEquals(201, response.getInteger("status"));
             testContext.completeNow();
           })));
