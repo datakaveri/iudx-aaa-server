@@ -104,7 +104,7 @@ public class KcAdmin {
 
     return p.future();
   }
-  
+
   /**
    * Add provider role for users. Reuses the modifyRoles method.
    * 
@@ -217,6 +217,59 @@ public class KcAdmin {
     }
 
     p.complete(map);
+    return p.future();
+  }
+
+  /**
+   * \ Find a user on Keycloak by email address. If the user is found, the name, keycloak ID and
+   * email address is sent in a JSON object. Else, an empty JSON object is sent. Note that a user
+   * may exist on Keycloak but may not have a user profile.
+   * 
+   * @param email The email address of the user to be found
+   * @return
+   */
+  public Future<JsonObject> findUserByEmail(String email) {
+    Promise<JsonObject> p = Promise.promise();
+    RealmResource realmResource = null;
+    UsersResource usersResource = null;
+
+    try {
+      realmResource = keycloak.realm(realm);
+      usersResource = realmResource.users();
+      usersResource.count();
+    } catch (ProcessingException e) {
+      p.fail("Error in Keycloak connection : " + e.getMessage());
+      return p.future();
+    } catch (NotFoundException e) {
+      p.fail("Realm may not exist");
+      return p.future();
+    } catch (Exception e) {
+      p.fail(e.getMessage());
+      return p.future();
+    }
+
+    JsonObject res = new JsonObject();
+    /*
+     * Since in the realm we configure email as username, we can directly search for the user name
+     */
+    List<UserRepresentation> users = usersResource.search(email);
+
+    /*
+     * TODO: we have to check if the email is exactly equal to what Keycloak returns because the
+     * clients uses fuzzy search. admin-client v11 has a search function with exact search. Upgrade
+     * to this version.
+     */
+    if (users.size() == 0 || !users.get(0).getEmail().equals(email)) {
+      p.complete(res);
+      return p.future();
+    }
+
+    UserRepresentation u = users.get(0);
+    res.put("keycloakId", u.getId());
+    res.put("email", u.getEmail());
+    res.put("name",
+        new JsonObject().put("firstName", u.getFirstName()).put("lastName", u.getLastName()));
+    p.complete(res);
     return p.future();
   }
 }

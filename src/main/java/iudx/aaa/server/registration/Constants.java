@@ -46,12 +46,14 @@ public class Constants {
   public static final String URN_SUCCESS = "urn:dx:as:Success";
   public static final String URN_MISSING_INFO = "urn:dx:as:MissingInformation";
   public static final String URN_INVALID_INPUT = "urn:dx:as:InvalidInput";
+  public static final String URN_INVALID_ROLE = "urn:dx:as:InvalidRole";
   public static final String URN_ALREADY_EXISTS = "urn:dx:as:AlreadyExists";
 
   /* Response title and details */
   public static final String SUCC_TITLE_CREATED_USER = "User profile has been created";
   public static final String PROVIDER_PENDING_MESG = ", Provider registration is pending approval";
   public static final String SUCC_TITLE_USER_READ = "User details";
+  public static final String SUCC_TITLE_USER_FOUND = "User found";
   public static final String SUCC_TITLE_ORG_READ = "Organizations";
   public static final String SUCC_TITLE_UPDATED_USER_ROLES = "Registered for requested roles";
 
@@ -78,6 +80,15 @@ public class Constants {
   public static final String ERR_TITLE_ORG_NO_MATCH = "User does not belong to organization";
   public static final String ERR_DETAIL_ORG_NO_MATCH =
       "User's email domain does not match the organization domain";
+
+  public static final String ERR_TITLE_USER_NOT_FOUND = "User not found";
+  public static final String ERR_DETAIL_USER_NOT_FOUND =
+      "A user with given email and role not found";
+
+  public static final String ERR_TITLE_SEARCH_USR_INVALID_ROLE =
+      "User does not have required role to search for user";
+  public static final String ERR_DETAIL_SEARCH_USR_INVALID_ROLE =
+      "Must have provider/admin roles or be an auth delegate";
 
   /* SQL queries */
   public static final String SQL_FIND_USER_BY_KC_ID =
@@ -119,4 +130,13 @@ public class Constants {
 
   public static final String SQL_GET_KC_ID_FROM_ARR =
       "SELECT id, keycloak_id FROM test.users WHERE id = ANY($1::uuid[])";
+
+  public static final String SQL_GET_USER_ID_ORG =
+      "SELECT users.id, organizations.name, url FROM test.users"
+          + " JOIN test.organizations ON users.organization_id = organizations.id WHERE keycloak_id = $1::uuid";
+
+  public static final String SQL_GET_UID_ORG_ID_CHECK_ROLE =
+      "SELECT users.id, users.organization_id FROM test.users"
+          + " JOIN test.roles ON users.id = roles.user_id"
+          + " WHERE users.keycloak_id = $1::uuid AND roles.role = $2::test.role_enum AND roles.status = 'APPROVED'";
 }
