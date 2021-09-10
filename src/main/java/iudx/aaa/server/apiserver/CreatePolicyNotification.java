@@ -25,7 +25,7 @@ public class CreatePolicyNotification {
     });
     return arr;
   }
-  
+    
   public CreatePolicyNotification(JsonObject json) {
     CreatePolicyNotificationConverter.fromJson(json, this);
   }

@@ -65,7 +65,7 @@ public class Constants {
   public static final String URL_NOT_FOUND = "url not found";
   public static final String AUTH_DEL_POL_FAIL = "Not an auth delegate";
   public static final String AUTH_DEL_FAIL = "Not a delegate for resource owner";
-  public static final String ITEMNOTFOUND = "item does not exist:";
+  public static final String ITEMNOTFOUND = "Item does not exist";
   public static final String NO_RES_SERVER = "Res server does not exist";
   // Title
   public static final String SUCC_TITLE_POLICY_READ = "policy read";
@@ -106,6 +106,10 @@ public class Constants {
   public static final String COMPOSE_FAILURE = "COMPOSE_FAILURE";
   
   public static final String LOG_DB_ERROR = "Fail: Databse query; ";
+  public static final String ERR_DUP_NOTIF_REQ = "Fail: Duplicate Access notification request; ";
+  public static final String DUP_NOTIF_REQ = "Access request already exists ";
+  public static final String INVALID_TUPLE = "Unable to map request to db tuple";
+  public static final String SUCC_NOTIF_REQ = "Notification access request";
 
   // verify policy queries
   public static final String GET_FROM_ROLES_TABLE =
@@ -275,7 +279,11 @@ public class Constants {
       "INSERT INTO "+ DB_SCHEMA +".access_requests (user_id, item_id,item_type, owner_id, status, "
       + "expiry_duration, constraints, created_at, updated_at)\n"
       + "VALUES ($1::UUID, $2::UUID, $3::test.item_enum,$4::UUID,$5::test.acc_reqs_status_enum,"
-      + "$6,$7::jsonb, now() ,now());";
+      + "$6::interval,$7::jsonb, now() ,now()) RETURNING id;";
+  
+  public static final String SELECT_NOTIFI_POLICY_REQUEST =
+      "SELECT id FROM "+ DB_SCHEMA +".access_requests WHERE user_id = $1::UUID AND "
+      + "item_id = $2::UUID AND owner_id = $3::UUID AND status = $4::test.acc_reqs_status_enum";
 
   // item types
   public enum itemTypes {
