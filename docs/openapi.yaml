@@ -702,11 +702,11 @@ paths:
       security:
         - authorization: []
     get:
-      summary: Get User Profile
+      summary: Get User Profile or Search for User
       operationId: get-auth-v1-user-profile
       responses:
         '200':
-          description: Successfully list user profile
+          description: Successfully list user profile or successfully found user
           content:
             application/json:
               schema:
@@ -743,12 +743,9 @@ paths:
                   results:
                     type: object
                     required:
-                      - keycloakId
                       - name
-                      - roles
                       - userId
                       - email
-                      - clients
                     properties:
                       keycloakId:
                         type: string
@@ -796,9 +793,6 @@ paths:
                         minLength: 1
                       organization:
                         type: object
-                        required:
-                          - name
-                          - url
                         properties:
                           name:
                             type: string
@@ -806,12 +800,15 @@ paths:
                           url:
                             type: string
                             minLength: 1
+                        required:
+                          - name
+                          - url
                 required:
                   - type
                   - title
                   - results
               examples:
-                Success:
+                Get User Profile:
                   value:
                     type: 'urn:dx:as:Success'
                     title: User details
@@ -832,13 +829,29 @@ paths:
                       organization:
                         name: example
                         url: example.com
+                Found user:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: User found
+                    results:
+                      email: someone@example.com
+                      userId: a13eb955-c691-4fd3-b200-f18bc78810b5
+                      name:
+                        firstName: Someone
+                        lastName: Person
+                      organization:
+                        name: example
+                        url: example.com
           headers:
             Content-Type:
               schema:
                 type: string
               description: application/json
         '400':
-          description: Bad Request
+          description: |-
+            - Invalid `providerId` header
+            - Invalid `role`/`email` header
+            - If both `role` and `email` header not present
           headers:
             Content-Type:
               schema:
@@ -848,8 +861,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Invalid providerId:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Malformed request/missing or malformed request parameters
+                    detail: '[Bad Request] Validation error for parameter providerId in location HEADER: provided string should have size >= 36'
+                role/email header missing:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Invalid search user request
+                    detail: Require both 'email' and 'role' header for search user
         '401':
-          description: '- Unauthorized - `token` invalid/expired'
+          description: |-
+            - Unauthorized - `token` invalid/expired
+            - Not a valid auth delegate
           headers:
             Content-Type:
               schema:
@@ -865,18 +891,30 @@ paths:
                     type: 'urn:dx:as:InvalidAuthenticationToken'
                     title: Token authentication failed
                     detail: Inactive Token
+                Not auth delegate:
+                  value:
+                    type: 'urn:dx:as:MissingAuthenticationToken'
+                    title: Invalid delegate request
+                    detail: Invalid delegate request
         '404':
-          description: A user profile for the user does not exist.
+          description: |-
+            - A user profile for the user does not exist
+            - A user with requested email+role does not exist
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
-                Example:
+                User profile for the user does not exist:
                   value:
                     type: 'urn:dx:as:MissingInformation'
                     title: User profile does not exist
                     detail: Please register to create user profile
+                User to be searched for cannot be found:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: User not found
+                    detail: A user with given email and role not found
       parameters:
         - schema:
             type: string
@@ -887,7 +925,40 @@ paths:
           name: Authorization
           description: Keycloak Issued token
           required: true
-      description: 'Get user profile. The response contains user details such as roles, name, email. It also lists the client ID of the user.'
+        - schema:
+            type: string
+            pattern: '^(?=.{1,254}$)(?=.{1,64}@)[-!#$%&''*+/0-9=?A-Z^_`a-z{|}~]+(\.[-!#$%&''*+/0-9=?A-Z^_`a-z{|}~]+)*@[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$'
+            format: email
+          in: header
+          name: email
+          description: Email of User to be found
+        - schema:
+            type: string
+            enum:
+              - provider
+              - consumer
+              - delegate
+          in: header
+          name: role
+          description: Role of user to be found
+        - schema:
+            type: string
+            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+            minLength: 36
+            maxLength: 36
+          in: header
+          name: providerId
+          description: 'User ID of the provider, if an auth delegate wishes to search for a user'
+      description: |-
+        Get user profile or search for a user by email address and role.
+
+        ## Get User profile
+        The response contains user details such as roles, name, email. It also lists the client ID of the user.
+
+        ## Search for a user
+        A user with `provider` or `admin` role or is a auth delegate may search for a user by providing the email address and role of said user. If a user exists, then the user ID `userId`, email, name and organization details (if applicable) is returned.
+
+        To search for the user, 2 headers `email` (email address of user) and `role` (role of the user) need to be included. **Both headers need to be present for the search to be attempted.** If an auth delegate is to call the API, the `providerId` header needs to be included. Users with roles `delegate`, `consumer` and `provider` can be searched for.
       tags:
         - User APIs
       security:

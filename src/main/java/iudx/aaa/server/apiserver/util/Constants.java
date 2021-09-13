@@ -91,6 +91,8 @@ public class Constants {
   public static final String ERR_PROVDERID = "General request- Delegate";
   public static final String INVALID_PROVERID = "Invalid providerId";
   public static final String ERR_DELEGATE = "Invalid delegate request";
+  public static final String ERR_DETAIL_SEARCH_USR = "Require both 'email' and 'role' header for search user";
+  public static final String ERR_TITLE_SEARCH_USR = "Invalid search user request";
 
   /* Static JSON responses */
   public static final String JSON_TIMEOUT = "{\"type\":\"" + URN_MISSING_INFO + "\", \"title\":\""
@@ -119,6 +121,9 @@ public class Constants {
   public static final String REQUEST = "request";
   public static final String PROVIDER_ID = "providerId";
   public static final String DATA = "data";
+  public static final String CONTEXT_SEARCH_USER = "searchUserData";
+  public static final String EMAIL_HEADER = "email";
+  public static final String ROLE_HEADER = "role";
 
   /* Compose failure due to invalid token */
   public static final String INVALID_TOKEN_FAILED_COMPOSE = "INVALID_TOKEN";
