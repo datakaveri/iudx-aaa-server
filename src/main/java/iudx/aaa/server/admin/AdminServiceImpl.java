@@ -43,6 +43,7 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.CreateOrgRequest;
+import iudx.aaa.server.apiserver.CreatePolicyRequest;
 import iudx.aaa.server.apiserver.ProviderUpdateRequest;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
@@ -240,7 +241,7 @@ public class AdminServiceImpl implements AdminService {
       return toBeApproved.stream().map(uid -> map.get(uid).toString()).collect(Collectors.toList());
     };
 
-    /* Function to get all Keycloak IDs */
+    /* Function to get Keycloak IDs of all providers in request */
     Function<Map<UUID, UUID>, List<String>> getKcIds = (map) -> {
       return ids.stream().map(uid -> map.get(uid).toString()).collect(Collectors.toList());
     };
@@ -249,11 +250,11 @@ public class AdminServiceImpl implements AdminService {
         .map(obj -> Tuple.of(obj.getStatus().name(), UUID.fromString(obj.getUserId())))
         .collect(Collectors.toList());
 
-    Future<Map<String, JsonObject>> result = checkRes.compose(uidToKc -> pool
-        .withTransaction(conn -> conn.preparedQuery(SQL_UPDATE_ROLE_STATUS).executeBatch(tuple))
-        .compose(cc -> kc.approveProvider(getKcIdToApprove.apply(uidToKc)))
-        .compose(success -> callPolicyProvider(toBeApproved))
-        .compose(r -> kc.getDetails(getKcIds.apply(uidToKc))));
+    Future<Map<String, JsonObject>> result = checkRes
+        .compose(uidToKc -> pool.withTransaction(conn -> conn.preparedQuery(SQL_UPDATE_ROLE_STATUS)
+            .executeBatch(tuple).compose(cc -> kc.approveProvider(getKcIdToApprove.apply(uidToKc)))
+            .compose(success -> setAuthAdminPolicy(user, toBeApproved))
+            .compose(r -> kc.getDetails(getKcIds.apply(uidToKc)))));
 
     result.onSuccess(details -> {
       JsonArray resp = new JsonArray();
@@ -282,11 +283,45 @@ public class AdminServiceImpl implements AdminService {
     return this;
   }
 
-  private Future<JsonObject> callPolicyProvider(List<UUID> userIds) {
-    Promise<JsonObject> res = Promise.promise();
-    List<String> list = userIds.stream().map(id -> id.toString()).collect(Collectors.toList());
-    policyService.setDefaultProviderPolicies(list, res);
-    return res.future();
+  /**
+   * Calls the createPolicy method in PolicyService to create auth admin policies for the approved
+   * providers.
+   * 
+   * @param user The User object of the Auth Admin.
+   * @param approvedProviders List of user IDs of approved providers
+   * @return void future
+   */
+  private Future<Void> setAuthAdminPolicy(User user, List<UUID> approvedProviders) {
+
+    Promise<Void> response = Promise.promise();
+    /* Exit early no providers to be approved */
+    if (approvedProviders.size() == 0) {
+      response.complete();
+      return response.future();
+    }
+
+    List<CreatePolicyRequest> request = approvedProviders.stream().map(id -> {
+      JsonObject obj = new JsonObject();
+      obj.put("userId", id.toString());
+      obj.put("itemId", AUTH_SERVER_URL);
+      obj.put("constraints", new JsonObject());
+      obj.put("itemType", "resource_server");
+      CreatePolicyRequest req = new CreatePolicyRequest(obj);
+      return req;
+    }).collect(Collectors.toList());
+
+    Promise<JsonObject> promise = Promise.promise();
+    policyService.createPolicy(request, user, promise);
+    promise.future().onSuccess(res -> {
+      if (res.getString("type").equals(URN_SUCCESS)) {
+        response.complete();
+      } else {
+        response.fail("Failed to set admin policy");
+      }
+    }).onFailure(res -> {
+      response.fail("Failed to set admin policy");
+    });
+    return response.future();
   }
 
   @Override

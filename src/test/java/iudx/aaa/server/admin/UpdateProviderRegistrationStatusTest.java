@@ -1,17 +1,27 @@
 package iudx.aaa.server.admin;
 
+import static iudx.aaa.server.admin.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.admin.Constants.ERR_DETAIL_NOT_AUTH_ADMIN;
+import static iudx.aaa.server.admin.Constants.ERR_DETAIL_NO_USER_PROFILE;
+import static iudx.aaa.server.admin.Constants.ERR_TITLE_INVALID_USER;
+import static iudx.aaa.server.admin.Constants.ERR_TITLE_NOT_AUTH_ADMIN;
+import static iudx.aaa.server.admin.Constants.ERR_TITLE_NO_USER_PROFILE;
+import static iudx.aaa.server.admin.Constants.NIL_UUID;
+import static iudx.aaa.server.admin.Constants.RESP_STATUS;
+import static iudx.aaa.server.admin.Constants.SUCC_TITLE_PROV_STATUS_UPDATE;
+import static iudx.aaa.server.admin.Constants.URN_INVALID_INPUT;
+import static iudx.aaa.server.admin.Constants.URN_INVALID_ROLE;
+import static iudx.aaa.server.admin.Constants.URN_MISSING_INFO;
+import static iudx.aaa.server.admin.Constants.URN_SUCCESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static iudx.aaa.server.admin.Constants.POLICY_SERVICE_ADDRESS;
 
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.impl.Arguments;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Checkpoint;
@@ -28,7 +38,6 @@ import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.policy.PolicyService;
-import iudx.aaa.server.policy.PolicyServiceImpl;
 import iudx.aaa.server.registration.KcAdmin;
 import iudx.aaa.server.registration.Utils;
 import java.util.ArrayList;
@@ -41,7 +50,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -72,11 +80,6 @@ public class UpdateProviderRegistrationStatusTest {
   private static Future<JsonObject> adminOtherUser;
   private static Future<JsonObject> consumerUser;
 
-  private static List<UUID> orgIds = new ArrayList<UUID>();
-
-  private static final String UUID_REGEX =
-      "^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$";
-
   private static final String DUMMY_SERVER =
       "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
   private static final String DUMMY_AUTH_SERVER =
@@ -102,6 +105,7 @@ public class UpdateProviderRegistrationStatusTest {
 
   static Future<JsonObject> providerPending1;
   static Future<JsonObject> providerPending2;
+  static Future<JsonObject> providerPending3;
   static Future<JsonObject> providerRejected;
   static Future<JsonObject> providerApproved;
 
@@ -138,7 +142,7 @@ public class UpdateProviderRegistrationStatusTest {
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
 
     /* Do not take test config, use generated config */
-    JsonObject options = new JsonObject().put(Constants.CONFIG_AUTH_URL, DUMMY_AUTH_SERVER);
+    JsonObject options = new JsonObject().put(CONFIG_AUTH_URL, DUMMY_AUTH_SERVER);
 
     Map<Roles, RoleStatus> rolesA = new HashMap<Roles, RoleStatus>();
     rolesA.put(Roles.ADMIN, RoleStatus.APPROVED);
@@ -146,9 +150,9 @@ public class UpdateProviderRegistrationStatusTest {
     Map<Roles, RoleStatus> rolesB = new HashMap<Roles, RoleStatus>();
     rolesB.put(Roles.CONSUMER, RoleStatus.APPROVED);
 
-    adminAuthUser = Utils.createFakeUser(pool, Constants.NIL_UUID, "", rolesA, false);
-    adminOtherUser = Utils.createFakeUser(pool, Constants.NIL_UUID, "", rolesA, false);
-    consumerUser = Utils.createFakeUser(pool, Constants.NIL_UUID, "", rolesB, false);
+    adminAuthUser = Utils.createFakeUser(pool, NIL_UUID, "", rolesA, false);
+    adminOtherUser = Utils.createFakeUser(pool, NIL_UUID, "", rolesA, false);
+    consumerUser = Utils.createFakeUser(pool, NIL_UUID, "", rolesB, false);
 
     orgIdFut = pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_ORG)
         .execute(Tuple.of(name, url)).map(row -> row.iterator().next().getUUID("id")));
@@ -165,9 +169,12 @@ public class UpdateProviderRegistrationStatusTest {
     providerPending2 = orgIdFut.compose(id -> Utils.createFakeUser(pool, id.toString(), url,
         Map.of(Roles.PROVIDER, RoleStatus.PENDING), true));
 
+    providerPending3 = orgIdFut.compose(id -> Utils.createFakeUser(pool, id.toString(), url,
+        Map.of(Roles.PROVIDER, RoleStatus.PENDING), true));
+
     @SuppressWarnings("rawtypes")
     List<Future> list = List.of(adminAuthUser, adminOtherUser, consumerUser, providerApproved,
-        providerPending1, providerPending2, providerRejected);
+        providerPending1, providerPending2, providerPending3, providerRejected);
 
     CompositeFuture.all(list).compose(res -> {
       JsonObject admin1 = (JsonObject) res.list().get(0);
@@ -192,7 +199,7 @@ public class UpdateProviderRegistrationStatusTest {
     Tuple servers = Tuple.of(List.of(DUMMY_AUTH_SERVER, DUMMY_SERVER).toArray());
     List<JsonObject> users = List.of(adminAuthUser.result(), adminOtherUser.result(),
         consumerUser.result(), providerPending1.result(), providerPending2.result(),
-        providerRejected.result(), providerApproved.result());
+        providerPending3.result(), providerRejected.result(), providerApproved.result());
 
     pool.withConnection(conn -> conn.preparedQuery(SQL_DELETE_SERVERS).execute(servers)
         .compose(success -> Utils.deleteFakeUser(pool, users))
@@ -223,9 +230,9 @@ public class UpdateProviderRegistrationStatusTest {
     adminService.updateProviderRegistrationStatus(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 404);
-          assertEquals(Constants.URN_MISSING_INFO, response.getString("type"));
-          assertEquals(Constants.ERR_TITLE_NO_USER_PROFILE, response.getString("title"));
-          assertEquals(Constants.ERR_DETAIL_NO_USER_PROFILE, response.getString("detail"));
+          assertEquals(URN_MISSING_INFO, response.getString("type"));
+          assertEquals(ERR_TITLE_NO_USER_PROFILE, response.getString("title"));
+          assertEquals(ERR_DETAIL_NO_USER_PROFILE, response.getString("detail"));
           testContext.completeNow();
         })));
   }
@@ -248,9 +255,9 @@ public class UpdateProviderRegistrationStatusTest {
     adminService.updateProviderRegistrationStatus(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 401);
-          assertEquals(Constants.URN_INVALID_ROLE, response.getString("type"));
-          assertEquals(Constants.ERR_TITLE_NOT_AUTH_ADMIN, response.getString("title"));
-          assertEquals(Constants.ERR_DETAIL_NOT_AUTH_ADMIN, response.getString("detail"));
+          assertEquals(URN_INVALID_ROLE, response.getString("type"));
+          assertEquals(ERR_TITLE_NOT_AUTH_ADMIN, response.getString("title"));
+          assertEquals(ERR_DETAIL_NOT_AUTH_ADMIN, response.getString("detail"));
           testContext.completeNow();
         })));
   }
@@ -273,9 +280,9 @@ public class UpdateProviderRegistrationStatusTest {
     adminService.updateProviderRegistrationStatus(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 401);
-          assertEquals(Constants.URN_INVALID_ROLE, response.getString("type"));
-          assertEquals(Constants.ERR_TITLE_NOT_AUTH_ADMIN, response.getString("title"));
-          assertEquals(Constants.ERR_DETAIL_NOT_AUTH_ADMIN, response.getString("detail"));
+          assertEquals(URN_INVALID_ROLE, response.getString("type"));
+          assertEquals(ERR_TITLE_NOT_AUTH_ADMIN, response.getString("title"));
+          assertEquals(ERR_DETAIL_NOT_AUTH_ADMIN, response.getString("detail"));
           testContext.completeNow();
         })));
   }
@@ -309,10 +316,10 @@ public class UpdateProviderRegistrationStatusTest {
 
     /** MOCKS -> mock PolicyService, kc.getDetails and kc.approveProvider **/
     Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(1);
-      p.complete(new JsonObject());
+      Promise<JsonObject> p = i.getArgument(2);
+      p.complete(new JsonObject().put("type", URN_SUCCESS));
       return i.getMock();
-    }).when(policyService).setDefaultProviderPolicies(any(), any());
+    }).when(policyService).createPolicy(any(), any(), any());
 
     @SuppressWarnings("unchecked")
     Map<String, JsonObject> resp = Mockito.mock(Map.class);
@@ -325,8 +332,8 @@ public class UpdateProviderRegistrationStatusTest {
 
     adminService.updateProviderRegistrationStatus(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getString("type"), Constants.URN_SUCCESS);
-          assertEquals(response.getString("title"), Constants.SUCC_TITLE_PROV_STATUS_UPDATE);
+          assertEquals(response.getString("type"), URN_SUCCESS);
+          assertEquals(response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
           JsonArray res = response.getJsonArray("results");
           assertTrue(res.size() > 0);
 
@@ -334,8 +341,7 @@ public class UpdateProviderRegistrationStatusTest {
             JsonObject j = (JsonObject) i;
             if (j.getString("userId").equals(providerJson.getString("userId"))) {
 
-              assertEquals(j.getString(Constants.RESP_STATUS),
-                  RoleStatus.APPROVED.name().toLowerCase());
+              assertEquals(j.getString(RESP_STATUS), RoleStatus.APPROVED.name().toLowerCase());
 
               assertEquals(j.getString("email"), providerJson.getString("email"));
               assertEquals(j.getString("userId"), providerJson.getString("userId"));
@@ -344,7 +350,6 @@ public class UpdateProviderRegistrationStatusTest {
           });
         })));
   }
-
 
   @Test
   @DisplayName("Test fail already approved")
@@ -365,10 +370,10 @@ public class UpdateProviderRegistrationStatusTest {
 
     /** MOCKS -> mock PolicyService, kc.getDetails and kc.approveProvider **/
     Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(1);
-      p.complete(new JsonObject());
+      Promise<JsonObject> p = i.getArgument(2);
+      p.complete(new JsonObject().put("type", URN_SUCCESS));
       return i.getMock();
-    }).when(policyService).setDefaultProviderPolicies(any(), any());
+    }).when(policyService).createPolicy(any(), any(), any());
 
     @SuppressWarnings("unchecked")
     Map<String, JsonObject> resp = Mockito.mock(Map.class);
@@ -381,8 +386,8 @@ public class UpdateProviderRegistrationStatusTest {
 
     adminService.updateProviderRegistrationStatus(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getString("type"), Constants.URN_INVALID_INPUT);
-          assertEquals(response.getString("title"), Constants.ERR_TITLE_INVALID_USER);
+          assertEquals(response.getString("type"), URN_INVALID_INPUT);
+          assertEquals(response.getString("title"), ERR_TITLE_INVALID_USER);
           assertEquals(response.getString("detail"), providerJson.getString("userId"));
           testContext.completeNow();
         })));
@@ -407,10 +412,10 @@ public class UpdateProviderRegistrationStatusTest {
 
     /** MOCKS -> mock PolicyService, kc.getDetails and kc.approveProvider **/
     Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(1);
-      p.complete(new JsonObject());
+      Promise<JsonObject> p = i.getArgument(2);
+      p.complete(new JsonObject().put("type", URN_SUCCESS));
       return i.getMock();
-    }).when(policyService).setDefaultProviderPolicies(any(), any());
+    }).when(policyService).createPolicy(any(), any(), any());
 
     @SuppressWarnings("unchecked")
     Map<String, JsonObject> resp = Mockito.mock(Map.class);
@@ -426,8 +431,8 @@ public class UpdateProviderRegistrationStatusTest {
 
     adminService.updateProviderRegistrationStatus(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getString("type"), Constants.URN_SUCCESS);
-          assertEquals(response.getString("title"), Constants.SUCC_TITLE_PROV_STATUS_UPDATE);
+          assertEquals(response.getString("type"), URN_SUCCESS);
+          assertEquals(response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
           JsonArray res = response.getJsonArray("results");
           assertTrue(res.size() > 0);
 
@@ -435,8 +440,7 @@ public class UpdateProviderRegistrationStatusTest {
             JsonObject j = (JsonObject) i;
             if (j.getString("userId").equals(providerJson.getString("userId"))) {
 
-              assertEquals(j.getString(Constants.RESP_STATUS),
-                  RoleStatus.REJECTED.name().toLowerCase());
+              assertEquals(j.getString(RESP_STATUS), RoleStatus.REJECTED.name().toLowerCase());
 
               assertEquals(j.getString("email"), providerJson.getString("email"));
               assertEquals(j.getString("userId"), providerJson.getString("userId"));
@@ -446,11 +450,70 @@ public class UpdateProviderRegistrationStatusTest {
 
           adminService.updateProviderRegistrationStatus(request, user,
               testContext.succeeding(r -> testContext.verify(() -> {
-                assertEquals(r.getString("type"), Constants.URN_INVALID_INPUT);
-                assertEquals(r.getString("title"), Constants.ERR_TITLE_INVALID_USER);
+                assertEquals(r.getString("type"), URN_INVALID_INPUT);
+                assertEquals(r.getString("title"), ERR_TITLE_INVALID_USER);
                 assertEquals(r.getString("detail"), providerJson.getString("userId"));
                 fail.flag();
               })));
         })));
+  }
+
+  @Test
+  @DisplayName("Test createPolicy fail and transaction rollback")
+  /*
+   * Testing if a failure in createPolicy rolls back the transaction. We attempt to approve the
+   * provider, but fail createPolicy. We then attempt to successfully reject the provider
+   */
+  void createPolicyFailtransaction(VertxTestContext testContext) {
+    JsonObject userJson = adminAuthUser.result();
+    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
+        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+
+    JsonObject providerJson = providerPending3.result();
+    JsonObject details = new JsonObject().put("email", providerJson.getString("email")).put("name",
+        new JsonObject().put("firstName", providerJson.getString("firstName")).put("lastName",
+            providerJson.getString("lastName")));
+
+    JsonArray req = new JsonArray().add(
+        new JsonObject().put("userId", providerJson.getString("userId")).put("status", "approved"));
+    List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
+
+    /** MOCKS -> mock PolicyService, kc.getDetails and kc.approveProvider **/
+    Mockito.doAnswer(i -> {
+      Promise<JsonObject> p = i.getArgument(2);
+      p.fail("Failed to set admin ");
+      return i.getMock();
+    }).when(policyService).createPolicy(any(), any(), any());
+
+    @SuppressWarnings("unchecked")
+    Map<String, JsonObject> resp = Mockito.mock(Map.class);
+    Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
+    Mockito.when(resp.get(anyString())).thenReturn(new JsonObject());
+    Mockito.when(resp.get(providerJson.getString("keycloakId"))).thenReturn(details);
+
+    Mockito.when(kc.approveProvider(any())).thenReturn(Future.succeededFuture());
+    /***********************************************************************/
+
+    Checkpoint failed = testContext.checkpoint();
+    Checkpoint rejectedSuccess = testContext.checkpoint();
+
+    adminService.updateProviderRegistrationStatus(request, user, testContext.failing(response -> {
+      failed.flag();
+
+      /* change request to rejected */
+      JsonArray j = new JsonArray().add(new JsonObject()
+          .put("userId", providerJson.getString("userId")).put("status", "rejected"));
+      List<ProviderUpdateRequest> newRequest = ProviderUpdateRequest.jsonArrayToList(j);
+
+      adminService.updateProviderRegistrationStatus(newRequest, user,
+          testContext.succeeding(r -> testContext.verify(() -> {
+            assertEquals(r.getString("type"), URN_SUCCESS);
+            assertEquals(r.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
+            JsonArray res = r.getJsonArray("results");
+            assertTrue(res.size() > 0);
+            rejectedSuccess.flag();
+          })));
+    }));
   }
 }
