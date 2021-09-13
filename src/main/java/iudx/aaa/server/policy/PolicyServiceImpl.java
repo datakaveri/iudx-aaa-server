@@ -63,6 +63,7 @@ import static iudx.aaa.server.policy.Constants.GET_RES_SER_OWNER_JOIN;
 import static iudx.aaa.server.policy.Constants.GET_URL;
 import static iudx.aaa.server.policy.Constants.ID;
 import static iudx.aaa.server.policy.Constants.ID_NOT_PRESENT;
+import static iudx.aaa.server.policy.Constants.INCORRECT_ITEM_TYPE;
 import static iudx.aaa.server.policy.Constants.INTERNALERROR;
 import static iudx.aaa.server.policy.Constants.INVALID_DELEGATE;
 import static iudx.aaa.server.policy.Constants.INVALID_DELEGATE_POL;
@@ -205,6 +206,19 @@ public class PolicyServiceImpl implements PolicyService {
             .map(CreatePolicyRequest::getItemId)
             .collect(Collectors.toList());
 
+    //the format for resource group item id when split by '/' should be of exactly length 4
+    if (!resGrpIds.stream().allMatch(itemTypeCheck -> itemTypeCheck.split("/").length == 4)) {
+      Response r =
+          new Response.ResponseBuilder()
+              .type(POLICY_FAILURE)
+              .title(INCORRECT_ITEM_TYPE)
+              .detail(INCORRECT_ITEM_TYPE)
+              .status(400)
+              .build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
+
     List<String> resIds =
         request.stream()
             .filter(
@@ -213,6 +227,18 @@ public class PolicyServiceImpl implements PolicyService {
             .map(CreatePolicyRequest::getItemId)
             .collect(Collectors.toList());
 
+      //the format for resource item id when split by '/' should be of greater than len of resource group(4)
+    if (!resIds.stream().allMatch(itemTypeCheck -> itemTypeCheck.split("/").length > 4)) {
+      Response r =
+          new Response.ResponseBuilder()
+              .type(POLICY_FAILURE)
+              .title(INCORRECT_ITEM_TYPE)
+              .detail(INCORRECT_ITEM_TYPE)
+              .status(400)
+              .build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
     Map<String, List<String>> catItem = new HashMap<>();
 
     if (resServerIds.size() > 0) catItem.put(RES_SERVER, resServerIds);

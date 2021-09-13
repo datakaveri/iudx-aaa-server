@@ -114,7 +114,8 @@ public class createPolicy {
 
     Future<List<Tuple>> tuples = createTuple(req, resourceId, ownerId, user);
 
-    Future<List<Tuple>> checkDuplicate = checkExistingPolicy(tuples.result());
+    Future<List<Tuple>> checkDuplicate = tuples.compose(this::checkExistingPolicy);
+
 
     checkDuplicate
         .compose(
@@ -278,6 +279,14 @@ public class createPolicy {
           r.status(403);
           break;
         }
+      case PROVIDER_NOT_REGISTERED:
+      {
+        r.title(PROVIDER_NOT_REGISTERED);
+        r.detail(obj.replace(PROVIDER_NOT_REGISTERED, ""));
+        r.status(403);
+        break;
+      }
+
       default:
         {
           r.title(INTERNALERROR);
