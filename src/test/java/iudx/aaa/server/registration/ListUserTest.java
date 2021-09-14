@@ -166,12 +166,13 @@ public class ListUserTest {
     Mockito.when(kc.getEmailId(any()))
         .thenReturn(Future.succeededFuture(userJson.getString("email")));
 
-    registrationService.listUser(user, testContext.succeeding(response -> testContext.verify(() -> {
-      assertEquals(404, response.getInteger("status"));
-      assertEquals(ERR_TITLE_NO_USER_PROFILE, response.getString("title"));
-      assertEquals(ERR_DETAIL_NO_USER_PROFILE, response.getString("detail"));
-      testContext.completeNow();
-    })));
+    registrationService.listUser(user, new JsonObject(), new JsonObject(),
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(404, response.getInteger("status"));
+          assertEquals(ERR_TITLE_NO_USER_PROFILE, response.getString("title"));
+          assertEquals(ERR_DETAIL_NO_USER_PROFILE, response.getString("detail"));
+          testContext.completeNow();
+        })));
   }
 
   @Test
@@ -186,9 +187,10 @@ public class ListUserTest {
 
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.failedFuture("fail"));
 
-    registrationService.listUser(user, testContext.failing(response -> testContext.verify(() -> {
-      testContext.completeNow();
-    })));
+    registrationService.listUser(user, new JsonObject(), new JsonObject(),
+        testContext.failing(response -> testContext.verify(() -> {
+          testContext.completeNow();
+        })));
   }
 
   @Test
@@ -203,12 +205,13 @@ public class ListUserTest {
 
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(""));
 
-    registrationService.listUser(user, testContext.succeeding(response -> testContext.verify(() -> {
-      assertEquals(400, response.getInteger("status"));
-      assertEquals(ERR_TITLE_USER_NOT_KC, response.getString("title"));
-      assertEquals(ERR_DETAIL_USER_NOT_KC, response.getString("detail"));
-      testContext.completeNow();
-    })));
+    registrationService.listUser(user, new JsonObject(), new JsonObject(),
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(400, response.getInteger("status"));
+          assertEquals(ERR_TITLE_USER_NOT_KC, response.getString("title"));
+          assertEquals(ERR_DETAIL_USER_NOT_KC, response.getString("detail"));
+          testContext.completeNow();
+        })));
   }
 
   @Test
@@ -227,35 +230,36 @@ public class ListUserTest {
     Mockito.when(kc.getEmailId(any()))
         .thenReturn(Future.succeededFuture(userJson.getString("email")));
 
-    registrationService.listUser(user, testContext.succeeding(response -> testContext.verify(() -> {
-      assertEquals(200, response.getInteger("status"));
-      assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
-      assertEquals(URN_SUCCESS, response.getString("type"));
+    registrationService.listUser(user, new JsonObject(), new JsonObject(),
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(200, response.getInteger("status"));
+          assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
+          assertEquals(URN_SUCCESS, response.getString("type"));
 
-      JsonObject result = response.getJsonObject("results");
+          JsonObject result = response.getJsonObject("results");
 
-      JsonObject name = result.getJsonObject("name");
-      assertEquals(name.getString("firstName"), userJson.getString("firstName"));
-      assertEquals(name.getString("lastName"), userJson.getString("lastName"));
+          JsonObject name = result.getJsonObject("name");
+          assertEquals(name.getString("firstName"), userJson.getString("firstName"));
+          assertEquals(name.getString("lastName"), userJson.getString("lastName"));
 
-      List<String> returnedRoles = result.getJsonArray("roles").getList();
-      assertTrue(returnedRoles.containsAll(rolesString));
+          List<String> returnedRoles = result.getJsonArray("roles").getList();
+          assertTrue(returnedRoles.containsAll(rolesString));
 
-      JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
-      JsonObject defaultClient = clients.getJsonObject(0);
-      assertTrue(clients.size() > 0);
-      assertEquals(defaultClient.getString(RESP_CLIENT_ID), userJson.getString("clientId"));
+          JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
+          JsonObject defaultClient = clients.getJsonObject(0);
+          assertTrue(clients.size() > 0);
+          assertEquals(defaultClient.getString(RESP_CLIENT_ID), userJson.getString("clientId"));
 
-      JsonObject org = result.getJsonObject(RESP_ORG);
-      assertEquals(org.getString("url"), userJson.getString("url"));
+          JsonObject org = result.getJsonObject(RESP_ORG);
+          assertEquals(org.getString("url"), userJson.getString("url"));
 
-      assertEquals(result.getString(RESP_PHONE), userJson.getString("phone"));
-      assertEquals(result.getString(RESP_EMAIL), userJson.getString("email"));
-      assertEquals(result.getString("userId"), userJson.getString("userId"));
-      assertEquals(result.getString("keycloakId"), userJson.getString("keycloakId"));
+          assertEquals(result.getString(RESP_PHONE), userJson.getString("phone"));
+          assertEquals(result.getString(RESP_EMAIL), userJson.getString("email"));
+          assertEquals(result.getString("userId"), userJson.getString("userId"));
+          assertEquals(result.getString("keycloakId"), userJson.getString("keycloakId"));
 
-      testContext.completeNow();
-    })));
+          testContext.completeNow();
+        })));
   }
 
   @Test
@@ -274,36 +278,39 @@ public class ListUserTest {
     Mockito.when(kc.getEmailId(any()))
         .thenReturn(Future.succeededFuture(userJson.getString("email")));
 
-    registrationService.listUser(user, testContext.succeeding(response -> testContext.verify(() -> {
-      assertEquals(200, response.getInteger("status"));
-      assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
-      assertEquals(URN_SUCCESS, response.getString("type"));
+    registrationService.listUser(user, new JsonObject(), new JsonObject(),
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(200, response.getInteger("status"));
+          assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
+          assertEquals(URN_SUCCESS, response.getString("type"));
 
-      JsonObject result = response.getJsonObject("results");
+          JsonObject result = response.getJsonObject("results");
 
-      JsonObject name = result.getJsonObject("name");
-      assertEquals(name.getString("firstName"), userJson.getString("firstName"));
-      assertEquals(name.getString("lastName"), userJson.getString("lastName"));
+          JsonObject name = result.getJsonObject("name");
+          assertEquals(name.getString("firstName"), userJson.getString("firstName"));
+          assertEquals(name.getString("lastName"), userJson.getString("lastName"));
 
-      List<String> returnedRoles = result.getJsonArray("roles").getList();
-      assertTrue(returnedRoles.containsAll(rolesString));
+          List<String> returnedRoles = result.getJsonArray("roles").getList();
+          assertTrue(returnedRoles.containsAll(rolesString));
 
-      JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
-      JsonObject defaultClient = clients.getJsonObject(0);
-      assertTrue(clients.size() > 0);
-      assertEquals(defaultClient.getString(RESP_CLIENT_ID), userJson.getString("clientId"));
+          JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
+          JsonObject defaultClient = clients.getJsonObject(0);
+          assertTrue(clients.size() > 0);
+          assertEquals(defaultClient.getString(RESP_CLIENT_ID), userJson.getString("clientId"));
 
-      assertFalse(result.containsKey(RESP_PHONE));
-      assertFalse(result.containsKey(RESP_ORG));
+          assertFalse(result.containsKey(RESP_PHONE));
+          assertFalse(result.containsKey(RESP_ORG));
 
-      assertEquals(result.getString(RESP_EMAIL), userJson.getString("email"));
-      assertEquals(result.getString("userId"), userJson.getString("userId"));
-      assertEquals(result.getString("keycloakId"), userJson.getString("keycloakId"));
+          assertEquals(result.getString(RESP_EMAIL), userJson.getString("email"));
+          assertEquals(result.getString("userId"), userJson.getString("userId"));
+          assertEquals(result.getString("keycloakId"), userJson.getString("keycloakId"));
 
-      testContext.completeNow();
-    })));
+          testContext.completeNow();
+        })));
   }
 
+
+  @Test
   @DisplayName("Test list user with no approved roles e.g. pending provider")
   void listNoApprovedRoles(VertxTestContext testContext) {
 
@@ -318,33 +325,34 @@ public class ListUserTest {
     Mockito.when(kc.getEmailId(any()))
         .thenReturn(Future.succeededFuture(userJson.getString("email")));
 
-    registrationService.listUser(user, testContext.succeeding(response -> testContext.verify(() -> {
-      assertEquals(200, response.getInteger("status"));
-      assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
-      assertEquals(URN_SUCCESS, response.getString("type"));
+    registrationService.listUser(user, new JsonObject(), new JsonObject(),
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(200, response.getInteger("status"));
+          assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
+          assertEquals(URN_SUCCESS, response.getString("type"));
 
-      JsonObject result = response.getJsonObject("results");
+          JsonObject result = response.getJsonObject("results");
 
-      JsonObject name = result.getJsonObject("name");
-      assertEquals(name.getString("firstName"), userJson.getString("firstName"));
-      assertEquals(name.getString("lastName"), userJson.getString("lastName"));
+          JsonObject name = result.getJsonObject("name");
+          assertEquals(name.getString("firstName"), userJson.getString("firstName"));
+          assertEquals(name.getString("lastName"), userJson.getString("lastName"));
 
-      assertTrue(result.getJsonArray("roles").isEmpty());
+          assertTrue(result.getJsonArray("roles").isEmpty());
 
-      JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
-      JsonObject defaultClient = clients.getJsonObject(0);
-      assertTrue(clients.size() > 0);
-      assertEquals(defaultClient.getString(RESP_CLIENT_ID), userJson.getString("clientId"));
+          JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
+          JsonObject defaultClient = clients.getJsonObject(0);
+          assertTrue(clients.size() > 0);
+          assertEquals(defaultClient.getString(RESP_CLIENT_ID), userJson.getString("clientId"));
 
-      JsonObject org = result.getJsonObject(RESP_ORG);
-      assertEquals(org.getString("url"), userJson.getString("url"));
+          JsonObject org = result.getJsonObject(RESP_ORG);
+          assertEquals(org.getString("url"), userJson.getString("url"));
 
-      assertEquals(result.getString(RESP_PHONE), userJson.getString("phone"));
-      assertEquals(result.getString(RESP_EMAIL), userJson.getString("email"));
-      assertEquals(result.getString("userId"), userJson.getString("userId"));
-      assertEquals(result.getString("keycloakId"), userJson.getString("keycloakId"));
+          assertEquals(result.getString(RESP_PHONE), userJson.getString("phone"));
+          assertEquals(result.getString(RESP_EMAIL), userJson.getString("email"));
+          assertEquals(result.getString("userId"), userJson.getString("userId"));
+          assertEquals(result.getString("keycloakId"), userJson.getString("keycloakId"));
 
-      testContext.completeNow();
-    })));
+          testContext.completeNow();
+        })));
   }
 }
