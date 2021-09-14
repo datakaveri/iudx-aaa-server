@@ -1221,9 +1221,12 @@ public class PolicyServiceImpl implements PolicyService {
             .map(res -> res.value())));
     
     policyRequestData.onComplete(dbHandler -> {
-      if(dbHandler.failed()) {
-        LOGGER.error(LOG_DB_ERROR + " {}", dbHandler.cause().getMessage());
-        handler.handle(Future.failedFuture(INTERNALERROR));
+      if(dbHandler.failed() || dbHandler.result().isEmpty()) {
+        LOGGER.error(LOG_DB_ERROR + " {}",
+            dbHandler.cause() == null ? dbHandler.result() : dbHandler.cause().getMessage());
+        Response resp = new ResponseBuilder().status(404).type(URN_INVALID_INPUT)
+            .title(ITEMNOTFOUND).detail(ITEMNOTFOUND).build();
+        handler.handle(Future.succeededFuture(resp.toJson()));
         return;
       }
      
@@ -1258,7 +1261,7 @@ public class PolicyServiceImpl implements PolicyService {
           
         getItemIdName.onComplete(getHandler -> {
           if(getHandler.failed()) {
-            LOGGER.error(LOG_DB_ERROR + " {}", dbHandler.cause().getMessage());
+            LOGGER.error(LOG_DB_ERROR + " {}", getHandler.cause().getMessage());
             handler.handle(Future.failedFuture(INTERNALERROR));
             return;
           }
@@ -1357,14 +1360,17 @@ public class PolicyServiceImpl implements PolicyService {
                     handler.handle(Future.failedFuture(INTERNALERROR));
                     return;
                   });
-                }          
+                } else {
+                  LOGGER.error("Fail: {}; {}", createHandler.result().getString(DETAIL),
+                      INVALID_ROLE);
+                  handler.handle(Future.succeededFuture(createHandler.result()));
+                }
               }
             });
           }
         });
       }
     });
-    
     return this;
   }
 

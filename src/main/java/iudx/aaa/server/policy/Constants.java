@@ -112,6 +112,9 @@ public class Constants {
   public static final String SUCC_NOTIF_REQ = "Notification access request";
   public static final String SUCC_LIST_NOTIF_REQ = "Access requests";
   public static final String ERR_LIST_NOTIF = "Fail: Unable to list notification access requests";
+  
+  //General
+  public static final String DETAIL = "detail";
 
   // verify policy queries
   public static final String GET_FROM_ROLES_TABLE =
