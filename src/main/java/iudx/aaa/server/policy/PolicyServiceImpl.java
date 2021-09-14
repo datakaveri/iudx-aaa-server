@@ -53,13 +53,14 @@ import static iudx.aaa.server.policy.Constants.GET_DELEGATIONS_BY_ID;
 import static iudx.aaa.server.policy.Constants.GET_FROM_ROLES_TABLE;
 import static iudx.aaa.server.policy.Constants.GET_POLICIES;
 import static iudx.aaa.server.policy.Constants.GET_POLICIES_JOIN;
-import static iudx.aaa.server.policy.Constants.GET_POLICIES_JOIN_OWNER;
+import static iudx.aaa.server.policy.Constants.GET_POLICIES_JOIN_DELEGATE;
 import static iudx.aaa.server.policy.Constants.GET_RES_DETAIL;
 import static iudx.aaa.server.policy.Constants.GET_RES_DETAIL_JOIN;
 import static iudx.aaa.server.policy.Constants.GET_RES_OWNER;
 import static iudx.aaa.server.policy.Constants.GET_RES_SERVER_OWNER;
 import static iudx.aaa.server.policy.Constants.GET_RES_SER_OWNER;
 import static iudx.aaa.server.policy.Constants.GET_RES_SER_OWNER_JOIN;
+import static iudx.aaa.server.policy.Constants.GET_SERVER_POLICIES;
 import static iudx.aaa.server.policy.Constants.GET_URL;
 import static iudx.aaa.server.policy.Constants.ID;
 import static iudx.aaa.server.policy.Constants.ID_NOT_PRESENT;
@@ -206,7 +207,7 @@ public class PolicyServiceImpl implements PolicyService {
             .map(CreatePolicyRequest::getItemId)
             .collect(Collectors.toList());
 
-    //the format for resource group item id when split by '/' should be of exactly length 4
+    // the format for resource group item id when split by '/' should be of exactly length 4
     if (!resGrpIds.stream().allMatch(itemTypeCheck -> itemTypeCheck.split("/").length == 4)) {
       Response r =
           new Response.ResponseBuilder()
@@ -227,7 +228,8 @@ public class PolicyServiceImpl implements PolicyService {
             .map(CreatePolicyRequest::getItemId)
             .collect(Collectors.toList());
 
-      //the format for resource item id when split by '/' should be of greater than len of resource group(4)
+    // the format for resource item id when split by '/' should be of greater than len of resource
+    // group(4)
     if (!resIds.stream().allMatch(itemTypeCheck -> itemTypeCheck.split("/").length > 4)) {
       Response r =
           new Response.ResponseBuilder()
@@ -498,70 +500,110 @@ public class PolicyServiceImpl implements PolicyService {
       User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler) {
     // TODO Auto-generated method stub
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+    boolean isDelegate = false;
     JsonArray respPolicies = new JsonArray();
-    JsonObject response = new JsonObject();
+    Future<List<JsonObject>> getResGrpPolicy;
+    Future<List<JsonObject>> getResIdPolicy;
+    Future<List<JsonObject>> getResSerPolicy;
 
     UUID user_id;
-    if (data.containsKey(USER_ID)) user_id = UUID.fromString(data.getString(USER_ID));
-    else user_id = UUID.fromString(user.getUserId());
+    if (data.containsKey(USER_ID)) {
+      user_id = UUID.fromString(data.getString(USER_ID));
+      isDelegate = true;
+    } else user_id = UUID.fromString(user.getUserId());
 
     Collector<Row, ?, List<JsonObject>> policyCollector =
         Collectors.mapping(Row::toJson, Collectors.toList());
 
-    Future<List<JsonObject>> getResGrpPolicy =
-        pool.withConnection(
-                conn ->
-                    conn.preparedQuery(GET_POLICIES + itemTypes.RESOURCE_GROUP + GET_POLICIES_JOIN)
-                        .collecting(policyCollector)
-                        .execute(Tuple.of(user_id, itemTypes.RESOURCE_GROUP, status.ACTIVE))
-                        .map(SqlResult::value))
-            .onFailure(
-                obj -> {
-                  LOGGER.error("failed getResGrpPolicy  " + obj.getMessage());
-                  handler.handle(Future.failedFuture(INTERNALERROR));
-                });
+    if (!isDelegate) {
+      getResGrpPolicy =
+          pool.withConnection(
+                  conn ->
+                      conn.preparedQuery(
+                              GET_POLICIES + itemTypes.RESOURCE_GROUP + GET_POLICIES_JOIN)
+                          .collecting(policyCollector)
+                          .execute(Tuple.of(user_id, itemTypes.RESOURCE_GROUP, status.ACTIVE))
+                          .map(SqlResult::value))
+              .onFailure(
+                  obj -> {
+                    LOGGER.error("failed getResGrpPolicy  " + obj.getMessage());
+                    handler.handle(Future.failedFuture(INTERNALERROR));
+                  });
 
-    Future<List<JsonObject>> getResIdPolicy =
-        pool.withConnection(
-                conn ->
-                    conn.preparedQuery(GET_POLICIES + itemTypes.RESOURCE + GET_POLICIES_JOIN)
-                        .collecting(policyCollector)
-                        .execute(Tuple.of(user_id, itemTypes.RESOURCE, status.ACTIVE))
-                        .map(SqlResult::value))
-            .onFailure(
-                obj -> {
-                  LOGGER.error("failed getResIdPolicy  " + obj.getMessage());
-                  handler.handle(Future.failedFuture(INTERNALERROR));
-                });
+      getResIdPolicy =
+          pool.withConnection(
+                  conn ->
+                      conn.preparedQuery(GET_POLICIES + itemTypes.RESOURCE + GET_POLICIES_JOIN)
+                          .collecting(policyCollector)
+                          .execute(Tuple.of(user_id, itemTypes.RESOURCE, status.ACTIVE))
+                          .map(SqlResult::value))
+              .onFailure(
+                  obj -> {
+                    LOGGER.error("failed getResIdPolicy  " + obj.getMessage());
+                    handler.handle(Future.failedFuture(INTERNALERROR));
+                  });
 
-    Future<List<JsonObject>> getGrpPolicy =
-        pool.withConnection(
-                conn ->
-                    conn.preparedQuery(
-                            GET_POLICIES + itemTypes.RESOURCE_GROUP + GET_POLICIES_JOIN_OWNER)
-                        .collecting(policyCollector)
-                        .execute(Tuple.of(user_id, itemTypes.RESOURCE_GROUP, status.ACTIVE))
-                        .map(SqlResult::value))
-            .onFailure(
-                obj -> {
-                  LOGGER.error(obj.getMessage());
-                  handler.handle(Future.failedFuture(INTERNALERROR));
-                });
+      getResSerPolicy =
+          pool.withConnection(
+                  conn ->
+                      conn.preparedQuery(
+                              GET_SERVER_POLICIES + itemTypes.RESOURCE_SERVER + GET_POLICIES_JOIN)
+                          .collecting(policyCollector)
+                          .execute(Tuple.of(user_id, itemTypes.RESOURCE_SERVER, status.ACTIVE))
+                          .map(SqlResult::value))
+              .onFailure(
+                  obj -> {
+                    LOGGER.error("failed getResSerPolicy  " + obj.getMessage());
+                    handler.handle(Future.failedFuture(INTERNALERROR));
+                  });
 
-    Future<List<JsonObject>> getIdPolicy = Future.succeededFuture();
-    pool.withConnection(
-            conn ->
-                conn.preparedQuery(GET_POLICIES + itemTypes.RESOURCE + GET_POLICIES_JOIN_OWNER)
-                    .collecting(policyCollector)
-                    .execute(Tuple.of(user_id, itemTypes.RESOURCE, status.ACTIVE))
-                    .map(SqlResult::value))
-        .onFailure(
-            obj -> {
-              LOGGER.error(obj.getMessage());
-              handler.handle(Future.failedFuture(INTERNALERROR));
-            });
+    } else {
+      getResGrpPolicy =
+          pool.withConnection(
+                  conn ->
+                      conn.preparedQuery(
+                              GET_POLICIES + itemTypes.RESOURCE_GROUP + GET_POLICIES_JOIN_DELEGATE)
+                          .collecting(policyCollector)
+                          .execute(Tuple.of(user_id, itemTypes.RESOURCE_GROUP, status.ACTIVE))
+                          .map(SqlResult::value))
+              .onFailure(
+                  obj -> {
+                    LOGGER.error("failed getResGrpPolicy  " + obj.getMessage());
+                    handler.handle(Future.failedFuture(INTERNALERROR));
+                  });
 
-    CompositeFuture.all(getResGrpPolicy, getResIdPolicy, getGrpPolicy, getIdPolicy)
+      getResIdPolicy =
+          pool.withConnection(
+                  conn ->
+                      conn.preparedQuery(
+                              GET_POLICIES + itemTypes.RESOURCE + GET_POLICIES_JOIN_DELEGATE)
+                          .collecting(policyCollector)
+                          .execute(Tuple.of(user_id, itemTypes.RESOURCE, status.ACTIVE))
+                          .map(SqlResult::value))
+              .onFailure(
+                  obj -> {
+                    LOGGER.error("failed getResIdPolicy  " + obj.getMessage());
+                    handler.handle(Future.failedFuture(INTERNALERROR));
+                  });
+
+      getResSerPolicy =
+          pool.withConnection(
+                  conn ->
+                      conn.preparedQuery(
+                              GET_SERVER_POLICIES
+                                  + itemTypes.RESOURCE_SERVER
+                                  + GET_POLICIES_JOIN_DELEGATE)
+                          .collecting(policyCollector)
+                          .execute(Tuple.of(user_id, itemTypes.RESOURCE_SERVER, status.ACTIVE))
+                          .map(SqlResult::value))
+              .onFailure(
+                  obj -> {
+                    LOGGER.error("failed getResSerPolicy  " + obj.getMessage());
+                    handler.handle(Future.failedFuture(INTERNALERROR));
+                  });
+    }
+
+    CompositeFuture.all(getResGrpPolicy, getResIdPolicy, getResSerPolicy)
         .onSuccess(
             obj -> {
               List<JsonObject> policies = new ArrayList<>();
@@ -575,10 +617,6 @@ public class PolicyServiceImpl implements PolicyService {
 
               if (obj.list().get(2) != null) {
                 policies.addAll((List<JsonObject>) obj.list().get(2));
-              }
-
-              if (obj.list().get(3) != null) {
-                policies.addAll((List<JsonObject>) obj.list().get(3));
               }
 
               policies = new ArrayList<>(new HashSet<>(policies));
@@ -619,7 +657,6 @@ public class PolicyServiceImpl implements PolicyService {
                             object = res.result().get(uid);
                             object.put("id", uid);
                             ar.put(USER_DETAILS, object);
-                            respPolicies.add(ar);
                           }
 
                           if (res.result().containsKey(oid)) {
@@ -627,16 +664,15 @@ public class PolicyServiceImpl implements PolicyService {
                             object = res.result().get(oid);
                             object.put("id", oid);
                             ar.put(OWNER_DETAILS, object);
-                            respPolicies.add(ar);
                           }
+                          respPolicies.add(ar);
                         }
-                        response.put("result", respPolicies);
                         Response r =
                             new Response.ResponseBuilder()
                                 .type(POLICY_SUCCESS)
                                 .title(SUCC_TITLE_POLICY_READ)
                                 .status(200)
-                                .objectResults(response)
+                                .arrayResults(respPolicies)
                                 .build();
                         handler.handle(Future.succeededFuture(r.toJson()));
                       } else if (res.failed()) {
