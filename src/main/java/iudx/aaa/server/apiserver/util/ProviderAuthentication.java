@@ -61,6 +61,8 @@ public class ProviderAuthentication implements Handler<RoutingContext> {
           Response rs = new ResponseBuilder().status(401).type(URN_MISSING_AUTH_TOKEN)
               .title(ERR_DELEGATE).detail(ERR_DELEGATE).build();
           routingContext.fail(new Throwable(rs.toJsonString()));
+        }else {
+          LOGGER.debug("Success: Provider/delegate authenticated");
         }
       }
 

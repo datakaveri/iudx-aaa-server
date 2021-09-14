@@ -10,7 +10,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.pgclient.data.Interval;
 import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.SqlResult;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.CreatePolicyNotification;
@@ -26,15 +25,15 @@ import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -970,10 +969,12 @@ public class PolicyServiceImpl implements PolicyService {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
     
     List<Roles> roles = user.getRoles();
-    JsonArray requestBody = new JsonArray(request);
+    JsonObject userJson = user.toJson();
+    userJson.remove("keycloakId");
+    userJson.remove("roles");
 
-    if (!roles.contains(Roles.DELEGATE) && !roles.contains(Roles.CONSUMER)) {
-      Response r = new Response.ResponseBuilder().type(INVALID_ROLE).title(URN_INVALID_ROLE)
+    if (!roles.contains(Roles.CONSUMER)) {
+      Response r = new Response.ResponseBuilder().type(URN_INVALID_ROLE).title(INVALID_ROLE)
           .detail(INVALID_ROLE).status(403).build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
@@ -1009,22 +1010,13 @@ public class PolicyServiceImpl implements PolicyService {
         catItem.put(RES, resIds);
       }
     }
-    
-    Future<Map<String, UUID>> reqCatItem =
-        catalogueClient.checkReqItems(catItem, user.getUserId());
-    Future<Map<String, UUID>> ownerId = catalogueClient.getOwnerId(catItem);
-    
-    reqCatItem.onComplete(cat->{
-      if(cat.succeeded()) {
-        System.out.println(cat.result());
-      }
-      if(cat.failed()) {
-        System.out.println(cat.cause());
-      }
-    });
-    
-    CompositeFuture.all(reqCatItem, ownerId).onComplete(dbHandler -> {
-      
+
+    Future<Map<String, UUID>> reqCatItem = catalogueClient.checkReqItems(catItem, user.getUserId());
+
+    reqCatItem.compose(catHandler -> {
+      return catalogueClient.getOwnerId(catItem);
+    }).onComplete(dbHandler -> {
+
       if (dbHandler.failed()) {
         LOGGER.error("Fail: " + ITEMNOTFOUND);
         Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
@@ -1034,7 +1026,7 @@ public class PolicyServiceImpl implements PolicyService {
       }
 
       if (dbHandler.succeeded()) {
-        Future<List<Tuple>> tuples = mapTuple(request, reqCatItem.result(), ownerId.result(), user);
+        Future<List<Tuple>> tuples = mapTupleCreate(request, reqCatItem.result(), dbHandler.result(), user);
         
         CompositeFuture.all(tuples, checkDuplication(tuples.result())).onComplete(resHandler ->{
           if (resHandler.failed()) {
@@ -1047,7 +1039,7 @@ public class PolicyServiceImpl implements PolicyService {
           }
           
           if (resHandler.succeeded()) {
-            
+
             pool.withTransaction(conn -> conn.preparedQuery(CREATE_NOTIFI_POLICY_REQUEST)
                 .executeBatch(tuples.result()).onComplete(insertHandler -> {
 
@@ -1060,34 +1052,46 @@ public class PolicyServiceImpl implements PolicyService {
                   }
 
                   if (insertHandler.succeeded()) {
-                    JsonArray resp = new JsonArray();
-                    for (RowSet<Row> rows = insertHandler.result();rows.next() != null;rows = rows.next()) {
-                      UUID id = rows.iterator().next().getUUID("id");
-                      System.out.println("generated key: " + id);
-                    }
                     
-                    for(Row each: insertHandler.result()) {
+                    JsonArray resp = new JsonArray();
+                    for (Row each : insertHandler.result()) {
                       resp.add(each.toJson());
                     }
                     
-//                    JsonArray results = new JsonArray();
-//                    for (int i = 0; i < request.size(); i++) {
-//                      JsonObject requestJson = request.get(i).toJson();
-//                      results.add(value)
-//                      JsonObject eachRow = each.toJson().copy().mergeIn(requestBody).put(USER_DETAILS, user.toJson());
-//                    }
-//                    request.forEach(each -> {
-//                      JsonObject json = each.toJson();
-//                      UUID kc = uidKc.get(UUID.fromString(obj.getUserId()));
-//                      j.mergeIn(details.get(kc.toString()));
-//                      resp.add(j);
-//                    });
+                    List<String> ids = new ArrayList<>();
+                    ids.add(user.getUserId());
+
+                    List<String> ownerIds = dbHandler.result().values().stream()
+                        .map(each -> each.toString()).collect(Collectors.toList());
+                    ids.addAll(ownerIds);
                     
-                    LOGGER.info("Success: {}; Id: {}",SUCC_NOTIF_REQ, resp);
-                    Response res =
-                        new Response.ResponseBuilder().type(POLICY_SUCCESS)
-                            .title(SUCC_TITLE_POLICY_READ).status(200).arrayResults(resp).build();
-                    handler.handle(Future.succeededFuture(res.toJson()));
+                    registrationService.getUserDetails(ids, userHandler -> {
+                      if (userHandler.failed()) {
+                        LOGGER.error("Fail: Registration failure; " + userHandler.cause());
+                        handler.handle(Future.failedFuture(INTERNALERROR));
+                      }
+                      
+                      if (userHandler.succeeded()) {
+                        Map<String, JsonObject> userInfo = userHandler.result();
+
+                        JsonObject userJson1 = userInfo.get(user.getUserId());
+
+                        JsonArray results = new JsonArray();
+                        for (int i = 0; i < request.size(); i++) {
+                          JsonObject requestJson = request.get(i).toJson();
+                          JsonObject eachJson = resp.getJsonObject(i).copy().mergeIn(requestJson)
+                              .put(USER_DETAILS, userJson1)
+                              .put(OWNER_DETAILS, userInfo.get(ownerIds.get(i)));
+                          results.add(eachJson);
+                        }
+
+                        LOGGER.info("Success: {}; Id: {}", SUCC_NOTIF_REQ, resp);
+                        Response res = new Response.ResponseBuilder().type(POLICY_SUCCESS)
+                            .title(SUCC_TITLE_POLICY_READ).status(200).arrayResults(results)
+                            .build();
+                        handler.handle(Future.succeededFuture(res.toJson()));
+                      }
+                    });
                   }
                 }));
           }
@@ -1102,17 +1106,265 @@ public class PolicyServiceImpl implements PolicyService {
   public PolicyService listPolicyNotification(
       User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler) {
 
-    handler.handle(Future.succeededFuture(data));
+    boolean isDelegate = !data.isEmpty();
+    List<Roles> roles = user.getRoles();
+    
+    if (!(isDelegate || roles.contains(Roles.PROVIDER) || roles.contains(Roles.DELEGATE))) {
+      Response r =
+          new Response.ResponseBuilder().type(URN_INVALID_ROLE).title(ERR_TITLE_INVALID_ROLES)
+              .detail(ERR_DETAIL_LIST_DELEGATE_ROLES).status(401).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
 
+    String query;
+    Tuple queryTuple;
+    
+    if (isDelegate) {
+      UUID providerId = UUID.fromString(data.getString("providerId"));
+      query = SELECT_PROVIDER_NOTIF_REQ;
+      queryTuple = Tuple.of(providerId);
+    } else {
+      query = SELECT_CONSUM_NOTIF_REQ;
+      queryTuple = Tuple.of(user.getUserId());
+    }
+    
+    Collector<Row, ?, List<JsonObject>> collect =
+        Collectors.mapping(row -> row.toJson(), Collectors.toList());
+
+    Future<List<JsonObject>> notifData =
+        pool.withTransaction(conn -> 
+          conn.query(SET_INTERVALSTYLE)
+              .execute()
+              .flatMap(result -> conn
+                  .preparedQuery(query)
+                  .collecting(collect)
+                  .execute(queryTuple)
+                  .map(res -> res.value())));
+
+    Future<Map<String, JsonObject>> userInfo = notifData.compose(result -> {
+      Set<String> ids = new HashSet<String>();
+      result.forEach(obj -> {
+        ids.add(obj.getString(OWNER_ID));
+        ids.add(obj.getString(USER_ID));
+      });
+
+      Promise<Map<String, JsonObject>> userDetails = Promise.promise();
+      registrationService.getUserDetails(new ArrayList<String>(ids), userDetails);
+      return userDetails.future();
+    });
+    
+    userInfo.onSuccess(details -> {
+      List<JsonObject> notifRequest = notifData.result();
+      JsonArray response = new JsonArray();
+      
+      notifRequest.forEach(each -> {
+
+        String userId = (String) each.remove(USER_ID);
+        String ownerId = (String) each.remove(OWNER_ID);
+        
+        JsonObject eachDetails = each.copy()
+            .put(USER_DETAILS, details.get(userId).put(ID, userId))
+            .put(OWNER_DETAILS, details.get(ownerId).put(ID, ownerId));
+        
+        response.add(eachDetails);
+      });
+      
+      Response r = new ResponseBuilder().type(POLICY_SUCCESS).title(SUCC_LIST_NOTIF_REQ)
+          .arrayResults(response).status(200).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      
+    }).onFailure(e -> {
+      LOGGER.error(ERR_LIST_NOTIF + "; {}", e.getMessage());
+      handler.handle(Future.failedFuture(INTERNALERROR));
+    });
+    
     return this;
   }
 
   /** {@inheritDoc} */
   @Override
   public PolicyService updatelistPolicyNotification(
-      List<UpdatePolicyNotification> request, User user, Handler<AsyncResult<JsonObject>> handler) {
+      List<UpdatePolicyNotification> request, User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler) {
 
-    handler.handle(Future.succeededFuture(new JsonObject()));
+    boolean isDelegate = !data.isEmpty();
+    List<Roles> roles = user.getRoles();
+    
+    if (!((isDelegate && roles.contains(Roles.DELEGATE)) || roles.contains(Roles.PROVIDER))) {
+      Response r =
+          new Response.ResponseBuilder().type(URN_INVALID_ROLE).title(ERR_TITLE_INVALID_ROLES)
+              .detail(ERR_DETAIL_LIST_DELEGATE_ROLES).status(401).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
+    
+    List<UUID> requestIds =
+        request.stream().map(each -> UUID.fromString(each.getRequestId())).collect(Collectors.toList());
+    
+    Collector<Row, ?, List<JsonObject>> notifRequestCollect =
+        Collectors.mapping(row -> row.toJson(), Collectors.toList());
+    
+    Map<UUID, JsonObject> requestMap = request.stream().collect(
+        Collectors.toMap(key -> UUID.fromString(key.getRequestId()), value -> value.toJson()));
+
+    List<Tuple> tuples = new ArrayList<>();
+    tuples.add(Tuple.from(requestIds));
+    
+    Future<List<JsonObject>> policyRequestData =
+    pool.withTransaction(conn -> 
+    conn.query(SET_INTERVALSTYLE)
+        .execute()
+        .flatMap(result -> conn
+            .preparedQuery(SEL_NOTIF_REQ_ID)
+            .collecting(notifRequestCollect)
+            .executeBatch(tuples)
+            .map(res -> res.value())));
+    
+    policyRequestData.onComplete(dbHandler -> {
+      if(dbHandler.failed()) {
+        LOGGER.error(LOG_DB_ERROR + " {}", dbHandler.cause().getMessage());
+        handler.handle(Future.failedFuture(INTERNALERROR));
+        return;
+      }
+     
+      if(dbHandler.succeeded()) {
+        List<JsonObject> notifReqlist = dbHandler.result();
+        JsonArray createPolicyArr = new JsonArray();
+        
+        notifReqlist.forEach(each -> {
+          UUID requestId = UUID.fromString(each.getString(ID));
+          JsonObject requestJson = requestMap.get(requestId);
+          if (requestJson != null) {
+            JsonObject temp = each.copy().mergeIn(requestJson, Boolean.TRUE);
+            createPolicyArr.add(temp);
+          }
+        });
+        
+        List<String> ownerIds = createPolicyArr.stream().map(JsonObject.class::cast)
+            .map(each -> each.getString(OWNERID)).collect(Collectors.toList());
+        
+        List<UUID> itemIds = createPolicyArr.stream().map(JsonObject.class::cast)
+            .map(each -> UUID.fromString(each.getString(ITEMID))).collect(Collectors.toList());
+        
+        List<Tuple> itemIdTuple = new ArrayList<>();
+        itemIdTuple.add(Tuple.from(itemIds));
+        
+        Collector<Row, ?, Map<UUID, String>> collectItemName =
+            Collectors.toMap(row -> row.getUUID(ID), row -> row.getString(URL));
+        
+        Future<Map<UUID, String>> getItemIdName = pool.withTransaction(
+            conn -> conn.preparedQuery(SEL_NOTIF_ITEM_ID).collecting(collectItemName).executeBatch(itemIdTuple))
+            .map(res -> res.value());
+          
+        getItemIdName.onComplete(getHandler -> {
+          if(getHandler.failed()) {
+            LOGGER.error(LOG_DB_ERROR + " {}", dbHandler.cause().getMessage());
+            handler.handle(Future.failedFuture(INTERNALERROR));
+            return;
+          }
+          
+          if(getHandler.succeeded()) {
+            
+            Map<UUID, String> idMap = getHandler.result();
+            
+            LocalDateTime start = LocalDateTime.now();
+            List<Tuple> selectPolicy = new ArrayList<>();
+            
+            JsonArray apprvoedReq = createPolicyArr.stream().map(JsonObject.class::cast)
+                .filter(each -> each.getString(STATUS).equals(RoleStatus.APPROVED.name()))
+                .map(each -> {
+                  String expiry = each.getString("expiryDuration");
+                  String itemId = each.getString(ITEMID);
+                  
+                  org.joda.time.Interval interval = org.joda.time.Interval.parse(start + "/" + expiry);
+                  each.put(EXPIRYTIME, interval.getEnd().toString());
+                  each.put(ITEMID,idMap.get(UUID.fromString(itemId)));
+                  selectPolicy.add(Tuple.of(each.getString(USERID),each.getString(ITEMID),each.getString(OWNERID)));
+                  
+                  return each;
+                }).collect(Collector.of(JsonArray::new, JsonArray::add, JsonArray::add));
+            
+            List<CreatePolicyRequest> createPolicyArray = CreatePolicyRequest.jsonArrayToList(apprvoedReq);
+            createPolicy(createPolicyArray, user, createHandler -> {
+              if (createHandler.failed()) {
+                handler.handle(Future.succeededFuture(createHandler.result()));
+                return;
+              }
+              
+              if (createHandler.succeeded()) {
+                
+                JsonObject result = createHandler.result();
+                if(POLICY_SUCCESS.equalsIgnoreCase(result.getString(TYPE))){
+                 
+                  Future<List<Tuple>> updateTuple = mapTupleUpdate(request);
+
+                  Collector<Row, ?, List<Tuple>> policyCollector = Collectors.mapping(
+                      row -> Tuple.of(row.getUUID("requestId"), row.getUUID("policyId")),
+                      Collectors.toList());
+                   
+                  Future<Object> updateResults = updateTuple.compose(mapper -> {
+
+                  return pool.withTransaction(
+                        conn -> conn.preparedQuery(UPDATE_NOTIF_REQ)
+                                    .executeBatch(mapper)
+                                    .flatMap(get -> 
+                                      conn.preparedQuery(SEL_NOTIF_POLICY_ID)
+                                          .collecting(policyCollector)
+                                          .executeBatch(selectPolicy))
+                                          .flatMap(insert -> 
+                                            conn.preparedQuery(INSERT_NOTIF_APPROVED_ID)
+                                                .executeBatch(insert.value())
+                                                .map(res -> res.value())));
+                  });
+                  
+                  updateResults.onSuccess(obj -> {
+                    
+                  List<String> ids = new ArrayList<>();
+                  ids.add(user.getUserId());
+                  ids.addAll(ownerIds);
+                  
+                  registrationService.getUserDetails(ids, userHandler -> {
+                    if (userHandler.failed()) {
+                      LOGGER.error("Fail: Registration failure; " + userHandler.cause());
+                      handler.handle(Future.failedFuture(INTERNALERROR));
+                      return;
+                    }
+                    
+                    if (userHandler.succeeded()) {
+                      Map<String, JsonObject> userInfo = userHandler.result();
+
+                      JsonObject userJson1 = userInfo.get(user.getUserId());
+
+                      JsonArray results = new JsonArray();
+                      for (int i = 0; i < request.size(); i++) {
+                        JsonObject requestJson = request.get(i).toJson();
+                        JsonObject eachJson = requestJson
+                            .put(USER_DETAILS, userJson1)
+                            .put(OWNER_DETAILS, userInfo.get(ownerIds.get(i)));
+                        results.add(eachJson);
+                      }
+
+                      LOGGER.info("Success: {};", SUCC_NOTIF_REQ);
+                      Response res = new Response.ResponseBuilder().type(POLICY_SUCCESS)
+                          .title(SUCC_LIST_NOTIF_REQ).status(200).arrayResults(results)
+                          .build();
+                      handler.handle(Future.succeededFuture(res.toJson()));
+                      return;
+                    }
+                  });
+                  }).onFailure(failureHandler ->{
+                    LOGGER.error(LOG_DB_ERROR + " {}", dbHandler.cause().getMessage());
+                    handler.handle(Future.failedFuture(INTERNALERROR));
+                    return;
+                  });
+                }          
+              }
+            });
+          }
+        });
+      }
+    });
+    
     return this;
   }
 
@@ -1333,7 +1585,7 @@ public class PolicyServiceImpl implements PolicyService {
    * @param user
    * @return List<Tuple>
    */
-  Future<List<Tuple>> mapTuple(List<CreatePolicyNotification> request, Map<String, UUID> resourceId,
+  Future<List<Tuple>> mapTupleCreate(List<CreatePolicyNotification> request, Map<String, UUID> resourceId,
       Map<String, UUID> ownerIds, User user) {
 
     Promise<List<Tuple>> promise = Promise.promise();
@@ -1368,6 +1620,44 @@ public class PolicyServiceImpl implements PolicyService {
   }
   
   /**
+   * Create/map objects, fields to List<tuple>.
+   * @param request 
+   * 
+   * @param request
+   * @param resourceId
+   * @param ownerId
+   * @param user
+   * @return List<Tuple>
+   */
+  Future<List<Tuple>> mapTupleUpdate(List<UpdatePolicyNotification> request) {
+
+    Promise<List<Tuple>> promise = Promise.promise();
+    List<Tuple> tuples = new ArrayList<>();
+
+    try {
+
+      for (UpdatePolicyNotification each : request) {
+        String status = each.getStatus().name();
+        UUID requestId = UUID.fromString(each.getRequestId());
+
+        Duration duration = DatatypeFactory.newInstance().newDuration(each.getExpiryDuration());
+        JsonObject constraints = each.getConstraints();
+
+        Interval interval = Interval.of(duration.getYears(), duration.getMonths(),
+            duration.getDays(), duration.getHours(), duration.getMinutes(), duration.getSeconds());
+
+        tuples.add(Tuple.of(status, interval, constraints, requestId));
+      }
+    } catch (DatatypeConfigurationException e) {
+      LOGGER.error("Fail: {}; {}", INVALID_TUPLE, e.getLocalizedMessage());
+      promise.fail(INVALID_TUPLE);
+    }
+
+    promise.complete(tuples);
+    return promise.future();
+  }
+  
+  /**
    * Checks the duplicate access requests.
    * 
    * @param tuples
@@ -1387,7 +1677,7 @@ public class PolicyServiceImpl implements PolicyService {
       String status = RoleStatus.PENDING.name();
       selectTuples.add(Tuple.of(userId, itemId, ownerId, status));
     }
-    pool.withTransaction(conn -> conn.preparedQuery(SELECT_NOTIFI_POLICY_REQUEST)
+    pool.withTransaction(conn -> conn.preparedQuery(SELECT_NOTIF_POLICY_REQUEST)
         .collecting(accessRequestId).executeBatch(selectTuples).onFailure(failureHandler -> {
           LOGGER.error(ERR_DUP_NOTIF_REQ + failureHandler.getLocalizedMessage());
           promise.fail(failureHandler.getLocalizedMessage());
