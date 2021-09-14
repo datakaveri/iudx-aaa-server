@@ -58,16 +58,21 @@ public interface RegistrationService {
       Handler<AsyncResult<JsonObject>> handler);
 
   /**
-   * The listUser implements the user list operation.
+   * The listUser implements the user list operation. It additionally implements a search function
+   * for providers, admins and auth delegates to search for a user's details from their email
+   * address and role.
    * 
    * @param user the User object i.e. the user calling the API
+   * @param searchUserDetails a JSON object with the email and role
+   * @param authDelegateDetails a JSON object with the auth delegate details if an auth delegate
+   *        calls the API
    * @param handler the request handler which returns a JsonObject
    * @return RegistrationService which is a Service
    */
 
   @Fluent
-  RegistrationService listUser(User user, Handler<AsyncResult<JsonObject>> handler);
-
+  RegistrationService listUser(User user, JsonObject searchUserDetails,
+      JsonObject authDelegateDetails, Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * The updateUser implements the user update operation. Currently role addition is allowed.

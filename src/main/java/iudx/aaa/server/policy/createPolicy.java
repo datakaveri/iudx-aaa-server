@@ -111,10 +111,10 @@ public class createPolicy {
       Map<String, UUID> ownerId,
       User user) {
     Promise<Boolean> p = Promise.promise();
-
     Future<List<Tuple>> tuples = createTuple(req, resourceId, ownerId, user);
 
-    Future<List<Tuple>> checkDuplicate = checkExistingPolicy(tuples.result());
+    Future<List<Tuple>> checkDuplicate = tuples.compose(this::checkExistingPolicy);
+
 
     checkDuplicate
         .compose(
@@ -156,12 +156,11 @@ public class createPolicy {
           expiryTime = LocalDateTime.parse(expTime, DateTimeFormatter.ISO_DATE_TIME);
         else {
           if (itemType.equals(itemTypes.RESOURCE_SERVER.toString()))
-            expiryTime =
-                LocalDateTime.now(ZoneOffset.UTC)
-                    .plusMonths(options.getInteger("adminPolicyExpiry"));
+            expiryTime = LocalDateTime.now(ZoneOffset.UTC)
+                .plusMonths(Integer.parseInt(options.getString("adminPolicyExpiry")));
           else
-            expiryTime =
-                LocalDateTime.now(ZoneOffset.UTC).plusMonths(options.getInteger("PolicyExpiry"));
+            expiryTime = LocalDateTime.now(ZoneOffset.UTC)
+                .plusMonths(Integer.parseInt(options.getString("policyExpiry")));
         }
         JsonObject constraints = obj.getConstraints();
         tuples.add(Tuple.of(userId, itemId, itemType, providerId, status, expiryTime, constraints));
@@ -278,6 +277,14 @@ public class createPolicy {
           r.status(403);
           break;
         }
+      case PROVIDER_NOT_REGISTERED:
+      {
+        r.title(PROVIDER_NOT_REGISTERED);
+        r.detail(obj.replace(PROVIDER_NOT_REGISTERED, ""));
+        r.status(403);
+        break;
+      }
+
       default:
         {
           r.title(INTERNALERROR);

@@ -78,7 +78,8 @@ public class Constants {
   public static final String INVALID_DELEGATE = "user does not have access to resource";
   public static final String ERR_TITLE_INVALID_ID = "Invalid delegation ID";
   public static final String ERR_TITLE_INVALID_ROLES = "User does not have roles to use API";
-  public static final String ERR_TITLE_AUTH_DELE_DELETE = "Auth delegate may not delete auth delegations";
+  public static final String ERR_TITLE_AUTH_DELE_DELETE =
+      "Auth delegate may not delete auth delegations";
   public static final String ERR_DETAIL_DEL_DELEGATE_ROLES =
       "User with provider role or is an auth delegate may call the API";
   public static final String ERR_DETAIL_LIST_DELEGATE_ROLES =
@@ -97,7 +98,9 @@ public class Constants {
   public static final String INVALID_DATETIME = "invalid date time:";
   public static final String INVALID_USER = "user does not exist:";
   public static final String NO_AUTH_POLICY = "No auth policy for user:";
+  public static final String INCORRECT_ITEM_TYPE = "incorrect item type";
   public static final String UNAUTHORIZED = "Not allowed to create policies for resource:";
+  public static final String PROVIDER_NOT_REGISTERED =  "Provider not a resgistered user";
   public static final String DUPLICATE_POLICY = "Policy already exists:";
   public static final String NO_USER = "no user";
   public static final String NOT_RES_OWNER = "does not own the resource";
@@ -118,42 +121,43 @@ public class Constants {
 
   // verify policy queries
   public static final String GET_FROM_ROLES_TABLE =
-          "Select role from test.roles where user_id = $1::UUID "
-                  + "AND role = $2::test.role_enum AND status = $3::test.role_status_enum";
+      "Select role from test.roles where user_id = $1::UUID "
+          + "AND role = $2::test.role_enum AND status = $3::test.role_status_enum";
   public static final String GET_RES_DETAIL = "select id,provider_id,resource_server_id from test.";
   public static final String GET_RES_DETAIL_JOIN = " where cat_id = $1::text ";
 
   public static final String GET_CONSUMER_CONSTRAINTS =
-          "select constraints from test.policies where  user_id = $1::UUID "
-                  + "and item_id = $2::UUID and item_type = $3::test.item_enum "
-                  + "and status = $4::test.policy_status_enum and expiry_time > now()";
+      "select constraints from test.policies where  user_id = $1::UUID "
+          + "and item_id = $2::UUID and item_type = $3::test.item_enum "
+          + "and status = $4::test.policy_status_enum and expiry_time > now()";
 
   public static final String GET_URL = "select url from test.resource_server where id = $1::UUID ";
 
   public static final String GET_RES_OWNER =
-          "select id from test.users where email_hash = $1::text";
+      "select id from test.users where email_hash = $1::text";
 
   public static final String GET_RES_SERVER_OWNER =
-          "select id,url,owner_id from test.resource_server where url = $1::text";
+      "select id,url,owner_id from test.resource_server where url = $1::text";
 
   public static final String GET_RES_SER_OWNER =
-          "select a.id,url,a.owner_id from test.resource_server a inner join test.";
+      "select a.id,url,a.owner_id from test.resource_server a inner join test.";
 
   public static final String GET_RES_SER_OWNER_JOIN =
-          " b on a.id = b.resource_server_id and b.cat_id = $1::text";
+      " b on a.id = b.resource_server_id and b.cat_id = $1::text";
 
   public static final String CHECK_ADMIN_POLICY =
-          "select id from test.policies where "
-                  + " user_id = $1::UUID and owner_id = $2::UUID and item_id =$3::UUID "
-                  + " and item_type = $4::test.item_enum and status = $5::test.policy_status_enum "
-                  + " and expiry_time > now()";
+      "select id from test.policies where "
+          + " user_id = $1::UUID and owner_id = $2::UUID and item_id =$3::UUID "
+          + " and item_type = $4::test.item_enum and status = $5::test.policy_status_enum "
+          + " and expiry_time > now()";
 
-  public static final String CHECK_DELEGATOINS_VERIFY ="select id from test.delegations where user_id = $1::UUID"
+  public static final String CHECK_DELEGATOINS_VERIFY =
+      "select id from test.delegations where user_id = $1::UUID"
           + " and owner_id = $2::UUID and resource_server_id = $3::UUID "
           + " and status = $4::test.policy_status_enum";
 
-
-  public static final String CHECK_POLICY = "select constraints from test.policies where user_id = $1::UUID"
+  public static final String CHECK_POLICY =
+      "select constraints from test.policies where user_id = $1::UUID"
           + " and owner_id = $2::UUID and item_id = $3::UUID and "
           + "status = $4::test.policy_status_enum "
           + " and expiry_time > now()";
@@ -162,102 +166,100 @@ public class Constants {
       "Select a.id as  \"policyId\", a.user_id, a.owner_id, a.item_id as \"itemId\" ,a.item_type as \"itemType\" ,"
           + " a.expiry_time as \"expiryTime\" ,a.constraints, b.cat_id  as \"catId\" from test.policies a INNER JOIN test.";
   public static final String GET_POLICIES_JOIN =
-          " b on a.item_id = b.id "
-                  + "where a.owner_id = $1::UUID AND a.item_type = $2::test.item_enum  "
-                  + "AND a.status = $3::test.policy_status_enum  AND a.expiry_time > NOW()";
+      " b on a.item_id = b.id "
+          + "where a.owner_id = $1::UUID AND a.item_type = $2::test.item_enum  "
+          + "AND a.status = $3::test.policy_status_enum  AND a.expiry_time > NOW()";
   public static final String GET_POLICIES_JOIN_OWNER =
-          " b on a.item_id = b.id "
-                  + "where a.user_id = $1::UUID AND a.item_type = $2::test.item_enum  "
-                  + "AND a.status = $3::test.policy_status_enum  AND a.expiry_time > NOW()";
+      " b on a.item_id = b.id "
+          + "where a.user_id = $1::UUID AND a.item_type = $2::test.item_enum  "
+          + "AND a.status = $3::test.policy_status_enum  AND a.expiry_time > NOW()";
   public static final String CHECK_RES_EXIST =
-          "select id from test.policies"
-                  + " where status = $1::test.policy_status_enum  and id = any($2::uuid[])";
+      "select id from test.policies"
+          + " where status = $1::test.policy_status_enum  and id = any($2::uuid[])";
   public static final String RES_OWNER_CHECK =
-          "select id from test.policies where owner_id = $1::uuid "
-                  + "and status = $2::test.policy_status_enum and id = any($3::uuid[]) and expiry_time > now()";
+      "select id from test.policies where owner_id = $1::uuid "
+          + "and status = $2::test.policy_status_enum and id = any($3::uuid[]) and expiry_time > now()";
   public static final String DELEGATE_CHECK =
-          "Select a.id from test.policies a "
-                  + "INNER JOIN test.delegations b on a.owner_id = b.owner_id where "
-                  + "a.user_id = $1::UUID and a.status =$2::test.policy_status_enum "
-                  + " and a.expiry_time > now() and a.id = any($3::UUID[]) ";
-
+      "Select a.id from test.policies a "
+          + "INNER JOIN test.delegations b on a.owner_id = b.owner_id where "
+          + "a.user_id = $1::UUID and a.status =$2::test.policy_status_enum "
+          + " and a.expiry_time > now() and a.id = any($3::UUID[]) ";
 
   // delete policy queries
   public static final String CHECK_DELPOLICY =
-          "select a.id from test.policies a inner join test.resource_server b on a.item_id = b.id "
-                  + "where  a.user_id = $1::UUID and item_type = $2::test.item_enum "
-                  + "and a.owner_id = b.owner_id and b.url = $3::varchar "
-                  + "and a.status = $4::test.policy_status_enum and a.expiry_time > now()";
+      "select a.id from test.policies a inner join test.resource_server b on a.item_id = b.id "
+          + "where  a.user_id = $1::UUID and item_type = $2::test.item_enum "
+          + "and a.owner_id = b.owner_id and b.url = $3::varchar "
+          + "and a.status = $4::test.policy_status_enum and a.expiry_time > now()";
   public static final String DELETE_POLICY =
-          "update test.policies set status = $1::test.policy_status_enum"
-                  + " where status = $2::test.policy_status_enum and expiry_time > now() "
-                  + " and id = any($3::uuid[])";
+      "update test.policies set status = $1::test.policy_status_enum"
+          + " where status = $2::test.policy_status_enum and expiry_time > now() "
+          + " and id = any($3::uuid[])";
   // create policy
   public static final String CHECKUSEREXIST =
-          "select id from test.users where id = any($1::uuid[])";
+      "select id from test.users where id = any($1::uuid[])";
   public static final String CHECK_RES_SER =
-          "select url as cat_id,id from test.resource_server "
-                  + "where owner_id = $1::UUID and url = ANY($2::text[])";
+      "select url as cat_id,id from test.resource_server "
+          + "where owner_id = $1::UUID and url = ANY($2::text[])";
   public static final String CHECKRESGRP =
-          "select cat_id from test.resource_group where cat_id = ANY($1::text[]) ";
+      "select cat_id from test.resource_group where cat_id = ANY($1::text[]) ";
   public static final String CHECK_AUTH_POLICY =
-          "select a.id from test.policies a inner join test.resource_server b "
-                  + " on a.item_id = b.id where a.user_id = $1::UUID and "
-                  + "  a.owner_id = b.owner_id and b.url = $2::varchar and "
-                  + " a.status = $3::test.policy_status_enum and a.expiry_time > now() ";
+      "select a.id from test.policies a inner join test.resource_server b "
+          + " on a.item_id = b.id where a.user_id = $1::UUID and "
+          + "  a.owner_id = b.owner_id and b.url = $2::varchar and "
+          + " a.status = $3::test.policy_status_enum and a.expiry_time > now() ";
   public static final String RES_GRP_OWNER =
-          "select provider_id from test.resource_group where "
-                  + "provider_id != $1::UUID  and cat_id = any($2::text[])";
+      "select provider_id from test.resource_group where "
+          + "provider_id != $1::UUID  and cat_id = any($2::text[])";
   public static final String RES_OWNER =
-          "select provider_id from test.resource where provider_id != $1::UUID"
-                  + " and cat_id = any($2::text[])";
+      "select provider_id from test.resource where provider_id != $1::UUID"
+          + " and cat_id = any($2::text[])";
   public static final String CHECK_DELEGATION =
-          "Select a.id from test.delegations a inner join test.resource_server b "
-                  + " on a.resource_server_id = b.id where b.url = $1::text "
-                  + " and a.user_id = $2::UUID and a.owner_id = any($3::UUID[]) ";
-
+      "Select a.id from test.delegations a inner join test.resource_server b "
+          + " on a.resource_server_id = b.id where b.url = $1::text "
+          + " and a.user_id = $2::UUID and a.owner_id = any($3::UUID[]) ";
 
   public static final String GET_RES_GRP_OWNER =
-          "select cat_id,provider_id from test.resource_group where cat_id = any($1::text[])";
+      "select cat_id,provider_id from test.resource_group where cat_id = any($1::text[])";
 
   public static final String GET_RES_OWNERS =
-          "select cat_id,provider_id from test.resource where cat_id = any($1::text[])";
+      "select cat_id,provider_id from test.resource where cat_id = any($1::text[])";
 
   public static final String GET_RES_DETAILS =
-          "select cat_id,id from test.resource where cat_id = ANY($1::text[]) ";
+      "select cat_id,id from test.resource where cat_id = ANY($1::text[]) ";
 
   public static final String GET_RES_SER_ID =
-          "select url,id from test.resource_server where url = any($1::text[])";
+      "select url,id from test.resource_server where url = any($1::text[])";
 
   public static final String GET_PROVIDER_ID =
-          "select email_hash,id from test.users where email_hash = any($1::text[])";
+      "select email_hash,id from test.users where email_hash = any($1::text[])";
 
   public static final String INSERT_RES_GRP =
-          "insert into test.resource_group "
-                  + "(cat_id,provider_id,resource_server_id,created_at,updated_at) values"
-                  + " ($1::text, $2::UUID, $3::UUID,now(),now()) "
-                  + "on conflict (cat_id,provider_id,resource_server_id) do nothing";
+      "insert into test.resource_group "
+          + "(cat_id,provider_id,resource_server_id,created_at,updated_at) values"
+          + " ($1::text, $2::UUID, $3::UUID,now(),now()) "
+          + "on conflict (cat_id,provider_id,resource_server_id) do nothing";
 
   public static final String GET_RES_SER_DETAIL =
-          "select id,provider_id,resource_server_id, "
-                  + "cat_id from test.resource_group where cat_id = any($1::text[])";
+      "select id,provider_id,resource_server_id, "
+          + "cat_id from test.resource_group where cat_id = any($1::text[])";
 
   public static final String INSERT_RES =
-          "insert into test.resource "
-                  + "(cat_id,provider_id,resource_server_id,resource_group_id,created_at,updated_at) values"
-                  + " ($1::text, $2::UUID, $3::UUID,$4::UUID,now(),now()) "
-                  + "on conflict (cat_id,provider_id,resource_group_id) do nothing";
+      "insert into test.resource "
+          + "(cat_id,provider_id,resource_server_id,resource_group_id,created_at,updated_at) values"
+          + " ($1::text, $2::UUID, $3::UUID,$4::UUID,now(),now()) "
+          + "on conflict (cat_id,provider_id,resource_group_id) do nothing";
 
   public static final String INSERT_POLICY =
-          "insert into test.policies (user_id,item_id,item_type,owner_id,status,"
-                  + "expiry_time,constraints,created_at,updated_at) values"
-                  + " ($1::UUID, $2::UUID, $3::test.item_enum, $4::UUID,$5::test.policy_status_enum "
-                  + ", $6::timestamp without time zone, $7::jsonb, now() ,now()) ";
+      "insert into test.policies (user_id,item_id,item_type,owner_id,status,"
+          + "expiry_time,constraints,created_at,updated_at) values"
+          + " ($1::UUID, $2::UUID, $3::test.item_enum, $4::UUID,$5::test.policy_status_enum "
+          + ", $6::timestamp without time zone, $7::jsonb, now() ,now()) ";
 
   public static final String CHECK_EXISTING_POLICY =
-          "select id from test.policies where user_id =$1::UUID "
-                  + " and item_id =$2::UUID and item_type = $3::test.item_enum and owner_id = $4::UUID "
-                  + " and status = $5::test.policy_status_enum and expiry_time > now()";
+      "select id from test.policies where user_id =$1::UUID "
+          + " and item_id =$2::UUID and item_type = $3::test.item_enum and owner_id = $4::UUID "
+          + " and status = $5::test.policy_status_enum and expiry_time > now()";
 
   public static final String LIST_DELEGATE_AUTH_DELEGATE =
       "SELECT d.id, d.owner_id, d.user_id, url, name AS server "
@@ -277,7 +279,7 @@ public class Constants {
 
   public static final String DELETE_DELEGATIONS =
       "UPDATE test.delegations SET status = 'DELETED', updated_at = NOW()"
-      + " WHERE owner_id = $1::uuid AND id = ANY($2::uuid[])";
+          + " WHERE owner_id = $1::uuid AND id = ANY($2::uuid[])";
   
   public static final String DB_SCHEMA = "test";
   public static final String CREATE_NOTIFI_POLICY_REQUEST =
@@ -331,6 +333,7 @@ public class Constants {
       
   
   public static final String SET_INTERVALSTYLE = "SET LOCAL intervalstyle = 'iso_8601'";
+
   
   // item types
   public enum itemTypes {
@@ -338,7 +341,7 @@ public class Constants {
     RESOURCE_GROUP("RESOURCE_GROUP"),
     RESOURCE("RESOURCE");
 
-    private String type;
+    private final String type;
 
     itemTypes(String item) {
       this.type = item;
@@ -356,7 +359,7 @@ public class Constants {
     CONSUMER("CONSUMER"),
     DELEGATE("DELEGATE");
 
-    private String role;
+    private final String role;
 
     roles(String role) {
       this.role = role;
@@ -375,7 +378,7 @@ public class Constants {
     DELETED("DELETED"),
     SUCCESS("SUCCESS");
 
-    private String status;
+    private final String status;
 
     status(String status) {
       this.status = status;
