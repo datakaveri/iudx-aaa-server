@@ -294,7 +294,7 @@ public class Constants {
 
   public static final String SELECT_CONSUM_NOTIF_REQ =
       "SELECT id as \"requestId\", user_id, item_id as \"itemId\", item_type as \"itemType\", owner_id, status, "
-          + "expiry_duration as \"expiryDuration\", constraints FROM "
+          + "expiry_duration::text as \"expiryDuration\", constraints FROM "
           + DB_SCHEMA + ".access_requests WHERE user_id = $1::UUID";
   
   public static final String SEL_NOTIF_REQ_ID =
