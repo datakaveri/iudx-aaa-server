@@ -14,13 +14,18 @@ public class Constants {
   /* Database */
   public static final String ERROR = "Error";
   public static final String QUERY_KEY = "query";
-  public static final String DATA_NOT_FOUND="Required Data not Found";
+  public static final String DATA_NOT_FOUND = "Required Data not Found";
+
   /* Auditing Service Constants*/
+  public static final String RESULTS = "results";
+
+  /* Metering Service Constants*/
   public static final String METHOD = "method";
   public static final String USER_ID = "userId";
   public static final String BODY = "body";
   public static final String API = "api";
   public static final String WRITE_QUERY =
       "INSERT INTO table_auditing (id,body,endpoint,method,time,userid) VALUES ('$1','$2','$3','$4',$5,'$6')";
+
   public static final String MESSAGE = "message";
 }

@@ -22,11 +22,12 @@ public class QueryBuilder {
   //  primaryKey,body,endpoint,method,time,userid
   public JsonObject buildWritingQuery(JsonObject request) {
 
-    if(!request.containsKey(BODY) || !request.containsKey(API)
-        || !request.containsKey(METHOD) || !request.containsKey(USER_ID)){
-      return new JsonObject().put(ERROR,DATA_NOT_FOUND);
+    if (!request.containsKey(BODY)
+        || !request.containsKey(API)
+        || !request.containsKey(METHOD)
+        || !request.containsKey(USER_ID)) {
+      return new JsonObject().put(ERROR, DATA_NOT_FOUND);
     }
-
 
     String primaryKey = UUID.randomUUID().toString().replace("-", "");
     String body = request.getJsonObject(BODY).toString();

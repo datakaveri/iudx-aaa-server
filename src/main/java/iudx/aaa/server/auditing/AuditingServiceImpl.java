@@ -72,7 +72,7 @@ public class AuditingServiceImpl implements AuditingService {
       JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
     query = queryBuilder.buildWritingQuery(request);
 
-    if(query.containsKey(ERROR)){
+    if (query.containsKey(ERROR)) {
       LOGGER.error("Fail: Query returned with an error: " + query.getString(ERROR));
       responseBuilder =
           new ResponseBuilder(FAILED).setTypeAndTitle(400).setMessage(query.getString(ERROR));
