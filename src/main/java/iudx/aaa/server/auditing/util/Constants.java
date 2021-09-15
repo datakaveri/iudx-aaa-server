@@ -18,8 +18,6 @@ public class Constants {
 
   /* Auditing Service Constants*/
   public static final String RESULTS = "results";
-
-  /* Metering Service Constants*/
   public static final String METHOD = "method";
   public static final String USER_ID = "userId";
   public static final String BODY = "body";
