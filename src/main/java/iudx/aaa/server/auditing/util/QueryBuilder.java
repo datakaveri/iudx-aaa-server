@@ -2,6 +2,8 @@ package iudx.aaa.server.auditing.util;
 
 import static iudx.aaa.server.auditing.util.Constants.API;
 import static iudx.aaa.server.auditing.util.Constants.BODY;
+import static iudx.aaa.server.auditing.util.Constants.DATA_NOT_FOUND;
+import static iudx.aaa.server.auditing.util.Constants.ERROR;
 import static iudx.aaa.server.auditing.util.Constants.METHOD;
 import static iudx.aaa.server.auditing.util.Constants.QUERY_KEY;
 import static iudx.aaa.server.auditing.util.Constants.USER_ID;
@@ -19,6 +21,13 @@ public class QueryBuilder {
 
   //  primaryKey,body,endpoint,method,time,userid
   public JsonObject buildWritingQuery(JsonObject request) {
+
+    if(!request.containsKey(BODY) || !request.containsKey(API)
+        || !request.containsKey(METHOD) || !request.containsKey(USER_ID)){
+      return new JsonObject().put(ERROR,DATA_NOT_FOUND);
+    }
+
+
     String primaryKey = UUID.randomUUID().toString().replace("-", "");
     String body = request.getJsonObject(BODY).toString();
     String endPoint = request.getString(API);

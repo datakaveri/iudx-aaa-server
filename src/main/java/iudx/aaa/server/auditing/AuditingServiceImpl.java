@@ -1,5 +1,6 @@
 package iudx.aaa.server.auditing;
 
+import static iudx.aaa.server.auditing.util.Constants.ERROR;
 import static iudx.aaa.server.auditing.util.Constants.FAILED;
 import static iudx.aaa.server.auditing.util.Constants.MESSAGE;
 import static iudx.aaa.server.auditing.util.Constants.QUERY_KEY;
@@ -70,6 +71,15 @@ public class AuditingServiceImpl implements AuditingService {
   public AuditingService executeWriteQuery(
       JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
     query = queryBuilder.buildWritingQuery(request);
+
+    if(query.containsKey(ERROR)){
+      LOGGER.error("Fail: Query returned with an error: " + query.getString(ERROR));
+      responseBuilder =
+          new ResponseBuilder(FAILED).setTypeAndTitle(400).setMessage(query.getString(ERROR));
+      handler.handle(Future.failedFuture(responseBuilder.getResponse().toString()));
+      return null;
+    }
+
     Future<JsonObject> result = writeInDatabase(query);
     result.onComplete(
         resultHandler -> {
