@@ -702,11 +702,11 @@ paths:
       security:
         - authorization: []
     get:
-      summary: Get User Profile
+      summary: Get User Profile or Search for User
       operationId: get-auth-v1-user-profile
       responses:
         '200':
-          description: Successfully list user profile
+          description: Successfully list user profile or successfully found user
           content:
             application/json:
               schema:
@@ -743,12 +743,9 @@ paths:
                   results:
                     type: object
                     required:
-                      - keycloakId
                       - name
-                      - roles
                       - userId
                       - email
-                      - clients
                     properties:
                       keycloakId:
                         type: string
@@ -796,9 +793,6 @@ paths:
                         minLength: 1
                       organization:
                         type: object
-                        required:
-                          - name
-                          - url
                         properties:
                           name:
                             type: string
@@ -806,12 +800,15 @@ paths:
                           url:
                             type: string
                             minLength: 1
+                        required:
+                          - name
+                          - url
                 required:
                   - type
                   - title
                   - results
               examples:
-                Success:
+                Get User Profile:
                   value:
                     type: 'urn:dx:as:Success'
                     title: User details
@@ -832,13 +829,29 @@ paths:
                       organization:
                         name: example
                         url: example.com
+                Found user:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: User found
+                    results:
+                      email: someone@example.com
+                      userId: a13eb955-c691-4fd3-b200-f18bc78810b5
+                      name:
+                        firstName: Someone
+                        lastName: Person
+                      organization:
+                        name: example
+                        url: example.com
           headers:
             Content-Type:
               schema:
                 type: string
               description: application/json
         '400':
-          description: Bad Request
+          description: |-
+            - Invalid `providerId` header
+            - Invalid `role`/`email` header
+            - If both `role` and `email` header not present
           headers:
             Content-Type:
               schema:
@@ -848,8 +861,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Invalid providerId:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Malformed request/missing or malformed request parameters
+                    detail: '[Bad Request] Validation error for parameter providerId in location HEADER: provided string should have size >= 36'
+                role/email header missing:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Invalid search user request
+                    detail: Require both 'email' and 'role' header for search user
         '401':
-          description: '- Unauthorized - `token` invalid/expired'
+          description: |-
+            - Unauthorized - `token` invalid/expired
+            - Not a valid auth delegate
           headers:
             Content-Type:
               schema:
@@ -865,18 +891,30 @@ paths:
                     type: 'urn:dx:as:InvalidAuthenticationToken'
                     title: Token authentication failed
                     detail: Inactive Token
+                Not auth delegate:
+                  value:
+                    type: 'urn:dx:as:MissingAuthenticationToken'
+                    title: Invalid delegate request
+                    detail: Invalid delegate request
         '404':
-          description: A user profile for the user does not exist.
+          description: |-
+            - A user profile for the user does not exist
+            - A user with requested email+role does not exist
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
-                Example:
+                User profile for the user does not exist:
                   value:
                     type: 'urn:dx:as:MissingInformation'
                     title: User profile does not exist
                     detail: Please register to create user profile
+                User to be searched for cannot be found:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: User not found
+                    detail: A user with given email and role not found
       parameters:
         - schema:
             type: string
@@ -887,7 +925,40 @@ paths:
           name: Authorization
           description: Keycloak Issued token
           required: true
-      description: 'Get user profile. The response contains user details such as roles, name, email. It also lists the client ID of the user.'
+        - schema:
+            type: string
+            pattern: '^(?=.{1,254}$)(?=.{1,64}@)[-!#$%&''*+/0-9=?A-Z^_`a-z{|}~]+(\.[-!#$%&''*+/0-9=?A-Z^_`a-z{|}~]+)*@[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$'
+            format: email
+          in: header
+          name: email
+          description: Email of User to be found
+        - schema:
+            type: string
+            enum:
+              - provider
+              - consumer
+              - delegate
+          in: header
+          name: role
+          description: Role of user to be found
+        - schema:
+            type: string
+            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+            minLength: 36
+            maxLength: 36
+          in: header
+          name: providerId
+          description: 'User ID of the provider, if an auth delegate wishes to search for a user'
+      description: |-
+        Get user profile or search for a user by email address and role.
+
+        ## Get User profile
+        The response contains user details such as roles, name, email. It also lists the client ID of the user.
+
+        ## Search for a user
+        A user with `provider` or `admin` role or is a auth delegate may search for a user by providing the email address and role of said user. If a user exists, then the user ID `userId`, email, name and organization details (if applicable) is returned.
+
+        To search for the user, 2 headers `email` (email address of user) and `role` (role of the user) need to be included. **Both headers need to be present for the search to be attempted.** If an auth delegate is to call the API, the `providerId` header needs to be included. Users with roles `delegate`, `consumer` and `provider` can be searched for.
       tags:
         - User APIs
       security:
@@ -1790,7 +1861,30 @@ paths:
               schema:
                 description: ''
                 type: object
-                x-examples: null
+                x-examples:
+                  example-1:
+                    type: 'urn:dx:as:Success'
+                    title: policy read
+                    results:
+                      result:
+                        - policyId: b268d557-cc98-4337-833d-6ad34e7eb51f
+                          itemId: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
+                          itemType: resource
+                          expiryTime: '2022-06-15T09:07:16.034289'
+                          constraints: {}
+                          catId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group/resource
+                          user:
+                            email: alice@gmail.com
+                            name:
+                              firstName: Alice
+                              lastName: Bob
+                            id: 32a4b979-4f4a-4c44-b0c3-2fe109952b5f
+                          owner:
+                            email: someone@example.com
+                            name:
+                              firstName: Someone
+                              lastName: Person
+                            id: a13eb955-c691-4fd3-b200-f18bc78810b5
                 properties:
                   type:
                     type: string
@@ -1810,21 +1904,21 @@ paths:
                         items:
                           type: object
                           properties:
-                            policy_id:
+                            policyId:
                               type: string
                               minLength: 1
-                            item_id:
+                            itemId:
                               type: string
                               minLength: 1
-                            item_type:
+                            itemType:
                               type: string
                               minLength: 1
-                            expiry_time:
+                            expiryTime:
                               type: string
                               minLength: 1
                             constraints:
                               type: object
-                            cat_id:
+                            catId:
                               type: string
                               minLength: 1
                             user:
@@ -1878,12 +1972,12 @@ paths:
                                 - name
                                 - id
                           required:
-                            - policy_id
-                            - item_id
-                            - item_type
-                            - expiry_time
+                            - policyId
+                            - itemId
+                            - itemType
+                            - expiryTime
                             - constraints
-                            - cat_id
+                            - catId
                 required:
                   - type
                   - title
@@ -1895,12 +1989,12 @@ paths:
                     title: policy read
                     results:
                       result:
-                        - policy_id: e4995fef-b850-48cc-82d0-6eef9ffb9531
-                          item_id: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
-                          item_type: resource
-                          expiry_time: '2022-06-15T09:07:16.034289'
+                        - policyId: b268d557-cc98-4337-833d-6ad34e7eb51f
+                          itemId: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
+                          itemType: resource
+                          expiryTime: '2022-06-15T09:07:16.034289'
                           constraints: {}
-                          cat_id: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group/resource
+                          catId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group/resource
                           user:
                             email: alice@gmail.com
                             name:
@@ -2023,29 +2117,33 @@ paths:
         content:
           application/json:
             schema:
-              type: array
               description: ''
-              minItems: 1
-              uniqueItems: true
+              type: object
+              properties:
+                request:
+                  type: array
+                  uniqueItems: true
+                  minItems: 1
+                  items:
+                    required:
+                      - id
+                    properties:
+                      id:
+                        type: string
+              required:
+                - request
               x-examples:
                 example-1:
-                  - id: 1e435fcb-11ce-4f4d-94c0-adf339932ba4
-                  - id: 7d50c547-9f36-4daa-bdc6-cca3c932379d
-              items:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    minLength: 36
-                    format: uuid
-                    maxLength: 36
-                required:
-                  - id
+                  request:
+                    - id: ''
+                    - id: ''
             examples:
               Delete Policies:
                 value:
-                  - id: 231f6eca-6276-4993-bfeb-53cbbbba6f06
-        description: Request body is a JsonArray having one or multiple ID Objects to delete policies.
+                  request:
+                    - id: 231f6eca-6276-4993-bfeb-53cbbbba6f06
+                    - id: 231f6eca-6276-4993-bfeb-53cbbbba6f0b
+        description: Request body is a JsonObject containing a JsonArray having one or multiple ID Objects to delete policies.
       tags:
         - Policies APIs
       security:
@@ -2093,64 +2191,76 @@ paths:
         content:
           application/json:
             schema:
-              type: array
               description: ''
-              minItems: 1
-              uniqueItems: true
+              type: object
               x-examples:
                 example-1:
-                  - userId: 89bbe934-5f18-4f57-b68e-fb821ba77291
-                    itemId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-abcd
-                    itemType: resource_group
-                    expiryTime: '2021-08-30T21:10:06.834292'
-                    constraints: {}
-              items:
-                type: object
-                properties:
-                  userId:
-                    type: string
-                    minLength: 1
-                  itemId:
-                    type: string
-                    minLength: 1
-                  itemType:
-                    type: string
-                    minLength: 1
-                  expiryTime:
-                    type: string
-                    minLength: 1
-                  constraints:
+                  request:
+                    - userId: 89bbe934-5f18-4f57-b68e-fb821ba77291
+                      itemId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group
+                      itemType: resource_group
+                      expiryTime: '2023-08-30T21:10:06.834292'
+                      constraints: {}
+                    - userId: 89bbe934-5f18-4f57-b68e-fb821ba77292
+                      itemId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group
+                      itemType: resource_group
+                      expiryTime: '2023-08-30T21:10:06.834292'
+                      constraints: {}
+              properties:
+                request:
+                  type: array
+                  uniqueItems: true
+                  minItems: 1
+                  items:
                     type: object
-                required:
-                  - userId
-                  - itemId
-                  - itemType
-                  - constraints
+                    properties:
+                      userId:
+                        type: string
+                        minLength: 1
+                      itemId:
+                        type: string
+                        minLength: 1
+                      itemType:
+                        type: string
+                        minLength: 1
+                      expiryTime:
+                        type: string
+                        minLength: 1
+                      constraints:
+                        type: object
+                    required:
+                      - userId
+                      - itemId
+                      - itemType
+              required:
+                - request
             examples:
               Create MultiplePolicies:
                 value:
-                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
-                    itemType: resource_group
-                    expiryTime: '2022-08-04T20:00:19+0000'
-                    constraints: {}
-                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cq21/resource-group
-                    itemType: resource_group
-                    expiryTime: '2022-08-04T20:00:19+0000'
-                    constraints: {}
+                  request:
+                    - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                      itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
+                      itemType: resource_group
+                      expiryTime: '2022-08-04T20:00:19+0000'
+                      constraints: {}
+                    - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                      itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cq21/resource-group
+                      itemType: resource_group
+                      expiryTime: '2022-08-04T20:00:19+0000'
+                      constraints: {}
               Create SinglePolicies:
                 value:
-                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
-                    itemType: resource_group
-                    expiryTime: '2022-08-04T20:00:19+0000'
-                    constraints: {}
+                  request:
+                    - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                      itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
+                      itemType: resource_group
+                      expiryTime: '2022-08-04T20:00:19+0000'
+                      constraints: {}
           application/xml:
             schema:
               type: object
               properties: {}
-        description: Request body will be JsonArray having or many objects
+        description: Request body will be an JsonObject containing JsonArray of requests
       tags:
         - Policies APIs
       security:

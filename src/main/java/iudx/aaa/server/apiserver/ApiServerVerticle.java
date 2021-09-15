@@ -37,6 +37,7 @@ import iudx.aaa.server.apiserver.util.ClientAuthentication;
 import iudx.aaa.server.apiserver.util.FailureHandler;
 import iudx.aaa.server.apiserver.util.OIDCAuthentication;
 import iudx.aaa.server.apiserver.util.ProviderAuthentication;
+import iudx.aaa.server.apiserver.util.SearchUserHandler;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.token.Constants;
@@ -153,6 +154,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     OIDCAuthentication oidcFlow = new OIDCAuthentication(vertx, pgPool, keycloakOptions);
     ClientAuthentication clientFlow = new ClientAuthentication(pgPool);
     ProviderAuthentication providerAuth = new ProviderAuthentication(pgPool);
+    SearchUserHandler searchUser = new SearchUserHandler();
     FailureHandler failureHandler = new FailureHandler();
 
     RouterBuilder.create(vertx, "docs/openapi.yaml").onFailure(Throwable::printStackTrace)
@@ -188,10 +190,12 @@ public class ApiServerVerticle extends AbstractVerticle {
 
           // Get user profile
           routerBuilder.operation(GET_USER_PROFILE)
-              .handler(this::listUserProfileHandler)
-              .failureHandler(failureHandler);
-
-          // Update user profile
+                       .handler(providerAuth)
+                       .handler(searchUser)
+                       .handler(this::listUserProfileHandler)
+                       .failureHandler(failureHandler);
+          
+          // Update user profile          
           routerBuilder.operation(UPDATE_USER_PROFILE)
               .handler(this::updateUserProfileHandler)
               .failureHandler(failureHandler);
@@ -425,7 +429,13 @@ public class ApiServerVerticle extends AbstractVerticle {
   private void listUserProfileHandler(RoutingContext context) {
     User user = context.get(USER);
 
-    registrationService.listUser(user, handler -> {
+    JsonObject authDelegateDetails =
+        Optional.ofNullable((JsonObject) context.get(DATA)).orElse(new JsonObject());
+
+    JsonObject searchUserDetails =
+        Optional.ofNullable((JsonObject) context.get(CONTEXT_SEARCH_USER)).orElse(new JsonObject());
+
+    registrationService.listUser(user, searchUserDetails, authDelegateDetails, handler -> {
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {
@@ -562,7 +572,8 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void createPolicyHandler(RoutingContext context) {
 
-    JsonArray jsonRequest = context.getBodyAsJsonArray();
+    JsonObject arr = context.getBodyAsJson();
+    JsonArray jsonRequest = arr.getJsonArray(REQUEST);
     List<CreatePolicyRequest> request = CreatePolicyRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
 
@@ -583,7 +594,8 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void deletePolicyHandler(RoutingContext context) {
 
-    JsonArray jsonRequest = context.getBodyAsJsonArray();
+    JsonObject arr = context.getBodyAsJson();
+    JsonArray jsonRequest = arr.getJsonArray(REQUEST);
     List<DeletePolicyRequest> request = DeletePolicyRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
 

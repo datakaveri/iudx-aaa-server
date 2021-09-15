@@ -16,8 +16,18 @@
       "databasePassword": "iudx@123",
       "poolSize": "5",
       "catalogueOptions": {
-        "catServerHost": "api.catalogue.iudx.io",
-        "catServerPort": "443"
+       "catServerHost": "api.catalogue.iudx.io",
+        "catServerPort": "443",
+        "authServerUrl": "authdev.iudx.io"
+      },
+      "authOptions": {
+        "authServerUrl": "authdev.iudx.io",
+        "policyExpiry" : "12",
+        "adminPolicyExpiry" : "60"
+      },
+      "catOptions": {
+        "catURL" : "catalogue.iudx.io",
+        "catItem" : "catalogue/crud"
       }
     },
     {

@@ -9,14 +9,18 @@ import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_ID_REQUIRED;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_NO_EXIST;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_NO_MATCH;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ROLE_EXISTS;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_SEARCH_USR_INVALID_ROLE;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_EXISTS;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_FOUND;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_KC;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_USER_PROFILE;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_ORG_ID_REQUIRED;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_ORG_NO_EXIST;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_ORG_NO_MATCH;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_ROLE_EXISTS;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_SEARCH_USR_INVALID_ROLE;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_USER_EXISTS;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_USER_NOT_FOUND;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_USER_NOT_KC;
 import static iudx.aaa.server.registration.Constants.NIL_PHONE;
 import static iudx.aaa.server.registration.Constants.NIL_UUID;
@@ -39,13 +43,16 @@ import static iudx.aaa.server.registration.Constants.SQL_GET_CLIENTS_FORMATTED;
 import static iudx.aaa.server.registration.Constants.SQL_GET_KC_ID_FROM_ARR;
 import static iudx.aaa.server.registration.Constants.SQL_GET_ORG_DETAILS;
 import static iudx.aaa.server.registration.Constants.SQL_GET_PHONE_JOIN_ORG;
+import static iudx.aaa.server.registration.Constants.SQL_GET_UID_ORG_ID_CHECK_ROLE;
 import static iudx.aaa.server.registration.Constants.SQL_UPDATE_ORG_ID;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_CREATED_USER;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_ORG_READ;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_UPDATED_USER_ROLES;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_USER_READ;
+import static iudx.aaa.server.registration.Constants.SUCC_TITLE_USER_FOUND;
 import static iudx.aaa.server.registration.Constants.URN_ALREADY_EXISTS;
 import static iudx.aaa.server.registration.Constants.URN_INVALID_INPUT;
+import static iudx.aaa.server.registration.Constants.URN_INVALID_ROLE;
 import static iudx.aaa.server.registration.Constants.URN_MISSING_INFO;
 import static iudx.aaa.server.registration.Constants.URN_SUCCESS;
 import static iudx.aaa.server.registration.Constants.UUID_REGEX;
@@ -297,13 +304,23 @@ public class RegistrationServiceImpl implements RegistrationService {
   }
 
   @Override
-  public RegistrationService listUser(User user, Handler<AsyncResult<JsonObject>> handler) {
+  public RegistrationService listUser(User user, JsonObject searchUserDetails,
+      JsonObject authDelegateDetails, Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
     if (user.getUserId().equals(NIL_UUID)) {
       Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
           .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
       handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
+
+    /* If it's a search user flow */
+    if (!searchUserDetails.isEmpty()) {
+      Promise<JsonObject> promise = Promise.promise();
+      Boolean isAuthDelegate = !authDelegateDetails.isEmpty();
+      searchUser(user, searchUserDetails, isAuthDelegate, promise);
+      promise.future().onComplete(result -> handler.handle(result));
       return this;
     }
 
@@ -604,5 +621,90 @@ public class RegistrationServiceImpl implements RegistrationService {
     });
 
     return this;
+  }
+
+  public void searchUser(User user, JsonObject searchUserDetails, Boolean isAuthDelegate,
+      Promise<JsonObject> promise) {
+
+    /* Create error denoting email+role does not exist */
+    Supplier<Response> getSearchErr = () -> {
+      return new ResponseBuilder().type(URN_INVALID_INPUT).title(ERR_TITLE_USER_NOT_FOUND)
+          .status(404).detail(ERR_DETAIL_USER_NOT_FOUND).build();
+    };
+
+    List<Roles> roles = user.getRoles();
+
+    if (!(roles.contains(Roles.PROVIDER) || roles.contains(Roles.ADMIN)
+        || (roles.contains(Roles.DELEGATE) && isAuthDelegate))) {
+      Response r = new ResponseBuilder().status(401).type(URN_INVALID_ROLE)
+          .title(ERR_TITLE_SEARCH_USR_INVALID_ROLE).detail(ERR_DETAIL_SEARCH_USR_INVALID_ROLE)
+          .build();
+      promise.complete(r.toJson());
+      return;
+    }
+
+    String email = searchUserDetails.getString("email").toLowerCase();
+    Roles role = Roles.valueOf(searchUserDetails.getString("role").toUpperCase());
+
+    Future<JsonObject> foundUser = kc.findUserByEmail(email);
+
+    Future<UUID> exists = foundUser.compose(res -> {
+      if (res.isEmpty()) {
+        promise.complete(getSearchErr.get().toJson());
+        return Future.failedFuture(COMPOSE_FAILURE);
+      }
+
+      UUID keycloakId = UUID.fromString(res.getString("keycloakId"));
+      return Future.succeededFuture(keycloakId);
+    });
+
+    /*
+     * Get user ID and org ID (if applicable) if the user + role exists (user profile is there and
+     * user has the requested role)
+     */
+    Future<JsonObject> getUserId = exists.compose(res -> pool.withConnection(
+        conn -> conn.preparedQuery(SQL_GET_UID_ORG_ID_CHECK_ROLE).execute(Tuple.of(res, role)).map(
+            row -> row.iterator().hasNext() ? row.iterator().next().toJson() : new JsonObject())));
+
+    Future<JsonObject> getOrgIfNeeded = getUserId.compose(res -> {
+      if (res.isEmpty()) {
+        promise.complete(getSearchErr.get().toJson());
+        return Future.failedFuture(COMPOSE_FAILURE);
+      }
+
+      if (res.getString("organization_id") != null) {
+        return pool.withConnection(conn -> conn.preparedQuery(SQL_GET_ORG_DETAILS)
+            .execute(Tuple.of(UUID.fromString(res.getString("organization_id"))))
+            .map(row -> row.iterator().next().toJson()));
+      }
+
+      return Future.succeededFuture(new JsonObject());
+    });
+
+    getOrgIfNeeded.onSuccess(res -> {
+      JsonObject response = new JsonObject();
+
+      JsonObject userDetails = foundUser.result();
+      String userId = getUserId.result().getString("id");
+      response.put(RESP_EMAIL, userDetails.getString("email"));
+      response.put("userId", userId);
+      response.put("name", userDetails.getJsonObject("name"));
+
+      if (!res.isEmpty()) {
+        response.put(RESP_ORG, res);
+      }
+
+      Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_USER_FOUND).status(200)
+          .objectResults(response).build();
+      promise.complete(r.toJson());
+    }).onFailure(e -> {
+      if (e.getMessage().equals(COMPOSE_FAILURE)) {
+        return; // do nothing
+      }
+      LOGGER.error(e.getMessage());
+      promise.fail("Internal error");
+    });
+
+    return;
   }
 }
