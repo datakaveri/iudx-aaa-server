@@ -9,20 +9,20 @@ import static iudx.aaa.server.auditing.util.Constants.TITLE;
 import io.vertx.core.json.JsonObject;
 
 public class ResponseBuilder {
-  private String status;
+  private String actionStatus;
   private JsonObject response;
 
-  /** Initialise the object with Success or Failure. */
-  public ResponseBuilder(String status) {
-    this.status = status;
+  /** Initialize the object with Success or Failure. */
+  public ResponseBuilder(String actionStatus) {
+    this.actionStatus = actionStatus;
     response = new JsonObject();
   }
 
   public ResponseBuilder setTypeAndTitle(int statusCode) {
     response.put(ERROR_TYPE, statusCode);
-    if (SUCCESS.equalsIgnoreCase(status)) {
+    if (SUCCESS.equalsIgnoreCase(actionStatus)) {
       response.put(TITLE, SUCCESS);
-    } else if (FAILED.equalsIgnoreCase(status)) {
+    } else if (FAILED.equalsIgnoreCase(actionStatus)) {
       response.put(TITLE, FAILED);
     }
     return this;

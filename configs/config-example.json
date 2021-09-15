@@ -103,6 +103,16 @@
         "clientSecret": "keycloakClientSecret",
         "jwtLeeway": 90
       }
+    },
+    {
+      "id": "iudx.resource.server.auditing.AuditingVerticle",
+      "verticleInstances": 1,
+      "auditingDatabaseIP": "139.59.69.190",
+      "auditingDatabasePort": 32508,
+      "auditingDatabaseName": "defaultdb",
+      "auditingDatabaseUserName": "immudb",
+      "auditingDatabasePassword": "immudb",
+      "auditingPoolSize": 25
     }
   ]
 }
