@@ -21,6 +21,6 @@ public class Constants {
   public static final String BODY = "body";
   public static final String API = "api";
   public static final String WRITE_QUERY =
-      "INSERT INTO testing_table (id,body,endpoint,method,time,userid) VALUES ('$1','$2','$3','$4',$5,'$6')";
+      "INSERT INTO table_auditing (id,body,endpoint,method,time,userid) VALUES ('$1','$2','$3','$4',$5,'$6')";
   public static final String MESSAGE = "message";
 }

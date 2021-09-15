@@ -107,11 +107,11 @@
     {
       "id": "iudx.resource.server.auditing.AuditingVerticle",
       "verticleInstances": 1,
-      "auditingDatabaseIP": "139.59.69.190",
-      "auditingDatabasePort": 32508,
-      "auditingDatabaseName": "defaultdb",
-      "auditingDatabaseUserName": "immudb",
-      "auditingDatabasePassword": "immudb",
+      "auditingDatabaseIP": "",
+      "auditingDatabasePort": 0,
+      "auditingDatabaseName": "",
+      "auditingDatabaseUserName": "",
+      "auditingDatabasePassword": "",
       "auditingPoolSize": 25
     }
   ]
