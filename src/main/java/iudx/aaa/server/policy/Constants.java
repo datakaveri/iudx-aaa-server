@@ -154,14 +154,18 @@ public class Constants {
   public static final String GET_POLICIES =
       "Select a.id as  \"policyId\", a.user_id, a.owner_id, a.item_id as \"itemId\" ,a.item_type as \"itemType\" ,"
           + " a.expiry_time as \"expiryTime\" ,a.constraints, b.cat_id  as \"catId\" from test.policies a INNER JOIN test.";
+  public static final String GET_SERVER_POLICIES =
+          "Select a.id as  \"policyId\", a.user_id, a.owner_id, a.item_id as \"itemId\" ,a.item_type as \"itemType\" ,"
+                  + " a.expiry_time as \"expiryTime\" ,a.constraints, b.url  as \"catId\" from test.policies a INNER JOIN test.";
   public static final String GET_POLICIES_JOIN =
       " b on a.item_id = b.id "
-          + "where a.owner_id = $1::UUID AND a.item_type = $2::test.item_enum  "
-          + "AND a.status = $3::test.policy_status_enum  AND a.expiry_time > NOW()";
-  public static final String GET_POLICIES_JOIN_OWNER =
-      " b on a.item_id = b.id "
-          + "where a.user_id = $1::UUID AND a.item_type = $2::test.item_enum  "
-          + "AND a.status = $3::test.policy_status_enum  AND a.expiry_time > NOW()";
+          + "where  a.item_type = $2::test.item_enum  "
+          + "AND a.status = $3::test.policy_status_enum  AND a.expiry_time > NOW() And (a.owner_id = $1::UUID or  a.user_id = $1::UUID)";
+  public static final String GET_POLICIES_JOIN_DELEGATE =
+          " b on a.item_id = b.id "
+                  + "where  a.item_type = $2::test.item_enum  "
+                  + "AND a.status = $3::test.policy_status_enum  AND a.expiry_time > NOW() And  a.owner_id = $1::UUID";
+
   public static final String CHECK_RES_EXIST =
       "select id from test.policies"
           + " where status = $1::test.policy_status_enum  and id = any($2::uuid[])";
