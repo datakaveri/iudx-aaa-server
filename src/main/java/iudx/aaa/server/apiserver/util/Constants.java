@@ -58,6 +58,7 @@ public class Constants {
   public static final String PUT_POLICIES_REQUEST = "put-auth-v1-policies-requests";
   public static final String GET_DELEGATIONS = "get-auth-v1-policies-delegations";
   public static final String DELETE_DELEGATIONS = "delete-auth-v1-policies-delegations";
+  public static final String CREATE_DELEGATIONS = "post-auth-v1-policies-delegations";
   
   public static final String TOKEN_ROUTE = "/auth/v1/token";
 

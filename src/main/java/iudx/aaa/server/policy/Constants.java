@@ -61,7 +61,7 @@ public class Constants {
   // failed messages
   public static final String ROLE_NOT_FOUND = "role not found";
   public static final String POLICY_NOT_FOUND = "policy not found";
-  public static final String NOT_DELEGATE = "not a delegate";
+  public static final String NOT_DELEGATE = "user is not a delegate:";
   public static final String URL_NOT_FOUND = "url not found";
   public static final String AUTH_DEL_POL_FAIL = "Not an auth delegate";
   public static final String AUTH_DEL_FAIL = "Not a delegate for resource owner";
@@ -84,6 +84,8 @@ public class Constants {
       "User with provider role or is an auth delegate may call the API";
   public static final String ERR_DETAIL_LIST_DELEGATE_ROLES =
       "User with provider/delegate role or is an auth delegate may call the API";
+  public static final String ERR_TITLE_AUTH_DELE_CREATE =
+      "Auth delegate may not create auth delegations";
   // URN
   public static final String ID_NOT_PRESENT = "id does not exist";
   public static final String POLICY_SUCCESS = "urn:dx:as:Success";
@@ -100,8 +102,9 @@ public class Constants {
   public static final String NO_AUTH_POLICY = "No auth policy for user:";
   public static final String INCORRECT_ITEM_TYPE = "incorrect item type";
   public static final String UNAUTHORIZED = "Not allowed to create policies for resource:";
-  public static final String PROVIDER_NOT_REGISTERED =  "Provider not a resgistered user";
+  public static final String PROVIDER_NOT_REGISTERED = "Provider not a resgistered user";
   public static final String DUPLICATE_POLICY = "Policy already exists:";
+  public static final String DUPLICATE_DELEGATION = "Delegation already exists:";
   public static final String NO_USER = "no user";
   public static final String NOT_RES_OWNER = "does not own the resource";
   public static final String NO_ADMIN_POLICY = "No admin policy";
@@ -155,16 +158,16 @@ public class Constants {
       "Select a.id as  \"policyId\", a.user_id, a.owner_id, a.item_id as \"itemId\" ,a.item_type as \"itemType\" ,"
           + " a.expiry_time as \"expiryTime\" ,a.constraints, b.cat_id  as \"catId\" from test.policies a INNER JOIN test.";
   public static final String GET_SERVER_POLICIES =
-          "Select a.id as  \"policyId\", a.user_id, a.owner_id, a.item_id as \"itemId\" ,a.item_type as \"itemType\" ,"
-                  + " a.expiry_time as \"expiryTime\" ,a.constraints, b.url  as \"catId\" from test.policies a INNER JOIN test.";
+      "Select a.id as  \"policyId\", a.user_id, a.owner_id, a.item_id as \"itemId\" ,a.item_type as \"itemType\" ,"
+          + " a.expiry_time as \"expiryTime\" ,a.constraints, b.url  as \"catId\" from test.policies a INNER JOIN test.";
   public static final String GET_POLICIES_JOIN =
       " b on a.item_id = b.id "
           + "where  a.item_type = $2::test.item_enum  "
           + "AND a.status = $3::test.policy_status_enum  AND a.expiry_time > NOW() And (a.owner_id = $1::UUID or  a.user_id = $1::UUID)";
   public static final String GET_POLICIES_JOIN_DELEGATE =
-          " b on a.item_id = b.id "
-                  + "where  a.item_type = $2::test.item_enum  "
-                  + "AND a.status = $3::test.policy_status_enum  AND a.expiry_time > NOW() And  a.owner_id = $1::UUID";
+      " b on a.item_id = b.id "
+          + "where  a.item_type = $2::test.item_enum  "
+          + "AND a.status = $3::test.policy_status_enum  AND a.expiry_time > NOW() And  a.owner_id = $1::UUID";
 
   public static final String CHECK_RES_EXIST =
       "select id from test.policies"
@@ -273,6 +276,29 @@ public class Constants {
   public static final String DELETE_DELEGATIONS =
       "UPDATE test.delegations SET status = 'DELETED', updated_at = NOW()"
           + " WHERE owner_id = $1::uuid AND id = ANY($2::uuid[])";
+
+  public static final String INSERT_DELEGATION =
+      "insert into test.delegations (owner_id,user_id,resource_server_id,status,created_at,updated_at) values "
+          + " ($1::UUID, $2::UUID, $3::UUID, $4::test.policy_status_enum, now() ,now())";
+
+  // create delegation
+
+  public static final String CHECK_ROLES =
+      "select user_id from test.roles where role = $1::test.role_enum"
+          + " and status = $2::test.role_status_enum and user_id = ANY($3::UUID[]) ";
+
+  public static final String GET_SERVER_DETAILS =
+      "select url,id from test.resource_server where url =  ANY($1::text[])";
+
+  public static final String CHECK_AUTH_POLICY_DELEGATION =
+      "select * from test.policies a inner join test.resource_server b on a.item_id = b.id "
+          + " where a.user_id = $1::UUID and a.item_type = $2::test.item_enum and"
+          + " b.url = $3::text and a.status =$4::test.policy_status_enum and a.expiry_time > now() ";
+
+  public static final String CHECK_EXISTING_DELEGATIONS =
+      "select id from test.delegations where owner_id = $1::UUID "
+          + " and user_id =$2::UUID and resource_server_id = $3::UUID and  "
+          + " status = $4::test.policy_status_enum ";
 
   // item types
   public enum itemTypes {

@@ -1866,25 +1866,24 @@ paths:
                     type: 'urn:dx:as:Success'
                     title: policy read
                     results:
-                      result:
-                        - policyId: b268d557-cc98-4337-833d-6ad34e7eb51f
-                          itemId: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
-                          itemType: resource
-                          expiryTime: '2022-06-15T09:07:16.034289'
-                          constraints: {}
-                          catId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group/resource
-                          user:
-                            email: alice@gmail.com
-                            name:
-                              firstName: Alice
-                              lastName: Bob
-                            id: 32a4b979-4f4a-4c44-b0c3-2fe109952b5f
-                          owner:
-                            email: someone@example.com
-                            name:
-                              firstName: Someone
-                              lastName: Person
-                            id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                      - policyId: b268d557-cc98-4337-833d-6ad34e7eb51f
+                        itemId: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
+                        itemType: resource
+                        expiryTime: '2022-06-15T09:07:16.034289'
+                        constraints: {}
+                        catId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group/resource
+                        user:
+                          email: alice@gmail.com
+                          name:
+                            firstName: Alice
+                            lastName: Bob
+                          id: 32a4b979-4f4a-4c44-b0c3-2fe109952b5f
+                        owner:
+                          email: someone@example.com
+                          name:
+                            firstName: Someone
+                            lastName: Person
+                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
                 properties:
                   type:
                     type: string
@@ -1893,120 +1892,91 @@ paths:
                     type: string
                     minLength: 1
                   results:
-                    type: object
-                    required:
-                      - result
-                    properties:
-                      result:
-                        type: array
-                        uniqueItems: true
-                        minItems: 1
-                        items:
+                    type: array
+                    uniqueItems: true
+                    minItems: 1
+                    items:
+                      type: object
+                      properties:
+                        policyId:
+                          type: string
+                          minLength: 1
+                        itemId:
+                          type: string
+                          minLength: 1
+                        itemType:
+                          type: string
+                          minLength: 1
+                        expiryTime:
+                          type: string
+                          minLength: 1
+                        constraints:
+                          type: object
+                        catId:
+                          type: string
+                          minLength: 1
+                        user:
                           type: object
                           properties:
-                            policyId:
+                            email:
                               type: string
                               minLength: 1
-                            itemId:
-                              type: string
-                              minLength: 1
-                            itemType:
-                              type: string
-                              minLength: 1
-                            expiryTime:
-                              type: string
-                              minLength: 1
-                            constraints:
+                            name:
                               type: object
-                            catId:
-                              type: string
-                              minLength: 1
-                            user:
-                              type: object
-                              properties:
-                                email:
-                                  type: string
-                                  minLength: 1
-                                name:
-                                  type: object
-                                  required:
-                                    - firstName
-                                    - lastName
-                                  properties:
-                                    firstName:
-                                      type: string
-                                      minLength: 1
-                                    lastName:
-                                      type: string
-                                      minLength: 1
-                                id:
-                                  type: string
-                                  minLength: 1
                               required:
-                                - email
-                                - name
-                                - id
-                            owner:
-                              type: object
+                                - firstName
+                                - lastName
                               properties:
-                                email:
+                                firstName:
                                   type: string
                                   minLength: 1
-                                name:
-                                  type: object
-                                  required:
-                                    - firstName
-                                    - lastName
-                                  properties:
-                                    firstName:
-                                      type: string
-                                      minLength: 1
-                                    lastName:
-                                      type: string
-                                      minLength: 1
-                                id:
+                                lastName:
                                   type: string
                                   minLength: 1
-                              required:
-                                - email
-                                - name
-                                - id
+                            id:
+                              type: string
+                              minLength: 1
                           required:
-                            - policyId
-                            - itemId
-                            - itemType
-                            - expiryTime
-                            - constraints
-                            - catId
+                            - email
+                            - name
+                            - id
+                        owner:
+                          type: object
+                          properties:
+                            email:
+                              type: string
+                              minLength: 1
+                            name:
+                              type: object
+                              required:
+                                - firstName
+                                - lastName
+                              properties:
+                                firstName:
+                                  type: string
+                                  minLength: 1
+                                lastName:
+                                  type: string
+                                  minLength: 1
+                            id:
+                              type: string
+                              minLength: 1
+                          required:
+                            - email
+                            - name
+                            - id
+                      required:
+                        - policyId
+                        - itemId
+                        - itemType
+                        - expiryTime
+                        - constraints
+                        - catId
                 required:
                   - type
                   - title
                   - results
-              examples:
-                Example:
-                  value:
-                    type: 'urn:dx:as:Success'
-                    title: policy read
-                    results:
-                      result:
-                        - policyId: b268d557-cc98-4337-833d-6ad34e7eb51f
-                          itemId: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
-                          itemType: resource
-                          expiryTime: '2022-06-15T09:07:16.034289'
-                          constraints: {}
-                          catId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group/resource
-                          user:
-                            email: alice@gmail.com
-                            name:
-                              firstName: Alice
-                              lastName: Bob
-                            id: 32a4b979-4f4a-4c44-b0c3-2fe109952b5f
-                          owner:
-                            email: someone@example.com
-                            name:
-                              firstName: Someone
-                              lastName: Person
-                            id: a13eb955-c691-4fd3-b200-f18bc78810b5
+              examples: {}
           headers:
             Content-Type:
               schema:
@@ -2714,7 +2684,16 @@ paths:
               schema:
                 type: string
               description: application/json
-      description: Create new delegations
+      description: |-
+        Create new delegations
+
+        - `userId` : UUID of the user who is to be made a delegate.
+        - `resourceServerId` : URL of the resource server the user is to be made a delegate for.
+
+        ## Auth delegate
+        An auth delegate may use the API to create delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
+
+        **NOTE: An auth delegate may not create any delegations related to the auth server.**
       parameters:
         - schema:
             type: string
@@ -2725,63 +2704,41 @@ paths:
           name: Authorization
           description: Keycloak Issued token
           required: true
+        - schema:
+            type: string
+          in: header
+          name: providerId
+          description: 'User ID of the provider, if an auth delegate wishes to view delegations of their provider'
       requestBody:
         content:
           application/json:
             schema:
-              type: array
               description: ''
-              minItems: 1
-              uniqueItems: true
+              type: object
+              properties:
+                request:
+                  type: array
+                  uniqueItems: true
+                  minItems: 1
+                  items:
+                    required:
+                      - resSerId
+                      - userId
+                    properties:
+                      resSerId:
+                        type: string
+                        minLength: 1
+                      userId:
+                        type: string
+                        minLength: 1
+              required:
+                - request
               x-examples:
                 example-1:
-                  - userId: 89bbe934-5f18-4f57-b68e-fb821ba77291
-                    itemId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-abcd
-                    itemType: resource_group
-                    expiryTime: '2021-08-30T21:10:06.834292'
-                    constraints: {}
-              items:
-                type: object
-                properties:
-                  userId:
-                    type: string
-                    minLength: 1
-                  itemId:
-                    type: string
-                    minLength: 1
-                  itemType:
-                    type: string
-                    minLength: 1
-                  expiryTime:
-                    type: string
-                    minLength: 1
-                  constraints:
-                    type: object
-                required:
-                  - userId
-                  - itemId
-                  - itemType
-                  - constraints
-            examples:
-              Create MultiplePolicies:
-                value:
-                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
-                    itemType: resource_group
-                    expiryTime: '2022-08-04T20:00:19+0000'
-                    constraints: {}
-                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cq21/resource-group
-                    itemType: resource_group
-                    expiryTime: '2022-08-04T20:00:19+0000'
-                    constraints: {}
-              Create SinglePolicies:
-                value:
-                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
-                    itemType: resource_group
-                    expiryTime: '2022-08-04T20:00:19+0000'
-                    constraints: {}
+                  request:
+                    - resSerId: Auth_Dev_Server
+                      userId: a13eb955-c691-4fd3-b200-f18bc78810b5
+            examples: {}
           application/xml:
             schema:
               type: object
