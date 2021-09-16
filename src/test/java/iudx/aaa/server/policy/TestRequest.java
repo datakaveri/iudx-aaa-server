@@ -2,6 +2,7 @@ package iudx.aaa.server.policy;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import iudx.aaa.server.apiserver.CreateDelegationRequest;
 import iudx.aaa.server.apiserver.CreatePolicyRequest;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
@@ -212,4 +213,32 @@ public class TestRequest {
 
   public static List<CreatePolicyRequest> roleFailureReq =
       CreatePolicyRequest.jsonArrayToList(new JsonArray().add(emptyCreateObject));
+
+  //createDelegations
+  public  static User createDelUser =
+        new User(
+          new JsonObject()
+              .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683")
+              .put("roles", new JsonArray().add(Roles.PROVIDER))
+          .put("keycloakId", "04617f23-7e5d-4118-8773-1b6c85da14ed"));
+
+  public static JsonObject invalidUser =    new JsonObject()
+          .put("userId", "d34b1547-7281-4f66-b550-ed79f9bb0c33")
+          .put( "resSerId", "rs.iudx.io");
+  public static List<CreateDelegationRequest> userFailure =
+    CreateDelegationRequest.jsonArrayToList(new JsonArray().add(invalidUser));
+
+
+  public static JsonObject invalidServer =    new JsonObject()
+          .put("userId", "d34b1547-7281-4f66-b550-ed79f9bb0c36")
+          .put( "resSerId", "rs.iudx.org");
+  public static List<CreateDelegationRequest> serverFailure =
+          CreateDelegationRequest.jsonArrayToList(new JsonArray().add(invalidServer));
+
+  public static JsonObject duplicateFail =    new JsonObject()
+          .put("userId", "d34b1547-7281-4f66-b550-ed79f9bb0c36")
+          .put( "resSerId", "authdev.iudx.io");
+  public static List<CreateDelegationRequest> duplicateFailure =
+          CreateDelegationRequest.jsonArrayToList(new JsonArray().add(duplicateFail));
+
 }
