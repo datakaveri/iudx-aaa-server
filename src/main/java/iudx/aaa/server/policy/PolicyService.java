@@ -9,6 +9,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import iudx.aaa.server.apiserver.CreateDelegationRequest;
 import iudx.aaa.server.apiserver.CreatePolicyNotification;
 import iudx.aaa.server.apiserver.CreatePolicyRequest;
 import iudx.aaa.server.apiserver.DeleteDelegationRequest;
@@ -177,4 +178,21 @@ public interface PolicyService {
   @Fluent
   PolicyService deleteDelegation(List<DeleteDelegationRequest> request, User user,
       JsonObject authDelegateDetails, Handler<AsyncResult<JsonObject>> handler);
+
+
+  /**
+   * createDelegation implements the ability for a provider to create delegations.
+   * It allows auth delegates to perform the same on behalf of a provider (although an auth
+   * delegate may not create auth delegate-related information).
+   *
+   * @param request which is a list of CreateDelegationRequest objects
+   * @param user which is a {@link User} DataObject
+   * @param authDelegateDetails which contains details of the provider, etc. in case the caller is
+   *        an auth delegate
+   * @param handler which is a Request Handler
+   * @return PolicyService which is a Service
+   */
+  @Fluent
+  PolicyService  createDelegation(
+          List<CreateDelegationRequest> request, User user, JsonObject authDelegateDetails, Handler<AsyncResult<JsonObject>> handler);
 }

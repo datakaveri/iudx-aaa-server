@@ -12,6 +12,7 @@ import io.vertx.pgclient.data.Interval;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.SqlResult;
 import io.vertx.sqlclient.Tuple;
+import iudx.aaa.server.apiserver.CreateDelegationRequest;
 import iudx.aaa.server.apiserver.CreatePolicyNotification;
 import iudx.aaa.server.apiserver.CreatePolicyRequest;
 import iudx.aaa.server.apiserver.DeleteDelegationRequest;
@@ -59,6 +60,7 @@ public class PolicyServiceImpl implements PolicyService {
   private final RegistrationService registrationService;
   private final deletePolicy deletePolicy;
   private final createPolicy createPolicy;
+  private final createDelegate createDelegate;
   private final CatalogueClient catalogueClient;
   private final JsonObject authOptions;
   private final JsonObject catServerOptions;
@@ -78,6 +80,7 @@ public class PolicyServiceImpl implements PolicyService {
     this.catServerOptions = catServerOptions;
     this.deletePolicy = new deletePolicy(pool, authOptions);
     this.createPolicy = new createPolicy(pool, authOptions);
+    this.createDelegate = new createDelegate(pool, authOptions);
   }
 
   @Override
@@ -437,9 +440,9 @@ public class PolicyServiceImpl implements PolicyService {
     Future<List<JsonObject>> getResSerPolicy;
 
     UUID user_id;
-    if (data.containsKey(USER_ID)) {
-      user_id = UUID.fromString(data.getString(USER_ID));
-      isDelegate = true;
+      isDelegate = !data.isEmpty();
+    if (isDelegate) {
+      user_id = UUID.fromString(data.getString("providerId"));
     } else user_id = UUID.fromString(user.getUserId());
 
     Collector<Row, ?, List<JsonObject>> policyCollector =
@@ -1755,5 +1758,91 @@ public class PolicyServiceImpl implements PolicyService {
         }));
 
     return promise.future();
+  }
+
+  @Override
+  public PolicyService createDelegation(
+      List<CreateDelegationRequest> request,
+      User user,
+      JsonObject authDelegateDetails,
+      Handler<AsyncResult<JsonObject>> handler) {
+    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+    boolean isAuthDelegate = !authDelegateDetails.isEmpty();
+    String userId = user.getUserId();
+    // check if resources and userIds in request exist in db and have roles as delegate
+
+    List<UUID> users =
+        request.stream().map(obj -> UUID.fromString(obj.getUserId())).collect(Collectors.toList());
+
+    Future<Void> checkUserRole = createDelegate.checkUserRoles(users);
+
+    List<String> resServers =
+        request.stream().map(CreateDelegationRequest::getResSerId).collect(Collectors.toList());
+
+    Future<Map<String,UUID>> resSerDetail = createDelegate.getResourceServerDetails(resServers);
+
+// check if user has policy by auth admin
+      String finalUserId = userId;
+      Future<Boolean> checkAuthPolicy = CompositeFuture.all(checkUserRole,resSerDetail)
+            .compose(obj -> createDelegate.checkAuthPolicy(finalUserId)
+                    );
+
+
+    if (isAuthDelegate) {
+        //auth delegate cannot create other auth delegates
+            if(resServers.contains(authOptions.getString("authServerUrl")))
+            {
+                Response r =
+                        new ResponseBuilder()
+                                .type(POLICY_FAILURE)
+                                .title(ERR_TITLE_AUTH_DELE_CREATE)
+                                .detail(ERR_TITLE_AUTH_DELE_CREATE)
+                                .status(403)
+                                .build();
+                handler.handle(Future.succeededFuture(r.toJson()));
+                return this;
+
+            }
+        // if delegate then the delegation should be created by using the providers userId
+        userId = authDelegateDetails.getString("providerId");
+
+    }
+
+      String OwnerId = userId;
+      Future<List<Tuple>> item = checkAuthPolicy
+                      .compose(
+                              ar -> {
+                                  List<Tuple> tuples = new ArrayList<>();
+                                  for (CreateDelegationRequest createDelegationRequest : request) {
+                                      UUID user_id = UUID.fromString(createDelegationRequest.getUserId());
+                                      UUID resource_server_id = resSerDetail.result()
+                                              .get(createDelegationRequest.getResSerId());
+                                      String status = "ACTIVE";
+                                     tuples.add(Tuple.of(OwnerId, user_id, resource_server_id,status));
+                                  }
+
+                                  return Future.succeededFuture(tuples);
+                              });
+
+      Future<Boolean> insertDelegations = item.compose(createDelegate::insertItems);
+
+      insertDelegations
+              .onSuccess(
+                      succ -> {
+                          Response r =
+                                  new Response.ResponseBuilder()
+                                          .type(POLICY_SUCCESS)
+                                          .title("added delegations")
+                                          .status(200)
+                                          .build();
+                          handler.handle(Future.succeededFuture(r.toJson()));
+                      })
+              .onFailure(
+                      obj -> {
+                          obj.printStackTrace();
+                          Response r = createDelegate.getRespObj(obj.getLocalizedMessage());
+                          handler.handle(Future.succeededFuture(r.toJson()));
+                      });
+    return this;
   }
 }

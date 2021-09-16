@@ -259,7 +259,13 @@ public class ApiServerVerticle extends AbstractVerticle {
           routerBuilder.operation(DELETE_DELEGATIONS)
                        .handler(providerAuth)
                        .handler(this::deleteDelegationsHandler)
-                       .failureHandler(failureHandler);          
+                       .failureHandler(failureHandler);
+
+          // Create delegations
+          routerBuilder.operation(CREATE_DELEGATIONS)
+                  .handler(providerAuth)
+                  .handler(this::createDelegationsHandler)
+                  .failureHandler(failureHandler);
 
           /* TimeoutHandler needs to be added as rootHandler */
           routerBuilder.rootHandler(TimeoutHandler.create(serverTimeout));
@@ -700,6 +706,31 @@ public class ApiServerVerticle extends AbstractVerticle {
         Optional.ofNullable((JsonObject) context.get(DATA)).orElse(new JsonObject());
 
     policyService.deleteDelegation(request, user, authDelegateDetails, handler -> {
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+
+
+  /**
+   * Create a delegation for a User.
+   *
+   * @param context
+   */
+  private void createDelegationsHandler(RoutingContext context) {
+
+    JsonObject arr = context.getBodyAsJson();
+    JsonArray jsonRequest = arr.getJsonArray(REQUEST);
+    List<CreateDelegationRequest> request = CreateDelegationRequest.jsonArrayToList(jsonRequest);
+    User user = context.get(USER);
+    JsonObject authDelegateDetails =
+            Optional.ofNullable((JsonObject) context.get(DATA)).orElse(new JsonObject());
+
+    policyService.createDelegation(request,user,authDelegateDetails, handler -> {
+
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {
