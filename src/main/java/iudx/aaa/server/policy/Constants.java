@@ -22,7 +22,7 @@ public class Constants {
   public static final String POLICYBY = "policyBy";
   public static final String POLICYFOR = "policyFor";
   public static final String DESCRIPTION = "description";
-  public static final String INTERNALERROR = "internal server error";
+  public static final String INTERNALERROR = "Internal server error";
   public static final String TYPE = "type";
   public static final String ID = "id";
   public static final String RES_SERVER = "resServer";
@@ -65,7 +65,7 @@ public class Constants {
   public static final String URL_NOT_FOUND = "url not found";
   public static final String AUTH_DEL_POL_FAIL = "Not an auth delegate";
   public static final String AUTH_DEL_FAIL = "Not a delegate for resource owner";
-  public static final String ITEMNOTFOUND = "item does not exist:";
+  public static final String ITEMNOTFOUND = "Item does not exist";
   public static final String NO_RES_SERVER = "Res server does not exist";
   // Title
   public static final String SUCC_TITLE_POLICY_READ = "policy read";
@@ -73,7 +73,7 @@ public class Constants {
   public static final String SUCC_TITLE_LIST_DELEGS = "Delegations";
   public static final String SUCC_TITLE_DELETE_DELE = "Deleted requested delegations";
   public static final String DELETE_FAILURE = "Cannot delete policy";
-  public static final String INVALID_ROLE = "invalid role to perform operation";
+  public static final String INVALID_ROLE = "Invalid role to perform operation";
   public static final String INVALID_DELEGATE_POL = "user does not have access to auth server";
   public static final String INVALID_DELEGATE = "user does not have access to resource";
   public static final String ERR_TITLE_INVALID_ID = "Invalid delegation ID";
@@ -110,6 +110,17 @@ public class Constants {
   public static final String NO_ADMIN_POLICY = "No admin policy";
   public static final String UNAUTHORIZED_DELEGATE = "Unauthorized";
   public static final String COMPOSE_FAILURE = "COMPOSE_FAILURE";
+  
+  public static final String LOG_DB_ERROR = "Fail: Databse query; ";
+  public static final String ERR_DUP_NOTIF_REQ = "Fail: Duplicate Access notification request; ";
+  public static final String DUP_NOTIF_REQ = "Access request already exists ";
+  public static final String INVALID_TUPLE = "Unable to map request to db tuple";
+  public static final String SUCC_NOTIF_REQ = "Notification access request";
+  public static final String SUCC_LIST_NOTIF_REQ = "Access requests";
+  public static final String ERR_LIST_NOTIF = "Fail: Unable to list notification access requests";
+  
+  //General
+  public static final String DETAIL = "detail";
 
   // verify policy queries
   public static final String GET_FROM_ROLES_TABLE =
@@ -276,6 +287,59 @@ public class Constants {
   public static final String DELETE_DELEGATIONS =
       "UPDATE test.delegations SET status = 'DELETED', updated_at = NOW()"
           + " WHERE owner_id = $1::uuid AND id = ANY($2::uuid[])";
+  
+  public static final String DB_SCHEMA = "test";
+  public static final String CREATE_NOTIFI_POLICY_REQUEST =
+      "INSERT INTO "+ DB_SCHEMA +".access_requests (user_id, item_id,item_type, owner_id, status, "
+      + "expiry_duration, constraints, created_at, updated_at)\n"
+      + "VALUES ($1::UUID, $2::UUID, $3::test.item_enum,$4::UUID,$5::test.acc_reqs_status_enum,"
+      + "$6::interval,$7::jsonb, now() ,now()) RETURNING id as \"requestId\";";
+  
+  public static final String SELECT_NOTIF_POLICY_REQUEST =
+      "SELECT id FROM "+ DB_SCHEMA +".access_requests WHERE user_id = $1::UUID AND "
+      + "item_id = $2::UUID AND owner_id = $3::UUID AND status = $4::test.acc_reqs_status_enum";
+  
+  public static final String SELECT_PROVIDER_NOTIF_REQ =
+      "SELECT id as \"requestId\", user_id, item_id as \"itemId\", item_type as \"itemType\", owner_id, status, "
+      + "expiry_duration::text as \"expiryDuration\", constraints FROM "
+          + DB_SCHEMA + ".access_requests WHERE owner_id = $1::UUID";
+
+  public static final String SELECT_CONSUM_NOTIF_REQ =
+      "SELECT id as \"requestId\", user_id, item_id as \"itemId\", item_type as \"itemType\", owner_id, status, "
+          + "expiry_duration::text as \"expiryDuration\", constraints FROM "
+          + DB_SCHEMA + ".access_requests WHERE user_id = $1::UUID";
+  
+  public static final String SEL_NOTIF_REQ_ID =
+      "SELECT id, user_id as \"userId\", item_id as \"itemId\", item_type as \"itemType\", owner_id as \"ownerId\", "
+          + "status, expiry_duration::text as \"expiryDuration\", "
+          + "constraints FROM "+ DB_SCHEMA + ".access_requests where id = $1::UUID";
+  
+//  public static final String SEL_NOTIF_REQ_ID =
+//      "SELECT id, user_id as \"userId\", item_id as \"itemId\", item_type as \"itemType\", owner_id as \"ownerId\", "
+//          + "status, EXTRACT(epoch from expiry_duration)::int as \"expiryDuration\", "
+//          + "constraints FROM test.access_requests where id = $1::UUID";
+  
+  public static final String SEL_NOTIF_ITEM_ID =
+      "SELECT * FROM (SELECT id, cat_id AS url FROM "+ DB_SCHEMA + ".resource\n" + 
+      "UNION SELECT id, url AS url FROM "+ DB_SCHEMA + ".resource_server\n" + 
+      "UNION select id, cat_id AS url FROM "+ DB_SCHEMA + ".resource_group) view WHERE id = $1::UUID"; 
+  
+  public static final String UPDATE_NOTIF_REQ =
+      "UPDATE " + DB_SCHEMA + ".access_request SET status = $1::test.acc_reqs_status_enum, expiry_duration = $2::interval, "
+      + "constraints =$3::jsonb, updated_at = NOW() WHERE id = $4::UUID";
+  
+  public static final String SEL_NOTIF_POLICY_ID =
+      "SELLECT ar.id AS \"requestId\", pol.id AS \"policyId\" FROM " + DB_SCHEMA
+          + ".access_requests ar "
+          + "LEFT JOIN test.policies pol ON ar.user_id = pol.user_id AND ar.item_id = pol.item_id AND ar.owner_id = pol.owner_id \n"
+          + "WHERE pol.user_id= $1::UUID AND pol.item_id = $2::UUID AND ar.owner_id = $3::UUID AND pol.status = 'ACTIVE'";
+  
+  public static final String INSERT_NOTIF_APPROVED_ID =
+      "INSERT INTO " + DB_SCHEMA + ".approved_access_requests(request_id,policy_id,created_at,updated_at) "
+          + "VALUES ($1::UUID,$2::UUID, NOW(),NOW());";
+      
+  
+  public static final String SET_INTERVALSTYLE = "SET LOCAL intervalstyle = 'iso_8601'";
 
   public static final String INSERT_DELEGATION =
       "insert into test.delegations (owner_id,user_id,resource_server_id,status,created_at,updated_at) values "

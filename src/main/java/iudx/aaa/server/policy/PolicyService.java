@@ -139,12 +139,13 @@ public interface PolicyService {
    * 
    * @param request which is a list of {@link UpdatePolicyNotification} DataObject
    * @param user which is a {@link User} DataObect
+   * @param data which is a {@link JsonObject}
    * @param handler which is a Request Handler
    * @return PolicyService which is a Service
    */
   
   @Fluent
-  PolicyService updatelistPolicyNotification(List<UpdatePolicyNotification> request, User user, Handler<AsyncResult<JsonObject>> handler);
+  PolicyService updatelistPolicyNotification(List<UpdatePolicyNotification> request, User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * listDelegation implements the ability for a provider to view the delegations they have created.

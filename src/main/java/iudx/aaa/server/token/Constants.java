@@ -45,6 +45,7 @@ public class Constants {
   public static final String ROLE_LIST = "roleList";
   public static final String EXISTS = "exists";
   public static final String TYPE = "type";
+  public static final String OWNER = "owner";
   public static String keystorePath = null;
   public static String keystorePassword = null;
   
@@ -116,6 +117,11 @@ public class Constants {
   public static final String TOKEN_FAILED = "Token authentication failed";
   public static final String POLICY_SUCCESS =  "Policy evaluation succeeded";
   public static final String INVALID_SUB = "Invalid subject ID";
+  public static final String ERR_ADMIN = "Not admin of the request resource";
+  
+  public static final String ADMIN = "admin";
+  public static final String CONSUMER = "consumer";
+  public static final String PROVIDER = "provider";
   
   /* SQL Queries */
   public static final String DB_SCHEMA = "test";
@@ -127,5 +133,7 @@ public class Constants {
   
   public static final String GET_URL =
       "SELECT EXISTS (SELECT 1 FROM " + DB_SCHEMA + ".resource_server WHERE url = $1)";
+  
+  public static final String GET_RS = "SELECT owner_id AS owner FROM " + DB_SCHEMA + ".resource_server WHERE url = $1";
 
 }

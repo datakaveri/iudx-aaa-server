@@ -1,7 +1,10 @@
 package iudx.aaa.server.apiserver;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -22,7 +25,7 @@ public class CreatePolicyNotification {
     });
     return arr;
   }
-  
+    
   public CreatePolicyNotification(JsonObject json) {
     CreatePolicyNotificationConverter.fromJson(json, this);
   }
@@ -54,7 +57,15 @@ public class CreatePolicyNotification {
   }
 
   public void setExpiryDuration(String expiryDuration) {
-    this.expiryDuration = expiryDuration;
+    javax.xml.datatype.Duration duration = null;
+    try {
+      duration = DatatypeFactory.newInstance().newDuration(expiryDuration);
+    } catch (DatatypeConfigurationException e) {
+      e.printStackTrace();
+    }
+
+    // Duration duration = Duration.parse(expiryDuration);
+    this.expiryDuration = duration.toString();
   }
 
   public JsonObject getConstraints() {

@@ -8,6 +8,7 @@ import static iudx.aaa.server.apiserver.util.Constants.MIME_APPLICATION_JSON;
 import static iudx.aaa.server.apiserver.util.Constants.STATUS;
 import static iudx.aaa.server.apiserver.util.Constants.URN_INVALID_INPUT;
 import static iudx.aaa.server.apiserver.util.Constants.URN_MISSING_INFO;
+import java.time.format.DateTimeParseException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import io.vertx.core.Future;
@@ -54,6 +55,9 @@ public class FailureHandler implements Handler<RoutingContext> {
       processResponse(response, failure.getLocalizedMessage());
       
     } else if (failure instanceof RequestPredicateException) {
+      processResponse(response, failure.getLocalizedMessage());
+      
+    } else if (failure instanceof DateTimeParseException) {
       processResponse(response, failure.getLocalizedMessage());
       
     } else {

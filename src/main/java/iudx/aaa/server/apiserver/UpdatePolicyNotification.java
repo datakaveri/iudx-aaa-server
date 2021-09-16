@@ -34,12 +34,12 @@ public class UpdatePolicyNotification {
     return obj;
   }
   
-  public UUID getRequestId() {
-    return requestId;
+  public String getRequestId() {
+    return requestId.toString();
   }
 
-  public void setRequestId(UUID requestId) {
-    this.requestId = requestId;
+  public void setRequestId(String requestId) {
+    this.requestId = UUID.fromString(requestId);
   }
 
   public RoleStatus getStatus() {

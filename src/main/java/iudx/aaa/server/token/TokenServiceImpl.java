@@ -19,10 +19,12 @@ import iudx.aaa.server.apiserver.IntrospectToken;
 import iudx.aaa.server.apiserver.RequestToken;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.RevokeToken;
+import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.policy.PolicyService;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static iudx.aaa.server.token.Constants.*;
@@ -79,25 +81,39 @@ public class TokenServiceImpl implements TokenService {
       return this;
     }
     
-    if (RESOURCE_SVR.equals(itemType)) {
+    if (RESOURCE_SVR.equals(itemType)
+        && (role.equalsIgnoreCase(ADMIN) || role.equalsIgnoreCase(CONSUMER))) {
+      
       Tuple tuple = Tuple.of(requestToken.getItemId());
-      pgSelelctQuery(GET_URL, tuple).onComplete(dbHandler -> {
+      pgSelelctQuery(GET_RS, tuple).onComplete(dbHandler -> {
         if (dbHandler.failed()) {
           LOGGER.error(LOG_DB_ERROR + dbHandler.cause());
           handler.handle(Future.failedFuture(INTERNAL_SVR_ERR));
           return;
         }
 
-        if (dbHandler.succeeded()) {
+        if (dbHandler.succeeded() && dbHandler.result().size() > 0) {
           JsonObject dbExistsRow = dbHandler.result().getJsonObject(0);
-          boolean flag = dbExistsRow.getBoolean(EXISTS);
-
-          if (flag == Boolean.FALSE) {
-            LOGGER.error("Fail: " + INVALID_RS_URL);
-            Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                .title(INVALID_RS_URL).detail(INVALID_RS_URL).build();
-            handler.handle(Future.succeededFuture(resp.toJson()));
-            return;
+          String flag = dbExistsRow.getString(OWNER);
+          
+          if (role.equalsIgnoreCase(ADMIN)) {
+            if (!user.getUserId().equals(flag)) {
+              LOGGER.error("Fail: " + ERR_ADMIN);
+              Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+                  .title(ERR_ADMIN).detail(ERR_ADMIN).build();
+              handler.handle(Future.succeededFuture(resp.toJson()));
+              return;
+            }
+          }
+          
+          if(role.equalsIgnoreCase(CONSUMER)) {
+            if(flag != null && flag.isEmpty()) {
+              LOGGER.error("Fail: " + INVALID_RS_URL);
+              Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+                  .title(INVALID_RS_URL).detail(INVALID_RS_URL).build();
+              handler.handle(Future.succeededFuture(resp.toJson()));
+              return; 
+            }
           }
           
           request.put(URL, requestToken.getItemId());
@@ -105,6 +121,12 @@ public class TokenServiceImpl implements TokenService {
           LOGGER.info(LOG_TOKEN_SUCC);
           Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
               .arrayResults(new JsonArray().add(jwt)).build();
+          handler.handle(Future.succeededFuture(resp.toJson()));
+          return;
+        } else {
+          LOGGER.error("Fail: " + INVALID_RS_URL);
+          Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+              .title(INVALID_RS_URL).detail(INVALID_RS_URL).build();
           handler.handle(Future.succeededFuture(resp.toJson()));
           return;
         }
