@@ -16,6 +16,8 @@ public class Constants {
   public static final String DATABASE_POOLSIZE = "poolSize";
   public static final int DB_CONNECT_TIMEOUT = 10000;
 
+  public static final String DB_SCHEMA = "test";
+
   public static final String KEYCLOAK_URL = "keycloakUrl";
   public static final String KEYCLOAK_REALM = "keycloakRealm";
   public static final String KC_ADMIN_CLIENT_ID = "keycloakAdminClientId";
@@ -57,23 +59,26 @@ public class Constants {
 
   /* SQL */
   public static final String SQL_CREATE_ORG_IF_NOT_EXIST =
-      "INSERT INTO test.organizations (name, url, created_at, updated_at) "
+      "INSERT INTO " + DB_SCHEMA + ".organizations (name, url, created_at, updated_at) "
           + "VALUES ($1::text, $2::text, NOW(), NOW()) ON CONFLICT (url) DO NOTHING RETURNING id";
 
-  public static final String SQL_CHECK_ADMIN_OF_SERVER =
-      "SELECT id FROM test.resource_server WHERE owner_id = $1::uuid AND url = $2::text";
+  public static final String SQL_CHECK_ADMIN_OF_SERVER = "SELECT id FROM " + DB_SCHEMA
+      + ".resource_server WHERE owner_id = $1::uuid AND url = $2::text";
 
   public static final String SQL_GET_PROVIDERS_BY_STATUS =
-      "SELECT users.id, keycloak_id, organization_id FROM test.users JOIN test.roles ON users.id = roles.user_id "
-          + "WHERE roles.role = 'PROVIDER' AND roles.status = $1::test.role_status_enum";
+      "SELECT users.id, keycloak_id, organization_id FROM " + DB_SCHEMA + ".users JOIN " + DB_SCHEMA
+          + ".roles ON users.id = roles.user_id "
+          + "WHERE roles.role = 'PROVIDER' AND roles.status = $1::" + DB_SCHEMA
+          + ".role_status_enum";
 
   public static final String SQL_GET_ORG_DETAILS =
-      "SELECT id, name, url FROM test.organizations WHERE id = ANY($1::uuid[])";
+      "SELECT id, name, url FROM " + DB_SCHEMA + ".organizations WHERE id = ANY($1::uuid[])";
 
   public static final String SQL_UPDATE_ROLE_STATUS =
-      "UPDATE test.roles SET status = $1::test.role_status_enum, updated_at = NOW() WHERE user_id = $2::uuid";
+      "UPDATE " + DB_SCHEMA + ".roles SET status = $1::" + DB_SCHEMA
+          + ".role_status_enum, updated_at = NOW() WHERE user_id = $2::uuid";
 
-  public static final String SQL_GET_PENDING_PROVIDERS =
-      "SELECT users.id, keycloak_id FROM test.users JOIN test.roles ON users.id = roles.user_id "
-          + "WHERE role = 'PROVIDER' AND status = 'PENDING' AND user_id = ANY ($1::uuid[])";
+  public static final String SQL_GET_PENDING_PROVIDERS = "SELECT users.id, keycloak_id FROM "
+      + DB_SCHEMA + ".users JOIN " + DB_SCHEMA + ".roles ON users.id = roles.user_id "
+      + "WHERE role = 'PROVIDER' AND status = 'PENDING' AND user_id = ANY ($1::uuid[])";
 }
