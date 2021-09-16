@@ -10,6 +10,30 @@ Make a config file based on the template in `./configs/config-example.json`
 - Generate a certificate using Lets Encrypt or other methods
 - Make a Java Keystore File and mention its path and password in the appropriate sections
 - Modify the database url and associated credentials in the appropriate sections
+- Set up the database using Flyway
+
+#### Flyway Database setup
+
+Flyway is used to manage the database schema and handle migrations. The migration files are located at [src/main/resources/db/migrations](src/main/resources/db/migrations). The following pre-requisites are needed before running `flyway`:
+1. An admin user - a database user who has create schema/table privileges for the database. It can be the super user.
+2. An auth user - a database user with no privileges; this is the database user that will be configured to make queries from the server 
+(e.g. `CREATE USER auth WITH PASSWORD 'randompassword';`)
+
+[flyway.conf](flyway.conf) must be updated with the required data. 
+`flyway.url` - the database connection URL
+`flyway.user` - the username of the admin user
+`flyway.password` - the password of the admin user
+`flyway.schemas` - the name of the schema under which the tables are created
+`flyway.placeholders.authUser` - the username of the auth user
+
+Please refer [here](https://flywaydb.org/documentation/configuration/parameters/) for more information about Flyway config parameters.
+
+After this, the `info` command can be run to test the config. Then, the `migrate` command can be run to set up the database. At the `/iudx-aaa-server` directory, run
+
+```
+mvn flyway:info -Dflyway.configFiles=flyway.conf
+mvn flyway:migrate -Dflyway.configFiles=flyway.conf
+```
 
 ### Docker based
 1. Install docker and docker-compose
