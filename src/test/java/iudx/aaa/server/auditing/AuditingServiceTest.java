@@ -4,7 +4,6 @@ import static iudx.aaa.server.auditing.util.Constants.API;
 import static iudx.aaa.server.auditing.util.Constants.BODY;
 import static iudx.aaa.server.auditing.util.Constants.DATA_NOT_FOUND;
 import static iudx.aaa.server.auditing.util.Constants.DETAIL;
-import static iudx.aaa.server.auditing.util.Constants.ENDPOINT;
 import static iudx.aaa.server.auditing.util.Constants.END_TIME;
 import static iudx.aaa.server.auditing.util.Constants.INVALID_DATE_TIME;
 import static iudx.aaa.server.auditing.util.Constants.INVALID_TIME;
@@ -140,36 +139,36 @@ public class AuditingServiceTest {
                     })));
   }
 
-//  @Test
-//  @DisplayName("Success-Testing Write Query")
-//  void writeData(VertxTestContext vertxTestContext) {
-//    JsonObject jsonObject = writeRequest();
-//
-//    auditingService.executeWriteQuery(
-//        jsonObject,
-//        vertxTestContext.succeeding(
-//            response ->
-//                vertxTestContext.verify(
-//                    () -> {
-//                      assertTrue(response.getString("title").equals("Success"));
-//                      vertxTestContext.completeNow();
-//                    })));
-//  }
+  @Test
+  @DisplayName("Success-Testing Write Query")
+  void writeData(VertxTestContext vertxTestContext) {
+    JsonObject jsonObject = writeRequest();
 
-  private JsonObject readRequest(){
-    JsonObject jsonObject=new JsonObject();
-    jsonObject.put("userId","/userId");
-    jsonObject.put("method","POST");
-    jsonObject.put("endPoint","/post");
-    jsonObject.put("startTime","1970-01-01T05:30:00+05:30[Asia/Kolkata]");
-    jsonObject.put("endTime","2021-09-17T02:00:00+05:30[Asia/Kolkata]");
+    auditingService.executeWriteQuery(
+        jsonObject,
+        vertxTestContext.succeeding(
+            response ->
+                vertxTestContext.verify(
+                    () -> {
+                      assertTrue(response.getString("title").equals("Success"));
+                      vertxTestContext.completeNow();
+                    })));
+  }
+
+  private JsonObject readRequest() {
+    JsonObject jsonObject = new JsonObject();
+    jsonObject.put("userId", "/userId");
+    jsonObject.put("method", "POST");
+    jsonObject.put("endPoint", "/post");
+    jsonObject.put("startTime", "1970-01-01T05:30:00+05:30[Asia/Kolkata]");
+    jsonObject.put("endTime", "2021-09-17T02:00:00+05:30[Asia/Kolkata]");
     return jsonObject;
   }
 
   @Test
   @DisplayName("Success- Reading Query")
-  void readData(VertxTestContext vertxTestContext){
-    JsonObject jsonObject=readRequest();
+  void readData(VertxTestContext vertxTestContext) {
+    JsonObject jsonObject = readRequest();
     auditingService.executeReadQuery(
         jsonObject,
         vertxTestContext.succeeding(
@@ -194,7 +193,8 @@ public class AuditingServiceTest {
                 vertxTestContext.verify(
                     () -> {
                       assertEquals(
-                          USERID_NOT_FOUND, new JsonObject(response.getMessage()).getString(DETAIL));
+                          USERID_NOT_FOUND,
+                          new JsonObject(response.getMessage()).getString(DETAIL));
                       vertxTestContext.completeNow();
                     })));
   }
@@ -212,7 +212,8 @@ public class AuditingServiceTest {
                 vertxTestContext.verify(
                     () -> {
                       assertEquals(
-                          MISSING_START_TIME, new JsonObject(response.getMessage()).getString(DETAIL));
+                          MISSING_START_TIME,
+                          new JsonObject(response.getMessage()).getString(DETAIL));
                       vertxTestContext.completeNow();
                     })));
   }
@@ -230,7 +231,8 @@ public class AuditingServiceTest {
                 vertxTestContext.verify(
                     () -> {
                       assertEquals(
-                          MISSING_END_TIME, new JsonObject(response.getMessage()).getString(DETAIL));
+                          MISSING_END_TIME,
+                          new JsonObject(response.getMessage()).getString(DETAIL));
                       vertxTestContext.completeNow();
                     })));
   }
@@ -239,9 +241,9 @@ public class AuditingServiceTest {
   @DisplayName("Failure-Testing read query when endTime is before startTime")
   void ReadForEndTimeBeforeStartTime(VertxTestContext vertxTestContext) {
     JsonObject jsonObject = readRequest();
-    String temp=jsonObject.getString(START_TIME);
-    jsonObject.put(START_TIME,jsonObject.getString(END_TIME));
-    jsonObject.put(END_TIME,temp);
+    String temp = jsonObject.getString(START_TIME);
+    jsonObject.put(START_TIME, jsonObject.getString(END_TIME));
+    jsonObject.put(END_TIME, temp);
 
     auditingService.executeReadQuery(
         jsonObject,
@@ -259,8 +261,8 @@ public class AuditingServiceTest {
   @DisplayName("Failure-Testing read query for invalid date time format")
   void ReadForInvalidDateTimeFormat(VertxTestContext vertxTestContext) {
     JsonObject jsonObject = readRequest();
-    String temp="1970-01-0105:30:00+05:30[Asia/Kolkata]";
-    jsonObject.put(START_TIME,temp);
+    String temp = "1970-01-0105:30:00+05:30[Asia/Kolkata]";
+    jsonObject.put(START_TIME, temp);
     auditingService.executeReadQuery(
         jsonObject,
         vertxTestContext.failing(
@@ -268,10 +270,9 @@ public class AuditingServiceTest {
                 vertxTestContext.verify(
                     () -> {
                       assertEquals(
-                          INVALID_DATE_TIME, new JsonObject(response.getMessage()).getString(DETAIL));
+                          INVALID_DATE_TIME,
+                          new JsonObject(response.getMessage()).getString(DETAIL));
                       vertxTestContext.completeNow();
                     })));
   }
-
-
 }

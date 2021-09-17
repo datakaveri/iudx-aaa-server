@@ -18,8 +18,8 @@ import static iudx.aaa.server.auditing.util.Constants.QUERY_KEY;
 import static iudx.aaa.server.auditing.util.Constants.READ_QUERY;
 import static iudx.aaa.server.auditing.util.Constants.START_TIME;
 import static iudx.aaa.server.auditing.util.Constants.START_TIME_QUERY;
-import static iudx.aaa.server.auditing.util.Constants.USER_ID;
 import static iudx.aaa.server.auditing.util.Constants.USERID_NOT_FOUND;
+import static iudx.aaa.server.auditing.util.Constants.USER_ID;
 import static iudx.aaa.server.auditing.util.Constants.WRITE_QUERY;
 
 import io.vertx.core.json.JsonObject;
@@ -78,13 +78,13 @@ public class QueryBuilder {
   public JsonObject buildReadingQuery(JsonObject request) {
     LOGGER.info("Trying to build reading query.");
 
-    String userId=request.getString(USER_ID);
-    String startTime=request.getString(START_TIME);
-    String endTime=request.getString(END_TIME);
-    String method=request.getString(METHOD);
-    String endPoint=request.getString(ENDPOINT);
+    String userId = request.getString(USER_ID);
+    String startTime = request.getString(START_TIME);
+    String endTime = request.getString(END_TIME);
+    String method = request.getString(METHOD);
+    String endPoint = request.getString(ENDPOINT);
     long fromTime = 0;
-    long toTime=0;
+    long toTime = 0;
     ZonedDateTime zdt;
 
     if (!request.containsKey(USER_ID)) {
@@ -101,10 +101,10 @@ public class QueryBuilder {
         return new JsonObject().put(ERROR, INVALID_DATE_TIME);
       }
 
-    if(!request.containsKey(END_TIME)){
-      return new JsonObject().put(ERROR,MISSING_END_TIME);
+      if (!request.containsKey(END_TIME)) {
+        return new JsonObject().put(ERROR, MISSING_END_TIME);
+      }
     }
-}
 
     if (request.containsKey(END_TIME)) {
 
@@ -115,8 +115,8 @@ public class QueryBuilder {
         LOGGER.error("Invalid Date-Time exception: " + e.getMessage());
         return new JsonObject().put(ERROR, INVALID_DATE_TIME);
       }
-      if(!request.containsKey(START_TIME)){
-        return new JsonObject().put(ERROR,MISSING_START_TIME);
+      if (!request.containsKey(START_TIME)) {
+        return new JsonObject().put(ERROR, MISSING_START_TIME);
       }
 
       ZonedDateTime startZDT = ZonedDateTime.parse(startTime);
@@ -126,27 +126,24 @@ public class QueryBuilder {
         LOGGER.error("Invalid Date-Time exception");
         return new JsonObject().put(ERROR, INVALID_TIME);
       }
-      fromTime=getEpochTime(startZDT);
-      toTime=getEpochTime(endZDT);
-}
+      fromTime = getEpochTime(startZDT);
+      toTime = getEpochTime(endZDT);
+    }
 
     LOGGER.debug("Epoch fromTime: " + fromTime);
     LOGGER.debug("Epoch toTime: " + toTime);
-    StringBuilder userIdQuery =
-        new StringBuilder(
-            READ_QUERY
-                .replace("$1", userId));
+    StringBuilder userIdQuery = new StringBuilder(READ_QUERY.replace("$1", userId));
     LOGGER.info("Info: QUERY " + userIdQuery);
 
     if (request.containsKey(START_TIME) && request.containsKey(END_TIME)) {
       StringBuilder tempQuery = userIdQuery;
-      for (String s : Arrays.asList(
-          START_TIME_QUERY.replace("$2", Long.toString(fromTime)),
-          END_TIME_QUERY.replace("$3", Long.toString(toTime))))
-        tempQuery.append(s);
-      userIdQuery=tempQuery;
+      for (String s :
+          Arrays.asList(
+              START_TIME_QUERY.replace("$2", Long.toString(fromTime)),
+              END_TIME_QUERY.replace("$3", Long.toString(toTime)))) tempQuery.append(s);
+      userIdQuery = tempQuery;
       LOGGER.info("Info: QUERY with start and end time" + userIdQuery);
-      }
+    }
     if (request.containsKey(METHOD) && request.containsKey(ENDPOINT)) {
       StringBuilder tempQuery = userIdQuery;
       tempQuery.append(ENDPOINT_QUERY.replace("$4", endPoint));
