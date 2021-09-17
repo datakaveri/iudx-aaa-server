@@ -1866,24 +1866,25 @@ paths:
                     type: 'urn:dx:as:Success'
                     title: policy read
                     results:
-                      - policyId: b268d557-cc98-4337-833d-6ad34e7eb51f
-                        itemId: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
-                        itemType: resource
-                        expiryTime: '2022-06-15T09:07:16.034289'
-                        constraints: {}
-                        catId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group/resource
-                        user:
-                          email: alice@gmail.com
-                          name:
-                            firstName: Alice
-                            lastName: Bob
-                          id: 32a4b979-4f4a-4c44-b0c3-2fe109952b5f
-                        owner:
-                          email: someone@example.com
-                          name:
-                            firstName: Someone
-                            lastName: Person
-                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                      result:
+                        - policyId: b268d557-cc98-4337-833d-6ad34e7eb51f
+                          itemId: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
+                          itemType: resource
+                          expiryTime: '2022-06-15T09:07:16.034289'
+                          constraints: {}
+                          catId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group/resource
+                          user:
+                            email: alice@gmail.com
+                            name:
+                              firstName: Alice
+                              lastName: Bob
+                            id: 32a4b979-4f4a-4c44-b0c3-2fe109952b5f
+                          owner:
+                            email: someone@example.com
+                            name:
+                              firstName: Someone
+                              lastName: Person
+                            id: a13eb955-c691-4fd3-b200-f18bc78810b5
                 properties:
                   type:
                     type: string
@@ -1892,91 +1893,120 @@ paths:
                     type: string
                     minLength: 1
                   results:
-                    type: array
-                    uniqueItems: true
-                    minItems: 1
-                    items:
-                      type: object
-                      properties:
-                        policyId:
-                          type: string
-                          minLength: 1
-                        itemId:
-                          type: string
-                          minLength: 1
-                        itemType:
-                          type: string
-                          minLength: 1
-                        expiryTime:
-                          type: string
-                          minLength: 1
-                        constraints:
-                          type: object
-                        catId:
-                          type: string
-                          minLength: 1
-                        user:
+                    type: object
+                    required:
+                      - result
+                    properties:
+                      result:
+                        type: array
+                        uniqueItems: true
+                        minItems: 1
+                        items:
                           type: object
                           properties:
-                            email:
+                            policyId:
                               type: string
                               minLength: 1
-                            name:
+                            itemId:
+                              type: string
+                              minLength: 1
+                            itemType:
+                              type: string
+                              minLength: 1
+                            expiryTime:
+                              type: string
+                              minLength: 1
+                            constraints:
                               type: object
-                              required:
-                                - firstName
-                                - lastName
-                              properties:
-                                firstName:
-                                  type: string
-                                  minLength: 1
-                                lastName:
-                                  type: string
-                                  minLength: 1
-                            id:
+                            catId:
                               type: string
                               minLength: 1
-                          required:
-                            - email
-                            - name
-                            - id
-                        owner:
-                          type: object
-                          properties:
-                            email:
-                              type: string
-                              minLength: 1
-                            name:
+                            user:
                               type: object
-                              required:
-                                - firstName
-                                - lastName
                               properties:
-                                firstName:
+                                email:
                                   type: string
                                   minLength: 1
-                                lastName:
+                                name:
+                                  type: object
+                                  required:
+                                    - firstName
+                                    - lastName
+                                  properties:
+                                    firstName:
+                                      type: string
+                                      minLength: 1
+                                    lastName:
+                                      type: string
+                                      minLength: 1
+                                id:
                                   type: string
                                   minLength: 1
-                            id:
-                              type: string
-                              minLength: 1
+                              required:
+                                - email
+                                - name
+                                - id
+                            owner:
+                              type: object
+                              properties:
+                                email:
+                                  type: string
+                                  minLength: 1
+                                name:
+                                  type: object
+                                  required:
+                                    - firstName
+                                    - lastName
+                                  properties:
+                                    firstName:
+                                      type: string
+                                      minLength: 1
+                                    lastName:
+                                      type: string
+                                      minLength: 1
+                                id:
+                                  type: string
+                                  minLength: 1
+                              required:
+                                - email
+                                - name
+                                - id
                           required:
-                            - email
-                            - name
-                            - id
-                      required:
-                        - policyId
-                        - itemId
-                        - itemType
-                        - expiryTime
-                        - constraints
-                        - catId
+                            - policyId
+                            - itemId
+                            - itemType
+                            - expiryTime
+                            - constraints
+                            - catId
                 required:
                   - type
                   - title
                   - results
-              examples: {}
+              examples:
+                Example:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: policy read
+                    results:
+                      result:
+                        - policyId: b268d557-cc98-4337-833d-6ad34e7eb51f
+                          itemId: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
+                          itemType: resource
+                          expiryTime: '2022-06-15T09:07:16.034289'
+                          constraints: {}
+                          catId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group/resource
+                          user:
+                            email: alice@gmail.com
+                            name:
+                              firstName: Alice
+                              lastName: Bob
+                            id: 32a4b979-4f4a-4c44-b0c3-2fe109952b5f
+                          owner:
+                            email: someone@example.com
+                            name:
+                              firstName: Someone
+                              lastName: Person
+                            id: a13eb955-c691-4fd3-b200-f18bc78810b5
           headers:
             Content-Type:
               schema:
@@ -2684,16 +2714,7 @@ paths:
               schema:
                 type: string
               description: application/json
-      description: |-
-        Create new delegations
-
-        - `userId` : UUID of the user who is to be made a delegate.
-        - `resourceServerId` : URL of the resource server the user is to be made a delegate for.
-
-        ## Auth delegate
-        An auth delegate may use the API to create delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
-
-        **NOTE: An auth delegate may not create any delegations related to the auth server.**
+      description: Create new delegations
       parameters:
         - schema:
             type: string
@@ -2704,41 +2725,63 @@ paths:
           name: Authorization
           description: Keycloak Issued token
           required: true
-        - schema:
-            type: string
-          in: header
-          name: providerId
-          description: 'User ID of the provider, if an auth delegate wishes to view delegations of their provider'
       requestBody:
         content:
           application/json:
             schema:
+              type: array
               description: ''
-              type: object
-              properties:
-                request:
-                  type: array
-                  uniqueItems: true
-                  minItems: 1
-                  items:
-                    required:
-                      - resSerId
-                      - userId
-                    properties:
-                      resSerId:
-                        type: string
-                        minLength: 1
-                      userId:
-                        type: string
-                        minLength: 1
-              required:
-                - request
+              minItems: 1
+              uniqueItems: true
               x-examples:
                 example-1:
-                  request:
-                    - resSerId: Auth_Dev_Server
-                      userId: a13eb955-c691-4fd3-b200-f18bc78810b5
-            examples: {}
+                  - userId: 89bbe934-5f18-4f57-b68e-fb821ba77291
+                    itemId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-abcd
+                    itemType: resource_group
+                    expiryTime: '2021-08-30T21:10:06.834292'
+                    constraints: {}
+              items:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                    minLength: 1
+                  itemId:
+                    type: string
+                    minLength: 1
+                  itemType:
+                    type: string
+                    minLength: 1
+                  expiryTime:
+                    type: string
+                    minLength: 1
+                  constraints:
+                    type: object
+                required:
+                  - userId
+                  - itemId
+                  - itemType
+                  - constraints
+            examples:
+              Create MultiplePolicies:
+                value:
+                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
+                    itemType: resource_group
+                    expiryTime: '2022-08-04T20:00:19+0000'
+                    constraints: {}
+                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cq21/resource-group
+                    itemType: resource_group
+                    expiryTime: '2022-08-04T20:00:19+0000'
+                    constraints: {}
+              Create SinglePolicies:
+                value:
+                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
+                    itemType: resource_group
+                    expiryTime: '2022-08-04T20:00:19+0000'
+                    constraints: {}
           application/xml:
             schema:
               type: object
@@ -2759,29 +2802,34 @@ paths:
               schema:
                 $ref: '#/components/schemas/AccessRequest'
               examples:
-                Example:
+                ListResults:
                   value:
                     type: 'urn:dx:as:Success'
-                    title: User permission requests
+                    title: Access requests
                     results:
-                      - requestId: e4619679-f5d9-4eff-9f79-bbded6130bb1
-                        itemId: string
-                        itemType: resource_server
-                        status: pending
-                        expiryDuration: string
-                        constraints: {}
+                      - requestId: bd5f0bb3-c02c-4e3d-b75c-a6eb8144bddc
+                        itemId: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
+                        itemType: RESOURCE
+                        status: PENDING
+                        expiryDuration: P1Y2M10DT2H30M
+                        constraints:
+                          access:
+                            - api
+                            - subs
+                            - ingest
+                            - file
                         user:
-                          id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
-                          email: user@example.com
+                          email: someone@example.com
                           name:
-                            firstName: string
-                            lastName: string
+                            firstName: Someone
+                            lastName: Person
+                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
                         owner:
-                          id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
-                          email: user@example.com
+                          email: someone@example.com
                           name:
-                            firstName: string
-                            lastName: string
+                            firstName: Someone
+                            lastName: Person
+                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
           headers:
             Content-Type:
               schema:
@@ -2857,27 +2905,31 @@ paths:
               examples:
                 Example:
                   value:
-                    type: string
-                    title: string
+                    type: 'urn:dx:as:Success'
+                    title: Access requests
                     results:
-                      - requestId: string
-                        itemId: string
-                        itemType: string
-                        status: string
-                        expiryDuration: string
-                        constraints: {}
+                      - requestId: bd5f0bb3-c02c-4e3d-b75c-a6eb8144bddc
+                        itemId: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
+                        itemType: RESOURCE
+                        status: PENDING
+                        expiryDuration: P1Y2M10DT2H30M
+                        constraints:
+                          access:
+                            - api
+                            - subs
+                            - file
                         user:
-                          id: string
-                          email: string
+                          email: someone@example.com
                           name:
-                            firstName: string
-                            lastName: string
+                            firstName: Someone
+                            lastName: Person
+                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
                         owner:
-                          id: string
-                          email: string
+                          email: someone@example.com
                           name:
-                            firstName: string
-                            lastName: string
+                            firstName: Someone
+                            lastName: Person
+                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
         '400':
           description: 'Bad Request- Schema validation, missing or incorrect fields & values'
           headers:
@@ -2924,9 +2976,9 @@ paths:
               x-examples:
                 example-1:
                   request:
-                    - itemId: string
-                      itemType: resource_server
-                      expiryDuration: string
+                    - itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood/FWR03
+                      itemType: resource
+                      expiryDuration: P1Y2M10DT2H30M
                       constraints: {}
               properties:
                 request:
@@ -2943,7 +2995,6 @@ paths:
                         type: string
                         minLength: 1
                         enum:
-                          - resource_server
                           - resource_group
                           - resource
                       expiryDuration:
@@ -2955,16 +3006,22 @@ paths:
                       - itemId
                       - itemType
                       - expiryDuration
+                      - constraints
               required:
                 - request
             examples:
-              Example:
+              Create:
                 value:
                   request:
-                    - itemId: string
-                      itemType: resource_server
-                      expiryDuration: string
-                      constraints: {}
+                    - itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood/FWR035
+                      itemType: resource
+                      expiryDuration: P1Y2M10DT2H30M
+                      constraints:
+                        access:
+                          - api
+                          - subs
+                          - file
+        description: ''
       tags:
         - Notifications APIs
       parameters: []
@@ -2983,6 +3040,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AccessRequest'
+              examples:
+                Update:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: Access requests
+                    results:
+                      - requestId: bd5f0bb3-c02c-4e3d-b75c-a6eb8144bddc
+                        itemId: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
+                        itemType: RESOURCE
+                        status: PENDING
+                        expiryDuration: P1Y2M10DT2H30M
+                        constraints:
+                          access:
+                            - api
+                            - subs
+                            - file
+                        user:
+                          email: someone@example.com
+                          name:
+                            firstName: Someone
+                            lastName: Person
+                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                        owner:
+                          email: someone@example.com
+                          name:
+                            firstName: Someone
+                            lastName: Person
+                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
         '400':
           description: 'Bad Request- Schema validation, missing or incorrect fields & values'
           headers:
@@ -3012,15 +3097,19 @@ paths:
         content:
           application/json:
             schema:
-              description: ''
               type: object
+              description: ''
               x-examples:
                 example-1:
                   request:
-                    - requestId: e4619679-f5d9-4eff-9f79-bbded6130bb1
+                    - requestId: bca11712-f381-46a5-afa3-a29b00568ace
                       status: approved
-                      expiryDuration: string
-                      constraints: {}
+                      expiryDuration: P1Y2M10DT2H30M
+                      constraints:
+                        access:
+                          - api
+                          - subs
+                          - file
               properties:
                 request:
                   type: array
@@ -3049,16 +3138,22 @@ paths:
                       - requestId
                       - status
                       - expiryDuration
+                      - constraints
               required:
                 - request
             examples:
-              Example:
+              Update:
                 value:
                   request:
-                    - requestId: e4619679-f5d9-4eff-9f79-bbded6130bb1
+                    - requestId: bca11712-f381-46a5-afa3-a29b00568ace
                       status: approved
-                      expiryDuration: string
-                      constraints: {}
+                      expiryDuration: P1Y2M10DT2H30M
+                      constraints:
+                        access:
+                          - api
+                          - subs
+                          - file
+        description: ''
       tags:
         - Notifications APIs
 components:
@@ -3081,7 +3176,11 @@ components:
         - itemType
         - role
       title: RequestToken
-      x-examples: {}
+      x-examples:
+        example-1:
+          itemId: string
+          itemType: string
+          role: string
     RevokeToken:
       description: ''
       type: object
@@ -3112,7 +3211,11 @@ components:
         - type
         - title
         - detail
-      x-examples: {}
+      x-examples:
+        example-1:
+          type: string
+          title: string
+          detail: string
     UserAlreadyExists:
       description: ''
       type: object
@@ -3183,7 +3286,12 @@ components:
               itemType: resource_server
               status: pending
               expiryDuration: string
-              constraints: {}
+              constraints:
+                access:
+                  - api
+                  - subs
+                  - ingest
+                  - file
               user:
                 id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
                 email: user@example.com
@@ -3196,28 +3304,6 @@ components:
                 name:
                   firstName: string
                   lastName: string
-          value:
-            type: 'urn:dx:as:Success'
-            title: User permission requests
-            results:
-              - requestId: e4619679-f5d9-4eff-9f79-bbded6130bb1
-                itemId: string
-                itemType: resource_server
-                status: pending
-                expiryDuration: string
-                constraints: {}
-                user:
-                  id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
-                  email: user@example.com
-                  name:
-                    firstName: string
-                    lastName: string
-                owner:
-                  id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
-                  email: user@example.com
-                  name:
-                    firstName: string
-                    lastName: string
       properties:
         type:
           type: string
@@ -3235,6 +3321,7 @@ components:
               requestId:
                 type: string
                 minLength: 1
+                format: uuid
               itemId:
                 type: string
                 minLength: 1
@@ -3250,9 +3337,55 @@ components:
               constraints:
                 type: object
               user:
-                $ref: '#/components/schemas/User'
+                type: object
+                properties:
+                  id:
+                    type: string
+                    minLength: 1
+                  email:
+                    type: string
+                    minLength: 1
+                  name:
+                    type: object
+                    required:
+                      - firstName
+                      - lastName
+                    properties:
+                      firstName:
+                        type: string
+                        minLength: 1
+                      lastName:
+                        type: string
+                        minLength: 1
+                required:
+                  - id
+                  - email
+                  - name
               owner:
-                $ref: '#/components/schemas/User'
+                type: object
+                properties:
+                  id:
+                    type: string
+                    minLength: 1
+                  email:
+                    type: string
+                    minLength: 1
+                  name:
+                    type: object
+                    required:
+                      - firstName
+                      - lastName
+                    properties:
+                      firstName:
+                        type: string
+                        minLength: 1
+                      lastName:
+                        type: string
+                        minLength: 1
+                required:
+                  - id
+                  - email
+                  - name
             required:
               - requestId
               - itemId
