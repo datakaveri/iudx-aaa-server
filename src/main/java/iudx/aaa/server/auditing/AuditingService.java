@@ -20,4 +20,7 @@ public interface AuditingService {
 
   @Fluent
   AuditingService executeWriteQuery(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+
+  @Fluent
+  AuditingService executeReadQuery(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
 }

@@ -778,6 +778,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    * @return context response
    */
   private Future<Void> processResponse(HttpServerResponse response, JsonObject msg) {
+    LOGGER.info("response "+response.getStatusMessage());
     int status = msg.getInteger(STATUS, 400);
     msg.remove(STATUS);
     response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON);
