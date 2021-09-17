@@ -29,6 +29,8 @@ public class CatalogueClient {
   private Integer catPort;
   private String catItemPath;
   private String authUrl;
+  private String resUrl;
+  private String domain;
 
   public CatalogueClient(Vertx vertx, PgPool pool, JsonObject options) {
 
@@ -41,6 +43,8 @@ public class CatalogueClient {
     this.catPort = Integer.parseInt(options.getString("catServerPort"));
     this.catItemPath = Constants.CAT_ITEM_PATH;
     this.authUrl = options.getString("authServerUrl");
+    this.resUrl = options.getString("resURL");
+      this.domain = options.getString("domain");
   }
 
   /**
@@ -462,8 +466,6 @@ public class CatalogueClient {
 
     // stream resGrps to get list of ResourceServers, parse to get url of server, check for
     // file/video, use to get resource server id
-    List<String> iudxServers = List.of("file.iudx.org.in", "video.iudx.org.in");
-    String resourceServer = "res.iudx.io";
 
     // TODO
     // changing video and file server (.iudx.org.in) to resource server
@@ -474,14 +476,12 @@ public class CatalogueClient {
 
       String server = obj.next().getString(RESOURCE_SERVER);
       String url = server.split("/")[2];
-
-      if (iudxServers.contains(url)) url = resourceServer;
+      String[] urlSplit = url.split("\\.",2);
+        if (!urlSplit[0].equals("catalogue") && urlSplit[1].equals(domain))  url = resUrl;
       resUrlMap.put(server, url);
     }
-
     Collector<Row, ?, Map<String, UUID>> collector =
         Collectors.toMap(row -> row.getString(URL), row -> row.getUUID(ID));
-
     Future<Map<String, UUID>> resSerId =
         pool.withConnection(
             conn ->
@@ -489,7 +489,6 @@ public class CatalogueClient {
                     .collecting(collector)
                     .execute(Tuple.of(resUrlMap.values().toArray()))
                     .map(SqlResult::value));
-
 
 
     Collector<Row, ?, Map<String, UUID>> providerId =
@@ -519,7 +518,6 @@ public class CatalogueClient {
                     UUID serverId = resSerId.result().get(url);
                     tuples.add(Tuple.of(id, pid, serverId));
                   }
-
                   return Future.succeededFuture(tuples);
                 });
     // create tuple for resource group insertion // not if empty

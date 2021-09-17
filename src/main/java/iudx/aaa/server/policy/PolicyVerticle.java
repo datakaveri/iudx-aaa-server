@@ -68,6 +68,8 @@ public class PolicyVerticle extends AbstractVerticle {
     databasePassword = config().getString("databasePassword");
     poolSize = Integer.parseInt(config().getString("poolSize"));
     catalogueOptions = config().getJsonObject("catalogueOptions");
+    catalogueOptions.put("domain",config().getString("domain"));
+    catalogueOptions.put("resURL",config().getJsonObject("resOptions").getString("resURL"));
     authOptions = config().getJsonObject("authOptions");
     catOptions = config().getJsonObject("catOptions");
 
