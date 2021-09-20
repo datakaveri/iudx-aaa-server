@@ -13,6 +13,10 @@ import static iudx.aaa.server.admin.Constants.URN_INVALID_INPUT;
 import static iudx.aaa.server.admin.Constants.URN_INVALID_ROLE;
 import static iudx.aaa.server.admin.Constants.URN_MISSING_INFO;
 import static iudx.aaa.server.admin.Constants.URN_SUCCESS;
+import static iudx.aaa.server.registration.Utils.SQL_CREATE_ADMIN_SERVER;
+import static iudx.aaa.server.registration.Utils.SQL_CREATE_ORG;
+import static iudx.aaa.server.registration.Utils.SQL_DELETE_ORG;
+import static iudx.aaa.server.registration.Utils.SQL_DELETE_SERVERS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,7 +44,6 @@ import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.KcAdmin;
 import iudx.aaa.server.registration.Utils;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,20 +87,6 @@ public class UpdateProviderRegistrationStatusTest {
       "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
   private static final String DUMMY_AUTH_SERVER =
       "auth" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + "iudx.io";
-
-  /* SQL queries for creating and deleting required data */
-  private static final String SQL_CREATE_ADMIN_SERVER =
-      "INSERT INTO test.resource_server (name, owner_id, url, created_at, updated_at) "
-          + "VALUES ($1::text, $2::uuid, $3::text, NOW(), NOW())";
-
-  private static final String SQL_DELETE_SERVERS =
-      "DELETE FROM test.resource_server WHERE url = ANY ($1::text[])";
-
-  private static final String SQL_CREATE_ORG =
-      "INSERT INTO test.organizations (name, url, created_at, updated_at) "
-          + "VALUES ($1:: text, $2::text, NOW(), NOW()) RETURNING id";
-
-  private static final String SQL_DELETE_ORG = "DELETE FROM test.organizations WHERE id = $1::uuid";
 
   static String name = RandomStringUtils.randomAlphabetic(10).toLowerCase();
   static String url = name + ".com";

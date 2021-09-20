@@ -1,5 +1,7 @@
 package iudx.aaa.server.registration;
 
+import iudx.aaa.server.apiserver.Schema;
+
 /**
  * Constants for Registration service for SQL queries, URNs, responses and other values.
  */
@@ -22,6 +24,8 @@ public class Constants {
   public static final String DATABASE_PASSWORD = "databasePassword";
   public static final String DATABASE_POOLSIZE = "poolSize";
   public static final int DB_CONNECT_TIMEOUT = 10000;
+
+  public static final Schema DB_SCHEMA = Schema.INSTANCE; 
 
   public static final String KEYCLOAK_URL = "keycloakUrl";
   public static final String KEYCLOAK_REALM = "keycloakRealm";
@@ -92,51 +96,53 @@ public class Constants {
 
   /* SQL queries */
   public static final String SQL_FIND_USER_BY_KC_ID =
-      "SELECT * FROM test.users WHERE keycloak_id = $1";
+      "SELECT * FROM " + DB_SCHEMA + ".users WHERE keycloak_id = $1";
   public static final String SQL_FIND_ORG_BY_ID =
-      "SELECT * FROM test.organizations WHERE id = $1::uuid";
+      "SELECT * FROM " + DB_SCHEMA + ".organizations WHERE id = $1::uuid";
 
   public static final String SQL_CREATE_USER =
-      "INSERT INTO test.users (phone, organization_id, email_hash, keycloak_id, "
+      "INSERT INTO " + DB_SCHEMA + ".users (phone, organization_id, email_hash, keycloak_id, "
           + "created_at, updated_at) VALUES ($1::text, $2::uuid, $3::text, $4::uuid, "
           + "NOW(), NOW()) " + " RETURNING id";
 
-  public static final String SQL_CREATE_ROLE =
-      "INSERT INTO test.roles (user_id, role, status, created_at, updated_at)"
-          + " VALUES ($1::uuid, $2::test.role_enum, $3::test.role_status_enum, NOW(), NOW())";
+  public static final String SQL_CREATE_ROLE = "INSERT INTO " + DB_SCHEMA
+      + ".roles (user_id, role, status, created_at, updated_at)" + " VALUES ($1::uuid, $2::"
+      + DB_SCHEMA + ".role_enum, $3::" + DB_SCHEMA + ".role_status_enum, NOW(), NOW())";
 
-  public static final String SQL_CREATE_CLIENT = "INSERT INTO test.user_clients"
+  public static final String SQL_CREATE_CLIENT = "INSERT INTO " + DB_SCHEMA + ".user_clients"
       + " (user_id, client_id, client_secret, client_name, created_at, updated_at)"
       + " VALUES ($1::uuid, $2::uuid, $3::text, $4::text, NOW(), NOW())";
 
   public static final String SQL_GET_ORG_DETAILS =
-      "SELECT name, url FROM test.organizations WHERE id = $1::uuid";
+      "SELECT name, url FROM " + DB_SCHEMA + ".organizations WHERE id = $1::uuid";
 
-  public static final String SQL_GET_ALL_ORGS = "SELECT id, name, url FROM test.organizations";
+  public static final String SQL_GET_ALL_ORGS =
+      "SELECT id, name, url FROM " + DB_SCHEMA + ".organizations";
 
   public static final String SQL_GET_REG_ROLES =
-      "SELECT role FROM test.roles WHERE user_id = $1::uuid";
+      "SELECT role FROM " + DB_SCHEMA + ".roles WHERE user_id = $1::uuid";
 
   public static final String SQL_GET_CLIENTS_FORMATTED =
-      "SELECT client_name as \"clientName\", client_id as \"clientId\" "
-          + " FROM test.user_clients WHERE user_id = $1::uuid";
+      "SELECT client_name as \"clientName\", client_id as \"clientId\" " + " FROM " + DB_SCHEMA
+          + ".user_clients WHERE user_id = $1::uuid";
 
-  public static final String SQL_UPDATE_ORG_ID =
-      "UPDATE test.users SET organization_id = $1::uuid WHERE organization_id IS NULL AND id = $2::uuid";
+  public static final String SQL_UPDATE_ORG_ID = "UPDATE " + DB_SCHEMA
+      + ".users SET organization_id = $1::uuid WHERE organization_id IS NULL AND id = $2::uuid";
 
   public static final String SQL_GET_PHONE_JOIN_ORG =
-      "SELECT users.phone, name, url FROM test.organizations RIGHT JOIN test.users"
-          + " ON users.organization_id = organizations.id WHERE users.id = $1::uuid";
+      "SELECT users.phone, name, url FROM " + DB_SCHEMA + ".organizations RIGHT JOIN " + DB_SCHEMA
+          + ".users" + " ON users.organization_id = organizations.id WHERE users.id = $1::uuid";
 
   public static final String SQL_GET_KC_ID_FROM_ARR =
-      "SELECT id, keycloak_id FROM test.users WHERE id = ANY($1::uuid[])";
+      "SELECT id, keycloak_id FROM " + DB_SCHEMA + ".users WHERE id = ANY($1::uuid[])";
 
-  public static final String SQL_GET_USER_ID_ORG =
-      "SELECT users.id, organizations.name, url FROM test.users"
-          + " JOIN test.organizations ON users.organization_id = organizations.id WHERE keycloak_id = $1::uuid";
+  public static final String SQL_GET_USER_ID_ORG = "SELECT users.id, organizations.name, url FROM "
+      + DB_SCHEMA + ".users" + " JOIN " + DB_SCHEMA
+      + ".organizations ON users.organization_id = organizations.id WHERE keycloak_id = $1::uuid";
 
   public static final String SQL_GET_UID_ORG_ID_CHECK_ROLE =
-      "SELECT users.id, users.organization_id FROM test.users"
-          + " JOIN test.roles ON users.id = roles.user_id"
-          + " WHERE users.keycloak_id = $1::uuid AND roles.role = $2::test.role_enum AND roles.status = 'APPROVED'";
+      "SELECT users.id, users.organization_id FROM " + DB_SCHEMA + ".users" + " JOIN " + DB_SCHEMA
+          + ".roles ON users.id = roles.user_id"
+          + " WHERE users.keycloak_id = $1::uuid AND roles.role = $2::" + DB_SCHEMA
+          + ".role_enum AND roles.status = 'APPROVED'";
 }

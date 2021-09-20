@@ -9,23 +9,15 @@ import static iudx.aaa.server.policy.Constants.POLICY_SUCCESS;
 import static iudx.aaa.server.policy.Constants.RESULTS;
 import static iudx.aaa.server.policy.Constants.TYPE;
 import static iudx.aaa.server.policy.Constants.URN_INVALID_ROLE;
+import static iudx.aaa.server.registration.Utils.SQL_CREATE_ADMIN_SERVER;
+import static iudx.aaa.server.registration.Utils.SQL_CREATE_DELEG;
+import static iudx.aaa.server.registration.Utils.SQL_CREATE_ORG;
+import static iudx.aaa.server.registration.Utils.SQL_DELETE_ORG;
+import static iudx.aaa.server.registration.Utils.SQL_DELETE_SERVERS;
+import static iudx.aaa.server.registration.Utils.SQL_GET_SERVER_IDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
+
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -48,6 +40,21 @@ import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.policy.Constants.status;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.registration.Utils;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
 public class ListDelegationTest {
@@ -82,27 +89,6 @@ public class ListDelegationTest {
 
   private static final String DUMMY_SERVER =
       "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
-
-  /* SQL queries for creating and deleting required data */
-  private static final String SQL_CREATE_ADMIN_SERVER =
-      "INSERT INTO test.resource_server (name, owner_id, url, created_at, updated_at) "
-          + "VALUES ($1::text, $2::uuid, $3::text, NOW(), NOW()) ";
-
-  private static final String SQL_GET_SERVER_IDS =
-      "SELECT id, url FROM test.resource_server WHERE url = ANY($1::text[])";
-
-  private static final String SQL_DELETE_SERVERS =
-      "DELETE FROM test.resource_server WHERE url = ANY ($1::text[])";
-
-  private static final String SQL_CREATE_ORG =
-      "INSERT INTO test.organizations (name, url, created_at, updated_at) "
-          + "VALUES ($1:: text, $2::text, NOW(), NOW()) RETURNING id";
-
-  private static final String SQL_CREATE_DELEG = "INSERT INTO test.delegations "
-      + "(owner_id, user_id, resource_server_id,status, created_at, updated_at) "
-      + "VALUES ($1::uuid, $2::uuid, $3::uuid, $4::test.policy_status_enum, NOW(), NOW())";
-
-  private static final String SQL_DELETE_ORG = "DELETE FROM test.organizations WHERE id = $1::uuid";
 
   static String name = RandomStringUtils.randomAlphabetic(10).toLowerCase();
   static String url = name + ".com";

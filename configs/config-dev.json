@@ -5,6 +5,7 @@
   ],
   "clusterId": "iudx-aaa-cluster",
   "host": "server",
+  "databaseSchema":"test",
   "modules": [
     {
       "id": "iudx.aaa.server.policy.PolicyVerticle",

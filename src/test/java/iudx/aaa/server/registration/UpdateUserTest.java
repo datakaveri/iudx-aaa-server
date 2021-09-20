@@ -11,7 +11,6 @@ import static iudx.aaa.server.registration.Constants.ERR_TITLE_ORG_NO_EXIST;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_ORG_NO_MATCH;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_ROLE_EXISTS;
 import static iudx.aaa.server.registration.Constants.NIL_UUID;
-import static iudx.aaa.server.registration.Constants.PROVIDER_PENDING_MESG;
 import static iudx.aaa.server.registration.Constants.RESP_CLIENT_ARR;
 import static iudx.aaa.server.registration.Constants.RESP_CLIENT_ID;
 import static iudx.aaa.server.registration.Constants.RESP_EMAIL;
@@ -22,9 +21,10 @@ import static iudx.aaa.server.registration.Constants.URN_ALREADY_EXISTS;
 import static iudx.aaa.server.registration.Constants.URN_INVALID_INPUT;
 import static iudx.aaa.server.registration.Constants.URN_MISSING_INFO;
 import static iudx.aaa.server.registration.Constants.URN_SUCCESS;
+import static iudx.aaa.server.registration.Utils.SQL_CREATE_ORG;
+import static iudx.aaa.server.registration.Utils.SQL_DELETE_ORG;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 
@@ -80,13 +80,6 @@ public class UpdateUserTest {
   private static Vertx vertxObj;
 
   private static KcAdmin kc = Mockito.mock(KcAdmin.class);
-
-  /* SQL queries for creating and deleting required data */
-  private static final String SQL_CREATE_ORG =
-      "INSERT INTO test.organizations (name, url, created_at, updated_at) "
-          + "VALUES ($1:: text, $2::text, NOW(), NOW()) RETURNING id";
-
-  private static final String SQL_DELETE_ORG = "DELETE FROM test.organizations WHERE id = $1::uuid";
 
   static String name = RandomStringUtils.randomAlphabetic(10).toLowerCase();
   static String url = name + ".com";

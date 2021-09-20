@@ -7,6 +7,7 @@ import java.util.EnumSet;
 import io.vertx.core.eventbus.EventBusOptions;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import iudx.aaa.server.apiserver.Schema;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.DiscoveryStrategyConfig;
 import com.hazelcast.zookeeper.*;
@@ -126,6 +127,10 @@ public class Deployer {
     EventBusOptions ebOptions = new EventBusOptions().setClusterPublicHost(host);
     VertxOptions options = new VertxOptions().setClusterManager(mgr).setEventBusOptions(ebOptions)
         .setMetricsOptions(getMetricsOptions());
+
+    String dbSchema = configuration.getString("databaseSchema");
+    Schema.INSTANCE.set(dbSchema);
+    LOGGER.debug("Set database schema to " + Schema.INSTANCE);
 
     Vertx.clusteredVertx(options, res -> {
       if (res.succeeded()) {

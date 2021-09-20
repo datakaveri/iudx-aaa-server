@@ -1,5 +1,7 @@
 package iudx.aaa.server.apiserver.util;
 
+import iudx.aaa.server.apiserver.Schema;
+
 public class Constants {
   // Header params
   public static final String HEADER_AUTHORIZATION = "Authorization";
@@ -130,7 +132,7 @@ public class Constants {
   public static final String INVALID_TOKEN_FAILED_COMPOSE = "INVALID_TOKEN";
 
   /* SQL Queries */
-  public static final String DB_SCHEMA = "test";
+  public static final Schema DB_SCHEMA = Schema.INSTANCE; 
   public static final String SQL_GET_USER_ROLES =
       "SELECT u.id, uc.client_id, array_agg(r.role) as roles \n" + "FROM (select id from "
           + DB_SCHEMA + ".users where keycloak_id = $1) u \n" + "LEFT JOIN " + DB_SCHEMA
@@ -147,8 +149,8 @@ public class Constants {
           + "where r.status='APPROVED' GROUP BY u.id, client_secret, keycloak_id";
   
   public static final String CHECK_DELEGATE =
-      "SELECT * FROM test.policies pol "
-      + "INNER JOIN test.delegations del ON "
+      "SELECT * FROM " + DB_SCHEMA + ".policies pol "
+      + "INNER JOIN " + DB_SCHEMA + ".delegations del ON "
       + "pol.owner_id = del.owner_id AND pol.user_id = del.user_id "
       + "WHERE del.user_id = $1 AND "
       + "del.owner_id = $2 AND "

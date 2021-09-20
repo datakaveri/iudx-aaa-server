@@ -9,6 +9,7 @@ import io.vertx.core.cli.CLI;
 import io.vertx.core.cli.Option;
 import io.vertx.core.cli.CommandLine;
 import io.vertx.core.json.JsonObject;
+import iudx.aaa.server.apiserver.Schema;
 import io.vertx.core.DeploymentOptions;
 
 
@@ -65,6 +66,9 @@ public class DeployerDev {
       return;
     }
     JsonObject configuration = new JsonObject(config);
+    String dbSchema = configuration.getString("databaseSchema");
+    Schema.INSTANCE.set(dbSchema);
+    LOGGER.debug("Set database schema to " + Schema.INSTANCE);
     Vertx vertx = Vertx.vertx(options);
     recursiveDeploy(vertx, configuration, 0);
   }

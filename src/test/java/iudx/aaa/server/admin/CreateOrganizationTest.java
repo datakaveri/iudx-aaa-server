@@ -1,14 +1,15 @@
 package iudx.aaa.server.admin;
 
+import static iudx.aaa.server.registration.Utils.SQL_CREATE_ADMIN_SERVER;
+import static iudx.aaa.server.registration.Utils.SQL_DELETE_BULK_ORG;
+import static iudx.aaa.server.registration.Utils.SQL_DELETE_SERVERS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
@@ -76,16 +77,6 @@ public class CreateOrganizationTest {
   private static final String DUMMY_AUTH_SERVER =
       "auth" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + "iudx.io";
 
-  /* SQL queries for creating and deleting required data */
-  private static final String SQL_CREATE_ADMIN_SERVER =
-      "INSERT INTO test.resource_server (name, owner_id, url, created_at, updated_at) "
-          + "VALUES ($1::text, $2::uuid, $3::text, NOW(), NOW())";
-
-  private static final String SQL_DELETE_SERVERS =
-      "DELETE FROM test.resource_server WHERE url = ANY ($1::text[])";
-
-  private static final String SQL_DELETE_BULK_ORG =
-      "DELETE FROM test.organizations WHERE id = ANY ($1::uuid[])";
 
   @BeforeAll
   @DisplayName("Deploying Verticle")

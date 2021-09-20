@@ -5,6 +5,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import iudx.aaa.server.apiserver.Schema;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import java.io.File;
@@ -33,6 +34,9 @@ public class Configuration {
     if (file.exists()) {
       Buffer buff = fileSystem.readFileBlocking(CONFIG_PATH);
       JsonArray conf = buff.toJsonObject().getJsonArray("modules");
+      String databaseSchema = buff.toJsonObject().getString("databaseSchema");
+      Schema.INSTANCE.set(databaseSchema);
+      LOGGER.debug("Set database schema to " + Schema.INSTANCE);
       moduleConf = conf.getJsonObject(moduleIndex);
 
     } else {
