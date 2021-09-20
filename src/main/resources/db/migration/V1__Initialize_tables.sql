@@ -329,7 +329,7 @@ ALTER TABLE ONLY users
 -- Access grants
 --
 
-GRANT USAGE ON SCHEMA test TO ${authUser};
+GRANT USAGE ON SCHEMA ${flyway:defaultSchema} TO ${authUser};
 
 GRANT SELECT,INSERT,UPDATE ON TABLE access_requests TO ${authUser};
 GRANT SELECT,INSERT,UPDATE ON TABLE approved_access_requests TO ${authUser};
