@@ -11,6 +11,8 @@ import static iudx.aaa.server.registration.Constants.RESP_ORG;
 import static iudx.aaa.server.registration.Constants.RESP_PHONE;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_USER_READ;
 import static iudx.aaa.server.registration.Constants.URN_SUCCESS;
+import static iudx.aaa.server.registration.Utils.SQL_CREATE_ORG;
+import static iudx.aaa.server.registration.Utils.SQL_DELETE_ORG;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -69,13 +71,6 @@ public class ListUserTest {
   private static KcAdmin kc = Mockito.mock(KcAdmin.class);
   private static final String UUID_REGEX =
       "^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$";
-
-  /* SQL queries for creating and deleting required data */
-  private static final String SQL_CREATE_ORG =
-      "INSERT INTO test.organizations (name, url, created_at, updated_at) "
-          + "VALUES ($1:: text, $2::text, NOW(), NOW()) RETURNING id";
-
-  private static final String SQL_DELETE_ORG = "DELETE FROM test.organizations WHERE id = $1::uuid";
 
   static String name = RandomStringUtils.randomAlphabetic(10).toLowerCase();
   static String url = name + ".com";
