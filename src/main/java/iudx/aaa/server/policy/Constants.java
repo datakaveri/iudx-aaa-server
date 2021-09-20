@@ -1,9 +1,11 @@
 package iudx.aaa.server.policy;
 
+import iudx.aaa.server.apiserver.Schema;
+
 public class Constants {
 
   public static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
-  public static final String DB_SCHEMA = "test";
+  public static final Schema DB_SCHEMA = Schema.INSTANCE; 
   // db columns
   public static final String USERID = "userId";
   public static final String ITEMID = "itemId";
@@ -235,6 +237,9 @@ public class Constants {
 
   public static final String GET_RES_DETAILS =
       "select cat_id,id from "+  DB_SCHEMA +  ".resource where cat_id = ANY($1::text[]) ";
+
+  public static final String GET_RES_GRP_DETAILS =
+      "select cat_id,id from "+  DB_SCHEMA +  ".resource_group where cat_id = ANY($1::text[]) ";
 
   public static final String GET_RES_SER_ID =
       "select url,id from "+  DB_SCHEMA +  ".resource_server where url = any($1::text[])";

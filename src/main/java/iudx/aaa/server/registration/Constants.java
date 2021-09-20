@@ -1,5 +1,7 @@
 package iudx.aaa.server.registration;
 
+import iudx.aaa.server.apiserver.Schema;
+
 /**
  * Constants for Registration service for SQL queries, URNs, responses and other values.
  */
@@ -23,7 +25,7 @@ public class Constants {
   public static final String DATABASE_POOLSIZE = "poolSize";
   public static final int DB_CONNECT_TIMEOUT = 10000;
 
-  public static final String DB_SCHEMA = "test";
+  public static final Schema DB_SCHEMA = Schema.INSTANCE; 
 
   public static final String KEYCLOAK_URL = "keycloakUrl";
   public static final String KEYCLOAK_REALM = "keycloakRealm";

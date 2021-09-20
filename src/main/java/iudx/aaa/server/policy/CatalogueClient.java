@@ -228,8 +228,7 @@ public class CatalogueClient {
 
       pool.withConnection(
           conn ->
-              conn.preparedQuery(
-                      "select cat_id,id from test.resource where cat_id = ANY($1::text[]) ")
+              conn.preparedQuery(GET_RES_DETAILS)
                   .collecting(catIdCollector)
                   .execute(Tuple.of(resourceList.toArray(String[]::new)))
                   .onFailure(
@@ -354,8 +353,7 @@ public class CatalogueClient {
 
       pool.withConnection(
           conn ->
-              conn.preparedQuery(
-                      "select cat_id,id from test.resource_group where cat_id = ANY($1::text[]) ")
+              conn.preparedQuery(GET_RES_GRP_DETAILS)
                   .collecting(catIdCollector)
                   .execute(Tuple.of(resGrpList.toArray(String[]::new)))
                   .onFailure(
