@@ -2167,7 +2167,6 @@ paths:
         '403':
           description: |-
             Forbidden
-
             - if the user trying to set a policy does not have an Admin,provider or delegate role
             - if the user trying to set a policy does not have a policy by the auth server admin
             - if the user is neither the owner of the resource item/group or a delegate to the owner of the resource
@@ -2179,10 +2178,8 @@ paths:
                 properties: {}
       description: |
         Create new policies of an authenticated User
-
-
         - `userId` : UUID of the user for whom policy is to be set.
-        - `itemId` : String value of the item for which policy is to be set
+        - `itemId` : String value of the item for which policy is to be set 
         - `itemType` : String value of the item type
         - `expiryTime` : ISO8601 compatible time in UTC - optional, if not sent default expiry is set for the policy
         - `constraints` : JsonObject of the constraints that the resource server can recognize.
