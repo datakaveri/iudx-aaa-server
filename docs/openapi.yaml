@@ -383,7 +383,7 @@ paths:
                     title: string
                     detail: string
       description: |-
-        Revoke the token associated with clientId. 
+        Revoke the token associated with clientId.
         <!--- (Commented out) Revoke token requires either token header or clientId/clientSecret header.---!>
       tags:
         - Token APIs
