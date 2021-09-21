@@ -383,7 +383,7 @@ paths:
                     title: string
                     detail: string
       description: |-
-        Revoke the token associated with clientId. 
+        Revoke the token associated with clientId.
         <!--- (Commented out) Revoke token requires either token header or clientId/clientSecret header.---!>
       tags:
         - Token APIs
@@ -644,7 +644,7 @@ paths:
           - manage catalogue items
           - manage data on resource servers
           - manage policies
-          
+
         ## Client ID and Client Secret
         On successful creation of the user profile, the user would receive a client ID and a client secret. The client ID and client secret can be used instead of the OIDC flow to request for tokens. **The client secret is ONLY shown to the user here and can never be obtained again.**
 
@@ -1656,7 +1656,7 @@ paths:
           name: filter
           description: Filter the status of the Registration
       description: |-
-        Get all the provider registration details. This operation can be performed by an `admin` of the IUDX AAA server. 
+        Get all the provider registration details. This operation can be performed by an `admin` of the IUDX AAA server.
         The request can be filtered based on the status of registration using the query param `filter`.
         The various statuses are:
         - `pending`
@@ -1866,25 +1866,23 @@ paths:
                     type: 'urn:dx:as:Success'
                     title: policy read
                     results:
-                      result:
-                        - policyId: b268d557-cc98-4337-833d-6ad34e7eb51f
-                          itemId: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
-                          itemType: resource
-                          expiryTime: '2022-06-15T09:07:16.034289'
-                          constraints: {}
-                          catId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group/resource
-                          user:
-                            email: alice@gmail.com
-                            name:
-                              firstName: Alice
-                              lastName: Bob
-                            id: 32a4b979-4f4a-4c44-b0c3-2fe109952b5f
-                          owner:
-                            email: someone@example.com
-                            name:
-                              firstName: Someone
-                              lastName: Person
-                            id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                      - policyId: b45148b0-6bb7-4ab5-91f6-7c7146cefe42
+                        itemType: resource_server
+                        expiryTime: '2022-09-09T04:22:36'
+                        constraints: {}
+                        itemId: rs.iudx.io
+                        user:
+                          email: someone@example.com
+                          name:
+                            firstName: Someone
+                            lastName: Person
+                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                        owner:
+                          email: bryanrobert@iisc.ac.in
+                          name:
+                            firstName: B
+                            lastName: Robert
+                          id: 844e251b-574b-46e6-9247-f76f1f70a637
                 properties:
                   type:
                     type: string
@@ -1893,149 +1891,124 @@ paths:
                     type: string
                     minLength: 1
                   results:
-                    type: object
-                    required:
-                      - result
-                    properties:
-                      result:
-                        type: array
-                        uniqueItems: true
-                        minItems: 1
-                        items:
+                    type: array
+                    uniqueItems: true
+                    minItems: 1
+                    items:
+                      type: object
+                      properties:
+                        policyId:
+                          type: string
+                          minLength: 1
+                        itemType:
+                          type: string
+                          minLength: 1
+                        expiryTime:
+                          type: string
+                          minLength: 1
+                        constraints:
+                          type: object
+                        itemId:
+                          type: string
+                          minLength: 1
+                        user:
                           type: object
                           properties:
-                            policyId:
+                            email:
                               type: string
                               minLength: 1
-                            itemId:
-                              type: string
-                              minLength: 1
-                            itemType:
-                              type: string
-                              minLength: 1
-                            expiryTime:
-                              type: string
-                              minLength: 1
-                            constraints:
+                            name:
                               type: object
-                            catId:
-                              type: string
-                              minLength: 1
-                            user:
-                              type: object
-                              properties:
-                                email:
-                                  type: string
-                                  minLength: 1
-                                name:
-                                  type: object
-                                  required:
-                                    - firstName
-                                    - lastName
-                                  properties:
-                                    firstName:
-                                      type: string
-                                      minLength: 1
-                                    lastName:
-                                      type: string
-                                      minLength: 1
-                                id:
-                                  type: string
-                                  minLength: 1
                               required:
-                                - email
-                                - name
-                                - id
-                            owner:
-                              type: object
+                                - firstName
+                                - lastName
                               properties:
-                                email:
+                                firstName:
                                   type: string
                                   minLength: 1
-                                name:
-                                  type: object
-                                  required:
-                                    - firstName
-                                    - lastName
-                                  properties:
-                                    firstName:
-                                      type: string
-                                      minLength: 1
-                                    lastName:
-                                      type: string
-                                      minLength: 1
-                                id:
+                                lastName:
                                   type: string
                                   minLength: 1
-                              required:
-                                - email
-                                - name
-                                - id
+                            id:
+                              type: string
+                              minLength: 1
                           required:
-                            - policyId
-                            - itemId
-                            - itemType
-                            - expiryTime
-                            - constraints
-                            - catId
+                            - email
+                            - name
+                            - id
+                        owner:
+                          type: object
+                          required:
+                            - email
+                            - name
+                            - id
+                          properties:
+                            email:
+                              type: string
+                              minLength: 1
+                            name:
+                              type: object
+                              required:
+                                - firstName
+                                - lastName
+                              properties:
+                                firstName:
+                                  type: string
+                                  minLength: 1
+                                lastName:
+                                  type: string
+                                  minLength: 1
+                            id:
+                              type: string
+                              minLength: 1
+                      required:
+                        - policyId
+                        - itemType
+                        - expiryTime
+                        - constraints
+                        - itemId
+                        - owner
                 required:
                   - type
                   - title
                   - results
               examples:
-                Example:
+                example:
                   value:
                     type: 'urn:dx:as:Success'
                     title: policy read
                     results:
-                      result:
-                        - policyId: b268d557-cc98-4337-833d-6ad34e7eb51f
-                          itemId: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
-                          itemType: resource
-                          expiryTime: '2022-06-15T09:07:16.034289'
-                          constraints: {}
-                          catId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group/resource
-                          user:
-                            email: alice@gmail.com
-                            name:
-                              firstName: Alice
-                              lastName: Bob
-                            id: 32a4b979-4f4a-4c44-b0c3-2fe109952b5f
-                          owner:
-                            email: someone@example.com
-                            name:
-                              firstName: Someone
-                              lastName: Person
-                            id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                      - policyId: b45148b0-6bb7-4ab5-91f6-7c7146cefe42
+                        itemType: resource_server
+                        expiryTime: '2022-09-09T04:22:36'
+                        constraints: {}
+                        itemId: rs.iudx.io
+                        user:
+                          email: someone@example.com
+                          name:
+                            firstName: Someone
+                            lastName: Person
+                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                        owner:
+                          email: bryanrobert@iisc.ac.in
+                          name:
+                            firstName: B
+                            lastName: Robert
+                          id: 844e251b-574b-46e6-9247-f76f1f70a637
           headers:
             Content-Type:
               schema:
                 type: string
               description: application/json
-        '400':
-          description: Bad Request
-          headers:
-            Content-Type:
-              schema:
-                type: string
-              description: application/json
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: '- Unauthorized - `token` invalid/expired'
-          headers:
-            Content-Type:
-              schema:
-                type: string
-              description: application/json
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Unauthorized'
       operationId: get-auth-v1-policies
-      description: Get all related policies of an authenticated User
+      description: |-
+        Get policies related to a particular user if the user is a
+        - `provider` : returns all policies created by the provider/auth delegate of the provider and the policies set for the provider
+        - `delegate` : returns all pollicies set for the delegate
+        - `consumer` : returns the policies set for the consumer
+
+        ## Auth delegate
+        An auth delegate may use the API to view policies on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
       parameters:
         - schema:
             type: string
@@ -2069,8 +2042,11 @@ paths:
             application/json:
               schema:
                 type: object
+              examples: {}
         '400':
-          description: Bad Request- Error or exceptions
+          description: |-
+            Bad Request- Error or exceptions
+            -id is not a valid a policyId
           content:
             application/json:
               schema:
@@ -2091,6 +2067,11 @@ paths:
               schema:
                 type: string
               description: application/json
+        '403':
+          description: |-
+            Forbidden
+
+            -User does not own the policy or is not a auth delegate to the owner of the policy
         '404':
           description: If the requested policies not exists
           content:
@@ -2102,7 +2083,10 @@ paths:
               schema:
                 type: string
               description: application/json
-      description: Delete policies of an authenticated User.
+      description: |-
+        Delete policies of an authenticated User.
+
+        - `id` :is the policy id that the user wants to delete. The user can use the list policy api to get this value.
       parameters:
         - schema:
             type: string
@@ -2155,7 +2139,11 @@ paths:
         '200':
           description: OK
         '400':
-          description: Bad Request
+          description: |
+            Bad Request
+            Invalid expiry - dateTime in the past or invalid format
+            Invalid user - UserId is not present in db
+            Invalid resource Servers - If the resource server that the policy is being set for is not present in the db
           content:
             application/json:
               schema:
@@ -2176,7 +2164,25 @@ paths:
               schema:
                 type: string
               description: application/json
-      description: Create new policies of an authenticated User
+        '403':
+          description: |-
+            Forbidden
+            - if the user trying to set a policy does not have an Admin,provider or delegate role
+            - if the user trying to set a policy does not have a policy by the auth server admin
+            - if the user is neither the owner of the resource item/group or a delegate to the owner of the resource
+            - if a valid policy already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+      description: |
+        Create new policies of an authenticated User
+        - `userId` : UUID of the user for whom policy is to be set.
+        - `itemId` : String value of the item for which policy is to be set 
+        - `itemType` : String value of the item type
+        - `expiryTime` : ISO8601 compatible time in UTC - optional, if not sent default expiry is set for the policy
+        - `constraints` : JsonObject of the constraints that the resource server can recognize.
       parameters:
         - schema:
             type: string
@@ -2492,7 +2498,7 @@ paths:
         - `delegate` : returns all providers who have assigned them as delegates for certain servers
 
         ## Auth delegate
-        An auth delegate may use the API to view delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
+        An auth delegate may use the API to view delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
 
         **NOTE: An auth delegate may not view any delegations related to the auth server.**
       parameters:
@@ -2626,10 +2632,10 @@ paths:
                     title: Auth delegate may not delete auth delegations
                     detail: 8ff57971-10d9-4bc6-ab3b-87dc328c72ce
       description: |
-        A provider may delete delegations created by them. 
+        A provider may delete delegations created by them.
 
         ## Auth delegate
-        An auth delegate may use the API to delete delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
+        An auth delegate may use the API to delete delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
 
         **NOTE: An auth delegate may not delete any delegations related to the auth server.**
       parameters:
@@ -2687,13 +2693,16 @@ paths:
       tags:
         - Delegation APIs
     post:
-      summary: Create Delegations - DRAFT
+      summary: Create Delegations
       operationId: post-auth-v1-policies-delegations
       responses:
         '200':
           description: OK
         '400':
-          description: Bad Request
+          description: |-
+            Bad Request
+            -the user trying to be made a delegate is not registered as a delegate
+            -the server url is not present in the db
           content:
             application/json:
               schema:
@@ -2714,7 +2723,22 @@ paths:
               schema:
                 type: string
               description: application/json
-      description: Create new delegations
+        '403':
+          description: |-
+            Forbidden
+            - No auth policy for the user trying to create a delegate
+            - Auth delegate trying to create another auth delegate
+            - Delegation already exists
+      description: |
+        Create new delegations
+
+        - `userId` : UUID of the user who is to be made a delegate.
+        - `resourceServerId` : URL of the resource server the user is to be made a delegate for.
+
+        ## Auth delegate
+        An auth delegate may use the API to create delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
+
+        **NOTE: An auth delegate may not create any delegations related to the auth server.**
       parameters:
         - schema:
             type: string
@@ -2725,72 +2749,59 @@ paths:
           name: Authorization
           description: Keycloak Issued token
           required: true
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              description: ''
-              minItems: 1
-              uniqueItems: true
-              x-examples:
-                example-1:
-                  - userId: 89bbe934-5f18-4f57-b68e-fb821ba77291
-                    itemId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-abcd
-                    itemType: resource_group
-                    expiryTime: '2021-08-30T21:10:06.834292'
-                    constraints: {}
-              items:
-                type: object
-                properties:
-                  userId:
-                    type: string
-                    minLength: 1
-                  itemId:
-                    type: string
-                    minLength: 1
-                  itemType:
-                    type: string
-                    minLength: 1
-                  expiryTime:
-                    type: string
-                    minLength: 1
-                  constraints:
-                    type: object
-                required:
-                  - userId
-                  - itemId
-                  - itemType
-                  - constraints
-            examples:
-              Create MultiplePolicies:
-                value:
-                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
-                    itemType: resource_group
-                    expiryTime: '2022-08-04T20:00:19+0000'
-                    constraints: {}
-                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cq21/resource-group
-                    itemType: resource_group
-                    expiryTime: '2022-08-04T20:00:19+0000'
-                    constraints: {}
-              Create SinglePolicies:
-                value:
-                  - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                    itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
-                    itemType: resource_group
-                    expiryTime: '2022-08-04T20:00:19+0000'
-                    constraints: {}
-          application/xml:
-            schema:
-              type: object
-              properties: {}
-        description: Request body will be JsonArray having or many objects
+        - schema:
+            type: string
+          in: header
+          name: providerId
+          description: 'User ID of the provider, if an auth delegate wishes to view delegations of their provider'
       security:
         - authorization: []
       tags:
         - Delegation APIs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              description: ''
+              type: object
+              x-examples:
+                example-1:
+                  request:
+                    - resSerId: rs.iudx.io
+                      userId: d34b1547-7281-4f66-b550-ed79f9bb0c36
+              properties:
+                request:
+                  type: array
+                  uniqueItems: true
+                  minItems: 1
+                  items:
+                    type: object
+                    properties:
+                      resSerId:
+                        type: string
+                        minLength: 1
+                      userId:
+                        type: string
+                        minLength: 1
+                    required:
+                      - resSerId
+                      - userId
+              required:
+                - request
+            examples:
+              single request:
+                value:
+                  request:
+                    - resSerId: rs.iudx.io
+                      userId: d34b1547-7281-4f66-b550-ed79f9bb0c36
+              multiple request:
+                value:
+                  request:
+                    - resSerId: rs.iudx.io
+                      userId: d34b1547-7281-4f66-b550-ed79f9bb0c36
+                    - resSerId: auth.iudx.io
+                      userId: d34b1547-7281-4f66-b550-ed79f9bb0c37
+        description: The body is a JSON object with a JSON array containing the objects that need to be created.
   /auth/v1/policies/requests:
     get:
       summary: List Requests
