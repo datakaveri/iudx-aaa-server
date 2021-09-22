@@ -10,13 +10,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -351,9 +354,9 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     tokenService.createToken(requestTokenDTO, user, handler -> {
       if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
+        processResponse(context, handler.result());
       } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
+        processResponse(context, handler.cause().getLocalizedMessage());
       }
     });
   }
@@ -369,9 +372,9 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     tokenService.validateToken(introspectToken, handler -> {
       if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
+        processResponse(context, handler.result());
       } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
+        processResponse(context, handler.cause().getLocalizedMessage());
       }
     });
   }
@@ -393,15 +396,15 @@ public class ApiServerVerticle extends AbstractVerticle {
       LOGGER.error("Fail: " + INVALID_CLIENT);
       Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
           .title(INVALID_CLIENT).detail(INVALID_CLIENT).build();
-      processResponse(context.response(), resp.toJson());
+      processResponse(context, resp.toJson());
       return;
     }
 
     tokenService.revokeToken(revokeTokenDTO, user, handler -> {
       if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
+        processResponse(context, handler.result());
       } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
+        processResponse(context, handler.cause().getLocalizedMessage());
       }
     });
   }
@@ -418,9 +421,9 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     registrationService.createUser(request, user, handler -> {
       if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
+        processResponse(context, handler.result());
       } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
+        processResponse(context, handler.cause().getLocalizedMessage());
       }
     });
   }
@@ -441,9 +444,9 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     registrationService.listUser(user, searchUserDetails, authDelegateDetails, handler -> {
       if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
+        processResponse(context, handler.result());
       } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
+        processResponse(context, handler.cause().getLocalizedMessage());
       }
     });
   }
@@ -460,9 +463,9 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     registrationService.updateUser(request, user, handler -> {
       if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
+        processResponse(context, handler.result());
       } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
+        processResponse(context, handler.cause().getLocalizedMessage());
       }
     });
   }
@@ -475,9 +478,9 @@ public class ApiServerVerticle extends AbstractVerticle {
   private void listOrganizationHandler(RoutingContext context) {
     registrationService.listOrganization(handler -> {
       if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
+        processResponse(context, handler.result());
       } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
+        processResponse(context, handler.cause().getLocalizedMessage());
       }
     });
   }
@@ -494,9 +497,9 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     adminService.createOrganization(request, user, handler -> {
       if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
+        processResponse(context, handler.result());
       } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
+        processResponse(context, handler.cause().getLocalizedMessage());
       }
     });
   }
@@ -524,9 +527,9 @@ public class ApiServerVerticle extends AbstractVerticle {
     User user = context.get(USER);
     adminService.getProviderRegistrations(filter, user, handler -> {
       if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
+        processResponse(context, handler.result());
       } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
+        processResponse(context, handler.cause().getLocalizedMessage());
       }
     });
   }
@@ -544,9 +547,9 @@ public class ApiServerVerticle extends AbstractVerticle {
     User user = context.get(USER);
     adminService.updateProviderRegistrationStatus(request, user, handler -> {
       if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
+        processResponse(context, handler.result());
       } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
+        processResponse(context, handler.cause().getLocalizedMessage());
       }
     });
   }
@@ -562,9 +565,9 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     policyService.listPolicy(user, data, handler -> {
       if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
+        processResponse(context, handler.result());
       } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
+        processResponse(context, handler.cause().getLocalizedMessage());
       }
     });
   }
@@ -584,9 +587,9 @@ public class ApiServerVerticle extends AbstractVerticle {
     policyService.createPolicy(request,user, handler -> {
 
       if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
+        processResponse(context, handler.result());
       } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
+        processResponse(context, handler.cause().getLocalizedMessage());
       }
     });
   }
@@ -605,9 +608,9 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     policyService.deletePolicy(jsonRequest, user, handler -> {
       if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
+        processResponse(context, handler.result());
       } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
+        processResponse(context, handler.cause().getLocalizedMessage());
       }
     });
   }
@@ -624,9 +627,9 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     policyService.listPolicyNotification(user, data, handler -> {
       if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
+        processResponse(context, handler.result());
       } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
+        processResponse(context, handler.cause().getLocalizedMessage());
       }
     });
   }
@@ -644,9 +647,9 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     policyService.createPolicyNotification(request, user, handler -> {
       if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
+        processResponse(context, handler.result());
       } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
+        processResponse(context, handler.cause().getLocalizedMessage());
       }
     });
   }
@@ -665,9 +668,9 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     policyService.updatelistPolicyNotification(request, user, data, handler -> {
       if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
+        processResponse(context, handler.result());
       } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
+        processResponse(context, handler.cause().getLocalizedMessage());
       }
     });
   }
@@ -685,9 +688,9 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     policyService.listDelegation(user, authDelegateDetails, handler -> {
       if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
+        processResponse(context, handler.result());
       } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
+        processResponse(context, handler.cause().getLocalizedMessage());
       }
     });
   }
@@ -709,9 +712,9 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     policyService.deleteDelegation(request, user, authDelegateDetails, handler -> {
       if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
+        processResponse(context, handler.result());
       } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
+        processResponse(context, handler.cause().getLocalizedMessage());
       }
     });
   }
@@ -734,9 +737,9 @@ public class ApiServerVerticle extends AbstractVerticle {
     policyService.createDelegation(request,user,authDelegateDetails, handler -> {
 
       if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
+        processResponse(context, handler.result());
       } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
+        processResponse(context, handler.cause().getLocalizedMessage());
       }
     });
   }
@@ -764,30 +767,74 @@ public class ApiServerVerticle extends AbstractVerticle {
             .end(new JsonObject().put(CERTIFICATE, certKeyString).encode());
 
       } else {
-        processResponse(context.response(), KS_PARSE_ERROR);
+        processResponse(context, KS_PARSE_ERROR);
       }
     } catch (Exception e) {
-      processResponse(context.response(), KS_PARSE_ERROR);
+      processResponse(context, KS_PARSE_ERROR);
     }
   }
 
   /**
    * HTTP Response Wrapper
+   * 
    * @param response
    * @param msg JsonObject
    * @return context response
    */
-  private Future<Void> processResponse(HttpServerResponse response, JsonObject msg) {
-    LOGGER.info("response "+response.getStatusMessage());
+  private Future<Void> processResponse(RoutingContext context, JsonObject msg) {
+    HttpServerResponse response = context.response();
+    LOGGER.info("response " + response.getStatusMessage());
     int status = msg.getInteger(STATUS, 400);
     msg.remove(STATUS);
     response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON);
+
+    if (successStatus.contains(status)) {
+      handleAuditLogs(context);
+    }
+
     return response.setStatusCode(status).end(msg.toString());
   }
 
-  private Future<Void> processResponse(HttpServerResponse response, String msg) {
+  private Future<Void> processResponse(RoutingContext context, String msg) {
+    HttpServerResponse response = context.response();
     Response rs = new ResponseBuilder().title(INTERNAL_SVR_ERR).detail(msg).build();
     response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON);
     return response.setStatusCode(500).end(rs.toJsonString());
+  }
+  
+  /**
+   * Handles succeeded audit logs. Creates the required {@link JsonObject} from the
+   * {@link RoutingContext} and pass on to it {@link AuditingService} for database storage when the
+   * requests succeeded. Applicable to POST, PUT and DELETE HTTP operations.
+   * 
+   * @param context which is {@link RoutingContext}
+   * @return void which is {@link Future}
+   */
+  private Future<Void> handleAuditLogs(RoutingContext context) {
+
+    Promise<Void> promise = Promise.promise();
+
+    HttpServerRequest request = context.request();
+    User user = context.get(USER);
+    JsonObject requestBody = context.getBodyAsJson();
+    String userId = user.getUserId();
+
+    JsonObject auditLog = new JsonObject();
+    auditLog.put(BODY, requestBody);
+    auditLog.put(API, request.uri());
+    auditLog.put(METHOD, request.method().toString());
+    auditLog.put(USER_ID, userId);
+    
+    auditingService.executeWriteQuery(auditLog, handler -> {
+      if (handler.succeeded()) {
+        LOGGER.info("{}; {}", SUCC_AUDIT_UPDATE, handler.result());
+        promise.complete();
+      } else {
+        LOGGER.error("{}; {}", ERR_AUDIT_UPDATE, handler.cause().getLocalizedMessage());
+        promise.complete();
+      }
+    });
+
+    return promise.future();
   }
 }

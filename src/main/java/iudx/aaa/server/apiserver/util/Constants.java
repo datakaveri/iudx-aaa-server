@@ -1,5 +1,9 @@
 package iudx.aaa.server.apiserver.util;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 public class Constants {
   // Header params
   public static final String HEADER_AUTHORIZATION = "Authorization";
@@ -94,6 +98,8 @@ public class Constants {
   public static final String ERR_DELEGATE = "Invalid delegate request";
   public static final String ERR_DETAIL_SEARCH_USR = "Require both 'email' and 'role' header for search user";
   public static final String ERR_TITLE_SEARCH_USR = "Invalid search user request";
+  public static final String SUCC_AUDIT_UPDATE = "Info: Audit log successfully processed";
+  public static final String ERR_AUDIT_UPDATE = "Fail: Error in processing audit log";
 
   /* Static JSON responses */
   public static final String JSON_TIMEOUT = "{\"type\":\"" + URN_MISSING_INFO + "\", \"title\":\""
@@ -125,9 +131,18 @@ public class Constants {
   public static final String CONTEXT_SEARCH_USER = "searchUserData";
   public static final String EMAIL_HEADER = "email";
   public static final String ROLE_HEADER = "role";
+  public static final String BODY = "body";
+  public static final String API = "api";
+  public static final String METHOD = "method";
+  public static final String USER_ID = "userId";
 
   /* Compose failure due to invalid token */
   public static final String INVALID_TOKEN_FAILED_COMPOSE = "INVALID_TOKEN";
+  
+  /* HashSet to Match success status */
+  public static final Set<Integer> successStatus =
+      new HashSet<Integer>(Arrays.asList(200, 201, 202));
+
 
   /* SQL Queries */
   public static final String DB_SCHEMA = "test";
