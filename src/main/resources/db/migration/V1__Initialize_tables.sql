@@ -268,7 +268,7 @@ ALTER TABLE ONLY resource_group
     ADD CONSTRAINT unique_rsg UNIQUE (cat_id, provider_id, resource_server_id);
 
 ALTER TABLE ONLY resource_server
-    ADD CONSTRAINT unique_server UNIQUE (name, url);
+    ADD CONSTRAINT unique_server UNIQUE (url);
 
 ALTER TABLE ONLY user_clients
     ADD CONSTRAINT user_clients_pkey PRIMARY KEY (id);
