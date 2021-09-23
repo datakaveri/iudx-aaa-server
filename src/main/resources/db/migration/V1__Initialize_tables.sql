@@ -8,8 +8,10 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
--- for gen_random_uuid
-CREATE EXTENSION pgcrypto WITH SCHEMA ${flyway:defaultSchema};
+-- we create the pgcrypto extension to use gen_random_uuid
+-- it is created on the default public schema so that all
+-- schemas in the database may use it (if required).
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
 
 ALTER SCHEMA ${flyway:defaultSchema} OWNER TO ${flyway:user};
 
@@ -76,7 +78,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 CREATE TABLE access_requests (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     user_id uuid NOT NULL,
     item_id uuid NOT NULL,
     item_type item_enum NOT NULL,
@@ -93,7 +95,7 @@ ALTER TABLE access_requests OWNER TO ${flyway:user};
 --------------------------------------------------
 
 CREATE TABLE approved_access_requests (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     request_id uuid NOT NULL,
     policy_id uuid NOT NULL,
     created_at timestamp without time zone NOT NULL,
@@ -105,7 +107,7 @@ ALTER TABLE approved_access_requests OWNER TO ${flyway:user};
 --------------------------------------------------
 
 CREATE TABLE delegations (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     owner_id uuid NOT NULL,
     user_id uuid NOT NULL,
     resource_server_id uuid NOT NULL,
@@ -119,7 +121,7 @@ ALTER TABLE delegations OWNER TO ${flyway:user};
 --------------------------------------------------
 
 CREATE TABLE organizations (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     name character varying NOT NULL,
     url character varying NOT NULL,
     created_at timestamp without time zone NOT NULL,
@@ -131,7 +133,7 @@ ALTER TABLE organizations OWNER TO ${flyway:user};
 --------------------------------------------------
 
 CREATE TABLE policies (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     user_id uuid NOT NULL,
     item_id uuid NOT NULL,
     item_type item_enum NOT NULL,
@@ -148,7 +150,7 @@ ALTER TABLE policies OWNER TO ${flyway:user};
 --------------------------------------------------
 
 CREATE TABLE resource (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     cat_id character varying NOT NULL,
     provider_id uuid NOT NULL,
     resource_group_id uuid,
@@ -162,7 +164,7 @@ ALTER TABLE resource OWNER TO ${flyway:user};
 --------------------------------------------------
 
 CREATE TABLE resource_group (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     cat_id character varying NOT NULL,
     provider_id uuid NOT NULL,
     resource_server_id uuid NOT NULL,
@@ -175,7 +177,7 @@ ALTER TABLE resource_group OWNER TO ${flyway:user};
 --------------------------------------------------
 
 CREATE TABLE resource_server (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     name character varying NOT NULL,
     owner_id uuid NOT NULL,
     url character varying NOT NULL,
@@ -188,7 +190,7 @@ ALTER TABLE resource_server OWNER TO ${flyway:user};
 --------------------------------------------------
 
 CREATE TABLE roles (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     user_id uuid NOT NULL,
     role role_enum NOT NULL,
     status role_status_enum NOT NULL,
@@ -201,7 +203,7 @@ ALTER TABLE roles OWNER TO ${flyway:user};
 --------------------------------------------------
 
 CREATE TABLE user_clients (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     user_id uuid NOT NULL,
     client_id uuid NOT NULL,
     client_secret character varying NOT NULL,
@@ -215,7 +217,7 @@ ALTER TABLE user_clients OWNER TO ${flyway:user};
 --------------------------------------------------
 
 CREATE TABLE users (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     phone character varying(10) NOT NULL,
     organization_id uuid,
     email_hash character varying NOT NULL,
@@ -264,6 +266,9 @@ ALTER TABLE ONLY resource
 
 ALTER TABLE ONLY resource_group
     ADD CONSTRAINT unique_rsg UNIQUE (cat_id, provider_id, resource_server_id);
+
+ALTER TABLE ONLY resource_server
+    ADD CONSTRAINT unique_server UNIQUE (url);
 
 ALTER TABLE ONLY user_clients
     ADD CONSTRAINT user_clients_pkey PRIMARY KEY (id);
@@ -329,7 +334,7 @@ ALTER TABLE ONLY users
 -- Access grants
 --
 
-GRANT USAGE ON SCHEMA test TO ${authUser};
+GRANT USAGE ON SCHEMA ${flyway:defaultSchema} TO ${authUser};
 
 GRANT SELECT,INSERT,UPDATE ON TABLE access_requests TO ${authUser};
 GRANT SELECT,INSERT,UPDATE ON TABLE approved_access_requests TO ${authUser};

@@ -20,6 +20,10 @@ import static iudx.aaa.server.registration.Constants.URN_ALREADY_EXISTS;
 import static iudx.aaa.server.registration.Constants.URN_INVALID_INPUT;
 import static iudx.aaa.server.registration.Constants.URN_MISSING_INFO;
 import static iudx.aaa.server.registration.Constants.URN_SUCCESS;
+import static iudx.aaa.server.registration.Utils.SQL_CREATE_ORG;
+import static iudx.aaa.server.registration.Utils.SQL_DELETE_CONSUMERS;
+import static iudx.aaa.server.registration.Utils.SQL_DELETE_ORG;
+import static iudx.aaa.server.registration.Utils.SQL_DELETE_USRS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -74,16 +78,6 @@ public class CreateUserTest {
   private static KcAdmin kc = Mockito.mock(KcAdmin.class);
   private static final String UUID_REGEX =
       "^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$";
-
-  /* SQL queries for creating and deleting required data */
-  private static final String SQL_CREATE_ORG =
-      "INSERT INTO test.organizations (name, url, created_at, updated_at) "
-          + "VALUES ($1:: text, $2::text, NOW(), NOW()) RETURNING id";
-  private static final String SQL_DELETE_USRS =
-      "DELETE FROM test.users WHERE organization_id = $1::uuid";
-  private static final String SQL_DELETE_ORG = "DELETE FROM test.organizations WHERE id = $1::uuid";
-  private static final String SQL_DELETE_CONSUMERS =
-      "DELETE FROM test.users WHERE email_hash LIKE $1::text || '%'";
 
   static String name = RandomStringUtils.randomAlphabetic(10).toLowerCase();
   static String url = name + ".com";

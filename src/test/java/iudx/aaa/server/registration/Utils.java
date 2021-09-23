@@ -16,6 +16,7 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
+import iudx.aaa.server.apiserver.Schema;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
@@ -28,9 +29,51 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 
 /**
- * Class to help manage mock user creation, deletion etc.
+ * Class to help manage mock user, organization, delegation creation and deletion etc.
  */
 public class Utils {
+
+  private static final Schema DB_SCHEMA = Schema.INSTANCE;
+
+  /* SQL queries for creating and deleting required data */
+  public static final String SQL_CREATE_ORG =
+      "INSERT INTO " + DB_SCHEMA + ".organizations (name, url, created_at, updated_at) "
+          + "VALUES ($1:: text, $2::text, NOW(), NOW()) RETURNING id";
+
+  public static final String SQL_DELETE_USRS =
+      "DELETE FROM " + DB_SCHEMA + ".users WHERE organization_id = $1::uuid";
+
+  public static final String SQL_DELETE_ORG =
+      "DELETE FROM " + DB_SCHEMA + ".organizations WHERE id = $1::uuid";
+
+  public static final String SQL_DELETE_CONSUMERS =
+      "DELETE FROM " + DB_SCHEMA + ".users WHERE email_hash LIKE $1::text || '%'";
+
+  private static final String SQL_DELETE_USER_BY_ID =
+      "DELETE FROM " + DB_SCHEMA + ".users WHERE id = ANY($1::uuid[])";
+
+  public static final String SQL_CREATE_ADMIN_SERVER =
+      "INSERT INTO " + DB_SCHEMA + ".resource_server (name, owner_id, url, created_at, updated_at) "
+          + "VALUES ($1::text, $2::uuid, $3::text, NOW(), NOW())";
+
+  public static final String SQL_DELETE_SERVERS =
+      "DELETE FROM " + DB_SCHEMA + ".resource_server WHERE url = ANY ($1::text[])";
+
+  public static final String SQL_DELETE_BULK_ORG =
+      "DELETE FROM " + DB_SCHEMA + ".organizations WHERE id = ANY ($1::uuid[])";
+
+  public static final String SQL_GET_SERVER_IDS =
+      "SELECT id, url FROM " + DB_SCHEMA + ".resource_server WHERE url = ANY($1::text[])";
+
+  public static final String SQL_CREATE_DELEG = "INSERT INTO " + DB_SCHEMA + ".delegations "
+      + "(owner_id, user_id, resource_server_id,status, created_at, updated_at) "
+      + "VALUES ($1::uuid, $2::uuid, $3::uuid, $4::" + DB_SCHEMA
+      + ".policy_status_enum, NOW(), NOW())" + " RETURNING id, resource_server_id";
+
+  public static final String SQL_GET_DELEG_IDS =
+      "SELECT d.id, url FROM " + DB_SCHEMA + ".delegations AS d JOIN " + DB_SCHEMA
+          + ".resource_server ON" + " d.resource_server_id = resource_server.id"
+          + " WHERE url = ANY($1::text[]) AND d.owner_id = $2::uuid";
 
   /**
    * Create a mock user based on the supplied params. The user is created and the information of the
@@ -156,10 +199,9 @@ public class Utils {
 
     List<UUID> ids = userList.stream().map(obj -> UUID.fromString(obj.getString("userId")))
         .collect(Collectors.toList());
-    
+
     Tuple tuple = Tuple.of(ids.toArray(UUID[]::new));
-    pool.withConnection(conn -> conn
-        .preparedQuery("DELETE FROM test.users WHERE id = ANY($1::uuid[])").execute(tuple))
+    pool.withConnection(conn -> conn.preparedQuery(SQL_DELETE_USER_BY_ID).execute(tuple))
         .onSuccess(row -> promise.complete())
         .onFailure(err -> promise.fail("Could not delete users"));
 

@@ -2,6 +2,7 @@ package iudx.aaa.server.token;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import iudx.aaa.server.apiserver.Schema;
 
 public class Constants {
   
@@ -124,7 +125,7 @@ public class Constants {
   public static final String PROVIDER = "provider";
   
   /* SQL Queries */
-  public static final String DB_SCHEMA = "test";
+  public static final Schema DB_SCHEMA = Schema.INSTANCE; 
   public static final String CHECK_USER =
       "SELECT EXISTS (SELECT 1 FROM " + DB_SCHEMA + ".user_clients WHERE user_id = $1)";
 
