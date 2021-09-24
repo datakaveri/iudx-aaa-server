@@ -133,12 +133,12 @@ public class Constants {
 
   /* SQL Queries */
   public static final Schema DB_SCHEMA = Schema.INSTANCE; 
-  public static final String SQL_GET_USER_ROLES =
-      "SELECT u.id, uc.client_id, array_agg(r.role) as roles \n" + "FROM (select id from "
-          + DB_SCHEMA + ".users where keycloak_id = $1) u \n" + "LEFT JOIN " + DB_SCHEMA
-          + ".roles r ON u.id = r.user_id \n" + "LEFT JOIN " + DB_SCHEMA
-          + ".user_clients uc ON u.id = uc.user_id \n"
-          + "where r.status='APPROVED' GROUP BY u.id, uc.client_id";
+  public static final String SQL_GET_USER_ROLES = 
+      "select roles.user_id AS id, coalesce(array_agg(roles.role) filter (where status = 'APPROVED'), '{}') AS roles"
+      + ", client_id FROM " + DB_SCHEMA + ".roles JOIN " + DB_SCHEMA + ".user_clients"
+      + " ON roles.user_id = user_clients.user_id"
+      + " WHERE roles.user_id = (SELECT id FROM " + DB_SCHEMA + ".users WHERE keycloak_id = $1)"
+      + " GROUP BY client_id, roles.user_id";
 
   public static final String SQL_GET_KID_ROLES =
       "SELECT u.id, q.keycloak_id as kid, client_secret, array_agg(r.role) as roles\n"
