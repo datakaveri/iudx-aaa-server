@@ -157,5 +157,22 @@ public class Constants {
       + "del.resource_server_id = pol.item_id AND "
       + "pol.status = 'ACTIVE' AND "
       + "pol.expiry_time > now()";
+  
+  public static final String GET_DELEGATE = 
+      "WITH auth AS (\n" + 
+      "    SELECT owner_id, id FROM "+ DB_SCHEMA +".resource_server WHERE url = $1::text\n" + 
+      "), delegate AS (\n" + 
+      "    SELECT resource_server_id, user_id,owner_id FROM "+ DB_SCHEMA +".delegations \n" + 
+      "    WHERE user_id = $2::uuid \n" + 
+      "    AND owner_id = $3::uuid \n" + 
+      "    AND status = 'ACTIVE' \n" + 
+      "    AND resource_server_id = (SELECT id FROM auth)\n" + 
+      "), policy AS (\n" + 
+      "    SELECT * FROM "+ DB_SCHEMA +".policies WHERE item_id = (SELECT id FROM auth) \n" + 
+      "    AND owner_id = (SELECT owner_id FROM auth) \n" + 
+      "    AND user_id = (SELECT user_id FROM delegate)\n" + 
+      "    AND status = 'ACTIVE' \n" + 
+      "    AND expiry_time > now()\n" + 
+      ") SELECT * FROM policy";
 
 }
