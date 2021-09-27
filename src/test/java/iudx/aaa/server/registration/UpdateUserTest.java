@@ -33,6 +33,7 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
@@ -375,15 +376,23 @@ public class UpdateUserTest {
   }
 
   @Test
-  @DisplayName("Test pending provider getting consumer and delegate roles")
+  @DisplayName("Test pending provider getting consumer and delegate roles - with and without orgId")
   void providerGettingConsDele(VertxTestContext testContext) {
 
     JsonObject req = new JsonObject().put("roles", new JsonArray().add("consumer").add("delegate"));
 
-    UpdateProfileRequest request = new UpdateProfileRequest(req);
+    /* Request without orgId */
+    UpdateProfileRequest badRequest = new UpdateProfileRequest(req);
+
+    /* Request with orgId */
+    UpdateProfileRequest correctRequest =
+        new UpdateProfileRequest(req.put("orgId", orgIdFut.result().toString()));
 
     Map<Roles, RoleStatus> prov = new HashMap<Roles, RoleStatus>();
     prov.put(Roles.PROVIDER, RoleStatus.PENDING);
+
+    Checkpoint noOrgIdFail = testContext.checkpoint();
+    Checkpoint withOrgIdSuccess = testContext.checkpoint();
 
     Future<JsonObject> provider =
         Utils.createFakeUser(pool, orgIdFut.result().toString(), url, prov, true);
@@ -400,39 +409,52 @@ public class UpdateUserTest {
           .thenReturn(Future.succeededFuture(userJson.getString("email")));
       Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.succeededFuture());
 
-      registrationService.updateUser(request, user,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(200, response.getInteger("status"));
-            assertEquals(SUCC_TITLE_UPDATED_USER_ROLES, response.getString("title"));
-            assertEquals(URN_SUCCESS, response.getString("type"));
+      registrationService.updateUser(badRequest, user,
+          testContext.succeeding(resp -> testContext.verify(() -> {
 
-            JsonObject result = response.getJsonObject("results");
+            assertEquals(400, resp.getInteger("status"));
+            assertEquals(ERR_TITLE_ORG_ID_REQUIRED, resp.getString("title"));
+            assertEquals(URN_MISSING_INFO, resp.getString("type"));
+            assertEquals(ERR_DETAIL_ORG_ID_REQUIRED, resp.getString("detail"));
+            noOrgIdFail.flag();
 
-            JsonObject name = result.getJsonObject("name");
-            assertEquals(name.getString("firstName"), userJson.getString("firstName"));
-            assertEquals(name.getString("lastName"), userJson.getString("lastName"));
 
-            @SuppressWarnings("unchecked")
-            List<String> returnedRoles = result.getJsonArray("roles").getList();
-            List<String> rolesString =
-                List.of(Roles.CONSUMER.name().toLowerCase(), Roles.DELEGATE.name().toLowerCase());
-            assertTrue(
-                returnedRoles.containsAll(rolesString) && rolesString.containsAll(returnedRoles));
 
-            JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
-            JsonObject defaultClient = clients.getJsonObject(0);
-            assertTrue(clients.size() > 0);
-            assertEquals(defaultClient.getString(RESP_CLIENT_ID), userJson.getString("clientId"));
+            registrationService.updateUser(correctRequest, user,
+                testContext.succeeding(response -> testContext.verify(() -> {
+                  assertEquals(200, response.getInteger("status"));
+                  assertEquals(SUCC_TITLE_UPDATED_USER_ROLES, response.getString("title"));
+                  assertEquals(URN_SUCCESS, response.getString("type"));
 
-            JsonObject org = result.getJsonObject(RESP_ORG);
-            assertEquals(org.getString("url"), userJson.getString("url"));
+                  JsonObject result = response.getJsonObject("results");
 
-            assertEquals(result.getString(RESP_EMAIL), userJson.getString("email"));
-            assertEquals(result.getString(RESP_PHONE), userJson.getString("phone"));
-            assertEquals(result.getString("userId"), userJson.getString("userId"));
-            assertEquals(result.getString("keycloakId"), userJson.getString("keycloakId"));
+                  JsonObject name = result.getJsonObject("name");
+                  assertEquals(name.getString("firstName"), userJson.getString("firstName"));
+                  assertEquals(name.getString("lastName"), userJson.getString("lastName"));
 
-            testContext.completeNow();
+                  @SuppressWarnings("unchecked")
+                  List<String> returnedRoles = result.getJsonArray("roles").getList();
+                  List<String> rolesString = List.of(Roles.CONSUMER.name().toLowerCase(),
+                      Roles.DELEGATE.name().toLowerCase());
+                  assertTrue(returnedRoles.containsAll(rolesString)
+                      && rolesString.containsAll(returnedRoles));
+
+                  JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
+                  JsonObject defaultClient = clients.getJsonObject(0);
+                  assertTrue(clients.size() > 0);
+                  assertEquals(defaultClient.getString(RESP_CLIENT_ID),
+                      userJson.getString("clientId"));
+
+                  JsonObject org = result.getJsonObject(RESP_ORG);
+                  assertEquals(org.getString("url"), userJson.getString("url"));
+
+                  assertEquals(result.getString(RESP_EMAIL), userJson.getString("email"));
+                  assertEquals(result.getString(RESP_PHONE), userJson.getString("phone"));
+                  assertEquals(result.getString("userId"), userJson.getString("userId"));
+                  assertEquals(result.getString("keycloakId"), userJson.getString("keycloakId"));
+
+                  withOrgIdSuccess.flag();
+                })));
           })));
     });
   }

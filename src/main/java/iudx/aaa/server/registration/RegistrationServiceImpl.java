@@ -417,9 +417,8 @@ public class RegistrationServiceImpl implements RegistrationService {
     Future<String> email = kc.getEmailId(user.getKeycloakId());
     Future<String> checkOrgRequired;
 
-    /* currently, org_id is needed only when a consumer wants to register as a delegate */
-    if (registeredRoles.containsAll(List.of(Roles.CONSUMER))
-        && requestedRoles.containsAll(List.of(Roles.DELEGATE))) {
+    /* orgId is needed always for delegate reg, even if the user has registered for provider role */
+    if (requestedRoles.contains(Roles.DELEGATE)) {
       if (orgId.toString().equals(NIL_UUID)) {
         Response r = new ResponseBuilder().status(400).type(URN_MISSING_INFO)
             .title(ERR_TITLE_ORG_ID_REQUIRED).detail(ERR_DETAIL_ORG_ID_REQUIRED).build();
