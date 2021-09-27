@@ -32,36 +32,49 @@ paths:
                     type: string
                     minLength: 1
                   results:
-                    type: array
-                    uniqueItems: true
-                    minItems: 1
-                    items:
-                      required:
-                        - accessToken
-                        - expiry
-                        - server
-                      properties:
-                        accessToken:
-                          type: string
-                          minLength: 1
-                        expiry:
-                          type: number
-                        server:
-                          type: string
-                          minLength: 1
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+                        minLength: 1
+                      expiry:
+                        type: number
+                      server:
+                        type: string
+                        minLength: 1
+                    required:
+                      - accessToken
+                      - expiry
+                      - server
                 required:
                   - type
                   - title
                   - results
+                x-examples:
+                  example-1:
+                    type: 'urn:dx:as:Success'
+                    title: Token created
+                    results:
+                      accessToken: eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJzdWIiOiIzNDliNGI1NS0wMjUxLTQ5MGUtYmVlOS0wMGYzYTVkM2U2NDMiLCJpc3MiOiJhdXRoLnRlc3QuY29tIiwiYXVkIjoiZm9vYmFyLml1ZHguaW8iLCJleHAiOjE2MjY4MzY3ODQsImlhdCI6MTYyNjc5MzU4NCwiaWlkIjoicmc6ZXhhbXBsZS5jb20vNzllN2JmYTYyZmFkNmM3NjViYWM2OTE1NGMyZjI0Yzk0Yzk1MjIwYS9yZXNvdXJjZS1ncm91cCIsInJvbGUiOiJjb25zdW1lciIsImNvbnMiOnt9fQ.eAWKamrRdV4c1MPuoLU6j0bWB6iiM_of5F3LA-_DZGhyu_6aFP4cmCI1Y3ZN2ZRklOSGcrL5aHC8Ccga6dtTrg
+                      expiry: 1626836784
+                      server: foobar.iudx.io
               examples:
                 General Structure:
                   value:
                     type: 'urn:dx:as:Success'
                     title: Token created
                     results:
-                      - accessToken: eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJzdWIiOiIzNDliNGI1NS0wMjUxLTQ5MGUtYmVlOS0wMGYzYTVkM2U2NDMiLCJpc3MiOiJhdXRoLnRlc3QuY29tIiwiYXVkIjoiZm9vYmFyLml1ZHguaW8iLCJleHAiOjE2MjY4MzY3ODQsImlhdCI6MTYyNjc5MzU4NCwiaWlkIjoicmc6ZXhhbXBsZS5jb20vNzllN2JmYTYyZmFkNmM3NjViYWM2OTE1NGMyZjI0Yzk0Yzk1MjIwYS9yZXNvdXJjZS1ncm91cCIsInJvbGUiOiJjb25zdW1lciIsImNvbnMiOnt9fQ.eAWKamrRdV4c1MPuoLU6j0bWB6iiM_of5F3LA-_DZGhyu_6aFP4cmCI1Y3ZN2ZRklOSGcrL5aHC8Ccga6dtTrg
-                        expiry: 1626836784
-                        server: foobar.iudx.io
+                      accessToken: eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJzdWIiOiIzNDliNGI1NS0wMjUxLTQ5MGUtYmVlOS0wMGYzYTVkM2U2NDMiLCJpc3MiOiJhdXRoLnRlc3QuY29tIiwiYXVkIjoiZm9vYmFyLml1ZHguaW8iLCJleHAiOjE2MjY4MzY3ODQsImlhdCI6MTYyNjc5MzU4NCwiaWlkIjoicmc6ZXhhbXBsZS5jb20vNzllN2JmYTYyZmFkNmM3NjViYWM2OTE1NGMyZjI0Yzk0Yzk1MjIwYS9yZXNvdXJjZS1ncm91cCIsInJvbGUiOiJjb25zdW1lciIsImNvbnMiOnt9fQ.eAWKamrRdV4c1MPuoLU6j0bWB6iiM_of5F3LA-_DZGhyu_6aFP4cmCI1Y3ZN2ZRklOSGcrL5aHC8Ccga6dtTrg
+                      expiry: 1626836784
+                      server: foobar.iudx.io
+                example-1:
+                  value:
+                    type: string
+                    title: string
+                    results:
+                      accessToken: string
+                      expiry: 0
+                      server: string
           headers:
             Content-Type:
               schema:
@@ -199,6 +212,19 @@ paths:
               schema:
                 description: ''
                 type: object
+                x-examples:
+                  example-1:
+                    type: 'urn:dx:as:Success'
+                    title: Token authenticated
+                    results:
+                      sub: 129b4b55-0251-490e-bee9-00f3a5d3e632
+                      iss: auth.test.com
+                      aud: foobar.iudx.io
+                      exp: 1626837909
+                      iat: 1626794709
+                      iid: 'rg:example.com/79e7bfa62fad6c765bac69154c2f24c94c95210v/resource-group'
+                      role: consumer
+                      cons: {}
                 properties:
                   type:
                     type: string
@@ -207,42 +233,38 @@ paths:
                     type: string
                     minLength: 1
                   results:
-                    type: array
-                    uniqueItems: true
-                    minItems: 1
-                    items:
-                      type: object
-                      properties:
-                        sub:
-                          type: string
-                          minLength: 1
-                        iss:
-                          type: string
-                          minLength: 1
-                        aud:
-                          type: string
-                          minLength: 1
-                        exp:
-                          type: number
-                        iat:
-                          type: number
-                        iid:
-                          type: string
-                          minLength: 1
-                        role:
-                          type: string
-                          minLength: 1
-                        cons:
-                          type: object
-                      required:
-                        - sub
-                        - iss
-                        - aud
-                        - exp
-                        - iat
-                        - iid
-                        - role
-                        - cons
+                    type: object
+                    required:
+                      - sub
+                      - iss
+                      - aud
+                      - exp
+                      - iat
+                      - iid
+                      - role
+                      - cons
+                    properties:
+                      sub:
+                        type: string
+                        minLength: 1
+                      iss:
+                        type: string
+                        minLength: 1
+                      aud:
+                        type: string
+                        minLength: 1
+                      exp:
+                        type: number
+                      iat:
+                        type: number
+                      iid:
+                        type: string
+                        minLength: 1
+                      role:
+                        type: string
+                        minLength: 1
+                      cons:
+                        type: object
                 required:
                   - type
                   - title
@@ -253,14 +275,14 @@ paths:
                     type: 'urn:dx:as:Success'
                     title: Token authenticated
                     results:
-                      - sub: 129b4b55-0251-490e-bee9-00f3a5d3e632
-                        iss: auth.test.com
-                        aud: foobar.iudx.io
-                        exp: 1626837909
-                        iat: 1626794709
-                        iid: 'rg:example.com/79e7bfa62fad6c765bac69154c2f24c94c95210v/resource-group'
-                        role: consumer
-                        cons: {}
+                      sub: 129b4b55-0251-490e-bee9-00f3a5d3e632
+                      iss: auth.test.com
+                      aud: foobar.iudx.io
+                      exp: 1626837909
+                      iat: 1626794709
+                      iid: 'rg:example.com/79e7bfa62fad6c765bac69154c2f24c94c95210v/resource-group'
+                      role: consumer
+                      cons: {}
         '400':
           description: Invalid/missing information
           content:
@@ -383,7 +405,7 @@ paths:
                     title: string
                     detail: string
       description: |-
-        Revoke the token associated with clientId.
+        Revoke the token associated with clientId. 
         <!--- (Commented out) Revoke token requires either token header or clientId/clientSecret header.---!>
       tags:
         - Token APIs
@@ -644,7 +666,7 @@ paths:
           - manage catalogue items
           - manage data on resource servers
           - manage policies
-
+          
         ## Client ID and Client Secret
         On successful creation of the user profile, the user would receive a client ID and a client secret. The client ID and client secret can be used instead of the OIDC flow to request for tokens. **The client secret is ONLY shown to the user here and can never be obtained again.**
 
@@ -1656,7 +1678,7 @@ paths:
           name: filter
           description: Filter the status of the Registration
       description: |-
-        Get all the provider registration details. This operation can be performed by an `admin` of the IUDX AAA server.
+        Get all the provider registration details. This operation can be performed by an `admin` of the IUDX AAA server. 
         The request can be filtered based on the status of registration using the query param `filter`.
         The various statuses are:
         - `pending`
@@ -2002,13 +2024,13 @@ paths:
               description: application/json
       operationId: get-auth-v1-policies
       description: |-
-        Get policies related to a particular user if the user is a
+        Get policies related to a particular user if the user is a 
         - `provider` : returns all policies created by the provider/auth delegate of the provider and the policies set for the provider
         - `delegate` : returns all pollicies set for the delegate
         - `consumer` : returns the policies set for the consumer
 
         ## Auth delegate
-        An auth delegate may use the API to view policies on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
+        An auth delegate may use the API to view policies on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
       parameters:
         - schema:
             type: string
@@ -2167,6 +2189,7 @@ paths:
         '403':
           description: |-
             Forbidden
+             
             - if the user trying to set a policy does not have an Admin,provider or delegate role
             - if the user trying to set a policy does not have a policy by the auth server admin
             - if the user is neither the owner of the resource item/group or a delegate to the owner of the resource
@@ -2178,6 +2201,8 @@ paths:
                 properties: {}
       description: |
         Create new policies of an authenticated User
+
+
         - `userId` : UUID of the user for whom policy is to be set.
         - `itemId` : String value of the item for which policy is to be set 
         - `itemType` : String value of the item type
@@ -2498,7 +2523,7 @@ paths:
         - `delegate` : returns all providers who have assigned them as delegates for certain servers
 
         ## Auth delegate
-        An auth delegate may use the API to view delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
+        An auth delegate may use the API to view delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
 
         **NOTE: An auth delegate may not view any delegations related to the auth server.**
       parameters:
@@ -2632,10 +2657,10 @@ paths:
                     title: Auth delegate may not delete auth delegations
                     detail: 8ff57971-10d9-4bc6-ab3b-87dc328c72ce
       description: |
-        A provider may delete delegations created by them.
+        A provider may delete delegations created by them. 
 
         ## Auth delegate
-        An auth delegate may use the API to delete delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
+        An auth delegate may use the API to delete delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
 
         **NOTE: An auth delegate may not delete any delegations related to the auth server.**
       parameters:
@@ -2736,7 +2761,7 @@ paths:
         - `resourceServerId` : URL of the resource server the user is to be made a delegate for.
 
         ## Auth delegate
-        An auth delegate may use the API to create delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
+        An auth delegate may use the API to create delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
 
         **NOTE: An auth delegate may not create any delegations related to the auth server.**
       parameters:

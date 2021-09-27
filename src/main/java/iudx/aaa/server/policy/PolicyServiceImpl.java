@@ -1171,7 +1171,7 @@ public class PolicyServiceImpl implements PolicyService {
     boolean isDelegate = !data.isEmpty();
     List<Roles> roles = user.getRoles();
     
-    if (!(isDelegate || roles.contains(Roles.PROVIDER) || roles.contains(Roles.DELEGATE))) {
+    if (!(isDelegate || roles.contains(Roles.PROVIDER) || roles.contains(Roles.CONSUMER))) {
       Response r =
           new Response.ResponseBuilder().type(URN_INVALID_ROLE).title(ERR_TITLE_INVALID_ROLES)
               .detail(ERR_DETAIL_LIST_DELEGATE_ROLES).status(401).build();
@@ -1186,6 +1186,9 @@ public class PolicyServiceImpl implements PolicyService {
       UUID providerId = UUID.fromString(data.getString("providerId"));
       query = SELECT_PROVIDER_NOTIF_REQ;
       queryTuple = Tuple.of(providerId);
+    } else if (roles.contains(Roles.PROVIDER)) {
+      query = SELECT_PROVIDER_NOTIF_REQ;
+      queryTuple = Tuple.of(user.getUserId());
     } else {
       query = SELECT_CONSUM_NOTIF_REQ;
       queryTuple = Tuple.of(user.getUserId());
