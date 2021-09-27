@@ -155,7 +155,7 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     OIDCAuthentication oidcFlow = new OIDCAuthentication(vertx, pgPool, keycloakOptions);
     ClientAuthentication clientFlow = new ClientAuthentication(pgPool);
-    ProviderAuthentication providerAuth = new ProviderAuthentication(pgPool);
+    ProviderAuthentication providerAuth = new ProviderAuthentication(pgPool, authServerDomain);
     SearchUserHandler searchUser = new SearchUserHandler();
     FailureHandler failureHandler = new FailureHandler();
 

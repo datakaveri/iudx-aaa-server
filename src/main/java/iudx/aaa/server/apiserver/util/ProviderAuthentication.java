@@ -22,9 +22,11 @@ public class ProviderAuthentication implements Handler<RoutingContext> {
   
   private static final Logger LOGGER = LogManager.getLogger(ProviderAuthentication.class);
   private PgPool pgPool;
+  private String authServerDomain;
   
-  public ProviderAuthentication(PgPool pgPool) {
+  public ProviderAuthentication(PgPool pgPool, String domain) {
     this.pgPool = pgPool;
+    this.authServerDomain = domain;
   }
 
   @Override
@@ -48,8 +50,8 @@ public class ProviderAuthentication implements Handler<RoutingContext> {
       routingContext.fail(new Throwable(rs.toJsonString()));
     }
     
-    Tuple tuple = Tuple.of(user.getUserId(),providerId);
-    pgQueryHandler(CHECK_DELEGATE, tuple).onComplete(dbHandler ->{
+    Tuple tuple = Tuple.of(authServerDomain,user.getUserId(),providerId);
+    pgQueryHandler(GET_DELEGATE, tuple).onComplete(dbHandler ->{
       if (dbHandler.failed()) {
         LOGGER.error(LOG_DB_ERROR + dbHandler.cause());
         Response rs = new ResponseBuilder().title(INTERNAL_SVR_ERR).status(500)
@@ -88,7 +90,8 @@ public class ProviderAuthentication implements Handler<RoutingContext> {
             JsonObject details = handler.result();
             promise.complete(details);
           } else if (handler.failed()) {
-            promise.fail(handler.cause());
+            LOGGER.error(LOG_DB_ERROR+ handler.cause());
+            promise.fail(INTERNAL_SVR_ERR);
           }
         }));
     return promise.future();
