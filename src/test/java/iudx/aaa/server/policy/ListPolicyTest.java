@@ -109,7 +109,7 @@ public class ListPolicyTest {
         mockRegistrationFactory.setResponse("valid");
         policyService.listPolicy(validListPolicyProvider, new JsonObject(),
                 testContext.succeeding(response -> testContext.verify(() -> {
-                    assertEquals(POLICY_SUCCESS, response.getString(TYPE));
+                    assertEquals(URN_SUCCESS, response.getString(TYPE));
                     testContext.completeNow();
                 })));
     }
@@ -122,7 +122,7 @@ public class ListPolicyTest {
         mockRegistrationFactory.setResponse("valid");
         policyService.listPolicy(validListPolicyConsumer, new JsonObject(),
                 testContext.succeeding(response -> testContext.verify(() -> {
-                    assertEquals(POLICY_SUCCESS, response.getString(TYPE));
+                    assertEquals(URN_SUCCESS, response.getString(TYPE));
                     testContext.completeNow();
                 })));
     }
@@ -134,7 +134,7 @@ public class ListPolicyTest {
         mockRegistrationFactory.setResponse("valid");
         policyService.listPolicy(invalidListPolicy, new JsonObject(),
                 testContext.succeeding(response -> testContext.verify(() -> {
-                    assertEquals(POLICY_SUCCESS, response.getString(TYPE));
+                    assertEquals(URN_SUCCESS, response.getString(TYPE));
                     testContext.completeNow();
                 })));
     }
