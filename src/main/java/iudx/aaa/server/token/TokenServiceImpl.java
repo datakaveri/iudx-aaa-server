@@ -120,7 +120,7 @@ public class TokenServiceImpl implements TokenService {
           JsonObject jwt = getJwt(request);
           LOGGER.info(LOG_TOKEN_SUCC);
           Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
-              .arrayResults(new JsonArray().add(jwt)).build();
+              .objectResults(jwt).build();
           handler.handle(Future.succeededFuture(resp.toJson()));
           return;
         } else {
@@ -140,7 +140,7 @@ public class TokenServiceImpl implements TokenService {
 
           LOGGER.info(LOG_TOKEN_SUCC);
           Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
-              .arrayResults(new JsonArray().add(jwt)).build();
+              .objectResults(jwt).build();
           handler.handle(Future.succeededFuture(resp.toJson()));
 
         } else if (policyHandler.failed()) {
@@ -263,7 +263,7 @@ public class TokenServiceImpl implements TokenService {
           
           if (RESOURCE_SVR.equals(itemType)) {
             Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS)
-                .title(TOKEN_AUTHENTICATED).arrayResults(new JsonArray().add(accessTokenJwt)).build();
+                .title(TOKEN_AUTHENTICATED).objectResults(accessTokenJwt).build();
             LOGGER.info("Info: {}; {}", POLICY_SUCCESS, TOKEN_AUTHENTICATED);
             handler.handle(Future.succeededFuture(resp.toJson()));
             return;
@@ -279,7 +279,7 @@ public class TokenServiceImpl implements TokenService {
             if (policyHandler.succeeded()) {
 
               Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS)
-                  .title(TOKEN_AUTHENTICATED).arrayResults(new JsonArray().add(accessTokenJwt)).build();
+                  .title(TOKEN_AUTHENTICATED).objectResults(accessTokenJwt).build();
               LOGGER.info("Info: {}; {}", POLICY_SUCCESS, TOKEN_AUTHENTICATED);
               handler.handle(Future.succeededFuture(resp.toJson()));
               
