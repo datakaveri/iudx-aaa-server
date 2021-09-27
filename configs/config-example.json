@@ -88,6 +88,16 @@
       "keycloakAdminClientSecret": "f5800be0-258a-4cd2-820f-8128818ed70a",
       "keycloakAdminPoolSize": "10"
     },
+     {
+      "id": "iudx.aaa.server.auditing.AuditingVerticle",
+      "verticleInstances": 1,
+      "auditingDatabaseIP": "localhost",
+      "auditingDatabasePort": 4352,
+      "auditingDatabaseName": "audit_service",
+      "auditingDatabaseUserName": "root",
+      "auditingDatabasePassword": "root",
+      "auditingPoolSize": 25
+    },
     {
       "id": "iudx.aaa.server.apiserver.ApiServerVerticle",
       "ssl": true,

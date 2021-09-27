@@ -89,6 +89,16 @@
       "keycloakAdminPoolSize": "10"
     },
     {
+      "id": "iudx.aaa.server.auditing.AuditingVerticle",
+      "verticleInstances": 1,
+      "auditingDatabaseIP": "",
+      "auditingDatabasePort": 0,
+      "auditingDatabaseName": "",
+      "auditingDatabaseUserName": "",
+      "auditingDatabasePassword": "",
+      "auditingPoolSize": 25
+    },
+    {
       "id": "iudx.aaa.server.apiserver.ApiServerVerticle",
       "ssl": true,
       "keystorePath": "configs/keystore.jks",
