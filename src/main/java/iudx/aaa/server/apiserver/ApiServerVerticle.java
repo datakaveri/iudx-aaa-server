@@ -144,6 +144,10 @@ public class ApiServerVerticle extends AbstractVerticle {
     allowedHeaders.add(HEADER_ORIGIN);
     allowedHeaders.add(HEADER_REFERER);
     allowedHeaders.add(HEADER_ALLOW_ORIGIN);
+    
+    allowedHeaders.add(HEADER_PROVIDER_ID);
+    allowedHeaders.add(HEADER_EMAIL);
+    allowedHeaders.add(HEADER_ROLE);
 
     Set<HttpMethod> allowedMethods = new HashSet<>();
     allowedMethods.add(HttpMethod.GET);
