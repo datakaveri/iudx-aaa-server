@@ -18,6 +18,11 @@ public class Constants {
   public static final String HEADER_OPTIONS = "options";
   public static final String BEARER = "Bearer";
 
+  /* Implementation specific headers */
+  public static final String HEADER_PROVIDER_ID = "providerId";
+  public static final String HEADER_EMAIL = "email";
+  public static final String HEADER_ROLE = "role";
+
   /* Configuration & related */
   public static final String DATABASE_IP = "databaseIP";
   public static final String DATABASE_PORT = "databasePort";
@@ -127,11 +132,8 @@ public class Constants {
   public static final String PUB_KEY = "publicKey";
   public static final String CERTIFICATE = "cert";
   public static final String REQUEST = "request";
-  public static final String PROVIDER_ID = "providerId";
   public static final String DATA = "data";
   public static final String CONTEXT_SEARCH_USER = "searchUserData";
-  public static final String EMAIL_HEADER = "email";
-  public static final String ROLE_HEADER = "role";
   public static final String BODY = "body";
   public static final String API = "api";
   public static final String METHOD = "method";

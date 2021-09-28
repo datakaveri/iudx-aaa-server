@@ -35,13 +35,13 @@ public class ProviderAuthentication implements Handler<RoutingContext> {
     MultiMap headers = request.headers();
     User user = routingContext.get(USER);
 
-    if (!headers.contains(PROVIDER_ID)) {
+    if (!headers.contains(HEADER_PROVIDER_ID)) {
       LOGGER.debug("Info: {}; {}", ERR_PROVDERID, "null");
       routingContext.next();
       return;
     }
     
-    String providerId = headers.get(PROVIDER_ID);
+    String providerId = headers.get(HEADER_PROVIDER_ID);
     
     if(providerId.isBlank()) {
       LOGGER.error("Fail: {}; {}", ERR_PROVDERID, "empty/null");
@@ -68,7 +68,7 @@ public class ProviderAuthentication implements Handler<RoutingContext> {
         }
       }
 
-      JsonObject data = new JsonObject().put(PROVIDER_ID, providerId);
+      JsonObject data = new JsonObject().put(HEADER_PROVIDER_ID, providerId);
       routingContext.put(DATA, data).next();
     });
   }
