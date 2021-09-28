@@ -32,49 +32,36 @@ paths:
                     type: string
                     minLength: 1
                   results:
-                    type: object
-                    properties:
-                      accessToken:
-                        type: string
-                        minLength: 1
-                      expiry:
-                        type: number
-                      server:
-                        type: string
-                        minLength: 1
-                    required:
-                      - accessToken
-                      - expiry
-                      - server
+                    type: array
+                    uniqueItems: true
+                    minItems: 1
+                    items:
+                      required:
+                        - accessToken
+                        - expiry
+                        - server
+                      properties:
+                        accessToken:
+                          type: string
+                          minLength: 1
+                        expiry:
+                          type: number
+                        server:
+                          type: string
+                          minLength: 1
                 required:
                   - type
                   - title
                   - results
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:Success'
-                    title: Token created
-                    results:
-                      accessToken: eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJzdWIiOiIzNDliNGI1NS0wMjUxLTQ5MGUtYmVlOS0wMGYzYTVkM2U2NDMiLCJpc3MiOiJhdXRoLnRlc3QuY29tIiwiYXVkIjoiZm9vYmFyLml1ZHguaW8iLCJleHAiOjE2MjY4MzY3ODQsImlhdCI6MTYyNjc5MzU4NCwiaWlkIjoicmc6ZXhhbXBsZS5jb20vNzllN2JmYTYyZmFkNmM3NjViYWM2OTE1NGMyZjI0Yzk0Yzk1MjIwYS9yZXNvdXJjZS1ncm91cCIsInJvbGUiOiJjb25zdW1lciIsImNvbnMiOnt9fQ.eAWKamrRdV4c1MPuoLU6j0bWB6iiM_of5F3LA-_DZGhyu_6aFP4cmCI1Y3ZN2ZRklOSGcrL5aHC8Ccga6dtTrg
-                      expiry: 1626836784
-                      server: foobar.iudx.io
               examples:
                 General Structure:
                   value:
                     type: 'urn:dx:as:Success'
                     title: Token created
                     results:
-                      accessToken: eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJzdWIiOiIzNDliNGI1NS0wMjUxLTQ5MGUtYmVlOS0wMGYzYTVkM2U2NDMiLCJpc3MiOiJhdXRoLnRlc3QuY29tIiwiYXVkIjoiZm9vYmFyLml1ZHguaW8iLCJleHAiOjE2MjY4MzY3ODQsImlhdCI6MTYyNjc5MzU4NCwiaWlkIjoicmc6ZXhhbXBsZS5jb20vNzllN2JmYTYyZmFkNmM3NjViYWM2OTE1NGMyZjI0Yzk0Yzk1MjIwYS9yZXNvdXJjZS1ncm91cCIsInJvbGUiOiJjb25zdW1lciIsImNvbnMiOnt9fQ.eAWKamrRdV4c1MPuoLU6j0bWB6iiM_of5F3LA-_DZGhyu_6aFP4cmCI1Y3ZN2ZRklOSGcrL5aHC8Ccga6dtTrg
-                      expiry: 1626836784
-                      server: foobar.iudx.io
-                example-1:
-                  value:
-                    type: string
-                    title: string
-                    results:
-                      accessToken: string
-                      expiry: 0
-                      server: string
+                      - accessToken: eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJzdWIiOiIzNDliNGI1NS0wMjUxLTQ5MGUtYmVlOS0wMGYzYTVkM2U2NDMiLCJpc3MiOiJhdXRoLnRlc3QuY29tIiwiYXVkIjoiZm9vYmFyLml1ZHguaW8iLCJleHAiOjE2MjY4MzY3ODQsImlhdCI6MTYyNjc5MzU4NCwiaWlkIjoicmc6ZXhhbXBsZS5jb20vNzllN2JmYTYyZmFkNmM3NjViYWM2OTE1NGMyZjI0Yzk0Yzk1MjIwYS9yZXNvdXJjZS1ncm91cCIsInJvbGUiOiJjb25zdW1lciIsImNvbnMiOnt9fQ.eAWKamrRdV4c1MPuoLU6j0bWB6iiM_of5F3LA-_DZGhyu_6aFP4cmCI1Y3ZN2ZRklOSGcrL5aHC8Ccga6dtTrg
+                        expiry: 1626836784
+                        server: foobar.iudx.io
           headers:
             Content-Type:
               schema:
@@ -212,19 +199,6 @@ paths:
               schema:
                 description: ''
                 type: object
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:Success'
-                    title: Token authenticated
-                    results:
-                      sub: 129b4b55-0251-490e-bee9-00f3a5d3e632
-                      iss: auth.test.com
-                      aud: foobar.iudx.io
-                      exp: 1626837909
-                      iat: 1626794709
-                      iid: 'rg:example.com/79e7bfa62fad6c765bac69154c2f24c94c95210v/resource-group'
-                      role: consumer
-                      cons: {}
                 properties:
                   type:
                     type: string
@@ -233,38 +207,42 @@ paths:
                     type: string
                     minLength: 1
                   results:
-                    type: object
-                    required:
-                      - sub
-                      - iss
-                      - aud
-                      - exp
-                      - iat
-                      - iid
-                      - role
-                      - cons
-                    properties:
-                      sub:
-                        type: string
-                        minLength: 1
-                      iss:
-                        type: string
-                        minLength: 1
-                      aud:
-                        type: string
-                        minLength: 1
-                      exp:
-                        type: number
-                      iat:
-                        type: number
-                      iid:
-                        type: string
-                        minLength: 1
-                      role:
-                        type: string
-                        minLength: 1
-                      cons:
-                        type: object
+                    type: array
+                    uniqueItems: true
+                    minItems: 1
+                    items:
+                      type: object
+                      properties:
+                        sub:
+                          type: string
+                          minLength: 1
+                        iss:
+                          type: string
+                          minLength: 1
+                        aud:
+                          type: string
+                          minLength: 1
+                        exp:
+                          type: number
+                        iat:
+                          type: number
+                        iid:
+                          type: string
+                          minLength: 1
+                        role:
+                          type: string
+                          minLength: 1
+                        cons:
+                          type: object
+                      required:
+                        - sub
+                        - iss
+                        - aud
+                        - exp
+                        - iat
+                        - iid
+                        - role
+                        - cons
                 required:
                   - type
                   - title
@@ -275,14 +253,14 @@ paths:
                     type: 'urn:dx:as:Success'
                     title: Token authenticated
                     results:
-                      sub: 129b4b55-0251-490e-bee9-00f3a5d3e632
-                      iss: auth.test.com
-                      aud: foobar.iudx.io
-                      exp: 1626837909
-                      iat: 1626794709
-                      iid: 'rg:example.com/79e7bfa62fad6c765bac69154c2f24c94c95210v/resource-group'
-                      role: consumer
-                      cons: {}
+                      - sub: 129b4b55-0251-490e-bee9-00f3a5d3e632
+                        iss: auth.test.com
+                        aud: foobar.iudx.io
+                        exp: 1626837909
+                        iat: 1626794709
+                        iid: 'rg:example.com/79e7bfa62fad6c765bac69154c2f24c94c95210v/resource-group'
+                        role: consumer
+                        cons: {}
         '400':
           description: Invalid/missing information
           content:
@@ -1877,7 +1855,14 @@ paths:
         - Policies APIs
       responses:
         '200':
-          description: Successfully listing the User policies
+          description: |-
+            Successfully listing the User policies
+             `results` : array of response objects
+              ` itemType` : 
+               -resource/resource_group for item policies 
+               -resource_server for server policies
+               ` itemId` : the cat ID of the item for which policy is set
+               
           content:
             application/json:
               schema:
@@ -1995,7 +1980,7 @@ paths:
                   - title
                   - results
               examples:
-                example:
+                policy for resource server:
                   value:
                     type: 'urn:dx:as:Success'
                     title: policy read
@@ -2011,6 +1996,52 @@ paths:
                             firstName: Someone
                             lastName: Person
                           id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                        owner:
+                          email: bryanrobert@iisc.ac.in
+                          name:
+                            firstName: B
+                            lastName: Robert
+                          id: 844e251b-574b-46e6-9247-f76f1f70a637
+                policy for resource_group:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: policy read
+                    results:
+                      - policyId: 5055ca31-937b-4a5e-b301-449ca35c123b
+                        itemType: resource_group
+                        expiryTime: '2022-09-09T04:22:36'
+                        constraints:
+                          access:
+                            - sub
+                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood
+                        user:
+                          email: vasanth.rajaraman@datakaveri.org
+                          name:
+                            firstName: Vasanth
+                            lastName: Rajaraman
+                          id: 15c7506f-c800-48d6-adeb-0542b03947c6
+                        owner:
+                          email: bryanrobert@iisc.ac.in
+                          name:
+                            firstName: B
+                            lastName: Robert
+                          id: 844e251b-574b-46e6-9247-f76f1f70a637
+                policy for resource:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: policy read
+                    results:
+                      - policyId: 11178f10-0b62-4d9f-a1c6-4cb8f7c173d0
+                        itemType: resource
+                        expiryTime: '2022-09-09T04:22:36'
+                        constraints: {}
+                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/surat-itms-realtime-information/surat-itms-live-eta
+                        user:
+                          email: kailash.adhikari@india.nec.com
+                          name:
+                            firstName: Kailash
+                            lastName: Adhikari
+                          id: 2563e6d4-5884-40e8-9d9f-e84ee956298b
                         owner:
                           email: bryanrobert@iisc.ac.in
                           name:
@@ -2206,7 +2237,7 @@ paths:
         - `userId` : UUID of the user for whom policy is to be set.
         - `itemId` : String value of the item for which policy is to be set 
         - `itemType` : String value of the item type
-        - `expiryTime` : ISO8601 compatible time in UTC - optional, if not sent default expiry is set for the policy
+        - `expiryTime` : ISO8601 compatible time in UTC(yyyy-MM-dd'T'HH:mm:ss). optional field, if not sent default expiry is set for the policy
         - `constraints` : JsonObject of the constraints that the resource server can recognize.
       parameters:
         - schema:
@@ -2266,27 +2297,49 @@ paths:
               required:
                 - request
             examples:
-              Create MultiplePolicies:
+              single req for res_group policy:
                 value:
                   request:
                     - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                      itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
+                      itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood
                       itemType: resource_group
-                      expiryTime: '2022-08-04T20:00:19+0000'
+                      expiryTime: '2022-08-04T20:00:19'
                       constraints: {}
-                    - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                      itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cq21/resource-group
-                      itemType: resource_group
-                      expiryTime: '2022-08-04T20:00:19+0000'
-                      constraints: {}
-              Create SinglePolicies:
+              single req for resource policy:
                 value:
                   request:
                     - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                      itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
-                      itemType: resource_group
-                      expiryTime: '2022-08-04T20:00:19+0000'
+                      itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood/FWR056
+                      itemType: resource
+                      expiryTime: '2022-10-10T04:00:19'
+                      constraints:
+                        access:
+                          - api
+                          - sub
+              single req for resource_server policy:
+                value:
+                  request:
+                    - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                      itemId: authvertx.iudx.io
+                      itemType: resource_server
+                      expiryTime: '2022-05-12T04:00:19'
                       constraints: {}
+              multiple requests:
+                value:
+                  request:
+                    - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                      itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood
+                      itemType: resource_group
+                      expiryTime: '2022-08-04T20:00:19'
+                      constraints: {}
+                    - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                      itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood/FWR056
+                      itemType: resource
+                      expiryTime: '2022-10-10T04:00:19'
+                      constraints:
+                        access:
+                          - api
+                          - sub
           application/xml:
             schema:
               type: object
