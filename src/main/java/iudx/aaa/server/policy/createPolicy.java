@@ -207,7 +207,7 @@ public class createPolicy {
   }
 
   public Response getRespObj(String obj) {
-    Response.ResponseBuilder r = new Response.ResponseBuilder().type(POLICY_FAILURE);
+    Response.ResponseBuilder r = new Response.ResponseBuilder();
 
     String errorMessage;
     if (obj.contains(":")) errorMessage = obj.split(":")[0] + ":";
@@ -215,6 +215,7 @@ public class createPolicy {
     switch (errorMessage) {
       case BAD_REQUEST:
         {
+          r.type(URN_INVALID_INPUT);
           r.title(BAD_REQUEST);
           r.detail(BAD_REQUEST);
           r.status(400);
@@ -222,6 +223,7 @@ public class createPolicy {
         }
       case VALIDATE_EXPIRY_FAIL:
         {
+          r.type(URN_INVALID_INPUT);
           r.title(VALIDATE_EXPIRY_FAIL);
           r.detail(obj.replace(VALIDATE_EXPIRY_FAIL, ""));
           r.status(400);
@@ -229,6 +231,7 @@ public class createPolicy {
         }
       case INVALID_DATETIME:
         {
+          r.type(URN_INVALID_INPUT);
           r.title(INVALID_DATETIME);
           r.detail(obj.replace(INVALID_DATETIME, ""));
           r.status(400);
@@ -237,6 +240,7 @@ public class createPolicy {
 
       case INVALID_USER:
         {
+          r.type(URN_INVALID_INPUT);
           r.title(INVALID_USER);
           r.detail(obj.replace(INVALID_USER, ""));
           r.status(400);
@@ -244,6 +248,7 @@ public class createPolicy {
         }
       case SERVER_NOT_PRESENT:
         {
+          r.type(URN_INVALID_INPUT);
           r.title(SERVER_NOT_PRESENT);
           r.detail(obj.replace(SERVER_NOT_PRESENT, ""));
           r.status(400);
@@ -251,6 +256,7 @@ public class createPolicy {
         }
       case NO_AUTH_POLICY:
         {
+          r.type(URN_INVALID_INPUT);
           r.title(NO_AUTH_POLICY);
           r.detail(NO_AUTH_POLICY);
           r.status(403);
@@ -258,6 +264,7 @@ public class createPolicy {
         }
       case UNAUTHORIZED:
         {
+          r.type(URN_INVALID_INPUT);
           r.title(UNAUTHORIZED);
           r.detail(UNAUTHORIZED);
           r.status(403);
@@ -265,6 +272,7 @@ public class createPolicy {
         }
       case ITEMNOTFOUND:
         {
+          r.type(URN_INVALID_INPUT);
           r.title(ITEMNOTFOUND);
           r.detail(obj.replace(ITEMNOTFOUND, ""));
           r.status(400);
@@ -272,6 +280,7 @@ public class createPolicy {
         }
       case DUPLICATE_POLICY:
         {
+          r.type(URN_ALREADY_EXISTS);
           r.title(DUPLICATE_POLICY);
           r.detail(obj.replace(DUPLICATE_POLICY, ""));
           r.status(403);
@@ -279,6 +288,7 @@ public class createPolicy {
         }
       case PROVIDER_NOT_REGISTERED:
       {
+        r.type(URN_INVALID_INPUT);
         r.title(PROVIDER_NOT_REGISTERED);
         r.detail(obj.replace(PROVIDER_NOT_REGISTERED, ""));
         r.status(403);
@@ -287,6 +297,7 @@ public class createPolicy {
 
       default:
         {
+          r.type(URN_INVALID_INPUT);
           r.title(INTERNALERROR);
           r.detail(INTERNALERROR);
           r.status(500);

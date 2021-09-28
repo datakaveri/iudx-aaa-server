@@ -14,11 +14,53 @@ import io.vertx.sqlclient.Tuple;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-import static iudx.aaa.server.policy.Constants.*;
+import static iudx.aaa.server.policy.Constants.BAD_REQUEST;
+import static iudx.aaa.server.policy.Constants.CAT_ID;
+import static iudx.aaa.server.policy.Constants.CHECKRESGRP;
+import static iudx.aaa.server.policy.Constants.CHECK_AUTH_POLICY;
+import static iudx.aaa.server.policy.Constants.CHECK_DELEGATION;
+import static iudx.aaa.server.policy.Constants.CHECK_RES_SER;
+import static iudx.aaa.server.policy.Constants.EMAIL_HASH;
+import static iudx.aaa.server.policy.Constants.GET_PROVIDER_ID;
+import static iudx.aaa.server.policy.Constants.GET_RES_DETAILS;
+import static iudx.aaa.server.policy.Constants.GET_RES_GRP_DETAILS;
+import static iudx.aaa.server.policy.Constants.GET_RES_GRP_OWNER;
+import static iudx.aaa.server.policy.Constants.GET_RES_OWNERS;
+import static iudx.aaa.server.policy.Constants.GET_RES_SER_DETAIL;
+import static iudx.aaa.server.policy.Constants.GET_RES_SER_ID;
+import static iudx.aaa.server.policy.Constants.ID;
+import static iudx.aaa.server.policy.Constants.INSERT_RES;
+import static iudx.aaa.server.policy.Constants.INSERT_RES_GRP;
+import static iudx.aaa.server.policy.Constants.INTERNALERROR;
+import static iudx.aaa.server.policy.Constants.ITEMNOTFOUND;
+import static iudx.aaa.server.policy.Constants.IUDX_RES;
+import static iudx.aaa.server.policy.Constants.IUDX_RES_GRP;
+import static iudx.aaa.server.policy.Constants.NO_AUTH_POLICY;
+import static iudx.aaa.server.policy.Constants.PROVIDER;
+import static iudx.aaa.server.policy.Constants.PROVIDER_ID;
+import static iudx.aaa.server.policy.Constants.RES;
+import static iudx.aaa.server.policy.Constants.RESOURCE_GROUP;
+import static iudx.aaa.server.policy.Constants.RESOURCE_SERVER;
+import static iudx.aaa.server.policy.Constants.RESOURCE_SERVER_ID;
+import static iudx.aaa.server.policy.Constants.RESULTS;
+import static iudx.aaa.server.policy.Constants.RES_GRP;
+import static iudx.aaa.server.policy.Constants.RES_GRP_OWNER;
+import static iudx.aaa.server.policy.Constants.RES_OWNER;
+import static iudx.aaa.server.policy.Constants.RES_SERVER;
+import static iudx.aaa.server.policy.Constants.SERVER_NOT_PRESENT;
+import static iudx.aaa.server.policy.Constants.STATUS;
+import static iudx.aaa.server.policy.Constants.TYPE;
+import static iudx.aaa.server.policy.Constants.URL;
+import static iudx.aaa.server.policy.Constants.status;
 
 public class CatalogueClient {
   private static final Logger LOGGER = LogManager.getLogger(CatalogueClient.class);
@@ -44,7 +86,7 @@ public class CatalogueClient {
     this.catItemPath = Constants.CAT_ITEM_PATH;
     this.authUrl = options.getString("authServerUrl");
     this.resUrl = options.getString("resURL");
-      this.domain = options.getString("domain");
+    this.domain = options.getString("domain");
   }
 
   /**
@@ -55,7 +97,6 @@ public class CatalogueClient {
    * @return Map<String, UUID> -> map of cat_id to itemid
    */
   public Future<Map<String, UUID>> checkReqItems(Map<String, List<String>> request, String userId) {
-
     Promise<Map<String, UUID>> p = Promise.promise();
 
     if (request.containsKey(RES_SERVER)) {
@@ -84,9 +125,7 @@ public class CatalogueClient {
           resources.compose(
               obj -> {
                 if (obj.size() == 0) return Future.succeededFuture(new ArrayList<JsonObject>());
-                else
-                    return fetch(obj);
-
+                else return fetch(obj);
               });
 
       Future<Boolean> insertItems =
@@ -155,7 +194,6 @@ public class CatalogueClient {
               if (!resGrp.result().isEmpty()) resp.put(RES_GRP, resGrp.result());
 
               if (!resItem.result().isEmpty()) resp.put(RES, resItem.result());
-
               p.complete(resp);
             })
         .onFailure(fail -> p.fail(INTERNALERROR));
@@ -436,9 +474,20 @@ public class CatalogueClient {
         .onSuccess(
             obj -> {
               JsonObject res = obj.bodyAsJsonObject();
-              if (res.getString(STATUS).equals(status.SUCCESS.toString().toLowerCase()))
-                p.complete(obj.bodyAsJsonObject().getJsonArray(RESULTS).getJsonObject(0));
-              else p.fail(ITEMNOTFOUND + id);
+              if (obj.statusCode() == 200)
+              {
+                if (res.getString(STATUS).equals(status.SUCCESS.toString().toLowerCase()))
+                  p.complete(obj.bodyAsJsonObject().getJsonArray(RESULTS).getJsonObject(0));
+                }
+                else{
+                  if (obj.statusCode() == 404)
+                      p.fail(ITEMNOTFOUND + id);
+                  else{
+                      LOGGER.error("failed fetchItem: " + res);
+                      p.fail(INTERNALERROR);
+                  }
+
+              }
             });
     return p.future();
   }
@@ -461,7 +510,6 @@ public class CatalogueClient {
     List<String> emailSHA =
         resGrps.stream().map(e -> e.getString(PROVIDER)).collect(Collectors.toList());
 
-
     // stream resGrps to get list of ResourceServers, parse to get url of server, check for
     // file/video, use to get resource server id
 
@@ -474,8 +522,8 @@ public class CatalogueClient {
 
       String server = obj.next().getString(RESOURCE_SERVER);
       String url = server.split("/")[2];
-      String[] urlSplit = url.split("\\.",2);
-        if (!urlSplit[0].equals("catalogue") && urlSplit[1].equals(domain))  url = resUrl;
+      String[] urlSplit = url.split("\\.", 2);
+      if (!urlSplit[0].equals("catalogue") && urlSplit[1].equals(domain)) url = resUrl;
       resUrlMap.put(server, url);
     }
     Collector<Row, ?, Map<String, UUID>> collector =
@@ -487,7 +535,6 @@ public class CatalogueClient {
                     .collecting(collector)
                     .execute(Tuple.of(resUrlMap.values().toArray()))
                     .map(SqlResult::value));
-
 
     Collector<Row, ?, Map<String, UUID>> providerId =
         Collectors.toMap(row -> row.getString(EMAIL_HASH), row -> row.getUUID(ID));
@@ -504,8 +551,8 @@ public class CatalogueClient {
         CompositeFuture.all(resSerId, emailHash)
             .compose(
                 ar -> {
-                    if(emailHash.result() == null || emailHash.result().isEmpty() )
-                        return  Future.failedFuture("Provider not a resgistered user");
+                  if (emailHash.result() == null || emailHash.result().isEmpty())
+                    return Future.failedFuture("Provider not a resgistered user");
 
                   List<Tuple> tuples = new ArrayList<>();
                   for (JsonObject jsonObject : resGrps) {
@@ -521,14 +568,14 @@ public class CatalogueClient {
     // create tuple for resource group insertion // not if empty
     Future<Void> resGrpEntry =
         item.compose(
-            success ->{
-                if(success.size() == 0)
-                {
-                    LOGGER.error("failed resGrpEntry: " + "No res groups to enter");
-                   return Future.failedFuture(INTERNALERROR);
-                }
-              return  pool.withTransaction(
-                    conn -> conn.preparedQuery(INSERT_RES_GRP).executeBatch(success).mapEmpty());});
+            success -> {
+              if (success.size() == 0) {
+                LOGGER.error("failed resGrpEntry: " + "No res groups to enter");
+                return Future.failedFuture(INTERNALERROR);
+              }
+              return pool.withTransaction(
+                  conn -> conn.preparedQuery(INSERT_RES_GRP).executeBatch(success).mapEmpty());
+            });
 
     List<JsonObject> res =
         request.stream()
@@ -562,24 +609,24 @@ public class CatalogueClient {
     Future<List<Tuple>> resources =
         resourceItemDetails.compose(
             x -> {
-
               List<Tuple> tuples = new ArrayList<>();
-                for (JsonObject jsonObject : res) {
-                    String id = jsonObject.getString(RESOURCE_GROUP);
-                    String cat_id = jsonObject.getString(ID);
-                    UUID pId = UUID.fromString(x.get(id).getString(PROVIDER_ID));
-                    UUID rSerId = UUID.fromString(x.get(id).getString(RESOURCE_SERVER_ID));
-                    UUID rId = UUID.fromString(x.get(id).getString(ID));
-                    tuples.add(Tuple.of(cat_id, pId, rSerId, rId));
-                }
+              for (JsonObject jsonObject : res) {
+                String id = jsonObject.getString(RESOURCE_GROUP);
+                String cat_id = jsonObject.getString(ID);
+                UUID pId = UUID.fromString(x.get(id).getString(PROVIDER_ID));
+                UUID rSerId = UUID.fromString(x.get(id).getString(RESOURCE_SERVER_ID));
+                UUID rId = UUID.fromString(x.get(id).getString(ID));
+                tuples.add(Tuple.of(cat_id, pId, rSerId, rId));
+              }
               return Future.succeededFuture(tuples);
             });
 
     resources
         .compose(
-            success ->{
-             return  pool.withTransaction(
-                    conn -> conn.preparedQuery(INSERT_RES).executeBatch(success).mapEmpty());})
+            success -> {
+              return pool.withTransaction(
+                  conn -> conn.preparedQuery(INSERT_RES).executeBatch(success).mapEmpty());
+            })
         .onFailure(
             failureHandler -> {
               failureHandler.printStackTrace();

@@ -5,10 +5,10 @@ import static iudx.aaa.server.policy.Constants.AUTH_SERVER_URL;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_LIST_DELEGATE_ROLES;
 import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ROLES;
 import static iudx.aaa.server.policy.Constants.NIL_UUID;
-import static iudx.aaa.server.policy.Constants.POLICY_SUCCESS;
 import static iudx.aaa.server.policy.Constants.RESULTS;
 import static iudx.aaa.server.policy.Constants.TYPE;
 import static iudx.aaa.server.policy.Constants.URN_INVALID_ROLE;
+import static iudx.aaa.server.policy.Constants.URN_SUCCESS;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_ADMIN_SERVER;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_DELEG;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_ORG;
@@ -239,7 +239,7 @@ public class ListDelegationTest {
 
     policyService.listDelegation(user, new JsonObject(),
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(POLICY_SUCCESS, response.getString(TYPE));
+          assertEquals(URN_SUCCESS, response.getString(TYPE));
           JsonArray resp = response.getJsonArray(RESULTS);
           assertTrue(resp.size() == 2);
           resp.forEach(obj -> {
@@ -282,7 +282,7 @@ public class ListDelegationTest {
 
     policyService.listDelegation(user, new JsonObject(),
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(POLICY_SUCCESS, response.getString(TYPE));
+          assertEquals(URN_SUCCESS, response.getString(TYPE));
           JsonArray resp = response.getJsonArray(RESULTS);
           assertTrue(resp.size() == 2);
           resp.forEach(obj -> {
@@ -327,7 +327,7 @@ public class ListDelegationTest {
 
     policyService.listDelegation(user, providerDetails,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(POLICY_SUCCESS, response.getString(TYPE));
+          assertEquals(URN_SUCCESS, response.getString(TYPE));
           JsonArray resp = response.getJsonArray(RESULTS);
           assertTrue(resp.size() == 1);
           resp.forEach(obj -> {
