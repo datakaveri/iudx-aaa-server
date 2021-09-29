@@ -856,4 +856,9 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     return promise.future();
   }
+
+  @Override
+  public void stop() {
+    LOGGER.info("Stopping the API server");
+  }
 }

@@ -21,7 +21,7 @@ services:
     depends_on:
       - "zookeeper"
     ports:
-      - "80:80"
+      - "80:8443"
       - "9000:9000"
     restart: on-failure
     networks: 
