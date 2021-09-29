@@ -113,7 +113,7 @@ public class CreatePolicyTest {
 
   @Test
   @DisplayName("Testing Failure(Role is consumer))")
-  void resExistFailure(VertxTestContext testContext) {
+  void roleFailure(VertxTestContext testContext) {
     policyService.createPolicy(
             roleFailureReq,
         consumerUser,

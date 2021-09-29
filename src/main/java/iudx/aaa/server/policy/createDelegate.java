@@ -35,11 +35,13 @@ import static iudx.aaa.server.policy.Constants.INVALID_USER;
 import static iudx.aaa.server.policy.Constants.ITEMNOTFOUND;
 import static iudx.aaa.server.policy.Constants.NOT_DELEGATE;
 import static iudx.aaa.server.policy.Constants.NO_AUTH_POLICY;
-import static iudx.aaa.server.policy.Constants.POLICY_FAILURE;
 import static iudx.aaa.server.policy.Constants.PROVIDER_NOT_REGISTERED;
 import static iudx.aaa.server.policy.Constants.SERVER_NOT_PRESENT;
 import static iudx.aaa.server.policy.Constants.UNAUTHORIZED;
 import static iudx.aaa.server.policy.Constants.URL;
+import static iudx.aaa.server.policy.Constants.URN_ALREADY_EXISTS;
+import static iudx.aaa.server.policy.Constants.URN_INVALID_INPUT;
+import static iudx.aaa.server.policy.Constants.URN_INVALID_ROLE;
 import static iudx.aaa.server.policy.Constants.USER_ID;
 import static iudx.aaa.server.policy.Constants.roles;
 import static iudx.aaa.server.policy.Constants.status;
@@ -203,7 +205,7 @@ public class createDelegate {
 
 
     public Response getRespObj(String obj) {
-        Response.ResponseBuilder r = new Response.ResponseBuilder().type(POLICY_FAILURE);
+        Response.ResponseBuilder r = new Response.ResponseBuilder();
 
         String errorMessage;
         if (obj.contains(":")) errorMessage = obj.split(":")[0] + ":";
@@ -211,6 +213,7 @@ public class createDelegate {
         switch (errorMessage) {
             case BAD_REQUEST:
             {
+                r.type(URN_INVALID_INPUT);
                 r.title(BAD_REQUEST);
                 r.detail(BAD_REQUEST);
                 r.status(400);
@@ -219,6 +222,7 @@ public class createDelegate {
 
             case NOT_DELEGATE:
             {
+                r.type(URN_INVALID_ROLE);
                 r.title(NOT_DELEGATE);
                 r.detail(obj.replace(NOT_DELEGATE, ""));
                 r.status(400);
@@ -226,6 +230,7 @@ public class createDelegate {
             }
             case SERVER_NOT_PRESENT:
             {
+                r.type(URN_INVALID_INPUT);
                 r.title(SERVER_NOT_PRESENT);
                 r.detail(obj.replace(SERVER_NOT_PRESENT, ""));
                 r.status(400);
@@ -233,6 +238,7 @@ public class createDelegate {
             }
             case NO_AUTH_POLICY:
             {
+                r.type(URN_INVALID_INPUT);
                 r.title(NO_AUTH_POLICY);
                 r.detail(NO_AUTH_POLICY);
                 r.status(403);
@@ -240,6 +246,7 @@ public class createDelegate {
             }
             case UNAUTHORIZED:
             {
+                r.type(URN_INVALID_INPUT);
                 r.title(UNAUTHORIZED);
                 r.detail(UNAUTHORIZED);
                 r.status(403);
@@ -247,15 +254,17 @@ public class createDelegate {
             }
             case DUPLICATE_DELEGATION:
             {
+                r.type(URN_ALREADY_EXISTS);
                 r.title(DUPLICATE_DELEGATION);
                 r.detail(obj.replace(DUPLICATE_DELEGATION, ""));
-                r.status(403);
+                r.status(409);
                 break;
             }
 
 
             default:
             {
+                r.type(URN_INVALID_INPUT);
                 r.title(INTERNALERROR);
                 r.detail(INTERNALERROR);
                 r.status(500);

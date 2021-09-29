@@ -68,7 +68,7 @@ public class Constants {
   public static final String URL_NOT_FOUND = "url not found";
   public static final String AUTH_DEL_POL_FAIL = "Not an auth delegate";
   public static final String AUTH_DEL_FAIL = "Not a delegate for resource owner";
-  public static final String ITEMNOTFOUND = "Item does not exist";
+  public static final String ITEMNOTFOUND = "Item does not exist:";
   public static final String NO_RES_SERVER = "Res server does not exist";
   // Title
   public static final String SUCC_TITLE_POLICY_READ = "policy read";
@@ -91,21 +91,21 @@ public class Constants {
       "Auth delegate may not create auth delegations";
   // URN
   public static final String ID_NOT_PRESENT = "id does not exist";
-  public static final String POLICY_SUCCESS = "urn:dx:as:Success";
-  public static final String POLICY_FAILURE = "urn:dx:as:Failure";
-  public static final String URN_INVALID_ROLE = "urn:dx:as:InvalidRole";
-  public static final String URN_INVALID_DELEGATE = "urn:dx:as:InvalidDelegate";
+  public static final String URN_SUCCESS = "urn:dx:as:Success";
+  public static final String URN_MISSING_INFO = "urn:dx:as:MissingInformation";
   public static final String URN_INVALID_INPUT = "urn:dx:as:InvalidInput";
+  public static final String URN_INVALID_ROLE = "urn:dx:as:InvalidRole";
+  public static final String URN_ALREADY_EXISTS = "urn:dx:as:AlreadyExists";
   // future failure messages
-  public static final String BAD_REQUEST = "bad request:";
+  public static final String BAD_REQUEST = "bad request";
   public static final String SERVER_NOT_PRESENT = "servers not present:";
   public static final String VALIDATE_EXPIRY_FAIL = "expiry cannot be in the past:";
   public static final String INVALID_DATETIME = "invalid date time:";
   public static final String INVALID_USER = "user does not exist:";
-  public static final String NO_AUTH_POLICY = "No auth policy for user:";
+  public static final String NO_AUTH_POLICY = "No auth policy for user";
   public static final String INCORRECT_ITEM_TYPE = "incorrect item type";
-  public static final String UNAUTHORIZED = "Not allowed to create policies for resource:";
-  public static final String PROVIDER_NOT_REGISTERED = "Provider not a resgistered user";
+  public static final String UNAUTHORIZED = "Not allowed to create policies for resource";
+  public static final String PROVIDER_NOT_REGISTERED = "Provider not a registered user";
   public static final String DUPLICATE_POLICY = "Policy already exists:";
   public static final String DUPLICATE_DELEGATION = "Delegation already exists:";
   public static final String NO_USER = "no user";

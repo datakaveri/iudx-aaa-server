@@ -188,12 +188,14 @@ public class TestRequest {
               .put("userId", "d34b1547-7281-4f66-b550-ed79f9bb0c36")
               .put("roles", new JsonArray().add(Roles.CONSUMER))
               .put("keycloakId", "04617f23-7e5d-4118-8773-1b6c85da14ed"));
+
   public static User AdminUser =
       new User(
           new JsonObject()
               .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5")
               .put("roles", new JsonArray().add(Roles.ADMIN))
               .put("keycloakId", "04617f23-7e5d-4118-8773-1b6c85da14ed"));
+
   public static User ProviderUserCreate =
       new User(
           new JsonObject()
@@ -205,7 +207,7 @@ public class TestRequest {
 
   public static JsonObject emptyCreateObject =
       new JsonObject()
-          .put("userId", "d34b1547-7281-4f66-b550-ed79f9bb0c36")
+          .put("userId", "d34b1547-7281-4f66-b550-ed79f9bb0c99")
           .put("resId", "")
           .put("resType", "")
           .put("expiry_time", "")
@@ -214,6 +216,16 @@ public class TestRequest {
   public static List<CreatePolicyRequest> roleFailureReq =
       CreatePolicyRequest.jsonArrayToList(new JsonArray().add(emptyCreateObject));
 
+  public static JsonObject UserCreateObject =
+          new JsonObject()
+                  .put("userId", "d34b1547-7281-4f66-b550-ed79f9bb0c99")
+                  .put("itemId", "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/file.iudx.io/surat-itms-realtime-information")
+                  .put("itemType", "resource_group")
+                  .put("expiry_time", "")
+                  .put("constraints", constraints);
+
+  public static List<CreatePolicyRequest> userFailureReq =
+          CreatePolicyRequest.jsonArrayToList(new JsonArray().add(UserCreateObject));
   //createDelegations
   public  static User createDelUser =
         new User(
