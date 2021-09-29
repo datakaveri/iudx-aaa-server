@@ -32,36 +32,49 @@ paths:
                     type: string
                     minLength: 1
                   results:
-                    type: array
-                    uniqueItems: true
-                    minItems: 1
-                    items:
-                      required:
-                        - accessToken
-                        - expiry
-                        - server
-                      properties:
-                        accessToken:
-                          type: string
-                          minLength: 1
-                        expiry:
-                          type: number
-                        server:
-                          type: string
-                          minLength: 1
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+                        minLength: 1
+                      expiry:
+                        type: number
+                      server:
+                        type: string
+                        minLength: 1
+                    required:
+                      - accessToken
+                      - expiry
+                      - server
                 required:
                   - type
                   - title
                   - results
+                x-examples:
+                  example-1:
+                    type: 'urn:dx:as:Success'
+                    title: Token created
+                    results:
+                      accessToken: eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJzdWIiOiIzNDliNGI1NS0wMjUxLTQ5MGUtYmVlOS0wMGYzYTVkM2U2NDMiLCJpc3MiOiJhdXRoLnRlc3QuY29tIiwiYXVkIjoiZm9vYmFyLml1ZHguaW8iLCJleHAiOjE2MjY4MzY3ODQsImlhdCI6MTYyNjc5MzU4NCwiaWlkIjoicmc6ZXhhbXBsZS5jb20vNzllN2JmYTYyZmFkNmM3NjViYWM2OTE1NGMyZjI0Yzk0Yzk1MjIwYS9yZXNvdXJjZS1ncm91cCIsInJvbGUiOiJjb25zdW1lciIsImNvbnMiOnt9fQ.eAWKamrRdV4c1MPuoLU6j0bWB6iiM_of5F3LA-_DZGhyu_6aFP4cmCI1Y3ZN2ZRklOSGcrL5aHC8Ccga6dtTrg
+                      expiry: 1626836784
+                      server: foobar.iudx.io
               examples:
                 General Structure:
                   value:
                     type: 'urn:dx:as:Success'
                     title: Token created
                     results:
-                      - accessToken: eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJzdWIiOiIzNDliNGI1NS0wMjUxLTQ5MGUtYmVlOS0wMGYzYTVkM2U2NDMiLCJpc3MiOiJhdXRoLnRlc3QuY29tIiwiYXVkIjoiZm9vYmFyLml1ZHguaW8iLCJleHAiOjE2MjY4MzY3ODQsImlhdCI6MTYyNjc5MzU4NCwiaWlkIjoicmc6ZXhhbXBsZS5jb20vNzllN2JmYTYyZmFkNmM3NjViYWM2OTE1NGMyZjI0Yzk0Yzk1MjIwYS9yZXNvdXJjZS1ncm91cCIsInJvbGUiOiJjb25zdW1lciIsImNvbnMiOnt9fQ.eAWKamrRdV4c1MPuoLU6j0bWB6iiM_of5F3LA-_DZGhyu_6aFP4cmCI1Y3ZN2ZRklOSGcrL5aHC8Ccga6dtTrg
-                        expiry: 1626836784
-                        server: foobar.iudx.io
+                      accessToken: eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJzdWIiOiIzNDliNGI1NS0wMjUxLTQ5MGUtYmVlOS0wMGYzYTVkM2U2NDMiLCJpc3MiOiJhdXRoLnRlc3QuY29tIiwiYXVkIjoiZm9vYmFyLml1ZHguaW8iLCJleHAiOjE2MjY4MzY3ODQsImlhdCI6MTYyNjc5MzU4NCwiaWlkIjoicmc6ZXhhbXBsZS5jb20vNzllN2JmYTYyZmFkNmM3NjViYWM2OTE1NGMyZjI0Yzk0Yzk1MjIwYS9yZXNvdXJjZS1ncm91cCIsInJvbGUiOiJjb25zdW1lciIsImNvbnMiOnt9fQ.eAWKamrRdV4c1MPuoLU6j0bWB6iiM_of5F3LA-_DZGhyu_6aFP4cmCI1Y3ZN2ZRklOSGcrL5aHC8Ccga6dtTrg
+                      expiry: 1626836784
+                      server: foobar.iudx.io
+                example-1:
+                  value:
+                    type: string
+                    title: string
+                    results:
+                      accessToken: string
+                      expiry: 0
+                      server: string
           headers:
             Content-Type:
               schema:
@@ -133,10 +146,10 @@ paths:
           description: Keycloak Issued clientId
         - schema:
             type: string
-            format: uuid
-            maxLength: 36
-            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-            minLength: 36
+            maxLength: 40
+            pattern: '^[0-9a-f]{40}$'
+            minLength: 40
+            example: 73b66ab55ba4d07ea487310679aa0689b4bd2c9d
           in: header
           description: Keycloak Issued clientSecret
           name: clientSecret
@@ -199,6 +212,19 @@ paths:
               schema:
                 description: ''
                 type: object
+                x-examples:
+                  example-1:
+                    type: 'urn:dx:as:Success'
+                    title: Token authenticated
+                    results:
+                      sub: 129b4b55-0251-490e-bee9-00f3a5d3e632
+                      iss: auth.test.com
+                      aud: foobar.iudx.io
+                      exp: 1626837909
+                      iat: 1626794709
+                      iid: 'rg:example.com/79e7bfa62fad6c765bac69154c2f24c94c95210v/resource-group'
+                      role: consumer
+                      cons: {}
                 properties:
                   type:
                     type: string
@@ -207,42 +233,38 @@ paths:
                     type: string
                     minLength: 1
                   results:
-                    type: array
-                    uniqueItems: true
-                    minItems: 1
-                    items:
-                      type: object
-                      properties:
-                        sub:
-                          type: string
-                          minLength: 1
-                        iss:
-                          type: string
-                          minLength: 1
-                        aud:
-                          type: string
-                          minLength: 1
-                        exp:
-                          type: number
-                        iat:
-                          type: number
-                        iid:
-                          type: string
-                          minLength: 1
-                        role:
-                          type: string
-                          minLength: 1
-                        cons:
-                          type: object
-                      required:
-                        - sub
-                        - iss
-                        - aud
-                        - exp
-                        - iat
-                        - iid
-                        - role
-                        - cons
+                    type: object
+                    required:
+                      - sub
+                      - iss
+                      - aud
+                      - exp
+                      - iat
+                      - iid
+                      - role
+                      - cons
+                    properties:
+                      sub:
+                        type: string
+                        minLength: 1
+                      iss:
+                        type: string
+                        minLength: 1
+                      aud:
+                        type: string
+                        minLength: 1
+                      exp:
+                        type: number
+                      iat:
+                        type: number
+                      iid:
+                        type: string
+                        minLength: 1
+                      role:
+                        type: string
+                        minLength: 1
+                      cons:
+                        type: object
                 required:
                   - type
                   - title
@@ -253,14 +275,14 @@ paths:
                     type: 'urn:dx:as:Success'
                     title: Token authenticated
                     results:
-                      - sub: 129b4b55-0251-490e-bee9-00f3a5d3e632
-                        iss: auth.test.com
-                        aud: foobar.iudx.io
-                        exp: 1626837909
-                        iat: 1626794709
-                        iid: 'rg:example.com/79e7bfa62fad6c765bac69154c2f24c94c95210v/resource-group'
-                        role: consumer
-                        cons: {}
+                      sub: 129b4b55-0251-490e-bee9-00f3a5d3e632
+                      iss: auth.test.com
+                      aud: foobar.iudx.io
+                      exp: 1626837909
+                      iat: 1626794709
+                      iid: 'rg:example.com/79e7bfa62fad6c765bac69154c2f24c94c95210v/resource-group'
+                      role: consumer
+                      cons: {}
         '400':
           description: Invalid/missing information
           content:
@@ -517,7 +539,9 @@ paths:
                               minLength: 1
                             clientSecret:
                               type: string
-                              minLength: 1
+                              minLength: 40
+                              maxLength: 40
+                              pattern: '^[0-9a-f]{40}$'
                           required:
                             - clientName
                             - clientId
@@ -560,7 +584,7 @@ paths:
                       clients:
                         - clientName: default
                           clientId: 6d0b58c3-c0c4-48af-bca2-4f255c0e73a7
-                          clientSecret: a18cb9fc-06b3-4ae5-8220-86fc4e89a1a6
+                          clientSecret: 73b66ab55ba4d07ea487310679aa0689b4bd2c9d
                       email: ngoaf@chspomvjuq.com
                       phone: '9919967211'
                       organization:
