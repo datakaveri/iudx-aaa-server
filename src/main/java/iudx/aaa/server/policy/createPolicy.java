@@ -224,7 +224,7 @@ public class createPolicy {
       case VALIDATE_EXPIRY_FAIL:
         {
           r.type(URN_INVALID_INPUT);
-          r.title(VALIDATE_EXPIRY_FAIL);
+          r.title(VALIDATE_EXPIRY_FAIL.split(":")[0]);
           r.detail(obj.replace(VALIDATE_EXPIRY_FAIL, ""));
           r.status(400);
           break;
@@ -232,7 +232,7 @@ public class createPolicy {
       case INVALID_DATETIME:
         {
           r.type(URN_INVALID_INPUT);
-          r.title(INVALID_DATETIME);
+          r.title(INVALID_DATETIME.split(":")[0]);
           r.detail(obj.replace(INVALID_DATETIME, ""));
           r.status(400);
           break;
@@ -241,7 +241,7 @@ public class createPolicy {
       case INVALID_USER:
         {
           r.type(URN_INVALID_INPUT);
-          r.title(INVALID_USER);
+          r.title(INVALID_USER.split(":")[0]);
           r.detail(obj.replace(INVALID_USER, ""));
           r.status(400);
           break;
@@ -249,14 +249,14 @@ public class createPolicy {
       case SERVER_NOT_PRESENT:
         {
           r.type(URN_INVALID_INPUT);
-          r.title(SERVER_NOT_PRESENT);
+          r.title(SERVER_NOT_PRESENT.split(":")[0]);
           r.detail(obj.replace(SERVER_NOT_PRESENT, ""));
           r.status(400);
           break;
         }
       case NO_AUTH_POLICY:
         {
-          r.type(URN_INVALID_INPUT);
+          r.type(URN_INVALID_ROLE);
           r.title(NO_AUTH_POLICY);
           r.detail(NO_AUTH_POLICY);
           r.status(403);
@@ -281,16 +281,16 @@ public class createPolicy {
       case DUPLICATE_POLICY:
         {
           r.type(URN_ALREADY_EXISTS);
-          r.title(DUPLICATE_POLICY);
+          r.title(DUPLICATE_POLICY.split(":")[0]);
           r.detail(obj.replace(DUPLICATE_POLICY, ""));
-          r.status(403);
+          r.status(409);
           break;
         }
       case PROVIDER_NOT_REGISTERED:
       {
         r.type(URN_INVALID_INPUT);
         r.title(PROVIDER_NOT_REGISTERED);
-        r.detail(obj.replace(PROVIDER_NOT_REGISTERED, ""));
+        r.detail(PROVIDER_NOT_REGISTERED);
         r.status(403);
         break;
       }

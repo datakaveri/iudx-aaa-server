@@ -257,7 +257,7 @@ public class createDelegate {
                 r.type(URN_ALREADY_EXISTS);
                 r.title(DUPLICATE_DELEGATION);
                 r.detail(obj.replace(DUPLICATE_DELEGATION, ""));
-                r.status(403);
+                r.status(409);
                 break;
             }
 

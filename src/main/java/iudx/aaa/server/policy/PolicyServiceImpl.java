@@ -193,8 +193,8 @@ public class PolicyServiceImpl implements PolicyService {
       // 403 not allowed to create policy
       Response r =
           new Response.ResponseBuilder()
-              .type(INVALID_ROLE)
-              .title(URN_INVALID_ROLE)
+              .type(URN_INVALID_ROLE)
+              .title(INVALID_ROLE)
               .detail(INVALID_ROLE)
               .status(403)
               .build();
