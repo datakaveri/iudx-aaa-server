@@ -10,9 +10,9 @@ services:
   prod:
     image: iudx/aaa-depl:latest
     environment:
-      - HOSTNAME=server
-      - ZOOKEEPER=zookeeper
-      - RS_URL=https://aaa.iudx.org.in
+      - AUTH_URL=https://authorization.iudx.org.in
+      - LOG_LEVEL=INFO
+      - AUTH_JAVA_OPTS=-Xmx4096m
     volumes:
       - ./configs/config-depl.json:/usr/share/app/configs/config.json
       - ./docs/:/usr/share/app/docs
@@ -31,12 +31,14 @@ services:
          options:
              max-file: "5"
              max-size: "100m"
-    command: "java -jar ./fatjar.jar -c configs/config.json"
+    command: bash -c "exec java $$AUTH_JAVA_OPTS  -Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.Log4j2LogDelegateFactory -jar ./fatjar.jar  --host $$(hostname) -c configs/config.json"
 
   dev:
     image: iudx/aaa-dev:latest
     environment:
-      - RS_URL=https://aaa.iudx.org.in
+      - AUTH_URL=https://authorization.iudx.org.in
+      - LOG_LEVEL=INFO
+      - AUTH_JAVA_OPTS=-Xmx4096m
     volumes:
       - ./configs/config-dev.json:/usr/share/app/configs/config.json
       - ./configs/keystore.jks:/usr/share/app/configs/keystore.jks
@@ -53,7 +55,7 @@ services:
          options:
              max-file: "5"
              max-size: "100m"
-    command: "java -jar ./fatjar.jar -c configs/config.json"
+    command: bash -c "exec java $$AUTH_JAVA_OPTS  -Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.Log4j2LogDelegateFactory -jar ./fatjar.jar  --host $$(hostname) -c configs/config.json"
 
   zookeeper:
     image: zookeeper:latest
