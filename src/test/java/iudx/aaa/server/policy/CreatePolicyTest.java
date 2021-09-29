@@ -122,11 +122,10 @@ public class CreatePolicyTest {
                 testContext.verify(
                     () -> {
                       JsonObject result = response;
-                      assertEquals(URN_INVALID_ROLE, result.getString("title"));
+                      assertEquals(URN_INVALID_ROLE, result.getString("type"));
                       testContext.completeNow();
                     })));
   }
-
 
 
 }
