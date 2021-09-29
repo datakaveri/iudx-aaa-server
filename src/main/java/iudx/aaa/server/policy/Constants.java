@@ -97,15 +97,15 @@ public class Constants {
   public static final String URN_INVALID_ROLE = "urn:dx:as:InvalidRole";
   public static final String URN_ALREADY_EXISTS = "urn:dx:as:AlreadyExists";
   // future failure messages
-  public static final String BAD_REQUEST = "bad request:";
+  public static final String BAD_REQUEST = "bad request";
   public static final String SERVER_NOT_PRESENT = "servers not present:";
   public static final String VALIDATE_EXPIRY_FAIL = "expiry cannot be in the past:";
   public static final String INVALID_DATETIME = "invalid date time:";
   public static final String INVALID_USER = "user does not exist:";
-  public static final String NO_AUTH_POLICY = "No auth policy for user:";
+  public static final String NO_AUTH_POLICY = "No auth policy for user";
   public static final String INCORRECT_ITEM_TYPE = "incorrect item type";
-  public static final String UNAUTHORIZED = "Not allowed to create policies for resource:";
-  public static final String PROVIDER_NOT_REGISTERED = "Provider not a resgistered user";
+  public static final String UNAUTHORIZED = "Not allowed to create policies for resource";
+  public static final String PROVIDER_NOT_REGISTERED = "Provider not a registered user";
   public static final String DUPLICATE_POLICY = "Policy already exists:";
   public static final String DUPLICATE_DELEGATION = "Delegation already exists:";
   public static final String NO_USER = "no user";
