@@ -146,10 +146,10 @@ paths:
           description: Keycloak Issued clientId
         - schema:
             type: string
-            format: uuid
-            maxLength: 36
-            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-            minLength: 36
+            maxLength: 40
+            pattern: '^[0-9a-f]{40}$'
+            minLength: 40
+            example: 73b66ab55ba4d07ea487310679aa0689b4bd2c9d
           in: header
           description: Keycloak Issued clientSecret
           name: clientSecret
@@ -163,6 +163,8 @@ paths:
                 itemId:
                   type: string
                   minLength: 1
+                  pattern: '^[a-zA-Z0-9_*\-*\.\/]+$'
+                  maxLength: 512
                 itemType:
                   type: string
                   minLength: 1
@@ -185,14 +187,14 @@ paths:
             examples:
               Body for resourceGroup:
                 value:
-                  itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cf91/resource-group
+                  itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cf91/rs.iudx.io/resource-group
                   itemType: resource_group
-                  role: admin
+                  role: consumer
               Body for Open Resources:
                 value:
-                  itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cf91/<rs.url>
+                  itemId: rs.iudx.io
                   itemType: resource_server
-                  role: admin
+                  role: consumer
         description: ''
         required: true
       description: 'Request for a JWT (token). One can generate token using either by providing token header or providing clientId/clientSecret in the header. '
@@ -539,7 +541,9 @@ paths:
                               minLength: 1
                             clientSecret:
                               type: string
-                              minLength: 1
+                              minLength: 40
+                              maxLength: 40
+                              pattern: '^[0-9a-f]{40}$'
                           required:
                             - clientName
                             - clientId
@@ -582,7 +586,7 @@ paths:
                       clients:
                         - clientName: default
                           clientId: 6d0b58c3-c0c4-48af-bca2-4f255c0e73a7
-                          clientSecret: a18cb9fc-06b3-4ae5-8220-86fc4e89a1a6
+                          clientSecret: 73b66ab55ba4d07ea487310679aa0689b4bd2c9d
                       email: ngoaf@chspomvjuq.com
                       phone: '9919967211'
                       organization:
@@ -1877,7 +1881,14 @@ paths:
         - Policies APIs
       responses:
         '200':
-          description: Successfully listing the User policies
+          description: |-
+            Successfully listing the User policies
+             `results` : array of response objects
+              ` itemType` : 
+               -resource/resource_group for item policies 
+               -resource_server for server policies
+               ` itemId` : the cat ID of the item for which policy is set
+               
           content:
             application/json:
               schema:
@@ -1995,7 +2006,7 @@ paths:
                   - title
                   - results
               examples:
-                example:
+                policy for resource server:
                   value:
                     type: 'urn:dx:as:Success'
                     title: policy read
@@ -2011,6 +2022,52 @@ paths:
                             firstName: Someone
                             lastName: Person
                           id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                        owner:
+                          email: bryanrobert@iisc.ac.in
+                          name:
+                            firstName: B
+                            lastName: Robert
+                          id: 844e251b-574b-46e6-9247-f76f1f70a637
+                policy for resource_group:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: policy read
+                    results:
+                      - policyId: 5055ca31-937b-4a5e-b301-449ca35c123b
+                        itemType: resource_group
+                        expiryTime: '2022-09-09T04:22:36'
+                        constraints:
+                          access:
+                            - sub
+                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood
+                        user:
+                          email: vasanth.rajaraman@datakaveri.org
+                          name:
+                            firstName: Vasanth
+                            lastName: Rajaraman
+                          id: 15c7506f-c800-48d6-adeb-0542b03947c6
+                        owner:
+                          email: bryanrobert@iisc.ac.in
+                          name:
+                            firstName: B
+                            lastName: Robert
+                          id: 844e251b-574b-46e6-9247-f76f1f70a637
+                policy for resource:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: policy read
+                    results:
+                      - policyId: 11178f10-0b62-4d9f-a1c6-4cb8f7c173d0
+                        itemType: resource
+                        expiryTime: '2022-09-09T04:22:36'
+                        constraints: {}
+                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/surat-itms-realtime-information/surat-itms-live-eta
+                        user:
+                          email: kailash.adhikari@india.nec.com
+                          name:
+                            firstName: Kailash
+                            lastName: Adhikari
+                          id: 2563e6d4-5884-40e8-9d9f-e84ee956298b
                         owner:
                           email: bryanrobert@iisc.ac.in
                           name:
@@ -2125,24 +2182,29 @@ paths:
             schema:
               description: ''
               type: object
+              x-examples:
+                example-1:
+                  request:
+                    - id: ''
+                    - id: ''
               properties:
                 request:
                   type: array
                   uniqueItems: true
                   minItems: 1
                   items:
-                    required:
-                      - id
+                    type: object
                     properties:
                       id:
                         type: string
+                        format: uuid
+                        pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+                        minLength: 36
+                        maxLength: 36
+                    required:
+                      - id
               required:
                 - request
-              x-examples:
-                example-1:
-                  request:
-                    - id: ''
-                    - id: ''
             examples:
               Delete Policies:
                 value:
@@ -2150,6 +2212,7 @@ paths:
                     - id: 231f6eca-6276-4993-bfeb-53cbbbba6f06
                     - id: 231f6eca-6276-4993-bfeb-53cbbbba6f0b
         description: Request body is a JsonObject containing a JsonArray having one or multiple ID Objects to delete policies.
+        required: true
       tags:
         - Policies APIs
       security:
@@ -2206,7 +2269,7 @@ paths:
         - `userId` : UUID of the user for whom policy is to be set.
         - `itemId` : String value of the item for which policy is to be set 
         - `itemType` : String value of the item type
-        - `expiryTime` : ISO8601 compatible time in UTC - optional, if not sent default expiry is set for the policy
+        - `expiryTime` : ISO8601 compatible time in UTC(yyyy-MM-dd'T'HH:mm:ss). optional field, if not sent default expiry is set for the policy
         - `constraints` : JsonObject of the constraints that the resource server can recognize.
       parameters:
         - schema:
@@ -2247,51 +2310,85 @@ paths:
                     properties:
                       userId:
                         type: string
-                        minLength: 1
+                        format: uuid
+                        minLength: 36
+                        maxLength: 36
+                        pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
                       itemId:
                         type: string
                         minLength: 1
+                        maxLength: 512
+                        pattern: '^[a-zA-Z0-9_*\-*\.\/]+$'
                       itemType:
                         type: string
                         minLength: 1
+                        enum:
+                          - resource
+                          - resource_group
+                          - resource_server
                       expiryTime:
                         type: string
                         minLength: 1
+                        pattern: '^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$'
                       constraints:
                         type: object
                     required:
                       - userId
                       - itemId
                       - itemType
+                      - constraints
               required:
                 - request
             examples:
-              Create MultiplePolicies:
+              single req for res_group policy:
                 value:
                   request:
                     - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                      itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
+                      itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood
                       itemType: resource_group
-                      expiryTime: '2022-08-04T20:00:19+0000'
+                      expiryTime: '2022-08-04T20:00:19'
                       constraints: {}
-                    - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                      itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cq21/resource-group
-                      itemType: resource_group
-                      expiryTime: '2022-08-04T20:00:19+0000'
-                      constraints: {}
-              Create SinglePolicies:
+              single req for resource policy:
                 value:
                   request:
                     - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                      itemId: example.com/8d4b20ec4bf21efb363e72671e1b5bd77fd6cd32/resource-group
-                      itemType: resource_group
-                      expiryTime: '2022-08-04T20:00:19+0000'
+                      itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood/FWR056
+                      itemType: resource
+                      expiryTime: '2022-10-10T04:00:19'
+                      constraints:
+                        access:
+                          - api
+                          - sub
+              single req for resource_server policy:
+                value:
+                  request:
+                    - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                      itemId: authvertx.iudx.io
+                      itemType: resource_server
+                      expiryTime: '2022-05-12T04:00:19'
                       constraints: {}
+              multiple requests:
+                value:
+                  request:
+                    - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                      itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood
+                      itemType: resource_group
+                      expiryTime: '2022-08-04T20:00:19'
+                      constraints: {}
+                    - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
+                      itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood/FWR056
+                      itemType: resource
+                      expiryTime: '2022-10-10T04:00:19'
+                      constraints:
+                        access:
+                          - api
+                          - sub
           application/xml:
             schema:
               type: object
               properties: {}
         description: Request body will be an JsonObject containing JsonArray of requests
+        required: true
       tags:
         - Policies APIs
       security:
@@ -2713,6 +2810,7 @@ paths:
                   request:
                     - id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
         description: The body is a JSON object with a JSON array containing the delegation IDs. The IDs can be obtained from the `GET /auth/v1/policies/delegations` API
+        required: true
       security:
         - authorization: []
       tags:
@@ -2807,7 +2905,10 @@ paths:
                         minLength: 1
                       userId:
                         type: string
-                        minLength: 1
+                        minLength: 36
+                        pattern: '^[a-zA-Z0-9_*\-*\.\/]+$'
+                        maxLength: 36
+                        format: uuid
                     required:
                       - resSerId
                       - userId
@@ -2827,6 +2928,7 @@ paths:
                     - resSerId: auth.iudx.io
                       userId: d34b1547-7281-4f66-b550-ed79f9bb0c37
         description: The body is a JSON object with a JSON array containing the objects that need to be created.
+        required: true
   /auth/v1/policies/requests:
     get:
       summary: List Requests
@@ -3027,6 +3129,8 @@ paths:
                       itemId:
                         type: string
                         minLength: 1
+                        pattern: '^[a-zA-Z0-9_*\-*\.\/]+$'
+                        maxLength: 512
                       itemType:
                         type: string
                         minLength: 1
@@ -3058,6 +3162,7 @@ paths:
                           - subs
                           - file
         description: ''
+        required: true
       tags:
         - Notifications APIs
       parameters: []
@@ -3065,8 +3170,8 @@ paths:
       summary: Update Requests
       operationId: put-auth-v1-policies-requests
       responses:
-        '201':
-          description: Created
+        '200':
+          description: OK
           headers:
             Content-Type:
               schema:
@@ -3173,8 +3278,6 @@ paths:
                     required:
                       - requestId
                       - status
-                      - expiryDuration
-                      - constraints
               required:
                 - request
             examples:
@@ -3189,7 +3292,13 @@ paths:
                           - api
                           - subs
                           - file
+              Update-Rejected:
+                value:
+                  request:
+                    - requestId: bca11712-f381-46a5-afa3-a29b00568ace
+                      status: rejected
         description: ''
+        required: true
       tags:
         - Notifications APIs
 components:
