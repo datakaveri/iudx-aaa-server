@@ -3,13 +3,13 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>datakaveri.org</groupId>
-	<artifactId>iudx-aaa-server</artifactId>
+	<artifactId>iudx.aaa.server</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
 	<properties>
 		<vertx.version>4.0.3</vertx.version>
 		<hazelcast.version>4.0.2</hazelcast.version>
-		<micrometer.version>1.7.0</micrometer.version>
+		<micrometer.version>1.6.2</micrometer.version>
 		<curator.version>5.1.0</curator.version>
 		<apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
 		<junit-jupiter-engine.version>5.7.1</junit-jupiter-engine.version>
@@ -18,16 +18,17 @@
 		<jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
 		<guava.version>30.1.1-jre</guava.version>
 		<checkstyle.version>8.42</checkstyle.version>
+		<maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
 		<maven-shade-plugin.version>3.2.4</maven-shade-plugin.version>
 		<maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
 		<exec-maven-plugin.version>3.0.0</exec-maven-plugin.version>
 		<maven-pmd-plugin.version>3.14.0</maven-pmd-plugin.version>
 		<maven-checkstyle-plugin-google.version>3.1.2</maven-checkstyle-plugin-google.version>
 		<maven-surefire-report-plugin.version>3.0.0-M5</maven-surefire-report-plugin.version>
-		<maven.compiler.source>11</maven.compiler.source>
-		<maven.compiler.target>11</maven.compiler.target>
+		<openjdk.version>11</openjdk.version>
 		<keycloak.version>8.0.2</keycloak.version>
 		<resteasy.version>3.9.1.Final</resteasy.version>
+		<slf4j.version>1.7.25</slf4j.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<exec.mainClass>iudx.aaa.server.deploy.Deployer</exec.mainClass>
 		<exec.mainClassDev>iudx.aaa.server.deploy.DeployerDev
@@ -173,11 +174,6 @@
 			<artifactId>vertx-auth-jwt</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.bouncycastle</groupId>
-			<artifactId>bcprov-jdk15on</artifactId>
-			<version>1.69</version>
-		</dependency>
-		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
 			<version>3.11.1</version>
@@ -207,6 +203,16 @@
 			<groupId>joda-time</groupId>
 			<artifactId>joda-time</artifactId>
 			<version>2.10.10</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>${slf4j.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>${slf4j.version}</version>
 		</dependency>
 	</dependencies>
 
@@ -316,6 +322,13 @@
 									</manifestEntries>
 								</transformer>
 								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/services/io.vertx.core.spi.VerticleFactory
+									</resource>
+									<resource>META-INF/services/io.vertx.core.spi.VertxServiceProvider
+									</resource>
+								</transformer>							
+								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer">
 								</transformer>
 							</transformers>
@@ -350,6 +363,13 @@
 									</manifestEntries>
 								</transformer>
 								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/services/io.vertx.core.spi.VerticleFactory
+									</resource>
+									<resource>META-INF/services/io.vertx.core.spi.VertxServiceProvider
+									</resource>
+								</transformer>
+								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer">
 								</transformer>
 							</transformers>
@@ -365,8 +385,8 @@
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>${maven-javadoc-plugin.version}</version>
 				<configuration>
-					<source>11</source>
-					<target>11</target>
+					<source>${openjdk.version}</source>
+					<target>${openjdk.version}</target>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -396,7 +416,10 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
+				<version>${maven-compiler-plugin.version}</version>
 				<configuration>
+					<source>${openjdk.version}</source>
+					<target>${openjdk.version}</target>
 					<annotationProcessors>
 						<annotationProcessor>io.vertx.codegen.CodeGenProcessor</annotationProcessor>
 					</annotationProcessors>
@@ -412,7 +435,7 @@
 				<artifactId>maven-pmd-plugin</artifactId>
 				<version>${maven-pmd-plugin.version}</version>
 				<configuration>
-					<targetJdk>11</targetJdk>
+					<targetJdk>${openjdk.version}</targetJdk>
 					<rulesets>
 						<ruleset>/rulesets/java/braces.xml</ruleset>
 						<ruleset>/rulesets/java/naming.xml</ruleset>

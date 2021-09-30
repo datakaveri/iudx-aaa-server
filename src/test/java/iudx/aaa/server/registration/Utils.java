@@ -1,7 +1,6 @@
 package iudx.aaa.server.registration;
 
-import static iudx.aaa.server.registration.Constants.BCRYPT_LOG_COST;
-import static iudx.aaa.server.registration.Constants.BCRYPT_SALT_LEN;
+import static iudx.aaa.server.registration.Constants.CLIENT_SECRET_BYTES;
 import static iudx.aaa.server.registration.Constants.DEFAULT_CLIENT;
 import static iudx.aaa.server.registration.Constants.NIL_PHONE;
 import static iudx.aaa.server.registration.Constants.NIL_UUID;
@@ -24,6 +23,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
@@ -129,7 +129,11 @@ public class Utils {
     resp.put("email", email);
 
     UUID clientId = UUID.randomUUID();
-    UUID clientSecret = UUID.randomUUID();
+    SecureRandom random = new SecureRandom();
+    byte[] randBytes = new byte[CLIENT_SECRET_BYTES];
+    random.nextBytes(randBytes);
+    String clientSecret = Hex.encodeHexString(randBytes);
+
     UUID keycloakId = UUID.randomUUID();
 
     resp.put("clientId", clientId.toString());
@@ -157,8 +161,7 @@ public class Utils {
 
     /* Function to hash client secret, and create tuple for client creation query */
     Supplier<Tuple> createClientTup = () -> {
-      String hashedClientSecret =
-          OpenBSDBCrypt.generate(clientSecret.toString().toCharArray(), genSalt(), BCRYPT_LOG_COST);
+      String hashedClientSecret = DigestUtils.sha512Hex(clientSecret);
 
       return Tuple.of(genUserId.future().result(), clientId, hashedClientSecret, DEFAULT_CLIENT);
     };
@@ -175,15 +178,6 @@ public class Utils {
         }).onFailure(res -> response.fail("Failed to create fake user" + res.getMessage()));
 
     return response.future();
-  }
-
-  /* Generate salt for bcrypt hash */
-
-  private static byte[] genSalt() {
-    SecureRandom random = new SecureRandom();
-    byte salt[] = new byte[BCRYPT_SALT_LEN];
-    random.nextBytes(salt);
-    return salt;
   }
 
   /**

@@ -3,6 +3,10 @@
 
 IUDX-AAA is the Authentication, Authorization, and Accounting server for accessing [IUDX](https://www.iudx.org.in) services.
 
+<p align="center">
+<img src="./readme/images/aaa_overview.png">
+</p>
+
 ## Get Started
 
 ### Prerequisite - Make configuration
@@ -46,10 +50,15 @@ mvn flyway:migrate -Dflyway.configFiles=flyway.conf
 6. The server will be up in Port 8443 is SSL is true or in Port 8080 if SSL is false.
 
 ### Maven based
-1. Install java 13 and maven
-2. Use the maven exec plugin based starter to start the server 
+1. Install java 11 and maven
+2. Set Environment variables
+```
+export AUTH_URL=http://<auth-domain-name>
+export LOG_LEVEL=INFO
+```
+3. Use the maven exec plugin based starter to start the server 
    `mvn clean compile exec:java@aaa-server`
-3. The server will be up in Port 8443 is SSL is true or in Port 8080 if SSL is false.
+4. The server will be up in Port 8443 is SSL is true or in Port 8080 if SSL is false.
 
 ### Testing
 

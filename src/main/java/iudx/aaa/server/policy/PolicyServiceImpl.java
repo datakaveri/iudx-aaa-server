@@ -94,6 +94,7 @@ import static iudx.aaa.server.policy.Constants.ITEMTYPE;
 import static iudx.aaa.server.policy.Constants.LIST_DELEGATE_AS_PROVIDER_DELEGATE;
 import static iudx.aaa.server.policy.Constants.LIST_DELEGATE_AUTH_DELEGATE;
 import static iudx.aaa.server.policy.Constants.LOG_DB_ERROR;
+import static iudx.aaa.server.policy.Constants.NIL_UUID;
 import static iudx.aaa.server.policy.Constants.NOT_RES_OWNER;
 import static iudx.aaa.server.policy.Constants.NO_ADMIN_POLICY;
 import static iudx.aaa.server.policy.Constants.NO_RES_SERVER;
@@ -315,14 +316,16 @@ public class PolicyServiceImpl implements PolicyService {
         checkOwner.compose(
             checkOwn -> {
               if (checkOwn.isEmpty()) return Future.succeededFuture(new ArrayList<>());
-              return catalogueClient.checkDelegate(checkOwn, user.getUserId());
+              List<UUID> distinctOwner = checkOwn.stream().distinct().collect(Collectors.toList());
+              return catalogueClient.checkDelegate(distinctOwner, user.getUserId());
             });
 
     Future<Map<String, UUID>> getOwner =
         checkDelegate.compose(
             checkDel -> {
-              if (checkDel.size() < checkOwner.result().size())
-                return Future.failedFuture(UNAUTHORIZED);
+              List<UUID> distinctOwner =
+                  checkOwner.result().stream().distinct().collect(Collectors.toList());
+              if (checkDel.size() < distinctOwner.size()) return Future.failedFuture(UNAUTHORIZED);
 
               if (catItem.containsKey(RES_SERVER)) return Future.succeededFuture(new HashMap<>());
 
@@ -532,6 +535,20 @@ public class PolicyServiceImpl implements PolicyService {
       User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler) {
     // TODO Auto-generated method stub
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+
+    if (user.getUserId().equals(NIL_UUID)) {
+      // empty user object
+      Response r =
+          new Response.ResponseBuilder()
+              .type(URN_MISSING_INFO)
+              .title(URN_MISSING_INFO)
+              .detail(NO_USER)
+              .status(404)
+              .build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
+
     boolean isDelegate = false;
     JsonArray respPolicies = new JsonArray();
     Future<List<JsonObject>> getResGrpPolicy;
@@ -1296,7 +1313,7 @@ public class PolicyServiceImpl implements PolicyService {
 
     boolean isDelegate = !data.isEmpty();
     List<Roles> roles = user.getRoles();
-    
+
     if (!(isDelegate || roles.contains(Roles.PROVIDER) || roles.contains(Roles.CONSUMER))) {
       Response r =
           new Response.ResponseBuilder()

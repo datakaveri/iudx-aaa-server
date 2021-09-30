@@ -16,13 +16,14 @@ import static iudx.aaa.server.token.Constants.LOG_DB_ERROR;
 import static iudx.aaa.server.token.Constants.LOG_UNAUTHORIZED;
 import static iudx.aaa.server.token.Constants.LOG_USER_SECRET;
 import static iudx.aaa.server.token.Constants.URN_INVALID_INPUT;
-import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -89,8 +90,10 @@ public class ClientAuthentication implements AuthenticationHandler{
           /* Validating clientSecret hash */
           boolean valid = false;
           try {
-            valid = OpenBSDBCrypt.checkPassword(dbClientSecret,
-                clientSecret.getBytes(StandardCharsets.UTF_8));
+            byte[] requestSecretHashed = DigestUtils.sha512(clientSecret);
+            byte[] dbSecretHashed = Hex.decodeHex(dbClientSecret.toCharArray());
+
+            valid = MessageDigest.isEqual(dbSecretHashed, requestSecretHashed);
           } catch (Exception e) {
             LOGGER.error(LOG_USER_SECRET + e.getLocalizedMessage());
             Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
