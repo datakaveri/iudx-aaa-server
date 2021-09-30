@@ -47,6 +47,7 @@ import static iudx.aaa.server.policy.Constants.IUDX_RES_GRP;
 import static iudx.aaa.server.policy.Constants.NO_AUTH_POLICY;
 import static iudx.aaa.server.policy.Constants.PROVIDER;
 import static iudx.aaa.server.policy.Constants.PROVIDER_ID;
+import static iudx.aaa.server.policy.Constants.PROVIDER_NOT_REGISTERED;
 import static iudx.aaa.server.policy.Constants.RES;
 import static iudx.aaa.server.policy.Constants.RESOURCE_GROUP;
 import static iudx.aaa.server.policy.Constants.RESOURCE_SERVER;
@@ -552,7 +553,7 @@ public class CatalogueClient {
             .compose(
                 ar -> {
                   if (emailHash.result() == null || emailHash.result().isEmpty())
-                    return Future.failedFuture("Provider not a resgistered user");
+                    return Future.failedFuture(PROVIDER_NOT_REGISTERED);
 
                   List<Tuple> tuples = new ArrayList<>();
                   for (JsonObject jsonObject : resGrps) {
