@@ -43,7 +43,7 @@ public class AuditingServiceTest {
   static void startVertex(Vertx vertx, VertxTestContext vertxTestContext) {
     vertxObj = vertx;
     config = new Configuration();
-    JsonObject dbConfig = config.configLoader(5, vertx);
+    JsonObject dbConfig = config.configLoader(4, vertx);
     databaseIP = dbConfig.getString("auditingDatabaseIP");
     databasePort = dbConfig.getInteger("auditingDatabasePort");
     databaseName = dbConfig.getString("auditingDatabaseName");
