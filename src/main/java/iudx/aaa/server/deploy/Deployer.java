@@ -144,8 +144,8 @@ public class Deployer {
 
     Vertx.clusteredVertx(options, res -> {
       if (res.succeeded()) {
-        LOGGER.debug(vertx.isMetricsEnabled());
         vertx = res.result();
+        LOGGER.debug(vertx.isMetricsEnabled());
         setJVMmetrics();
         recursiveDeploy(vertx, configuration, 0);
       } else {

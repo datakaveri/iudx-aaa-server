@@ -6,6 +6,7 @@ import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.serviceproxy.ServiceBinder;
@@ -47,6 +48,8 @@ public class PolicyVerticle extends AbstractVerticle {
   private PolicyService policyService;
   private RegistrationService registrationService;
   private CatalogueClient catalogueClient;
+  private ServiceBinder binder;
+  private MessageConsumer<JsonObject> consumer;
   private static final Logger LOGGER = LogManager.getLogger(PolicyVerticle.class);
 
   /**
@@ -97,11 +100,17 @@ public class PolicyVerticle extends AbstractVerticle {
     catalogueClient = new CatalogueClient(vertx,pool,catalogueOptions);
     policyService = new PolicyServiceImpl(pool,registrationService,catalogueClient,authOptions,catOptions);
 
-    new ServiceBinder(vertx).setAddress(POLICY_SERVICE_ADDRESS).register(PolicyService.class,
+    binder = new ServiceBinder(vertx);
+    consumer =
+        binder.setAddress(POLICY_SERVICE_ADDRESS).register(PolicyService.class,
         policyService);
 
     LOGGER.debug("Info : " + LOGGER.getName() + " : Started");
 
   }
 
+  @Override
+  public void stop() {
+    binder.unregister(consumer);
+  }
 }

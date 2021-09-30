@@ -1,27 +1,124 @@
 {
-    "version": "1.0",
-    "zookeepers": [ "zookeeper" ],
-    "clusterId": "iudx-rs-cluster",
-    "host": "server",
-    "modules": [
-        {
-            "id": "iudx.aaa.server.policy.PolicyVerticle",
-            "verticleInstances": 2,
-            "databaseIP": "139.59.80.176",
-            "databasePort": "5432",
-            "databaseName": "iudx",
-            "databaseUserName": "iudx_user",
-            "databasePassword": "iudx@123",
-            "poolSize": "25"
-        },
-        {
-            "id": "iudx.aaa.server.apiserver.ApiServerVerticle",
-            "ssl": false,
-            "keystore": "configs/keystore.jks",
-            "keystorePassword": "",
-            "rsAdmin": "datakaveri.org/f7e044eee8122b5c87dce6e7ad64f3266afa41dc",
-            "verticleInstances": 2
-
-        }
-    ]
+  "version": "1.0",
+  "zookeepers": [
+    "zookeeper"
+  ],
+  "clusterId": "iudx-aaa-cluster",
+  "host": "auth.iudx.io",
+  "databaseSchema":"test",
+  "modules": [
+    {
+      "id": "iudx.aaa.server.policy.PolicyVerticle",
+      "verticleInstances": 1,
+      "databaseIP": "x.y.z.a",
+      "databasePort": "5432",
+      "databaseName": "abc",
+      "databaseUserName": "qwqws",
+      "databasePassword": "wwd",
+      "poolSize": "25",
+      "domain" : "iudx.io.test",
+      "catalogueOptions": {
+        "catServerHost": "api.catalogue.iudx.io.test",
+        "catServerPort": "443",
+        "authServerUrl": "auth.iudx.io.test"
+      },
+      "authOptions": {
+        "authServerUrl": "auth.iudx.io.test",
+        "policyExpiry" : "12",
+        "adminPolicyExpiry" : "60"
+      },
+      "catOptions": {
+        "catURL" : "catalogue.iudx.io.test",
+        "catItem" : "catalogue/crud"
+      },
+      "resOptions" : {
+        "resURL" : "rs.iudx.io.test"
+      }
+    },
+    {
+      "id": "iudx.aaa.server.registration.RegistrationVerticle",
+      "verticleInstances": 1,
+      "databaseIP": "x.y.z.a",
+      "databasePort": "5432",
+      "databaseName": "abc",
+      "databaseUserName": "qwqws",
+      "databasePassword": "wwd",
+      "poolSize": "25",
+      "keycloakUrl": "https://127.0.0.1:3000/auth",
+      "keycloakRealm": "some-realm",
+      "keycloakAdminClientId": "some-admin-client-id",
+      "keycloakAdminClientSecret": "f5800be0-258a-4cd2-820f-8128818ed70a",
+      "keycloakAdminPoolSize": "10"
+    },
+    {
+      "id": "iudx.aaa.server.token.TokenVerticle",
+      "verticleInstances": 1,
+      "authServerDomain": "auth.test.com",
+      "databaseIP": "x.y.z.a",
+      "databasePort": "5432",
+      "databaseName": "abc",
+      "databaseUserName": "qwqws",
+      "databasePassword": "wwd",
+      "poolSize": "5",
+      "keystorePath": "configs/keystore.jks",
+      "keystorePassword": "secret",
+      "keycloakOptions": {
+        "host": "identity.iudx.io.test",
+        "port": 8443,
+        "uri": "/auth/realms/demo/protocol/openid-connect/token",
+        "clientId": "auth.iudx.test",
+        "clientSecret": "6ba458a0-06c6-89a0-a824-d53fc6d025f4"
+      }
+    },
+    {
+      "id": "iudx.aaa.server.admin.AdminVerticle",
+      "verticleInstances": 1,
+      "options": {
+        "authServerDomain": "foobar.iudx.io"
+      },
+      "databaseIP": "x.y.z.a",
+      "databasePort": "5432",
+      "databaseName": "abc",
+      "databaseUserName": "qwqws",
+      "databasePassword": "wwd",
+      "poolSize": "25",
+      "keycloakUrl": "https://127.0.0.1:3000/auth",
+      "keycloakRealm": "some-realm",
+      "keycloakAdminClientId": "some-admin-client-id",
+      "keycloakAdminClientSecret": "f5800be0-258a-4cd2-820f-8128818ed70a",
+      "keycloakAdminPoolSize": "10"
+    },
+    {
+      "id": "iudx.aaa.server.auditing.AuditingVerticle",
+      "verticleInstances": 1,
+      "auditingDatabaseIP": "x.y.z.w",
+      "auditingDatabasePort": 0,
+      "auditingDatabaseName": "ddqwd",
+      "auditingDatabaseUserName": "qwdd",
+      "auditingDatabasePassword": "qdwqw",
+      "auditingPoolSize": 25
+    },
+    {
+      "id": "iudx.aaa.server.apiserver.ApiServerVerticle",
+      "ssl": false,
+      "authServerDomain": "auth.iudx.io.test",
+      "keystorePath": "configs/keystore.jks",
+      "keystorePassword": "secret",
+      "verticleInstances": 1,
+      "databaseIP": "x.y.z.a",
+      "databasePort": "5432",
+      "databaseName": "abc",
+      "databaseUserName": "qwqws",
+      "databasePassword": "wwd",
+      "poolSize": "5",
+      "serverTimeoutMs": 5000,
+      "corsRegexString": "*",
+      "keycloakOptions": {
+        "site": "https://identity.iudx.io.test/auth/realms/demo",
+        "clientId": "keycloakClientId",
+        "clientSecret": "keycloakClientSecret",
+        "jwtLeeway": 90
+      }
+    }
+  ]
 }

@@ -15,6 +15,7 @@ import static iudx.aaa.server.admin.Constants.KEYCLOAK_URL;
 import static iudx.aaa.server.admin.Constants.POLICY_SERVICE_ADDRESS;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
@@ -59,6 +60,8 @@ public class AdminVerticle extends AbstractVerticle {
   private static final String ADMIN_SERVICE_ADDRESS = "iudx.aaa.admin.service";
   private static JsonObject options;
   private AdminService adminService;
+  private ServiceBinder binder;
+  private MessageConsumer<JsonObject> consumer;
   private static final Logger LOGGER = LogManager.getLogger(AdminVerticle.class);
 
   private PolicyService policyService;
@@ -109,10 +112,15 @@ public class AdminVerticle extends AbstractVerticle {
 
     policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
     adminService = new AdminServiceImpl(pool, kcadmin, policyService, options);
-
-    new ServiceBinder(vertx).setAddress(ADMIN_SERVICE_ADDRESS).register(AdminService.class,
+    binder = new ServiceBinder(vertx);
+    consumer = binder.setAddress(ADMIN_SERVICE_ADDRESS).register(AdminService.class,
         adminService);
 
     LOGGER.debug("Info : " + LOGGER.getName() + " : Started");
+  }
+
+  @Override
+  public void stop() {
+    binder.unregister(consumer);
   }
 }
