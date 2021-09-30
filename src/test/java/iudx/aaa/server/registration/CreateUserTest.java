@@ -1,5 +1,6 @@
 package iudx.aaa.server.registration;
 
+import static iudx.aaa.server.registration.Constants.CLIENT_SECRET_BYTES;
 import static iudx.aaa.server.registration.Constants.DEFAULT_CLIENT;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_ID_REQUIRED;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_NO_EXIST;
@@ -78,6 +79,8 @@ public class CreateUserTest {
   private static KcAdmin kc = Mockito.mock(KcAdmin.class);
   private static final String UUID_REGEX =
       "^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$";
+  private static final int CLIENT_SECRET_HEX_LEN = CLIENT_SECRET_BYTES * 2;
+  private static final String CLIENT_SECRET_REGEX = "^[0-9a-f]{" + CLIENT_SECRET_HEX_LEN + "}$";
 
   static String name = RandomStringUtils.randomAlphabetic(10).toLowerCase();
   static String url = name + ".com";
@@ -167,7 +170,7 @@ public class CreateUserTest {
 
           JsonObject client = result.getJsonArray("clients").getJsonObject(0);
           assertTrue(client.getString(RESP_CLIENT_ID).matches(UUID_REGEX));
-          assertTrue(client.getString(RESP_CLIENT_SC).matches(UUID_REGEX));
+          assertTrue(client.getString(RESP_CLIENT_SC).matches(CLIENT_SECRET_REGEX));
           assertEquals(client.getString(RESP_CLIENT_NAME), DEFAULT_CLIENT);
 
           testContext.completeNow();
@@ -210,7 +213,7 @@ public class CreateUserTest {
 
           JsonObject client = result.getJsonArray("clients").getJsonObject(0);
           assertTrue(client.getString(RESP_CLIENT_ID).matches(UUID_REGEX));
-          assertTrue(client.getString(RESP_CLIENT_SC).matches(UUID_REGEX));
+          assertTrue(client.getString(RESP_CLIENT_SC).matches(CLIENT_SECRET_REGEX));
           assertEquals(client.getString(RESP_CLIENT_NAME), DEFAULT_CLIENT);
 
           testContext.completeNow();
@@ -253,7 +256,7 @@ public class CreateUserTest {
 
           JsonObject client = result.getJsonArray("clients").getJsonObject(0);
           assertTrue(client.getString(RESP_CLIENT_ID).matches(UUID_REGEX));
-          assertTrue(client.getString(RESP_CLIENT_SC).matches(UUID_REGEX));
+          assertTrue(client.getString(RESP_CLIENT_SC).matches(CLIENT_SECRET_REGEX));
           assertEquals(client.getString(RESP_CLIENT_NAME), DEFAULT_CLIENT);
 
           testContext.completeNow();
@@ -302,7 +305,7 @@ public class CreateUserTest {
 
           JsonObject client = result.getJsonArray("clients").getJsonObject(0);
           assertTrue(client.getString(RESP_CLIENT_ID).matches(UUID_REGEX));
-          assertTrue(client.getString(RESP_CLIENT_SC).matches(UUID_REGEX));
+          assertTrue(client.getString(RESP_CLIENT_SC).matches(CLIENT_SECRET_REGEX));
           assertEquals(client.getString(RESP_CLIENT_NAME), DEFAULT_CLIENT);
 
           testContext.completeNow();

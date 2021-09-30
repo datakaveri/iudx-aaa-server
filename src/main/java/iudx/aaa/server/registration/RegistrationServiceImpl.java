@@ -1,7 +1,6 @@
 package iudx.aaa.server.registration;
 
-import static iudx.aaa.server.registration.Constants.BCRYPT_LOG_COST;
-import static iudx.aaa.server.registration.Constants.BCRYPT_SALT_LEN;
+import static iudx.aaa.server.registration.Constants.CLIENT_SECRET_BYTES;
 import static iudx.aaa.server.registration.Constants.COMPOSE_FAILURE;
 import static iudx.aaa.server.registration.Constants.DEFAULT_CLIENT;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_USER_PROFILE;
@@ -87,6 +86,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -207,8 +207,12 @@ public class RegistrationServiceImpl implements RegistrationService {
           return Future.succeededFuture(emailId);
         });
 
+    /* create client ID and random client secret */
     UUID clientId = UUID.randomUUID();
-    UUID clientSecret = UUID.randomUUID();
+    SecureRandom random = new SecureRandom();
+    byte[] randBytes = new byte[CLIENT_SECRET_BYTES];
+    random.nextBytes(randBytes);
+    String clientSecret = Hex.encodeHexString(randBytes);
 
     List<Roles> rolesForKc =
         requestedRoles.stream().filter(x -> x != Roles.PROVIDER).collect(Collectors.toList());
@@ -238,9 +242,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     /* Function to hash client secret, and create tuple for client creation query */
     Supplier<Tuple> createClientTup = () -> {
-      String hashedClientSecret =
-          OpenBSDBCrypt.generate(clientSecret.toString().toCharArray(), genSalt(), BCRYPT_LOG_COST);
-
+      String hashedClientSecret = DigestUtils.sha512Hex(clientSecret);
       return Tuple.of(userId.result(), clientId, hashedClientSecret, DEFAULT_CLIENT);
     };
 
@@ -259,7 +261,7 @@ public class RegistrationServiceImpl implements RegistrationService {
               .roles(rolesForKc).keycloakId(user.getKeycloakId()).userId(userId.result()).build();
 
       JsonObject clientDetails = new JsonObject().put(RESP_CLIENT_NAME, DEFAULT_CLIENT)
-          .put(RESP_CLIENT_ID, clientId.toString()).put(RESP_CLIENT_SC, clientSecret.toString());
+          .put(RESP_CLIENT_ID, clientId.toString()).put(RESP_CLIENT_SC, clientSecret);
 
       JsonArray clients = new JsonArray().add(clientDetails);
       JsonObject payload =
@@ -293,14 +295,6 @@ public class RegistrationServiceImpl implements RegistrationService {
     });
 
     return this;
-  }
-
-  /* Generate salt for bcrypt hash */
-  private byte[] genSalt() {
-    SecureRandom random = new SecureRandom();
-    byte salt[] = new byte[BCRYPT_SALT_LEN];
-    random.nextBytes(salt);
-    return salt;
   }
 
   @Override

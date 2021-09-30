@@ -21,7 +21,7 @@ public class RequestPayload {
   public static JsonArray roleList = new JsonArray("[\"delegate\",\"provider\"]");
   
   public static JsonObject validPayload = new JsonObject().put("clientId", "349b4b55-0251-490e-bee9-00f3a5d3e643")
-      .put("clientSecret","48434da1-411d-42d6-894a-557fd5b9965e")
+      .put("clientSecret","e980d5bda287fa4808f8b6d32a3d7f45027aefdc")
       .put("itemId", "item-1")
       .put("itemType", "ResourceGroup")
       .put("role", "consumer");

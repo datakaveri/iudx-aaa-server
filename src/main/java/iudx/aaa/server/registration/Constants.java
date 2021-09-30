@@ -32,10 +32,8 @@ public class Constants {
   public static final String KC_ADMIN_CLIENT_ID = "keycloakAdminClientId";
   public static final String KC_ADMIN_CLIENT_SEC = "keycloakAdminClientSecret";
   public static final String KC_ADMIN_POOLSIZE = "keycloakAdminPoolSize";
-
-  /* bcrypt parameters TODO move to common constants file */
-  public static final int BCRYPT_LOG_COST = 12;
-  public static final int BCRYPT_SALT_LEN = 16;
+  
+  public static final int CLIENT_SECRET_BYTES = 20; 
 
   /* Response fields */
   public static final String RESP_CLIENT_NAME = "clientName";
