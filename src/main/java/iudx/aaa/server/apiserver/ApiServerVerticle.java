@@ -101,7 +101,7 @@ public class ApiServerVerticle extends AbstractVerticle {
   /**
    * This method is used to start the Verticle. It deploys a verticle in a cluster, reads the
    * configuration, obtains a proxy for the Event bus services exposed through service discovery,
-   * start an HTTPs server at port 8443 or an HTTP server at port 8080.
+   * start an HTTP server at port 8443
    *
    * @throws Exception which is a startup exception TODO Need to add documentation for all the
    *
@@ -310,24 +310,9 @@ public class ApiServerVerticle extends AbstractVerticle {
                 .setStatusCode(404).end(JSON_NOT_FOUND);
           });
 
-          /* Read ssl configuration. */
-          isSSL = config().getBoolean(SSL);
           HttpServerOptions serverOptions = new HttpServerOptions();
-
-          if (isSSL) {
-            LOGGER.debug("Info: Starting HTTPs server");
-
-            /* Read the configuration and set the HTTPs server properties. */
-            keystore = config().getString(KEYSTORE_PATH);
-            keystorePassword = config().getString(KEYSTPRE_PASSWORD);
-
-            serverOptions.setSsl(true).setKeyStoreOptions(
-                new JksOptions().setPath(keystore).setPassword(keystorePassword));
-
-          } else {
-            LOGGER.debug("Info: Starting HTTP server");
-            serverOptions.setSsl(false);
-          }
+          LOGGER.debug("Info: Starting HTTP server");
+          serverOptions.setSsl(false);
 
           serverOptions.setCompressionSupported(true).setCompressionLevel(5);
           server = vertx.createHttpServer(serverOptions);
