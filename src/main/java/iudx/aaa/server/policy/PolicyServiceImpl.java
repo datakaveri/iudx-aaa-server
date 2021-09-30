@@ -54,6 +54,7 @@ import static iudx.aaa.server.policy.Constants.DELEGATE_ROLE;
 import static iudx.aaa.server.policy.Constants.DELETE_DELEGATIONS;
 import static iudx.aaa.server.policy.Constants.DELETE_FAILURE;
 import static iudx.aaa.server.policy.Constants.DETAIL;
+import static iudx.aaa.server.policy.Constants.DUPLICATE;
 import static iudx.aaa.server.policy.Constants.DUP_NOTIF_REQ;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_DEL_DELEGATE_ROLES;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_LIST_DELEGATE_ROLES;
@@ -179,7 +180,6 @@ public class PolicyServiceImpl implements PolicyService {
     this.createPolicy = new createPolicy(pool, authOptions);
     this.createDelegate = new createDelegate(pool, authOptions);
   }
-
   @Override
   public PolicyService createPolicy(
       List<CreatePolicyRequest> request, User user, Handler<AsyncResult<JsonObject>> handler) {
@@ -187,7 +187,29 @@ public class PolicyServiceImpl implements PolicyService {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
     List<Roles> roles = user.getRoles();
 
-    if (!roles.contains(Roles.ADMIN)
+    //check duplicate
+      List<CreatePolicyRequest> duplicates = request.stream()
+              .collect(Collectors.groupingBy(p -> p.getUserId() + "-" + p.getItemId() + "-" + p.getItemType(), Collectors.toList()))
+              .values()
+              .stream()
+              .filter(i -> i.size() > 1)
+              .flatMap(j -> j.stream())
+              .collect(Collectors.toList());
+
+      if(duplicates.size() > 0)
+      {
+          Response r =
+                  new Response.ResponseBuilder()
+                          .type(URN_INVALID_INPUT)
+                          .title(DUPLICATE)
+                          .detail(duplicates.get(0).toString())
+                          .status(403)
+                          .build();
+          handler.handle(Future.succeededFuture(r.toJson()));
+          return this;
+      }
+
+      if (!roles.contains(Roles.ADMIN)
         && !roles.contains(Roles.PROVIDER)
         && !roles.contains(Roles.DELEGATE)) {
       // 403 not allowed to create policy
@@ -962,8 +984,9 @@ public class PolicyServiceImpl implements PolicyService {
     else
       checkPolicy =
           checkDelegation.compose(
-              ar ->
-                  pool.withConnection(
+              ar -> {
+                  if (ar == null) return Future.failedFuture(UNAUTHORIZED_DELEGATE);
+                 return pool.withConnection(
                       conn ->
                           conn.preparedQuery(CHECK_POLICY)
                               .execute(
@@ -976,7 +999,8 @@ public class PolicyServiceImpl implements PolicyService {
                                   rows ->
                                       rows.rowCount() > 0
                                           ? rows.iterator().next().toJson()
-                                          : null)));
+                                          : null));
+              });
 
     Future<UUID> checkAdminPolicy =
         checkPolicy.compose(
@@ -2026,7 +2050,22 @@ public class PolicyServiceImpl implements PolicyService {
     String userId = user.getUserId();
     // check if resources and userIds in request exist in db and have roles as delegate
 
-    List<UUID> users =
+      if (!(isAuthDelegate
+              || user.getRoles().contains(Roles.PROVIDER)
+              || user.getRoles().contains(Roles.DELEGATE))) {
+          Response r =
+                  new Response.ResponseBuilder()
+                          .type(URN_INVALID_ROLE)
+                          .title(ERR_TITLE_INVALID_ROLES)
+                          .detail(ERR_DETAIL_LIST_DELEGATE_ROLES)
+                          .status(401)
+                          .build();
+          handler.handle(Future.succeededFuture(r.toJson()));
+          return this;
+      }
+
+
+      List<UUID> users =
         request.stream().map(obj -> UUID.fromString(obj.getUserId())).collect(Collectors.toList());
 
     Future<Void> checkUserRole = createDelegate.checkUserRoles(users);

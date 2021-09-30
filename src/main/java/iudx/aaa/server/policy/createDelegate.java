@@ -7,6 +7,8 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.Response;
+import iudx.aaa.server.apiserver.Roles;
+import iudx.aaa.server.apiserver.User;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -25,6 +27,7 @@ import static iudx.aaa.server.policy.Constants.CHECK_EXISTING_POLICY;
 import static iudx.aaa.server.policy.Constants.CHECK_ROLES;
 import static iudx.aaa.server.policy.Constants.DUPLICATE_DELEGATION;
 import static iudx.aaa.server.policy.Constants.DUPLICATE_POLICY;
+import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ROLES;
 import static iudx.aaa.server.policy.Constants.GET_SERVER_DETAILS;
 import static iudx.aaa.server.policy.Constants.ID;
 import static iudx.aaa.server.policy.Constants.INSERT_DELEGATION;
@@ -33,6 +36,7 @@ import static iudx.aaa.server.policy.Constants.INTERNALERROR;
 import static iudx.aaa.server.policy.Constants.INVALID_DATETIME;
 import static iudx.aaa.server.policy.Constants.INVALID_USER;
 import static iudx.aaa.server.policy.Constants.ITEMNOTFOUND;
+import static iudx.aaa.server.policy.Constants.NIL_UUID;
 import static iudx.aaa.server.policy.Constants.NOT_DELEGATE;
 import static iudx.aaa.server.policy.Constants.NO_AUTH_POLICY;
 import static iudx.aaa.server.policy.Constants.PROVIDER_NOT_REGISTERED;
@@ -56,7 +60,6 @@ public class createDelegate {
     this.pool = pool;
     this.options = options;
   }
-
   /**
    * Validate user roles
    *
@@ -260,7 +263,14 @@ public class createDelegate {
                 r.status(409);
                 break;
             }
-
+            case ERR_TITLE_INVALID_ROLES:
+            {
+                r.type(URN_INVALID_ROLE);
+                r.title(ERR_TITLE_INVALID_ROLES);
+                r.detail(ERR_TITLE_INVALID_ROLES);
+                r.status(401);
+                break;
+            }
 
             default:
             {
