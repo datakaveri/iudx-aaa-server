@@ -1,0 +1,2069 @@
+{
+	"info": {
+		"_postman_id": "cccf05e3-d34a-40a9-acc1-8f0564e45740",
+		"name": "IUDX-AAA-Server",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "User Profile APIs",
+			"item": [
+				{
+					"name": "Get organization details",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "authUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/organizations",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"organizations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create User Profile",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "authUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"roles\": [\n        \"provider\",\n        \"consumer\",\n        \"delegate\"\n    ],\n    \"orgId\": \"894777b1-e82a-4cf8-b99a-86fc3d7d707b\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List User Profile",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "authUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "accessToken",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search User",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "authUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "accessToken",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "email",
+								"value": "",
+								"description": "Email address of the user to search for",
+								"type": "text"
+							},
+							{
+								"key": "role",
+								"value": "",
+								"description": "Role of the user to search for",
+								"type": "text"
+							},
+							{
+								"key": "providerId",
+								"value": "",
+								"description": "Provider's User ID in case of auth delegate",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update user (add roles)",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "authUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"roles\": [\n        \"consumer\",\n        \"delegate\"\n    ],\n    \"orgId\": \"894777b1-e82a-4cf8-b99a-86fc3d7d707b\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Token APIs",
+			"item": [
+				{
+					"name": "Get token (via Keycloak token)",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "authUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "accessToken",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"itemId\": \"datakaveri.org/facec5182e3bf44cc3ac42b0b611263676d668a2/rs.iudx.org.in/agartala-env-aqm\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get token (via client-id, secret) Copy",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "clientId",
+								"value": "",
+								"type": "text",
+								"description": "Client ID (UUID)"
+							},
+							{
+								"key": "clientSecret",
+								"value": "",
+								"type": "text",
+								"description": "Client secret (40 chars in hexadecimal)"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"itemId\": \"datakaveri.org/facec5182e3bf44cc3ac42b0b611263676d668a2/rs.iudx.org.in/agartala-env-aqm\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Introspect token",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "authUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"accessToken\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJzdWIiOiIzZjRhYjcyNS0xNmRiLTQwMjktOGVhOC01Yjc1M2VlZDgyNTgiLCJpc3MiOiJhdXRoLnRlc3QuY29tIiwiYXVkIjoiZm9vYmFyLml1ZHguaW8iLCJleHAiOjE2MjY5Mjc3ODIsImlhdCI6MTYyNjg4NDU4MiwiaWlkIjoicmc6ZXhhbXBsZS5jb20vNzllN2JmYTYyZmFkNmM3NjViYWM2OTE1NGMyZjI0Yzk0Yzk1MjIwYS9yZXNvdXJjZS1ncm91cCIsInJvbGUiOiJjb25zdW1lciIsImNvbnMiOnt9fQ.W7b0bDxwWY_36QXw8j5qAcxKrW6_1ogJ-QoNHYpWVRsBDqOFgtXZ7cTZlutcK0O_W9kj-p-X3WKpaGUEpytLdw\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/introspect",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"introspect"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Notifications APIs",
+			"item": [
+				{
+					"name": "List Notifications",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "authUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "accessToken",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "providerId",
+								"value": "",
+								"description": "Provider's User ID in case of auth delegate",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/requests",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies",
+								"requests"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Notifications",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "authUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "accessToken",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/facec5182e3bf44cc3ac42b0b611263676d668a2/rs.iudx.org.in/agartala-env-aqm\",\n            \"itemType\": \"resource_group\",\n            \"expiryDuration\": \"P1Y2M10DT2H30M\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\",\n                    \"sub\",\n                    \"file\"\n                ]\n            }\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/requests",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies",
+								"requests"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Notifications",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "authUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "accessToken",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "providerId",
+								"value": "",
+								"description": "Provider's User ID in case of auth delegate",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [\n        {\n            \"requestId\": \"bca11712-f381-46a5-afa3-a29b00568ace\",\n            \"status\": \"approved\",\n            \"expiryDuration\": \"P1Y2M10DT2H30M\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\",\n                    \"sub\",\n                    \"file\"\n                ]\n            }\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/requests",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies",
+								"requests"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Policy APIs",
+			"item": [
+				{
+					"name": "List policy",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "authUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create policy",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "authUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/facec5182e3bf44cc3ac42b0b611263676d668a2/rs.iudx.org.in/agartala-env-aqm\",\n            \"itemType\": \"resource_group\",\n            \"userId\": \"fcbecd18-2ecb-4066-8a9e-f073aacbe579\",\n            \"constraints\": {\n                \"access\": [\n                    \"file\"\n                ]\n            },\n            \"expiryTime\": \"2023-09-09T04:22:36\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete policy",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "authUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [\n        {\n            \"id\": \"4c1fbdb2-c53c-487c-9a2f-1aae9a9bde23\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Delegation APIs",
+			"item": [
+				{
+					"name": "Create Delegation",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "authUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "accessToken",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "providerId",
+								"value": "",
+								"description": "Provider's User ID in case of auth delegate",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"a13eb955-c691-4fd3-b200-f18bc78810b5\",\n            \"resSerId\": \"catalogue.iudx.org.in\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies",
+								"delegations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Delegations",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "authUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "accessToken",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "providerId",
+								"value": "",
+								"description": "Provider's User ID in case of auth delegate",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies",
+								"delegations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Delegations",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "authUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "accessToken",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "providerId",
+								"value": "",
+								"description": "Provider's User ID in case of auth delegate",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [\n        {\n            \"id\": \"5882036e-a731-42fe-a77c-ecf3f3148999\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies",
+								"delegations"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Admin APIs",
+			"item": [
+				{
+					"name": "Admin - create organization",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "authUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\":\"Example\",\n    \"url\":\"aaa.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/admin/organizations",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"admin",
+								"organizations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Admin - get provider registrations",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "authUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/admin/provider/registrations?filter=approved",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"admin",
+								"provider",
+								"registrations"
+							],
+							"query": [
+								{
+									"key": "filter",
+									"value": "approved"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Admin - update provider registrations",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "authUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"3f08e1ba-f4c0-4ed0-86da-edf7092d6333\",\n            \"status\": \"approved\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/admin/provider/registrations",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"admin",
+								"provider",
+								"registrations"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
