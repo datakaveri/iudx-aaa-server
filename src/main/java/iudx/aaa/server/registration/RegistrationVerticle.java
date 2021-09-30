@@ -15,6 +15,8 @@ import static iudx.aaa.server.registration.Constants.KEYCLOAK_URL;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.eventbus.MessageConsumer;
+import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.serviceproxy.ServiceBinder;
@@ -53,6 +55,8 @@ public class RegistrationVerticle extends AbstractVerticle {
   private PgConnectOptions connectOptions;
   private static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
   private RegistrationService registrationService;
+  private ServiceBinder binder;
+  private MessageConsumer<JsonObject> consumer;
   private static final Logger LOGGER = LogManager.getLogger(RegistrationVerticle.class);
 
   /**
@@ -99,12 +103,16 @@ public class RegistrationVerticle extends AbstractVerticle {
         keycloakAdminClientSecret, keycloakAdminPoolSize);
 
     registrationService = new RegistrationServiceImpl(pool, kcadmin);
-
-    new ServiceBinder(vertx).setAddress(REGISTRATION_SERVICE_ADDRESS)
+    binder = new ServiceBinder(vertx);
+    consumer = binder.setAddress(REGISTRATION_SERVICE_ADDRESS)
         .register(RegistrationService.class, registrationService);
 
     LOGGER.debug("Info : " + LOGGER.getName() + " : Started");
 
   }
 
+  @Override
+  public void stop() {
+    binder.unregister(consumer);
+  }
 }
