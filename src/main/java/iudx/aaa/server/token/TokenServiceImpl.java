@@ -26,7 +26,10 @@ import iudx.aaa.server.policy.PolicyService;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_USER_PROFILE;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_USER_PROFILE;
+import static iudx.aaa.server.registration.Constants.NIL_UUID;
+import static iudx.aaa.server.registration.Constants.URN_MISSING_INFO;
 import static iudx.aaa.server.token.Constants.*;
 
 /**
@@ -72,6 +75,14 @@ public class TokenServiceImpl implements TokenService {
     JsonObject request = JsonObject.mapFrom(requestToken);
     request.put(USER_ID, user.getUserId());
 
+    /* Checking if the userId is valid */
+    if (user.getUserId().equals(NIL_UUID)) {
+      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
+          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
+    
     /* Verify the user role */
     if (!roles.contains(role)) {
       LOGGER.error(LOG_UNAUTHORIZED + INVALID_ROLE);
@@ -144,9 +155,9 @@ public class TokenServiceImpl implements TokenService {
           handler.handle(Future.succeededFuture(resp.toJson()));
 
         } else if (policyHandler.failed()) {
-          LOGGER.error(LOG_UNAUTHORIZED + INVALID_POLICY);
-          Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-              .title(INVALID_POLICY).detail(INVALID_POLICY).build();
+          LOGGER.error("Fail: {}; {}", INVALID_POLICY, policyHandler.cause().getMessage());
+          Response resp = new ResponseBuilder().status(403).type(URN_INVALID_INPUT)
+              .title(INVALID_POLICY).detail(policyHandler.cause().getLocalizedMessage()).build();
           handler.handle(Future.succeededFuture(resp.toJson()));
         }
       });
@@ -285,7 +296,7 @@ public class TokenServiceImpl implements TokenService {
               
             } else if (policyHandler.failed()) {
               LOGGER.error("Fail: {}; {}", INVALID_POLICY, policyHandler.cause().getMessage());
-              Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+              Response resp = new ResponseBuilder().status(403).type(URN_INVALID_INPUT)
                   .title(INVALID_POLICY).detail(INVALID_POLICY).build();
               handler.handle(Future.succeededFuture(resp.toJson()));
             }

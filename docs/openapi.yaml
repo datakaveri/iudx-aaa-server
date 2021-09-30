@@ -184,6 +184,7 @@ paths:
               required:
                 - itemId
                 - itemType
+                - role
             examples:
               Body for resourceGroup:
                 value:
@@ -2945,10 +2946,10 @@ paths:
                     type: 'urn:dx:as:Success'
                     title: Access requests
                     results:
-                      - requestId: bd5f0bb3-c02c-4e3d-b75c-a6eb8144bddc
-                        itemId: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
-                        itemType: RESOURCE
-                        status: PENDING
+                      - requestId: ea48d233-5d3b-4bdb-9545-691680c99cee
+                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood/FWR056
+                        itemType: resource
+                        status: pending
                         expiryDuration: P1Y2M10DT2H30M
                         constraints:
                           access:
@@ -2963,11 +2964,11 @@ paths:
                             lastName: Person
                           id: a13eb955-c691-4fd3-b200-f18bc78810b5
                         owner:
-                          email: someone@example.com
+                          email: bryanrobert@iisc.ac.in
                           name:
-                            firstName: Someone
-                            lastName: Person
-                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                            firstName: B
+                            lastName: Robert
+                          id: 844e251b-574b-46e6-9247-f76f1f70a637
           headers:
             Content-Type:
               schema:
@@ -3029,8 +3030,8 @@ paths:
       summary: Create Requests
       operationId: post-auth-v1-policies-requests
       responses:
-        '201':
-          description: Created
+        '200':
+          description: OK
           headers:
             Content-Type:
               schema:
@@ -3047,9 +3048,9 @@ paths:
                     title: Access requests
                     results:
                       - requestId: bd5f0bb3-c02c-4e3d-b75c-a6eb8144bddc
-                        itemId: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
-                        itemType: RESOURCE
-                        status: PENDING
+                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood/FWR056
+                        itemType: resource
+                        status: pending
                         expiryDuration: P1Y2M10DT2H30M
                         constraints:
                           access:
@@ -3140,6 +3141,8 @@ paths:
                       expiryDuration:
                         type: string
                         minLength: 1
+                        pattern: '^(-?)P(?=\d|T\d)(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)([DW]))?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$'
+                        example: P1Y2M10DT2H30M
                       constraints:
                         type: object
                     required:
@@ -3188,9 +3191,9 @@ paths:
                     title: Access requests
                     results:
                       - requestId: bd5f0bb3-c02c-4e3d-b75c-a6eb8144bddc
-                        itemId: 604cec16-0ba3-4eb9-bdcf-d2b98f1fddab
-                        itemType: RESOURCE
-                        status: PENDING
+                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood/FWR056
+                        itemType: resource
+                        status: approved
                         expiryDuration: P1Y2M10DT2H30M
                         constraints:
                           access:
@@ -3273,6 +3276,8 @@ paths:
                       expiryDuration:
                         type: string
                         minLength: 1
+                        example: P1Y2M10DT2H30M
+                        pattern: '^(-?)P(?=\d|T\d)(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)([DW]))?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$'
                       constraints:
                         type: object
                     required:
