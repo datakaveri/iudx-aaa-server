@@ -121,6 +121,7 @@ public class Constants {
   public static final String SUCC_NOTIF_REQ = "Notification access request";
   public static final String SUCC_LIST_NOTIF_REQ = "Access requests";
   public static final String ERR_LIST_NOTIF = "Fail: Unable to list notification access requests";
+  public static final String SUCC_UPDATE_NOTIF_REQ = "Request updated";
   
   //General
   public static final String DETAIL = "detail";
@@ -305,36 +306,34 @@ public class Constants {
       + "item_id = $2::UUID AND owner_id = $3::UUID AND status = $4::"+  DB_SCHEMA +  ".acc_reqs_status_enum";
   
   public static final String SELECT_PROVIDER_NOTIF_REQ =
-      "SELECT id as \"requestId\", user_id, item_id as \"itemId\", item_type as \"itemType\", owner_id, status, "
-      + "expiry_duration::text as \"expiryDuration\", constraints FROM "
-          + DB_SCHEMA + ".access_requests WHERE owner_id = $1::UUID";
+      "SELECT id as \"requestId\", user_id, item_id as \"itemId\", lower(item_type::text) as \"itemType\", owner_id, lower(status::text), "
+          + "expiry_duration::text as \"expiryDuration\", constraints FROM " + DB_SCHEMA
+          + ".access_requests WHERE owner_id = $1::UUID";
 
   public static final String SELECT_CONSUM_NOTIF_REQ =
-      "SELECT id as \"requestId\", user_id, item_id as \"itemId\", item_type as \"itemType\", owner_id, status, "
-          + "expiry_duration::text as \"expiryDuration\", constraints FROM "
-          + DB_SCHEMA + ".access_requests WHERE user_id = $1::UUID";
+      "SELECT id as \"requestId\", user_id, item_id as \"itemId\", lower(item_type::text) as \"itemType\", owner_id, lower(status::text), "
+          + "expiry_duration::text as \"expiryDuration\", constraints FROM " + DB_SCHEMA
+          + ".access_requests WHERE user_id = $1::UUID";
   
   public static final String SEL_NOTIF_REQ_ID =
       "SELECT id, user_id as \"userId\", item_id as \"itemId\", item_type as \"itemType\", owner_id as \"ownerId\", "
           + "status, expiry_duration::text as \"expiryDuration\", "
-          + "constraints FROM "+ DB_SCHEMA + ".access_requests where id = $1::UUID";
-  
-//  public static final String SEL_NOTIF_REQ_ID =
-//      "SELECT id, user_id as \"userId\", item_id as \"itemId\", item_type as \"itemType\", owner_id as \"ownerId\", "
-//          + "status, EXTRACT(epoch from expiry_duration)::int as \"expiryDuration\", "
-//          + "constraints FROM "+  DB_SCHEMA +  ".access_requests where id = $1::UUID";
+          + "constraints FROM "+ DB_SCHEMA + ".access_requests where id = ANY($1::UUID[])";
   
   public static final String SEL_NOTIF_ITEM_ID =
       "SELECT * FROM (SELECT id, cat_id AS url FROM "+ DB_SCHEMA + ".resource\n" + 
       "UNION SELECT id, url AS url FROM "+ DB_SCHEMA + ".resource_server\n" + 
-      "UNION select id, cat_id AS url FROM "+ DB_SCHEMA + ".resource_group) view WHERE id = $1::UUID"; 
+      "UNION select id, cat_id AS url FROM "+ DB_SCHEMA + ".resource_group) view WHERE id = ANY($1::UUID[])"; 
   
-  public static final String UPDATE_NOTIF_REQ =
-      "UPDATE " + DB_SCHEMA + ".access_request SET status = $1::"+  DB_SCHEMA +  ".acc_reqs_status_enum, expiry_duration = $2::interval, "
-      + "constraints =$3::jsonb, updated_at = NOW() WHERE id = $4::UUID";
+  public static final String UPDATE_NOTIF_REQ_APPROVED =
+      "UPDATE " + DB_SCHEMA + ".access_requests SET status = $1::"+  DB_SCHEMA +  ".acc_reqs_status_enum, expiry_duration = $2::interval, "
+      + "constraints =$3::jsonb, updated_at = NOW() WHERE id = $4::UUID and status = 'PENDING'";
+  
+  public static final String UPDATE_NOTIF_REQ_REJECTED = 
+      "UPDATE "+  DB_SCHEMA +  ".access_requests SET status = $2::"+  DB_SCHEMA +  ".acc_reqs_status_enum, updated_at = NOW() WHERE id = $1::UUID and status = 'PENDING'";
   
   public static final String SEL_NOTIF_POLICY_ID =
-      "SELLECT ar.id AS \"requestId\", pol.id AS \"policyId\" FROM " + DB_SCHEMA
+      "SELECT ar.id AS \"requestId\", pol.id AS \"policyId\" FROM " + DB_SCHEMA
           + ".access_requests ar "
           + "LEFT JOIN "+  DB_SCHEMA +  ".policies pol ON ar.user_id = pol.user_id AND ar.item_id = pol.item_id AND ar.owner_id = pol.owner_id \n"
           + "WHERE pol.user_id= $1::UUID AND pol.item_id = $2::UUID AND ar.owner_id = $3::UUID AND pol.status = 'ACTIVE'";
