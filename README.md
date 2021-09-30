@@ -3,6 +3,10 @@
 
 IUDX-AAA is the Authentication, Authorization, and Accounting server for accessing [IUDX](https://www.iudx.org.in) services.
 
+<p align="center">
+<img src="./readme/images/aaa_overview.png">
+</p>
+
 ## Get Started
 
 ### Prerequisite - Make configuration
