@@ -307,12 +307,12 @@ public class Constants {
       + "item_id = $2::UUID AND owner_id = $3::UUID AND status = $4::"+  DB_SCHEMA +  ".acc_reqs_status_enum";
   
   public static final String SELECT_PROVIDER_NOTIF_REQ =
-      "SELECT id as \"requestId\", user_id, item_id as \"itemId\", lower(item_type::text) as \"itemType\", owner_id, lower(status::text), "
+      "SELECT id as \"requestId\", user_id, item_id as \"itemId\", lower(item_type::text) as \"itemType\", owner_id, lower(status::text) AS status, "
           + "expiry_duration::text as \"expiryDuration\", constraints FROM " + DB_SCHEMA
           + ".access_requests WHERE owner_id = $1::UUID";
 
   public static final String SELECT_CONSUM_NOTIF_REQ =
-      "SELECT id as \"requestId\", user_id, item_id as \"itemId\", lower(item_type::text) as \"itemType\", owner_id, lower(status::text), "
+      "SELECT id as \"requestId\", user_id, item_id as \"itemId\", lower(item_type::text) as \"itemType\", owner_id, lower(status::text) AS status, "
           + "expiry_duration::text as \"expiryDuration\", constraints FROM " + DB_SCHEMA
           + ".access_requests WHERE user_id = $1::UUID";
   
