@@ -74,4 +74,13 @@ public class CreatePolicyRequest {
         return reg;
     }
 
+    @Override
+    public String toString() {
+        return
+                "userId=" + userId +
+                ", itemId='" + itemId + '\'' +
+                ", itemType='" + itemType + '\'' +
+                ", expiryTime='" + expiryTime + '\'' +
+                ", constraints=" + constraints ;
+    }
 }

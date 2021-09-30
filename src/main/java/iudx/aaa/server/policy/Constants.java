@@ -70,6 +70,7 @@ public class Constants {
   public static final String AUTH_DEL_FAIL = "Not a delegate for resource owner";
   public static final String ITEMNOTFOUND = "Item does not exist:";
   public static final String NO_RES_SERVER = "Res server does not exist";
+  public static final String DUPLICATE = "Request must be unique";
   // Title
   public static final String SUCC_TITLE_POLICY_READ = "policy read";
   public static final String SUCC_TITLE_POLICY_DEL = "policy deleted";
