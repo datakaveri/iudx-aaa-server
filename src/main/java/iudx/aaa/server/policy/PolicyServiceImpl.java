@@ -1,6 +1,5 @@
 package iudx.aaa.server.policy;
 
-import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
@@ -11,6 +10,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.pgclient.data.Interval;
 import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.SqlResult;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.CreateDelegationRequest;
@@ -1298,7 +1298,8 @@ public class PolicyServiceImpl implements PolicyService {
 
                         pool.withTransaction(
                             conn -> conn.preparedQuery(CREATE_NOTIFI_POLICY_REQUEST)
-                                .executeBatch(tuples.result()).onComplete(insertHandler -> {
+                                .executeBatch(tuples.result())
+                                .onComplete(insertHandler -> {
                                   if (insertHandler.failed()) {
                                     LOGGER.error(
                                         LOG_DB_ERROR + insertHandler.cause().getLocalizedMessage());
@@ -1310,10 +1311,13 @@ public class PolicyServiceImpl implements PolicyService {
                                   }
 
                                   if (insertHandler.succeeded()) {
-
+                                    RowSet<Row> rows = insertHandler.result();
                                     JsonArray resp = new JsonArray();
-                                    for (Row each : insertHandler.result()) {
-                                      resp.add(each.toJson());
+                                    while (rows != null) {
+                                      rows.iterator().forEachRemaining(row -> {
+                                        resp.add(row.toJson());
+                                      });
+                                      rows = rows.next();
                                     }
 
                                     List<String> ids = new ArrayList<>();
@@ -1334,13 +1338,17 @@ public class PolicyServiceImpl implements PolicyService {
                                         Map<String, JsonObject> userInfo = userHandler.result();
 
                                         JsonObject userJson1 = userInfo.get(user.getUserId());
+                                        userJson1.put(ID, user.getUserId());
 
                                         JsonArray results = new JsonArray();
                                         for (int i = 0; i < request.size(); i++) {
                                           JsonObject requestJson = request.get(i).toJson();
+                                          String ownerId = ownerIds.get(i);
+                                          JsonObject ownerInfo = userInfo.get(ownerId);
+                                          ownerInfo.put(ID, ownerId);
                                           JsonObject eachJson = resp.getJsonObject(i).copy()
                                               .mergeIn(requestJson).put(USER_DETAILS, userJson1)
-                                              .put(OWNER_DETAILS, userInfo.get(ownerIds.get(i)));
+                                              .put(OWNER_DETAILS, ownerInfo);
                                           results.add(eachJson);
                                         }
 
@@ -2037,9 +2045,6 @@ public class PolicyServiceImpl implements PolicyService {
   public Future<List<Tuple>> checkDuplication(List<Tuple> tuples) {
     Promise<List<Tuple>> promise = Promise.promise();
 
-    Collector<Row, ?, List<UUID>> accessRequestId =
-        Collectors.mapping(row -> row.getUUID(ID), Collectors.toList());
-
     List<Tuple> selectTuples = new ArrayList<>();
     for (int i = 0; i < tuples.size(); i++) {
       UUID userId = tuples.get(i).getUUID(0);
@@ -2048,23 +2053,31 @@ public class PolicyServiceImpl implements PolicyService {
       String status = RoleStatus.PENDING.name();
       selectTuples.add(Tuple.of(userId, itemId, ownerId, status));
     }
-    pool.withTransaction(
-        conn ->
-            conn.preparedQuery(SELECT_NOTIF_POLICY_REQUEST)
-                .collecting(accessRequestId)
-                .executeBatch(selectTuples)
-                .onFailure(
-                    failureHandler -> {
-                      LOGGER.error(ERR_DUP_NOTIF_REQ + failureHandler.getLocalizedMessage());
-                      promise.fail(failureHandler.getLocalizedMessage());
-                    })
-                .onSuccess(
-                    succHandler -> {
-                      if (succHandler.size() > 0) {
-                        LOGGER.error("Fail: {}; Id: {}", DUP_NOTIF_REQ, succHandler.value().get(0));
-                        promise.fail(DUP_NOTIF_REQ);
-                      } else promise.complete(tuples);
-                    }));
+    pool.withConnection(conn -> conn.preparedQuery(SELECT_NOTIF_POLICY_REQUEST)
+        .executeBatch(selectTuples)
+        .onComplete(dbHandler -> {
+          if (dbHandler.failed()) {
+            LOGGER.error(ERR_DUP_NOTIF_REQ + dbHandler.cause().getLocalizedMessage());
+            promise.fail(dbHandler.cause().getLocalizedMessage());
+
+          } else if (dbHandler.succeeded()) {
+            RowSet<Row> rows = dbHandler.result();
+            List<UUID> ids = new ArrayList<>();
+            while (rows != null) {
+              rows.iterator().forEachRemaining(row -> {
+                ids.add(row.getUUID(ID));
+              });
+              rows = rows.next();
+            }
+            
+            if (ids.size() > 0) {
+              LOGGER.error("Fail: {}; Id: {}", DUP_NOTIF_REQ, ids);
+              promise.fail(DUP_NOTIF_REQ);
+            } else {
+              promise.complete(tuples); 
+            }
+          }
+        }));
 
     return promise.future();
   }

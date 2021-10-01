@@ -117,7 +117,7 @@ public class Constants {
 
   public static final String LOG_DB_ERROR = "Fail: Databse query; ";
   public static final String ERR_DUP_NOTIF_REQ = "Fail: Duplicate Access notification request; ";
-  public static final String DUP_NOTIF_REQ = "Access request already exists ";
+  public static final String DUP_NOTIF_REQ = "Access request already exists";
   public static final String INVALID_TUPLE = "Unable to map request to db tuple";
   public static final String SUCC_NOTIF_REQ = "Notification access request";
   public static final String SUCC_LIST_NOTIF_REQ = "Access requests";

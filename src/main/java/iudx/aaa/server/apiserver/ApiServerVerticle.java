@@ -196,10 +196,10 @@ public class ApiServerVerticle extends AbstractVerticle {
 
           // Get user profile
           routerBuilder.operation(GET_USER_PROFILE)
-                       .handler(providerAuth)
-                       .handler(searchUser)
-                       .handler(this::listUserProfileHandler)
-                       .failureHandler(failureHandler);
+              .handler(providerAuth)
+              .handler(searchUser)
+              .handler(this::listUserProfileHandler)
+              .failureHandler(failureHandler);
 
           routerBuilder.operation(UPDATE_USER_PROFILE)
               .handler(this::updateUserProfileHandler)
@@ -254,6 +254,7 @@ public class ApiServerVerticle extends AbstractVerticle {
 
           // Updates the policy request by provider/delegate
           routerBuilder.operation(PUT_POLICIES_REQUEST)
+              .handler(providerAuth)
               .handler(this::updatePolicyNotificationHandler)
               .failureHandler(failureHandler);
 
@@ -265,20 +266,21 @@ public class ApiServerVerticle extends AbstractVerticle {
 
           // Delete delegations by provider/delegate/auth delegate
           routerBuilder.operation(DELETE_DELEGATIONS)
-                       .handler(providerAuth)
-                       .handler(this::deleteDelegationsHandler)
-                       .failureHandler(failureHandler);
+              .handler(providerAuth)
+              .handler(this::deleteDelegationsHandler)
+              .failureHandler(failureHandler);
 
           // Create delegations
           routerBuilder.operation(CREATE_DELEGATIONS)
-                  .handler(providerAuth)
-                  .handler(this::createDelegationsHandler)
-                  .failureHandler(failureHandler);
+              .handler(providerAuth)
+              .handler(this::createDelegationsHandler)
+              .failureHandler(failureHandler);
           /* TimeoutHandler needs to be added as rootHandler */
           routerBuilder.rootHandler(TimeoutHandler.create(serverTimeout));
 
           // Router configuration- CORS, methods and headers
-          routerBuilder.rootHandler(CorsHandler.create(corsRegex).allowedHeaders(allowedHeaders)
+          routerBuilder.rootHandler(CorsHandler.create(corsRegex)
+              .allowedHeaders(allowedHeaders)
               .allowedMethods(allowedMethods));
 
           router = routerBuilder.createRouter();
