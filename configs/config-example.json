@@ -100,7 +100,6 @@
     },
     {
       "id": "iudx.aaa.server.apiserver.ApiServerVerticle",
-      "ssl": true,
       "authServerDomain": "auth.test.com",
       "keystorePath": "configs/keystore.jks",
       "keystorePassword": "secret",

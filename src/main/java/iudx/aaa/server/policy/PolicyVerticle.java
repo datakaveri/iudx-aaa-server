@@ -11,7 +11,6 @@ import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.serviceproxy.ServiceBinder;
 import io.vertx.sqlclient.PoolOptions;
-import iudx.aaa.server.postgres.client.PostgresClient;
 
 import static iudx.aaa.server.policy.Constants.REGISTRATION_SERVICE_ADDRESS;
 import static iudx.aaa.server.token.Constants.POLICY_SERVICE_ADDRESS;
@@ -43,7 +42,6 @@ public class PolicyVerticle extends AbstractVerticle {
   private JsonObject catalogueOptions;
   private JsonObject authOptions;
   private JsonObject catOptions;
-  private PostgresClient pgClient;
   private static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
   private PolicyService policyService;
   private RegistrationService registrationService;
@@ -91,9 +89,6 @@ public class PolicyVerticle extends AbstractVerticle {
     }
 
     /* Create the client pool */
-   // pgclient = PgPool.pool(vertx, connectOptions, poolOptions);
-
-    //pgClient = new PostgresClient(vertx, connectOptions, poolOptions);
 
     PgPool pool = PgPool.pool(vertx,connectOptions, poolOptions);
     registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);

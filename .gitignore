@@ -104,3 +104,7 @@ nb-configuration.xml
 *.tar.gz
 *.rar
 
+# Keystores
+*.jks
+*.p12
+
