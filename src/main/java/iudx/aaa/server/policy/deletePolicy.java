@@ -103,7 +103,7 @@ public class deletePolicy {
                       DELEGATE_CHECK)
                   .collecting(idCollector)
                   .execute(
-                      Tuple.of(userId, Constants.status.ACTIVE)
+                      Tuple.of(userId, Constants.status.ACTIVE,options.getString("authServerUrl"))
                           .addArrayOfUUID(request.toArray(UUID[]::new)))
                   .onSuccess(
                       obj -> {

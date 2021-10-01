@@ -5,7 +5,7 @@ import iudx.aaa.server.apiserver.Schema;
 public class Constants {
 
   public static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
-  public static final Schema DB_SCHEMA = Schema.INSTANCE; 
+  public static final Schema DB_SCHEMA = Schema.INSTANCE;
   // db columns
   public static final String USERID = "userId";
   public static final String ITEMID = "itemId";
@@ -114,7 +114,7 @@ public class Constants {
   public static final String NO_ADMIN_POLICY = "No admin policy";
   public static final String UNAUTHORIZED_DELEGATE = "Unauthorized";
   public static final String COMPOSE_FAILURE = "COMPOSE_FAILURE";
-  
+
   public static final String LOG_DB_ERROR = "Fail: Databse query; ";
   public static final String ERR_DUP_NOTIF_REQ = "Fail: Duplicate Access notification request; ";
   public static final String DUP_NOTIF_REQ = "Access request already exists ";
@@ -123,7 +123,7 @@ public class Constants {
   public static final String SUCC_LIST_NOTIF_REQ = "Access requests";
   public static final String ERR_LIST_NOTIF = "Fail: Unable to list notification access requests";
   public static final String SUCC_UPDATE_NOTIF_REQ = "Request updated";
-  
+
   //General
   public static final String DETAIL = "detail";
 
@@ -192,10 +192,10 @@ public class Constants {
       "select id from "+  DB_SCHEMA +  ".policies where owner_id = $1::uuid "
           + "and status = $2::"+  DB_SCHEMA +  ".policy_status_enum and id = any($3::uuid[]) and expiry_time > now()";
   public static final String DELEGATE_CHECK =
-      "Select a.id from "+  DB_SCHEMA +  ".policies a "
-          + "INNER JOIN "+  DB_SCHEMA +  ".delegations b on a.owner_id = b.owner_id where "
-          + "a.user_id = $1::UUID and a.status =$2::"+  DB_SCHEMA +  ".policy_status_enum "
-          + " and a.expiry_time > now() and a.id = any($3::UUID[]) ";
+      "select a.id from " + DB_SCHEMA + ".policies a inner join  " + DB_SCHEMA + ".delegations b "
+          + " on a.owner_id = b.owner_id inner join " + DB_SCHEMA + ".resource_server c "
+          + " on b.resource_server_id = c.id where b.user_id = $1::UUID and "
+          + "b.status =$2::"+  DB_SCHEMA + ".policy_status_enum and c.url = $3::text and a.id = any($4::uuid[]) ";
 
   // delete policy queries
   public static final String CHECK_DELPOLICY =
@@ -204,7 +204,7 @@ public class Constants {
           + "and a.owner_id = b.owner_id and b.url = $3::varchar "
           + "and a.status = $4::"+  DB_SCHEMA +  ".policy_status_enum and a.expiry_time > now()";
   public static final String DELETE_POLICY =
-      "update "+  DB_SCHEMA +  ".policies set status = $1::"+  DB_SCHEMA +  ".policy_status_enum"
+      "update "+  DB_SCHEMA +  ".policies set status = $1::"+  DB_SCHEMA +  ".policy_status_enum , updated_at = now()"
           + " where status = $2::"+  DB_SCHEMA +  ".policy_status_enum and expiry_time > now() "
           + " and id = any($3::uuid[])";
   // create policy
@@ -292,20 +292,20 @@ public class Constants {
           + " d.resource_server_id = resource_server.id"
           + " WHERE d.owner_id = $1::uuid AND d.id = ANY($2::uuid[]) AND d.status = 'ACTIVE'";
 
-  public static final String DELETE_DELEGATIONS =
+  public static final String  DELETE_DELEGATIONS =
       "UPDATE "+  DB_SCHEMA +  ".delegations SET status = 'DELETED', updated_at = NOW()"
           + " WHERE owner_id = $1::uuid AND id = ANY($2::uuid[])";
-  
+
   public static final String CREATE_NOTIFI_POLICY_REQUEST =
       "INSERT INTO "+ DB_SCHEMA +".access_requests (user_id, item_id,item_type, owner_id, status, "
       + "expiry_duration, constraints, created_at, updated_at)\n"
       + "VALUES ($1::UUID, $2::UUID, $3::"+  DB_SCHEMA +  ".item_enum,$4::UUID,$5::"+  DB_SCHEMA +  ".acc_reqs_status_enum,"
       + "$6::interval,$7::jsonb, now() ,now()) RETURNING id as \"requestId\";";
-  
+
   public static final String SELECT_NOTIF_POLICY_REQUEST =
       "SELECT id FROM "+ DB_SCHEMA +".access_requests WHERE user_id = $1::UUID AND "
       + "item_id = $2::UUID AND owner_id = $3::UUID AND status = $4::"+  DB_SCHEMA +  ".acc_reqs_status_enum";
-  
+
   public static final String SELECT_PROVIDER_NOTIF_REQ =
       "SELECT id as \"requestId\", user_id, item_id as \"itemId\", lower(item_type::text) as \"itemType\", owner_id, lower(status::text) AS status, "
           + "expiry_duration::text as \"expiryDuration\", constraints FROM " + DB_SCHEMA
@@ -315,35 +315,35 @@ public class Constants {
       "SELECT id as \"requestId\", user_id, item_id as \"itemId\", lower(item_type::text) as \"itemType\", owner_id, lower(status::text) AS status, "
           + "expiry_duration::text as \"expiryDuration\", constraints FROM " + DB_SCHEMA
           + ".access_requests WHERE user_id = $1::UUID";
-  
+
   public static final String SEL_NOTIF_REQ_ID =
       "SELECT id, user_id as \"userId\", item_id as \"itemId\", item_type as \"itemType\", owner_id as \"ownerId\", "
           + "status, expiry_duration::text as \"expiryDuration\", "
           + "constraints FROM "+ DB_SCHEMA + ".access_requests where id = ANY($1::UUID[])";
-  
+
   public static final String SEL_NOTIF_ITEM_ID =
-      "SELECT * FROM (SELECT id, cat_id AS url FROM "+ DB_SCHEMA + ".resource\n" + 
-      "UNION SELECT id, url AS url FROM "+ DB_SCHEMA + ".resource_server\n" + 
-      "UNION select id, cat_id AS url FROM "+ DB_SCHEMA + ".resource_group) view WHERE id = ANY($1::UUID[])"; 
-  
+      "SELECT * FROM (SELECT id, cat_id AS url FROM "+ DB_SCHEMA + ".resource\n" +
+      "UNION SELECT id, url AS url FROM "+ DB_SCHEMA + ".resource_server\n" +
+      "UNION select id, cat_id AS url FROM "+ DB_SCHEMA + ".resource_group) view WHERE id = ANY($1::UUID[])";
+
   public static final String UPDATE_NOTIF_REQ_APPROVED =
       "UPDATE " + DB_SCHEMA + ".access_requests SET status = $1::"+  DB_SCHEMA +  ".acc_reqs_status_enum, expiry_duration = $2::interval, "
       + "constraints =$3::jsonb, updated_at = NOW() WHERE id = $4::UUID and status = 'PENDING'";
-  
-  public static final String UPDATE_NOTIF_REQ_REJECTED = 
+
+  public static final String UPDATE_NOTIF_REQ_REJECTED =
       "UPDATE "+  DB_SCHEMA +  ".access_requests SET status = $2::"+  DB_SCHEMA +  ".acc_reqs_status_enum, updated_at = NOW() WHERE id = $1::UUID and status = 'PENDING'";
-  
+
   public static final String SEL_NOTIF_POLICY_ID =
       "SELECT ar.id AS \"requestId\", pol.id AS \"policyId\" FROM " + DB_SCHEMA
           + ".access_requests ar "
           + "LEFT JOIN "+  DB_SCHEMA +  ".policies pol ON ar.user_id = pol.user_id AND ar.item_id = pol.item_id AND ar.owner_id = pol.owner_id \n"
           + "WHERE pol.user_id= $1::UUID AND pol.item_id = $2::UUID AND ar.owner_id = $3::UUID AND pol.status = 'ACTIVE'";
-  
+
   public static final String INSERT_NOTIF_APPROVED_ID =
       "INSERT INTO " + DB_SCHEMA + ".approved_access_requests(request_id,policy_id,created_at,updated_at) "
           + "VALUES ($1::UUID,$2::UUID, NOW(),NOW());";
-      
-  
+
+
   public static final String SET_INTERVALSTYLE = "SET LOCAL intervalstyle = 'iso_8601'";
 
   public static final String INSERT_DELEGATION =

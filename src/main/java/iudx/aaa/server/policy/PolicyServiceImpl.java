@@ -387,6 +387,36 @@ public class PolicyServiceImpl implements PolicyService {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
     // check if all req items exist to delete;
 
+      if (user.getUserId().equals(NIL_UUID)) {
+          // empty user object
+          Response r =
+                  new Response.ResponseBuilder()
+                          .type(URN_MISSING_INFO)
+                          .title(URN_MISSING_INFO)
+                          .detail(NO_USER)
+                          .status(404)
+                          .build();
+          handler.handle(Future.succeededFuture(r.toJson()));
+          return this;
+      }
+      List<Roles> roles = user.getRoles();
+
+      if (!roles.contains(Roles.ADMIN)
+              && !roles.contains(Roles.PROVIDER)
+              && !roles.contains(Roles.DELEGATE)) {
+          // 403 not allowed to create policy
+          Response r =
+                  new Response.ResponseBuilder()
+                          .type(URN_INVALID_ROLE)
+                          .title(INVALID_ROLE)
+                          .detail(INVALID_ROLE)
+                          .status(403)
+                          .build();
+          handler.handle(Future.succeededFuture(r.toJson()));
+          return this;
+      }
+
+
     List<UUID> req =
         request.stream()
             .map(JsonObject.class::cast)
