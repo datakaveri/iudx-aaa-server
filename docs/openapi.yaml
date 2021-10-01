@@ -3306,6 +3306,45 @@ paths:
         required: true
       tags:
         - Notifications APIs
+  /auth/v1/cert:
+    get:
+      summary: Get JWT Certificate
+      tags:
+        - Certificate API
+      responses:
+        '200':
+          description: Successfully list the Certificate
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+                properties:
+                  cert:
+                    type: string
+                    minLength: 1
+                required:
+                  - cert
+                x-examples:
+                  example-1:
+                    cert: |-
+                      -----BEGIN CERTIFICATE-----
+                      MIIBnzCCAUOgAwIBAgIIBXqRSbCK9qUwDAYIKoZIzj0EAwIFADBCMQkwBwYDVQQGEwAxCTAHBgNVBAgTADEJMAcGA1UEBxMAMQkwBwYDVQQKEwAxCTAHBgNVBAsTADEJMAcGA1UEAxMAMB4XDTIxMDYwNTE1MDEyOFoXDTIyMDUzMTE1MDEyOFowQjEJMAcGA1UEBhMAMQkwBwYDVQQIEwAxCTAHBgNVBAcTADEJMAcGA1UEChMAMQkwBwYDVQQLEwAxCTAHBgNVBAMTADBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABPASn9h2d8LesDX99EiLG8o2D5JE0hhssjNvzBhf82E2VfWdvIR8L2YEn527Kxd+gQSp1rM5TmFtAInsgFCminajITAfMB0GA1UdDgQWBBQUKmbmWE9Kv1PzPjRj5RMoTCErkDAMBggqhkjOPQQDAgUAA0gAMEUCIGysQH9MjOCbTYZQbiwaWGCP3yTFwz4jyRLJYZslloesAiEAvfZaflCesKaeOYS+7htQg0mnnUOlkBRq+POfqoF77fM=
+                      -----END CERTIFICATE-----
+              examples:
+                Certificate:
+                  value:
+                    cert: |-
+                      -----BEGIN CERTIFICATE-----
+                      MIIBnzCCAUOgAwIBAgIIBXqRSbCK9qUwDAYIKoZIzj0EAwIFADBCMQkwBwYDVQQGEwAxCTAHBgNVBAgTADEJMAcGA1UEBxMAMQkwBwYDVQQKEwAxCTAHBgNVBAsTADEJMAcGA1UEAxMAMB4XDTIxMDYwNTE1MDEyOFoXDTIyMDUzMTE1MDEyOFowQjEJMAcGA1UEBhMAMQkwBwYDVQQIEwAxCTAHBgNVBAcTADEJMAcGA1UEChMAMQkwBwYDVQQLEwAxCTAHBgNVBAMTADBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABPASn9h2d8LesDX99EiLG8o2D5JE0hhssjNvzBhf82E2VfWdvIR8L2YEn527Kxd+gQSp1rM5TmFtAInsgFCminajITAfMB0GA1UdDgQWBBQUKmbmWE9Kv1PzPjRj5RMoTCErkDAMBggqhkjOPQQDAgUAA0gAMEUCIGysQH9MjOCbTYZQbiwaWGCP3yTFwz4jyRLJYZslloesAiEAvfZaflCesKaeOYS+7htQg0mnnUOlkBRq+POfqoF77fM=
+                      -----END CERTIFICATE-----
+      operationId: get-auth-v1-cert
+      description: Get the JsonObject having certificate to authenticate/validate the generated JWT using `/auth/v1/token`
 components:
   schemas:
     RequestToken:
