@@ -1269,10 +1269,6 @@ public class PolicyServiceImpl implements PolicyService {
                         pool.withTransaction(
                             conn -> conn.preparedQuery(CREATE_NOTIFI_POLICY_REQUEST)
                                 .executeBatch(tuples.result())
-//                                .flatMap(mapper -> 
-//                                  conn.preparedQuery(SELECT_NOTIF_POLICY_REQUEST)
-//                                      .executeBatch(tuples.result())
-//                                      .map(res -> res.value()))
                                 .onComplete(insertHandler -> {
                                   if (insertHandler.failed()) {
                                     LOGGER.error(
