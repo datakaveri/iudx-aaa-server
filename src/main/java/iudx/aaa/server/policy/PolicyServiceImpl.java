@@ -299,8 +299,36 @@ public class PolicyServiceImpl implements PolicyService {
     }
     Map<String, List<String>> catItem = new HashMap<>();
 
-    if (resServerIds.size() > 0) catItem.put(RES_SERVER, resServerIds);
+    if (resServerIds.size() > 0) {
+      if (!roles.contains(Roles.ADMIN))
+      {
+          Response r =
+                  new Response.ResponseBuilder()
+                          .type(URN_INVALID_ROLE)
+                          .title(INVALID_ROLE)
+                          .detail(INVALID_ROLE)
+                          .status(403)
+                          .build();
+          handler.handle(Future.succeededFuture(r.toJson()));
+          return this;
+      }
+      else
+          catItem.put(RES_SERVER, resServerIds);
+    }
     else {
+        if (!roles.contains(Roles.PROVIDER)
+                && !roles.contains(Roles.DELEGATE))
+        {
+            Response r =
+                    new Response.ResponseBuilder()
+                            .type(URN_INVALID_ROLE)
+                            .title(INVALID_ROLE)
+                            .detail(INVALID_ROLE)
+                            .status(403)
+                            .build();
+            handler.handle(Future.succeededFuture(r.toJson()));
+            return this;
+        }
       if (resGrpIds.size() > 0) catItem.put(RES_GRP, resGrpIds);
       if (resIds.size() > 0) catItem.put(RES, resIds);
     }
