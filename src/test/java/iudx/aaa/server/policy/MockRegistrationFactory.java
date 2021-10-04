@@ -3,15 +3,10 @@ package iudx.aaa.server.policy;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
-import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.registration.RegistrationService;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
-
-import java.util.HashMap;
-import java.util.Map;
-
 
 /**
  * Mocks, stubs the RegistrationService.
@@ -21,7 +16,7 @@ import java.util.Map;
 public class MockRegistrationFactory {
 
   private static RegistrationService registrationService;
-  AsyncResult<Map<String,JsonObject>> asyncResult;
+  AsyncResult<JsonObject> asyncResult;
 
   @SuppressWarnings("unchecked")
   public MockRegistrationFactory() {
@@ -30,8 +25,8 @@ public class MockRegistrationFactory {
     }
 
     asyncResult = Mockito.mock(AsyncResult.class);
-    Mockito.doAnswer((Answer<AsyncResult<Map<String,JsonObject>>>) arguments -> {
-      ((Handler<AsyncResult<Map<String,JsonObject>>>) arguments.getArgument(1)).handle(asyncResult);
+    Mockito.doAnswer((Answer<AsyncResult<JsonObject>>) arguments -> {
+      ((Handler<AsyncResult<JsonObject>>) arguments.getArgument(1)).handle(asyncResult);
       return null;
     }).when(registrationService).getUserDetails(Mockito.any(), Mockito.any());
   }
@@ -48,7 +43,7 @@ public class MockRegistrationFactory {
    */
 
   public void setResponse(String status) {
-    Map<String,JsonObject> response = new HashMap<>();
+    JsonObject response = new JsonObject();
     JsonObject obj = new JsonObject();
     if ("valid".equals(status)) {
       obj.put("name","abc").put("email","abc@xyz.com");
@@ -70,7 +65,7 @@ public class MockRegistrationFactory {
    * 
    * @param response is void
    */
-  public void setResponse(Map<String, JsonObject> response) {
+  public void setResponse(JsonObject response) {
     Mockito.when(asyncResult.result()).thenReturn(response);
     Mockito.when(asyncResult.failed()).thenReturn(false);
     Mockito.when(asyncResult.succeeded()).thenReturn(true);

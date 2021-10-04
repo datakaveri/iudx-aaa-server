@@ -107,5 +107,5 @@ public interface RegistrationService {
 
   @Fluent
   RegistrationService getUserDetails(List<String> userIds,
-      Handler<AsyncResult<Map<String, JsonObject>>> handler);
+      Handler<AsyncResult<JsonObject>> handler);
 }

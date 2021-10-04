@@ -180,7 +180,8 @@ public class ListDelegationTest {
     }).onSuccess(r -> {
 
       registrationService = mockRegistrationFactory.getInstance();
-      policyService = new PolicyServiceImpl(pool, registrationService, catalogueClient,authOptions,catOptions);
+      policyService = new PolicyServiceImpl(pool, registrationService, catalogueClient, authOptions,
+          catOptions);
       testContext.completeNow();
     });
   }
@@ -205,9 +206,9 @@ public class ListDelegationTest {
   /**
    * Creates valid userDetails response for the providerAdmin and delegate users.
    * 
-   * @return a map with the userDetails response
+   * @return a JsonObject with the userDetails response
    */
-  Map<String, JsonObject> createUserDetailsResponse() {
+  JsonObject createUserDetailsResponse() {
     JsonObject paUser = providerAdmin.result();
     JsonObject deleUser = delegate.result();
 
@@ -219,7 +220,8 @@ public class ListDelegationTest {
         new JsonObject().put("firstName", deleUser.getString("firstName")).put("lastName",
             deleUser.getString("lastName")));
 
-    return Map.of(paUser.getString("userId"), paDets, deleUser.getString("userId"), deleDets);
+    return new JsonObject().put(paUser.getString("userId"), paDets)
+        .put(deleUser.getString("userId"), deleDets);
   }
 
   @Test
