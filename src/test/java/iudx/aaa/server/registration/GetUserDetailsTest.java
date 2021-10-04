@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -58,8 +60,6 @@ public class GetUserDetailsTest {
 
   private static KcAdmin kc = Mockito.mock(KcAdmin.class);
 
-  /* SQL queries for creating and deleting required data */
-
   static String name = RandomStringUtils.randomAlphabetic(10).toLowerCase();
   static String url = name + ".com";
   static Promise<UUID> orgId;
@@ -67,6 +67,12 @@ public class GetUserDetailsTest {
   static Future<JsonObject> userWithOrg;
   static Future<JsonObject> userNoOrg;
   static Future<UUID> orgIdFut;
+
+  /* for converting getUserDetails's JsonObject to map */ 
+  Function<JsonObject, Map<String, JsonObject>> jsonObjectToMap = (obj) -> {
+    return obj.stream().collect(
+        Collectors.toMap(val -> (String) val.getKey(), val -> (JsonObject) val.getValue()));
+  };
 
   @BeforeAll
   @DisplayName("Deploying Verticle")
@@ -242,7 +248,10 @@ public class GetUserDetailsTest {
 
     registrationService.getUserDetails(
         List.of(userJson1.getString("userId"), userJson2.getString("userId")),
-        testContext.succeeding(response -> testContext.verify(() -> {
+        testContext.succeeding(jsonResult -> testContext.verify(() -> {
+          
+          Map<String, JsonObject> response = jsonObjectToMap.apply(jsonResult);
+          
           JsonObject one = response.get(userJson1.getString("userId"));
           assertNotNull(one);
           assertEquals(one.getString("email"), userJson1.getString("email"));
@@ -277,7 +286,10 @@ public class GetUserDetailsTest {
 
     registrationService.getUserDetails(
         List.of(userJson.getString("userId"), userJson.getString("userId")),
-        testContext.succeeding(response -> testContext.verify(() -> {
+        testContext.succeeding(jsonResult -> testContext.verify(() -> {
+          
+          Map<String, JsonObject> response = jsonObjectToMap.apply(jsonResult);
+          
           assertTrue(response.size() == 1);
           JsonObject obj = response.get(userJson.getString("userId"));
           assertNotNull(obj);

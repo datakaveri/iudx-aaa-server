@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -180,6 +181,13 @@ public class PolicyServiceImpl implements PolicyService {
     this.createPolicy = new createPolicy(pool, authOptions);
     this.createDelegate = new createDelegate(pool, authOptions);
   }
+  
+  /* for converting getUserDetails's JsonObject to map */ 
+  Function<JsonObject, Map<String, JsonObject>> jsonObjectToMap = (obj) -> {
+    return obj.stream().collect(
+        Collectors.toMap(val -> (String) val.getKey(), val -> (JsonObject) val.getValue()));
+  };
+
   @Override
   public PolicyService createPolicy(
       List<CreatePolicyRequest> request, User user, Handler<AsyncResult<JsonObject>> handler) {
@@ -776,21 +784,23 @@ public class PolicyServiceImpl implements PolicyService {
                         String oid;
                         String itemType;
                         JsonObject object;
+                        Map<String, JsonObject> map = jsonObjectToMap.apply(res.result());
+                        
                         for (JsonObject ar : finalPolicies) {
                           uid = ar.getString(USER_ID);
                           oid = ar.getString(OWNER_ID);
                           itemType = ar.getString("itemType");
                           ar.put("itemType", itemType.toLowerCase());
-                          if (res.result().containsKey(uid)) {
+                          if (map.containsKey(uid)) {
                             ar.remove(USER_ID);
-                            object = res.result().get(uid);
+                            object = map.get(uid);
                             object.put("id", uid);
                             ar.put(USER_DETAILS, object);
                           }
 
-                          if (res.result().containsKey(oid)) {
+                          if (map.containsKey(oid)) {
                             ar.remove(OWNER_ID);
-                            object = res.result().get(oid);
+                            object = map.get(oid);
                             object.put("id", oid);
                             ar.put(OWNER_DETAILS, object);
                           }
@@ -1363,7 +1373,7 @@ public class PolicyServiceImpl implements PolicyService {
                                       }
 
                                       if (userHandler.succeeded()) {
-                                        Map<String, JsonObject> userInfo = userHandler.result();
+                                        Map<String, JsonObject> userInfo = jsonObjectToMap.apply(userHandler.result());
 
                                         JsonObject userJson1 = userInfo.get(user.getUserId());
                                         userJson1.put(ID, user.getUserId());
@@ -1477,7 +1487,7 @@ public class PolicyServiceImpl implements PolicyService {
       return promise.future();
     });
 
-    Future<Map<String, JsonObject>> userInfo = itemNames.compose(result -> {
+    Future<JsonObject> userInfo = itemNames.compose(result -> {
       Set<String> ids = new HashSet<String>();
       result.forEach(obj -> {
         JsonObject each = (JsonObject) obj;
@@ -1485,14 +1495,15 @@ public class PolicyServiceImpl implements PolicyService {
         ids.add(each.getString(USER_ID));
       });
 
-      Promise<Map<String, JsonObject>> userDetails = Promise.promise();
+      Promise<JsonObject> userDetails = Promise.promise();
       registrationService.getUserDetails(new ArrayList<String>(ids), userDetails);
       return userDetails.future();
     });
 
-    userInfo.onSuccess(details -> {
+    userInfo.onSuccess(result -> {
       JsonArray notifRequest = itemNames.result();
       JsonArray response = new JsonArray();
+      Map<String, JsonObject> details = jsonObjectToMap.apply(result);
       
       notifRequest.forEach(obj -> {
         JsonObject each = (JsonObject) obj;
@@ -1725,7 +1736,7 @@ public class PolicyServiceImpl implements PolicyService {
                   }
 
                   if (userHandler.succeeded()) {
-                    Map<String, JsonObject> userInfo = userHandler.result();
+                    Map<String, JsonObject> userInfo = jsonObjectToMap.apply(userHandler.result());
 
                     JsonObject userJson1 = userInfo.get(user.getUserId());
 
@@ -1808,7 +1819,7 @@ public class PolicyServiceImpl implements PolicyService {
                     .execute(queryTup)
                     .map(res -> res.value()));
 
-    Future<Map<String, JsonObject>> userInfo =
+    Future<JsonObject> userInfo =
         data.compose(
             result -> {
               Set<String> ss = new HashSet<String>();
@@ -1818,15 +1829,16 @@ public class PolicyServiceImpl implements PolicyService {
                     ss.add(obj.getString("user_id"));
                   });
 
-              Promise<Map<String, JsonObject>> userDetails = Promise.promise();
+              Promise<JsonObject> userDetails = Promise.promise();
               registrationService.getUserDetails(new ArrayList<String>(ss), userDetails);
               return userDetails.future();
             });
 
     userInfo
         .onSuccess(
-            details -> {
+            results -> {
               List<JsonObject> deleRes = data.result();
+              Map<String, JsonObject> details = jsonObjectToMap.apply(results);
 
               deleRes.forEach(
                   obj -> {

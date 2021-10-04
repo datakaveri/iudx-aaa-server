@@ -555,11 +555,11 @@ public class RegistrationServiceImpl implements RegistrationService {
 
   @Override
   public RegistrationService getUserDetails(List<String> userIds,
-      Handler<AsyncResult<Map<String, JsonObject>>> handler) {
+      Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
     if (userIds.isEmpty()) {
-      handler.handle(Future.succeededFuture(new HashMap<String, JsonObject>()));
+      handler.handle(Future.succeededFuture(new JsonObject()));
       return this;
     }
 
@@ -601,9 +601,9 @@ public class RegistrationServiceImpl implements RegistrationService {
     /* 'merge' userId-KcId and KcId-details maps */
     details.onSuccess(kcToDetails -> {
       Map<String, String> user2kc = userToKc.future().result();
-      Map<String, JsonObject> userDetails = user2kc.entrySet().stream()
-          .collect(Collectors.toMap(id -> id.getKey(), id -> kcToDetails.get(id.getValue())));
+      JsonObject userDetails = new JsonObject();
 
+      user2kc.forEach((userId, kcId) -> userDetails.put(userId, kcToDetails.get(kcId)));
       handler.handle(Future.succeededFuture(userDetails));
     }).onFailure(e -> {
       if (e.getMessage().equals(COMPOSE_FAILURE)) {
