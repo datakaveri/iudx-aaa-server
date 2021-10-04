@@ -42,7 +42,6 @@ import iudx.aaa.server.apiserver.util.ProviderAuthentication;
 import iudx.aaa.server.apiserver.util.SearchUserHandler;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
-import iudx.aaa.server.token.Constants;
 import iudx.aaa.server.token.TokenService;
 
 /**
@@ -69,8 +68,7 @@ public class ApiServerVerticle extends AbstractVerticle {
   private HttpServer server;
   private Router router;
   private final int port = 8443;
-  private boolean isSSL;
-  private String keystore;
+  private String keystorePath;
   private String keystorePassword;
 
   private String databaseIP;
@@ -120,6 +118,8 @@ public class ApiServerVerticle extends AbstractVerticle {
     serverTimeout = Long.parseLong(config().getString(SERVER_TIMEOUT_MS));
     corsRegex = config().getString(CORS_REGEX);
     authServerDomain = config().getString(AUTHSERVER_DOMAIN);
+    keystorePath = config().getString(KEYSTORE_PATH);
+    keystorePassword = config().getString(KEYSTPRE_PASSWORD);
 
     /* Set Connection Object */
     if (connectOptions == null) {
@@ -275,6 +275,11 @@ public class ApiServerVerticle extends AbstractVerticle {
               .handler(providerAuth)
               .handler(this::createDelegationsHandler)
               .failureHandler(failureHandler);
+
+          // Get PublicKey
+          routerBuilder.operation(GET_CERT)
+              .handler(this::pubCertHandler);
+
           /* TimeoutHandler needs to be added as rootHandler */
           routerBuilder.rootHandler(TimeoutHandler.create(serverTimeout));
 
@@ -299,11 +304,6 @@ public class ApiServerVerticle extends AbstractVerticle {
                 HttpServerResponse response = routingContext.response();
                 response.sendFile("docs/apidoc.html");
               });
-
-          // Get PublicKey
-          router.get(PUBLIC_KEY_ROUTE)
-              .produces(MIME_APPLICATION_JSON)
-              .handler(this::pubCertHandler);
 
           /* In case API/method not implemented, this last route is triggered */
           router.route().last().handler(routingContext-> {
@@ -759,8 +759,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void pubCertHandler(RoutingContext context) {
 
-    JksOptions options = new JksOptions().setPath(Constants.keystorePath).setPassword(Constants.keystorePassword);
-
+    JksOptions options = new JksOptions().setPath(keystorePath).setPassword(keystorePassword);
     try {
       KeyStore ks = options.loadKeyStore(vertx);
       if (ks.containsAlias(KS_ALIAS)) {

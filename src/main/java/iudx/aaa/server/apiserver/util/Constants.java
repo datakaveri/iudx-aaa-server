@@ -41,7 +41,6 @@ public class Constants {
   // API Documentation endpoint
   public static final String ROUTE_STATIC_SPEC = "/apis/spec";
   public static final String ROUTE_DOC = "/apis";
-  public static final String PUBLIC_KEY_ROUTE = "/auth/v1/cert";
 
   // Accept Headers and CORS
   public static final String MIME_APPLICATION_JSON = "application/json";
@@ -69,6 +68,7 @@ public class Constants {
   public static final String GET_DELEGATIONS = "get-auth-v1-policies-delegations";
   public static final String DELETE_DELEGATIONS = "delete-auth-v1-policies-delegations";
   public static final String CREATE_DELEGATIONS = "post-auth-v1-policies-delegations";
+  public static final String GET_CERT = "get-auth-v1-cert";
   
   public static final String TOKEN_ROUTE = "/auth/v1/token";
 
