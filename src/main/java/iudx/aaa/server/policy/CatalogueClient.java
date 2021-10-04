@@ -390,7 +390,7 @@ public class CatalogueClient {
         return p.future();
       }
 
-      pool.withConnection(
+        pool.withConnection(
           conn ->
               conn.preparedQuery(GET_RES_GRP_DETAILS)
                   .collecting(catIdCollector)
@@ -475,19 +475,15 @@ public class CatalogueClient {
         .onSuccess(
             obj -> {
               JsonObject res = obj.bodyAsJsonObject();
-              if (obj.statusCode() == 200)
-              {
+              if (obj.statusCode() == 200) {
                 if (res.getString(STATUS).equals(status.SUCCESS.toString().toLowerCase()))
                   p.complete(obj.bodyAsJsonObject().getJsonArray(RESULTS).getJsonObject(0));
+              } else {
+                if (obj.statusCode() == 404) p.fail(ITEMNOTFOUND + id);
+                else {
+                  LOGGER.error("failed fetchItem: " + res);
+                  p.fail(INTERNALERROR);
                 }
-                else{
-                  if (obj.statusCode() == 404)
-                      p.fail(ITEMNOTFOUND + id);
-                  else{
-                      LOGGER.error("failed fetchItem: " + res);
-                      p.fail(INTERNALERROR);
-                  }
-
               }
             });
     return p.future();
@@ -583,58 +579,67 @@ public class CatalogueClient {
             .filter(arr -> arr.getJsonArray(TYPE).contains(IUDX_RES))
             .collect(Collectors.toList());
 
-    List<String> resGrpId =
-        res.stream().map(e -> e.getString(RESOURCE_GROUP)).collect(Collectors.toList());
+    if (res.size() == 0) {
+        resGrpEntry.onSuccess(
+                ar -> p.complete(true)
+                ).onFailure(
+                failureHandler -> {
+                    failureHandler.printStackTrace();
+                    p.fail(failureHandler.getLocalizedMessage());
+                });
+    } else {
+      List<String> resGrpId =
+          res.stream().map(e -> e.getString(RESOURCE_GROUP)).collect(Collectors.toList());
 
-    Future<Map<String, JsonObject>> resourceItemDetails =
-        resGrpEntry.compose(
-            ar -> {
-              Collector<Row, ?, Map<String, JsonObject>> mapCollector =
-                  Collectors.toMap(
-                      row -> row.getString(CAT_ID),
-                      row ->
-                          new JsonObject()
-                              .put(ID, row.getUUID(ID))
-                              .put(PROVIDER_ID, row.getUUID(PROVIDER_ID))
-                              .put(RESOURCE_SERVER_ID, row.getUUID(RESOURCE_SERVER_ID)));
+      Future<Map<String, JsonObject>> resourceItemDetails =
+          resGrpEntry.compose(
+              ar -> {
+                Collector<Row, ?, Map<String, JsonObject>> mapCollector =
+                    Collectors.toMap(
+                        row -> row.getString(CAT_ID),
+                        row ->
+                            new JsonObject()
+                                .put(ID, row.getUUID(ID))
+                                .put(PROVIDER_ID, row.getUUID(PROVIDER_ID))
+                                .put(RESOURCE_SERVER_ID, row.getUUID(RESOURCE_SERVER_ID)));
 
-              // get map of resid , jsonobj by using data from resource_group table
-              return pool.withConnection(
-                  conn ->
-                      conn.preparedQuery(GET_RES_SER_DETAIL)
-                          .collecting(mapCollector)
-                          .execute(Tuple.of(resGrpId.toArray()))
-                          .map(map -> map.value()));
-            });
+                // get map of resid , jsonobj by using data from resource_group table
+                return pool.withConnection(
+                    conn ->
+                        conn.preparedQuery(GET_RES_SER_DETAIL)
+                            .collecting(mapCollector)
+                            .execute(Tuple.of(resGrpId.toArray()))
+                            .map(map -> map.value()));
+              });
 
-    Future<List<Tuple>> resources =
-        resourceItemDetails.compose(
-            x -> {
-              List<Tuple> tuples = new ArrayList<>();
-              for (JsonObject jsonObject : res) {
-                String id = jsonObject.getString(RESOURCE_GROUP);
-                String cat_id = jsonObject.getString(ID);
-                UUID pId = UUID.fromString(x.get(id).getString(PROVIDER_ID));
-                UUID rSerId = UUID.fromString(x.get(id).getString(RESOURCE_SERVER_ID));
-                UUID rId = UUID.fromString(x.get(id).getString(ID));
-                tuples.add(Tuple.of(cat_id, pId, rSerId, rId));
-              }
-              return Future.succeededFuture(tuples);
-            });
+      Future<List<Tuple>> resources =
+          resourceItemDetails.compose(
+              x -> {
+                List<Tuple> tuples = new ArrayList<>();
+                for (JsonObject jsonObject : res) {
+                  String id = jsonObject.getString(RESOURCE_GROUP);
+                  String cat_id = jsonObject.getString(ID);
+                  UUID pId = UUID.fromString(x.get(id).getString(PROVIDER_ID));
+                  UUID rSerId = UUID.fromString(x.get(id).getString(RESOURCE_SERVER_ID));
+                  UUID rId = UUID.fromString(x.get(id).getString(ID));
+                  tuples.add(Tuple.of(cat_id, pId, rSerId, rId));
+                }
+                return Future.succeededFuture(tuples);
+              });
 
-    resources
-        .compose(
-            success -> {
-              return pool.withTransaction(
-                  conn -> conn.preparedQuery(INSERT_RES).executeBatch(success).mapEmpty());
-            })
-        .onFailure(
-            failureHandler -> {
-              failureHandler.printStackTrace();
-              p.fail(failureHandler.getLocalizedMessage());
-            })
-        .onSuccess(success -> p.complete(true));
-
+      resources
+          .compose(
+              success -> {
+                return pool.withTransaction(
+                    conn -> conn.preparedQuery(INSERT_RES).executeBatch(success).mapEmpty());
+              })
+          .onFailure(
+              failureHandler -> {
+                failureHandler.printStackTrace();
+                p.fail(failureHandler.getLocalizedMessage());
+              })
+          .onSuccess(success -> p.complete(true));
+    }
     return p.future();
   }
 
