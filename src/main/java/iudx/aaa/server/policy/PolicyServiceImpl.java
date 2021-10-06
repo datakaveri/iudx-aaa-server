@@ -1193,7 +1193,6 @@ public class PolicyServiceImpl implements PolicyService {
     String itemId = request.getString(ITEMID);
     String itemType = request.getString(ITEMTYPE).toUpperCase();
     String role = request.getString(ROLE).toUpperCase();
-    String emailHash = itemId.split("/")[0] + "/" + itemId.split("/")[1];
 
     boolean isCatalogue = false;
 
@@ -1202,6 +1201,8 @@ public class PolicyServiceImpl implements PolicyService {
       handler.handle(Future.failedFuture(INCORRECT_ITEM_TYPE));
       return this;
     }
+
+      String emailHash = itemId.split("/")[0] + "/" + itemId.split("/")[1];
 
     Future<String> getRoles =
         pool.withConnection(
