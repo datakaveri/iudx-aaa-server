@@ -5,6 +5,7 @@ import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Roles;
@@ -188,7 +189,6 @@ public class createDelegate {
         pool.withTransaction(
                 conn ->
                         conn.preparedQuery(CHECK_EXISTING_DELEGATIONS)
-                                .collecting(policyIdCollector)
                                 .executeBatch(tuples)
                                 .onFailure(
                                         failureHandler -> {
@@ -198,8 +198,17 @@ public class createDelegate {
                                         })
                                 .onSuccess(
                                         ar -> {
-                                            if (ar.size() > 0) {
-                                                p.fail(DUPLICATE_DELEGATION + ar.value().get(0));
+                                            RowSet<Row> rows = ar;
+                                            List<UUID> ids = new ArrayList<>();
+                                            while (rows != null) {
+                                                rows.iterator().forEachRemaining(row -> {
+                                                    ids.add(row.getUUID(ID));
+                                                });
+                                                rows = rows.next();
+                                            }
+
+                                            if (ids.size() > 0) {
+                                                p.fail(DUPLICATE_DELEGATION + ids);
                                             } else p.complete(tuples);
                                         }));
 

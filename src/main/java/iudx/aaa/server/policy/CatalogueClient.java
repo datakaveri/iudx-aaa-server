@@ -469,7 +469,6 @@ public class CatalogueClient {
         .send()
         .onFailure(
             ar -> {
-              ar.printStackTrace();
               p.fail(INTERNALERROR);
             })
         .onSuccess(
@@ -584,7 +583,6 @@ public class CatalogueClient {
                 ar -> p.complete(true)
                 ).onFailure(
                 failureHandler -> {
-                    failureHandler.printStackTrace();
                     p.fail(failureHandler.getLocalizedMessage());
                 });
     } else {
@@ -635,7 +633,6 @@ public class CatalogueClient {
               })
           .onFailure(
               failureHandler -> {
-                failureHandler.printStackTrace();
                 p.fail(failureHandler.getLocalizedMessage());
               })
           .onSuccess(success -> p.complete(true));
@@ -707,7 +704,6 @@ public class CatalogueClient {
                 .onFailure(
                     obj -> {
                       LOGGER.error("resGrpOwner db fail :: " + obj.getLocalizedMessage());
-                      obj.printStackTrace();
                       p.fail(INTERNALERROR);
                     })
                 .onSuccess(
