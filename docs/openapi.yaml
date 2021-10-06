@@ -130,7 +130,7 @@ paths:
         - schema:
             type: string
             minLength: 1
-            maxLength: 2000
+            maxLength: 3000
             example: Bearer <JWT>
           in: header
           name: Authorization
@@ -323,7 +323,7 @@ paths:
                 accessToken:
                   type: string
                   minLength: 1
-                  maxLength: 512
+                  maxLength: 640
                   example: JWT
               required:
                 - accessToken
@@ -415,7 +415,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 2000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -656,7 +656,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 2000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -945,7 +945,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 2000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -1176,7 +1176,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 2000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -1307,7 +1307,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 2000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -1441,7 +1441,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 2000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -1663,7 +1663,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 2000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -1820,7 +1820,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 2000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -2092,7 +2092,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 2000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -2170,7 +2170,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 2000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -2275,7 +2275,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 2000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -2627,7 +2627,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 2000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -2764,7 +2764,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 2000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -2866,7 +2866,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 2000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -3021,6 +3021,15 @@ paths:
           in: header
           name: providerId
           description: Required only if the caller is an auth delegate
+        - schema:
+            type: string
+            example: Bearer <JWT>
+            minLength: 1
+            maxLength: 3000
+          in: header
+          name: Authorization
+          required: true
+          description: Keycloak Issued token
       security:
         - authorization: []
       tags:
@@ -3168,7 +3177,16 @@ paths:
         required: true
       tags:
         - Notifications APIs
-      parameters: []
+      parameters:
+        - schema:
+            type: string
+            example: Bearer <JWT>
+            minLength: 1
+            maxLength: 3000
+          in: header
+          name: Authorization
+          required: true
+          description: Keycloak Issued token
     put:
       summary: Update Requests
       operationId: put-auth-v1-policies-requests
@@ -3306,6 +3324,16 @@ paths:
         required: true
       tags:
         - Notifications APIs
+      parameters:
+        - schema:
+            type: string
+            example: Bearer <JWT>
+            minLength: 1
+            maxLength: 3000
+          in: header
+          name: Authorization
+          required: true
+          description: Keycloak Issued token
   /auth/v1/cert:
     get:
       summary: Get JWT Certificate
@@ -3630,4 +3658,3 @@ components:
       scheme: bearer
       description: ''
   responses: {}
-security: []
