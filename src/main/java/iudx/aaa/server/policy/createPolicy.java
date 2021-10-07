@@ -93,7 +93,11 @@ public class createPolicy {
                     obj -> {
                       if (obj.value().isEmpty()) {
                         p.fail(INVALID_USER + users.toString());
-                      } else p.complete(obj.value());
+                      } else{
+                        Set<UUID> resp = users;
+                        resp.removeAll(obj.value());
+                        p.complete(resp);
+                      }
                     }));
     return p.future();
   }

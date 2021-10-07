@@ -349,7 +349,7 @@ public class PolicyServiceImpl implements PolicyService {
         CompositeFuture.all(UserExist, validateExp, reqItemDetail)
             .compose(
                 obj -> {
-                  if (!users.equals(UserExist.result())) {
+                   if (!UserExist.result().isEmpty()) {
                     LOGGER.debug("UserExist fail:: " + UserExist.result().toString());
                     return Future.failedFuture(INVALID_USER + UserExist.result());
                   }
@@ -1202,7 +1202,7 @@ public class PolicyServiceImpl implements PolicyService {
       return this;
     }
 
-      String emailHash = itemId.split("/")[0] + "/" + itemId.split("/")[1];
+    String emailHash = itemId.split("/")[0] + "/" + itemId.split("/")[1];
 
     Future<String> getRoles =
         pool.withConnection(
