@@ -112,7 +112,7 @@ export LOG_LEVEL=INFO
 
 ### Usage
 
-Postman collection and enviroment files can be found at [docs/postman](docs/postman).
+Postman collection and enviroment files can be found at [src/main/resources/postman](src/main/resources/postman).
 
 ## Contributing
 We follow Git Merge based workflow 
