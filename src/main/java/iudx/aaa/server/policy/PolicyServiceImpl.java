@@ -45,7 +45,6 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-import static iudx.aaa.server.policy.Constants.AUTH_DEL_FAIL;
 import static iudx.aaa.server.policy.Constants.CAT_ID;
 import static iudx.aaa.server.policy.Constants.CHECK_ADMIN_POLICY;
 import static iudx.aaa.server.policy.Constants.CHECK_DELEGATOINS_VERIFY;
@@ -87,7 +86,6 @@ import static iudx.aaa.server.policy.Constants.INCORRECT_ITEM_TYPE;
 import static iudx.aaa.server.policy.Constants.INSERT_NOTIF_APPROVED_ID;
 import static iudx.aaa.server.policy.Constants.INTERNALERROR;
 import static iudx.aaa.server.policy.Constants.INVALID_DELEGATE;
-import static iudx.aaa.server.policy.Constants.INVALID_DELEGATE_POL;
 import static iudx.aaa.server.policy.Constants.INVALID_ROLE;
 import static iudx.aaa.server.policy.Constants.INVALID_TUPLE;
 import static iudx.aaa.server.policy.Constants.INVALID_USER;
@@ -349,9 +347,9 @@ public class PolicyServiceImpl implements PolicyService {
         CompositeFuture.all(UserExist, validateExp, reqItemDetail)
             .compose(
                 obj -> {
-                   if (!UserExist.result().isEmpty()) {
+                  if (!UserExist.result().isEmpty()) {
                     LOGGER.debug("UserExist fail:: " + UserExist.result().toString());
-                    return Future.failedFuture(INVALID_USER + UserExist.result());
+                    return Future.failedFuture(INVALID_USER + UserExist.result().iterator().next());
                   }
 
                   if (catItem.containsKey(RES_SERVER)) return Future.succeededFuture(false);
@@ -447,7 +445,7 @@ public class PolicyServiceImpl implements PolicyService {
               .type(URN_INVALID_ROLE)
               .title(INVALID_ROLE)
               .detail(INVALID_ROLE)
-              .status(403)
+              .status(401)
               .build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
@@ -513,9 +511,9 @@ public class PolicyServiceImpl implements PolicyService {
                                           Response r =
                                               new Response.ResponseBuilder()
                                                   .type(URN_INVALID_INPUT)
-                                                  .title(INVALID_DELEGATE_POL)
-                                                  .detail(AUTH_DEL_FAIL)
-                                                  .status(403)
+                                                  .title(ITEMNOTFOUND)
+                                                  .detail(ITEMNOTFOUND)
+                                                  .status(400)
                                                   .build();
                                           handler.handle(Future.succeededFuture(r.toJson()));
                                         } else { // check delegate
@@ -580,10 +578,10 @@ public class PolicyServiceImpl implements PolicyService {
                             else {
                               Response r =
                                   new Response.ResponseBuilder()
-                                      .type(URN_INVALID_ROLE)
-                                      .title(INVALID_ROLE)
-                                      .detail("invalid role for " + ar.toString())
-                                      .status(403)
+                                      .type(URN_INVALID_INPUT)
+                                      .title(ITEMNOTFOUND)
+                                      .detail(ITEMNOTFOUND)
+                                      .status(400)
                                       .build();
                               handler.handle(Future.succeededFuture(r.toJson()));
                             }
@@ -883,8 +881,8 @@ public class PolicyServiceImpl implements PolicyService {
                     return getResGrpConstraints;
                   } else {
                     if (getResItemConstraints.result() == null) return getResGrpConstraints;
-                   else{
-                        return getResItemConstraints;
+                    else {
+                      return getResItemConstraints;
                     }
                   }
                 });
@@ -915,8 +913,7 @@ public class PolicyServiceImpl implements PolicyService {
                 details.put(CAT_ID, itemId);
                 details.put(URL, getUrl.result());
                 p.complete(details);
-              }
-              else p.fail(POLICY_NOT_FOUND);
+              } else p.fail(POLICY_NOT_FOUND);
             })
         .onFailure(
             failureHandler -> {
@@ -1085,8 +1082,11 @@ public class PolicyServiceImpl implements PolicyService {
     Future<JsonObject> checkPolicy;
     Future<JsonObject> checkResGrpPolicy;
     Future<JsonObject> checkResPolicy;
-    if (isCatalogue)
-      checkPolicy = checkDelegation.compose(obj -> Future.succeededFuture(new JsonObject()));
+    if (isCatalogue){
+        checkPolicy = checkDelegation.compose(obj ->{
+            if (obj == null) return Future.failedFuture(UNAUTHORIZED_DELEGATE);
+            return Future.succeededFuture(new JsonObject());});
+    }
     else {
       checkResGrpPolicy =
           checkDelegation.compose(
@@ -1189,16 +1189,19 @@ public class PolicyServiceImpl implements PolicyService {
   public PolicyService verifyPolicy(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
     UUID userId = UUID.fromString(request.getString(USERID));
-    // itemId when role is provider
     String itemId = request.getString(ITEMID);
     String itemType = request.getString(ITEMTYPE).toUpperCase();
     String role = request.getString(ROLE).toUpperCase();
 
     boolean isCatalogue = false;
-
     // verify policy does not expect the resServer itemType
     if (itemType.equals(itemTypes.RESOURCE_SERVER.toString())) {
       handler.handle(Future.failedFuture(INCORRECT_ITEM_TYPE));
+      return this;
+    }
+
+    if (role.equals(roles.ADMIN.toString())) {
+      handler.handle(Future.failedFuture(INVALID_ROLE));
       return this;
     }
 
