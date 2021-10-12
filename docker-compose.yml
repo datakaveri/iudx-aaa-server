@@ -1,7 +1,7 @@
 version: '3.7'
 
 networks:
-  rs-net:
+  auth-net:
     driver: bridge
 
 services:
@@ -12,16 +12,15 @@ services:
       - AUTH_URL=https://authorization.iudx.org.in
       - LOG_LEVEL=INFO
       - AUTH_JAVA_OPTS=-Xmx4096m
-
     volumes:
       - ./configs/config-depl.json:/usr/share/app/configs/config.json
-      - ./docs/:/usr/share/app/docs
       - ./configs/keystore.jks:/usr/share/app/configs/keystore.jks
-      - /tmp/iudx/:/tmp/iudx/
     ports:
-      - "443:8443"
+      - "8443:8443"
       - "9000:9000"
     restart: on-failure
+    depends_on:
+      - "zookeeper"
     networks: 
       - auth-net
     logging:
@@ -40,14 +39,12 @@ services:
     volumes:
       - ./configs/config-dev.json:/usr/share/app/configs/config.json
       - ./configs/keystore.jks:/usr/share/app/configs/keystore.jks
-      - ./docs/:/usr/share/app/docs
-      - /tmp/iudx/:/tmp/iudx/
     ports:
       - "8443:8443"
       - "9000:9000"
     restart: on-failure
     networks: 
-      - rs-net
+      - auth-net
     logging:
          driver: "json-file"
          options:

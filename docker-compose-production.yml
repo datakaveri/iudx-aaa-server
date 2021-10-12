@@ -15,13 +15,11 @@ services:
       - AUTH_JAVA_OPTS=-Xmx4096m
     volumes:
       - ./configs/config-depl.json:/usr/share/app/configs/config.json
-      - ./docs/:/usr/share/app/docs
       - ./configs/keystore.jks:/usr/share/app/configs/keystore.jks
-      - /tmp/iudx/:/tmp/iudx/
     depends_on:
       - "zookeeper"
     ports:
-      - "80:8443"
+      - "8443:8443"
       - "9000:9000"
     restart: on-failure
     networks: 
@@ -42,10 +40,8 @@ services:
     volumes:
       - ./configs/config-dev.json:/usr/share/app/configs/config.json
       - ./configs/keystore.jks:/usr/share/app/configs/keystore.jks
-      - ./docs/:/usr/share/app/docs
-      - /tmp/iudx/:/tmp/iudx/
     ports:
-      - "8080:80"
+      - "8443:8443"
       - "9000:9000"
     restart: on-failure
     networks: 
