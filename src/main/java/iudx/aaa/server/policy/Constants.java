@@ -123,6 +123,8 @@ public class Constants {
   public static final String SUCC_LIST_NOTIF_REQ = "Access requests";
   public static final String ERR_LIST_NOTIF = "Fail: Unable to list notification access requests";
   public static final String SUCC_UPDATE_NOTIF_REQ = "Request updated";
+  public static final String REQ_ID_ALREADY_NOT_EXISTS = "requestId not exists";
+  public static final String REQ_ID_ALREADY_PROCESSED = "requestId already processed";
 
   //General
   public static final String DETAIL = "detail";
