@@ -30,9 +30,6 @@ import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,6 +41,10 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.Duration;
 
 import static iudx.aaa.server.policy.Constants.CAT_ID;
 import static iudx.aaa.server.policy.Constants.CHECK_ADMIN_POLICY;
@@ -141,6 +142,9 @@ import static iudx.aaa.server.policy.Constants.URN_SUCCESS;
 import static iudx.aaa.server.policy.Constants.USERID;
 import static iudx.aaa.server.policy.Constants.USER_DETAILS;
 import static iudx.aaa.server.policy.Constants.USER_ID;
+import static iudx.aaa.server.policy.Constants.URN_ALREADY_EXISTS;
+import static iudx.aaa.server.policy.Constants.REQ_ID_ALREADY_NOT_EXISTS;
+import static iudx.aaa.server.policy.Constants.*;
 
 /**
  * The Policy Service Implementation.
@@ -1490,16 +1494,24 @@ public class PolicyServiceImpl implements PolicyService {
               if (dbHandler.succeeded()) {
                 Future<List<Tuple>> tuples =
                     mapTupleCreate(request, reqCatItem.result(), dbHandler.result(), user);
+                Future<List<Tuple>> checkDuplicate = checkDuplication(tuples.result());
 
-                CompositeFuture.all(tuples, checkDuplication(tuples.result()))
+                CompositeFuture.all(tuples, checkDuplicate)
                     .onComplete(
                         resHandler -> {
                           if (resHandler.failed()) {
+                            String msg = URN_INVALID_INPUT;
+                            int status = 400;
+                            if (checkDuplicate.failed()) {
+                              msg = URN_ALREADY_EXISTS;
+                              status = 409;
+                            }
+                            
                             LOGGER.error(LOG_DB_ERROR + resHandler.cause().getLocalizedMessage());
                             Response resp =
                                 new ResponseBuilder()
-                                    .status(500)
-                                    .type(URN_INVALID_INPUT)
+                                    .status(status)
+                                    .type(msg)
                                     .title(resHandler.cause().getLocalizedMessage())
                                     .detail(resHandler.cause().getLocalizedMessage())
                                     .build();
@@ -1523,7 +1535,7 @@ public class PolicyServiceImpl implements PolicyService {
                                                             .getLocalizedMessage());
                                                 Response resp =
                                                     new ResponseBuilder()
-                                                        .status(500)
+                                                        .status(400)
                                                         .type(URN_INVALID_INPUT)
                                                         .title(INTERNALERROR)
                                                         .detail(INTERNALERROR)
@@ -1790,6 +1802,20 @@ public class PolicyServiceImpl implements PolicyService {
         request.stream()
             .map(each -> UUID.fromString(each.getRequestId()))
             .collect(Collectors.toList());
+    
+    Set<UUID> uniqueRequestIds = new HashSet<UUID>(requestIds);
+    if(requestIds.size() != uniqueRequestIds.size()) {
+    	LOGGER.error("Fail: {}", DUPLICATE);
+    	Response r =
+    			new Response.ResponseBuilder()
+    				.type(URN_INVALID_INPUT)
+    	            .title(SUCC_NOTIF_REQ)
+    	            .detail(DUPLICATE)
+    	            .status(400)
+    	            .build();
+    	handler.handle(Future.succeededFuture(r.toJson()));
+    	return this;
+    }
 
     Collector<Row, ?, List<JsonObject>> notifRequestCollect =
         Collectors.mapping(row -> row.toJson(), Collectors.toList());
@@ -1815,22 +1841,29 @@ public class PolicyServiceImpl implements PolicyService {
 
     policyRequestData.onComplete(
         dbHandler -> {
-          if (dbHandler.failed() || dbHandler.result().isEmpty()) {
+          if (dbHandler.failed()) {
             LOGGER.error(
                 LOG_DB_ERROR + " {}",
                 dbHandler.cause() == null ? dbHandler.result() : dbHandler.cause().getMessage());
-            Response resp =
-                new ResponseBuilder()
-                    .status(404)
-                    .type(URN_INVALID_INPUT)
-                    .title(ITEMNOTFOUND)
-                    .detail(ITEMNOTFOUND)
-                    .build();
-            handler.handle(Future.succeededFuture(resp.toJson()));
+            handler.handle(Future.failedFuture(INTERNALERROR));
             return;
           }
 
           if (dbHandler.succeeded()) {
+        	if(dbHandler.result().size() != request.size()) {
+        		LOGGER.debug("Info: {}", REQ_ID_ALREADY_NOT_EXISTS);
+        		
+                Response resp =
+                        new ResponseBuilder()
+                            .status(404)
+                            .type(URN_INVALID_INPUT)
+                            .title(SUCC_NOTIF_REQ)
+                            .detail(REQ_ID_ALREADY_NOT_EXISTS)
+                            .build();
+                    handler.handle(Future.succeededFuture(resp.toJson()));
+                    return;
+        	}
+        	
             List<JsonObject> notifReqlist = dbHandler.result();
             JsonArray createPolicyArr = new JsonArray();
 
@@ -1946,6 +1979,10 @@ public class PolicyServiceImpl implements PolicyService {
                                         })
                                     .onSuccess(
                                         updateSuccHandler -> {
+                                        	if(updateSuccHandler.rowCount() == 0) {
+                                        		futureHandler.fail(REQ_ID_ALREADY_PROCESSED);
+                                                return;
+                                        	}
                                           List<CreatePolicyRequest> createPolicyArray =
                                               CreatePolicyRequest.jsonArrayToList(approvedReq);
 
@@ -2002,14 +2039,20 @@ public class PolicyServiceImpl implements PolicyService {
                                               });
                                         });
                               } else if (!updateRejectedReq.isEmpty()) {
-                                Future<Object> updateRejected =
+                                Future<Integer> updateRejected =
                                     pool.withTransaction(
                                         conn ->
                                             conn.preparedQuery(UPDATE_NOTIF_REQ_REJECTED)
                                                 .executeBatch(updateRejectedReq)
-                                                .map(res -> res.value()));
-
-                                futureHandler.complete(updateRejected.result());
+                                                .map(res -> res.value().rowCount()));
+                               
+                                updateRejected.onComplete(comHandler -> {
+                                	if(comHandler.succeeded() && comHandler.result() == 0) {
+                                		futureHandler.fail(REQ_ID_ALREADY_PROCESSED);
+                                	} else {
+                                		futureHandler.complete(updateRejected.result());
+                                	}
+                                });
                               }
                             });
 
@@ -2017,6 +2060,7 @@ public class PolicyServiceImpl implements PolicyService {
                         updateHandler -> {
                           if (updateHandler.failed()) {
                             String msg = updateHandler.cause().getMessage();
+                            LOGGER.error("Fail: {}",msg);
                             if (msg.contains(INTERNALERROR)) {
                               handler.handle(
                                   Future.failedFuture(updateHandler.cause().getMessage()));

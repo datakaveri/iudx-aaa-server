@@ -111,7 +111,7 @@ public class OIDCAuthentication implements AuthenticationHandler {
             user.roles(processRoles(result.getJsonArray(ROLES)));
           }
 
-          routingContext.put(CLIENT_ID, result.getString("client_id"));
+          routingContext.put(CLIENT_ID, result.getString("client_id",NIL_UUID));
           routingContext.put(USER, user.build()).next();
         } else if (kcHandler.failed()) {
           LOGGER.error("Fail: Request validation and authentication; " + kcHandler.cause());
