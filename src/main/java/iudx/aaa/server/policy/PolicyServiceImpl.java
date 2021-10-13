@@ -141,6 +141,7 @@ import static iudx.aaa.server.policy.Constants.URN_SUCCESS;
 import static iudx.aaa.server.policy.Constants.USERID;
 import static iudx.aaa.server.policy.Constants.USER_DETAILS;
 import static iudx.aaa.server.policy.Constants.USER_ID;
+import static iudx.aaa.server.policy.Constants.URN_ALREADY_EXISTS;;
 
 /**
  * The Policy Service Implementation.
@@ -1490,16 +1491,24 @@ public class PolicyServiceImpl implements PolicyService {
               if (dbHandler.succeeded()) {
                 Future<List<Tuple>> tuples =
                     mapTupleCreate(request, reqCatItem.result(), dbHandler.result(), user);
+                Future<List<Tuple>> checkDuplicate = checkDuplication(tuples.result());
 
-                CompositeFuture.all(tuples, checkDuplication(tuples.result()))
+                CompositeFuture.all(tuples, checkDuplicate)
                     .onComplete(
                         resHandler -> {
                           if (resHandler.failed()) {
+                            String msg = URN_INVALID_INPUT;
+                            int status = 400;
+                            if (checkDuplicate.failed()) {
+                              msg = URN_ALREADY_EXISTS;
+                              status = 409;
+                            }
+                            
                             LOGGER.error(LOG_DB_ERROR + resHandler.cause().getLocalizedMessage());
                             Response resp =
                                 new ResponseBuilder()
-                                    .status(500)
-                                    .type(URN_INVALID_INPUT)
+                                    .status(status)
+                                    .type(msg)
                                     .title(resHandler.cause().getLocalizedMessage())
                                     .detail(resHandler.cause().getLocalizedMessage())
                                     .build();
@@ -1523,7 +1532,7 @@ public class PolicyServiceImpl implements PolicyService {
                                                             .getLocalizedMessage());
                                                 Response resp =
                                                     new ResponseBuilder()
-                                                        .status(500)
+                                                        .status(400)
                                                         .type(URN_INVALID_INPUT)
                                                         .title(INTERNALERROR)
                                                         .detail(INTERNALERROR)

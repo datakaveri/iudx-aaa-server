@@ -108,7 +108,7 @@ public class TokenServiceImpl implements TokenService {
           if (role.equalsIgnoreCase(ADMIN)) {
             if (!user.getUserId().equals(flag)) {
               LOGGER.error("Fail: " + ERR_ADMIN);
-              Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+              Response resp = new ResponseBuilder().status(403).type(URN_INVALID_INPUT)
                   .title(ERR_ADMIN).detail(ERR_ADMIN).build();
               handler.handle(Future.succeededFuture(resp.toJson()));
               return;
