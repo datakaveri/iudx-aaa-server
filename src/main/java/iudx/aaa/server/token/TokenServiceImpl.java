@@ -350,7 +350,7 @@ public class TokenServiceImpl implements TokenService {
 
     Promise<JsonArray> promise = Promise.promise();
     pgPool.withConnection(
-        connection -> connection.preparedQuery(query).execute(tuple).onComplete(handler -> {
+        connection -> connection.preparedQuery(query).execute(tuple)).onComplete(handler -> {
           if (handler.succeeded()) {
             JsonArray jsonResult = new JsonArray();
             for (Row each : handler.result()) {
@@ -360,7 +360,7 @@ public class TokenServiceImpl implements TokenService {
           } else if (handler.failed()) {
             promise.fail(handler.cause());
           }
-        }));
+        });
     return promise.future();
   }
 }

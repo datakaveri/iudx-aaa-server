@@ -72,7 +72,7 @@ public class ClientAuthentication implements AuthenticationHandler{
           if (dbHandler.failed()) {
             LOGGER.error(LOG_DB_ERROR + dbHandler.cause());
             Response rs = new ResponseBuilder().title(INTERNAL_SVR_ERR).status(500)
-                .detail(dbHandler.cause().getLocalizedMessage()).build();
+                .detail(INTERNAL_SVR_ERR).build();
             routingContext.fail(new Throwable(rs.toJsonString()));
             return;
           } else if (dbHandler.succeeded()) {
@@ -142,7 +142,7 @@ public class ClientAuthentication implements AuthenticationHandler{
 
     Promise<JsonObject> promise = Promise.promise();
     pgPool.withConnection(connection -> connection.preparedQuery(query).execute(Tuple.of(id))
-        .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson() : new JsonObject())
+        .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson() : new JsonObject()))
         .onComplete(handler -> {
           if (handler.succeeded()) {
             JsonObject details = handler.result();
@@ -150,7 +150,7 @@ public class ClientAuthentication implements AuthenticationHandler{
           } else if (handler.failed()) {
             promise.fail(handler.cause());
           }
-        }));
+        });
     return promise.future();
   }
   
