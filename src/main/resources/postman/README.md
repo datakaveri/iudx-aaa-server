@@ -3,7 +3,7 @@
 All APIs can be accessed with the given Postman collection with the environment file. For production, the values of the environment variables must be:
 
 * `AUTH_ENDPOINT` : `https://authorization.iudx.org.in`
-* `KEYCLOAK_ENDPOINT` : `keycloak.iudx.org.in`
+* `KEYCLOAK_ENDPOINT` : `https://keycloak.iudx.org.in`
 * `KEYCLOAK_REALM` : `iudx`
 
 ## OIDC Authentication
