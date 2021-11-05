@@ -66,7 +66,9 @@ public class OIDCAuthentication implements AuthenticationHandler {
 
     iudx.aaa.server.apiserver.User.UserBuilder user = new UserBuilder();
 
-    /* Handles OIDC Token Flow */
+    /* Handles OIDC Token Flow
+     * A combination of routingContext.fail and routingContext.end ends the compose
+     * chain and prevents all the onFailure blocks from being triggered */
     if (token != null && !token.isBlank()) {
       JsonObject credentials = new JsonObject().put("access_token", token);
       keycloak.authenticate(credentials).onFailure(authHandler -> {

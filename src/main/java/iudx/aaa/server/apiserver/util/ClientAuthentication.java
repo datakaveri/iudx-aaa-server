@@ -77,10 +77,10 @@ public class ClientAuthentication implements AuthenticationHandler{
             return;
           } else if (dbHandler.succeeded()) {
             if (dbHandler.result().isEmpty()) {
-              Response rs = new ResponseBuilder().status(401).type(URN_MISSING_AUTH_TOKEN)
-                  .title(TOKEN_FAILED).detail(TOKEN_FAILED).build();
+              Response rs = new ResponseBuilder().status(401).type(URN_INVALID_INPUT)
+                  .title(INVALID_CLIENT_ID_SEC).detail(INVALID_CLIENT_ID_SEC).build();
               routingContext.fail(new Throwable(rs.toJsonString()));
-              routingContext.end();
+              return;
             }
           }
 
