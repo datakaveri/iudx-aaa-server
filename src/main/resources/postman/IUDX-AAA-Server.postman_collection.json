@@ -16,7 +16,7 @@
 							"oauth2": [
 								{
 									"key": "authUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
 									"type": "string"
 								},
 								{
@@ -26,12 +26,12 @@
 								},
 								{
 									"key": "accessTokenUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
 									"type": "string"
 								},
 								{
 									"key": "redirect_uri",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
 									"type": "string"
 								},
 								{
@@ -105,7 +105,7 @@
 							"oauth2": [
 								{
 									"key": "authUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
 									"type": "string"
 								},
 								{
@@ -115,12 +115,12 @@
 								},
 								{
 									"key": "accessTokenUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
 									"type": "string"
 								},
 								{
 									"key": "redirect_uri",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
 									"type": "string"
 								},
 								{
@@ -204,7 +204,7 @@
 							"oauth2": [
 								{
 									"key": "authUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
 									"type": "string"
 								},
 								{
@@ -229,12 +229,12 @@
 								},
 								{
 									"key": "accessTokenUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
 									"type": "string"
 								},
 								{
 									"key": "redirect_uri",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
 									"type": "string"
 								},
 								{
@@ -309,7 +309,7 @@
 								},
 								{
 									"key": "authUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}protocol/openid-connect/auth",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}protocol/openid-connect/auth",
 									"type": "string"
 								},
 								{
@@ -324,12 +324,12 @@
 								},
 								{
 									"key": "accessTokenUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
 									"type": "string"
 								},
 								{
 									"key": "redirect_uri",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
 									"type": "string"
 								},
 								{
@@ -424,7 +424,7 @@
 							"oauth2": [
 								{
 									"key": "authUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
 									"type": "string"
 								},
 								{
@@ -434,12 +434,12 @@
 								},
 								{
 									"key": "accessTokenUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
 									"type": "string"
 								},
 								{
 									"key": "redirect_uri",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
 									"type": "string"
 								},
 								{
@@ -528,7 +528,7 @@
 							"oauth2": [
 								{
 									"key": "authUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
 									"type": "string"
 								},
 								{
@@ -548,12 +548,12 @@
 								},
 								{
 									"key": "accessTokenUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
 									"type": "string"
 								},
 								{
 									"key": "redirect_uri",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
 									"type": "string"
 								},
 								{
@@ -680,7 +680,7 @@
 							"oauth2": [
 								{
 									"key": "authUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
 									"type": "string"
 								},
 								{
@@ -695,12 +695,12 @@
 								},
 								{
 									"key": "accessTokenUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
 									"type": "string"
 								},
 								{
 									"key": "redirect_uri",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
 									"type": "string"
 								},
 								{
@@ -793,7 +793,7 @@
 								},
 								{
 									"key": "authUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
 									"type": "string"
 								},
 								{
@@ -808,12 +808,12 @@
 								},
 								{
 									"key": "accessTokenUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
 									"type": "string"
 								},
 								{
 									"key": "redirect_uri",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
 									"type": "string"
 								},
 								{
@@ -901,7 +901,7 @@
 								},
 								{
 									"key": "authUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
 									"type": "string"
 								},
 								{
@@ -916,12 +916,12 @@
 								},
 								{
 									"key": "accessTokenUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
 									"type": "string"
 								},
 								{
 									"key": "redirect_uri",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
 									"type": "string"
 								},
 								{
@@ -1010,7 +1010,7 @@
 								},
 								{
 									"key": "authUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
 									"type": "string"
 								},
 								{
@@ -1025,12 +1025,12 @@
 								},
 								{
 									"key": "accessTokenUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
 									"type": "string"
 								},
 								{
 									"key": "redirect_uri",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
 									"type": "string"
 								},
 								{
@@ -1134,7 +1134,7 @@
 								},
 								{
 									"key": "authUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
 									"type": "string"
 								},
 								{
@@ -1144,12 +1144,12 @@
 								},
 								{
 									"key": "accessTokenUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
 									"type": "string"
 								},
 								{
 									"key": "redirect_uri",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
 									"type": "string"
 								},
 								{
@@ -1232,17 +1232,17 @@
 								},
 								{
 									"key": "authUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
 									"type": "string"
 								},
 								{
 									"key": "accessTokenUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
 									"type": "string"
 								},
 								{
 									"key": "redirect_uri",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
 									"type": "string"
 								},
 								{
@@ -1330,17 +1330,17 @@
 								},
 								{
 									"key": "authUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
 									"type": "string"
 								},
 								{
 									"key": "accessTokenUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
 									"type": "string"
 								},
 								{
 									"key": "redirect_uri",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
 									"type": "string"
 								},
 								{
@@ -1433,7 +1433,7 @@
 								},
 								{
 									"key": "authUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
 									"type": "string"
 								},
 								{
@@ -1448,12 +1448,12 @@
 								},
 								{
 									"key": "accessTokenUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
 									"type": "string"
 								},
 								{
 									"key": "redirect_uri",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
 									"type": "string"
 								},
 								{
@@ -1550,7 +1550,7 @@
 								},
 								{
 									"key": "authUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
 									"type": "string"
 								},
 								{
@@ -1565,12 +1565,12 @@
 								},
 								{
 									"key": "accessTokenUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
 									"type": "string"
 								},
 								{
 									"key": "redirect_uri",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
 									"type": "string"
 								},
 								{
@@ -1658,7 +1658,7 @@
 								},
 								{
 									"key": "authUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
 									"type": "string"
 								},
 								{
@@ -1673,12 +1673,12 @@
 								},
 								{
 									"key": "accessTokenUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
 									"type": "string"
 								},
 								{
 									"key": "redirect_uri",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
 									"type": "string"
 								},
 								{
@@ -1780,17 +1780,17 @@
 								},
 								{
 									"key": "authUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
 									"type": "string"
 								},
 								{
 									"key": "accessTokenUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
 									"type": "string"
 								},
 								{
 									"key": "redirect_uri",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
 									"type": "string"
 								},
 								{
@@ -1879,17 +1879,17 @@
 								},
 								{
 									"key": "authUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
 									"type": "string"
 								},
 								{
 									"key": "accessTokenUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
 									"type": "string"
 								},
 								{
 									"key": "redirect_uri",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
 									"type": "string"
 								},
 								{
@@ -1976,17 +1976,17 @@
 								},
 								{
 									"key": "authUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
 									"type": "string"
 								},
 								{
 									"key": "accessTokenUrl",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
 									"type": "string"
 								},
 								{
 									"key": "redirect_uri",
-									"value": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
 									"type": "string"
 								},
 								{
