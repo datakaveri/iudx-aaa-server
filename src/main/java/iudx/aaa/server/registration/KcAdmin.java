@@ -221,7 +221,7 @@ public class KcAdmin {
   }
 
   /**
-   * \ Find a user on Keycloak by email address. If the user is found, the name, keycloak ID and
+   * Find a user on Keycloak by email address. If the user is found, the name, keycloak ID and
    * email address is sent in a JSON object. Else, an empty JSON object is sent. Note that a user
    * may exist on Keycloak but may not have a user profile.
    * 
@@ -252,14 +252,9 @@ public class KcAdmin {
     /*
      * Since in the realm we configure email as username, we can directly search for the user name
      */
-    List<UserRepresentation> users = usersResource.search(email);
+    List<UserRepresentation> users = usersResource.search(email, true);
 
-    /*
-     * TODO: we have to check if the email is exactly equal to what Keycloak returns because the
-     * clients uses fuzzy search. admin-client v11 has a search function with exact search. Upgrade
-     * to this version.
-     */
-    if (users.size() == 0 || !users.get(0).getEmail().equals(email)) {
+    if (users.size() == 0) {
       p.complete(res);
       return p.future();
     }

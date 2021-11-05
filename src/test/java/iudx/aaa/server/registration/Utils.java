@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 
 /**
  * Class to help manage mock user, organization, delegation creation and deletion etc.
