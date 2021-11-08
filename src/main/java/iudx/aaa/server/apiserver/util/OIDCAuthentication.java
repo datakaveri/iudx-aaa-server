@@ -66,7 +66,9 @@ public class OIDCAuthentication implements AuthenticationHandler {
 
     iudx.aaa.server.apiserver.User.UserBuilder user = new UserBuilder();
 
-    /* Handles OIDC Token Flow */
+    /* Handles OIDC Token Flow
+     * A combination of routingContext.fail and routingContext.end ends the compose
+     * chain and prevents all the onFailure blocks from being triggered */
     if (token != null && !token.isBlank()) {
       JsonObject credentials = new JsonObject().put("access_token", token);
       keycloak.authenticate(credentials).onFailure(authHandler -> {
@@ -116,7 +118,7 @@ public class OIDCAuthentication implements AuthenticationHandler {
         } else if (kcHandler.failed()) {
           LOGGER.error("Fail: Request validation and authentication; " + kcHandler.cause());
           Response rs = new ResponseBuilder().status(500).title(INTERNAL_SVR_ERR)
-              .detail(kcHandler.cause().getLocalizedMessage()).build();
+              .detail(INTERNAL_SVR_ERR).build();
           routingContext.fail(new Throwable(rs.toJsonString()));
         }
       });
@@ -171,7 +173,7 @@ public class OIDCAuthentication implements AuthenticationHandler {
 
     Promise<JsonObject> promise = Promise.promise();
     pgPool.withConnection(connection -> connection.preparedQuery(query).execute(Tuple.of(id))
-        .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson() : new JsonObject())
+        .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson() : new JsonObject()))
         .onComplete(handler -> {
           if (handler.succeeded()) {
             JsonObject details = handler.result();
@@ -179,7 +181,7 @@ public class OIDCAuthentication implements AuthenticationHandler {
           } else if (handler.failed()) {
             promise.fail(handler.cause());
           }
-        }));
+        });
     return promise.future();
   }
 
