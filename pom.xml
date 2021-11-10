@@ -398,6 +398,12 @@
 						<id>aaa-server</id>
 						<configuration>
 							<mainClass>iudx.aaa.server.deploy.DeployerDev </mainClass>
+							<systemProperties>
+								<systemProperty>
+									<key>vertx.logger-delegate-factory-class-name</key>
+									<value>io.vertx.core.logging.Log4j2LogDelegateFactory</value>
+								</systemProperty>
+							</systemProperties>
 							<arguments>
 								<argument>-jar</argument>
 								<argument>{project.build.directory}/${project.artifactId}-dev-${project.version}-fat.jar
