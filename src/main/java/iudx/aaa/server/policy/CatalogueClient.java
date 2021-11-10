@@ -476,7 +476,7 @@ public class CatalogueClient {
             obj -> {
               JsonObject res = obj.bodyAsJsonObject();
               if (obj.statusCode() == 200) {
-                if (res.getString(STATUS).equals(URN_CAT_SUCCESS))
+                if (res.getString(TYPE).equals(URN_CAT_SUCCESS))
                   p.complete(obj.bodyAsJsonObject().getJsonArray(RESULTS).getJsonObject(0));
               } else {
                 if (obj.statusCode() == 404) p.fail(ITEMNOTFOUND + id);
