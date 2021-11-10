@@ -201,6 +201,13 @@ public class Deployer {
 
   }
 
+  /**
+   * Graceful shutdown of Vertx application in a sequential manner - 1) undeploy verticle including
+   * unregistering of services through the stop method of verticle 2) unregister the vertx from
+   * cluster 3) shutdown of vertx 4) shutdown of log4g2. The function is triggered by shutdown hook
+   * on a normal shutdown of application.
+   */
+
   public static void gracefulShutdown() {
     Set<String> deployIDSet = vertx.deploymentIDs();
     Logger LOGGER = LogManager.getLogger(Deployer.class);
