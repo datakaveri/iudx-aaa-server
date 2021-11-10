@@ -4,7 +4,6 @@
     "zookeeper"
   ],
   "clusterId": "iudx-aaa-cluster",
-  "host": "server",
   "databaseSchema":"test",
   "modules": [
     {

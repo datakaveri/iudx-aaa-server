@@ -63,7 +63,6 @@ public class Deployer {
       return;
     }
     JsonObject config = configs.getJsonArray("modules").getJsonObject(i);
-    config.put("host", configs.getString("host"));
     String moduleName = config.getString("id");
     int numInstances = config.getInteger("verticleInstances");
     vertx.deployVerticle(moduleName,
@@ -101,7 +100,6 @@ public class Deployer {
       return;
     }
 
-    config.put("host", configs.getString("host"));
     int numInstances = config.getInteger("verticleInstances");
     vertx.deployVerticle(moduleName,
         new DeploymentOptions().setInstances(numInstances).setConfig(config), ar -> {
