@@ -97,6 +97,7 @@ public class Constants {
   public static final String URN_INVALID_INPUT = "urn:dx:as:InvalidInput";
   public static final String URN_INVALID_ROLE = "urn:dx:as:InvalidRole";
   public static final String URN_ALREADY_EXISTS = "urn:dx:as:AlreadyExists";
+  public static final String URN_CAT_SUCCESS = "urn:dx:cat:Success";
   // future failure messages
   public static final String BAD_REQUEST = "bad request";
   public static final String SERVER_NOT_PRESENT = "servers not present:";
