@@ -45,6 +45,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
 
+/**
+ * Deploys clustered vert.x instance of the server. As a JAR, the application
+ * requires 3 runtime arguments:
+ * <ul>
+ * <li>--config/-c : path to the config file</li>
+ * <li>--hostname/-i : the hostname for clustering</li>
+ * <li>--modules/-m : comma separated list of module names to deploy</li>
+ * </ul>
+ * 
+ * e.g. <i>java -jar ./fatjar.jar  --host $(hostname) -c configs/config.json -m iudx.aaa.server.admin.AdminVerticle,iudx.aaa.server.token.TokenVerticle
+ * ,iudx.aaa.server.registration.RegistrationVerticle,iudx.aaa.server.auditing.AuditingVerticle</i> 
+ */
+
 public class Deployer {
   private static final Logger LOGGER = LogManager.getLogger(Deployer.class);
   private static ClusterManager mgr;
