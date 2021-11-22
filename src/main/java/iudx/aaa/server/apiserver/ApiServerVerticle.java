@@ -313,13 +313,16 @@ public class ApiServerVerticle extends AbstractVerticle {
           });
 
           HttpServerOptions serverOptions = new HttpServerOptions();
-          LOGGER.debug("Info: Starting HTTP server");
           serverOptions.setSsl(false);
 
           serverOptions.setCompressionSupported(true).setCompressionLevel(5);
           server = vertx.createHttpServer(serverOptions);
-          server.requestHandler(router).listen(port);
-
+          server.requestHandler(router).listen(port).onSuccess(success -> {
+            LOGGER.debug("Info: Started HTTP server");
+          }).onFailure(err -> {
+            LOGGER.fatal("Info: Failed to start HTTP server - " + err.getMessage());
+          });
+          
           /* Get a handler for the Service Discovery interface. */
           policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
           registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
