@@ -262,7 +262,9 @@ public class TokenServiceImpl implements TokenService {
           handler.handle(Future.failedFuture(INTERNAL_SVR_ERR));
         } else if (dbHandler.succeeded()) {
 
-          if (dbHandler.result().size() != 1) {
+        JsonObject dbExistsRow = dbHandler.result().getJsonObject(0);
+        boolean flag = dbExistsRow.getBoolean(EXISTS);
+        if (flag == Boolean.FALSE) {
             LOGGER.error(LOG_TOKEN_AUTH + INVALID_SUB);
             Response resp = new ResponseBuilder().status(400).type(URN_INVALID_AUTH_TOKEN)
                 .title(TOKEN_FAILED).detail(INVALID_SUB).build();
@@ -311,7 +313,7 @@ public class TokenServiceImpl implements TokenService {
    * @param request
    * @return jwtToken
    */
-  private JsonObject getJwt(JsonObject request) {
+  public JsonObject getJwt(JsonObject request) {
     
     JWTOptions options = new JWTOptions().setAlgorithm(JWT_ALGORITHM);
     long timestamp = System.currentTimeMillis() / 1000;
