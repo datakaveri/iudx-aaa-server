@@ -77,7 +77,9 @@ public class AuditingServiceImpl implements AuditingService {
             .setHost(databaseIP)
             .setDatabase(databaseName)
             .setUser(databaseUserName)
-            .setPassword(databasePassword);
+            .setPassword(databasePassword)
+            .setReconnectAttempts(2)
+            .setReconnectInterval(1000);
 
     this.vertx = vertxInstance;
     this.poolOptions = new PoolOptions().setMaxSize(databasePoolSize);
@@ -150,8 +152,7 @@ public class AuditingServiceImpl implements AuditingService {
   private Future<JsonObject> executeReadQuery(JsonObject query) {
     Promise<JsonObject> promise = Promise.promise();
     JsonArray jsonArray = new JsonArray();
-    pool.getConnection()
-        .compose(connection -> connection.query(query.getString(QUERY_KEY)).execute())
+    pool.withConnection(connection -> connection.query(query.getString(QUERY_KEY)).execute())
         .onComplete(
             rows -> {
               RowSet<Row> result = rows.result();
@@ -181,8 +182,7 @@ public class AuditingServiceImpl implements AuditingService {
   private Future<JsonObject> writeInDatabase(JsonObject query) {
     Promise<JsonObject> promise = Promise.promise();
     JsonObject response = new JsonObject();
-    pool.getConnection()
-        .compose(connection -> connection.query(query.getString(QUERY_KEY)).execute())
+    pool.withConnection(connection -> connection.query(query.getString(QUERY_KEY)).execute())
         .onComplete(
             rows -> {
               if (rows.succeeded()) {
