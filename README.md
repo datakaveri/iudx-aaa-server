@@ -94,7 +94,54 @@ export LOG_LEVEL=INFO
    `mvn clean compile exec:java@aaa-server`
 4. The server will be up in Port 8443.
 
+### JAR based
+1. Install java 11 and maven
+2. Set Environment variables
+```
+export AUTH_URL=http://<auth-domain-name>
+export LOG_LEVEL=INFO
+```
+3. Use maven to package the application as a JAR
+   `mvn clean package -Dmaven.test.skip=true`
+4. 2 JAR files would be generated in the `target/` directory
+    - `iudx.aaa.server-cluster-0.0.1-SNAPSHOT-fat.jar` - clustered vert.x containing micrometer metrics
+    - `iudx.aaa.server-dev-0.0.1-SNAPSHOT-fat.jar` - non-clustered vert.x and does not contain micrometer metrics
 
+#### Running the clustered JAR
+
+**Note**: The clustered JAR requires Zookeeper to be installed. Refer [here](https://zookeeper.apache.org/doc/r3.3.3/zookeeperStarted.html) to learn more about how to set up Zookeeper. Additionally, the `zookeepers` key in the config being used needs to be updated with the IP address/domain of the system running Zookeeper.
+
+The JAR requires 3 runtime arguments when running:
+
+* --config/-c : path to the config file</li>
+* --hostname/-i : the hostname for clustering</li>
+* --modules/-m : comma separated list of module names to deploy</li>
+
+ e.g. `java -Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.Log4j2LogDelegateFactory -jar target/iudx.aaa.server-cluster-0.0.1-SNAPSHOT-fat.jar --host $(hostname) -c configs/config.json -m iudx.aaa.server.admin.AdminVerticle,iudx.aaa.server.token.TokenVerticle ,iudx.aaa.server.registration.RegistrationVerticle,iudx.aaa.server.auditing.AuditingVerticle`
+
+Use the `--help/-h` argument for more information. You may additionally append an `AUTH_JAVA_OPTS` environment variable containing any Java options to pass to the application.
+
+e.g.
+```
+$ export AUTH_JAVA_OPTS="-Xms128m -Xmx512m"
+$ java $AUTH_JAVA_OPTS -jar target/iudx.aaa.server-cluster-0.0.1-SNAPSHOT-fat.jar ...
+```
+
+#### Running the non-clustered JAR
+The JAR requires 1 runtime argument when running:
+
+* --config/-c : path to the config file</li>
+
+e.g. `java -Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.Log4j2LogDelegateFactory -jar target/iudx.aaa.server-dev-0.0.1-SNAPSHOT-fat.jar -c configs/config.json`
+
+Use the `--help/-h` argument for more information. You may additionally append an `AUTH_JAVA_OPTS` environment variable containing any Java options to pass to the application.
+
+e.g.
+```
+$ export AUTH_JAVA_OPTS="-Xms128m -Xmx512m"
+$ java $AUTH_JAVA_OPTS -jar target/iudx.aaa.server-dev-0.0.1-SNAPSHOT-fat.jar ...
+```
+    
 ### Testing
 
 ### TDD based Unit test flow

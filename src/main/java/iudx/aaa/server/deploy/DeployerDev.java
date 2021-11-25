@@ -23,8 +23,14 @@ import org.apache.logging.log4j.Logger;
 
 
 /**
- * DeploySingle - Deploy a single non-clustered resource server instance
- **/
+ * Deploys non-clustered vert.x instance of the server. As a JAR, the application
+ * requires 1 runtime argument:
+ * <ul>
+ * <li>--config/-c : path to the config file</li>
+ * </ul>
+ * 
+ * e.g. <i>java -jar ./fatjar.jar -c configs/config.json</i>
+ */
 public class DeployerDev {
   private static final Logger LOGGER = LogManager.getLogger(DeployerDev.class);
 
@@ -74,7 +80,7 @@ public class DeployerDev {
   }
 
   public static void main(String[] args) {
-    CLI cli = CLI.create("IUDX Cat").setSummary("A CLI to deploy the resource server")
+    CLI cli = CLI.create("IUDX Auth").setSummary("A CLI to deploy the resource")
         .addOption(new Option().setLongName("help").setShortName("h").setFlag(true)
             .setDescription("display help"))
         .addOption(new Option().setLongName("config").setShortName("c")
