@@ -1,17 +1,40 @@
 package iudx.aaa.server.token;
 
+import static iudx.aaa.server.token.Constants.ACCESS_TOKEN;
+import static iudx.aaa.server.token.Constants.AUD;
+import static iudx.aaa.server.token.Constants.CLAIM_ISSUER;
+import static iudx.aaa.server.token.Constants.CONS;
+import static iudx.aaa.server.token.Constants.DENY;
+import static iudx.aaa.server.token.Constants.EXP;
+import static iudx.aaa.server.token.Constants.IID;
+import static iudx.aaa.server.token.Constants.ISS;
+import static iudx.aaa.server.token.Constants.ITEM_ID;
+import static iudx.aaa.server.token.Constants.ITEM_TYPE;
+import static iudx.aaa.server.token.Constants.PG_CONNECTION_TIMEOUT;
+import static iudx.aaa.server.token.Constants.RESOURCE_SVR;
+import static iudx.aaa.server.token.Constants.ROLE;
+import static iudx.aaa.server.token.Constants.STATUS;
+import static iudx.aaa.server.token.Constants.TYPE;
+import static iudx.aaa.server.token.Constants.URL;
+import static iudx.aaa.server.token.Constants.URN_INVALID_AUTH_TOKEN;
+import static iudx.aaa.server.token.Constants.URN_INVALID_INPUT;
+import static iudx.aaa.server.token.Constants.URN_INVALID_ROLE;
+import static iudx.aaa.server.token.Constants.URN_MISSING_INFO;
+import static iudx.aaa.server.token.Constants.URN_SUCCESS;
+import static iudx.aaa.server.token.Constants.USER_ID;
+import static iudx.aaa.server.token.RequestPayload.expiredTipPayload;
+import static iudx.aaa.server.token.RequestPayload.mapToInspctToken;
+import static iudx.aaa.server.token.RequestPayload.mapToRevToken;
+import static iudx.aaa.server.token.RequestPayload.randomToken;
+import static iudx.aaa.server.token.RequestPayload.revokeTokenInvalidClientId;
+import static iudx.aaa.server.token.RequestPayload.revokeTokenInvalidUrl;
+import static iudx.aaa.server.token.RequestPayload.revokeTokenValidPayload;
+import static iudx.aaa.server.token.RequestPayload.user;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -20,9 +43,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.KeyStoreOptions;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
@@ -34,15 +54,28 @@ import iudx.aaa.server.apiserver.IntrospectToken;
 import iudx.aaa.server.apiserver.RequestToken;
 import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
-import iudx.aaa.server.registration.Utils;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.configuration.Configuration;
-import iudx.aaa.server.policy.MockRegistrationFactory;
 import iudx.aaa.server.policy.PolicyService;
+import iudx.aaa.server.registration.Utils;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import static iudx.aaa.server.token.RequestPayload.*;
-import static iudx.aaa.server.token.Constants.*;
 
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
 public class TokenServiceTest {
@@ -60,6 +93,7 @@ public class TokenServiceTest {
   private static PoolOptions poolOptions;
   private static PgConnectOptions connectOptions;
   private static PgPool pgPool;
+  private static TokenServiceImpl tokenServiceImplObj;
   private static TokenService tokenService;
   private static Vertx vertxObj;
   private static String keystorePath;
@@ -111,7 +145,7 @@ public class TokenServiceTest {
 
     keystorePath = dbConfig.getString("keystorePath");
     keystorePassword = dbConfig.getString("keystorePassword");
-    String issuer = dbConfig.getString("authServerDomain", "");
+    String issuer = DUMMY_AUTH_SERVER;
 
     if (issuer != null && !issuer.isBlank()) {
       CLAIM_ISSUER = issuer;
@@ -187,7 +221,8 @@ public class TokenServiceTest {
       httpWebClient = mockHttpWebClient.getMockHttpWebClient();
 
       policyService = mockPolicy.getInstance();
-      tokenService = new TokenServiceImpl(pgPool, policyService, provider, httpWebClient);
+      tokenServiceImplObj = new TokenServiceImpl(pgPool, policyService, provider, httpWebClient);
+      tokenService = tokenServiceImplObj;
 
       testContext.completeNow();
     });
@@ -200,6 +235,12 @@ public class TokenServiceTest {
 
     JWTAuth provider = JWTAuth.create(vertx, config);
     return provider;
+  }
+
+  private static JsonObject getJwtPayload(String jwt) {
+    String payload = jwt.split("\\.")[1];
+    byte[] bytes = Base64.getUrlDecoder().decode(payload);
+    return new JsonObject(new String(bytes, StandardCharsets.UTF_8));
   }
 
   @AfterAll
@@ -235,10 +276,18 @@ public class TokenServiceTest {
         .put("itemType", "resource_group").put("role", "consumer");
     RequestToken request = new RequestToken(jsonReq);
 
-    mockPolicy.setResponse("valid");
+    mockPolicy.setResponse("valid", RESOURCE_GROUP, DUMMY_SERVER);
     tokenService.createToken(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_SUCCESS, response.getString("type"));
+          JsonObject payload =
+              getJwtPayload(response.getJsonObject("results").getString(ACCESS_TOKEN));
+          assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
+          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+          assertEquals(payload.getString(IID), "rg:" + RESOURCE_GROUP);
+          assertEquals(payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
+          assertFalse(payload.getJsonObject(CONS).isEmpty());
+          assertNotNull(payload.getString(EXP));
           testContext.completeNow();
         })));
   }
@@ -258,10 +307,18 @@ public class TokenServiceTest {
         .put("role", "consumer");
     RequestToken request = new RequestToken(jsonReq);
 
-    mockPolicy.setResponse("valid");
+    mockPolicy.setResponse("valid", RESOURCE_ITEM, DUMMY_SERVER);
     tokenService.createToken(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_SUCCESS, response.getString("type"));
+          JsonObject payload =
+              getJwtPayload(response.getJsonObject("results").getString(ACCESS_TOKEN));
+          assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
+          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+          assertEquals(payload.getString(IID), "ri:" + RESOURCE_ITEM);
+          assertEquals(payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
+          assertFalse(payload.getJsonObject(CONS).isEmpty());
+          assertNotNull(payload.getString(EXP));
           testContext.completeNow();
         })));
   }
@@ -277,14 +334,21 @@ public class TokenServiceTest {
         .name(userJson.getString("firstName"), userJson.getString("lastName"))
         .roles(List.of(Roles.CONSUMER)).build();
 
-    JsonObject jsonReq = new JsonObject().put("itemId", DUMMY_SERVER).put("itemType", "resource_server")
-        .put("role", "consumer");
+    JsonObject jsonReq = new JsonObject().put("itemId", DUMMY_SERVER)
+        .put("itemType", "resource_server").put("role", "consumer");
     RequestToken request = new RequestToken(jsonReq);
 
-    mockPolicy.setResponse("valid");
     tokenService.createToken(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_SUCCESS, response.getString("type"));
+          JsonObject payload =
+              getJwtPayload(response.getJsonObject("results").getString(ACCESS_TOKEN));
+          assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
+          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+          assertEquals(payload.getString(IID), "rs:" + DUMMY_SERVER);
+          assertEquals(payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
+          assertTrue(payload.getJsonObject(CONS).isEmpty());
+          assertNotNull(payload.getString(EXP));
           testContext.completeNow();
         })));
   }
@@ -300,14 +364,22 @@ public class TokenServiceTest {
         .name(userJson.getString("firstName"), userJson.getString("lastName"))
         .roles(List.of(Roles.ADMIN, Roles.PROVIDER)).build();
 
-    JsonObject jsonReq = new JsonObject().put("itemId", DUMMY_SERVER).put("itemType", "resource_server")
-        .put("role", "admin");
+    JsonObject jsonReq = new JsonObject().put("itemId", DUMMY_SERVER)
+        .put("itemType", "resource_server").put("role", "admin");
     RequestToken request = new RequestToken(jsonReq);
 
     mockPolicy.setResponse("valid");
     tokenService.createToken(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_SUCCESS, response.getString("type"));
+          JsonObject payload =
+              getJwtPayload(response.getJsonObject("results").getString(ACCESS_TOKEN));
+          assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
+          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+          assertEquals(payload.getString(IID), "rs:" + DUMMY_SERVER);
+          assertEquals(payload.getString(ROLE), Roles.ADMIN.toString().toLowerCase());
+          assertTrue(payload.getJsonObject(CONS).isEmpty());
+          assertNotNull(payload.getString(EXP));
           testContext.completeNow();
         })));
   }
@@ -323,8 +395,8 @@ public class TokenServiceTest {
         .name(userJson.getString("firstName"), userJson.getString("lastName"))
         .roles(List.of(Roles.ADMIN, Roles.PROVIDER)).build();
 
-    JsonObject jsonReq = new JsonObject().put("itemId", "abc.123.com").put("itemType", "resource_server")
-        .put("role", "admin");
+    JsonObject jsonReq = new JsonObject().put("itemId", "abc.123.com")
+        .put("itemType", "resource_server").put("role", "admin");
     RequestToken request = new RequestToken(jsonReq);
 
     mockPolicy.setResponse("valid");
@@ -340,16 +412,17 @@ public class TokenServiceTest {
   void createTokenConsumerResServFail(VertxTestContext testContext) {
 
     JsonObject userJson = consumer.result();
-    
-    /* We *artificially* add the admin role to the consumer user when creating the
-     * user object */
+
+    /*
+     * We *artificially* add the admin role to the consumer user when creating the user object
+     */
     User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
         .userId(userJson.getString("userId"))
         .name(userJson.getString("firstName"), userJson.getString("lastName"))
         .roles(List.of(Roles.ADMIN)).build();
 
-    JsonObject jsonReq = new JsonObject().put("itemId", DUMMY_SERVER).put("itemType", "resource_server")
-        .put("role", "admin");
+    JsonObject jsonReq = new JsonObject().put("itemId", DUMMY_SERVER)
+        .put("itemType", "resource_server").put("role", "admin");
     RequestToken request = new RequestToken(jsonReq);
 
     mockPolicy.setResponse("valid");
@@ -361,8 +434,8 @@ public class TokenServiceTest {
   }
 
   @Test
-  @DisplayName("createToken [Failed-01 invalidPolicy]")
-  void createTokenFailed01(VertxTestContext testContext) {
+  @DisplayName("createToken invalid policy [Fail]")
+  void createTokenFailedInvalidPolicy(VertxTestContext testContext) {
 
     JsonObject userJson = consumer.result();
 
@@ -384,6 +457,27 @@ public class TokenServiceTest {
   }
 
   @Test
+  @DisplayName("createToken no user profile [Fail]")
+  void createTokenNoUserProfile(VertxTestContext testContext) {
+
+    JsonObject userJson = consumer.result();
+
+    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId")).userId(NIL_UUID)
+        .name(userJson.getString("firstName"), userJson.getString("lastName")).roles(List.of())
+        .build();
+
+    JsonObject jsonReq = new JsonObject().put("itemId", RESOURCE_ITEM).put("itemType", "resource")
+        .put("role", "consumer");
+    RequestToken request = new RequestToken(jsonReq);
+
+    tokenService.createToken(request, user,
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_MISSING_INFO, response.getString(TYPE));
+          testContext.completeNow();
+        })));
+  }
+
+  @Test
   @DisplayName("createToken user does not have requested role [Fail]")
   void createTokenUserNotHaveRequestedRole(VertxTestContext testContext) {
 
@@ -396,10 +490,10 @@ public class TokenServiceTest {
 
     JsonObject jsonReq = new JsonObject().put("itemId", RESOURCE_ITEM).put("itemType", "resource")
         .put("role", "delegate");
-    
+
     RequestToken request = new RequestToken(jsonReq);
     mockPolicy.setResponse("valid");
-    tokenService.createToken(mapToReqToken(undefinedRole), clientFlowUser(),
+    tokenService.createToken(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_INVALID_ROLE, response.getString(TYPE));
           testContext.completeNow();
@@ -415,7 +509,6 @@ public class TokenServiceTest {
         user("32a4b979-4f4a-4c44-b0c3-2fe109952b5f"),
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_SUCCESS, response.getString(TYPE));
-          // assertTrue(response.containsKey("accessToken"));
           testContext.completeNow();
         })));
   }
@@ -492,11 +585,49 @@ public class TokenServiceTest {
   @Test
   @DisplayName("validateToken [Success]")
   void validateTokenSuccess(VertxTestContext testContext) {
+    JsonObject tokenRequest = new JsonObject().put(ITEM_TYPE, "resource_group")
+        .put(ITEM_ID, RESOURCE_GROUP).put(USER_ID, consumer.result().getString("userId"))
+        .put(URL, DUMMY_SERVER).put(ROLE, Roles.CONSUMER.toString().toLowerCase());
+    JsonObject token = tokenServiceImplObj.getJwt(tokenRequest);
+    token.remove("expiry");
+    token.remove("server");
 
     mockPolicy.setResponse("valid");
-    tokenService.validateToken(mapToInspctToken(validTipPayload),
+    tokenService.validateToken(mapToInspctToken(token),
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_SUCCESS, response.getString(TYPE));
+          JsonObject payload = response.getJsonObject("results");
+          assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
+          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+          assertEquals(payload.getString(IID), "rg:" + RESOURCE_GROUP);
+          assertEquals(payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
+          assertTrue(payload.getJsonObject(CONS).isEmpty());
+          assertNotNull(payload.getString(EXP));
+          testContext.completeNow();
+        })));
+  }
+
+  @Test
+  @DisplayName("validateToken resource server token [Success]")
+  void validateResourceServerTokenSuccess(VertxTestContext testContext) {
+    JsonObject tokenRequest = new JsonObject().put(ITEM_TYPE, RESOURCE_SVR)
+        .put(ITEM_ID, DUMMY_SERVER).put(USER_ID, consumer.result().getString("userId"))
+        .put(URL, DUMMY_SERVER).put(ROLE, Roles.CONSUMER.toString().toLowerCase());
+    JsonObject token = tokenServiceImplObj.getJwt(tokenRequest);
+    token.remove("expiry");
+    token.remove("server");
+
+    mockPolicy.setResponse("valid");
+    tokenService.validateToken(mapToInspctToken(token),
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_SUCCESS, response.getString(TYPE));
+          JsonObject payload = response.getJsonObject("results");
+          assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
+          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+          assertEquals(payload.getString(IID), "rs:" + DUMMY_SERVER);
+          assertEquals(payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
+          assertTrue(payload.getJsonObject(CONS).isEmpty());
+          assertNotNull(payload.getString(EXP));
           testContext.completeNow();
         })));
   }
@@ -505,8 +636,15 @@ public class TokenServiceTest {
   @DisplayName("validateToken [Failed-01 invalidPolicy]")
   void validateTokenFailed01(VertxTestContext testContext) {
 
+    JsonObject tokenRequest = new JsonObject().put(ITEM_TYPE, "resourceGroup")
+        .put(ITEM_ID, RESOURCE_GROUP).put(USER_ID, consumer.result().getString("userId"))
+        .put(URL, DUMMY_SERVER).put(ROLE, Roles.CONSUMER.toString().toLowerCase());
+    JsonObject token = tokenServiceImplObj.getJwt(tokenRequest);
+    token.remove("expiry");
+    token.remove("server");
+
     mockPolicy.setResponse("invalid");
-    tokenService.validateToken(mapToInspctToken(validTipPayload),
+    tokenService.validateToken(mapToInspctToken(token),
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
           testContext.completeNow();
@@ -517,10 +655,20 @@ public class TokenServiceTest {
   @DisplayName("validateToken [Failed-02 invalidToken]")
   void validateTokenFailed02(VertxTestContext testContext) {
 
-    mockPolicy.setResponse("valid");
-    tokenService.validateToken(mapToInspctToken(invalidTipPayload),
+    JsonObject tokenRequest = new JsonObject().put(ITEM_TYPE, "resourceGroup")
+        .put(ITEM_ID, RESOURCE_GROUP).put(USER_ID, consumer.result().getString("userId"))
+        .put(URL, DUMMY_SERVER).put(ROLE, Roles.CONSUMER.toString().toLowerCase());
+    JsonObject token = tokenServiceImplObj.getJwt(tokenRequest);
+
+    /* add extra data to token */
+    JsonObject invalidToken =
+        new JsonObject().put("accessToken", token.getString("accessToken") + "abc");
+
+    tokenService.validateToken(mapToInspctToken(invalidToken),
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_INVALID_AUTH_TOKEN, response.getString(TYPE));
+          assertTrue(
+              response.getJsonArray("results").getJsonObject(0).getString(STATUS).equals(DENY));
           testContext.completeNow();
         })));
   }
@@ -529,10 +677,11 @@ public class TokenServiceTest {
   @DisplayName("validateToken [Failed-03 expiredToken]")
   void validateTokenFailed03(VertxTestContext testContext) {
 
-    mockPolicy.setResponse("valid");
     tokenService.validateToken(mapToInspctToken(expiredTipPayload),
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_INVALID_AUTH_TOKEN, response.getString(TYPE));
+          assertTrue(
+              response.getJsonArray("results").getJsonObject(0).getString(STATUS).equals(DENY));
           testContext.completeNow();
         })));
   }
@@ -541,7 +690,6 @@ public class TokenServiceTest {
   @DisplayName("validateToken [Failed-04 missingToken]")
   void validateTokenFailed04(VertxTestContext testContext) {
 
-    mockPolicy.setResponse("valid");
     IntrospectToken introspect = new IntrospectToken();
 
     tokenService.validateToken(introspect,
