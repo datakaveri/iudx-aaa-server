@@ -193,6 +193,14 @@ public class Deployer {
     VertxOptions options = new VertxOptions().setClusterManager(mgr).setEventBusOptions(ebOptions)
         .setMetricsOptions(getMetricsOptions());
     LOGGER.debug("metrics-options" + options.getMetricsOptions());
+    try {
+      ConfigResolve.resolve(configuration);
+    }
+    catch(IllegalStateException e)
+    {
+      LOGGER.fatal("Invalid option passed in config" + e.getMessage());
+      return;
+    }
     String dbSchema = configuration.getString("databaseSchema");
     Schema.INSTANCE.set(dbSchema);
     LOGGER.debug("Set database schema to " + Schema.INSTANCE);

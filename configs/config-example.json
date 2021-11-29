@@ -5,15 +5,20 @@
   ],
   "clusterId": "iudx-aaa-cluster",
   "databaseSchema":"test",
+  "options":{
+      "postgresOptions": {
+        "databaseIP": "139.59.80.176",
+        "databasePort": "5432",
+        "databaseName": "iudx",
+        "databaseUserName": "iudx_user",
+        "databasePassword": "iudx@123"
+      }
+  },
   "modules": [
     {
       "id": "iudx.aaa.server.policy.PolicyVerticle",
       "verticleInstances": 1,
-      "databaseIP": "139.59.80.176",
-      "databasePort": "5432",
-      "databaseName": "iudx",
-      "databaseUserName": "iudx_user",
-      "databasePassword": "iudx@123",
+      "required":["postgresOptions"],
       "poolSize": "5",
       "domain" : "iudx.io",
       "catalogueOptions": {
@@ -37,11 +42,7 @@
     {
       "id": "iudx.aaa.server.registration.RegistrationVerticle",
       "verticleInstances": 1,
-      "databaseIP": "139.59.80.176",
-      "databasePort": "5432",
-      "databaseName": "iudx",
-      "databaseUserName": "iudx_user",
-      "databasePassword": "iudx@123",
+      "required":["postgresOptions"],
       "poolSize": "5",
       "keycloakUrl": "https://127.0.0.1:3000/auth",
       "keycloakRealm": "some-realm",
@@ -53,11 +54,7 @@
       "id": "iudx.aaa.server.token.TokenVerticle",
       "verticleInstances": 1,
       "authServerDomain": "auth.test.com",
-      "databaseIP": "139.59.80.176",
-      "databasePort": "5432",
-      "databaseName": "iudx",
-      "databaseUserName": "iudx_user",
-      "databasePassword": "iudx@123",
+      "required":["postgresOptions"],
       "poolSize": "5",
       "keystorePath": "configs/keystore.jks",
       "keystorePassword": "secret",
@@ -75,11 +72,7 @@
       "options": {
         "authServerDomain": "foobar.iudx.io"
       },
-      "databaseIP": "139.59.80.176",
-      "databasePort": "5432",
-      "databaseName": "iudx",
-      "databaseUserName": "iudx_user",
-      "databasePassword": "iudx@123",
+      "required":["postgresOptions"],
       "poolSize": "5",
       "keycloakUrl": "https://127.0.0.1:3000/auth",
       "keycloakRealm": "some-realm",
@@ -103,11 +96,7 @@
       "keystorePath": "configs/keystore.jks",
       "keystorePassword": "secret",
       "verticleInstances": 1,
-      "databaseIP": "139.59.80.176",
-      "databasePort": "5432",
-      "databaseName": "iudx",
-      "databaseUserName": "iudx_user",
-      "databasePassword": "iudx@123",
+      "required":["postgresOptions"],
       "poolSize": "5",
       "serverTimeoutMs": 5000,
       "corsRegexString": "*",

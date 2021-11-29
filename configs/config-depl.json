@@ -5,15 +5,20 @@
   ],
   "clusterId": "iudx-aaa-cluster",
   "databaseSchema":"test",
+  "options":{
+      "postgresOptions": {
+        "databaseIP": "x.y.z.a",
+        "databasePort": "5432",
+        "databaseName": "abc",
+        "databaseUserName": "qwqws",
+        "databasePassword": "wwd"
+      }
+  },
   "modules": [
     {
       "id": "iudx.aaa.server.policy.PolicyVerticle",
       "verticleInstances": 1,
-      "databaseIP": "x.y.z.a",
-      "databasePort": "5432",
-      "databaseName": "abc",
-      "databaseUserName": "qwqws",
-      "databasePassword": "wwd",
+      "required":["postgresOptions"],
       "poolSize": "25",
       "domain" : "iudx.io.test",
       "catalogueOptions": {
@@ -37,11 +42,7 @@
     {
       "id": "iudx.aaa.server.registration.RegistrationVerticle",
       "verticleInstances": 1,
-      "databaseIP": "x.y.z.a",
-      "databasePort": "5432",
-      "databaseName": "abc",
-      "databaseUserName": "qwqws",
-      "databasePassword": "wwd",
+      "required":["postgresOptions"],
       "poolSize": "25",
       "keycloakUrl": "https://127.0.0.1:3000/auth",
       "keycloakRealm": "some-realm",
@@ -53,11 +54,7 @@
       "id": "iudx.aaa.server.token.TokenVerticle",
       "verticleInstances": 1,
       "authServerDomain": "auth.test.com",
-      "databaseIP": "x.y.z.a",
-      "databasePort": "5432",
-      "databaseName": "abc",
-      "databaseUserName": "qwqws",
-      "databasePassword": "wwd",
+      "required":["postgresOptions"],
       "poolSize": "5",
       "keystorePath": "configs/keystore.jks",
       "keystorePassword": "secret",
@@ -75,11 +72,7 @@
       "options": {
         "authServerDomain": "foobar.iudx.io"
       },
-      "databaseIP": "x.y.z.a",
-      "databasePort": "5432",
-      "databaseName": "abc",
-      "databaseUserName": "qwqws",
-      "databasePassword": "wwd",
+      "required":["postgresOptions"],
       "poolSize": "25",
       "keycloakUrl": "https://127.0.0.1:3000/auth",
       "keycloakRealm": "some-realm",
@@ -104,11 +97,7 @@
       "keystorePath": "configs/keystore.jks",
       "keystorePassword": "secret",
       "verticleInstances": 1,
-      "databaseIP": "x.y.z.a",
-      "databasePort": "5432",
-      "databaseName": "abc",
-      "databaseUserName": "qwqws",
-      "databasePassword": "wwd",
+      "required":["postgresOptions"],
       "poolSize": "5",
       "serverTimeoutMs": 5000,
       "corsRegexString": "*",
