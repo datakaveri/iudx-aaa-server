@@ -1,5 +1,6 @@
 package iudx.aaa.server.admin;
 
+import static iudx.aaa.server.admin.Constants.CONFIG_AUTH_URL;
 import static iudx.aaa.server.admin.Constants.DATABASE_IP;
 import static iudx.aaa.server.admin.Constants.DATABASE_NAME;
 import static iudx.aaa.server.admin.Constants.DATABASE_PASSWORD;
@@ -90,7 +91,9 @@ public class AdminVerticle extends AbstractVerticle {
     keycloakAdminClientSecret = config().getString(KC_ADMIN_CLIENT_SEC);
     keycloakAdminPoolSize = Integer.parseInt(config().getString(KC_ADMIN_POOLSIZE));
 
-    options = config().getJsonObject("options");
+    /* Pass an `options` JSON object to the serviceImpl with a key:val being the
+     * authServerDomain */
+    options = new JsonObject().put(CONFIG_AUTH_URL, config().getString(CONFIG_AUTH_URL));
 
     /* Set Connection Object */
     if (connectOptions == null) {

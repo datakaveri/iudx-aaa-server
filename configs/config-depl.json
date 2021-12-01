@@ -12,22 +12,23 @@
         "databaseName": "abc",
         "databaseUserName": "qwqws",
         "databasePassword": "wwd"
+      },
+      "commonOptions":{
+        "authServerDomain":"auth.test.com"
       }
   },
   "modules": [
     {
       "id": "iudx.aaa.server.policy.PolicyVerticle",
       "verticleInstances": 1,
-      "required":["postgresOptions"],
+      "required":["postgresOptions", "commonOptions"],
       "poolSize": "25",
       "domain" : "iudx.io.test",
       "catalogueOptions": {
         "catServerHost": "api.catalogue.iudx.io.test",
-        "catServerPort": "443",
-        "authServerUrl": "auth.iudx.io.test"
+        "catServerPort": "443"
       },
       "authOptions": {
-        "authServerUrl": "auth.iudx.io.test",
         "policyExpiry" : "12",
         "adminPolicyExpiry" : "60"
       },
@@ -53,8 +54,7 @@
     {
       "id": "iudx.aaa.server.token.TokenVerticle",
       "verticleInstances": 1,
-      "authServerDomain": "auth.test.com",
-      "required":["postgresOptions"],
+      "required":["postgresOptions", "commonOptions"],
       "poolSize": "5",
       "keystorePath": "configs/keystore.jks",
       "keystorePassword": "secret",
@@ -69,10 +69,7 @@
     {
       "id": "iudx.aaa.server.admin.AdminVerticle",
       "verticleInstances": 1,
-      "options": {
-        "authServerDomain": "foobar.iudx.io"
-      },
-      "required":["postgresOptions"],
+      "required":["postgresOptions", "commonOptions"],
       "poolSize": "25",
       "keycloakUrl": "https://127.0.0.1:3000/auth",
       "keycloakRealm": "some-realm",
@@ -93,11 +90,10 @@
     {
       "id": "iudx.aaa.server.apiserver.ApiServerVerticle",
       "ssl": false,
-      "authServerDomain": "auth.iudx.io.test",
       "keystorePath": "configs/keystore.jks",
       "keystorePassword": "secret",
       "verticleInstances": 1,
-      "required":["postgresOptions"],
+      "required":["postgresOptions", "commonOptions"],
       "poolSize": "5",
       "serverTimeoutMs": 5000,
       "corsRegexString": "*",

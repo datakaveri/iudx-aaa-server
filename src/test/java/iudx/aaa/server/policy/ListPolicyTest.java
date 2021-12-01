@@ -70,6 +70,13 @@ public class ListPolicyTest {
         poolSize = Integer.parseInt(dbConfig.getString("poolSize"));
         authOptions = dbConfig.getJsonObject("authOptions");
         catOptions = dbConfig.getJsonObject("catOptions");
+        
+        /*
+         * Injecting authServerUrl into 'authOptions' and 'catOptions' from config().'authServerDomain'
+         * TODO - make this uniform
+         */
+        authOptions.put("authServerUrl", dbConfig.getString("authServerDomain"));
+        catOptions.put("authServerUrl", dbConfig.getString("authServerDomain"));
 
 // Set Connection Object
 
