@@ -157,7 +157,9 @@ public class ApiServerVerticle extends AbstractVerticle {
     allowedMethods.add(HttpMethod.PATCH);
     allowedMethods.add(HttpMethod.PUT);
 
-    OIDCAuthentication oidcFlow = new OIDCAuthentication(vertx, pgPool, keycloakOptions);
+    /* Passing the full config to OIDC auth, as the config has all the required keycloak
+     * options */
+    OIDCAuthentication oidcFlow = new OIDCAuthentication(vertx, pgPool, config());
     ClientAuthentication clientFlow = new ClientAuthentication(pgPool);
     ProviderAuthentication providerAuth = new ProviderAuthentication(pgPool, authServerDomain);
     SearchUserHandler searchUser = new SearchUserHandler();

@@ -22,6 +22,8 @@ public class Constants {
   public static final String HEADER_PROVIDER_ID = "providerId";
   public static final String HEADER_EMAIL = "email";
   public static final String HEADER_ROLE = "role";
+  public static final String CLIENT_ID = "clientId";
+  public static final String CLIENT_SECRET = "clientSecret";
 
   /* Configuration & related */
   public static final String DATABASE_IP = "databaseIP";
@@ -121,11 +123,12 @@ public class Constants {
   public static final String ID = "id";
   public static final String ROLES = "roles";
   public static final String USER = "user";
-  public static final String CLIENT_ID = "clientId";
-  public static final String CLIENT_SECRET = "clientSecret";
+  public static final String KEYCLOAK_AAA_SERVER_CLIENT_ID = "keycloakAaaClientId";
+  public static final String KEYCLOAK_AAA_SERVER_CLIENT_SECRET = "keycloakAaaClientSecret";
   public static final String KID = "kid";
-  public static final String SITE = "site";
-  public static final String JWT_LEEWAY = "jwtLeeway";
+  public static final String KEYCLOAK_SITE = "keycloakSite";
+  public static final String KEYCLOAK_REALM = "keycloakRealm";
+  public static final String KEYCLOAK_JWT_LEEWAY = "keycloakJwtLeeway";
   public static final String STATUS = "status";
   public static final String SSL = "ssl";
   public static final String KS_ALIAS = "ES256";

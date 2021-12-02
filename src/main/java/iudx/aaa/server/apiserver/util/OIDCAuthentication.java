@@ -139,16 +139,19 @@ public class OIDCAuthentication implements AuthenticationHandler {
 
   /**
    * Creates KeyCloack provider using configurations.
+   * keycloakOptions is a JSON object containing the required
+   * keys. (It is actually the full config verticle config object)
    */
   public void keyCloackAuth() {
-    String site = keycloakOptions.getString(SITE);
-    String realm = site.substring(site.lastIndexOf('/') + 1);
+    String site = keycloakOptions.getString(KEYCLOAK_SITE);
+    String realm = keycloakOptions.getString(KEYCLOAK_REALM);
 
     /* Options for OAuth2, KeyCloack. */
     OAuth2Options options = new OAuth2Options().setFlow(OAuth2FlowType.CLIENT)
-        .setClientID(keycloakOptions.getString(CLIENT_ID))
-        .setClientSecret(keycloakOptions.getString(CLIENT_SECRET)).setTenant(realm).setSite(site)
-        .setJWTOptions(new JWTOptions().setLeeway(keycloakOptions.getInteger(JWT_LEEWAY)));
+        .setClientID(keycloakOptions.getString(KEYCLOAK_AAA_SERVER_CLIENT_ID))
+        .setClientSecret(keycloakOptions.getString(KEYCLOAK_AAA_SERVER_CLIENT_SECRET))
+        .setTenant(realm).setSite(site)
+        .setJWTOptions(new JWTOptions().setLeeway(keycloakOptions.getInteger(KEYCLOAK_JWT_LEEWAY)));
 
     options.getHttpClientOptions().setSsl(true).setVerifyHost(false).setTrustAll(true);
 
