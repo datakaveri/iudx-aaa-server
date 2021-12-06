@@ -29,6 +29,10 @@
         "keycloakAaaClientId": "auth.iudx.org.in",
         "keycloakAaaClientSecret": "6ba618a0-06c6-49a0-a824-d5dfc6d025f3",
         "keycloakJwtLeeway": 90
+      },
+      "jwtKeystoreOptions":{
+        "keystorePath": "configs/keystore.jks",
+        "keystorePassword": "secret"
       }
   },
   "modules": [
@@ -63,10 +67,8 @@
     {
       "id": "iudx.aaa.server.token.TokenVerticle",
       "verticleInstances": 1,
-      "required":["postgresOptions", "commonOptions", "keycloakOptions"],
-      "poolSize": "5",
-      "keystorePath": "configs/keystore.jks",
-      "keystorePassword": "secret"
+      "required":["postgresOptions", "commonOptions", "keycloakOptions", "jwtKeystoreOptions"],
+      "poolSize": "5"
     },
     {
       "id": "iudx.aaa.server.admin.AdminVerticle",
@@ -86,10 +88,8 @@
     },
     {
       "id": "iudx.aaa.server.apiserver.ApiServerVerticle",
-      "keystorePath": "configs/keystore.jks",
-      "keystorePassword": "secret",
       "verticleInstances": 1,
-      "required":["postgresOptions", "commonOptions", "keycloakOptions"],
+      "required":["postgresOptions", "commonOptions", "keycloakOptions", "jwtKeystoreOptions"],
       "poolSize": "5",
       "serverTimeoutMs": 5000,
       "corsRegexString": "*"
