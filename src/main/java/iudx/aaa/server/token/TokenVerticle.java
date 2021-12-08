@@ -68,7 +68,17 @@ public class TokenVerticle extends AbstractVerticle {
     keystorePath = config().getString(KEYSTORE_PATH);
     keystorePassword = config().getString(KEYSTPRE_PASSWORD);
     String issuer = config().getString(AUTHSERVER_DOMAIN,"");
-    JsonObject keycloakOptions = config().getJsonObject(KEYCLOACK_OPTIONS);
+
+    /* keycloakOptions contains the configuration options to get a token from Keycloak
+     * along with the client ID and client secret of the AAA server. This is created 
+     * since the httpPostFormAsync method in TokenRevokeService uses the object as is 
+     * for configuring the web client request options (host, port, uri). */
+    JsonObject keycloakOptions = new JsonObject()
+        .put(HOST, config().getString(KEYCLOAK_HOST))
+        .put(PORT, config().getString(KEYCLOAK_PORT))
+        .put(URI, config().getString(KEYCLOAK_TOKEN_URI))
+        .put(CLIENT_ID, config().getString(KEYCLOAK_AAA_SERVER_CLIENT_ID))
+        .put(CLIENT_SECRET, config().getString(KEYCLOAK_AAA_SERVER_CLIENT_SECRET));
     
     if(issuer != null && !issuer.isBlank()) {
       CLAIM_ISSUER = issuer;

@@ -75,6 +75,14 @@ public class DeployerDev {
     String dbSchema = configuration.getString("databaseSchema");
     Schema.INSTANCE.set(dbSchema);
     LOGGER.debug("Set database schema to " + Schema.INSTANCE);
+    try {
+      ConfigResolve.resolve(configuration);
+    }
+    catch(IllegalStateException e)
+    {
+      LOGGER.fatal("Invalid option passed in config" + e.getMessage());
+      return;
+    }
     Vertx vertx = Vertx.vertx(options);
     recursiveDeploy(vertx, configuration, 0);
   }

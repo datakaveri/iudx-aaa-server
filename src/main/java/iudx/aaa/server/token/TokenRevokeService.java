@@ -105,18 +105,18 @@ public class TokenRevokeService {
    * To Generate JWT using KeyCloak credentials.
    * Performs POST Multipart/Form request to KeyCloak.
    * 
-   * @param requestBody which is a JsonObject
+   * @param config which is a JsonObject with the keycloak config
    * @return promise and future associated with the promise.
    */
-  private Future<JsonObject> httpPostFormAsync(JsonObject requestBody) {
+  private Future<JsonObject> httpPostFormAsync(JsonObject config) {
 
     Promise<JsonObject> promise = Promise.promise();
-    RequestOptions options = new RequestOptions(requestBody);
+    RequestOptions options = new RequestOptions(config);
     
     MultiMap bodyForm = MultiMap.caseInsensitiveMultiMap();
     bodyForm.set(GRANT_TYPE, CLIENT_CREDENTIALS)
-            .set("client_id", requestBody.getString(CLIENT_ID))
-            .set("client_secret", requestBody.getString(CLIENT_SECRET));
+            .set("client_id", config.getString(CLIENT_ID))
+            .set("client_secret", config.getString(CLIENT_SECRET));
     
     client.request(HttpMethod.POST, options).sendForm(bodyForm, reqHandler -> {
       if (reqHandler.succeeded()) {

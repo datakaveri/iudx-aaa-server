@@ -74,6 +74,12 @@ public class PolicyVerticle extends AbstractVerticle {
     authOptions = config().getJsonObject("authOptions");
     catOptions = config().getJsonObject("catOptions");
 
+    /*
+     * Injecting authServerUrl into 'authOptions' and 'catOptions' from config().'authServerDomain'
+     * TODO - make this uniform
+     */
+    authOptions.put("authServerUrl", config().getString("authServerDomain"));
+    catOptions.put("authServerUrl", config().getString("authServerDomain"));
 
     //get options for catalogue client
 

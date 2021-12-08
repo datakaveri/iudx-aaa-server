@@ -28,7 +28,12 @@ public class Constants {
   public static final String KEYSTORE_PATH = "keystorePath";
   public static final String KEYSTPRE_PASSWORD = "keystorePassword";
   public static final String AUTHSERVER_DOMAIN = "authServerDomain";
-  public static final String KEYCLOACK_OPTIONS = "keycloakOptions";
+
+  public static final String KEYCLOAK_HOST = "keycloakHost";
+  public static final String KEYCLOAK_PORT = "keycloakPort";
+  public static final String KEYCLOAK_TOKEN_URI = "keycloakTokenUri";
+  public static final String KEYCLOAK_AAA_SERVER_CLIENT_ID = "keycloakAaaClientId";
+  public static final String KEYCLOAK_AAA_SERVER_CLIENT_SECRET = "keycloakAaaClientSecret";
   public static final int PG_CONNECTION_TIMEOUT = 10000;
   
   /* General */ 
@@ -40,6 +45,7 @@ public class Constants {
   public static final String DESC = "desc";
   public static final String ACCESS_TOKEN = "accessToken";
   public static final String RS_URL = "rsUrl";
+  public static final String HOST = "host";
   public static final String PORT = "port";
   public static final String URI = "uri";
   public static final String BODY = "BODY";

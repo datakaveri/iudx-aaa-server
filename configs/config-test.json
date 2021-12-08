@@ -5,24 +5,48 @@
   ],
   "clusterId": "iudx-aaa-cluster",
   "databaseSchema":"test",
+  "options":{
+      "postgresOptions": {
+        "databaseIP": "139.59.80.176",
+        "databasePort": "5432",
+        "databaseName": "iudx",
+        "databaseUserName": "iudx_user",
+        "databasePassword": "iudx@123"
+      },
+      "commonOptions":{
+        "authServerDomain":"auth.test.com"
+      },
+      "keycloakOptions":{
+        "keycloakHost": "identitydev.iudx.io",
+        "keycloakPort": 8443,
+        "keycloakRealm": "some-realm",
+        "keycloakSite": "{{protocol}}://{{keycloakHost}}:{{keycloakPort}}/auth/realms/{{keycloakRealm}}",
+        "keycloakUrl": "{{protocol}}://{{keycloakHost}}:{{keycloakPort}}/auth",
+        "keycloakTokenUri": "/auth/realms/{{keycloakRealm}}/protocol/openid-connect/token",
+        "keycloakAdminClientId": "some-admin-client-id",
+        "keycloakAdminClientSecret": "f5800be0-258a-4cd2-820f-8128818ed70a",
+        "keycloakAdminPoolSize": "10",
+        "keycloakAaaClientId": "auth.iudx.org.in",
+        "keycloakAaaClientSecret": "6ba618a0-06c6-49a0-a824-d5dfc6d025f3",
+        "keycloakJwtLeeway": 90
+      },
+      "jwtKeystoreOptions":{
+        "keystorePath": "configs/keystore.jks",
+        "keystorePassword": "secret"
+      }
+  },
   "modules": [
     {
       "id": "iudx.aaa.server.policy.PolicyVerticle",
       "verticleInstances": 1,
-      "databaseIP": "139.59.80.176",
-      "databasePort": "5432",
-      "databaseName": "iudx",
-      "databaseUserName": "iudx_user",
-      "databasePassword": "iudx@123",
+      "required":["postgresOptions", "commonOptions"],
       "poolSize": "25",
       "domain" : "iudx.io",
       "catalogueOptions": {
         "catServerHost": "api.catalogue.iudx.io",
-        "catServerPort": "443",
-        "authServerUrl": "authdev.iudx.io"
+        "catServerPort": "443"
       },
       "authOptions": {
-        "authServerUrl": "authdev.iudx.io",
         "policyExpiry" : "12",
         "adminPolicyExpiry" : "60"
       },
@@ -37,57 +61,22 @@
     {
       "id": "iudx.aaa.server.registration.RegistrationVerticle",
       "verticleInstances": 1,
-      "databaseIP": "139.59.80.176",
-      "databasePort": "5432",
-      "databaseName": "iudx",
-      "databaseUserName": "iudx_user",
-      "databasePassword": "iudx@123",
-      "poolSize": "25",
-      "keycloakUrl": "https://127.0.0.1:3000/auth",
-      "keycloakRealm": "some-realm",
-      "keycloakAdminClientId": "some-admin-client-id",
-      "keycloakAdminClientSecret": "f5800be0-258a-4cd2-820f-8128818ed70a",
-      "keycloakAdminPoolSize": "10"
+      "required":["postgresOptions", "keycloakOptions"],
+      "poolSize": "25"
     },
     {
       "id": "iudx.aaa.server.token.TokenVerticle",
       "verticleInstances": 1,
-      "authServerDomain": "auth.test.com",
-      "databaseIP": "139.59.80.176",
-      "databasePort": "5432",
-      "databaseName": "iudx",
-      "databaseUserName": "iudx_user",
-      "databasePassword": "iudx@123",
-      "poolSize": "5",
-      "keystorePath": "configs/keystore.jks",
-      "keystorePassword": "secret",
-      "keycloakOptions": {
-        "host": "keycloakHost",
-        "port": 8443,
-        "uri": "/auth/realms/demo/protocol/openid-connect/token",
-        "clientId": "keycloackClientId",
-        "clientSecret": "keycloackClientSecret"
-      }
+      "required":["postgresOptions", "commonOptions", "keycloakOptions", "jwtKeystoreOptions"],
+      "poolSize": "5"
     },
     {
       "id": "iudx.aaa.server.admin.AdminVerticle",
       "verticleInstances": 1,
-      "options": {
-        "authServerDomain": "foobar.iudx.io"
-      },
-      "databaseIP": "139.59.80.176",
-      "databasePort": "5432",
-      "databaseName": "iudx",
-      "databaseUserName": "iudx_user",
-      "databasePassword": "iudx@123",
-      "poolSize": "25",
-      "keycloakUrl": "https://127.0.0.1:3000/auth",
-      "keycloakRealm": "some-realm",
-      "keycloakAdminClientId": "some-admin-client-id",
-      "keycloakAdminClientSecret": "f5800be0-258a-4cd2-820f-8128818ed70a",
-      "keycloakAdminPoolSize": "10"
+      "required":["postgresOptions", "commonOptions", "keycloakOptions"],
+      "poolSize": "25"
     },
-    {
+     {
       "id": "iudx.aaa.server.auditing.AuditingVerticle",
       "verticleInstances": 1,
       "auditingDatabaseIP": "",
@@ -99,24 +88,11 @@
     },
     {
       "id": "iudx.aaa.server.apiserver.ApiServerVerticle",
-      "authServerDomain": "auth.test.com",
-      "keystorePath": "configs/keystore.jks",
-      "keystorePassword": "secret",
       "verticleInstances": 1,
-      "databaseIP": "139.59.80.176",
-      "databasePort": "5432",
-      "databaseName": "iudx",
-      "databaseUserName": "iudx_user",
-      "databasePassword": "iudx@123",
+      "required":["postgresOptions", "commonOptions", "keycloakOptions", "jwtKeystoreOptions"],
       "poolSize": "5",
       "serverTimeoutMs": 5000,
-      "corsRegexString": "*",
-      "keycloakOptions": {
-        "site": "https://<host>:<port>/auth/realms/demo",
-        "clientId": "keycloakClientId",
-        "clientSecret": "keycloakClientSecret",
-        "jwtLeeway": 90
-      }
+      "corsRegexString": "*"
     }
   ]
 }
