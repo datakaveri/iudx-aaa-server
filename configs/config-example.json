@@ -10,6 +10,7 @@
         "databaseIP": "139.59.80.176",
         "databasePort": "5432",
         "databaseName": "iudx",
+        "databaseSchema":"test",
         "databaseUserName": "iudx_user",
         "databasePassword": "iudx@123"
       },

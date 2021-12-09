@@ -10,6 +10,7 @@
         "databaseIP": "x.y.z.a",
         "databasePort": "5432",
         "databaseName": "abc",
+        "databaseSchema":"test",
         "databaseUserName": "qwqws",
         "databasePassword": "wwd"
       },
