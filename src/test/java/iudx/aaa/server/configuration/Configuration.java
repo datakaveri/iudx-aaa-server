@@ -44,9 +44,6 @@ public class Configuration {
         return moduleConf;
       }
       JsonArray allModulesConf = config.getJsonArray("modules");
-      String databaseSchema = buff.toJsonObject().getString("databaseSchema");
-      Schema.INSTANCE.set(databaseSchema);
-      LOGGER.debug("Set database schema to " + Schema.INSTANCE);
       moduleConf = allModulesConf.getJsonObject(moduleIndex);
 
     } else {
