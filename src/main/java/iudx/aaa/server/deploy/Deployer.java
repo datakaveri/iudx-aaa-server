@@ -30,7 +30,6 @@ import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.micrometer.VertxPrometheusOptions;
 import io.vertx.micrometer.backends.BackendRegistries;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
-import iudx.aaa.server.apiserver.Schema;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -201,9 +200,6 @@ public class Deployer {
       LOGGER.fatal("Invalid option passed in config" + e.getMessage());
       return;
     }
-    String dbSchema = configuration.getString("databaseSchema");
-    Schema.INSTANCE.set(dbSchema);
-    LOGGER.debug("Set database schema to " + Schema.INSTANCE);
 
     Vertx.clusteredVertx(options, res -> {
       if (res.succeeded()) {

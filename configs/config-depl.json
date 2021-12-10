@@ -4,7 +4,6 @@
     "zookeeper"
   ],
   "clusterId": "iudx-aaa-cluster",
-  "databaseSchema":"test",
   "options":{
       "postgresOptions": {
         "databaseIP": "x.y.z.a",
