@@ -303,6 +303,7 @@ public class Deployer {
                 + "If omitted, or if `all` is passed, all verticles are deployed"));
 
     StringBuilder usageString = new StringBuilder();
+    LOGGER.debug("The logger has message lookups disabled ${LOG_LEVEL_PATTERN}");
     cli.usage(usageString);
     CommandLine commandLine = cli.parse(Arrays.asList(args), false);
     if (commandLine.isValid() && !commandLine.isFlagEnabled("help")) {
