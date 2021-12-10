@@ -87,6 +87,7 @@ public class TokenServiceTest {
   private static String databaseIP;
   private static int databasePort;
   private static String databaseName;
+  private static String databaseSchema;
   private static String databaseUserName;
   private static String databasePassword;
   private static int poolSize;
@@ -139,6 +140,7 @@ public class TokenServiceTest {
     databaseIP = dbConfig.getString("databaseIP");
     databasePort = Integer.parseInt(dbConfig.getString("databasePort"));
     databaseName = dbConfig.getString("databaseName");
+    databaseSchema = dbConfig.getString("databaseSchema");
     databaseUserName = dbConfig.getString("databaseUserName");
     databasePassword = dbConfig.getString("databasePassword");
     poolSize = Integer.parseInt(dbConfig.getString("poolSize"));
@@ -154,11 +156,13 @@ public class TokenServiceTest {
       throw new IllegalStateException("authServerDomain not set");
     }
 
-    /* Set Connection Object */
+    /* Set Connection Object and schema */
     if (connectOptions == null) {
+      Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
+
       connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
           .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
-          .setConnectTimeout(PG_CONNECTION_TIMEOUT);
+          .setConnectTimeout(PG_CONNECTION_TIMEOUT).setProperties(schemaProp);
     }
 
     /* Pool options */
