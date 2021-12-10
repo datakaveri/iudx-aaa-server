@@ -18,6 +18,7 @@ import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.configuration.Configuration;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -40,6 +41,7 @@ public class ListOrganizationTest {
   private static String databaseIP;
   private static int databasePort;
   private static String databaseName;
+  private static String databaseSchema;
   private static String databaseUserName;
   private static String databasePassword;
   private static int poolSize;
@@ -68,13 +70,18 @@ public class ListOrganizationTest {
     databaseIP = dbConfig.getString("databaseIP");
     databasePort = Integer.parseInt(dbConfig.getString("databasePort"));
     databaseName = dbConfig.getString("databaseName");
+    databaseSchema = dbConfig.getString("databaseSchema");
     databaseUserName = dbConfig.getString("databaseUserName");
     databasePassword = dbConfig.getString("databasePassword");
     poolSize = Integer.parseInt(dbConfig.getString("poolSize"));
 
+    /* Set Connection Object and schema */
     if (connectOptions == null) {
+      Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
+
       connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
-          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword);
+          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
+          .setProperties(schemaProp);
     }
 
     if (poolOptions == null) {
