@@ -14,6 +14,7 @@ import io.vertx.sqlclient.PoolOptions;
 
 import static iudx.aaa.server.policy.Constants.REGISTRATION_SERVICE_ADDRESS;
 import static iudx.aaa.server.token.Constants.POLICY_SERVICE_ADDRESS;
+import java.util.Map;
 
 /**
  * The Policy Verticle.
@@ -33,6 +34,7 @@ public class PolicyVerticle extends AbstractVerticle {
   private String databaseIP;
   private int databasePort;
   private String databaseName;
+  private String databaseSchema;
   private String databaseUserName;
   private String databasePassword;
   private int poolSize;
@@ -65,6 +67,7 @@ public class PolicyVerticle extends AbstractVerticle {
     databaseIP = config().getString("databaseIP");
     databasePort = Integer.parseInt(config().getString("databasePort"));
     databaseName = config().getString("databaseName");
+    databaseSchema = config().getString("databaseSchema");
     databaseUserName = config().getString("databaseUserName");
     databasePassword = config().getString("databasePassword");
     poolSize = Integer.parseInt(config().getString("poolSize"));
@@ -83,10 +86,13 @@ public class PolicyVerticle extends AbstractVerticle {
 
     //get options for catalogue client
 
-    /* Set Connection Object */
+    /* Set Connection Object and schema */
     if (connectOptions == null) {
+      Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
+
       connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
-          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword);
+          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
+          .setProperties(schemaProp);
     }
 
     /* Pool options */

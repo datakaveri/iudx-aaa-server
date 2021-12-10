@@ -1,11 +1,8 @@
 package iudx.aaa.server.policy;
 
-import iudx.aaa.server.apiserver.Schema;
-
 public class Constants {
 
   public static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
-  public static final Schema DB_SCHEMA = Schema.INSTANCE;
   // db columns
   public static final String USERID = "userId";
   public static final String ITEMID = "itemId";
@@ -132,245 +129,245 @@ public class Constants {
 
   // verify policy queries
   public static final String GET_FROM_ROLES_TABLE =
-      "Select role from  "  + DB_SCHEMA  + ".roles where user_id = $1::UUID "
-          + "AND role = $2::"  + DB_SCHEMA  + ".role_enum AND status = $3::"  + DB_SCHEMA  + ".role_status_enum";
-  public static final String GET_RES_DETAIL = "select id,provider_id,resource_server_id from  "  + DB_SCHEMA  + ".";
+      "Select role from  roles where user_id = $1::UUID "
+          + "AND role = $2::role_enum AND status = $3::role_status_enum";
+  public static final String GET_RES_DETAIL = "select id,provider_id,resource_server_id from  ";
   public static final String GET_RES_DETAIL_JOIN = " where cat_id = $1::text ";
 
   public static final String GET_CONSUMER_CONSTRAINTS =
-      "select constraints from  "  + DB_SCHEMA  + ".policies where  user_id = $1::UUID "
-          + "and item_id = $2::UUID and item_type = $3::"  + DB_SCHEMA  + ".item_enum "
-          + "and status = $4::"  + DB_SCHEMA  + ".policy_status_enum and expiry_time > now()";
+      "select constraints from  policies where  user_id = $1::UUID "
+          + "and item_id = $2::UUID and item_type = $3::item_enum "
+          + "and status = $4::policy_status_enum and expiry_time > now()";
 
-  public static final String GET_URL = "select url from  "  + DB_SCHEMA  + ".resource_server where id = $1::UUID ";
+  public static final String GET_URL = "select url from resource_server where id = $1::UUID ";
 
   public static final String GET_RES_OWNER =
-      "select id from  "  + DB_SCHEMA  + ".users where email_hash = $1::text";
+      "select id from users where email_hash = $1::text";
 
   public static final String GET_RES_SERVER_OWNER =
-      "select id,url,owner_id from  "  + DB_SCHEMA  + ".resource_server where url = $1::text";
+      "select id,url,owner_id from resource_server where url = $1::text";
 
   public static final String GET_RES_SER_OWNER =
-      "select a.id,url,a.owner_id from  "  + DB_SCHEMA  + ".resource_server a inner join  "  + DB_SCHEMA  + ".";
+      "select a.id,url,a.owner_id from resource_server a inner join ";
 
   public static final String GET_RES_SER_OWNER_JOIN =
       " b on a.id = b.resource_server_id and b.cat_id = $1::text";
 
   public static final String CHECK_ADMIN_POLICY =
-      "select id from  "  + DB_SCHEMA  + ".policies where "
+      "select id from policies where "
           + " user_id = $1::UUID and owner_id = $2::UUID and item_id =$3::UUID "
-          + " and item_type = $4::"  + DB_SCHEMA  + ".item_enum and status = $5::"  + DB_SCHEMA  + ".policy_status_enum "
+          + " and item_type = $4::item_enum and status = $5::policy_status_enum "
           + " and expiry_time > now()";
 
   public static final String CHECK_DELEGATOINS_VERIFY =
-      "select id from  "  + DB_SCHEMA  + ".delegations where user_id = $1::UUID"
+      "select id from delegations where user_id = $1::UUID"
           + " and owner_id = $2::UUID and resource_server_id = $3::UUID "
-          + " and status = $4::"  + DB_SCHEMA  + ".policy_status_enum";
+          + " and status = $4::policy_status_enum";
 
   public static final String CHECK_POLICY =
-      "select constraints from  "  + DB_SCHEMA  + ".policies where user_id = $1::UUID"
+      "select constraints from policies where user_id = $1::UUID"
           + " and owner_id = $2::UUID and item_id = $3::UUID and "
-          + "status = $4::"  + DB_SCHEMA  + ".policy_status_enum "
+          + "status = $4::policy_status_enum "
           + " and expiry_time > now()";
   // List Policy queries
   public static final String GET_POLICIES =
       "Select a.id as  \"policyId\", a.user_id, a.owner_id ,a.item_type as \"itemType\" ,"
-          + " a.expiry_time as \"expiryTime\" ,a.constraints, b.cat_id  as \"itemId\" from "+  DB_SCHEMA +  ".policies a INNER JOIN "+  DB_SCHEMA +  ".";
+          + " a.expiry_time as \"expiryTime\" ,a.constraints, b.cat_id  as \"itemId\" from policies a INNER JOIN ";
   public static final String GET_SERVER_POLICIES =
       "Select a.id as  \"policyId\", a.user_id, a.owner_id ,a.item_type as \"itemType\" ,"
-          + " a.expiry_time as \"expiryTime\" ,a.constraints, b.url  as \"itemId\" from "+  DB_SCHEMA +  ".policies a INNER JOIN "+  DB_SCHEMA +  ".";
+          + " a.expiry_time as \"expiryTime\" ,a.constraints, b.url  as \"itemId\" from policies a INNER JOIN ";
   public static final String GET_POLICIES_JOIN =
       " b on a.item_id = b.id "
-          + "where  a.item_type = $2::"+  DB_SCHEMA +  ".item_enum  "
-          + "AND a.status = $3::"+  DB_SCHEMA +  ".policy_status_enum  AND a.expiry_time > NOW() And (a.owner_id = $1::UUID or  a.user_id = $1::UUID)";
+          + "where  a.item_type = $2::item_enum  "
+          + "AND a.status = $3::policy_status_enum  AND a.expiry_time > NOW() And (a.owner_id = $1::UUID or  a.user_id = $1::UUID)";
   public static final String GET_POLICIES_JOIN_DELEGATE =
       " b on a.item_id = b.id "
-          + "where  a.item_type = $2::"+  DB_SCHEMA +  ".item_enum  "
-          + "AND a.status = $3::"+  DB_SCHEMA +  ".policy_status_enum  AND a.expiry_time > NOW() And  a.owner_id = $1::UUID";
+          + "where  a.item_type = $2::item_enum  "
+          + "AND a.status = $3::policy_status_enum  AND a.expiry_time > NOW() And  a.owner_id = $1::UUID";
 
   public static final String CHECK_RES_EXIST =
-      "select id from "+  DB_SCHEMA +  ".policies"
-          + " where status = $1::"+  DB_SCHEMA +  ".policy_status_enum  and id = any($2::uuid[])";
+      "select id from policies"
+          + " where status = $1::policy_status_enum  and id = any($2::uuid[])";
   public static final String RES_OWNER_CHECK =
-      "select id from "+  DB_SCHEMA +  ".policies where owner_id = $1::uuid "
-          + "and status = $2::"+  DB_SCHEMA +  ".policy_status_enum and id = any($3::uuid[]) and expiry_time > now()";
+      "select id from policies where owner_id = $1::uuid "
+          + "and status = $2::policy_status_enum and id = any($3::uuid[]) and expiry_time > now()";
   public static final String DELEGATE_CHECK =
-      "select a.id from " + DB_SCHEMA + ".policies a inner join  " + DB_SCHEMA + ".delegations b "
-          + " on a.owner_id = b.owner_id inner join " + DB_SCHEMA + ".resource_server c "
+      "select a.id from policies a inner join delegations b "
+          + " on a.owner_id = b.owner_id inner join resource_server c "
           + " on b.resource_server_id = c.id where b.user_id = $1::UUID and "
-          + "b.status =$2::"+  DB_SCHEMA + ".policy_status_enum and c.url = $3::text and a.id = any($4::uuid[]) ";
+          + "b.status =$2::policy_status_enum and c.url = $3::text and a.id = any($4::uuid[]) ";
 
   // delete policy queries
   public static final String CHECK_DELPOLICY =
-      "select a.id from "+  DB_SCHEMA +  ".policies a inner join "+  DB_SCHEMA +  ".resource_server b on a.item_id = b.id "
-          + "where  a.user_id = $1::UUID and item_type = $2::"+  DB_SCHEMA +  ".item_enum "
+      "select a.id from policies a inner join resource_server b on a.item_id = b.id "
+          + "where  a.user_id = $1::UUID and item_type = $2::item_enum "
           + "and a.owner_id = b.owner_id and b.url = $3::varchar "
-          + "and a.status = $4::"+  DB_SCHEMA +  ".policy_status_enum and a.expiry_time > now()";
+          + "and a.status = $4::policy_status_enum and a.expiry_time > now()";
   public static final String DELETE_POLICY =
-      "update "+  DB_SCHEMA +  ".policies set status = $1::"+  DB_SCHEMA +  ".policy_status_enum , updated_at = now()"
-          + " where status = $2::"+  DB_SCHEMA +  ".policy_status_enum and expiry_time > now() "
+      "update policies set status = $1::policy_status_enum , updated_at = now()"
+          + " where status = $2::policy_status_enum and expiry_time > now() "
           + " and id = any($3::uuid[])";
   // create policy
   public static final String CHECKUSEREXIST =
-      "select id from "+  DB_SCHEMA +  ".users where id = any($1::uuid[])";
+      "select id from users where id = any($1::uuid[])";
   public static final String CHECK_RES_SER =
-      "select url as cat_id,id from "+  DB_SCHEMA +  ".resource_server "
+      "select url as cat_id,id from resource_server "
           + "where owner_id = $1::UUID and url = ANY($2::text[])";
   public static final String CHECKRESGRP =
-      "select cat_id from "+  DB_SCHEMA +  ".resource_group where cat_id = ANY($1::text[]) ";
+      "select cat_id from resource_group where cat_id = ANY($1::text[]) ";
   public static final String CHECK_AUTH_POLICY =
-      "select a.id from "+  DB_SCHEMA +  ".policies a inner join "+  DB_SCHEMA +  ".resource_server b "
+      "select a.id from policies a inner join resource_server b "
           + " on a.item_id = b.id where a.user_id = $1::UUID and "
           + "  a.owner_id = b.owner_id and b.url = $2::varchar and "
-          + " a.status = $3::"+  DB_SCHEMA +  ".policy_status_enum and a.expiry_time > now() ";
+          + " a.status = $3::policy_status_enum and a.expiry_time > now() ";
   public static final String RES_GRP_OWNER =
-      "select provider_id from "+  DB_SCHEMA +  ".resource_group where "
+      "select provider_id from resource_group where "
           + "provider_id != $1::UUID  and cat_id = any($2::text[])";
   public static final String RES_OWNER =
-      "select provider_id from "+  DB_SCHEMA +  ".resource where provider_id != $1::UUID"
+      "select provider_id from resource where provider_id != $1::UUID"
           + " and cat_id = any($2::text[])";
   public static final String CHECK_DELEGATION =
-      "Select a.id from "+  DB_SCHEMA +  ".delegations a inner join "+  DB_SCHEMA +  ".resource_server b "
+      "Select a.id from delegations a inner join resource_server b "
           + " on a.resource_server_id = b.id where b.url = $1::text "
           + " and a.user_id = $2::UUID and a.owner_id = any($3::UUID[]) ";
 
   public static final String GET_RES_GRP_OWNER =
-      "select cat_id,provider_id from "+  DB_SCHEMA +  ".resource_group where cat_id = any($1::text[])";
+      "select cat_id,provider_id from resource_group where cat_id = any($1::text[])";
 
   public static final String GET_RES_OWNERS =
-      "select cat_id,provider_id from "+  DB_SCHEMA +  ".resource where cat_id = any($1::text[])";
+      "select cat_id,provider_id from resource where cat_id = any($1::text[])";
 
   public static final String GET_RES_DETAILS =
-      "select cat_id,id from "+  DB_SCHEMA +  ".resource where cat_id = ANY($1::text[]) ";
+      "select cat_id,id from resource where cat_id = ANY($1::text[]) ";
 
   public static final String GET_RES_GRP_DETAILS =
-      "select cat_id,id from "+  DB_SCHEMA +  ".resource_group where cat_id = ANY($1::text[]) ";
+      "select cat_id,id from resource_group where cat_id = ANY($1::text[]) ";
 
   public static final String GET_RES_SER_ID =
-      "select url,id from "+  DB_SCHEMA +  ".resource_server where url = any($1::text[])";
+      "select url,id from resource_server where url = any($1::text[])";
 
   public static final String GET_PROVIDER_ID =
-      "select email_hash,id from "+  DB_SCHEMA +  ".users where email_hash = any($1::text[])";
+      "select email_hash,id from users where email_hash = any($1::text[])";
 
   public static final String INSERT_RES_GRP =
-      "insert into "+  DB_SCHEMA +  ".resource_group "
+      "insert into resource_group "
           + "(cat_id,provider_id,resource_server_id,created_at,updated_at) values"
           + " ($1::text, $2::UUID, $3::UUID,now(),now()) "
           + "on conflict (cat_id,provider_id,resource_server_id) do nothing";
 
   public static final String GET_RES_SER_DETAIL =
       "select id,provider_id,resource_server_id, "
-          + "cat_id from "+  DB_SCHEMA +  ".resource_group where cat_id = any($1::text[])";
+          + "cat_id from resource_group where cat_id = any($1::text[])";
 
   public static final String INSERT_RES =
-      "insert into "+  DB_SCHEMA +  ".resource "
+      "insert into resource "
           + "(cat_id,provider_id,resource_server_id,resource_group_id,created_at,updated_at) values"
           + " ($1::text, $2::UUID, $3::UUID,$4::UUID,now(),now()) "
           + "on conflict (cat_id,provider_id,resource_group_id) do nothing";
 
   public static final String INSERT_POLICY =
-      "insert into "+  DB_SCHEMA +  ".policies (user_id,item_id,item_type,owner_id,status,"
+      "insert into policies (user_id,item_id,item_type,owner_id,status,"
           + "expiry_time,constraints,created_at,updated_at) values"
-          + " ($1::UUID, $2::UUID, $3::"+  DB_SCHEMA +  ".item_enum, $4::UUID,$5::"+  DB_SCHEMA +  ".policy_status_enum "
+          + " ($1::UUID, $2::UUID, $3::item_enum, $4::UUID,$5::policy_status_enum "
           + ", $6::timestamp without time zone, $7::jsonb, now() ,now()) ";
 
   public static final String CHECK_EXISTING_POLICY =
-      "select id from "+  DB_SCHEMA +  ".policies where user_id =$1::UUID "
-          + " and item_id =$2::UUID and item_type = $3::"+  DB_SCHEMA +  ".item_enum and owner_id = $4::UUID "
-          + " and status = $5::"+  DB_SCHEMA +  ".policy_status_enum and expiry_time > now()";
+      "select id from policies where user_id =$1::UUID "
+          + " and item_id =$2::UUID and item_type = $3::item_enum and owner_id = $4::UUID "
+          + " and status = $5::policy_status_enum and expiry_time > now()";
 
   public static final String LIST_DELEGATE_AUTH_DELEGATE =
       "SELECT d.id, d.owner_id, d.user_id, url, name AS server "
-          + "FROM "+  DB_SCHEMA +  ".delegations AS d JOIN "+  DB_SCHEMA +  ".resource_server ON"
+          + "FROM delegations AS d JOIN resource_server ON"
           + " d.resource_server_id = resource_server.id WHERE d.owner_id = $1::uuid AND url != $2::text AND d.status = 'ACTIVE'";
 
   public static final String LIST_DELEGATE_AS_PROVIDER_DELEGATE =
       "SELECT d.id, d.owner_id, d.user_id, url, name AS server "
-          + "FROM "+  DB_SCHEMA +  ".delegations AS d JOIN "+  DB_SCHEMA +  ".resource_server ON"
+          + "FROM delegations AS d JOIN resource_server ON"
           + " d.resource_server_id = resource_server.id"
           + " WHERE d.status = 'ACTIVE' AND (d.owner_id = $1::uuid OR d.user_id = $1::uuid)";
 
   public static final String GET_DELEGATIONS_BY_ID =
-      "SELECT d.id, url FROM "+  DB_SCHEMA +  ".delegations AS d JOIN "+  DB_SCHEMA +  ".resource_server ON"
+      "SELECT d.id, url FROM delegations AS d JOIN resource_server ON"
           + " d.resource_server_id = resource_server.id"
           + " WHERE d.owner_id = $1::uuid AND d.id = ANY($2::uuid[]) AND d.status = 'ACTIVE'";
 
   public static final String  DELETE_DELEGATIONS =
-      "UPDATE "+  DB_SCHEMA +  ".delegations SET status = 'DELETED', updated_at = NOW()"
+      "UPDATE delegations SET status = 'DELETED', updated_at = NOW()"
           + " WHERE owner_id = $1::uuid AND id = ANY($2::uuid[])";
 
   public static final String CREATE_NOTIFI_POLICY_REQUEST =
-      "INSERT INTO "+ DB_SCHEMA +".access_requests (user_id, item_id,item_type, owner_id, status, "
+      "INSERT INTO access_requests (user_id, item_id,item_type, owner_id, status, "
       + "expiry_duration, constraints, created_at, updated_at)\n"
-      + "VALUES ($1::UUID, $2::UUID, $3::"+  DB_SCHEMA +  ".item_enum,$4::UUID,$5::"+  DB_SCHEMA +  ".acc_reqs_status_enum,"
+      + "VALUES ($1::UUID, $2::UUID, $3::item_enum,$4::UUID,$5::acc_reqs_status_enum,"
       + "$6::interval,$7::jsonb, now() ,now()) RETURNING id as \"requestId\";";
 
   public static final String SELECT_NOTIF_POLICY_REQUEST =
-      "SELECT id FROM "+ DB_SCHEMA +".access_requests WHERE user_id = $1::UUID AND "
-      + "item_id = $2::UUID AND owner_id = $3::UUID AND status = $4::"+  DB_SCHEMA +  ".acc_reqs_status_enum";
+      "SELECT id FROM access_requests WHERE user_id = $1::UUID AND "
+      + "item_id = $2::UUID AND owner_id = $3::UUID AND status = $4::acc_reqs_status_enum";
 
   public static final String SELECT_PROVIDER_NOTIF_REQ =
       "SELECT id as \"requestId\", user_id, item_id as \"itemId\", lower(item_type::text) as \"itemType\", owner_id, lower(status::text) AS status, "
-          + "expiry_duration::text as \"expiryDuration\", constraints FROM " + DB_SCHEMA
-          + ".access_requests WHERE owner_id = $1::UUID";
+          + "expiry_duration::text as \"expiryDuration\", constraints FROM "
+          + "access_requests WHERE owner_id = $1::UUID";
 
   public static final String SELECT_CONSUM_NOTIF_REQ =
       "SELECT id as \"requestId\", user_id, item_id as \"itemId\", lower(item_type::text) as \"itemType\", owner_id, lower(status::text) AS status, "
-          + "expiry_duration::text as \"expiryDuration\", constraints FROM " + DB_SCHEMA
-          + ".access_requests WHERE user_id = $1::UUID";
+          + "expiry_duration::text as \"expiryDuration\", constraints FROM " 
+          + "access_requests WHERE user_id = $1::UUID";
 
   public static final String SEL_NOTIF_REQ_ID =
       "SELECT id, user_id as \"userId\", item_id as \"itemId\", item_type as \"itemType\", owner_id as \"ownerId\", "
           + "status, expiry_duration::text as \"expiryDuration\", "
-          + "constraints FROM "+ DB_SCHEMA + ".access_requests where id = ANY($1::UUID[])";
+          + "constraints FROM access_requests where id = ANY($1::UUID[])";
 
   public static final String SEL_NOTIF_ITEM_ID =
-      "SELECT * FROM (SELECT id, cat_id AS url FROM "+ DB_SCHEMA + ".resource\n" +
-      "UNION SELECT id, url AS url FROM "+ DB_SCHEMA + ".resource_server\n" +
-      "UNION select id, cat_id AS url FROM "+ DB_SCHEMA + ".resource_group) view WHERE id = ANY($1::UUID[])";
+      "SELECT * FROM (SELECT id, cat_id AS url FROM resource\n" +
+      "UNION SELECT id, url AS url FROM resource_server\n" +
+      "UNION select id, cat_id AS url FROM resource_group) view WHERE id = ANY($1::UUID[])";
 
   public static final String UPDATE_NOTIF_REQ_APPROVED =
-      "UPDATE " + DB_SCHEMA + ".access_requests SET status = $1::"+  DB_SCHEMA +  ".acc_reqs_status_enum, expiry_duration = $2::interval, "
+      "UPDATE access_requests SET status = $1::acc_reqs_status_enum, expiry_duration = $2::interval, "
       + "constraints =$3::jsonb, updated_at = NOW() WHERE id = $4::UUID and status = 'PENDING'";
 
   public static final String UPDATE_NOTIF_REQ_REJECTED =
-      "UPDATE "+  DB_SCHEMA +  ".access_requests SET status = $2::"+  DB_SCHEMA +  ".acc_reqs_status_enum, updated_at = NOW() WHERE id = $1::UUID and status = 'PENDING'";
+      "UPDATE access_requests SET status = $2::acc_reqs_status_enum, updated_at = NOW() WHERE id = $1::UUID and status = 'PENDING'";
 
   public static final String SEL_NOTIF_POLICY_ID =
-      "SELECT ar.id AS \"requestId\", pol.id AS \"policyId\" FROM " + DB_SCHEMA
-          + ".access_requests ar "
-          + "LEFT JOIN "+  DB_SCHEMA +  ".policies pol ON ar.user_id = pol.user_id AND ar.item_id = pol.item_id AND ar.owner_id = pol.owner_id \n"
+      "SELECT ar.id AS \"requestId\", pol.id AS \"policyId\" FROM " 
+          + "access_requests ar "
+          + "LEFT JOIN policies pol ON ar.user_id = pol.user_id AND ar.item_id = pol.item_id AND ar.owner_id = pol.owner_id \n"
           + "WHERE pol.user_id= $1::UUID AND pol.item_id = $2::UUID AND ar.owner_id = $3::UUID AND pol.status = 'ACTIVE'";
 
   public static final String INSERT_NOTIF_APPROVED_ID =
-      "INSERT INTO " + DB_SCHEMA + ".approved_access_requests(request_id,policy_id,created_at,updated_at) "
+      "INSERT INTO approved_access_requests(request_id,policy_id,created_at,updated_at) "
           + "VALUES ($1::UUID,$2::UUID, NOW(),NOW());";
 
 
   public static final String SET_INTERVALSTYLE = "SET LOCAL intervalstyle = 'iso_8601'";
 
   public static final String INSERT_DELEGATION =
-      "insert into "+  DB_SCHEMA +  ".delegations (owner_id,user_id,resource_server_id,status,created_at,updated_at) values "
-          + " ($1::UUID, $2::UUID, $3::UUID, $4::"+  DB_SCHEMA +  ".policy_status_enum, now() ,now())";
+      "insert into delegations (owner_id,user_id,resource_server_id,status,created_at,updated_at) values "
+          + " ($1::UUID, $2::UUID, $3::UUID, $4::policy_status_enum, now() ,now())";
 
   // create delegation
 
   public static final String CHECK_ROLES =
-      "select user_id from "+  DB_SCHEMA +  ".roles where role = $1::"+  DB_SCHEMA +  ".role_enum"
-          + " and status = $2::"+  DB_SCHEMA +  ".role_status_enum and user_id = ANY($3::UUID[]) ";
+      "select user_id from roles where role = $1::role_enum"
+          + " and status = $2::role_status_enum and user_id = ANY($3::UUID[]) ";
 
   public static final String GET_SERVER_DETAILS =
-      "select url,id from "+  DB_SCHEMA +  ".resource_server where url =  ANY($1::text[])";
+      "select url,id from resource_server where url =  ANY($1::text[])";
 
   public static final String CHECK_AUTH_POLICY_DELEGATION =
-      "select * from "+  DB_SCHEMA +  ".policies a inner join "+  DB_SCHEMA +  ".resource_server b on a.item_id = b.id "
-          + " where a.user_id = $1::UUID and a.item_type = $2::"+  DB_SCHEMA +  ".item_enum and"
-          + " b.url = $3::text and a.status =$4::"+  DB_SCHEMA +  ".policy_status_enum and a.expiry_time > now() ";
+      "select * from policies a inner join resource_server b on a.item_id = b.id "
+          + " where a.user_id = $1::UUID and a.item_type = $2::item_enum and"
+          + " b.url = $3::text and a.status =$4::policy_status_enum and a.expiry_time > now() ";
 
   public static final String CHECK_EXISTING_DELEGATIONS =
-      "select id from "+  DB_SCHEMA +  ".delegations where owner_id = $1::UUID "
+      "select id from delegations where owner_id = $1::UUID "
           + " and user_id =$2::UUID and resource_server_id = $3::UUID and  "
-          + " status = $4::"+  DB_SCHEMA +  ".policy_status_enum ";
+          + " status = $4::policy_status_enum ";
 
   // item types
   public enum itemTypes {

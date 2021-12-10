@@ -21,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static iudx.aaa.server.policy.Constants.*;
 import static iudx.aaa.server.policy.TestRequest.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.Map;
 
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
 public class VerifyPolicyTest {
@@ -32,6 +33,7 @@ public class VerifyPolicyTest {
   private static String databaseIP;
   private static int databasePort;
   private static String databaseName;
+  private static String databaseSchema;
   private static String databaseUserName;
   private static String databasePassword;
   private static int poolSize;
@@ -60,6 +62,7 @@ public class VerifyPolicyTest {
     databaseIP = dbConfig.getString("databaseIP");
     databasePort = Integer.parseInt(dbConfig.getString("databasePort"));
     databaseName = dbConfig.getString("databaseName");
+    databaseSchema = dbConfig.getString("databaseSchema");
     databaseUserName = dbConfig.getString("databaseUserName");
     databasePassword = dbConfig.getString("databasePassword");
     poolSize = Integer.parseInt(dbConfig.getString("poolSize"));
@@ -73,15 +76,13 @@ public class VerifyPolicyTest {
     authOptions.put("authServerUrl", dbConfig.getString("authServerDomain"));
     catOptions.put("authServerUrl", dbConfig.getString("authServerDomain"));
 
-      /* Set Connection Object */
+    /* Set Connection Object and schema */
     if (connectOptions == null) {
-      connectOptions =
-          new PgConnectOptions()
-              .setPort(databasePort)
-              .setHost(databaseIP)
-              .setDatabase(databaseName)
-              .setUser(databaseUserName)
-              .setPassword(databasePassword);
+      Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
+
+      connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
+          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
+          .setProperties(schemaProp);
     }
 
     /* Pool options */
