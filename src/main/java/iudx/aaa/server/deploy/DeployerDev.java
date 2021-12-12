@@ -93,7 +93,7 @@ public class DeployerDev {
             .setDescription("display help"))
         .addOption(new Option().setLongName("config").setShortName("c")
             .setRequired(true).setDescription("configuration file"));
-
+    LOGGER.debug("The logger has message lookups disabled ${LOG_LEVEL_PATTERN}");
     StringBuilder usageString = new StringBuilder();
     cli.usage(usageString);
     CommandLine commandLine = cli.parse(Arrays.asList(args), false);
