@@ -6,12 +6,14 @@ import static iudx.aaa.server.registration.Constants.DATABASE_NAME;
 import static iudx.aaa.server.registration.Constants.DATABASE_PASSWORD;
 import static iudx.aaa.server.registration.Constants.DATABASE_POOLSIZE;
 import static iudx.aaa.server.registration.Constants.DATABASE_PORT;
+import static iudx.aaa.server.registration.Constants.DATABASE_SCHEMA;
 import static iudx.aaa.server.registration.Constants.DATABASE_USERNAME;
 import static iudx.aaa.server.registration.Constants.KC_ADMIN_CLIENT_ID;
 import static iudx.aaa.server.registration.Constants.KC_ADMIN_CLIENT_SEC;
 import static iudx.aaa.server.registration.Constants.KC_ADMIN_POOLSIZE;
 import static iudx.aaa.server.registration.Constants.KEYCLOAK_REALM;
 import static iudx.aaa.server.registration.Constants.KEYCLOAK_URL;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import io.vertx.core.AbstractVerticle;
@@ -40,6 +42,7 @@ public class RegistrationVerticle extends AbstractVerticle {
   private String databaseIP;
   private int databasePort;
   private String databaseName;
+  private String databaseSchema;
   private String databaseUserName;
   private String databasePassword;
   private int poolSize;
@@ -74,6 +77,7 @@ public class RegistrationVerticle extends AbstractVerticle {
     databaseIP = config().getString(DATABASE_IP);
     databasePort = Integer.parseInt(config().getString(DATABASE_PORT));
     databaseName = config().getString(DATABASE_NAME);
+    databaseSchema = config().getString(DATABASE_SCHEMA);
     databaseUserName = config().getString(DATABASE_USERNAME);
     databasePassword = config().getString(DATABASE_PASSWORD);
     poolSize = Integer.parseInt(config().getString(DATABASE_POOLSIZE));
@@ -84,11 +88,13 @@ public class RegistrationVerticle extends AbstractVerticle {
     keycloakAdminClientSecret = config().getString(KC_ADMIN_CLIENT_SEC);
     keycloakAdminPoolSize = Integer.parseInt(config().getString(KC_ADMIN_POOLSIZE));
 
-    /* Set Connection Object */
+    /* Set Connection Object and schema */
     if (connectOptions == null) {
+      Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
+
       connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
           .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
-          .setConnectTimeout(DB_CONNECT_TIMEOUT);
+          .setConnectTimeout(DB_CONNECT_TIMEOUT).setProperties(schemaProp);
     }
 
     /* Pool options */

@@ -2,7 +2,6 @@ package iudx.aaa.server.token;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import iudx.aaa.server.apiserver.Schema;
 
 public class Constants {
   
@@ -22,6 +21,7 @@ public class Constants {
   public static final String DATABASE_IP = "databaseIP";
   public static final String DATABASE_PORT = "databasePort";
   public static final String DATABASE_NAME = "databaseName";
+  public static final String DATABASE_SCHEMA = "databaseSchema";
   public static final String DATABASE_USERNAME = "databaseUserName";
   public static final String DATABASE_PASSWORD = "databasePassword";
   public static final String POOLSIZE = "poolSize";
@@ -131,16 +131,15 @@ public class Constants {
   public static final String PROVIDER = "provider";
   
   /* SQL Queries */
-  public static final Schema DB_SCHEMA = Schema.INSTANCE; 
   public static final String CHECK_USER =
-      "SELECT EXISTS (SELECT 1 FROM " + DB_SCHEMA + ".user_clients WHERE user_id = $1)";
+      "SELECT EXISTS (SELECT 1 FROM user_clients WHERE user_id = $1)";
 
   public static final String GET_CLIENT =
-      "SELECT client_id FROM " + DB_SCHEMA + ".user_clients WHERE user_id = $1";
+      "SELECT client_id FROM user_clients WHERE user_id = $1";
   
   public static final String GET_URL =
-      "SELECT EXISTS (SELECT 1 FROM " + DB_SCHEMA + ".resource_server WHERE url = $1)";
+      "SELECT EXISTS (SELECT 1 FROM resource_server WHERE url = $1)";
   
-  public static final String GET_RS = "SELECT owner_id AS owner FROM " + DB_SCHEMA + ".resource_server WHERE url = $1";
+  public static final String GET_RS = "SELECT owner_id AS owner FROM resource_server WHERE url = $1";
 
 }

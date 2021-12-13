@@ -32,46 +32,44 @@ import org.apache.commons.lang3.RandomStringUtils;
  */
 public class Utils {
 
-  private static final Schema DB_SCHEMA = Schema.INSTANCE;
-
   /* SQL queries for creating and deleting required data */
   public static final String SQL_CREATE_ORG =
-      "INSERT INTO " + DB_SCHEMA + ".organizations (name, url, created_at, updated_at) "
+      "INSERT INTO organizations (name, url, created_at, updated_at) "
           + "VALUES ($1:: text, $2::text, NOW(), NOW()) RETURNING id";
 
   public static final String SQL_DELETE_USRS =
-      "DELETE FROM " + DB_SCHEMA + ".users WHERE organization_id = $1::uuid";
+      "DELETE FROM users WHERE organization_id = $1::uuid";
 
   public static final String SQL_DELETE_ORG =
-      "DELETE FROM " + DB_SCHEMA + ".organizations WHERE id = $1::uuid";
+      "DELETE FROM organizations WHERE id = $1::uuid";
 
   public static final String SQL_DELETE_CONSUMERS =
-      "DELETE FROM " + DB_SCHEMA + ".users WHERE email_hash LIKE $1::text || '%'";
+      "DELETE FROM users WHERE email_hash LIKE $1::text || '%'";
 
   private static final String SQL_DELETE_USER_BY_ID =
-      "DELETE FROM " + DB_SCHEMA + ".users WHERE id = ANY($1::uuid[])";
+      "DELETE FROM users WHERE id = ANY($1::uuid[])";
 
   public static final String SQL_CREATE_ADMIN_SERVER =
-      "INSERT INTO " + DB_SCHEMA + ".resource_server (name, owner_id, url, created_at, updated_at) "
+      "INSERT INTO resource_server (name, owner_id, url, created_at, updated_at) "
           + "VALUES ($1::text, $2::uuid, $3::text, NOW(), NOW())";
 
   public static final String SQL_DELETE_SERVERS =
-      "DELETE FROM " + DB_SCHEMA + ".resource_server WHERE url = ANY ($1::text[])";
+      "DELETE FROM resource_server WHERE url = ANY ($1::text[])";
 
   public static final String SQL_DELETE_BULK_ORG =
-      "DELETE FROM " + DB_SCHEMA + ".organizations WHERE id = ANY ($1::uuid[])";
+      "DELETE FROM organizations WHERE id = ANY ($1::uuid[])";
 
   public static final String SQL_GET_SERVER_IDS =
-      "SELECT id, url FROM " + DB_SCHEMA + ".resource_server WHERE url = ANY($1::text[])";
+      "SELECT id, url FROM resource_server WHERE url = ANY($1::text[])";
 
-  public static final String SQL_CREATE_DELEG = "INSERT INTO " + DB_SCHEMA + ".delegations "
+  public static final String SQL_CREATE_DELEG = "INSERT INTO delegations "
       + "(owner_id, user_id, resource_server_id,status, created_at, updated_at) "
-      + "VALUES ($1::uuid, $2::uuid, $3::uuid, $4::" + DB_SCHEMA
-      + ".policy_status_enum, NOW(), NOW())" + " RETURNING id, resource_server_id";
+      + "VALUES ($1::uuid, $2::uuid, $3::uuid, $4::" 
+      + "policy_status_enum, NOW(), NOW())" + " RETURNING id, resource_server_id";
 
   public static final String SQL_GET_DELEG_IDS =
-      "SELECT d.id, url FROM " + DB_SCHEMA + ".delegations AS d JOIN " + DB_SCHEMA
-          + ".resource_server ON" + " d.resource_server_id = resource_server.id"
+      "SELECT d.id, url FROM delegations AS d JOIN "
+          + "resource_server ON d.resource_server_id = resource_server.id"
           + " WHERE url = ANY($1::text[]) AND d.owner_id = $2::uuid";
 
   /**

@@ -7,6 +7,7 @@ import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.codec.binary.Base64;
@@ -74,6 +75,7 @@ public class ApiServerVerticle extends AbstractVerticle {
   private String databaseIP;
   private int databasePort;
   private String databaseName;
+  private String databaseSchema;
   private String databaseUserName;
   private String databasePassword;
   private int poolSize;
@@ -111,6 +113,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     databaseIP = config().getString(DATABASE_IP);
     databasePort = Integer.parseInt(config().getString(DATABASE_PORT));
     databaseName = config().getString(DATABASE_NAME);
+    databaseSchema = config().getString(DATABASE_SCHEMA);
     databaseUserName = config().getString(DATABASE_USERNAME);
     databasePassword = config().getString(DATABASE_PASSWORD);
     poolSize = Integer.parseInt(config().getString(POOLSIZE));
@@ -121,11 +124,13 @@ public class ApiServerVerticle extends AbstractVerticle {
     keystorePath = config().getString(KEYSTORE_PATH);
     keystorePassword = config().getString(KEYSTPRE_PASSWORD);
 
-    /* Set Connection Object */
+    /* Set Connection Object and schema */
     if (connectOptions == null) {
+      Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
+
       connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
           .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
-          .setConnectTimeout(PG_CONNECTION_TIMEOUT);
+          .setConnectTimeout(PG_CONNECTION_TIMEOUT).setProperties(schemaProp);
     }
 
     /* Pool options */

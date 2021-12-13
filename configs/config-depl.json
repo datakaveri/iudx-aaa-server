@@ -4,12 +4,12 @@
     "zookeeper"
   ],
   "clusterId": "iudx-aaa-cluster",
-  "databaseSchema":"test",
   "options":{
       "postgresOptions": {
         "databaseIP": "x.y.z.a",
         "databasePort": "5432",
         "databaseName": "abc",
+        "databaseSchema":"test",
         "databaseUserName": "qwqws",
         "databasePassword": "wwd"
       },

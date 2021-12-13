@@ -3,7 +3,6 @@ package iudx.aaa.server.apiserver.util;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import iudx.aaa.server.apiserver.Schema;
 
 public class Constants {
   // Header params
@@ -30,6 +29,7 @@ public class Constants {
   public static final String DATABASE_PORT = "databasePort";
   public static final String DATABASE_NAME = "databaseName";
   public static final String DATABASE_USERNAME = "databaseUserName";
+  public static final String DATABASE_SCHEMA = "databaseSchema";
   public static final String DATABASE_PASSWORD = "databasePassword";
   public static final String POOLSIZE = "poolSize";
   public static final String KEYSTORE_PATH = "keystorePath";
@@ -151,25 +151,24 @@ public class Constants {
 
 
   /* SQL Queries */
-  public static final Schema DB_SCHEMA = Schema.INSTANCE; 
   public static final String SQL_GET_USER_ROLES = 
       "select roles.user_id AS id, coalesce(array_agg(roles.role) filter (where status = 'APPROVED'), '{}') AS roles"
-      + ", client_id FROM " + DB_SCHEMA + ".roles JOIN " + DB_SCHEMA + ".user_clients"
+      + ", client_id FROM roles JOIN user_clients"
       + " ON roles.user_id = user_clients.user_id"
-      + " WHERE roles.user_id = (SELECT id FROM " + DB_SCHEMA + ".users WHERE keycloak_id = $1)"
+      + " WHERE roles.user_id = (SELECT id FROM users WHERE keycloak_id = $1)"
       + " GROUP BY client_id, roles.user_id";
 
   public static final String SQL_GET_KID_ROLES =
       "SELECT u.id, q.keycloak_id as kid, client_secret, array_agg(r.role) as roles\n"
-          + "FROM (select user_id as id, client_secret from " + DB_SCHEMA
-          + ".user_clients where client_id = $1) u\n" + "LEFT JOIN " + DB_SCHEMA
-          + ".roles r ON u.id = r.user_id\n" + "LEFT JOIN " + DB_SCHEMA
-          + ".users q ON u.id = q.id\n"
+          + "FROM (select user_id as id, client_secret from "
+          + "user_clients where client_id = $1) u\n" + "LEFT JOIN "
+          + "roles r ON u.id = r.user_id\n" + "LEFT JOIN " 
+          + "users q ON u.id = q.id\n"
           + "where r.status='APPROVED' GROUP BY u.id, client_secret, keycloak_id";
   
   public static final String CHECK_DELEGATE =
-      "SELECT * FROM " + DB_SCHEMA + ".policies pol "
-      + "INNER JOIN " + DB_SCHEMA + ".delegations del ON "
+      "SELECT * FROM policies pol "
+      + "INNER JOIN delegations del ON "
       + "pol.owner_id = del.owner_id AND pol.user_id = del.user_id "
       + "WHERE del.user_id = $1 AND "
       + "del.owner_id = $2 AND "
@@ -179,15 +178,15 @@ public class Constants {
   
   public static final String GET_DELEGATE = 
       "WITH auth AS (\n" + 
-      "    SELECT owner_id, id FROM "+ DB_SCHEMA +".resource_server WHERE url = $1::text\n" + 
+      "    SELECT owner_id, id FROM resource_server WHERE url = $1::text\n" + 
       "), delegate AS (\n" + 
-      "    SELECT resource_server_id, user_id,owner_id FROM "+ DB_SCHEMA +".delegations \n" + 
+      "    SELECT resource_server_id, user_id,owner_id FROM delegations \n" + 
       "    WHERE user_id = $2::uuid \n" + 
       "    AND owner_id = $3::uuid \n" + 
       "    AND status = 'ACTIVE' \n" + 
       "    AND resource_server_id = (SELECT id FROM auth)\n" + 
       "), policy AS (\n" + 
-      "    SELECT * FROM "+ DB_SCHEMA +".policies WHERE item_id = (SELECT id FROM auth) \n" + 
+      "    SELECT * FROM policies WHERE item_id = (SELECT id FROM auth) \n" + 
       "    AND owner_id = (SELECT owner_id FROM auth) \n" + 
       "    AND user_id = (SELECT user_id FROM delegate)\n" + 
       "    AND status = 'ACTIVE' \n" + 
