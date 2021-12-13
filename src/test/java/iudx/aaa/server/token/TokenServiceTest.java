@@ -15,6 +15,7 @@ import static iudx.aaa.server.token.Constants.RESOURCE_SVR;
 import static iudx.aaa.server.token.Constants.ROLE;
 import static iudx.aaa.server.token.Constants.RS_URL;
 import static iudx.aaa.server.token.Constants.STATUS;
+import static iudx.aaa.server.token.Constants.SUB;
 import static iudx.aaa.server.token.Constants.TYPE;
 import static iudx.aaa.server.token.Constants.URL;
 import static iudx.aaa.server.token.Constants.URN_INVALID_AUTH_TOKEN;
@@ -640,6 +641,7 @@ public class TokenServiceTest {
           assertEquals(URN_SUCCESS, response.getString(TYPE));
           JsonObject payload = response.getJsonObject("results");
           assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
+          assertEquals(payload.getString(SUB), consumer.result().getString("userId"));
           assertEquals(payload.getString(AUD), DUMMY_SERVER);
           assertEquals(payload.getString(IID), "rg:" + RESOURCE_GROUP);
           assertEquals(payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
@@ -665,6 +667,7 @@ public class TokenServiceTest {
           assertEquals(URN_SUCCESS, response.getString(TYPE));
           JsonObject payload = response.getJsonObject("results");
           assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
+          assertEquals(payload.getString(SUB), consumer.result().getString("userId"));
           assertEquals(payload.getString(AUD), DUMMY_SERVER);
           assertEquals(payload.getString(IID), "rs:" + DUMMY_SERVER);
           assertEquals(payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
@@ -768,6 +771,30 @@ public class TokenServiceTest {
     tokenService.validateToken(mapToInspctToken(token),
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_INVALID_AUTH_TOKEN, response.getString(TYPE));
+          testContext.completeNow();
+        })));
+  }
+  @Test
+  @DisplayName("validateToken success [special admin token]")
+  void validateSpecialAdminToken(VertxTestContext testContext) {
+
+        JsonObject adminTokenReq = new JsonObject().put(USER_ID, CLAIM_ISSUER).put(URL, DUMMY_SERVER)
+            .put(ROLE, "").put(ITEM_TYPE, "").put(ITEM_ID, "");
+    JsonObject token = tokenServiceImplObj.getJwt(adminTokenReq);
+    token.remove("expiry");
+    token.remove("server");
+
+    tokenService.validateToken(mapToInspctToken(token),
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_SUCCESS, response.getString(TYPE));
+          JsonObject payload = response.getJsonObject("results");
+          assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
+          assertEquals(payload.getString(SUB), DUMMY_AUTH_SERVER);
+          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+          assertEquals(payload.getString(IID), "null:");
+          assertEquals(payload.getString(ROLE), "");
+          assertTrue(payload.getJsonObject(CONS).isEmpty());
+          assertNotNull(payload.getString(EXP));
           testContext.completeNow();
         })));
   }

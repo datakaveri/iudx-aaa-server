@@ -285,6 +285,18 @@ public class TokenServiceImpl implements TokenService {
 
       JsonObject accessTokenJwt = jwtDetails.attributes().getJsonObject(ACCESS_TOKEN);
       String userId = accessTokenJwt.getString(SUB);
+      
+      /* If the sub field is equal to the auth server domain, it is a
+       * special admin token. Immediately send the decoded JWT back, as
+       * there is no role/item information to be checked/validated.
+       */
+      if(userId.equals(CLAIM_ISSUER)) {
+        Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS)
+            .title(TOKEN_AUTHENTICATED).objectResults(accessTokenJwt).build();
+        handler.handle(Future.succeededFuture(resp.toJson()));
+        return;
+      }
+      
       String role = accessTokenJwt.getString(ROLE);
       
       String[] item = accessTokenJwt.getString(IID).split(":");
