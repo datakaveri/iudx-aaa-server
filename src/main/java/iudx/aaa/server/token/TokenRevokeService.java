@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
@@ -13,120 +12,90 @@ import io.vertx.core.http.RequestOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
+import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import static iudx.aaa.server.token.Constants.*;
+import java.util.Optional;
 
 public class TokenRevokeService {
   private static final Logger LOGGER = LogManager.getLogger(TokenRevokeService.class);
   private WebClient client;
-  private JsonObject httpOptions;
 
   /**
    * Constructor initializing WebClient.
    * 
    * @param vertx which is a Vert.x instance
-   * @param keyCloakOptions which is a JsonObject
    */
-  public TokenRevokeService(Vertx vertx, JsonObject keyCloakOptions) {
-    
-    WebClientOptions clientOptions = new WebClientOptions()
-        .setSsl(true)
-        .setVerifyHost(false)
-        .setTrustAll(true);
-    
-    this.client = WebClient.create(vertx,clientOptions);
-    this.httpOptions = keyCloakOptions;
+  public TokenRevokeService(Vertx vertx) {
+
+    WebClientOptions clientOptions =
+        new WebClientOptions().setSsl(true).setVerifyHost(true).setTrustAll(false);
+
+    this.client = WebClient.create(vertx, clientOptions);
   }
-  
-  
+
+
   /**
-   * Handles token revocation requests. Generates token using KeyCloack 
-   * and send further request to resourceServer.
+   * Handles token revocation
    * 
-   * @param request which is a JsonObject
-   * @param handler which is a AsyncResult Handler
-   * @return future event which upon completion
+   * @param request is a JSON object containing the user ID and URL of server to revoke at
+   * @param adminToken is the admin token to be presented at the server
+   * @param handler to handle asynchronously
+   * @return an instance of TokenRevokeService
    */
-  TokenRevokeService httpRevokeRequest(JsonObject request,
+  TokenRevokeService httpRevokeRequest(JsonObject request, String adminToken,
       Handler<AsyncResult<JsonObject>> handler) {
 
-    LOGGER.info("Info : Procssing token revocation");
+    LOGGER.info("Info : Processing token revocation");
 
     JsonObject rsPayload = new JsonObject();
-    rsPayload.put("user_id", request.getValue(CLIENT_ID))
-             .put("current-token-duration",CLAIM_EXPIRY);
-    
-    request.put(BODY, rsPayload).put(URI, RS_REVOKE_URN);
+    rsPayload.put(RS_REVOKE_BODY_SUB, request.getString(USER_ID));
 
-    httpPostFormAsync(httpOptions).compose(kcHandler -> {
-      request.put(TOKEN, kcHandler.getString("access_token"));
-      return httpPostAsync(request);
-    }).onComplete(reqHandler -> {
-      if (reqHandler.succeeded()) {
-        handler.handle(Future.succeededFuture(reqHandler.result()));
-      } else if (reqHandler.failed()) {
-        handler.handle(Future.failedFuture(reqHandler.cause()));
-      }
+    request.put(BODY, rsPayload).put(URI, RS_REVOKE_URI);
+
+    httpPostAsync(request, adminToken).onSuccess(reqHandler -> {
+      handler.handle(Future.succeededFuture(new JsonObject()));
+    }).onFailure(reqHandler -> {
+      handler.handle(Future.failedFuture(reqHandler.getMessage()));
     });
 
     return this;
   }
-  
+
   /**
    * Future to handles http post request to External services.
    * 
-   * @param requestBody which is a JsonObject
+   * @param requestBody which is a JsonObject containing the URL, payload body and URI
+   * @param token the admin token to be presented to the server in the header
    * @return promise and future associated with the promise.
    */
-  private Future<JsonObject> httpPostAsync(JsonObject requestBody) {
+  private Future<Void> httpPostAsync(JsonObject requestBody, String token) {
 
-    Promise<JsonObject> promise = Promise.promise();
+    Promise<Void> promise = Promise.promise();
     RequestOptions options = new RequestOptions();
     options.setHost(requestBody.getString(RS_URL));
-    options.setPort(requestBody.getInteger(PORT,DEFAULT_HTTPS_PORT));
+    options.setPort(requestBody.getInteger(PORT, DEFAULT_HTTPS_PORT));
     options.setURI(requestBody.getString(URI));
 
-    String token = requestBody.getString(TOKEN);
     JsonObject body = requestBody.getJsonObject(BODY);
 
-    client.request(HttpMethod.POST, options).putHeader(TOKEN, token).sendJsonObject(body,
-        reqHandler -> {
-          if (reqHandler.succeeded()) {
-            LOGGER.debug("Info: ResourceServer request completed");
-            promise.complete(reqHandler.result().bodyAsJsonObject());
-          } else if (reqHandler.failed()) {
-            LOGGER.debug("Error: ResourceServer request failed; " + reqHandler.cause().getMessage());
-            promise.fail(reqHandler.cause());
-          }
-        });
-    return promise.future();
-  }
-  
-  /**
-   * To Generate JWT using KeyCloak credentials.
-   * Performs POST Multipart/Form request to KeyCloak.
-   * 
-   * @param config which is a JsonObject with the keycloak config
-   * @return promise and future associated with the promise.
-   */
-  private Future<JsonObject> httpPostFormAsync(JsonObject config) {
+    client.request(HttpMethod.POST, options).putHeader(TOKEN, token).expect(ResponsePredicate.SC_OK)
+        .expect(ResponsePredicate.JSON).sendJsonObject(body).onSuccess(reqHandler -> {
 
-    Promise<JsonObject> promise = Promise.promise();
-    RequestOptions options = new RequestOptions(config);
-    
-    MultiMap bodyForm = MultiMap.caseInsensitiveMultiMap();
-    bodyForm.set(GRANT_TYPE, CLIENT_CREDENTIALS)
-            .set("client_id", config.getString(CLIENT_ID))
-            .set("client_secret", config.getString(CLIENT_SECRET));
-    
-    client.request(HttpMethod.POST, options).sendForm(bodyForm, reqHandler -> {
-      if (reqHandler.succeeded()) {
-        LOGGER.debug("Info: Keycloak request completed; JWT generated");
-        promise.complete(reqHandler.result().bodyAsJsonObject());
-      } else if (reqHandler.failed()) {
-        LOGGER.error("Fail: Keycloak request failed; " + reqHandler.cause());
-        promise.fail(reqHandler.cause());
-      }
-    });
+          String type = Optional.ofNullable((String) reqHandler.bodyAsJsonObject().getString(TYPE))
+              .orElse("");
+
+          if (type.isBlank() || !type.toLowerCase().endsWith(SUCCESS)) {
+            promise.fail("Invalid type URN/type not in response");
+            return;
+          }
+
+          LOGGER.debug("Info: ResourceServer request completed");
+          promise.complete();
+        }).onFailure(reqHandler -> {
+          LOGGER.debug("Error: ResourceServer request failed; " + reqHandler.getMessage());
+          promise.fail(reqHandler.getMessage());
+        });
+
     return promise.future();
   }
 }

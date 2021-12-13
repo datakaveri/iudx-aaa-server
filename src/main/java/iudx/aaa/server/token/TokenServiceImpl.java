@@ -194,19 +194,31 @@ public class TokenServiceImpl implements TokenService {
           handler.handle(Future.succeededFuture(resp.toJson()));
           return;
         }
-
         LOGGER.debug("Info: ResourceServer URL validated");
-        JsonObject revokePayload = JsonObject.mapFrom(revokeToken);
+        
+        JsonObject revokePayload =
+            new JsonObject().put(USER_ID, user.getUserId()).put(RS_URL, revokeToken.getRsUrl());
 
-        revokeService.httpRevokeRequest(revokePayload, httpClient -> {
-          if (httpClient.succeeded()) {
+        /* Here, we get the special admin token that is presented to other servers for token
+         * revocation. The 'sub' field is the auth server domain instead of a UUID user ID.
+         * The 'iss' field is the auth server domain as usual and 'aud' is the requested 
+         * resource server domain. The rest of the field are not important, so they are
+         * either null or blank. 
+         */ 
+        
+        JsonObject adminTokenReq = new JsonObject().put(USER_ID, CLAIM_ISSUER).put(URL, rsUrl)
+            .put(ROLE, "").put(ITEM_TYPE, "").put(ITEM_ID, "");
+        String adminToken = getJwt(adminTokenReq).getString(ACCESS_TOKEN);
+        
+        revokeService.httpRevokeRequest(revokePayload, adminToken, result -> {
+          if (result.succeeded()) {
             LOGGER.info(LOG_REVOKE_REQ);
             Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_REVOKED)
                 .arrayResults(new JsonArray()).build();
             handler.handle(Future.succeededFuture(resp.toJson()));
             return;
           } else {
-            LOGGER.error("Fail: {}; {}", FAILED_REVOKE, httpClient.cause());
+            LOGGER.error("Fail: {}; {}", FAILED_REVOKE, result.cause());
             Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
                 .title(FAILED_REVOKE).detail(FAILED_REVOKE).build();
             handler.handle(Future.succeededFuture(resp.toJson()));
