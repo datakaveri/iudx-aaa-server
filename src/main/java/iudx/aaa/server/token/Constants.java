@@ -112,6 +112,7 @@ public class Constants {
   public static final String INTERNAL_SVR_ERR = "Internal server error";
   public static final String INVALID_CLIENT_ID_SEC = "Invalid clientId/clientSecret";
   public static final String INVALID_ROLE = "Role not defined";
+  public static final String CANNOT_REVOKE_ON_AUTH = "Cannot revoke tokens on auth server";
   public static final String INVALID_POLICY = "Policy evaluation failed";
   public static final String TOKEN_SUCCESS = "Token created";
   public static final String TOKEN_REVOKED = "Token revoked";

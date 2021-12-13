@@ -35,9 +35,9 @@ public class MockHttpWebClient {
 
     asyncResult = Mockito.mock(AsyncResult.class);
     Mockito.doAnswer((Answer<AsyncResult<JsonObject>>) arguments -> {
-      ((Handler<AsyncResult<JsonObject>>) arguments.getArgument(1)).handle(asyncResult);
+      ((Handler<AsyncResult<JsonObject>>) arguments.getArgument(2)).handle(asyncResult);
       return null;
-    }).when(httpWebClient).httpRevokeRequest(Mockito.any(), Mockito.any());
+    }).when(httpWebClient).httpRevokeRequest(Mockito.any(),Mockito.any(), Mockito.any());
     
     return MockHttpWebClient.httpWebClient;
     

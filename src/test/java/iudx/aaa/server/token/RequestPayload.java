@@ -17,12 +17,9 @@ import iudx.aaa.server.apiserver.User.UserBuilder;
  */
 public class RequestPayload {
   
-  /* Payload for tokenRevoke */
   public static JsonObject revokeTokenValidPayload = new JsonObject().put("clientId", "349b4b55-0251-490e-bee9-00f3a5d3e643")
       .put("rsUrl", "foobar.iudx.io");
 
-  public static JsonObject revokeTokenInvalidClientId =new JsonObject().put("clientId", "149b4b55-0251-490e-bee9-00f3a5d3e643");
-  public static JsonObject revokeTokenInvalidUrl = revokeTokenValidPayload.copy().put("rsUrl", "barfoo.iudx.io");
   
   /* Payload for TIP */
   public static JsonObject expiredTipPayload = new JsonObject().put("accessToken", "eyJ0eXAiOiJKV1QiL"

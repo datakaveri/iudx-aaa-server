@@ -172,8 +172,33 @@ public class TokenServiceImpl implements TokenService {
       Handler<AsyncResult<JsonObject>> handler) {
 
     LOGGER.debug(REQ_RECEIVED);
+    
+    /* Checking if the userId is valid */
+    if (user.getUserId().equals(NIL_UUID)) {
+      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
+          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
 
-    String rsUrl = revokeToken.getRsUrl();
+    /* Verify the user has some roles */
+    if (user.getRoles().isEmpty()) {
+      Response resp = new ResponseBuilder().status(400).type(URN_INVALID_ROLE).title(INVALID_ROLE)
+          .detail(INVALID_ROLE).build();
+      handler.handle(Future.succeededFuture(resp.toJson()));
+      return this;
+    }
+
+    String rsUrl = revokeToken.getRsUrl().toLowerCase();
+
+    /* Check if the user is trying to revoke tokens on auth */
+    if (rsUrl.equals(CLAIM_ISSUER)) {
+      Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+          .title(CANNOT_REVOKE_ON_AUTH).detail(CANNOT_REVOKE_ON_AUTH).build();
+      handler.handle(Future.succeededFuture(resp.toJson()));
+      return this;
+    }
+
     Tuple tuple = Tuple.of(rsUrl);
 
     pgSelelctQuery(GET_URL, tuple).onComplete(dbHandler -> {
