@@ -14,7 +14,7 @@ public class Constants {
   public static String CLAIM_ISSUER = "";
   public static final long CLAIM_EXPIRY = 60 * 60 * 12; //In Seconds 
   
-  public static final String RS_REVOKE_URI = "/admin/tokenRevoke";
+  public static final String RS_REVOKE_URI = "/admin/revokeToken";
   public static final String RS_REVOKE_BODY_SUB = "sub";
   public static final int DEFAULT_HTTPS_PORT = 443;
   
