@@ -14,7 +14,8 @@ public class Constants {
   public static String CLAIM_ISSUER = "";
   public static final long CLAIM_EXPIRY = 60 * 60 * 12; //In Seconds 
   
-  public static final String RS_REVOKE_URN = "/token/revocation";
+  public static final String RS_REVOKE_URI = "/admin/tokenRevoke";
+  public static final String RS_REVOKE_BODY_SUB = "sub";
   public static final int DEFAULT_HTTPS_PORT = 443;
   
   /* Configuration & related */
@@ -111,6 +112,7 @@ public class Constants {
   public static final String INTERNAL_SVR_ERR = "Internal server error";
   public static final String INVALID_CLIENT_ID_SEC = "Invalid clientId/clientSecret";
   public static final String INVALID_ROLE = "Role not defined";
+  public static final String CANNOT_REVOKE_ON_AUTH = "Cannot revoke tokens on auth server";
   public static final String INVALID_POLICY = "Policy evaluation failed";
   public static final String TOKEN_SUCCESS = "Token created";
   public static final String TOKEN_REVOKED = "Token revoked";

@@ -10,9 +10,6 @@ import io.vertx.core.json.JsonObject;
 //@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class RevokeToken {
 
-  @JsonAlias("clientId")
-  private String clientId;
-
   @JsonAlias("rsUrl")
   private String rsUrl;
 
@@ -28,14 +25,6 @@ public class RevokeToken {
   }
 
   public RevokeToken() {}
-
-  public String getClientId() {
-    return clientId;
-  }
-
-  public void setClientId(String clientId) {
-    this.clientId = clientId;
-  }
 
   public String getRsUrl() {
     return rsUrl;

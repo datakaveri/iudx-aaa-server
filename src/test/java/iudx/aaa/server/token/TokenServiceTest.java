@@ -13,7 +13,9 @@ import static iudx.aaa.server.token.Constants.ITEM_TYPE;
 import static iudx.aaa.server.token.Constants.PG_CONNECTION_TIMEOUT;
 import static iudx.aaa.server.token.Constants.RESOURCE_SVR;
 import static iudx.aaa.server.token.Constants.ROLE;
+import static iudx.aaa.server.token.Constants.RS_URL;
 import static iudx.aaa.server.token.Constants.STATUS;
+import static iudx.aaa.server.token.Constants.SUB;
 import static iudx.aaa.server.token.Constants.TYPE;
 import static iudx.aaa.server.token.Constants.URL;
 import static iudx.aaa.server.token.Constants.URN_INVALID_AUTH_TOKEN;
@@ -26,9 +28,6 @@ import static iudx.aaa.server.token.RequestPayload.expiredTipPayload;
 import static iudx.aaa.server.token.RequestPayload.mapToInspctToken;
 import static iudx.aaa.server.token.RequestPayload.mapToRevToken;
 import static iudx.aaa.server.token.RequestPayload.randomToken;
-import static iudx.aaa.server.token.RequestPayload.revokeTokenInvalidClientId;
-import static iudx.aaa.server.token.RequestPayload.revokeTokenInvalidUrl;
-import static iudx.aaa.server.token.RequestPayload.revokeTokenValidPayload;
 import static iudx.aaa.server.token.RequestPayload.user;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -507,10 +506,17 @@ public class TokenServiceTest {
   @Test
   @DisplayName("revokeToken [Success]")
   void revokeTokenSuccess(VertxTestContext testContext) {
+    JsonObject userJson = consumer.result();
+    
+    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+        .userId(userJson.getString("userId"))
+        .name(userJson.getString("firstName"), userJson.getString("lastName"))
+        .roles(List.of(Roles.CONSUMER)).build();
 
+    JsonObject request = new JsonObject().put(RS_URL, DUMMY_SERVER);
+    
     mockHttpWebClient.setResponse("valid");
-    tokenService.revokeToken(mapToRevToken(revokeTokenValidPayload),
-        user("32a4b979-4f4a-4c44-b0c3-2fe109952b5f"),
+    tokenService.revokeToken(mapToRevToken(request), user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_SUCCESS, response.getString(TYPE));
           testContext.completeNow();
@@ -518,44 +524,67 @@ public class TokenServiceTest {
   }
 
   @Test
-  @DisplayName("revokeToken [Failed-01 Failure in KeyClock or RS]")
+  @DisplayName("revokeToken [Failed-01 Failure in RS]")
   void revokeTokenFailed01(VertxTestContext testContext) {
 
+    JsonObject userJson = consumer.result();
+    
+    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+        .userId(userJson.getString("userId"))
+        .name(userJson.getString("firstName"), userJson.getString("lastName"))
+        .roles(List.of(Roles.CONSUMER)).build();
+
+    JsonObject request = new JsonObject().put(RS_URL, DUMMY_SERVER);
     mockHttpWebClient.setResponse("invalid");
-    tokenService.revokeToken(mapToRevToken(revokeTokenValidPayload),
-        user("32a4b979-4f4a-4c44-b0c3-2fe109952b5f"),
+    tokenService.revokeToken(mapToRevToken(request), user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
+          assertEquals(400, response.getInteger(STATUS));
           testContext.completeNow();
         })));
   }
 
   @Test
-  @Disabled
-  @DisplayName("revokeToken [Failed-02 nullUserId]")
+  @DisplayName("revokeToken [Failed-02 no roles]")
   void revokeTokenFailed02(VertxTestContext testContext) {
 
     mockHttpWebClient.setResponse("valid");
-    User.UserBuilder userBuilder = new UserBuilder();
-    User user = new User(userBuilder);
+    
+    JsonObject userJson = consumer.result();
+    
+    /* We purposefully add no roles to the user object */
+    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+        .userId(userJson.getString("userId"))
+        .name(userJson.getString("firstName"), userJson.getString("lastName"))
+        .roles(List.of()).build();
 
-    tokenService.revokeToken(mapToRevToken(revokeTokenValidPayload), user,
+    JsonObject request = new JsonObject().put(RS_URL, DUMMY_SERVER);
+    tokenService.revokeToken(mapToRevToken(request), user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
+          assertEquals(URN_INVALID_ROLE, response.getString(TYPE));
+          assertEquals(400, response.getInteger(STATUS));
           testContext.completeNow();
         })));
   }
 
   @Test
-  @Disabled
-  @DisplayName("revokeToken [Failed-03 invalidUserId]")
+  @DisplayName("revokeToken [Failed-03 nilUUID userId]")
   void revokeTokenFailed03(VertxTestContext testContext) {
 
+    JsonObject userJson = consumer.result();
+    
+    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+        .userId(NIL_UUID.toString())
+        .name(userJson.getString("firstName"), userJson.getString("lastName"))
+        .roles(List.of(Roles.CONSUMER)).build();
+
+    JsonObject request = new JsonObject().put(RS_URL, DUMMY_SERVER);
+
     mockHttpWebClient.setResponse("valid");
-    tokenService.revokeToken(mapToRevToken(revokeTokenValidPayload),
-        user("32a4b979-4f4a-4c44-b0c3-2fe109952b53"),
+    tokenService.revokeToken(mapToRevToken(request), user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
+          assertEquals(URN_MISSING_INFO, response.getString(TYPE));
+          assertEquals(404, response.getInteger(STATUS));
           testContext.completeNow();
         })));
   }
@@ -563,10 +592,17 @@ public class TokenServiceTest {
   @Test
   @DisplayName("revokeToken [Failed-04 invalidUrl]")
   void revokeTokenFailed04(VertxTestContext testContext) {
+    JsonObject userJson = consumer.result();
+    
+    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+        .userId(userJson.getString("userId"))
+        .name(userJson.getString("firstName"), userJson.getString("lastName"))
+        .roles(List.of(Roles.CONSUMER)).build();
+
+    JsonObject request = new JsonObject().put(RS_URL, "abcd.com");
 
     mockHttpWebClient.setResponse("valid");
-    tokenService.revokeToken(mapToRevToken(revokeTokenInvalidUrl),
-        user("32a4b979-4f4a-4c44-b0c3-2fe109952b5f"),
+    tokenService.revokeToken(mapToRevToken(request), user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
           testContext.completeNow();
@@ -574,12 +610,19 @@ public class TokenServiceTest {
   }
 
   @Test
-  @DisplayName("revokeToken [Failed-05 invalidClientId]")
+  @DisplayName("revokeToken [Failed-05 authUrl]")
   void revokeTokenFailed05(VertxTestContext testContext) {
+    JsonObject userJson = consumer.result();
+    
+    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+        .userId(userJson.getString("userId"))
+        .name(userJson.getString("firstName"), userJson.getString("lastName"))
+        .roles(List.of(Roles.CONSUMER)).build();
+
+    JsonObject request = new JsonObject().put(RS_URL, DUMMY_AUTH_SERVER);
 
     mockHttpWebClient.setResponse("valid");
-    tokenService.revokeToken(mapToRevToken(revokeTokenInvalidClientId),
-        user("32a4b979-4f4a-4c44-b0c3-2fe109952b5f"),
+    tokenService.revokeToken(mapToRevToken(request), user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
           testContext.completeNow();
@@ -602,6 +645,7 @@ public class TokenServiceTest {
           assertEquals(URN_SUCCESS, response.getString(TYPE));
           JsonObject payload = response.getJsonObject("results");
           assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
+          assertEquals(payload.getString(SUB), consumer.result().getString("userId"));
           assertEquals(payload.getString(AUD), DUMMY_SERVER);
           assertEquals(payload.getString(IID), "rg:" + RESOURCE_GROUP);
           assertEquals(payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
@@ -627,6 +671,7 @@ public class TokenServiceTest {
           assertEquals(URN_SUCCESS, response.getString(TYPE));
           JsonObject payload = response.getJsonObject("results");
           assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
+          assertEquals(payload.getString(SUB), consumer.result().getString("userId"));
           assertEquals(payload.getString(AUD), DUMMY_SERVER);
           assertEquals(payload.getString(IID), "rs:" + DUMMY_SERVER);
           assertEquals(payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
@@ -730,6 +775,30 @@ public class TokenServiceTest {
     tokenService.validateToken(mapToInspctToken(token),
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_INVALID_AUTH_TOKEN, response.getString(TYPE));
+          testContext.completeNow();
+        })));
+  }
+  @Test
+  @DisplayName("validateToken success [special admin token]")
+  void validateSpecialAdminToken(VertxTestContext testContext) {
+
+        JsonObject adminTokenReq = new JsonObject().put(USER_ID, CLAIM_ISSUER).put(URL, DUMMY_SERVER)
+            .put(ROLE, "").put(ITEM_TYPE, "").put(ITEM_ID, "");
+    JsonObject token = tokenServiceImplObj.getJwt(adminTokenReq);
+    token.remove("expiry");
+    token.remove("server");
+
+    tokenService.validateToken(mapToInspctToken(token),
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_SUCCESS, response.getString(TYPE));
+          JsonObject payload = response.getJsonObject("results");
+          assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
+          assertEquals(payload.getString(SUB), DUMMY_AUTH_SERVER);
+          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+          assertEquals(payload.getString(IID), "null:");
+          assertEquals(payload.getString(ROLE), "");
+          assertTrue(payload.getJsonObject(CONS).isEmpty());
+          assertNotNull(payload.getString(EXP));
           testContext.completeNow();
         })));
   }

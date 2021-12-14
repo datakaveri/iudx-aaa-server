@@ -172,8 +172,33 @@ public class TokenServiceImpl implements TokenService {
       Handler<AsyncResult<JsonObject>> handler) {
 
     LOGGER.debug(REQ_RECEIVED);
+    
+    /* Checking if the userId is valid */
+    if (user.getUserId().equals(NIL_UUID)) {
+      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
+          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
 
-    String rsUrl = revokeToken.getRsUrl();
+    /* Verify the user has some roles */
+    if (user.getRoles().isEmpty()) {
+      Response resp = new ResponseBuilder().status(400).type(URN_INVALID_ROLE).title(INVALID_ROLE)
+          .detail(INVALID_ROLE).build();
+      handler.handle(Future.succeededFuture(resp.toJson()));
+      return this;
+    }
+
+    String rsUrl = revokeToken.getRsUrl().toLowerCase();
+
+    /* Check if the user is trying to revoke tokens on auth */
+    if (rsUrl.equals(CLAIM_ISSUER)) {
+      Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+          .title(CANNOT_REVOKE_ON_AUTH).detail(CANNOT_REVOKE_ON_AUTH).build();
+      handler.handle(Future.succeededFuture(resp.toJson()));
+      return this;
+    }
+
     Tuple tuple = Tuple.of(rsUrl);
 
     pgSelelctQuery(GET_URL, tuple).onComplete(dbHandler -> {
@@ -194,19 +219,31 @@ public class TokenServiceImpl implements TokenService {
           handler.handle(Future.succeededFuture(resp.toJson()));
           return;
         }
-
         LOGGER.debug("Info: ResourceServer URL validated");
-        JsonObject revokePayload = JsonObject.mapFrom(revokeToken);
+        
+        JsonObject revokePayload =
+            new JsonObject().put(USER_ID, user.getUserId()).put(RS_URL, revokeToken.getRsUrl());
 
-        revokeService.httpRevokeRequest(revokePayload, httpClient -> {
-          if (httpClient.succeeded()) {
+        /* Here, we get the special admin token that is presented to other servers for token
+         * revocation. The 'sub' field is the auth server domain instead of a UUID user ID.
+         * The 'iss' field is the auth server domain as usual and 'aud' is the requested 
+         * resource server domain. The rest of the field are not important, so they are
+         * either null or blank. 
+         */ 
+        
+        JsonObject adminTokenReq = new JsonObject().put(USER_ID, CLAIM_ISSUER).put(URL, rsUrl)
+            .put(ROLE, "").put(ITEM_TYPE, "").put(ITEM_ID, "");
+        String adminToken = getJwt(adminTokenReq).getString(ACCESS_TOKEN);
+        
+        revokeService.httpRevokeRequest(revokePayload, adminToken, result -> {
+          if (result.succeeded()) {
             LOGGER.info(LOG_REVOKE_REQ);
             Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_REVOKED)
                 .arrayResults(new JsonArray()).build();
             handler.handle(Future.succeededFuture(resp.toJson()));
             return;
           } else {
-            LOGGER.error("Fail: {}; {}", FAILED_REVOKE, httpClient.cause());
+            LOGGER.error("Fail: {}; {}", FAILED_REVOKE, result.cause());
             Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
                 .title(FAILED_REVOKE).detail(FAILED_REVOKE).build();
             handler.handle(Future.succeededFuture(resp.toJson()));
@@ -248,6 +285,18 @@ public class TokenServiceImpl implements TokenService {
 
       JsonObject accessTokenJwt = jwtDetails.attributes().getJsonObject(ACCESS_TOKEN);
       String userId = accessTokenJwt.getString(SUB);
+      
+      /* If the sub field is equal to the auth server domain, it is a
+       * special admin token. Immediately send the decoded JWT back, as
+       * there is no role/item information to be checked/validated.
+       */
+      if(userId.equals(CLAIM_ISSUER)) {
+        Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS)
+            .title(TOKEN_AUTHENTICATED).objectResults(accessTokenJwt).build();
+        handler.handle(Future.succeededFuture(resp.toJson()));
+        return;
+      }
+      
       String role = accessTokenJwt.getString(ROLE);
       
       String[] item = accessTokenJwt.getString(IID).split(":");

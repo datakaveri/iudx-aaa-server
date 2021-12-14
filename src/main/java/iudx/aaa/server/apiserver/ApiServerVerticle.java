@@ -391,16 +391,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     JsonObject tokenRequestJson = context.getBodyAsJson();
     RevokeToken revokeTokenDTO = tokenRequestJson.mapTo(RevokeToken.class);
 
-    String dbClientId = context.get(CLIENT_ID);
     User user = context.get(USER);
-
-    if (!dbClientId.equals(revokeTokenDTO.getClientId())) {
-      LOGGER.error("Fail: " + INVALID_CLIENT);
-      Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-          .title(INVALID_CLIENT).detail(INVALID_CLIENT).build();
-      processResponse(context.response(), resp.toJson());
-      return;
-    }
 
     tokenService.revokeToken(revokeTokenDTO, user, handler -> {
       if (handler.succeeded()) {

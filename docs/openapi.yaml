@@ -511,23 +511,15 @@ paths:
               description: ''
               type: object
               properties:
-                clientId:
-                  type: string
-                  minLength: 36
-                  format: uuid
-                  pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-                  maxLength: 36
                 rsUrl:
                   type: string
                   minLength: 1
               required:
-                - clientId
                 - rsUrl
             examples:
               Revoke Request:
                 value:
-                  clientId: 123e4567-e89b-12d3-a456-426614174000
-                  rsUrl: string
+                  rsUrl: rs.iudx.org.in
         required: true
       security:
         - authorization: []
