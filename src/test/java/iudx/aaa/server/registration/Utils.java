@@ -15,7 +15,6 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
-import iudx.aaa.server.apiserver.Schema;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
