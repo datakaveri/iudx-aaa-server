@@ -133,11 +133,10 @@ public class DeleteDelegationTest {
     catOptions = dbConfig.getJsonObject("catOptions");
     
     /*
-     * Injecting authServerUrl into 'authOptions' and 'catOptions' from config().'authServerDomain'
+     * Injecting authServerUrl into 'authOptions' from config().'authServerDomain'
      * TODO - make this uniform
      */
     authOptions.put("authServerUrl", dbConfig.getString("authServerDomain"));
-    catOptions.put("authServerUrl", dbConfig.getString("authServerDomain"));
 
     /* Set Connection Object and schema */
     if (connectOptions == null) {
