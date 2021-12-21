@@ -29,7 +29,7 @@ pipeline {
     stage('Run Unit Tests and CodeCoverage test'){
       steps{
         script{
-          sh 'docker-compose -f docker-compose.test.yml up test'
+          sh 'docker-compose -f docker-compose-test.yml up test'
         }
       }
     }
@@ -59,7 +59,7 @@ pipeline {
         script{
             // sh 'scp Jmeter/CatalogueServer.jmx jenkins@jenkins-master:/var/lib/jenkins/iudx/cat/Jmeter/'
             sh 'scp src/test/resources/iudx-aaa-server.postman_collection.json jenkins@jenkins-master:/var/lib/jenkins/iudx/aaa-server/Newman/'
-            sh 'docker-compose up -f docker-compose.test.yml -d perfTest'
+            sh 'docker-compose up -f docker-compose-test.yml -d perfTest'
             sh 'sleep 45'
         }
       }
@@ -114,7 +114,7 @@ pipeline {
     
     stage('Clean up'){
       steps{
-        sh 'docker-compose down -f docker-compose.test.yml --remove-orphans'
+        sh 'docker-compose down -f docker-compose-test.yml --remove-orphans'
       }
     }
 
