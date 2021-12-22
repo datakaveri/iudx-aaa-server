@@ -114,7 +114,7 @@ pipeline {
     
     stage('Clean up'){
       steps{
-        sh 'docker-compose down -f docker-compose-test.yml --remove-orphans'
+        sh 'docker-compose -f docker-compose-test.yml down --remove-orphans'
       }
     }
 
