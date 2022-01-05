@@ -20,6 +20,7 @@ import java.util.UUID;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.policy.Constants.BAD_REQUEST;
 import static iudx.aaa.server.policy.Constants.CHECK_AUTH_POLICY;
 import static iudx.aaa.server.policy.Constants.CHECK_AUTH_POLICY_DELEGATION;
@@ -44,9 +45,6 @@ import static iudx.aaa.server.policy.Constants.PROVIDER_NOT_REGISTERED;
 import static iudx.aaa.server.policy.Constants.SERVER_NOT_PRESENT;
 import static iudx.aaa.server.policy.Constants.UNAUTHORIZED;
 import static iudx.aaa.server.policy.Constants.URL;
-import static iudx.aaa.server.policy.Constants.URN_ALREADY_EXISTS;
-import static iudx.aaa.server.policy.Constants.URN_INVALID_INPUT;
-import static iudx.aaa.server.policy.Constants.URN_INVALID_ROLE;
 import static iudx.aaa.server.policy.Constants.USER_ID;
 import static iudx.aaa.server.policy.Constants.roles;
 import static iudx.aaa.server.policy.Constants.status;

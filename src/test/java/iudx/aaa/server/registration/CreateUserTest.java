@@ -1,5 +1,6 @@
 package iudx.aaa.server.registration;
 
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.registration.Constants.CLIENT_SECRET_BYTES;
 import static iudx.aaa.server.registration.Constants.DEFAULT_CLIENT;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_ID_REQUIRED;
@@ -17,10 +18,6 @@ import static iudx.aaa.server.registration.Constants.RESP_CLIENT_ID;
 import static iudx.aaa.server.registration.Constants.RESP_CLIENT_NAME;
 import static iudx.aaa.server.registration.Constants.RESP_CLIENT_SC;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_CREATED_USER;
-import static iudx.aaa.server.registration.Constants.URN_ALREADY_EXISTS;
-import static iudx.aaa.server.registration.Constants.URN_INVALID_INPUT;
-import static iudx.aaa.server.registration.Constants.URN_MISSING_INFO;
-import static iudx.aaa.server.registration.Constants.URN_SUCCESS;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_ORG;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_CONSUMERS;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_ORG;
@@ -163,7 +160,7 @@ public class CreateUserTest {
           assertEquals(201, response.getInteger("status"));
           JsonObject result = response.getJsonObject("results");
 
-          assertEquals(URN_SUCCESS, response.getString("type"));
+          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
           assertEquals(SUCC_TITLE_CREATED_USER, response.getString("title"));
           assertTrue(
               result.getJsonArray("roles").getList().contains(Roles.CONSUMER.name().toLowerCase()));
@@ -206,7 +203,7 @@ public class CreateUserTest {
           assertEquals(201, response.getInteger("status"));
           JsonObject result = response.getJsonObject("results");
 
-          assertEquals(URN_SUCCESS, response.getString("type"));
+          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
           assertEquals(SUCC_TITLE_CREATED_USER + PROVIDER_PENDING_MESG,
               response.getString("title"));
           assertTrue(result.getJsonArray("roles").size() == 0);
@@ -250,7 +247,7 @@ public class CreateUserTest {
 
           JsonObject result = response.getJsonObject("results");
 
-          assertEquals(URN_SUCCESS, response.getString("type"));
+          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
           assertEquals(SUCC_TITLE_CREATED_USER, response.getString("title"));
           assertTrue(result.getJsonArray("roles").contains(Roles.DELEGATE.name().toLowerCase()));
           assertEquals(result.getString("email"), email);
@@ -294,7 +291,7 @@ public class CreateUserTest {
 
           JsonObject result = response.getJsonObject("results");
 
-          assertEquals(URN_SUCCESS, response.getString("type"));
+          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
           assertEquals(SUCC_TITLE_CREATED_USER + PROVIDER_PENDING_MESG,
               response.getString("title"));
           @SuppressWarnings("unchecked")
@@ -337,7 +334,7 @@ public class CreateUserTest {
 
     registrationService.createUser(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_INPUT, response.getString("type"));
+          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
           assertEquals(400, response.getInteger("status"));
           assertEquals(ERR_DETAIL_ORG_NO_EXIST, response.getString("detail"));
           assertEquals(ERR_TITLE_ORG_NO_EXIST, response.getString("title"));
@@ -363,7 +360,7 @@ public class CreateUserTest {
 
     registrationService.createUser(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_MISSING_INFO, response.getString("type"));
+          assertEquals(URN_MISSING_INFO.toString(), response.getString("type"));
           assertEquals(400, response.getInteger("status"));
           assertEquals(ERR_DETAIL_ORG_ID_REQUIRED, response.getString("detail"));
           assertEquals(ERR_TITLE_ORG_ID_REQUIRED, response.getString("title"));
@@ -389,7 +386,7 @@ public class CreateUserTest {
     User user = new UserBuilder().keycloakId(keycloakId).name("Foo", "Bar").build();
     registrationService.createUser(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_INPUT, response.getString("type"));
+          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
           assertEquals(400, response.getInteger("status"));
           assertEquals(ERR_DETAIL_ORG_NO_MATCH, response.getString("detail"));
           assertEquals(ERR_TITLE_ORG_NO_MATCH, response.getString("title"));
@@ -418,7 +415,7 @@ public class CreateUserTest {
     Promise<Void> completeReg = Promise.promise();
     registrationService.createUser(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_SUCCESS, response.getString("type"));
+          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
           assertEquals(201, response.getInteger("status"));
           completeReg.complete();
         })));
@@ -427,7 +424,7 @@ public class CreateUserTest {
 
       registrationService.createUser(request, user,
           testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(URN_ALREADY_EXISTS, response.getString("type"));
+            assertEquals(URN_ALREADY_EXISTS.toString(), response.getString("type"));
             assertEquals(409, response.getInteger("status"));
             assertEquals(ERR_DETAIL_USER_EXISTS, response.getString("detail"));
             assertEquals(ERR_TITLE_USER_EXISTS, response.getString("title"));
@@ -454,7 +451,7 @@ public class CreateUserTest {
 
     registrationService.createUser(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_INPUT, response.getString("type"));
+          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
           assertEquals(400, response.getInteger("status"));
           assertEquals(ERR_DETAIL_USER_NOT_KC, response.getString("detail"));
           assertEquals(ERR_TITLE_USER_NOT_KC, response.getString("title"));
@@ -488,7 +485,7 @@ public class CreateUserTest {
 
       registrationService.createUser(request, user,
           testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(URN_SUCCESS, response.getString("type"));
+            assertEquals(URN_SUCCESS.toString(), response.getString("type"));
             assertEquals(201, response.getInteger("status"));
             testContext.completeNow();
           })));

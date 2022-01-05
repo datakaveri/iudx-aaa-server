@@ -93,13 +93,6 @@ public class Constants {
   }
   
   /* Response Messages */
-  public static final String URN_SUCCESS = "urn:dx:as:Success";
-  public static final String URN_MISSING_INFO = "urn:dx:as:MissingInformation";
-  public static final String URN_INVALID_INPUT = "urn:dx:as:InvalidInput";
-  public static final String URN_ALREADY_EXISTS = "urn:dx:as:AlreadyExists";
-  public static final String URN_INVALID_ROLE = "urn:dx:as:InvalidRole";
-  public static final String URN_INVALID_AUTH_TOKEN = "urn:dx:as:InvalidAuthenticationToken";
-  
   public static final String REQ_RECEIVED = "Info: Request received";
   public static final String LOG_DB_ERROR = "Fail: Databse query; ";
   public static final String LOG_UNAUTHORIZED = "Fail: Unauthorized access; ";

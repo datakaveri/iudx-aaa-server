@@ -3,6 +3,7 @@ package iudx.aaa.server.apiserver.util;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import static iudx.aaa.server.apiserver.util.Urn.*;
 
 public class Constants {
   // Header params
@@ -76,15 +77,6 @@ public class Constants {
 
   /* Query Params */
   public static final String QUERY_FILTER = "filter";
-
-  /* Response Messages */
-  public static final String URN_SUCCESS = "urn:dx:as:Success";
-  public static final String URN_MISSING_INFO = "urn:dx:as:MissingInformation";
-  public static final String URN_INVALID_INPUT = "urn:dx:as:InvalidInput";
-  public static final String URN_ALREADY_EXISTS = "urn:dx:as:AlreadyExists";
-  public static final String URN_INVALID_ROLE = "urn:dx:as:InvalidRole";
-  public static final String URN_INVALID_AUTH_TOKEN = "urn:dx:as:InvalidAuthenticationToken";
-  public static final String URN_MISSING_AUTH_TOKEN = "urn:dx:as:MissingAuthenticationToken";
 
   public static final String TOKEN_FAILED = "Token authentication failed";
   public static final String MISSING_TOKEN = "Missing accessToken";

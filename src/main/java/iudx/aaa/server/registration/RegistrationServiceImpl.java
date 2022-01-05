@@ -1,5 +1,6 @@
 package iudx.aaa.server.registration;
 
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.registration.Constants.CLIENT_SECRET_BYTES;
 import static iudx.aaa.server.registration.Constants.COMPOSE_FAILURE;
 import static iudx.aaa.server.registration.Constants.DEFAULT_CLIENT;
@@ -49,11 +50,6 @@ import static iudx.aaa.server.registration.Constants.SUCC_TITLE_ORG_READ;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_UPDATED_USER_ROLES;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_USER_READ;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_USER_FOUND;
-import static iudx.aaa.server.registration.Constants.URN_ALREADY_EXISTS;
-import static iudx.aaa.server.registration.Constants.URN_INVALID_INPUT;
-import static iudx.aaa.server.registration.Constants.URN_INVALID_ROLE;
-import static iudx.aaa.server.registration.Constants.URN_MISSING_INFO;
-import static iudx.aaa.server.registration.Constants.URN_SUCCESS;
 import static iudx.aaa.server.registration.Constants.UUID_REGEX;
 
 import io.vertx.core.AsyncResult;

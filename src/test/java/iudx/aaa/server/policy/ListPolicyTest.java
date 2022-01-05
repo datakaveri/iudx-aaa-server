@@ -1,6 +1,7 @@
 
 package iudx.aaa.server.policy;
 
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.policy.Constants.*;
 import static iudx.aaa.server.policy.TestRequest.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -120,7 +121,7 @@ public class ListPolicyTest {
         mockRegistrationFactory.setResponse("valid");
         policyService.listPolicy(validListPolicyProvider, new JsonObject(),
                 testContext.succeeding(response -> testContext.verify(() -> {
-                    assertEquals(URN_SUCCESS, response.getString(TYPE));
+                    assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
                     testContext.completeNow();
                 })));
     }
@@ -133,7 +134,7 @@ public class ListPolicyTest {
         mockRegistrationFactory.setResponse("valid");
         policyService.listPolicy(validListPolicyConsumer, new JsonObject(),
                 testContext.succeeding(response -> testContext.verify(() -> {
-                    assertEquals(URN_SUCCESS, response.getString(TYPE));
+                    assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
                     testContext.completeNow();
                 })));
     }
@@ -145,7 +146,7 @@ public class ListPolicyTest {
         mockRegistrationFactory.setResponse("valid");
         policyService.listPolicy(invalidListPolicy, new JsonObject(),
                 testContext.succeeding(response -> testContext.verify(() -> {
-                    assertEquals(URN_SUCCESS, response.getString(TYPE));
+                    assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
                     testContext.completeNow();
                 })));
     }
