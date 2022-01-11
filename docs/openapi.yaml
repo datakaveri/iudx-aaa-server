@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: IUDX-AAA-Server
-  version: '3.0.0'
+  version: 3.0.0
   description: 'API specification for IUDX AAA Server. These APIs are used by users manage tokens, policy etc. These APIs requires valid token or client details for authentication.'
   license:
     name: MIT
@@ -421,11 +421,11 @@ paths:
     parameters: []
   /auth/v1/token/revoke:
     post:
-      summary: Revoke Token
+      summary: Revoke Tokens
       operationId: post-auth-v1-revoke
       responses:
         '200':
-          description: Successfully token revoke
+          description: Successful token revocation
           content:
             application/json:
               schema:
@@ -489,9 +489,7 @@ paths:
                     type: string
                     title: string
                     detail: string
-      description: |-
-        Revoke the token associated with clientId. 
-        <!--- (Commented out) Revoke token requires either token header or clientId/clientSecret header.---!>
+      description: 'Revoke tokens **issued for a particular resource server**. Once revoked, any tokens issued before the revocation with the `aud` field being the resource server will not be accepted by said resource server.'
       tags:
         - Token APIs
       parameters:
@@ -521,6 +519,7 @@ paths:
                 value:
                   rsUrl: rs.iudx.org.in
         required: true
+        description: '`rsUrl` is the URL/domain of a server that is recognised by the IUDX AAA '
       security:
         - authorization: []
     parameters: []
