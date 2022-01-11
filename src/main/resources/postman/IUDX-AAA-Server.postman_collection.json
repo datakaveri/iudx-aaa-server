@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "cccf05e3-d34a-40a9-acc1-8f0564e45740",
+		"_postman_id": "f7dcdd7a-86af-41d1-bdfe-f4b8974f4f26",
 		"name": "IUDX-AAA-Server",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -303,13 +303,18 @@
 							"type": "oauth2",
 							"oauth2": [
 								{
-									"key": "state",
-									"value": "{{$randomAlphaNumeric}}",
-									"type": "string"
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
 								},
 								{
 									"key": "authUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}protocol/openid-connect/auth",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
 									"type": "string"
 								},
 								{
@@ -336,11 +341,6 @@
 									"key": "tokenName",
 									"value": "Token",
 									"type": "string"
-								},
-								{
-									"key": "useBrowser",
-									"value": false,
-									"type": "boolean"
 								},
 								{
 									"key": "scope",
@@ -667,6 +667,115 @@
 								"auth",
 								"v1",
 								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Revoke tokens issued for particular resource server",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "authUrl",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "tokenType",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "accessToken",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rsUrl\":\"rs.iudx.org.in\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/token/revoke",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"token",
+								"revoke"
 							]
 						}
 					},
@@ -1086,7 +1195,8 @@
 								"key": "providerId",
 								"value": "",
 								"description": "Provider's User ID in case of auth delegate",
-								"type": "text"
+								"type": "text",
+								"disabled": true
 							}
 						],
 						"body": {
@@ -1195,7 +1305,15 @@
 							]
 						},
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "providerId",
+								"value": "",
+								"description": "Provider's User ID in case of auth delegate",
+								"type": "default",
+								"disabled": true
+							}
+						],
 						"body": {
 							"mode": "raw",
 							"raw": "",
