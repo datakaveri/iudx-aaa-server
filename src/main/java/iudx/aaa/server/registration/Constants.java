@@ -1,5 +1,8 @@
 package iudx.aaa.server.registration;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Constants for Registration service for SQL queries, URNs, responses and other values.
  */
@@ -29,6 +32,11 @@ public class Constants {
   public static final String KC_ADMIN_CLIENT_ID = "keycloakAdminClientId";
   public static final String KC_ADMIN_CLIENT_SEC = "keycloakAdminClientSecret";
   public static final String KC_ADMIN_POOLSIZE = "keycloakAdminPoolSize";
+  public static final String CONFIG_AUTH_URL = "authServerDomain";
+  
+  /* Set during RegistrationVerticle start() method */
+  public static String AUTH_SERVER_URL = "";
+  public static List<String> SERVERS_OMITTED_FROM_TOKEN_REVOKE = new ArrayList<String>();
   
   public static final int CLIENT_SECRET_BYTES = 20; 
 
@@ -55,6 +63,7 @@ public class Constants {
   public static final String SUCC_TITLE_USER_FOUND = "User found";
   public static final String SUCC_TITLE_ORG_READ = "Organizations";
   public static final String SUCC_TITLE_UPDATED_USER_ROLES = "Registered for requested roles";
+  public static final String SUCC_TITLE_REGEN_CLIENT_SECRET = "Regenerated client secret for requested client ID";
 
   public static final String ERR_TITLE_ROLE_EXISTS = "Already registered for requested role";
   public static final String ERR_DETAIL_ROLE_EXISTS = "You have already registered as ";
@@ -88,6 +97,9 @@ public class Constants {
       "User does not have required role to search for user";
   public static final String ERR_DETAIL_SEARCH_USR_INVALID_ROLE =
       "Must have provider/admin roles or be an auth delegate";
+  
+  public static final String ERR_TITLE_INVALID_CLI_ID = "Invalid client ID";
+  public static final String ERR_DETAIL_INVALID_CLI_ID = "Requested client ID not found";
 
   /* SQL queries */
   public static final String SQL_FIND_USER_BY_KC_ID =
@@ -140,4 +152,14 @@ public class Constants {
           + "roles ON users.id = roles.user_id "
           + "WHERE users.keycloak_id = $1::uuid AND roles.role = $2::"
           + "role_enum AND roles.status = 'APPROVED'";
+  
+  public static final String SQL_CHECK_CLIENT_ID_EXISTS =
+      "SELECT EXISTS (SELECT 1 FROM user_clients WHERE client_id = $1::uuid AND user_id = $2::uuid)";
+  
+  public static final String SQL_GET_SERVERS_FOR_REVOKE =
+      "SELECT url FROM resource_server WHERE url != ALL($1::text[])";
+  
+  public static final String SQL_UPDATE_CLIENT_SECRET =
+      "UPDATE user_clients SET client_secret = $1::text, updated_at = NOW() "
+          + "WHERE client_id = $2::uuid AND user_id = $3::uuid";
 }
