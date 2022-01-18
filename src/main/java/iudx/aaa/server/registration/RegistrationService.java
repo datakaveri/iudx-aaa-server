@@ -75,7 +75,8 @@ public interface RegistrationService {
       JsonObject authDelegateDetails, Handler<AsyncResult<JsonObject>> handler);
 
   /**
-   * The updateUser implements the user update operation. Currently role addition is allowed.
+   * The updateUser implements the user update operation. Currently role addition and client secret
+   * regeneration is allowed.
    * 
    * @param request the request body in the form of UpdateProfileRequest data object
    * @param handler the request handler which returns a JsonObject

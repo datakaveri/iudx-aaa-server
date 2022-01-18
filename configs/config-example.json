@@ -61,7 +61,8 @@
     {
       "id": "iudx.aaa.server.registration.RegistrationVerticle",
       "verticleInstances": 1,
-      "required":["postgresOptions", "keycloakOptions"],
+      "required":["postgresOptions", "keycloakOptions", "commonOptions"],
+      "serversOmittedFromRevoke":[],
       "poolSize": "5"
     },
     {
