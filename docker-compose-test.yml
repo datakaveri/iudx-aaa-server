@@ -10,33 +10,29 @@ services:
       - LOG_LEVEL=INFO
       - AUTH_JAVA_OPTS=-Xmx1024m
     volumes:
-      - /home/ubuntu/configs/aaa-config-test.json:/usr/share/app/configs/config-test.json
+      - /home/ubuntu/configs/aaa-config-test.json:/usr/share/app/configs/config-dev.json
       - /home/ubuntu/configs/aaa-keystore.jks:/usr/share/app/secrets/keystore.jks
       - ./docker/runTests.sh:/usr/share/app/docker/runTests.sh
       - ./src/:/usr/share/app/src
       - ${WORKSPACE}:/tmp/test
-    command: bash -c "docker/runTests.sh && cp -r target /tmp/test"
+    command: bash -c "docker/runTests.sh"
     ports:
-      - "8443:8443"
-      - "9000:9000"
     networks: 
       - auth-net
 
-  perfTest:
+  integTest:
     image: ghcr.io/karun-singh/aaa-test:latest
     environment:
       - AUTH_URL=https://authorization.iudx.org.in
       - LOG_LEVEL=INFO
       - AUTH_JAVA_OPTS=-Xmx1024m
     volumes:
-      - /home/ubuntu/configs/aaa-config-test.json:/usr/share/app/configs/config-test.json
+      - /home/ubuntu/configs/aaa-config-integ.json:/usr/share/app/configs/config-dev.json
       - /home/ubuntu/configs/aaa-keystore.jks:/usr/share/app/secrets/keystore.jks
-      - ./docker/runTests.sh:/usr/share/app/docker/runTests.sh
+      - /home/ubuntu/configs/aaa-flyway.conf:/usr/share/app/flyway.conf
       - ./src/:/usr/share/app/src
-      - ${WORKSPACE}:/tmp/test
     command: bash -c "mvn clean compile exec:java@aaa-server"
     ports:
       - "8443:8443"
-      - "9000:9000"
     networks: 
       - auth-net
