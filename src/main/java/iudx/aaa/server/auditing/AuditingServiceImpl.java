@@ -65,12 +65,6 @@ public class AuditingServiceImpl implements AuditingService {
       databasePoolSize = propObj.getInteger("auditingPoolSize");
     }
 
-    LOGGER.info("IP: " + databaseIP);
-    LOGGER.info("Port: " + databasePort);
-    LOGGER.info("database: " + databaseName);
-    LOGGER.info("userName: " + databaseUserName);
-    LOGGER.info("password: " + databasePassword);
-
     this.connectOptions =
         new PgConnectOptions()
             .setPort(databasePort)
