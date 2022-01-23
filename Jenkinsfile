@@ -94,6 +94,7 @@ pipeline {
             sh 'scp aaa.log jenkins@jenkins-master:/var/lib/jenkins/userContent/'
             echo 'container logs (aaa.log) can be found at jenkins-url/userContent'
             sh 'docker-compose -f docker-compose-test.yml down --remove-orphans'
+            cleanWs()
           }
         }
       }
