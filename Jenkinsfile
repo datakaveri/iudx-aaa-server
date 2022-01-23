@@ -37,7 +37,7 @@ pipeline {
     stage('Capture Unit Test results'){
       steps{
         xunit (
-          thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '40') ],
+          thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '10') ],
           tools: [ JUnit(pattern: 'target/surefire-reports/*.xml') ]
         )
       }
@@ -54,41 +54,22 @@ pipeline {
       }
     }
 
-    stage('Run File server for Performance Tests'){
+    stage('Run aaa-server for Integration Test'){
       steps{
         script{
-            // sh 'scp Jmeter/CatalogueServer.jmx jenkins@jenkins-master:/var/lib/jenkins/iudx/cat/Jmeter/'
             sh 'scp src/test/resources/Integration_Test.postman_collection.json jenkins@jenkins-master:/var/lib/jenkins/iudx/aaa/Newman/'
             sh 'docker-compose -f docker-compose-test.yml up -d integTest'
             sh 'sleep 45'
         }
       }
+      post{
+        always{
+          sh 'docker/runIntegTests.sh'
+        }
+      }
     }
-    
-    // stage('Run Jmeter Performance Tests'){
-    //   steps{
-    //     node('master') {      
-    //       script{
-    //         sh 'rm -rf /var/lib/jenkins/iudx/cat/Jmeter/Report ; mkdir -p /var/lib/jenkins/iudx/cat/Jmeter/Report ; /var/lib/jenkins/apache-jmeter-5.4.1/bin/jmeter.sh -n -t /var/lib/jenkins/iudx/cat/Jmeter/CatalogueServer.jmx -l /var/lib/jenkins/iudx/cat/Jmeter/Report/JmeterTest.jtl -e -o /var/lib/jenkins/iudx/cat/Jmeter/Report'
-    //       }
-    //     }
-    //   }
-    // }
-    
-    // stage('Capture Jmeter report'){
-    //   steps{
-    //     node('master') {
-    //       perfReport errorFailedThreshold: 0, errorUnstableThreshold: 0, filterRegex: '', showTrendGraphs: true, sourceDataFiles: '/var/lib/jenkins/iudx/cat/Jmeter/Report/*.jtl'
-    //     }
-    //   }
-    //   post{
-    //     failure{
-    //       error "Test failure. Stopping pipeline execution!"
-    //     }
-    //   }
-    // }
 
-    stage('OWASP ZAP pen test'){
+    stage('Integration Test & OWASP ZAP pen test'){
       steps{
         node('master') {
           script{
