@@ -58,8 +58,8 @@ pipeline {
       steps{
         script{
             // sh 'scp Jmeter/CatalogueServer.jmx jenkins@jenkins-master:/var/lib/jenkins/iudx/cat/Jmeter/'
-            sh 'scp src/test/resources/iudx-aaa-server.postman_collection.json jenkins@jenkins-master:/var/lib/jenkins/iudx/aaa/Newman/'
-            sh 'docker-compose -f docker-compose-test.yml up -d perfTest'
+            sh 'scp src/test/resources/Integration_Test.postman_collection.json jenkins@jenkins-master:/var/lib/jenkins/iudx/aaa/Newman/'
+            sh 'docker-compose -f docker-compose-test.yml up -d integTest'
             sh 'sleep 45'
         }
       }
@@ -94,7 +94,7 @@ pipeline {
           script{
             startZap ([host: 'localhost', port: 8090, zapHome: '/var/lib/jenkins/tools/com.cloudbees.jenkins.plugins.customtools.CustomTool/OWASP_ZAP/ZAP_2.11.0'])
             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-              sh 'HTTP_PROXY=\'127.0.0.1:8090\' newman run /var/lib/jenkins/iudx/aaa/Newman/iudx-aaa-server.postman_collection.json -e /home/ubuntu/configs/iudx-aaa-server.postman_environment.json --insecure -r htmlextra --reporter-htmlextra-export /var/lib/jenkins/iudx/aaa/Newman/report/report.html'
+              sh 'HTTP_PROXY=\'127.0.0.1:8090\' newman run /var/lib/jenkins/iudx/aaa/Newman/Integration_Test.postman_collection.json -e /home/ubuntu/configs/aaa-postman-env.json --insecure -r htmlextra --reporter-htmlextra-export /var/lib/jenkins/iudx/aaa/Newman/report/report.html'
             }
             runZapAttack()
           }
@@ -104,17 +104,17 @@ pipeline {
         always{
           node('master') {
             script{
-               archiveZap failAllAlerts: 15
-               publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: false, reportDir: '/var/lib/jenkins/iudx/aaa/Newman/report/', reportFiles: 'report.html', reportName: 'HTML Report', reportTitles: ''])
+              archiveZap failAllAlerts: 15
+              publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '/var/lib/jenkins/iudx/aaa/Newman/report/', reportFiles: 'report.html', reportName: 'HTML Report', reportTitles: '', reportName: 'Integration Test Report'])
             }  
           }
+          script{
+            sh 'docker-compose -f docker-compose-test.yml logs integTest > aaa.log'
+            sh 'scp aaa.log jenkins@jenkins-master:/var/lib/jenkins/userContent/'
+            echo 'container logs (aaa.log) can be found at jenkins-url/userContent'
+            sh 'docker-compose -f docker-compose-test.yml down --remove-orphans'
+          }
         }
-      }
-    }
-    
-    stage('Clean up'){
-      steps{
-        sh 'docker-compose -f docker-compose-test.yml down --remove-orphans'
       }
     }
 
