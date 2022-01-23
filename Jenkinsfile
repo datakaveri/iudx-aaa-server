@@ -57,14 +57,10 @@ pipeline {
     stage('Run aaa-server for Integration Test'){
       steps{
         script{
+            sh 'docker/runIntegTests.sh'
             sh 'scp src/test/resources/Integration_Test.postman_collection.json jenkins@jenkins-master:/var/lib/jenkins/iudx/aaa/Newman/'
             sh 'docker-compose -f docker-compose-test.yml up -d integTest'
             sh 'sleep 45'
-        }
-      }
-      post{
-        always{
-          sh 'docker/runIntegTests.sh'
         }
       }
     }
