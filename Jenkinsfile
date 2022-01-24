@@ -57,10 +57,17 @@ pipeline {
     stage('Run aaa-server for Integration Test'){
       steps{
         script{
-            // sh 'docker/runIntegTests.sh'
+            sh 'docker/runIntegTests.sh'
             sh 'scp src/test/resources/Integration_Test.postman_collection.json jenkins@jenkins-master:/var/lib/jenkins/iudx/aaa/Newman/'
             sh 'docker-compose -f docker-compose-test.yml up -d integTest'
             sh 'sleep 45'
+        }
+      }
+      post{
+        failure{
+          script{
+            sh 'mvn flyway:clean -Dflyway.configFiles=/home/ubuntu/configs/aaa-flyway.conf'
+          }
         }
       }
     }
@@ -86,11 +93,12 @@ pipeline {
             }  
           }
           script{
+            sh 'mvn flyway:clean -Dflyway.configFiles=/home/ubuntu/configs/aaa-flyway.conf'
             sh 'docker-compose -f docker-compose-test.yml logs integTest > aaa.log'
             sh 'scp aaa.log jenkins@jenkins-master:/var/lib/jenkins/userContent/'
             echo 'container logs (aaa.log) can be found at jenkins-url/userContent'
             sh 'docker-compose -f docker-compose-test.yml down --remove-orphans'
-            cleanWs()
+            cleanWs(patterns:[[pattern:'./src/main/resources/db/migration/*',type:'INCLUDE']])
           }
         }
       }
