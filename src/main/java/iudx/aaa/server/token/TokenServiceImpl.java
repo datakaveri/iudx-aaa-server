@@ -24,10 +24,11 @@ import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.policy.PolicyService;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_USER_PROFILE;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_USER_PROFILE;
 import static iudx.aaa.server.registration.Constants.NIL_UUID;
-import static iudx.aaa.server.registration.Constants.URN_MISSING_INFO;
 import static iudx.aaa.server.token.Constants.*;
 
 /**

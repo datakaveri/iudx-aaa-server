@@ -23,13 +23,6 @@ public class Constants {
   public static final String KC_ADMIN_CLIENT_SEC = "keycloakAdminClientSecret";
   public static final String KC_ADMIN_POOLSIZE = "keycloakAdminPoolSize";
 
-  /* URNs */
-  public static final String URN_SUCCESS = "urn:dx:as:Success";
-  public static final String URN_MISSING_INFO = "urn:dx:as:MissingInformation";
-  public static final String URN_INVALID_ROLE = "urn:dx:as:InvalidRole";
-  public static final String URN_INVALID_INPUT = "urn:dx:as:InvalidInput";
-  public static final String URN_ALREADY_EXISTS = "urn:dx:as:AlreadyExists";
-
   /* Response fields */
   public static final String RESP_USERID = "userId";
   public static final String RESP_STATUS = "status";

@@ -1,5 +1,6 @@
 package iudx.aaa.server.apiserver.util;
 
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.apiserver.util.Constants.CLIENT_ID;
 import static iudx.aaa.server.apiserver.util.Constants.CLIENT_SECRET;
 import static iudx.aaa.server.apiserver.util.Constants.ID;
@@ -9,13 +10,12 @@ import static iudx.aaa.server.apiserver.util.Constants.MISSING_TOKEN_CLIENT;
 import static iudx.aaa.server.apiserver.util.Constants.ROLES;
 import static iudx.aaa.server.apiserver.util.Constants.SQL_GET_KID_ROLES;
 import static iudx.aaa.server.apiserver.util.Constants.TOKEN_FAILED;
-import static iudx.aaa.server.apiserver.util.Constants.URN_MISSING_AUTH_TOKEN;
 import static iudx.aaa.server.apiserver.util.Constants.USER;
 import static iudx.aaa.server.token.Constants.INVALID_CLIENT_ID_SEC;
 import static iudx.aaa.server.token.Constants.LOG_DB_ERROR;
 import static iudx.aaa.server.token.Constants.LOG_UNAUTHORIZED;
 import static iudx.aaa.server.token.Constants.LOG_USER_SECRET;
-import static iudx.aaa.server.token.Constants.URN_INVALID_INPUT;
+
 import java.security.MessageDigest;
 import java.util.List;
 import java.util.Objects;

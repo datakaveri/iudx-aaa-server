@@ -1,5 +1,6 @@
 package iudx.aaa.server.registration;
 
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_USER_PROFILE;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_KC;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_USER_PROFILE;
@@ -10,7 +11,6 @@ import static iudx.aaa.server.registration.Constants.RESP_EMAIL;
 import static iudx.aaa.server.registration.Constants.RESP_ORG;
 import static iudx.aaa.server.registration.Constants.RESP_PHONE;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_USER_READ;
-import static iudx.aaa.server.registration.Constants.URN_SUCCESS;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_ORG;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_ORG;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -235,7 +235,7 @@ public class ListUserTest {
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(200, response.getInteger("status"));
           assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
-          assertEquals(URN_SUCCESS, response.getString("type"));
+          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
           JsonObject result = response.getJsonObject("results");
 
@@ -283,7 +283,7 @@ public class ListUserTest {
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(200, response.getInteger("status"));
           assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
-          assertEquals(URN_SUCCESS, response.getString("type"));
+          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
           JsonObject result = response.getJsonObject("results");
 
@@ -330,7 +330,7 @@ public class ListUserTest {
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(200, response.getInteger("status"));
           assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
-          assertEquals(URN_SUCCESS, response.getString("type"));
+          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
           JsonObject result = response.getJsonObject("results");
 

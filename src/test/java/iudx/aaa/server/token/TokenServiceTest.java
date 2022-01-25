@@ -1,5 +1,6 @@
 package iudx.aaa.server.token;
 
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.token.Constants.ACCESS_TOKEN;
 import static iudx.aaa.server.token.Constants.AUD;
 import static iudx.aaa.server.token.Constants.CLAIM_ISSUER;
@@ -18,11 +19,6 @@ import static iudx.aaa.server.token.Constants.STATUS;
 import static iudx.aaa.server.token.Constants.SUB;
 import static iudx.aaa.server.token.Constants.TYPE;
 import static iudx.aaa.server.token.Constants.URL;
-import static iudx.aaa.server.token.Constants.URN_INVALID_AUTH_TOKEN;
-import static iudx.aaa.server.token.Constants.URN_INVALID_INPUT;
-import static iudx.aaa.server.token.Constants.URN_INVALID_ROLE;
-import static iudx.aaa.server.token.Constants.URN_MISSING_INFO;
-import static iudx.aaa.server.token.Constants.URN_SUCCESS;
 import static iudx.aaa.server.token.Constants.USER_ID;
 import static iudx.aaa.server.token.RequestPayload.expiredTipPayload;
 import static iudx.aaa.server.token.RequestPayload.mapToInspctToken;
@@ -282,7 +278,7 @@ public class TokenServiceTest {
     mockPolicy.setResponse("valid", RESOURCE_GROUP, DUMMY_SERVER);
     tokenService.createToken(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_SUCCESS, response.getString("type"));
+          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
           JsonObject payload =
               getJwtPayload(response.getJsonObject("results").getString(ACCESS_TOKEN));
           assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
@@ -313,7 +309,7 @@ public class TokenServiceTest {
     mockPolicy.setResponse("valid", RESOURCE_ITEM, DUMMY_SERVER);
     tokenService.createToken(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_SUCCESS, response.getString("type"));
+          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
           JsonObject payload =
               getJwtPayload(response.getJsonObject("results").getString(ACCESS_TOKEN));
           assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
@@ -343,7 +339,7 @@ public class TokenServiceTest {
 
     tokenService.createToken(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_SUCCESS, response.getString("type"));
+          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
           JsonObject payload =
               getJwtPayload(response.getJsonObject("results").getString(ACCESS_TOKEN));
           assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
@@ -374,7 +370,7 @@ public class TokenServiceTest {
     mockPolicy.setResponse("valid");
     tokenService.createToken(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_SUCCESS, response.getString("type"));
+          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
           JsonObject payload =
               getJwtPayload(response.getJsonObject("results").getString(ACCESS_TOKEN));
           assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
@@ -405,7 +401,7 @@ public class TokenServiceTest {
     mockPolicy.setResponse("valid");
     tokenService.createToken(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_INPUT, response.getString("type"));
+          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
           testContext.completeNow();
         })));
   }
@@ -431,7 +427,7 @@ public class TokenServiceTest {
     mockPolicy.setResponse("valid");
     tokenService.createToken(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_INPUT, response.getString("type"));
+          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
           testContext.completeNow();
         })));
   }
@@ -454,7 +450,7 @@ public class TokenServiceTest {
     mockPolicy.setResponse("invalid");
     tokenService.createToken(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
+          assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
           testContext.completeNow();
         })));
   }
@@ -475,7 +471,7 @@ public class TokenServiceTest {
 
     tokenService.createToken(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_MISSING_INFO, response.getString(TYPE));
+          assertEquals(URN_MISSING_INFO.toString(), response.getString(TYPE));
           testContext.completeNow();
         })));
   }
@@ -498,7 +494,7 @@ public class TokenServiceTest {
     mockPolicy.setResponse("valid");
     tokenService.createToken(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_ROLE, response.getString(TYPE));
+          assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
           testContext.completeNow();
         })));
   }
@@ -518,7 +514,7 @@ public class TokenServiceTest {
     mockHttpWebClient.setResponse("valid");
     tokenService.revokeToken(mapToRevToken(request), user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_SUCCESS, response.getString(TYPE));
+          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
           testContext.completeNow();
         })));
   }
@@ -538,7 +534,7 @@ public class TokenServiceTest {
     mockHttpWebClient.setResponse("invalid");
     tokenService.revokeToken(mapToRevToken(request), user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
+          assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
           assertEquals(400, response.getInteger(STATUS));
           testContext.completeNow();
         })));
@@ -561,7 +557,7 @@ public class TokenServiceTest {
     JsonObject request = new JsonObject().put(RS_URL, DUMMY_SERVER);
     tokenService.revokeToken(mapToRevToken(request), user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_ROLE, response.getString(TYPE));
+          assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
           assertEquals(400, response.getInteger(STATUS));
           testContext.completeNow();
         })));
@@ -583,7 +579,7 @@ public class TokenServiceTest {
     mockHttpWebClient.setResponse("valid");
     tokenService.revokeToken(mapToRevToken(request), user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_MISSING_INFO, response.getString(TYPE));
+          assertEquals(URN_MISSING_INFO.toString(), response.getString(TYPE));
           assertEquals(404, response.getInteger(STATUS));
           testContext.completeNow();
         })));
@@ -604,7 +600,7 @@ public class TokenServiceTest {
     mockHttpWebClient.setResponse("valid");
     tokenService.revokeToken(mapToRevToken(request), user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
+          assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
           testContext.completeNow();
         })));
   }
@@ -624,7 +620,7 @@ public class TokenServiceTest {
     mockHttpWebClient.setResponse("valid");
     tokenService.revokeToken(mapToRevToken(request), user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
+          assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
           testContext.completeNow();
         })));
   }
@@ -642,7 +638,7 @@ public class TokenServiceTest {
     mockPolicy.setResponse("valid");
     tokenService.validateToken(mapToInspctToken(token),
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_SUCCESS, response.getString(TYPE));
+          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
           JsonObject payload = response.getJsonObject("results");
           assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
           assertEquals(payload.getString(SUB), consumer.result().getString("userId"));
@@ -668,7 +664,7 @@ public class TokenServiceTest {
     mockPolicy.setResponse("valid");
     tokenService.validateToken(mapToInspctToken(token),
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_SUCCESS, response.getString(TYPE));
+          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
           JsonObject payload = response.getJsonObject("results");
           assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
           assertEquals(payload.getString(SUB), consumer.result().getString("userId"));
@@ -695,7 +691,7 @@ public class TokenServiceTest {
     mockPolicy.setResponse("invalid");
     tokenService.validateToken(mapToInspctToken(token),
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_INPUT, response.getString(TYPE));
+          assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
           testContext.completeNow();
         })));
   }
@@ -715,7 +711,7 @@ public class TokenServiceTest {
 
     tokenService.validateToken(mapToInspctToken(invalidToken),
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_AUTH_TOKEN, response.getString(TYPE));
+          assertEquals(URN_INVALID_AUTH_TOKEN.toString(), response.getString(TYPE));
           assertTrue(
               response.getJsonArray("results").getJsonObject(0).getString(STATUS).equals(DENY));
           testContext.completeNow();
@@ -728,7 +724,7 @@ public class TokenServiceTest {
 
     tokenService.validateToken(mapToInspctToken(expiredTipPayload),
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_AUTH_TOKEN, response.getString(TYPE));
+          assertEquals(URN_INVALID_AUTH_TOKEN.toString(), response.getString(TYPE));
           assertTrue(
               response.getJsonArray("results").getJsonObject(0).getString(STATUS).equals(DENY));
           testContext.completeNow();
@@ -743,7 +739,7 @@ public class TokenServiceTest {
 
     tokenService.validateToken(introspect,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_MISSING_INFO, response.getString("type"));
+          assertEquals(URN_MISSING_INFO.toString(), response.getString("type"));
           testContext.completeNow();
         })));
   }
@@ -754,7 +750,7 @@ public class TokenServiceTest {
 
     tokenService.validateToken(mapToInspctToken(randomToken),
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_AUTH_TOKEN, response.getString(TYPE));
+          assertEquals(URN_INVALID_AUTH_TOKEN.toString(), response.getString(TYPE));
           assertTrue(
               response.getJsonArray("results").getJsonObject(0).getString(STATUS).equals(DENY));
           testContext.completeNow();
@@ -774,7 +770,7 @@ public class TokenServiceTest {
 
     tokenService.validateToken(mapToInspctToken(token),
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_AUTH_TOKEN, response.getString(TYPE));
+          assertEquals(URN_INVALID_AUTH_TOKEN.toString(), response.getString(TYPE));
           testContext.completeNow();
         })));
   }
@@ -790,7 +786,7 @@ public class TokenServiceTest {
 
     tokenService.validateToken(mapToInspctToken(token),
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_SUCCESS, response.getString(TYPE));
+          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
           JsonObject payload = response.getJsonObject("results");
           assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
           assertEquals(payload.getString(SUB), DUMMY_AUTH_SERVER);

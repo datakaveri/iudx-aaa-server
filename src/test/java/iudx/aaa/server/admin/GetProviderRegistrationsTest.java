@@ -1,5 +1,6 @@
 package iudx.aaa.server.admin;
 
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_ADMIN_SERVER;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_ORG;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_ORG;
@@ -199,7 +200,7 @@ public class GetProviderRegistrationsTest {
     adminService.getProviderRegistrations(RoleStatus.PENDING, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 404);
-          assertEquals(Constants.URN_MISSING_INFO, response.getString("type"));
+          assertEquals(URN_MISSING_INFO.toString(), response.getString("type"));
           assertEquals(Constants.ERR_TITLE_NO_USER_PROFILE, response.getString("title"));
           assertEquals(Constants.ERR_DETAIL_NO_USER_PROFILE, response.getString("detail"));
           testContext.completeNow();
@@ -220,7 +221,7 @@ public class GetProviderRegistrationsTest {
     adminService.getProviderRegistrations(RoleStatus.PENDING, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 401);
-          assertEquals(Constants.URN_INVALID_ROLE, response.getString("type"));
+          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
           assertEquals(Constants.ERR_TITLE_NOT_AUTH_ADMIN, response.getString("title"));
           assertEquals(Constants.ERR_DETAIL_NOT_AUTH_ADMIN, response.getString("detail"));
           testContext.completeNow();
@@ -241,7 +242,7 @@ public class GetProviderRegistrationsTest {
     adminService.getProviderRegistrations(RoleStatus.PENDING, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 401);
-          assertEquals(Constants.URN_INVALID_ROLE, response.getString("type"));
+          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
           assertEquals(Constants.ERR_TITLE_NOT_AUTH_ADMIN, response.getString("title"));
           assertEquals(Constants.ERR_DETAIL_NOT_AUTH_ADMIN, response.getString("detail"));
           testContext.completeNow();
@@ -277,7 +278,7 @@ public class GetProviderRegistrationsTest {
 
     adminService.getProviderRegistrations(RoleStatus.PENDING, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getString("type"), Constants.URN_SUCCESS);
+          assertEquals(response.getString("type"), URN_SUCCESS.toString());
           assertEquals(response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
           JsonArray res = response.getJsonArray("results");
           assertTrue(res.size() > 0);
@@ -320,7 +321,7 @@ public class GetProviderRegistrationsTest {
 
     adminService.getProviderRegistrations(RoleStatus.APPROVED, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getString("type"), Constants.URN_SUCCESS);
+          assertEquals(response.getString("type"), URN_SUCCESS.toString());
           assertEquals(response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
           JsonArray res = response.getJsonArray("results");
           assertTrue(res.size() > 0);
@@ -363,7 +364,7 @@ public class GetProviderRegistrationsTest {
 
     adminService.getProviderRegistrations(RoleStatus.REJECTED, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getString("type"), Constants.URN_SUCCESS);
+          assertEquals(response.getString("type"), URN_SUCCESS.toString());
           assertEquals(response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
           JsonArray res = response.getJsonArray("results");
           assertTrue(res.size() > 0);

@@ -46,6 +46,7 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.policy.Constants.CAT_ID;
 import static iudx.aaa.server.policy.Constants.CHECK_ADMIN_POLICY;
 import static iudx.aaa.server.policy.Constants.CHECK_DELEGATOINS_VERIFY;
@@ -135,14 +136,9 @@ import static iudx.aaa.server.policy.Constants.UNAUTHORIZED_DELEGATE;
 import static iudx.aaa.server.policy.Constants.UPDATE_NOTIF_REQ_APPROVED;
 import static iudx.aaa.server.policy.Constants.UPDATE_NOTIF_REQ_REJECTED;
 import static iudx.aaa.server.policy.Constants.URL;
-import static iudx.aaa.server.policy.Constants.URN_INVALID_INPUT;
-import static iudx.aaa.server.policy.Constants.URN_INVALID_ROLE;
-import static iudx.aaa.server.policy.Constants.URN_MISSING_INFO;
-import static iudx.aaa.server.policy.Constants.URN_SUCCESS;
 import static iudx.aaa.server.policy.Constants.USERID;
 import static iudx.aaa.server.policy.Constants.USER_DETAILS;
 import static iudx.aaa.server.policy.Constants.USER_ID;
-import static iudx.aaa.server.policy.Constants.URN_ALREADY_EXISTS;
 import static iudx.aaa.server.policy.Constants.REQ_ID_ALREADY_NOT_EXISTS;
 import static iudx.aaa.server.policy.Constants.*;
 
@@ -431,7 +427,7 @@ public class PolicyServiceImpl implements PolicyService {
       Response r =
           new Response.ResponseBuilder()
               .type(URN_MISSING_INFO)
-              .title(URN_MISSING_INFO)
+              .title(URN_MISSING_INFO.toString())
               .detail(NO_USER)
               .status(401)
               .build();
@@ -631,7 +627,7 @@ public class PolicyServiceImpl implements PolicyService {
       Response r =
           new Response.ResponseBuilder()
               .type(URN_MISSING_INFO)
-              .title(URN_MISSING_INFO)
+              .title(URN_MISSING_INFO.toString())
               .detail(NO_USER)
               .status(404)
               .build();
@@ -1500,10 +1496,10 @@ public class PolicyServiceImpl implements PolicyService {
                     .onComplete(
                         resHandler -> {
                           if (resHandler.failed()) {
-                            String msg = URN_INVALID_INPUT;
+                            String msg = URN_INVALID_INPUT.toString();
                             int status = 400;
                             if (checkDuplicate.failed()) {
-                              msg = URN_ALREADY_EXISTS;
+                              msg = URN_ALREADY_EXISTS.toString();
                               status = 409;
                             }
                             
@@ -1999,7 +1995,7 @@ public class PolicyServiceImpl implements PolicyService {
 
                                                 if (createHandler.succeeded()) {
                                                   JsonObject result = createHandler.result();
-                                                  if (URN_SUCCESS.equalsIgnoreCase(
+                                                  if (URN_SUCCESS.toString().equalsIgnoreCase(
                                                       result.getString(TYPE))) {
 
                                                     Collector<Row, ?, List<Tuple>> policyCollector =

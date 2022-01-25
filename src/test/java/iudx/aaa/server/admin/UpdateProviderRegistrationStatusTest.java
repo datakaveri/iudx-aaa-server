@@ -1,5 +1,6 @@
 package iudx.aaa.server.admin;
 
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.admin.Constants.CONFIG_AUTH_URL;
 import static iudx.aaa.server.admin.Constants.ERR_DETAIL_NOT_AUTH_ADMIN;
 import static iudx.aaa.server.admin.Constants.ERR_DETAIL_NO_USER_PROFILE;
@@ -9,10 +10,6 @@ import static iudx.aaa.server.admin.Constants.ERR_TITLE_NO_USER_PROFILE;
 import static iudx.aaa.server.admin.Constants.NIL_UUID;
 import static iudx.aaa.server.admin.Constants.RESP_STATUS;
 import static iudx.aaa.server.admin.Constants.SUCC_TITLE_PROV_STATUS_UPDATE;
-import static iudx.aaa.server.admin.Constants.URN_INVALID_INPUT;
-import static iudx.aaa.server.admin.Constants.URN_INVALID_ROLE;
-import static iudx.aaa.server.admin.Constants.URN_MISSING_INFO;
-import static iudx.aaa.server.admin.Constants.URN_SUCCESS;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_ADMIN_SERVER;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_ORG;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_ORG;
@@ -224,7 +221,7 @@ public class UpdateProviderRegistrationStatusTest {
     adminService.updateProviderRegistrationStatus(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 404);
-          assertEquals(URN_MISSING_INFO, response.getString("type"));
+          assertEquals(URN_MISSING_INFO.toString(), response.getString("type"));
           assertEquals(ERR_TITLE_NO_USER_PROFILE, response.getString("title"));
           assertEquals(ERR_DETAIL_NO_USER_PROFILE, response.getString("detail"));
           testContext.completeNow();
@@ -249,7 +246,7 @@ public class UpdateProviderRegistrationStatusTest {
     adminService.updateProviderRegistrationStatus(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 401);
-          assertEquals(URN_INVALID_ROLE, response.getString("type"));
+          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
           assertEquals(ERR_TITLE_NOT_AUTH_ADMIN, response.getString("title"));
           assertEquals(ERR_DETAIL_NOT_AUTH_ADMIN, response.getString("detail"));
           testContext.completeNow();
@@ -274,7 +271,7 @@ public class UpdateProviderRegistrationStatusTest {
     adminService.updateProviderRegistrationStatus(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 401);
-          assertEquals(URN_INVALID_ROLE, response.getString("type"));
+          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
           assertEquals(ERR_TITLE_NOT_AUTH_ADMIN, response.getString("title"));
           assertEquals(ERR_DETAIL_NOT_AUTH_ADMIN, response.getString("detail"));
           testContext.completeNow();
@@ -311,7 +308,7 @@ public class UpdateProviderRegistrationStatusTest {
     /** MOCKS -> mock PolicyService, kc.getDetails and kc.approveProvider **/
     Mockito.doAnswer(i -> {
       Promise<JsonObject> p = i.getArgument(2);
-      p.complete(new JsonObject().put("type", URN_SUCCESS));
+      p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
       return i.getMock();
     }).when(policyService).createPolicy(any(), any(), any());
 
@@ -326,7 +323,7 @@ public class UpdateProviderRegistrationStatusTest {
 
     adminService.updateProviderRegistrationStatus(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getString("type"), URN_SUCCESS);
+          assertEquals(response.getString("type"), URN_SUCCESS.toString());
           assertEquals(response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
           JsonArray res = response.getJsonArray("results");
           assertTrue(res.size() > 0);
@@ -365,7 +362,7 @@ public class UpdateProviderRegistrationStatusTest {
     /** MOCKS -> mock PolicyService, kc.getDetails and kc.approveProvider **/
     Mockito.doAnswer(i -> {
       Promise<JsonObject> p = i.getArgument(2);
-      p.complete(new JsonObject().put("type", URN_SUCCESS));
+      p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
       return i.getMock();
     }).when(policyService).createPolicy(any(), any(), any());
 
@@ -380,7 +377,7 @@ public class UpdateProviderRegistrationStatusTest {
 
     adminService.updateProviderRegistrationStatus(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getString("type"), URN_INVALID_INPUT);
+          assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
           assertEquals(response.getString("title"), ERR_TITLE_INVALID_USER);
           assertEquals(response.getString("detail"), providerJson.getString("userId"));
           testContext.completeNow();
@@ -407,7 +404,7 @@ public class UpdateProviderRegistrationStatusTest {
     /** MOCKS -> mock PolicyService, kc.getDetails and kc.approveProvider **/
     Mockito.doAnswer(i -> {
       Promise<JsonObject> p = i.getArgument(2);
-      p.complete(new JsonObject().put("type", URN_SUCCESS));
+      p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
       return i.getMock();
     }).when(policyService).createPolicy(any(), any(), any());
 
@@ -425,7 +422,7 @@ public class UpdateProviderRegistrationStatusTest {
 
     adminService.updateProviderRegistrationStatus(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getString("type"), URN_SUCCESS);
+          assertEquals(response.getString("type"), URN_SUCCESS.toString());
           assertEquals(response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
           JsonArray res = response.getJsonArray("results");
           assertTrue(res.size() > 0);
@@ -444,7 +441,7 @@ public class UpdateProviderRegistrationStatusTest {
 
           adminService.updateProviderRegistrationStatus(request, user,
               testContext.succeeding(r -> testContext.verify(() -> {
-                assertEquals(r.getString("type"), URN_INVALID_INPUT);
+                assertEquals(r.getString("type"), URN_INVALID_INPUT.toString());
                 assertEquals(r.getString("title"), ERR_TITLE_INVALID_USER);
                 assertEquals(r.getString("detail"), providerJson.getString("userId"));
                 fail.flag();
@@ -502,7 +499,7 @@ public class UpdateProviderRegistrationStatusTest {
 
       adminService.updateProviderRegistrationStatus(newRequest, user,
           testContext.succeeding(r -> testContext.verify(() -> {
-            assertEquals(r.getString("type"), URN_SUCCESS);
+            assertEquals(r.getString("type"), URN_SUCCESS.toString());
             assertEquals(r.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
             JsonArray res = r.getJsonArray("results");
             assertTrue(res.size() > 0);

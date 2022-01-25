@@ -4,6 +4,7 @@ import static iudx.aaa.server.apiserver.util.Constants.CONTEXT_SEARCH_USER;
 import static iudx.aaa.server.apiserver.util.Constants.HEADER_EMAIL;
 import static iudx.aaa.server.apiserver.util.Constants.*;
 import static iudx.aaa.server.apiserver.util.Constants.HEADER_ROLE;
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import io.vertx.core.Handler;
