@@ -427,7 +427,7 @@ public class RegistrationServiceImpl implements RegistrationService {
             .execute(Tuple.of(user.getUserId())).map(res -> res.value())));
 
     /* TODO: kc.getEmailId is slow, already being performed at addRole. Consider using once only */
-    Future<String> getEmail = kc.getEmailId(user.getKeycloakId());
+    Future<String> getEmail = modified.compose(x -> kc.getEmailId(user.getKeycloakId()));
 
     CompositeFuture.all(phoneOrgDetails, clientQuery, getEmail).onSuccess(obj -> {
       JsonObject details = (JsonObject) obj.list().get(0);
@@ -641,13 +641,13 @@ public class RegistrationServiceImpl implements RegistrationService {
       String url = (String) x.list().get(0);
       String emailId = (String) x.list().get(1);
 
-      String emailDomain = emailId.split("@")[1];
-
       if (emailId.length() == 0) {
         Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
             .title(ERR_TITLE_USER_NOT_KC).detail(ERR_DETAIL_USER_NOT_KC).build();
         return Future.failedFuture(new ComposeException(r));
       }
+
+      String emailDomain = emailId.split("@")[1];
 
       if (url == null) {
         Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
