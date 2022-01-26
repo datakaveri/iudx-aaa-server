@@ -34,7 +34,7 @@ pipeline {
       post{
         success{
           xunit (
-            thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '10') ],
+            thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
             tools: [ JUnit(pattern: 'target/surefire-reports/*.xml') ]
           )
           jacoco classPattern: 'target/classes', execPattern: 'target/jacoco.exec', sourcePattern: 'src/main/java'
