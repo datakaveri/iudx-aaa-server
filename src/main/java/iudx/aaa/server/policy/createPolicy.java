@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.policy.Constants.*;
 
 public class createPolicy {

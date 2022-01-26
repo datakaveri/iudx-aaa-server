@@ -41,13 +41,6 @@ public class Constants {
   public static final String RESP_PHONE = "phone";
   public static final String RESP_ORG = "organization";
 
-  /* URNs */
-  public static final String URN_SUCCESS = "urn:dx:as:Success";
-  public static final String URN_MISSING_INFO = "urn:dx:as:MissingInformation";
-  public static final String URN_INVALID_INPUT = "urn:dx:as:InvalidInput";
-  public static final String URN_INVALID_ROLE = "urn:dx:as:InvalidRole";
-  public static final String URN_ALREADY_EXISTS = "urn:dx:as:AlreadyExists";
-
   /* Response title and details */
   public static final String SUCC_TITLE_CREATED_USER = "User profile has been created";
   public static final String PROVIDER_PENDING_MESG = ", Provider registration is pending approval";

@@ -1,5 +1,6 @@
 package iudx.aaa.server.registration;
 
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_USER_PROFILE;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_ID_REQUIRED;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_NO_EXIST;
@@ -17,10 +18,6 @@ import static iudx.aaa.server.registration.Constants.RESP_EMAIL;
 import static iudx.aaa.server.registration.Constants.RESP_ORG;
 import static iudx.aaa.server.registration.Constants.RESP_PHONE;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_UPDATED_USER_ROLES;
-import static iudx.aaa.server.registration.Constants.URN_ALREADY_EXISTS;
-import static iudx.aaa.server.registration.Constants.URN_INVALID_INPUT;
-import static iudx.aaa.server.registration.Constants.URN_MISSING_INFO;
-import static iudx.aaa.server.registration.Constants.URN_SUCCESS;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_ORG;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_ORG;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -197,7 +194,7 @@ public class UpdateUserTest {
           testContext.succeeding(response -> testContext.verify(() -> {
             assertEquals(400, response.getInteger("status"));
             assertEquals(ERR_TITLE_ORG_ID_REQUIRED, response.getString("title"));
-            assertEquals(URN_MISSING_INFO, response.getString("type"));
+            assertEquals(URN_MISSING_INFO.toString(), response.getString("type"));
             assertEquals(ERR_DETAIL_ORG_ID_REQUIRED, response.getString("detail"));
             testContext.completeNow();
           })));
@@ -232,7 +229,7 @@ public class UpdateUserTest {
           testContext.succeeding(response -> testContext.verify(() -> {
             assertEquals(400, response.getInteger("status"));
             assertEquals(ERR_TITLE_ORG_NO_EXIST, response.getString("title"));
-            assertEquals(URN_INVALID_INPUT, response.getString("type"));
+            assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
             assertEquals(ERR_DETAIL_ORG_NO_EXIST, response.getString("detail"));
             testContext.completeNow();
           })));
@@ -269,7 +266,7 @@ public class UpdateUserTest {
           testContext.succeeding(response -> testContext.verify(() -> {
             assertEquals(400, response.getInteger("status"));
             assertEquals(ERR_TITLE_ORG_NO_MATCH, response.getString("title"));
-            assertEquals(URN_INVALID_INPUT, response.getString("type"));
+            assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
             assertEquals(ERR_DETAIL_ORG_NO_MATCH, response.getString("detail"));
             testContext.completeNow();
           })));
@@ -307,7 +304,7 @@ public class UpdateUserTest {
           testContext.succeeding(response -> testContext.verify(() -> {
             assertEquals(200, response.getInteger("status"));
             assertEquals(SUCC_TITLE_UPDATED_USER_ROLES, response.getString("title"));
-            assertEquals(URN_SUCCESS, response.getString("type"));
+            assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
             JsonObject result = response.getJsonObject("results");
 
@@ -374,7 +371,7 @@ public class UpdateUserTest {
             assertTrue(response.getString("detail").contains(ERR_DETAIL_ROLE_EXISTS));
             assertTrue(response.getString("detail").contains("delegate"));
             assertFalse(response.getString("detail").contains("provider"));
-            assertEquals(URN_ALREADY_EXISTS, response.getString("type"));
+            assertEquals(URN_ALREADY_EXISTS.toString(), response.getString("type"));
 
             testContext.completeNow();
           })));
@@ -420,7 +417,7 @@ public class UpdateUserTest {
 
             assertEquals(400, resp.getInteger("status"));
             assertEquals(ERR_TITLE_ORG_ID_REQUIRED, resp.getString("title"));
-            assertEquals(URN_MISSING_INFO, resp.getString("type"));
+            assertEquals(URN_MISSING_INFO.toString(), resp.getString("type"));
             assertEquals(ERR_DETAIL_ORG_ID_REQUIRED, resp.getString("detail"));
             noOrgIdFail.flag();
 
@@ -430,7 +427,7 @@ public class UpdateUserTest {
                 testContext.succeeding(response -> testContext.verify(() -> {
                   assertEquals(200, response.getInteger("status"));
                   assertEquals(SUCC_TITLE_UPDATED_USER_ROLES, response.getString("title"));
-                  assertEquals(URN_SUCCESS, response.getString("type"));
+                  assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
                   JsonObject result = response.getJsonObject("results");
 
@@ -504,7 +501,7 @@ public class UpdateUserTest {
             testContext.succeeding(response -> testContext.verify(() -> {
               assertEquals(200, response.getInteger("status"));
               assertEquals(SUCC_TITLE_UPDATED_USER_ROLES, response.getString("title"));
-              assertEquals(URN_SUCCESS, response.getString("type"));
+              assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
               JsonObject result = response.getJsonObject("results");
 

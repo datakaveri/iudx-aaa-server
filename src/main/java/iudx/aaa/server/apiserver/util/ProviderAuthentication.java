@@ -15,6 +15,7 @@ import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.User;
 import static iudx.aaa.server.apiserver.util.Constants.*;
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.token.Constants.LOG_DB_ERROR;
 
 public class ProviderAuthentication implements Handler<RoutingContext> {

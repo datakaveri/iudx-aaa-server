@@ -1,13 +1,12 @@
 package iudx.aaa.server.apiserver.util;
 
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.apiserver.util.Constants.ERR_TITLE_BAD_REQUEST;
 import static iudx.aaa.server.apiserver.util.Constants.HEADER_CONTENT_TYPE;
 import static iudx.aaa.server.apiserver.util.Constants.INVALID_JSON;
 import static iudx.aaa.server.apiserver.util.Constants.JSON_TIMEOUT;
 import static iudx.aaa.server.apiserver.util.Constants.MIME_APPLICATION_JSON;
 import static iudx.aaa.server.apiserver.util.Constants.STATUS;
-import static iudx.aaa.server.apiserver.util.Constants.URN_INVALID_INPUT;
-import static iudx.aaa.server.apiserver.util.Constants.URN_MISSING_INFO;
 import java.time.format.DateTimeParseException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,9 +41,9 @@ public class FailureHandler implements Handler<RoutingContext> {
     Throwable failure = context.failure();
 
     if (failure instanceof DecodeException) {
-      processResponse(response, URN_INVALID_INPUT, INVALID_JSON);
+      processResponse(response, URN_INVALID_INPUT.toString(), INVALID_JSON);
     } else if (failure instanceof IllegalArgumentException) {
-      processResponse(response, URN_INVALID_INPUT, failure.getLocalizedMessage());
+      processResponse(response, URN_INVALID_INPUT.toString(), failure.getLocalizedMessage());
     } else if (failure instanceof NullPointerException) {
       response.setStatusCode(500).end();
       return;
