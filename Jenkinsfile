@@ -67,8 +67,8 @@ pipeline {
         failure{
           script{
             sh 'mvn flyway:clean -Dflyway.configFiles=/home/ubuntu/configs/aaa-flyway.conf'
-            cleanWs(patterns:[[pattern:'./src/main/resources/db/migration/*',type:'INCLUDE']])
           }
+          cleanWs(patterns:[[pattern:'./src/main/resources/db/migration/*',type:'INCLUDE']])
         }
       }
     }
