@@ -68,7 +68,7 @@ pipeline {
           script{
             sh 'mvn flyway:clean -Dflyway.configFiles=/home/ubuntu/configs/aaa-flyway.conf'
           }
-          cleanWs(patterns:[[pattern:'./src/main/resources/db/migration/*',type:'INCLUDE']])
+          cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: '/src/main/resources/db/migration/*', type: 'INCLUDE']]
         }
       }
     }
@@ -99,7 +99,7 @@ pipeline {
             sh 'scp aaa.log jenkins@jenkins-master:/var/lib/jenkins/userContent/'
             echo 'container logs (aaa.log) can be found at jenkins-url/userContent'
             sh 'docker-compose -f docker-compose-test.yml down --remove-orphans'
-            cleanWs(patterns:[[pattern:'./src/main/resources/db/migration/*',type:'INCLUDE']])
+            cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: '/src/main/resources/db/migration/*', type: 'INCLUDE']]
           }
         }
       }
