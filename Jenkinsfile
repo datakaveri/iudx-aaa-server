@@ -1,4 +1,3 @@
-properties([pipelineTriggers([githubPush()])])
 pipeline {
   environment {
     devRegistry = 'ghcr.io/karun-singh/aaa-dev'
@@ -26,33 +25,42 @@ pipeline {
       }
     }
 
-    stage('Run Unit Tests and CodeCoverage test'){
+    stage('Unit Tests and CodeCoverage Test'){
       steps{
         script{
           sh 'docker-compose -f docker-compose-test.yml up test'
         }
       }
-    }
-
-    stage('Capture Unit Test results'){
-      steps{
-        xunit (
-          thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '10') ],
-          tools: [ JUnit(pattern: 'target/surefire-reports/*.xml') ]
-        )
-      }
       post{
-        failure{
-          error "Test failure. Stopping pipeline execution!"
+        success{
+          xunit (
+            thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '10') ],
+            tools: [ JUnit(pattern: 'target/surefire-reports/*.xml') ]
+          )
+          jacoco classPattern: 'target/classes', execPattern: 'target/jacoco.exec', sourcePattern: 'src/main/java'
         }
       }
     }
 
-    stage('Capture Code Coverage'){
-      steps{
-        jacoco classPattern: 'target/classes', execPattern: 'target/jacoco.exec', sourcePattern: 'src/main/java'
-      }
-    }
+    // stage('Capture Unit Test results'){
+    //   steps{
+    //     xunit (
+    //       thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '10') ],
+    //       tools: [ JUnit(pattern: 'target/surefire-reports/*.xml') ]
+    //     )
+    //   }
+    //   post{
+    //     failure{
+    //       error "Test failure. Stopping pipeline execution!"
+    //     }
+    //   }
+    // }
+
+    // stage('Capture Code Coverage'){
+    //   steps{
+    //     jacoco classPattern: 'target/classes', execPattern: 'target/jacoco.exec', sourcePattern: 'src/main/java'
+    //   }
+    // }
 
     stage('Run aaa-server for Integration Test'){
       steps{
@@ -68,7 +76,7 @@ pipeline {
           script{
             sh 'mvn flyway:clean -Dflyway.configFiles=/home/ubuntu/configs/aaa-flyway.conf'
           }
-          cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: '**/src/main/resources/db/migration/*', type: 'INCLUDE']]
+          cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: 'src/main/resources/db/migration/*', type: 'INCLUDE']]
         }
       }
     }
@@ -95,12 +103,9 @@ pipeline {
           }
           script{
             sh 'mvn flyway:clean -Dflyway.configFiles=/home/ubuntu/configs/aaa-flyway.conf'
-            sh 'docker-compose -f docker-compose-test.yml logs integTest > aaa.log'
-            sh 'scp aaa.log jenkins@jenkins-master:/var/lib/jenkins/userContent/'
-            echo 'container logs (aaa.log) can be found at jenkins-url/userContent'
             sh 'docker-compose -f docker-compose-test.yml down --remove-orphans'
           }
-          cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: '**/src/main/resources/db/migration/*', type: 'INCLUDE']]
+          cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: 'src/main/resources/db/migration/*', type: 'INCLUDE']]
         }
       }
     }
