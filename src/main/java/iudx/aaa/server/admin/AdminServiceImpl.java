@@ -24,11 +24,7 @@ import static iudx.aaa.server.admin.Constants.SQL_UPDATE_ROLE_STATUS;
 import static iudx.aaa.server.admin.Constants.SUCC_TITLE_CREATED_ORG;
 import static iudx.aaa.server.admin.Constants.SUCC_TITLE_PROVIDER_REGS;
 import static iudx.aaa.server.admin.Constants.SUCC_TITLE_PROV_STATUS_UPDATE;
-import static iudx.aaa.server.admin.Constants.URN_ALREADY_EXISTS;
-import static iudx.aaa.server.admin.Constants.URN_INVALID_INPUT;
-import static iudx.aaa.server.admin.Constants.URN_INVALID_ROLE;
-import static iudx.aaa.server.admin.Constants.URN_MISSING_INFO;
-import static iudx.aaa.server.admin.Constants.URN_SUCCESS;
+import static iudx.aaa.server.apiserver.util.Urn.*;
 
 import com.google.common.net.InternetDomainName;
 import io.vertx.core.AsyncResult;
@@ -313,7 +309,7 @@ public class AdminServiceImpl implements AdminService {
     Promise<JsonObject> promise = Promise.promise();
     policyService.createPolicy(request, user, promise);
     promise.future().onSuccess(res -> {
-      if (res.getString("type").equals(URN_SUCCESS)) {
+      if (res.getString("type").equals(URN_SUCCESS.toString())) {
         response.complete();
       } else {
         response.fail("Failed to set admin policy");

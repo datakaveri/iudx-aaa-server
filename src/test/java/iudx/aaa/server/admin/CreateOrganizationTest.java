@@ -1,5 +1,6 @@
 package iudx.aaa.server.admin;
 
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_ADMIN_SERVER;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_BULK_ORG;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_SERVERS;
@@ -175,7 +176,7 @@ public class CreateOrganizationTest {
     adminService.createOrganization(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 404);
-          assertEquals(Constants.URN_MISSING_INFO, response.getString("type"));
+          assertEquals(URN_MISSING_INFO.toString(), response.getString("type"));
           assertEquals(Constants.ERR_TITLE_NO_USER_PROFILE, response.getString("title"));
           assertEquals(Constants.ERR_DETAIL_NO_USER_PROFILE, response.getString("detail"));
           testContext.completeNow();
@@ -196,7 +197,7 @@ public class CreateOrganizationTest {
     adminService.createOrganization(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 401);
-          assertEquals(Constants.URN_INVALID_ROLE, response.getString("type"));
+          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
           assertEquals(Constants.ERR_TITLE_NOT_AUTH_ADMIN, response.getString("title"));
           assertEquals(Constants.ERR_DETAIL_NOT_AUTH_ADMIN, response.getString("detail"));
           testContext.completeNow();
@@ -217,7 +218,7 @@ public class CreateOrganizationTest {
     adminService.createOrganization(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 401);
-          assertEquals(Constants.URN_INVALID_ROLE, response.getString("type"));
+          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
           assertEquals(Constants.ERR_TITLE_NOT_AUTH_ADMIN, response.getString("title"));
           assertEquals(Constants.ERR_DETAIL_NOT_AUTH_ADMIN, response.getString("detail"));
           testContext.completeNow();
@@ -242,7 +243,7 @@ public class CreateOrganizationTest {
     adminService.createOrganization(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 400);
-          assertEquals(response.getString("type"), Constants.URN_INVALID_INPUT);
+          assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
           assertEquals(response.getString("title"), Constants.ERR_TITLE_INVALID_DOMAIN);
           assertEquals(response.getString("detail"), Constants.ERR_DETAIL_INVALID_DOMAIN);
           protocolInUrl.flag();
@@ -253,7 +254,7 @@ public class CreateOrganizationTest {
     adminService.createOrganization(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 400);
-          assertEquals(response.getString("type"), Constants.URN_INVALID_INPUT);
+          assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
           assertEquals(response.getString("title"), Constants.ERR_TITLE_INVALID_DOMAIN);
           assertEquals(response.getString("detail"), Constants.ERR_DETAIL_INVALID_DOMAIN);
           pathInUrl.flag();
@@ -264,7 +265,7 @@ public class CreateOrganizationTest {
     adminService.createOrganization(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 400);
-          assertEquals(response.getString("type"), Constants.URN_INVALID_INPUT);
+          assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
           assertEquals(response.getString("title"), Constants.ERR_TITLE_INVALID_DOMAIN);
           assertEquals(response.getString("detail"), Constants.ERR_DETAIL_INVALID_DOMAIN);
           badDomain.flag();
@@ -275,7 +276,7 @@ public class CreateOrganizationTest {
     adminService.createOrganization(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 400);
-          assertEquals(response.getString("type"), Constants.URN_INVALID_INPUT);
+          assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
           assertEquals(response.getString("title"), Constants.ERR_TITLE_INVALID_DOMAIN);
           assertEquals(response.getString("detail"), Constants.ERR_DETAIL_INVALID_DOMAIN);
           specialChars.flag();
@@ -299,7 +300,7 @@ public class CreateOrganizationTest {
     adminService.createOrganization(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 201);
-          assertEquals(response.getString("type"), Constants.URN_SUCCESS);
+          assertEquals(response.getString("type"), URN_SUCCESS.toString());
           assertEquals(response.getString("title"), Constants.SUCC_TITLE_CREATED_ORG);
           JsonObject result = response.getJsonObject("results");
           assertEquals(result.getString("name"), name);
@@ -329,7 +330,7 @@ public class CreateOrganizationTest {
     adminService.createOrganization(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 201);
-          assertEquals(response.getString("type"), Constants.URN_SUCCESS);
+          assertEquals(response.getString("type"), URN_SUCCESS.toString());
           assertEquals(response.getString("title"), Constants.SUCC_TITLE_CREATED_ORG);
           JsonObject result = response.getJsonObject("results");
           assertEquals(result.getString("name"), name);
@@ -343,7 +344,7 @@ public class CreateOrganizationTest {
       adminService.createOrganization(request, user,
           testContext.succeeding(response -> testContext.verify(() -> {
             assertEquals(response.getInteger("status"), 409);
-            assertEquals(response.getString("type"), Constants.URN_ALREADY_EXISTS);
+            assertEquals(response.getString("type"), URN_ALREADY_EXISTS.toString());
             assertEquals(response.getString("title"), Constants.ERR_TITLE_DOMAIN_EXISTS);
             assertEquals(response.getString("detail"), Constants.ERR_DETAIL_DOMAIN_EXISTS);
             testContext.completeNow();
@@ -375,7 +376,7 @@ public class CreateOrganizationTest {
     adminService.createOrganization(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 201);
-          assertEquals(response.getString("type"), Constants.URN_SUCCESS);
+          assertEquals(response.getString("type"), URN_SUCCESS.toString());
           assertEquals(response.getString("title"), Constants.SUCC_TITLE_CREATED_ORG);
           JsonObject result = response.getJsonObject("results");
           assertEquals(result.getString("name"), name);
@@ -389,7 +390,7 @@ public class CreateOrganizationTest {
       adminService.createOrganization(requestSub, user,
           testContext.succeeding(response -> testContext.verify(() -> {
             assertEquals(response.getInteger("status"), 409);
-            assertEquals(response.getString("type"), Constants.URN_ALREADY_EXISTS);
+            assertEquals(response.getString("type"), URN_ALREADY_EXISTS.toString());
             assertEquals(response.getString("title"), Constants.ERR_TITLE_DOMAIN_EXISTS);
             assertEquals(response.getString("detail"), Constants.ERR_DETAIL_DOMAIN_EXISTS);
             testContext.completeNow();

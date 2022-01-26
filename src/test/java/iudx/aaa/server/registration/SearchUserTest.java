@@ -1,5 +1,6 @@
 package iudx.aaa.server.registration;
 
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_USER_PROFILE;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_SEARCH_USR_INVALID_ROLE;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_FOUND;
@@ -8,9 +9,6 @@ import static iudx.aaa.server.registration.Constants.ERR_TITLE_SEARCH_USR_INVALI
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_USER_NOT_FOUND;
 import static iudx.aaa.server.registration.Constants.RESP_ORG;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_USER_FOUND;
-import static iudx.aaa.server.registration.Constants.URN_INVALID_INPUT;
-import static iudx.aaa.server.registration.Constants.URN_INVALID_ROLE;
-import static iudx.aaa.server.registration.Constants.URN_SUCCESS;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_ORG;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_ORG;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -200,7 +198,7 @@ public class SearchUserTest {
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(200, response.getInteger("status"));
           assertEquals(SUCC_TITLE_USER_FOUND, response.getString("title"));
-          assertEquals(URN_SUCCESS, response.getString("type"));
+          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
           JsonObject result = response.getJsonObject("results");
 
@@ -241,7 +239,7 @@ public class SearchUserTest {
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(200, response.getInteger("status"));
           assertEquals(SUCC_TITLE_USER_FOUND, response.getString("title"));
-          assertEquals(URN_SUCCESS, response.getString("type"));
+          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
           JsonObject result = response.getJsonObject("results");
 
@@ -293,7 +291,7 @@ public class SearchUserTest {
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(200, response.getInteger("status"));
           assertEquals(SUCC_TITLE_USER_FOUND, response.getString("title"));
-          assertEquals(URN_SUCCESS, response.getString("type"));
+          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
           JsonObject result = response.getJsonObject("results");
 
@@ -329,7 +327,7 @@ public class SearchUserTest {
           assertEquals(401, response.getInteger("status"));
           assertEquals(ERR_TITLE_SEARCH_USR_INVALID_ROLE, response.getString("title"));
           assertEquals(ERR_DETAIL_SEARCH_USR_INVALID_ROLE, response.getString("detail"));
-          assertEquals(URN_INVALID_ROLE, response.getString("type"));
+          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
           testContext.completeNow();
         })));
   }
@@ -355,7 +353,7 @@ public class SearchUserTest {
           assertEquals(401, response.getInteger("status"));
           assertEquals(ERR_TITLE_SEARCH_USR_INVALID_ROLE, response.getString("title"));
           assertEquals(ERR_DETAIL_SEARCH_USR_INVALID_ROLE, response.getString("detail"));
-          assertEquals(URN_INVALID_ROLE, response.getString("type"));
+          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
           testContext.completeNow();
         })));
   }
@@ -381,7 +379,7 @@ public class SearchUserTest {
           assertEquals(404, response.getInteger("status"));
           assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
           assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
-          assertEquals(URN_INVALID_INPUT, response.getString("type"));
+          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
           testContext.completeNow();
         })));
   }
@@ -412,7 +410,7 @@ public class SearchUserTest {
           assertEquals(404, response.getInteger("status"));
           assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
           assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
-          assertEquals(URN_INVALID_INPUT, response.getString("type"));
+          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
           testContext.completeNow();
         })));
   }
@@ -444,7 +442,7 @@ public class SearchUserTest {
           assertEquals(404, response.getInteger("status"));
           assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
           assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
-          assertEquals(URN_INVALID_INPUT, response.getString("type"));
+          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
           testContext.completeNow();
         })));
   }

@@ -1,6 +1,7 @@
 package iudx.aaa.server.apiserver.util;
 
 import static iudx.aaa.server.apiserver.util.Constants.*;
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;

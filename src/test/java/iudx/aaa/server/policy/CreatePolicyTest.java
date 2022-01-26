@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static iudx.aaa.server.policy.Constants.URN_INVALID_ROLE;
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.policy.TestRequest.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -128,7 +128,7 @@ public class CreatePolicyTest {
                 testContext.verify(
                     () -> {
                       JsonObject result = response;
-                      assertEquals(URN_INVALID_ROLE, result.getString("type"));
+                      assertEquals(URN_INVALID_ROLE.toString(), result.getString("type"));
                       testContext.completeNow();
                     })));
   }

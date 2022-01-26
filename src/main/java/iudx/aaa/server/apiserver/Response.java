@@ -2,6 +2,7 @@ package iudx.aaa.server.apiserver;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import iudx.aaa.server.apiserver.util.Urn;
 
 /**
  * Response object to easily create a JSON response object. Objects must have <b>type</b>, and
@@ -116,6 +117,11 @@ public class Response {
 
     public ResponseBuilder type(String type) {
       this.type = type;
+      return this;
+    }
+    
+    public ResponseBuilder type(Urn type) {
+      this.type = type.toString();
       return this;
     }
 

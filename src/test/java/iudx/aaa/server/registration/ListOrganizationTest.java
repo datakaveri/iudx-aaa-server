@@ -1,7 +1,7 @@
 package iudx.aaa.server.registration;
 
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_ORG_READ;
-import static iudx.aaa.server.registration.Constants.URN_SUCCESS;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_ORG;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_ORG;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -116,7 +116,7 @@ public class ListOrganizationTest {
     registrationService
         .listOrganization(testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(SUCC_TITLE_ORG_READ, response.getString("title"));
-          assertEquals(URN_SUCCESS, response.getString("type"));
+          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
           @SuppressWarnings("unchecked")
           List<JsonObject> list = response.getJsonArray("results").getList();

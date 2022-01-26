@@ -61,7 +61,7 @@ import static iudx.aaa.server.policy.Constants.SERVER_NOT_PRESENT;
 import static iudx.aaa.server.policy.Constants.STATUS;
 import static iudx.aaa.server.policy.Constants.TYPE;
 import static iudx.aaa.server.policy.Constants.URL;
-import static iudx.aaa.server.policy.Constants.URN_CAT_SUCCESS;
+import static iudx.aaa.server.policy.Constants.CAT_SUCCESS_URN;
 import static iudx.aaa.server.policy.Constants.status;
 
 public class CatalogueClient {
@@ -476,7 +476,7 @@ public class CatalogueClient {
             obj -> {
               JsonObject res = obj.bodyAsJsonObject();
               if (obj.statusCode() == 200) {
-                if (res.getString(TYPE).equals(URN_CAT_SUCCESS))
+                if (res.getString(TYPE).equals(CAT_SUCCESS_URN))
                   p.complete(obj.bodyAsJsonObject().getJsonArray(RESULTS).getJsonObject(0));
               } else {
                 if (obj.statusCode() == 404) p.fail(ITEMNOTFOUND + id);
