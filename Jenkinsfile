@@ -30,37 +30,13 @@ pipeline {
         script{
           sh 'docker-compose -f docker-compose-test.yml up test'
         }
-      }
-      post{
-        success{
-          xunit (
-            thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-            tools: [ JUnit(pattern: 'target/surefire-reports/*.xml') ]
-          )
-          jacoco classPattern: 'target/classes', execPattern: 'target/jacoco.exec', sourcePattern: 'src/main/java'
-        }
+        xunit (
+          thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '10') ],
+          tools: [ JUnit(pattern: 'target/surefire-reports/*.xml') ]
+        )
+        jacoco classPattern: 'target/classes', execPattern: 'target/jacoco.exec', sourcePattern: 'src/main/java'
       }
     }
-
-    // stage('Capture Unit Test results'){
-    //   steps{
-    //     xunit (
-    //       thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '10') ],
-    //       tools: [ JUnit(pattern: 'target/surefire-reports/*.xml') ]
-    //     )
-    //   }
-    //   post{
-    //     failure{
-    //       error "Test failure. Stopping pipeline execution!"
-    //     }
-    //   }
-    // }
-
-    // stage('Capture Code Coverage'){
-    //   steps{
-    //     jacoco classPattern: 'target/classes', execPattern: 'target/jacoco.exec', sourcePattern: 'src/main/java'
-    //   }
-    // }
 
     stage('Run aaa-server for Integration Test'){
       steps{
@@ -97,15 +73,17 @@ pipeline {
         always{
           node('master') {
             script{
-              archiveZap failAllAlerts: 15
+              archiveZap failHighAlerts: 1, failMediumAlerts: 1, failLowAlerts: 1
               publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '/var/lib/jenkins/iudx/aaa/Newman/report/', reportFiles: 'report.html', reportName: 'HTML Report', reportTitles: '', reportName: 'Integration Test Report'])
             }  
           }
+        }
+        cleanup{
           script{
             sh 'mvn flyway:clean -Dflyway.configFiles=/home/ubuntu/configs/aaa-flyway.conf'
             sh 'docker-compose -f docker-compose-test.yml down --remove-orphans'
           }
-          cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: 'src/main/resources/db/migration/*', type: 'INCLUDE']]
+          cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: 'src/main/resources/db/migration/*', type: 'INCLUDE'],[pattern: 'target/', type: 'INCLUDE']]
         }
       }
     }
