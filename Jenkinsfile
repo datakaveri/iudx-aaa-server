@@ -36,6 +36,11 @@ pipeline {
         )
         jacoco classPattern: 'target/classes', execPattern: 'target/jacoco.exec', sourcePattern: 'src/main/java', exclusionPattern:'iudx/aaa/server/apiserver/ApiServerVerticle.class,**/*VertxEBProxy.class,**/Constants.class,**/*VertxProxyHandler.class,**/*Verticle.class,iudx/aaa/server/deploy/*.class'
       }
+      post{
+        failure{
+          error "Test failure. Stopping pipeline execution!"
+        }
+      }
     }
 
     stage('Run aaa-server for Integration Test'){
