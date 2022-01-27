@@ -4,7 +4,7 @@ networks:
     driver: bridge
 services:
   test:
-    image: ghcr.io/karun-singh/aaa-test:latest
+    image: ghcr.io/datakaveri/aaa-test:latest
     environment:
       - AUTH_URL=https://authorization.iudx.org.in
       - LOG_LEVEL=INFO
@@ -20,7 +20,7 @@ services:
       - auth-net
 
   integTest:
-    image: ghcr.io/karun-singh/aaa-test:latest
+    image: ghcr.io/datakaveri/aaa-test:latest
     environment:
       - AUTH_URL=https://authorization.iudx.org.in
       - LOG_LEVEL=INFO
