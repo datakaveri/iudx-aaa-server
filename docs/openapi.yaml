@@ -1064,11 +1064,11 @@ paths:
       security:
         - authorization: []
     put:
-      summary: 'Update User Profile [Role]'
+      summary: 'Update User Profile - Add roles, regenerate client secret'
       operationId: put-auth-v1-user-profile
       responses:
         '200':
-          description: Successfully updated the user roles.
+          description: Successfully updated the user profile.
           content:
             application/json:
               schema:
@@ -1147,6 +1147,8 @@ paths:
                             clientId:
                               type: string
                               minLength: 1
+                            clientSecret:
+                              type: string
                           required:
                             - clientName
                             - clientId
@@ -1173,7 +1175,7 @@ paths:
                   - title
                   - results
               examples:
-                Updated User Profile:
+                Added roles successfully:
                   value:
                     type: 'urn:dx:as:Success'
                     title: Registered for requested roles
@@ -1188,7 +1190,29 @@ paths:
                       userId: 67194fc9-495e-40f7-b016-4470c1d4397f
                       clients:
                         - clientName: default
-                          clientId: 6d0b58c3-c0c4-48af-bca2-4f255c0e73a7
+                          clientId: 25b2c2d5-a7fc-47d0-89e4-8709a1560bfa
+                      email: ngoaf@chspomvjuq.com
+                      phone: '9989967899'
+                      organization:
+                        name: example
+                        url: example.com
+                Regenerated client secret successfully:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: Regenerated client secret for requested client ID
+                    results:
+                      keycloakId: c0c52fd1-e9de-456c-b553-8d408e8d2a42
+                      name:
+                        firstName: Foo
+                        lastName: Bar
+                      roles:
+                        - consumer
+                        - delegate
+                      userId: 67194fc9-495e-40f7-b016-4470c1d4397f
+                      clients:
+                        - clientName: default
+                          clientId: 25b2c2d5-a7fc-47d0-89e4-8709a1560bfa
+                          clientSecret: cf2f0e52df08ec08d7eb1706f7c63696a41de41e
                       email: ngoaf@chspomvjuq.com
                       phone: '9989967899'
                       organization:
@@ -1229,23 +1253,39 @@ paths:
                     title: Token authentication failed
                     detail: Inactive Token
         '404':
-          description: A user profile for the user does not exist.
+          description: |-
+            - A user profile for the user does not exist.
+            - The client ID does not exist
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
-                Example:
+                User profile does not exist:
                   value:
                     type: 'urn:dx:as:MissingInformation'
                     title: User profile does not exist
                     detail: Please register to create user profile
+                Client ID does not exist:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Invalid client ID
+                    detail: Requested client ID not found
       description: |-
         Update an existing user profile. Currently a user may use this API to:
         - Add roles to their user profile
+        - Regenerate a client secret corresponding to a client ID (and as a result, revoking all tokens issued in the user's name)
+
+        **NOTE: The operations cannot be done simultaneously.**
 
         ## Add roles
-        A user may add `consumer` and `delegate` roles to their user profile. **The `provider` role cannot be added**.
+        A user may add `consumer` and `delegate` roles to their user profile. **The `provider` role cannot be added**. 
+
+        ## Regenerate client secret
+        A user may regenerate a client secret corresponding to a client ID in case they have lost the client secret or it has been compromised. A new client secret will be generated and sent as part of the output **and will not be shown again.** 
+
+        ### Token revocation before regeneration
+        In addition to regenerating the client secret, **the AAA server notifies all servers recognized by IUDX to revoke all tokens issued in the user's name (with the user's credentials) before the regeneration request was made**. The AAA server is effectively calling the `POST /auth/v1/token/revoke` API for all servers on behalf of the user. This is done to account for the scenario where the client secret has been compromised and tokens have been issued by a malicious user. 
       parameters:
         - schema:
             type: string
@@ -1261,7 +1301,6 @@ paths:
           application/json:
             schema:
               description: ''
-              type: object
               x-examples:
                 example-1:
                   roles:
@@ -1269,37 +1308,53 @@ paths:
                     - consumer
                     - delegate
                   orgId: 123e4567-e89b-12d3-a456-426614174000
-              properties:
-                roles:
-                  type: array
-                  minItems: 1
-                  uniqueItems: true
-                  maxItems: 2
-                  items:
-                    type: string
-                    enum:
-                      - consumer
-                      - delegate
-                    minLength: 5
-                    maxLength: 10
-                orgId:
-                  type: string
-                  format: uuid
-                  minLength: 36
-                  maxLength: 36
-                  pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-              required:
-                - roles
+              oneOf:
+                - properties:
+                    roles:
+                      type: array
+                      minItems: 1
+                      uniqueItems: true
+                      maxItems: 2
+                      items:
+                        type: string
+                        enum:
+                          - consumer
+                          - delegate
+                        minLength: 5
+                        maxLength: 10
+                    orgId:
+                      type: string
+                      format: uuid
+                      minLength: 36
+                      maxLength: 36
+                      pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+                  required:
+                    - roles
+                - properties:
+                    clientId:
+                      type: string
+                      pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+                      minLength: 36
+                      maxLength: 36
+                      format: uuid
+                      description: A valid client ID belonging to the user
+                  required:
+                    - clientId
+              type: object
             examples:
-              Update UserProfile:
+              Add roles:
                 value:
                   roles:
                     - consumer
                     - delegate
                   orgId: 123e4567-e89b-12d3-a456-426614174000
+              Regenerate client secret:
+                value:
+                  clientId: 25b2c2d5-a7fc-47d0-89e4-8709a1560bfa
         description: |-
           - `orgId` is a valid organization ID obtain from the `GET /auth/v1/organizations` API
           - **`orgId` is required for `delegate` roles**
+          - `clientId` is a valid client ID (belonging to the user) whose corresponding client secret needs to be generate
         required: true
       tags:
         - User APIs

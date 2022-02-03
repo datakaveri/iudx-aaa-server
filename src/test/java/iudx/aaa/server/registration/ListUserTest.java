@@ -1,6 +1,8 @@
 package iudx.aaa.server.registration;
 
 import static iudx.aaa.server.apiserver.util.Urn.*;
+import static iudx.aaa.server.registration.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_USER_PROFILE;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_KC;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_USER_PROFILE;
@@ -35,6 +37,7 @@ import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.configuration.Configuration;
+import iudx.aaa.server.token.TokenService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +73,9 @@ public class ListUserTest {
   private static Vertx vertxObj;
 
   private static KcAdmin kc = Mockito.mock(KcAdmin.class);
+  private static TokenService tokenService = Mockito.mock(TokenService.class);
+  private static JsonObject options = new JsonObject();
+  
   private static final String UUID_REGEX =
       "^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$";
 
@@ -114,6 +120,8 @@ public class ListUserTest {
 
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
 
+    options.put(CONFIG_AUTH_URL, dbConfig.getString(CONFIG_AUTH_URL)).put(CONFIG_OMITTED_SERVERS,
+        dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS));
     /*
      * create fake organization, and create 2 mock users. One user has an organization + phone
      * number other does not
@@ -135,7 +143,7 @@ public class ListUserTest {
     userNoOrg = Utils.createFakeUser(pool, Constants.NIL_UUID, "", rolesB, false);
 
     CompositeFuture.all(userWithOrg, userNoOrg).onSuccess(res -> {
-      registrationService = new RegistrationServiceImpl(pool, kc);
+      registrationService = new RegistrationServiceImpl(pool, kc, tokenService, options);
       testContext.completeNow();
     }).onFailure(err -> testContext.failNow(err.getMessage()));
   }

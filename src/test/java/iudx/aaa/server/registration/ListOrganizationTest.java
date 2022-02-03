@@ -1,6 +1,8 @@
 package iudx.aaa.server.registration;
 
 import static iudx.aaa.server.apiserver.util.Urn.*;
+import static iudx.aaa.server.registration.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_ORG_READ;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_ORG;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_ORG;
@@ -17,6 +19,7 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.configuration.Configuration;
+import iudx.aaa.server.token.TokenService;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -52,6 +55,8 @@ public class ListOrganizationTest {
   private static Vertx vertxObj;
 
   private static KcAdmin kc = Mockito.mock(KcAdmin.class);
+  private static TokenService tokenService = Mockito.mock(TokenService.class);
+  private static JsonObject options = new JsonObject();
 
   static String name = RandomStringUtils.randomAlphabetic(10).toLowerCase();
   static String url = name + ".com";
@@ -89,12 +94,15 @@ public class ListOrganizationTest {
     }
 
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
+    
+    options.put(CONFIG_AUTH_URL, dbConfig.getString(CONFIG_AUTH_URL)).put(CONFIG_OMITTED_SERVERS,
+        dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS));
 
     /* create fake organization */
     orgIdFut =
         pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_ORG).execute(Tuple.of(name, url))
             .map(row -> row.iterator().next().getUUID("id"))).onSuccess(err -> {
-              registrationService = new RegistrationServiceImpl(pool, kc);
+              registrationService = new RegistrationServiceImpl(pool, kc, tokenService, options);
               testContext.completeNow();
             }).onFailure(err -> testContext.failNow(err.getMessage()));
   }
