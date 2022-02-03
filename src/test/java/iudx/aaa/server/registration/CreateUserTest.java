@@ -2,6 +2,8 @@ package iudx.aaa.server.registration;
 
 import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.registration.Constants.CLIENT_SECRET_BYTES;
+import static iudx.aaa.server.registration.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
 import static iudx.aaa.server.registration.Constants.DEFAULT_CLIENT;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_ID_REQUIRED;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_NO_EXIST;
@@ -42,6 +44,7 @@ import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.configuration.Configuration;
+import iudx.aaa.server.token.TokenService;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -76,6 +79,9 @@ public class CreateUserTest {
   private static Vertx vertxObj;
 
   private static KcAdmin kc = Mockito.mock(KcAdmin.class);
+  private static TokenService tokenService = Mockito.mock(TokenService.class);
+  private static JsonObject options = new JsonObject();
+
   private static final String UUID_REGEX =
       "^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$";
   private static final int CLIENT_SECRET_HEX_LEN = CLIENT_SECRET_BYTES * 2;
@@ -117,12 +123,15 @@ public class CreateUserTest {
     }
 
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
+    
+    options.put(CONFIG_AUTH_URL, dbConfig.getString(CONFIG_AUTH_URL)).put(CONFIG_OMITTED_SERVERS,
+        dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS));
 
     /* create fake organization */
     orgIdFut =
         pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_ORG).execute(Tuple.of(name, url))
             .map(row -> row.iterator().next().getUUID("id"))).onSuccess(err -> {
-              registrationService = new RegistrationServiceImpl(pool, kc);
+              registrationService = new RegistrationServiceImpl(pool, kc, tokenService, options);
               testContext.completeNow();
             }).onFailure(err -> testContext.failNow(err.getMessage()));
   }

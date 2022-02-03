@@ -18,6 +18,7 @@ public class UpdateProfileRequest {
 
   UUID orgId = UUID.fromString(Constants.NIL_UUID);
   List<Roles> roles = new ArrayList<Roles>();
+  UUID clientId = UUID.fromString(Constants.NIL_UUID);
 
   public List<Roles> getRoles() {
     return roles;
@@ -37,6 +38,14 @@ public class UpdateProfileRequest {
     return obj;
   }
 
+  public String getClientId() {
+    return this.clientId.toString();
+  }
+
+  public void setClientId(String orgId) {
+    this.clientId = UUID.fromString(orgId);
+  }
+
   public String getOrgId() {
     return this.orgId.toString();
   }
@@ -46,6 +55,10 @@ public class UpdateProfileRequest {
   }
 
   private static JsonObject rolesToUpperCase(JsonObject json) {
+    if(!json.containsKey("roles")) {
+      return json;
+    }
+    
     JsonArray roles = json.getJsonArray("roles");
     json.remove("roles");
     json.put("roles",
