@@ -4596,6 +4596,120 @@
 					"response": []
 				},
 				{
+					"name": "Updating roles and client secret regen - [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{NO_PROFILE_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"roles\": [\n        \"consumer\"\n    ],\n    \"clientId\":\"{{$randomUUID}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Updating roles and clientId as array - [400] Copy",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{NO_PROFILE_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"roles\": [\n        \"consumer\"\n    ],\n    \"clientId\": [\n        1,\n        2,\n        3,\n        4\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Update User with no user profile - [404] Copy",
 					"event": [
 						{
@@ -4975,6 +5089,618 @@
 								"v1",
 								"user",
 								"profile"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Regenerate client secret (PUT /user/profile)",
+			"item": [
+				{
+					"name": "Empty body - [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{NO_PROFILE_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Invalid clientId - [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{NO_PROFILE_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"clientId\":\"sdaulhudp*iudjnds\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Trying to update both client secret and roles - [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{NO_PROFILE_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"clientId\": \"{{$randomUUID}}\",\n    \"roles\": [\n        \"consumer\",\n        \"delegate\"\n    ],\n    \"orgId\": \"{{$randomUUID}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ClientId and roles as string - [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{NO_PROFILE_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"clientId\": \"{{$randomUUID}}\",\n    \"roles\": \"consumer\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consumer get RS token with original client ID, secret (save old client secret in env variable) [200]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    const moment = require('moment');",
+									"",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    const result = body.results;",
+									"    pm.expect(result).to.have.property(\"accessToken\");",
+									"    pm.expect(result.expiry).to.be.greaterThan(moment().unix());",
+									"    pm.expect(result.server).to.be.eq(\"rs.iudx.io\");",
+									"    pm.environment.set(\"OLD_CONSUMER_GMAIL_CLSC\", pm.environment.get(\"CONSUMER_GMAIL_CLSC\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "clientId",
+								"value": "{{CONSUMER_GMAIL_CLID}}",
+								"type": "text"
+							},
+							{
+								"key": "clientSecret",
+								"value": "{{CONSUMER_GMAIL_CLSC}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"itemId\": \"rs.iudx.io\",\n    \"itemType\": \"resource_server\",\n    \"role\": \"consumer\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Provider trying to regen client secret of consumer [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"clientId\": \"{{CONSUMER_GMAIL_CLID}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consumer regenerating non-existent client ID [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"clientId\": \"{{$randomUUID}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consumer successfully regen client secret (update client secret env variable with new one) [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    const result = body.results;",
+									"",
+									"    pm.expect(result).to.have.property(\"userId\");    ",
+									"    pm.expect(result).to.have.property(\"email\");",
+									"    pm.expect(result).to.have.property(\"name\");",
+									"    pm.expect(result).to.have.property(\"keycloakId\");",
+									"    pm.expect(result).to.have.property(\"clients\");",
+									"    pm.expect(result.roles).to.have.members([\"consumer\"]);",
+									"",
+									"    const clients = result.clients;",
+									"    pm.expect(clients).length.greaterThan(0);",
+									"    pm.expect(clients[0]).to.have.property(\"clientId\");",
+									"    pm.expect(clients[0]).to.have.property(\"clientSecret\");",
+									"    pm.expect(clients[0]).to.have.property(\"clientName\");",
+									"    pm.environment.set(\"CONSUMER_GMAIL_CLSC\",clients[0].clientSecret);",
+									"",
+									"    pm.expect(result).to.not.have.property(\"organization\");",
+									"    pm.expect(result).to.not.have.property(\"phone\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"clientId\": \"{{CONSUMER_GMAIL_CLID}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consumer Fails to get RS token with original client ID, secret [401]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "clientId",
+								"value": "{{CONSUMER_GMAIL_CLID}}",
+								"type": "text"
+							},
+							{
+								"key": "clientSecret",
+								"value": "{{OLD_CONSUMER_GMAIL_CLSC}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"itemId\": \"rs.iudx.io\",\n    \"itemType\": \"resource_server\",\n    \"role\": \"consumer\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consumer get RS token with client ID, new client secret [200]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    const moment = require('moment');",
+									"",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    const result = body.results;",
+									"    pm.expect(result).to.have.property(\"accessToken\");",
+									"    pm.expect(result.expiry).to.be.greaterThan(moment().unix());",
+									"    pm.expect(result.server).to.be.eq(\"rs.iudx.io\");",
+									"    pm.environment.set(\"OLD_CONSUMER_GMAIL_CLSC\", pm.environment.get(\"CONSUMER_GMAIL_CLSC\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "clientId",
+								"value": "{{CONSUMER_GMAIL_CLID}}",
+								"type": "text"
+							},
+							{
+								"key": "clientSecret",
+								"value": "{{CONSUMER_GMAIL_CLSC}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"itemId\": \"rs.iudx.io\",\n    \"itemType\": \"resource_server\",\n    \"role\": \"consumer\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"token"
 							]
 						}
 					},
@@ -18911,7 +19637,7 @@
 					"response": []
 				},
 				{
-					"name": "Status approved, missing expiryDuration - [200]",
+					"name": "Status approved, missing expiryDuration (approve one of the resource group request) - [200]",
 					"event": [
 						{
 							"listen": "test",
@@ -18970,7 +19696,7 @@
 					"response": []
 				},
 				{
-					"name": "Status rejected - [200]",
+					"name": "Status rejected (reject the resource request) - [200]",
 					"event": [
 						{
 							"listen": "test",
@@ -19236,11 +19962,18 @@
 									"        pm.expect(r.owner.id).to.be.eq(\"13d47a5a-213b-4ac8-b4db-10dbc70c48af\");",
 									"        pm.expect(r.user.id).to.be.eq(pm.environment.get(\"CONSUMER_GMAIL_USERID\"));",
 									"        if(r.requestId === approved_rid)",
+									"        {",
 									"            pm.expect(r.status).to.be.eq(\"approved\");",
-									"        else if(r.requestId === rejected_rid)",
+									"            pm.environment.set(\"ACCEPTED_RESOURCE_GROUP\", r.itemId);",
+									"        }",
+									"        else if(r.requestId === rejected_rid){",
 									"            pm.expect(r.status).to.be.eq(\"rejected\");",
-									"        else  ",
+									"            pm.environment.set(\"REJECTED_RESOURCE\", r.itemId);",
+									"        }            ",
+									"        else {",
 									"            pm.expect(r.status).to.be.eq(\"pending\");",
+									"            pm.environment.set(\"PENDING_RESOURCE_GROUP\", r.itemId);",
+									"        }",
 									"",
 									"    });",
 									"});"
@@ -19508,6 +20241,185 @@
 								"v1",
 								"policies",
 								"requests"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Consumer request for tokens for different policy request states",
+			"item": [
+				{
+					"name": "Consumer get token for accepted resource_group [200]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    const moment = require('moment');",
+									"",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    const result = body.results;",
+									"    pm.expect(result).to.have.property(\"accessToken\");",
+									"    pm.expect(result.expiry).to.be.greaterThan(moment().unix());",
+									"    pm.expect(result.server).to.be.eq(\"rs.iudx.io\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"itemId\": \"{{ACCEPTED_RESOURCE_GROUP}}\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consumer fails to get token for rejected resource [403]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"itemId\": \"{{REJECTED_RESOURCE}}\",\n    \"itemType\": \"resource\",\n    \"role\": \"consumer\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consumer fails to get token for pending resource group[403]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"itemId\": \"{{PENDING_RESOURCE_GROUP}}\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"token"
 							]
 						}
 					},
