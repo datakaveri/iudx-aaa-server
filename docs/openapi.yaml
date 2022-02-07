@@ -1309,7 +1309,8 @@ paths:
                     - delegate
                   orgId: 123e4567-e89b-12d3-a456-426614174000
               oneOf:
-                - properties:
+                - additionalProperties: false
+                  properties:
                     roles:
                       type: array
                       minItems: 1
@@ -1330,7 +1331,8 @@ paths:
                       pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
                   required:
                     - roles
-                - properties:
+                - additionalProperties: false
+                  properties:
                     clientId:
                       type: string
                       pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
