@@ -2,6 +2,8 @@ package iudx.aaa.server.apd;
 
 public class Constants {
 
+  public static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
+  
   /* Config related */
   public static final String CONFIG_AUTH_URL = "authServerDomain";
   public static final String DATABASE_IP = "databaseIP";

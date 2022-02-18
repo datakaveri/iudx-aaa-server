@@ -10,6 +10,7 @@ import io.vertx.pgclient.PgPool;
 import iudx.aaa.server.apiserver.ApdUpdateRequest;
 import iudx.aaa.server.apiserver.CreateApdRequest;
 import iudx.aaa.server.apiserver.User;
+import iudx.aaa.server.registration.RegistrationService;
 import java.util.List;
 
 /**
@@ -27,10 +28,13 @@ public class ApdServiceImpl implements ApdService {
   private static String AUTH_SERVER_URL;
   private PgPool pool;
   private ApdWebClient apdWebClient;
+  private RegistrationService registrationService;
 
-  public ApdServiceImpl(PgPool pool, ApdWebClient apdWebClient, JsonObject options) {
+  public ApdServiceImpl(PgPool pool, ApdWebClient apdWebClient, RegistrationService regService,
+      JsonObject options) {
     this.pool = pool;
     this.apdWebClient = apdWebClient;
+    this.registrationService = regService;
     AUTH_SERVER_URL = options.getString(CONFIG_AUTH_URL);
   }
 

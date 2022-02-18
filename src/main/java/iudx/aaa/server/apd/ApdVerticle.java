@@ -9,6 +9,7 @@ import static iudx.aaa.server.apd.Constants.DATABASE_PORT;
 import static iudx.aaa.server.apd.Constants.DATABASE_SCHEMA;
 import static iudx.aaa.server.apd.Constants.DATABASE_USERNAME;
 import static iudx.aaa.server.apd.Constants.DB_CONNECT_TIMEOUT;
+import static iudx.aaa.server.apd.Constants.REGISTRATION_SERVICE_ADDRESS;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.MessageConsumer;
@@ -19,6 +20,7 @@ import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.serviceproxy.ServiceBinder;
 import io.vertx.sqlclient.PoolOptions;
+import iudx.aaa.server.registration.RegistrationService;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,6 +56,7 @@ public class ApdVerticle extends AbstractVerticle {
   private WebClient webClient;
   private WebClientOptions webClientOptions;
   private ApdWebClient apdWebClient;
+  private RegistrationService registrationService;
 
   private ApdService apdService;
   private ServiceBinder binder;
@@ -106,7 +109,8 @@ public class ApdVerticle extends AbstractVerticle {
     webClient = WebClient.create(vertx, webClientOptions);
     apdWebClient = new ApdWebClient(webClient);
 
-    apdService = new ApdServiceImpl(pool, apdWebClient, options);
+    registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
+    apdService = new ApdServiceImpl(pool, apdWebClient, registrationService, options);
     binder = new ServiceBinder(vertx);
     consumer = binder.setAddress(APD_SERVICE_ADDRESS).register(ApdService.class, apdService);
 
