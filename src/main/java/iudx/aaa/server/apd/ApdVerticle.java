@@ -105,7 +105,8 @@ public class ApdVerticle extends AbstractVerticle {
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
 
     /* Create the APD web client */
-    webClientOptions = new WebClientOptions().setSsl(true).setVerifyHost(true).setTrustAll(true);
+    webClientOptions = new WebClientOptions().setSsl(true).setVerifyHost(true).setTrustAll(true)
+        .setFollowRedirects(false);
     webClient = WebClient.create(vertx, webClientOptions);
     apdWebClient = new ApdWebClient(webClient);
 
