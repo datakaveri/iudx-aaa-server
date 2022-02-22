@@ -18,14 +18,27 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static iudx.aaa.server.policy.Constants.*;
-import static iudx.aaa.server.policy.TestRequest.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.Map;
+
+import static iudx.aaa.server.policy.Constants.INVALID_ROLE;
+import static iudx.aaa.server.policy.Constants.NO_ADMIN_POLICY;
+import static iudx.aaa.server.policy.Constants.REGISTRATION_SERVICE_ADDRESS;
+import static iudx.aaa.server.policy.Constants.STATUS;
+import static iudx.aaa.server.policy.Constants.SUCCESS;
+import static iudx.aaa.server.policy.Constants.UNAUTHORIZED_DELEGATE;
+import static iudx.aaa.server.policy.TestRequest.NoCataloguePolicy;
+import static iudx.aaa.server.policy.TestRequest.NoCatalogueProviderPolicy;
+import static iudx.aaa.server.policy.TestRequest.consumerVerification;
+import static iudx.aaa.server.policy.TestRequest.invalidDelegate;
+import static iudx.aaa.server.policy.TestRequest.roleFailure;
+import static iudx.aaa.server.policy.TestRequest.validDelegateVerification;
+import static iudx.aaa.server.policy.TestRequest.validProviderCat;
+import static iudx.aaa.server.policy.TestRequest.validProviderVerification;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
 public class VerifyPolicyTest {
-  private static Logger LOGGER = LogManager.getLogger(VerifyPolicyTest.class);
+  private static final Logger LOGGER = LogManager.getLogger(VerifyPolicyTest.class);
 
   private static Configuration config;
 
@@ -66,22 +79,33 @@ public class VerifyPolicyTest {
     databaseUserName = dbConfig.getString("databaseUserName");
     databasePassword = dbConfig.getString("databasePassword");
     poolSize = Integer.parseInt(dbConfig.getString("poolSize"));
+    catalogueOptions = dbConfig.getJsonObject("catalogueOptions");
+    catalogueOptions.put("domain", dbConfig.getString("domain"));
+    catalogueOptions.put("resURL", dbConfig.getJsonObject("resOptions").getString("resURL"));
     authOptions = dbConfig.getJsonObject("authOptions");
     catOptions = dbConfig.getJsonObject("catOptions");
 
     /*
-     * Injecting authServerUrl into 'authOptions' from config().'authServerDomain'
+     * Injecting authServerUrl into 'authOptions' and 'catalogueOptions' from config().'authServerDomain'
      * TODO - make this uniform
      */
     authOptions.put("authServerUrl", dbConfig.getString("authServerDomain"));
+    catalogueOptions.put("authServerUrl", dbConfig.getString("authServerDomain"));
+
+    // get options for catalogue client
 
     /* Set Connection Object and schema */
     if (connectOptions == null) {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
-      connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
-          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
-          .setProperties(schemaProp);
+      connectOptions =
+          new PgConnectOptions()
+              .setPort(databasePort)
+              .setHost(databaseIP)
+              .setDatabase(databaseName)
+              .setUser(databaseUserName)
+              .setPassword(databasePassword)
+              .setProperties(schemaProp);
     }
 
     /* Pool options */
@@ -90,10 +114,12 @@ public class VerifyPolicyTest {
     }
 
     /* Create the client pool */
-    pgclient = PgPool.pool(vertx, connectOptions, poolOptions);
 
-    policyService = new PolicyServiceImpl(pgclient, registrationService, catalogueClient,authOptions,catOptions);
-
+    PgPool pool = PgPool.pool(vertx, connectOptions, poolOptions);
+    registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
+    catalogueClient = new CatalogueClient(vertx, pool, catalogueOptions);
+    policyService =
+        new PolicyServiceImpl(pool, registrationService, catalogueClient, authOptions, catOptions);
     testContext.completeNow();
   }
 
@@ -112,7 +138,8 @@ public class VerifyPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
-                      assertEquals(ROLE_NOT_FOUND, response.getLocalizedMessage());
+                      iudx.aaa.server.policy.ComposeException exp = (ComposeException) response;
+                      assertEquals(INVALID_ROLE, exp.getResponse().getDetail());
                       testContext.completeNow();
                     })));
   }
@@ -132,20 +159,6 @@ public class VerifyPolicyTest {
   }
 
   @Test
-  @DisplayName("no match for email hash")
-  void InvalidProviderUser(VertxTestContext testContext) {
-    policyService.verifyPolicy(
-        providerUserFailure,
-        testContext.failing(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(NO_USER, response.getLocalizedMessage());
-                      testContext.completeNow();
-                    })));
-  }
-
-  @Test
   @DisplayName("no policy by catalogue admin")
   void NoAdminPolicy(VertxTestContext testContext) {
     policyService.verifyPolicy(
@@ -154,7 +167,8 @@ public class VerifyPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
-                      assertEquals(NO_ADMIN_POLICY, response.getLocalizedMessage());
+                      iudx.aaa.server.policy.ComposeException exp = (ComposeException) response;
+                      assertEquals(NO_ADMIN_POLICY, exp.getResponse().getDetail());
                       testContext.completeNow();
                     })));
   }
@@ -196,13 +210,14 @@ public class VerifyPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
-                      assertEquals(UNAUTHORIZED_DELEGATE, response.getLocalizedMessage());
+                      iudx.aaa.server.policy.ComposeException exp = (ComposeException) response;
+                      assertEquals(UNAUTHORIZED_DELEGATE, exp.getResponse().getDetail());
                       testContext.completeNow();
                     })));
   }
 
   @Test
-  @DisplayName("not policy for user by cat admin")
+  @DisplayName("no policy for user by cat admin")
   void noCatAdminPolicy(VertxTestContext testContext) {
     policyService.verifyPolicy(
         NoCatalogueProviderPolicy,
@@ -210,7 +225,8 @@ public class VerifyPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
-                      assertEquals(NO_ADMIN_POLICY, response.getLocalizedMessage());
+                      iudx.aaa.server.policy.ComposeException exp = (ComposeException) response;
+                      assertEquals(UNAUTHORIZED_DELEGATE, exp.getResponse().getDetail());
                       testContext.completeNow();
                     })));
   }
@@ -224,7 +240,6 @@ public class VerifyPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
-                        System.out.println("response" + response);
                       assertEquals(SUCCESS, response.getString(STATUS));
                       testContext.completeNow();
                     })));

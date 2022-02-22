@@ -8,6 +8,7 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.CreatePolicyRequest;
+import iudx.aaa.server.apiserver.ResourceObj;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.User;
 import org.apache.logging.log4j.LogManager;
@@ -17,12 +18,39 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-import static iudx.aaa.server.apiserver.util.Urn.*;
-import static iudx.aaa.server.policy.Constants.*;
+import static iudx.aaa.server.apiserver.util.Urn.URN_ALREADY_EXISTS;
+import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
+import static iudx.aaa.server.policy.Constants.BAD_REQUEST;
+import static iudx.aaa.server.policy.Constants.CAT_ID;
+import static iudx.aaa.server.policy.Constants.CHECKUSEREXIST;
+import static iudx.aaa.server.policy.Constants.CHECK_AUTH_POLICY;
+import static iudx.aaa.server.policy.Constants.CHECK_DELEGATION;
+import static iudx.aaa.server.policy.Constants.CHECK_EXISTING_POLICY;
+import static iudx.aaa.server.policy.Constants.CHECK_RES_SER;
+import static iudx.aaa.server.policy.Constants.DUPLICATE_POLICY;
+import static iudx.aaa.server.policy.Constants.ID;
+import static iudx.aaa.server.policy.Constants.INSERT_POLICY;
+import static iudx.aaa.server.policy.Constants.INTERNALERROR;
+import static iudx.aaa.server.policy.Constants.INVALID_DATETIME;
+import static iudx.aaa.server.policy.Constants.INVALID_USER;
+import static iudx.aaa.server.policy.Constants.ITEMTYPE;
+import static iudx.aaa.server.policy.Constants.NO_AUTH_POLICY;
+import static iudx.aaa.server.policy.Constants.OWNER_ID;
+import static iudx.aaa.server.policy.Constants.RESOURCE_SERVER_TABLE;
+import static iudx.aaa.server.policy.Constants.SERVER_NOT_PRESENT;
+import static iudx.aaa.server.policy.Constants.UNAUTHORIZED;
+import static iudx.aaa.server.policy.Constants.VALIDATE_EXPIRY_FAIL;
+import static iudx.aaa.server.policy.Constants.itemTypes;
+import static iudx.aaa.server.policy.Constants.status;
 
 public class createPolicy {
   private static final Logger LOGGER = LogManager.getLogger(createPolicy.class);
@@ -38,8 +66,8 @@ public class createPolicy {
   /**
    * Validate expiry time
    *
-   * @param req - set of userId
-   * @return Set<UUID> -> set of uuids present in the db
+   * @param req - set of expiryTime
+   * @return
    */
   public Future<Void> validateExpiry(List<String> req) {
     Promise<Void> p = Promise.promise();
@@ -48,15 +76,29 @@ public class createPolicy {
       for (String obj : req) {
         LocalDateTime expTime = LocalDateTime.parse(obj, DateTimeFormatter.ISO_DATE_TIME);
         if (expTime.compareTo(LocalDateTime.now(ZoneOffset.UTC)) < 0) {
-          p.fail(VALIDATE_EXPIRY_FAIL + expTime.toString());
+          Response r =
+              new Response.ResponseBuilder()
+                  .type(URN_INVALID_INPUT)
+                  .title(VALIDATE_EXPIRY_FAIL)
+                  .detail(expTime.toString())
+                  .status(400)
+                  .build();
+          p.fail(new ComposeException(r));
           break;
         }
       }
 
     } catch (DateTimeParseException e) {
-      p.fail(INVALID_DATETIME + e.getParsedString());
+      Response r =
+          new Response.ResponseBuilder()
+              .type(URN_INVALID_INPUT)
+              .title(INVALID_DATETIME)
+              .detail(e.getParsedString())
+              .status(400)
+              .build();
+      p.fail(new ComposeException(r));
     } catch (Exception e) {
-      p.fail(INTERNALERROR + e.toString());
+      p.fail(INTERNALERROR);
     }
     if (!p.future().failed()) p.complete();
     return p.future();
@@ -66,14 +108,21 @@ public class createPolicy {
    * Check if the users exist in users table
    *
    * @param users - set of userId
-   * @return Set<UUID> -> set of uuids present in the db
+   * @return Set<UUID> -> set of uuids not present in the db
    */
   public Future<Set<UUID>> checkUserExist(Set<UUID> users) {
 
     Promise<Set<UUID>> p = Promise.promise();
 
     if (users.isEmpty()) {
-      p.fail(BAD_REQUEST);
+      Response r =
+          new Response.ResponseBuilder()
+              .type(URN_INVALID_INPUT)
+              .title(BAD_REQUEST)
+              .detail(BAD_REQUEST)
+              .status(400)
+              .build();
+      p.fail(new ComposeException(r));
       return p.future();
     }
 
@@ -93,8 +142,15 @@ public class createPolicy {
                 .onSuccess(
                     obj -> {
                       if (obj.value().isEmpty()) {
-                        p.fail(INVALID_USER + users.toString());
-                      } else{
+                        Response r =
+                            new Response.ResponseBuilder()
+                                .type(URN_INVALID_INPUT)
+                                .title(INVALID_USER)
+                                .detail(users.toString())
+                                .status(400)
+                                .build();
+                        p.fail(new ComposeException(r));
+                      } else {
                         Set<UUID> resp = users;
                         resp.removeAll(obj.value());
                         p.complete(resp);
@@ -107,30 +163,28 @@ public class createPolicy {
    * Insert into policy table
    *
    * @param req - List of requests
-   * @param resourceId - map of cat_id to item_id
-   * @param ownerId - map of cat_id to owner_id
+   * @param resourceObj - list of resourceObj
    * @return Boolean - true if insertion is true
    */
   public Future<Boolean> insertPolicy(
-      List<CreatePolicyRequest> req,
-      Map<String, UUID> resourceId,
-      Map<String, UUID> ownerId,
-      User user) {
+      List<CreatePolicyRequest> req, Map<String, ResourceObj> resourceObj, User user) {
     Promise<Boolean> p = Promise.promise();
-    Future<List<Tuple>> tuples = createTuple(req, resourceId, ownerId, user);
+    Future<List<Tuple>> tuples = createTuple(req, resourceObj, user);
 
     Future<List<Tuple>> checkDuplicate = tuples.compose(this::checkExistingPolicy);
 
-
     checkDuplicate
         .compose(
-            success ->
-                pool.withTransaction(
-                    conn -> conn.preparedQuery(INSERT_POLICY).executeBatch(success).mapEmpty()))
+            success -> {
+              return pool.withTransaction(
+                  conn -> conn.preparedQuery(INSERT_POLICY).executeBatch(success).mapEmpty());
+            })
         .onFailure(
             failureHandler -> {
               LOGGER.error("checkDuplicate fail :: " + failureHandler.getLocalizedMessage());
-              p.fail(failureHandler.getLocalizedMessage());
+              if (failureHandler instanceof iudx.aaa.server.policy.ComposeException) {
+                p.fail(failureHandler);
+              } else p.fail(INTERNALERROR);
             })
         .onSuccess(success -> p.complete(true));
 
@@ -138,10 +192,7 @@ public class createPolicy {
   }
 
   public Future<List<Tuple>> createTuple(
-      List<CreatePolicyRequest> req,
-      Map<String, UUID> resourceId,
-      Map<String, UUID> ownerId,
-      User user) {
+      List<CreatePolicyRequest> req, Map<String, ResourceObj> resourceObj, User user) {
     Promise<List<Tuple>> p = Promise.promise();
     try {
       List<Tuple> tuples = new ArrayList<>();
@@ -149,12 +200,12 @@ public class createPolicy {
 
         String catId = obj.getItemId();
         String userId = obj.getUserId();
-        UUID itemId = resourceId.get(catId);
+        UUID itemId = resourceObj.get(catId).getId();
         String itemType = obj.getItemType().toUpperCase();
         UUID providerId;
         if (itemType.equals(itemTypes.RESOURCE_SERVER.toString()))
           providerId = UUID.fromString(user.getUserId());
-        else providerId = ownerId.get(catId);
+        else providerId = resourceObj.get(catId).getOwnerId();
         String status = "ACTIVE";
         String expTime = obj.getExpiryTime();
         LocalDateTime expiryTime;
@@ -162,18 +213,21 @@ public class createPolicy {
           expiryTime = LocalDateTime.parse(expTime, DateTimeFormatter.ISO_DATE_TIME);
         else {
           if (itemType.equals(itemTypes.RESOURCE_SERVER.toString()))
-            expiryTime = LocalDateTime.now(ZoneOffset.UTC)
-                .plusMonths(Integer.parseInt(options.getString("adminPolicyExpiry")));
+            expiryTime =
+                LocalDateTime.now(ZoneOffset.UTC)
+                    .plusMonths(Integer.parseInt(options.getString("adminPolicyExpiry")));
           else
-            expiryTime = LocalDateTime.now(ZoneOffset.UTC)
-                .plusMonths(Integer.parseInt(options.getString("policyExpiry")));
+            expiryTime =
+                LocalDateTime.now(ZoneOffset.UTC)
+                    .plusMonths(Integer.parseInt(options.getString("policyExpiry")));
         }
         JsonObject constraints = obj.getConstraints();
         tuples.add(Tuple.of(userId, itemId, itemType, providerId, status, expiryTime, constraints));
       }
       p.complete(tuples);
     } catch (Exception e) {
-      p.fail(e.toString());
+      LOGGER.error("createTuple fail " + e.toString());
+      p.fail(INTERNALERROR);
     }
     return p.future();
   }
@@ -199,126 +253,182 @@ public class createPolicy {
                     failureHandler -> {
                       LOGGER.error(
                           "checkExistingPolicy fail :: " + failureHandler.getLocalizedMessage());
-                      p.fail(failureHandler.getLocalizedMessage());
+                      p.fail(INTERNALERROR);
                     })
                 .onSuccess(
                     ar -> {
                       RowSet<Row> rows = ar;
                       List<UUID> ids = new ArrayList<>();
                       while (rows != null) {
-                        rows.iterator().forEachRemaining(row -> {
-                          ids.add(row.getUUID(ID));
-                        });
+                        rows.iterator()
+                            .forEachRemaining(
+                                row -> {
+                                  ids.add(row.getUUID(ID));
+                                });
                         rows = rows.next();
                       }
-                      
+
                       if (ids.size() > 0) {
-                        p.fail(DUPLICATE_POLICY + ids);
+                        Response r =
+                            new Response.ResponseBuilder()
+                                .type(URN_ALREADY_EXISTS)
+                                .title(DUPLICATE_POLICY)
+                                .detail(ids.get(0).toString())
+                                .status(409)
+                                .build();
+                        p.fail(new ComposeException(r));
                       } else p.complete(tuples);
                     }));
 
     return p.future();
   }
 
-  public Response getRespObj(String obj) {
-    Response.ResponseBuilder r = new Response.ResponseBuilder();
+  public Future<Map<String, ResourceObj>> getResSerDetails(List<String> servers, String userId) {
 
-    String errorMessage;
-    if (obj.contains(":")) errorMessage = obj.split(":")[0] + ":";
-    else errorMessage = obj;
-    switch (errorMessage) {
-      case BAD_REQUEST:
-        {
-          r.type(URN_INVALID_INPUT);
-          r.title(BAD_REQUEST);
-          r.detail(BAD_REQUEST);
-          r.status(400);
-          break;
-        }
-      case VALIDATE_EXPIRY_FAIL:
-        {
-          r.type(URN_INVALID_INPUT);
-          r.title(VALIDATE_EXPIRY_FAIL.split(":")[0]);
-          r.detail(obj.replace(VALIDATE_EXPIRY_FAIL, ""));
-          r.status(400);
-          break;
-        }
-      case INVALID_DATETIME:
-        {
-          r.type(URN_INVALID_INPUT);
-          r.title(INVALID_DATETIME.split(":")[0]);
-          r.detail(obj.replace(INVALID_DATETIME, ""));
-          r.status(400);
-          break;
-        }
+    Promise<Map<String, ResourceObj>> p = Promise.promise();
 
-      case INVALID_USER:
-        {
-          r.type(URN_INVALID_INPUT);
-          r.title(INVALID_USER.split(":")[0]);
-          r.detail(obj.replace(INVALID_USER, ""));
-          r.status(400);
-          break;
-        }
-      case SERVER_NOT_PRESENT:
-        {
-          r.type(URN_INVALID_INPUT);
-          r.title(SERVER_NOT_PRESENT.split(":")[0]);
-          r.detail(obj.replace(SERVER_NOT_PRESENT, ""));
-          r.status(400);
-          break;
-        }
-      case NO_AUTH_POLICY:
-        {
-          r.type(URN_INVALID_ROLE);
-          r.title(NO_AUTH_POLICY);
-          r.detail(NO_AUTH_POLICY);
-          r.status(403);
-          break;
-        }
-      case UNAUTHORIZED:
-        {
-          r.type(URN_INVALID_INPUT);
-          r.title(UNAUTHORIZED);
-          r.detail(UNAUTHORIZED);
-          r.status(403);
-          break;
-        }
-      case ITEMNOTFOUND:
-        {
-          r.type(URN_INVALID_INPUT);
-          r.title(ITEMNOTFOUND);
-          r.detail(obj.replace(ITEMNOTFOUND, ""));
-          r.status(400);
-          break;
-        }
-      case DUPLICATE_POLICY:
-        {
-          r.type(URN_ALREADY_EXISTS);
-          r.title(DUPLICATE_POLICY.split(":")[0]);
-          r.detail(obj.replace(DUPLICATE_POLICY, ""));
-          r.status(409);
-          break;
-        }
-      case PROVIDER_NOT_REGISTERED:
-      {
-        r.type(URN_INVALID_INPUT);
-        r.title(PROVIDER_NOT_REGISTERED);
-        r.detail(PROVIDER_NOT_REGISTERED);
-        r.status(403);
-        break;
-      }
-
-      default:
-        {
-          r.type(URN_INVALID_INPUT);
-          r.title(INTERNALERROR);
-          r.detail(INTERNALERROR);
-          r.status(500);
-          break;
-        }
+    if (servers.isEmpty()) {
+      Response r =
+          new Response.ResponseBuilder()
+              .type(URN_INVALID_INPUT)
+              .title(BAD_REQUEST)
+              .detail(BAD_REQUEST)
+              .status(400)
+              .build();
+      p.fail(new ComposeException(r));
+      return p.future();
     }
-    Response resp = r.build();
-    return resp;
+
+    Collector<Row, ?, List<JsonObject>> resDetailCollector =
+        Collectors.mapping(row -> row.toJson(), Collectors.toList());
+
+    pool.withConnection(
+        conn ->
+            conn.preparedQuery(CHECK_RES_SER)
+                .collecting(resDetailCollector)
+                .execute(
+                    Tuple.of(UUID.fromString(userId))
+                        .addArrayOfString(servers.toArray(String[]::new)))
+                .map(res -> res.value())
+                .onFailure(
+                    obj -> {
+                      LOGGER.error("checkResSer db fail :: " + obj.getLocalizedMessage());
+                      p.fail(INTERNALERROR);
+                    })
+                .onSuccess(
+                    success -> {
+                      List<String> validServers =
+                          success.stream()
+                              .map(JsonObject.class::cast)
+                              .filter(tagObject -> !tagObject.getString(CAT_ID).isEmpty())
+                              .map(tagObject -> tagObject.getString(CAT_ID))
+                              .collect(Collectors.toList());
+
+                      servers.removeAll(validServers);
+                      if (!servers.isEmpty()) {
+                        Response r =
+                            new Response.ResponseBuilder()
+                                .status(400)
+                                .type(URN_INVALID_INPUT)
+                                .title(SERVER_NOT_PRESENT)
+                                .detail(servers.toString())
+                                .build();
+                        p.fail(new ComposeException(r));
+                      } else {
+                        Map<String, ResourceObj> respMap = new HashMap<>();
+                        for (JsonObject serverObject : success) {
+                          serverObject.put(ITEMTYPE, RESOURCE_SERVER_TABLE);
+                          respMap.put(
+                              serverObject.getString(CAT_ID), new ResourceObj(serverObject));
+                        }
+                        p.complete(respMap);
+                      }
+                    }));
+    return p.future();
+  }
+
+  /**
+   * checks if there is a policy for user by auth admin
+   *
+   * @param userId - userId of user
+   * @return Boolean - active policy exits true , else false
+   */
+  public Future<Boolean> checkAuthPolicy(String userId) {
+    Promise<Boolean> p = Promise.promise();
+    pool.withConnection(
+        conn ->
+            conn.preparedQuery(CHECK_AUTH_POLICY)
+                .execute(Tuple.of(userId, options.getString("authServerUrl"), status.ACTIVE))
+                .onFailure(
+                    obj -> {
+                      LOGGER.error("checkAuthPolicy db fail :: " + obj.getLocalizedMessage());
+                      p.fail(INTERNALERROR);
+                    })
+                .onSuccess(
+                    obj -> {
+                      if (obj.rowCount() > 0) p.complete(true);
+                      else {
+                        Response r =
+                            new Response.ResponseBuilder()
+                                .type(URN_INVALID_INPUT)
+                                .title(NO_AUTH_POLICY)
+                                .detail(NO_AUTH_POLICY)
+                                .status(403)
+                                .build();
+                        p.fail(new ComposeException(r));
+                      }
+                    }));
+
+    return p.future();
+  }
+
+  /**
+   * checks if for user is a delegate for any of a list of users
+   *
+   * @param provider_ids - List of Providers that the user should be a delegate of
+   * @param userId - userId of user
+   * @return List<UUID> - List of owner_ids
+   */
+  public Future<List<UUID>> checkDelegate(List<UUID> provider_ids, String userId) {
+    Promise<List<UUID>> p = Promise.promise();
+    Collector<Row, ?, List<UUID>> ownerIdCollector =
+        Collectors.mapping(row -> row.getUUID(OWNER_ID), Collectors.toList());
+
+    try {
+      pool.withConnection(
+          conn ->
+              conn.preparedQuery(CHECK_DELEGATION)
+                  .collecting(ownerIdCollector)
+                  .execute(
+                      Tuple.of(
+                              options.getString("authServerUrl"),
+                              UUID.fromString(userId),
+                              status.ACTIVE)
+                          .addArrayOfUUID(provider_ids.toArray(UUID[]::new)))
+                  .onSuccess(
+                      obj -> {
+                        provider_ids.removeAll(obj.value());
+                        if (provider_ids.isEmpty()) p.complete(obj.value());
+                        else {
+                          Response r =
+                              new Response.ResponseBuilder()
+                                  .type(URN_INVALID_INPUT)
+                                  .title(UNAUTHORIZED)
+                                  .detail(UNAUTHORIZED)
+                                  .status(403)
+                                  .build();
+                          p.fail(new ComposeException(r));
+                        }
+                      })
+                  .onFailure(
+                      obj -> {
+                        LOGGER.error("checkDelegate db fail :: " + obj.getLocalizedMessage());
+                        p.fail(INTERNALERROR);
+                      }));
+    } catch (Exception e) {
+      LOGGER.error("Fail checkDelegate:" + e.toString());
+      p.fail(INTERNALERROR);
+    }
+    return p.future();
   }
 }

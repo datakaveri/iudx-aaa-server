@@ -8,8 +8,6 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.Response;
-import iudx.aaa.server.apiserver.Roles;
-import iudx.aaa.server.apiserver.User;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,35 +18,27 @@ import java.util.UUID;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-import static iudx.aaa.server.apiserver.util.Urn.*;
+import static iudx.aaa.server.apiserver.util.Urn.URN_ALREADY_EXISTS;
+import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
+import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
 import static iudx.aaa.server.policy.Constants.BAD_REQUEST;
-import static iudx.aaa.server.policy.Constants.CHECK_AUTH_POLICY;
 import static iudx.aaa.server.policy.Constants.CHECK_AUTH_POLICY_DELEGATION;
 import static iudx.aaa.server.policy.Constants.CHECK_EXISTING_DELEGATIONS;
-import static iudx.aaa.server.policy.Constants.CHECK_EXISTING_POLICY;
 import static iudx.aaa.server.policy.Constants.CHECK_ROLES;
 import static iudx.aaa.server.policy.Constants.DUPLICATE_DELEGATION;
-import static iudx.aaa.server.policy.Constants.DUPLICATE_POLICY;
 import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ROLES;
 import static iudx.aaa.server.policy.Constants.GET_SERVER_DETAILS;
 import static iudx.aaa.server.policy.Constants.ID;
 import static iudx.aaa.server.policy.Constants.INSERT_DELEGATION;
-import static iudx.aaa.server.policy.Constants.INSERT_POLICY;
 import static iudx.aaa.server.policy.Constants.INTERNALERROR;
-import static iudx.aaa.server.policy.Constants.INVALID_DATETIME;
-import static iudx.aaa.server.policy.Constants.INVALID_USER;
-import static iudx.aaa.server.policy.Constants.ITEMNOTFOUND;
-import static iudx.aaa.server.policy.Constants.NIL_UUID;
 import static iudx.aaa.server.policy.Constants.NOT_DELEGATE;
 import static iudx.aaa.server.policy.Constants.NO_AUTH_POLICY;
-import static iudx.aaa.server.policy.Constants.PROVIDER_NOT_REGISTERED;
 import static iudx.aaa.server.policy.Constants.SERVER_NOT_PRESENT;
 import static iudx.aaa.server.policy.Constants.UNAUTHORIZED;
 import static iudx.aaa.server.policy.Constants.URL;
 import static iudx.aaa.server.policy.Constants.USER_ID;
 import static iudx.aaa.server.policy.Constants.roles;
 import static iudx.aaa.server.policy.Constants.status;
-import static iudx.aaa.server.policy.Constants.VALIDATE_EXPIRY_FAIL;
 
 public class createDelegate {
   private static final Logger LOGGER = LogManager.getLogger(createDelegate.class);
@@ -77,9 +67,9 @@ public class createDelegate {
                 .collecting(userIdCollector)
                 .execute(
                     Tuple.of(
-                       roles.DELEGATE.toString(),
+                        roles.DELEGATE.toString(),
                         status.APPROVED.toString(),
-                            users.toArray(UUID[]::new)))
+                        users.toArray(UUID[]::new)))
                 .onFailure(
                     failureHandler -> {
                       LOGGER.error(
@@ -161,134 +151,138 @@ public class createDelegate {
                     }));
     return p.future();
   }
-    public Future<Boolean> insertItems(List<Tuple> tuples) {
+
+  public Future<Boolean> insertItems(List<Tuple> tuples) {
     Promise<Boolean> p = Promise.promise();
-      Future<List<Tuple>>  checkDuplicate = checkExistingDelegation(tuples);
+    Future<List<Tuple>> checkDuplicate = checkExistingDelegation(tuples);
 
-      checkDuplicate.compose(success ->
-              pool.withTransaction(
-                      conn -> conn.preparedQuery(INSERT_DELEGATION).executeBatch(success).mapEmpty()))
-              .onFailure(
-                      failureHandler -> {
-                          LOGGER.error("insertItems fail :: " + failureHandler.getLocalizedMessage());
-                          p.fail(failureHandler.getLocalizedMessage());
-                      })
-              .onSuccess(success -> p.complete(true));
+    checkDuplicate
+        .compose(
+            success ->
+                pool.withTransaction(
+                    conn -> conn.preparedQuery(INSERT_DELEGATION).executeBatch(success).mapEmpty()))
+        .onFailure(
+            failureHandler -> {
+              LOGGER.error("insertItems fail :: " + failureHandler.getLocalizedMessage());
+              p.fail(failureHandler.getLocalizedMessage());
+            })
+        .onSuccess(success -> p.complete(true));
 
-        return p.future();
+    return p.future();
+  }
 
-    }
+  public Future<List<Tuple>> checkExistingDelegation(List<Tuple> tuples) {
+    Promise<List<Tuple>> p = Promise.promise();
+    Collector<Row, ?, List<UUID>> policyIdCollector =
+        Collectors.mapping(row -> row.getUUID(ID), Collectors.toList());
 
-    public Future<List<Tuple>> checkExistingDelegation(List<Tuple> tuples) {
-        Promise<List<Tuple>> p = Promise.promise();
-        Collector<Row, ?, List<UUID>> policyIdCollector =
-                Collectors.mapping(row -> row.getUUID(ID), Collectors.toList());
+    pool.withTransaction(
+        conn ->
+            conn.preparedQuery(CHECK_EXISTING_DELEGATIONS)
+                .executeBatch(tuples)
+                .onFailure(
+                    failureHandler -> {
+                      LOGGER.error(
+                          "checkExistingDelegation fail :: "
+                              + failureHandler.getLocalizedMessage());
+                      p.fail(failureHandler.getLocalizedMessage());
+                    })
+                .onSuccess(
+                    ar -> {
+                      RowSet<Row> rows = ar;
+                      List<UUID> ids = new ArrayList<>();
+                      while (rows != null) {
+                        rows.iterator()
+                            .forEachRemaining(
+                                row -> {
+                                  ids.add(row.getUUID(ID));
+                                });
+                        rows = rows.next();
+                      }
 
-        pool.withTransaction(
-                conn ->
-                        conn.preparedQuery(CHECK_EXISTING_DELEGATIONS)
-                                .executeBatch(tuples)
-                                .onFailure(
-                                        failureHandler -> {
-                                            LOGGER.error(
-                                                    "checkExistingDelegation fail :: " + failureHandler.getLocalizedMessage());
-                                            p.fail(failureHandler.getLocalizedMessage());
-                                        })
-                                .onSuccess(
-                                        ar -> {
-                                            RowSet<Row> rows = ar;
-                                            List<UUID> ids = new ArrayList<>();
-                                            while (rows != null) {
-                                                rows.iterator().forEachRemaining(row -> {
-                                                    ids.add(row.getUUID(ID));
-                                                });
-                                                rows = rows.next();
-                                            }
+                      if (ids.size() > 0) {
+                        p.fail(DUPLICATE_DELEGATION + ids);
+                      } else p.complete(tuples);
+                    }));
 
-                                            if (ids.size() > 0) {
-                                                p.fail(DUPLICATE_DELEGATION + ids);
-                                            } else p.complete(tuples);
-                                        }));
+    return p.future();
+  }
 
-        return p.future();
-    }
+  public Response getRespObj(String obj) {
+    Response.ResponseBuilder r = new Response.ResponseBuilder();
 
-
-    public Response getRespObj(String obj) {
-        Response.ResponseBuilder r = new Response.ResponseBuilder();
-
-        String errorMessage;
-        if (obj.contains(":")) errorMessage = obj.split(":")[0] + ":";
-        else errorMessage = obj;
-        switch (errorMessage) {
-            case BAD_REQUEST:
-            {
-                r.type(URN_INVALID_INPUT);
-                r.title(BAD_REQUEST);
-                r.detail(BAD_REQUEST);
-                r.status(400);
-                break;
-            }
-
-            case NOT_DELEGATE:
-            {
-                r.type(URN_INVALID_ROLE);
-                r.title(NOT_DELEGATE);
-                r.detail(obj.replace(NOT_DELEGATE, ""));
-                r.status(400);
-                break;
-            }
-            case SERVER_NOT_PRESENT:
-            {
-                r.type(URN_INVALID_INPUT);
-                r.title(SERVER_NOT_PRESENT);
-                r.detail(obj.replace(SERVER_NOT_PRESENT, ""));
-                r.status(400);
-                break;
-            }
-            case NO_AUTH_POLICY:
-            {
-                r.type(URN_INVALID_INPUT);
-                r.title(NO_AUTH_POLICY);
-                r.detail(NO_AUTH_POLICY);
-                r.status(403);
-                break;
-            }
-            case UNAUTHORIZED:
-            {
-                r.type(URN_INVALID_INPUT);
-                r.title(UNAUTHORIZED);
-                r.detail(UNAUTHORIZED);
-                r.status(403);
-                break;
-            }
-            case DUPLICATE_DELEGATION:
-            {
-                r.type(URN_ALREADY_EXISTS);
-                r.title(DUPLICATE_DELEGATION);
-                r.detail(obj.replace(DUPLICATE_DELEGATION, ""));
-                r.status(409);
-                break;
-            }
-            case ERR_TITLE_INVALID_ROLES:
-            {
-                r.type(URN_INVALID_ROLE);
-                r.title(ERR_TITLE_INVALID_ROLES);
-                r.detail(ERR_TITLE_INVALID_ROLES);
-                r.status(401);
-                break;
-            }
-
-            default:
-            {
-                r.type(URN_INVALID_INPUT);
-                r.title(INTERNALERROR);
-                r.detail(INTERNALERROR);
-                r.status(500);
-                break;
-            }
+    String errorMessage;
+    if (obj.contains(":")) errorMessage = obj.split(":")[0] + ":";
+    else errorMessage = obj;
+    switch (errorMessage) {
+      case BAD_REQUEST:
+        {
+          r.type(URN_INVALID_INPUT);
+          r.title(BAD_REQUEST);
+          r.detail(BAD_REQUEST);
+          r.status(400);
+          break;
         }
-        Response resp = r.build();
-        return resp;
+
+      case NOT_DELEGATE:
+        {
+          r.type(URN_INVALID_ROLE);
+          r.title(NOT_DELEGATE);
+          r.detail(obj.replace(NOT_DELEGATE, ""));
+          r.status(400);
+          break;
+        }
+      case SERVER_NOT_PRESENT:
+        {
+          r.type(URN_INVALID_INPUT);
+          r.title(SERVER_NOT_PRESENT);
+          r.detail(obj.replace(SERVER_NOT_PRESENT, ""));
+          r.status(400);
+          break;
+        }
+      case NO_AUTH_POLICY:
+        {
+          r.type(URN_INVALID_INPUT);
+          r.title(NO_AUTH_POLICY);
+          r.detail(NO_AUTH_POLICY);
+          r.status(403);
+          break;
+        }
+      case UNAUTHORIZED:
+        {
+          r.type(URN_INVALID_INPUT);
+          r.title(UNAUTHORIZED);
+          r.detail(UNAUTHORIZED);
+          r.status(403);
+          break;
+        }
+      case DUPLICATE_DELEGATION:
+        {
+          r.type(URN_ALREADY_EXISTS);
+          r.title(DUPLICATE_DELEGATION);
+          r.detail(obj.replace(DUPLICATE_DELEGATION, ""));
+          r.status(409);
+          break;
+        }
+      case ERR_TITLE_INVALID_ROLES:
+        {
+          r.type(URN_INVALID_ROLE);
+          r.title(ERR_TITLE_INVALID_ROLES);
+          r.detail(ERR_TITLE_INVALID_ROLES);
+          r.status(401);
+          break;
+        }
+
+      default:
+        {
+          r.type(URN_INVALID_INPUT);
+          r.title(INTERNALERROR);
+          r.detail(INTERNALERROR);
+          r.status(500);
+          break;
+        }
     }
+    Response resp = r.build();
+    return resp;
+  }
 }

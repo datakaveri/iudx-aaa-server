@@ -1,6 +1,5 @@
 package iudx.aaa.server.policy;
 
-import com.hazelcast.spi.impl.eventservice.impl.Registration;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
@@ -13,7 +12,7 @@ import io.vertx.serviceproxy.ServiceBinder;
 import io.vertx.sqlclient.PoolOptions;
 
 import static iudx.aaa.server.policy.Constants.REGISTRATION_SERVICE_ADDRESS;
-import static iudx.aaa.server.token.Constants.POLICY_SERVICE_ADDRESS;
+
 import java.util.Map;
 
 /**

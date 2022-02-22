@@ -19,17 +19,30 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.util.Map;
 import java.util.UUID;
 
-import static iudx.aaa.server.policy.Constants.*;
-import static iudx.aaa.server.policy.TestRequest.*;
+import static iudx.aaa.server.policy.Constants.ID_NOT_PRESENT;
+import static iudx.aaa.server.policy.Constants.INVALID_DELEGATE;
+import static iudx.aaa.server.policy.Constants.ITEMNOTFOUND;
+import static iudx.aaa.server.policy.Constants.SUCC_TITLE_POLICY_DEL;
+import static iudx.aaa.server.policy.TestRequest.DelFail;
+import static iudx.aaa.server.policy.TestRequest.DelPolFail;
+import static iudx.aaa.server.policy.TestRequest.DelegateUser;
+import static iudx.aaa.server.policy.TestRequest.DelegateUserFail;
+import static iudx.aaa.server.policy.TestRequest.INSERT_REQ;
+import static iudx.aaa.server.policy.TestRequest.ProviderUser;
+import static iudx.aaa.server.policy.TestRequest.ResExistFail;
+import static iudx.aaa.server.policy.TestRequest.ResOwnFail;
+import static iudx.aaa.server.policy.TestRequest.allRolesUser;
+import static iudx.aaa.server.policy.TestRequest.successProvider;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
 public class DeletePolicyTest {
-  static Future<UUID> policyId;
   private static final Logger LOGGER = LogManager.getLogger(VerifyPolicyTest.class);
+  static Future<UUID> policyId;
   private static Configuration config;
   /* Database Properties */
   private static String databaseIP;
@@ -44,10 +57,10 @@ public class DeletePolicyTest {
   private static PgConnectOptions connectOptions;
   private static PolicyService policyService;
   private static RegistrationService registrationService;
-  private static CatalogueClient  catalogueClient;
+  private static CatalogueClient catalogueClient;
   private static Vertx vertxObj;
-    private static JsonObject authOptions;
-    private static JsonObject catOptions;
+  private static JsonObject authOptions;
+  private static JsonObject catOptions;
 
   @BeforeAll
   @DisplayName("Deploying Verticle")
@@ -66,9 +79,9 @@ public class DeletePolicyTest {
     databaseUserName = dbConfig.getString("databaseUserName");
     databasePassword = dbConfig.getString("databasePassword");
     poolSize = Integer.parseInt(dbConfig.getString("poolSize"));
-      authOptions = dbConfig.getJsonObject("authOptions");
-      catOptions = dbConfig.getJsonObject("catOptions");
-      
+    authOptions = dbConfig.getJsonObject("authOptions");
+    catOptions = dbConfig.getJsonObject("catOptions");
+
     /*
      * Injecting authServerUrl into 'authOptions' from config().'authServerDomain'
      * TODO - make this uniform
@@ -79,9 +92,14 @@ public class DeletePolicyTest {
     if (connectOptions == null) {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
-      connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
-          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
-          .setProperties(schemaProp);
+      connectOptions =
+          new PgConnectOptions()
+              .setPort(databasePort)
+              .setHost(databaseIP)
+              .setDatabase(databaseName)
+              .setUser(databaseUserName)
+              .setPassword(databasePassword)
+              .setProperties(schemaProp);
     }
 
     /* Pool options */
@@ -101,7 +119,9 @@ public class DeletePolicyTest {
                         .map(row -> row.iterator().next().getUUID("id")))
             .onSuccess(
                 obj -> {
-                  policyService = new PolicyServiceImpl(pgclient, registrationService,catalogueClient,authOptions,catOptions);
+                  policyService =
+                      new PolicyServiceImpl(
+                          pgclient, registrationService, catalogueClient, authOptions, catOptions);
                   testContext.completeNow();
                 })
             .onFailure(err -> testContext.failNow(err.getMessage()));
@@ -142,7 +162,7 @@ public class DeletePolicyTest {
                 testContext.verify(
                     () -> {
                       JsonObject result = response;
-                      assertEquals(INVALID_ROLE, result.getString("title"));
+                      assertEquals(ITEMNOTFOUND, result.getString("title"));
                       testContext.completeNow();
                     })));
   }
@@ -159,7 +179,7 @@ public class DeletePolicyTest {
                 testContext.verify(
                     () -> {
                       JsonObject result = response;
-                      assertEquals(INVALID_DELEGATE_POL, result.getString("title"));
+                      assertEquals(ITEMNOTFOUND, result.getString("title"));
                       testContext.completeNow();
                     })));
   }
