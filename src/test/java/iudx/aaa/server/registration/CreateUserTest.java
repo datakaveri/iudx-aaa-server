@@ -277,6 +277,49 @@ public class CreateUserTest {
   }
 
   @Test
+  @DisplayName("Test successful trustee registration")
+  void createTrusteeSuccess(VertxTestContext testContext) {
+
+    String orgId = orgIdFut.result().toString();
+    String email = RandomStringUtils.randomAlphabetic(5).toLowerCase() + "@" + url;
+    String keycloakId = UUID.randomUUID().toString();
+
+    Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.succeededFuture());
+    Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(email));
+
+    JsonObject jsonReq =
+        new JsonObject().put("roles", new JsonArray().add("trustee")).put("orgId", orgId);
+    RegistrationRequest request = new RegistrationRequest(jsonReq);
+
+    User user = new UserBuilder().keycloakId(keycloakId).name("Foo", "Bar").build();
+
+    registrationService.createUser(request, user,
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(201, response.getInteger("status"));
+
+          JsonObject result = response.getJsonObject("results");
+
+          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+          assertEquals(SUCC_TITLE_CREATED_USER, response.getString("title"));
+          assertTrue(result.getJsonArray("roles").contains(Roles.TRUSTEE.name().toLowerCase()));
+          assertEquals(result.getString("email"), email);
+          assertEquals(result.getString("keycloakId"), keycloakId);
+          assertTrue(result.getString("userId").matches(UUID_REGEX));
+          assertEquals(result.getJsonObject("name").getString("firstName"), "Foo");
+          assertEquals(result.getJsonObject("name").getString("lastName"), "Bar");
+          assertTrue(!result.containsKey("phone"));
+          assertEquals(result.getJsonObject("organization").getString("url"), url);
+
+          JsonObject client = result.getJsonArray("clients").getJsonObject(0);
+          assertTrue(client.getString(RESP_CLIENT_ID).matches(UUID_REGEX));
+          assertTrue(client.getString(RESP_CLIENT_SC).matches(CLIENT_SECRET_REGEX));
+          assertEquals(client.getString(RESP_CLIENT_NAME), DEFAULT_CLIENT);
+
+          testContext.completeNow();
+        })));
+  }
+
+  @Test
   @DisplayName("Test successful registration of all roles")
   void allRolesRegister(VertxTestContext testContext) {
 
@@ -288,7 +331,7 @@ public class CreateUserTest {
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(email));
 
     JsonObject jsonReq = new JsonObject()
-        .put("roles", new JsonArray().add("delegate").add("provider").add("consumer"))
+        .put("roles", new JsonArray().add("delegate").add("provider").add("consumer").add("trustee"))
         .put("orgId", orgId).put("phone", "9989989980");
     RegistrationRequest request = new RegistrationRequest(jsonReq);
 
@@ -306,7 +349,8 @@ public class CreateUserTest {
           @SuppressWarnings("unchecked")
           List<String> roles = result.getJsonArray("roles").getList();
           assertTrue(roles.containsAll(
-              List.of(Roles.DELEGATE.name().toLowerCase(), Roles.CONSUMER.name().toLowerCase())));
+              List.of(Roles.DELEGATE.name().toLowerCase(), Roles.CONSUMER.name().toLowerCase(),
+                  Roles.TRUSTEE.name().toLowerCase())));
 
           assertEquals(result.getString("email"), email);
           assertEquals(result.getString("keycloakId"), keycloakId);
@@ -353,7 +397,7 @@ public class CreateUserTest {
   }
 
   @Test
-  @DisplayName("Testing no organization ID for provider/delegate reg")
+  @DisplayName("Testing no organization ID for provider, delegate reg")
   void noOrgForProviderReg(VertxTestContext testContext) {
     String email = RandomStringUtils.randomAlphabetic(5).toLowerCase() + "@" + url;
     String keycloakId = UUID.randomUUID().toString();
@@ -363,6 +407,32 @@ public class CreateUserTest {
 
     JsonObject jsonReq =
         new JsonObject().put("roles", new JsonArray().add("provider").add("delegate"));
+    RegistrationRequest request = new RegistrationRequest(jsonReq);
+
+    User user = new UserBuilder().keycloakId(keycloakId).name("Foo", "Bar").build();
+
+    registrationService.createUser(request, user,
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_MISSING_INFO.toString(), response.getString("type"));
+          assertEquals(400, response.getInteger("status"));
+          assertEquals(ERR_DETAIL_ORG_ID_REQUIRED, response.getString("detail"));
+          assertEquals(ERR_TITLE_ORG_ID_REQUIRED, response.getString("title"));
+
+          testContext.completeNow();
+        })));
+  }
+
+  @Test
+  @DisplayName("Testing no organization ID for trustee reg")
+  void noOrgForTrusteeReg(VertxTestContext testContext) {
+    String email = RandomStringUtils.randomAlphabetic(5).toLowerCase() + "@" + url;
+    String keycloakId = UUID.randomUUID().toString();
+
+    Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.succeededFuture());
+    Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(email));
+
+    JsonObject jsonReq =
+        new JsonObject().put("roles", new JsonArray().add("trustee"));
     RegistrationRequest request = new RegistrationRequest(jsonReq);
 
     User user = new UserBuilder().keycloakId(keycloakId).name("Foo", "Bar").build();

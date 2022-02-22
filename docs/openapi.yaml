@@ -744,6 +744,7 @@ paths:
           - manage catalogue items
           - manage data on resource servers
           - manage policies
+        - **trustee**, which allows a user to manage an Access Policy Domain (APD)
           
         ## Client ID and Client Secret
         On successful creation of the user profile, the user would receive a client ID and a client secret. The client ID and client secret can be used instead of the OIDC flow to request for tokens. **The client secret is ONLY shown to the user here and can never be obtained again.**
@@ -761,13 +762,14 @@ paths:
                   type: array
                   minItems: 1
                   uniqueItems: true
-                  maxItems: 3
+                  maxItems: 4
                   items:
                     type: string
                     enum:
                       - provider
                       - consumer
                       - delegate
+                      - trustee
                     minLength: 5
                     maxLength: 10
                 orgId:
@@ -794,7 +796,7 @@ paths:
                   orgId: 123e4567-e89b-12d3-a456-426614174000
         description: |-
           - `orgId` is a valid organization ID obtain from the `GET /auth/v1/organizations` API
-          - **`orgId` is required for `provider` and `delegate` roles**
+          - **`orgId` is required for `provider`, `delegate` and `trustee` roles**
           - **The domain of the email address of the registering user must match the organization domain**
         required: true
       tags:
@@ -1056,7 +1058,11 @@ paths:
         The response contains user details such as roles, name, email. It also lists the client ID of the user.
 
         ## Search for a user
-        A user with `provider` or `admin` role or is a auth delegate may search for a user by providing the email address and role of said user. If a user exists, then the user ID `userId`, email, name and organization details (if applicable) is returned.
+        A user with either 
+        - `provider` role
+        - `admin` role
+        - is an **auth delegate** 
+        may search for a user by providing the email address and role of said user. If a user exists, then the user ID `userId`, email, name and organization details (if applicable) is returned.
 
         To search for the user, 2 headers `email` (email address of user) and `role` (role of the user) need to be included. **Both headers need to be present for the search to be attempted.** If an auth delegate is to call the API, the `providerId` header needs to be included. Users with roles `delegate`, `consumer` and `provider` can be searched for.
       tags:
@@ -1187,6 +1193,7 @@ paths:
                       roles:
                         - consumer
                         - delegate
+                        - trustee
                       userId: 67194fc9-495e-40f7-b016-4470c1d4397f
                       clients:
                         - clientName: default
@@ -1279,7 +1286,7 @@ paths:
         **NOTE: The operations cannot be done simultaneously.**
 
         ## Add roles
-        A user may add `consumer` and `delegate` roles to their user profile. **The `provider` role cannot be added**. 
+        A user may add `consumer`, `delegate` and `trustee` roles to their user profile. **The `provider` role cannot be added**. 
 
         ## Regenerate client secret
         A user may regenerate a client secret corresponding to a client ID in case they have lost the client secret or it has been compromised. A new client secret will be generated and sent as part of the output **and will not be shown again.** 
@@ -1315,12 +1322,13 @@ paths:
                       type: array
                       minItems: 1
                       uniqueItems: true
-                      maxItems: 2
+                      maxItems: 3
                       items:
                         type: string
                         enum:
                           - consumer
                           - delegate
+                          - trustee
                         minLength: 5
                         maxLength: 10
                     orgId:
@@ -1349,13 +1357,14 @@ paths:
                   roles:
                     - consumer
                     - delegate
+                    - trustee
                   orgId: 123e4567-e89b-12d3-a456-426614174000
               Regenerate client secret:
                 value:
                   clientId: 25b2c2d5-a7fc-47d0-89e4-8709a1560bfa
         description: |-
           - `orgId` is a valid organization ID obtain from the `GET /auth/v1/organizations` API
-          - **`orgId` is required for `delegate` roles**
+          - **`orgId` is required for `delegate` or `trustee` roles**
           - `clientId` is a valid client ID (belonging to the user) whose corresponding client secret needs to be generate
         required: true
       tags:
