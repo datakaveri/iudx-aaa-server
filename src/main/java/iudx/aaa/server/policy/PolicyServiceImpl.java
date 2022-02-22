@@ -1081,7 +1081,7 @@ public class PolicyServiceImpl implements PolicyService {
               LOGGER.error("failed verifyProviderPolicy: " + failureHandler.getLocalizedMessage());
               if (failureHandler instanceof iudx.aaa.server.policy.ComposeException) {
                 p.fail(failureHandler);
-              } else p.fail(INTERNALERROR + 2);
+              } else p.fail(INTERNALERROR);
             });
 
     return p.future();
@@ -1326,7 +1326,7 @@ public class PolicyServiceImpl implements PolicyService {
               if (failureHandler instanceof iudx.aaa.server.policy.ComposeException) {
                 ComposeException exp = (ComposeException) failureHandler;
                 p.fail(failureHandler);
-              } else p.fail(INTERNALERROR + 1);
+              } else p.fail(INTERNALERROR);
             });
 
     return p.future();
@@ -1479,7 +1479,7 @@ public class PolicyServiceImpl implements PolicyService {
                       }
                     default:
                       {
-                        response = Future.failedFuture(INTERNALERROR + 3);
+                        response = Future.failedFuture(INTERNALERROR);
                       }
                   }
                   return response;

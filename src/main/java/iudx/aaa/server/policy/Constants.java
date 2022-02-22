@@ -3,6 +3,7 @@ package iudx.aaa.server.policy;
 public class Constants {
 
   public static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
+  public static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
   // db columns
   public static final String USERID = "userId";
   public static final String ITEMID = "itemId";
