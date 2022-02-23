@@ -117,7 +117,6 @@ public class RegistrationServiceImpl implements RegistrationService {
   public static String AUTH_SERVER_URL = "";
   public static List<String> SERVERS_OMITTED_FROM_TOKEN_REVOKE = new ArrayList<String>();
 
-  /* TODO: include token service here */
   public RegistrationServiceImpl(PgPool pool, KcAdmin kc, TokenService tokenService,
       JsonObject options) {
     this.pool = pool;
@@ -138,7 +137,8 @@ public class RegistrationServiceImpl implements RegistrationService {
     UUID orgId = UUID.fromString(request.getOrgId());
     final String phone = request.getPhone();
 
-    if (requestedRoles.contains(Roles.PROVIDER) || requestedRoles.contains(Roles.DELEGATE)) {
+    if (requestedRoles.contains(Roles.PROVIDER) || requestedRoles.contains(Roles.DELEGATE)
+        || requestedRoles.contains(Roles.TRUSTEE)) {
       if (orgId.toString().equals(NIL_UUID)) {
         Response r = new ResponseBuilder().status(400).type(URN_MISSING_INFO)
             .title(ERR_TITLE_ORG_ID_REQUIRED).detail(ERR_DETAIL_ORG_ID_REQUIRED).build();
@@ -166,7 +166,8 @@ public class RegistrationServiceImpl implements RegistrationService {
     Future<String> checkOrgExist;
     String orgIdToSet;
 
-    if (roles.containsKey(Roles.PROVIDER) || roles.containsKey(Roles.DELEGATE)) {
+    if (roles.containsKey(Roles.PROVIDER) || roles.containsKey(Roles.DELEGATE)
+        || roles.containsKey(Roles.TRUSTEE)) {
       orgIdToSet = request.getOrgId();
       checkOrgExist = pool.withConnection(
           conn -> conn.preparedQuery(SQL_GET_ORG_DETAILS).execute(Tuple.of(orgId.toString())).map(
@@ -622,8 +623,11 @@ public class RegistrationServiceImpl implements RegistrationService {
     Future<String> email = kc.getEmailId(user.getKeycloakId());
     Future<String> checkOrgRequired;
 
-    /* orgId is needed always for delegate reg, even if the user has registered for provider role */
-    if (requestedRoles.contains(Roles.DELEGATE)) {
+    /*
+     * orgId is needed always for delegate or trustee reg, even if the user has registered for
+     * provider role
+     */
+    if (requestedRoles.contains(Roles.DELEGATE) || requestedRoles.contains(Roles.TRUSTEE)) {
       if (orgId.toString().equals(NIL_UUID)) {
         Response r = new ResponseBuilder().status(400).type(URN_MISSING_INFO)
             .title(ERR_TITLE_ORG_ID_REQUIRED).detail(ERR_DETAIL_ORG_ID_REQUIRED).build();
