@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "d7d30943-fe48-4c8a-aa54-0407eadbb468",
-		"name": "Integration Test",
+	"name": "Integration Test",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
