@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "83504fab-3f10-448e-9f43-adbb1c4787c4",
+		"_postman_id": "d7d30943-fe48-4c8a-aa54-0407eadbb468",
 		"name": "Integration Test",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -988,6 +988,65 @@
 					"response": []
 				},
 				{
+					"name": "orgId needed for trustee role - [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:MissingInformation\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"roles\": [\n        \"trustee\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "orgId needed for provider role - [400] Copy",
 					"event": [
 						{
@@ -1260,7 +1319,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"roles\":[\"provider\"],\n    \"orgId\":\"{{$randomUUID}}\"\n}",
+							"raw": "{\n    \"roles\":[\"provider\", \"trustee\"],\n    \"orgId\":\"{{$randomUUID}}\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1364,7 +1423,7 @@
 					"response": []
 				},
 				{
-					"name": "Successful delegate and provider registration registration - [201] (All roles)",
+					"name": "Successful delegate, trustee and provider registration registration - [201] (All roles)",
 					"event": [
 						{
 							"listen": "test",
@@ -1390,7 +1449,7 @@
 									"    pm.expect(result).to.have.property(\"name\");",
 									"    pm.expect(result).to.have.property(\"keycloakId\");",
 									"    pm.expect(result).to.have.property(\"clients\");",
-									"    pm.expect(result.roles).to.have.members([\"delegate\"]);",
+									"    pm.expect(result.roles).to.have.members([\"delegate\", \"trustee\"]);",
 									"",
 									"    const clients = result.clients;",
 									"    pm.expect(clients).length.greaterThan(0);",
@@ -1419,7 +1478,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"roles\": [\n        \"delegate\",\n        \"provider\"\n    ],\n    \"orgId\": \"3a054e6a-220d-4d49-8cbd-25447dfaa8ed\",\n    \"phone\": \"9989989981\"\n}",
+							"raw": "{\n    \"roles\": [\n        \"delegate\",\n        \"provider\",\n        \"trustee\"\n    ],\n    \"orgId\": \"3a054e6a-220d-4d49-8cbd-25447dfaa8ed\",\n    \"phone\": \"9989989981\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -4793,7 +4852,7 @@
 									"    pm.expect(result).to.have.property(\"name\");",
 									"    pm.expect(result).to.have.property(\"keycloakId\");",
 									"    pm.expect(result).to.have.property(\"clients\");",
-									"    pm.expect(result.roles).to.have.members([\"delegate\", \"consumer\", \"provider\"]);",
+									"    pm.expect(result.roles).to.have.members([\"delegate\", \"consumer\", \"provider\", \"trustee\"]);",
 									"",
 									"    const clients = result.clients;",
 									"    pm.expect(clients).length.greaterThan(0);",
@@ -4938,7 +4997,64 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\"roles\":[\"delegate\"]}",
+							"raw": "{\n    \"roles\": [\n        \"delegate\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "orgId required for trustee role  - [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:MissingInformation\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"roles\": [\n        \"trustee\"\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -5072,7 +5188,80 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\"roles\":[\"delegate\"],\n \"orgId\": \"3a054e6a-220d-4d49-8cbd-25447dfaa8ed\"}",
+							"raw": "{\n    \"roles\": [\n        \"delegate\"\n    ],\n    \"orgId\": \"3a054e6a-220d-4d49-8cbd-25447dfaa8ed\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add trustee role for rejected provider  - [200]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    const result = body.results;",
+									"",
+									"    pm.expect(result).to.have.property(\"userId\");",
+									"    pm.expect(result).to.have.property(\"email\");",
+									"    pm.expect(result).to.have.property(\"name\");",
+									"    pm.expect(result).to.have.property(\"keycloakId\");",
+									"    pm.expect(result).to.have.property(\"clients\");",
+									"    pm.expect(result.roles).to.have.members([\"delegate\", \"trustee\"]);",
+									"",
+									"    const clients = result.clients;",
+									"    pm.expect(clients).length.greaterThan(0);",
+									"    pm.expect(clients[0]).to.have.property(\"clientId\");",
+									"    pm.expect(clients[0]).to.not.have.property(\"clientSecret\");",
+									"    pm.expect(clients[0]).to.have.property(\"clientName\");",
+									"",
+									"    pm.expect(result).to.have.property(\"organization\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"roles\": [\n        \"trustee\"\n    ],\n    \"orgId\": \"3a054e6a-220d-4d49-8cbd-25447dfaa8ed\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -5894,7 +6083,7 @@
 									"    pm.expect(result).to.have.property(\"name\");",
 									"    pm.expect(result).to.have.property(\"keycloakId\");",
 									"    pm.expect(result).to.have.property(\"clients\");",
-									"    pm.expect(result.roles).to.have.members([\"consumer\",\"delegate\",\"provider\"]);",
+									"    pm.expect(result.roles).to.have.members([\"consumer\",\"delegate\",\"provider\", \"trustee\"]);",
 									"",
 									"    const clients = result.clients;",
 									"    pm.expect(clients).length.greaterThan(0);",
@@ -6002,7 +6191,7 @@
 					"response": []
 				},
 				{
-					"name": "List User rejected provider, delegate",
+					"name": "List User rejected provider, delegate, trustee",
 					"event": [
 						{
 							"listen": "test",
@@ -6028,7 +6217,7 @@
 									"    pm.expect(result).to.have.property(\"name\");",
 									"    pm.expect(result).to.have.property(\"keycloakId\");",
 									"    pm.expect(result).to.have.property(\"clients\");",
-									"    pm.expect(result.roles).to.have.members([\"delegate\"]);",
+									"    pm.expect(result.roles).to.have.members([\"delegate\", \"trustee\"]);",
 									"",
 									"    const clients = result.clients;",
 									"    pm.expect(clients).length.greaterThan(0);",
@@ -9241,14 +9430,14 @@
 							"response": []
 						},
 						{
-							"name": "Item exists, but does not belong to the provider - [400]",
+							"name": "Item exists, but does not belong to the provider - [403]",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
 										"exec": [
 											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(400);",
+											"    pm.response.to.have.status(403);",
 											"});",
 											"",
 											"pm.test(\"Check response header\", function () {",
@@ -9277,7 +9466,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n                        {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/surat-itms-realtime-information\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n                {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/fake-item/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n        {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n         {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n                        {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"datakaveri.org/9c13a2308bb0919bf146be8681eb886922d29282/rs.iudx.io/invalid-resource-for-ownership-test\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n                {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n        {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n         {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -9473,7 +9662,7 @@
 							"response": []
 						},
 						{
-							"name": "Test catalogue fetch - [400]",
+							"name": "INCORRECT!! Test catalogue fetch - [400]",
 							"event": [
 								{
 									"listen": "test",
@@ -10253,7 +10442,7 @@
 											"",
 											"pm.test(\"Check response body\", function () {    ",
 											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidRole\");",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
 											"});",
 											"",
 											""
@@ -10447,7 +10636,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        },\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/surat-itms-realtime-information\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        },\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"datakaveri.org/9c13a2308bb0919bf146be8681eb886922d29282/rs.iudx.io/invalid-resource-for-ownership-test\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
