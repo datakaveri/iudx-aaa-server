@@ -25,39 +25,33 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import static iudx.aaa.server.apiserver.util.Urn.URN_ALREADY_EXISTS;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
-import static iudx.aaa.server.policy.Constants.DETAIL;
 import static iudx.aaa.server.policy.Constants.ITEMNOTFOUND;
-import static iudx.aaa.server.policy.Constants.STATUS;
 import static iudx.aaa.server.policy.Constants.TITLE;
 import static iudx.aaa.server.policy.Constants.TYPE;
 import static iudx.aaa.server.policy.Constants.UNAUTHORIZED;
-import static iudx.aaa.server.policy.TestRequest.INSERT_REQ;
 import static iudx.aaa.server.policy.TestRequest.MultipleProvider;
-import static iudx.aaa.server.policy.TestRequest.ProviderUserCreate;
 import static iudx.aaa.server.policy.TestRequest.consumerUser;
 import static iudx.aaa.server.policy.TestRequest.duplicate;
 import static iudx.aaa.server.policy.TestRequest.invalidDelUser;
 import static iudx.aaa.server.policy.TestRequest.invalidProvider;
 import static iudx.aaa.server.policy.TestRequest.invalidProviderItem;
 import static iudx.aaa.server.policy.TestRequest.itemFailure;
-import static iudx.aaa.server.policy.TestRequest.roleFailureReq;
-import static iudx.aaa.server.policy.TestRequest.unAuthDel;
+import static iudx.aaa.server.policy.TestRequest.validReq;
 import static iudx.aaa.server.policy.TestRequest.unAuthProvider;
 import static iudx.aaa.server.policy.TestRequest.validCatItem;
 import static iudx.aaa.server.policy.TestRequest.validDelUser;
 import static iudx.aaa.server.policy.TestRequest.validDelegateItem;
+import static iudx.aaa.server.policy.TestRequest.validProvider;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
 public class CreatePolicyTest {
   private static final Logger LOGGER = LogManager.getLogger(VerifyPolicyTest.class);
-  static Future<UUID> policyId;
   private static Configuration config;
   /* Database Properties */
   private static String databaseIP;
@@ -126,15 +120,7 @@ public class CreatePolicyTest {
     /* Create the client pool */
     pgclient = PgPool.pool(vertx, connectOptions, poolOptions);
 
-    policyId =
-        pgclient
-            .withConnection(
-                conn ->
-                    conn.preparedQuery(INSERT_REQ)
-                        .execute()
-                        .map(row -> row.iterator().next().getUUID("id")))
-            .onSuccess(
-                obj -> {
+
                   catClient = Mockito.mock(CatalogueClient.class);
                   mockRegistrationFactory = new MockRegistrationFactory();
                   registrationService = mockRegistrationFactory.getInstance();
@@ -142,8 +128,7 @@ public class CreatePolicyTest {
                       new PolicyServiceImpl(
                           pgclient, registrationService, catClient, authOptions, catOptions);
                   testContext.completeNow();
-                })
-            .onFailure(err -> testContext.failNow(err.getMessage()));
+          ;
   }
 
   @AfterAll
@@ -152,11 +137,29 @@ public class CreatePolicyTest {
     vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
   }
 
+  /*policies needed
+        user 1 is the admin for all servers and is the provider for itemid1/catid1
+         1. user1 creates policy for user 2 for authserver,resserver and catserver as admin
+         2. user1 creates policy for user 2 for item1 as provider
+         3. user1 creates delegation for user 2 on authserver,resserver and catserver as provider
+         4. user2 creates delegation for user3 on any server
+         5. user1 creates a policy for user 3 for authserver as an admin
+         6. user3 must not be any kind of delegate to user1
+         7. user3 must not have any active policies on item1
+         8. user1 creates policy for user3 for resource Serve
+
+         For createPolicyTest
+         userId1 844e251b-574b-46e6-9247-f76f1f70a637 (all roles)
+         userId2 d1262b13-1cbe-4b66-a9b2-96df86437683 (provider/delegate)
+         userId3 a13eb955-c691-4fd3-b200-f18bc78810b5 (all roles - remove admin)
+         item1  iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg
+*/
+
   @Test
   @DisplayName("Testing Failure(Role is consumer))")
   void roleFailure(VertxTestContext testContext) {
     policyService.createPolicy(
-        roleFailureReq,
+            validReq,
         consumerUser,
         testContext.succeeding(
             response ->
@@ -171,26 +174,19 @@ public class CreatePolicyTest {
   @Test
   @DisplayName("Testing Failure(Item does not exist))")
   void itemFailure(VertxTestContext testContext) {
-    JsonObject resp =
-        new JsonObject()
-            .put(TYPE, URN_INVALID_INPUT)
-            .put(
-                DETAIL,
-                "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/file.iudx.io/surat-itms-realtime-information2")
-            .put(TITLE, ITEMNOTFOUND)
-            .put(STATUS, 400);
+
     Response r =
         new Response.ResponseBuilder()
             .type(Urn.URN_INVALID_INPUT.toString())
             .title(ITEMNOTFOUND)
-            .detail("")
+            .detail("iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/invalidCatId")
             .status(400)
             .build();
     ComposeException exception = new ComposeException(r);
     Mockito.when(catClient.checkReqItems(any())).thenReturn(Future.failedFuture(exception));
     policyService.createPolicy(
         itemFailure,
-        ProviderUserCreate,
+            validProvider,
         testContext.succeeding(
             response ->
                 testContext.verify(
@@ -210,7 +206,7 @@ public class CreatePolicyTest {
     Mockito.when(catClient.checkReqItems(any())).thenReturn(Future.succeededFuture(resp));
     policyService.createPolicy(
         duplicate,
-        ProviderUserCreate,
+            validProvider,
         testContext.succeeding(
             response ->
                 testContext.verify(
@@ -230,7 +226,7 @@ public class CreatePolicyTest {
     resp.put(resourceObj.getCatId(), resourceObj);
     Mockito.when(catClient.checkReqItems(any())).thenReturn(Future.succeededFuture(resp));
     policyService.createPolicy(
-        duplicate,
+            validReq,
         invalidProvider,
         testContext.succeeding(
             response ->
@@ -247,11 +243,11 @@ public class CreatePolicyTest {
   // delegate role calling create policy and not a delegate to the owner
   void UnauthorizedDelegate(VertxTestContext testContext) {
     Map<String, ResourceObj> resp = new HashMap<>();
-    ResourceObj resourceObj = new ResourceObj(validDelegateItem);
+    ResourceObj resourceObj = new ResourceObj(validCatItem);
     resp.put(resourceObj.getCatId(), resourceObj);
     Mockito.when(catClient.checkReqItems(any())).thenReturn(Future.succeededFuture(resp));
     policyService.createPolicy(
-        unAuthDel,
+            validReq,
         invalidDelUser,
         testContext.succeeding(
             response ->
@@ -264,7 +260,7 @@ public class CreatePolicyTest {
   }
 
   @Test
-  @DisplayName("Testing unauthorized policy creation - delegate not assigned")
+  @DisplayName("Testing unauthorized policy creation - invalid delegate")
   // delegate role user calling create policy is a delegate to the provider. provider is not the
   // owner
   void UnauthorizedProvider(VertxTestContext testContext) {
@@ -297,7 +293,7 @@ public class CreatePolicyTest {
     Mockito.when(catClient.checkReqItems(any())).thenReturn(Future.succeededFuture(resp));
     policyService.createPolicy(
         MultipleProvider,
-        ProviderUserCreate,
+            validProvider,
         testContext.succeeding(
             response ->
                 testContext.verify(

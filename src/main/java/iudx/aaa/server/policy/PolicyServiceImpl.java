@@ -562,13 +562,12 @@ public class PolicyServiceImpl implements PolicyService {
                                                                         r.toJson()));
                                                               });
                                                     } else {
+                                                        LOGGER.error(INVALID_DELEGATE);
                                                       Response r =
                                                           new Response.ResponseBuilder()
                                                               .type(URN_INVALID_ROLE)
-                                                              .title(INVALID_DELEGATE)
-                                                              .detail(
-                                                                  "invalid role for "
-                                                                      + success.toString())
+                                                              .title(ITEMNOTFOUND)
+                                                              .detail(success.toString())
                                                               .status(403)
                                                               .build();
                                                       handler.handle(
@@ -1038,7 +1037,8 @@ public class PolicyServiceImpl implements PolicyService {
     Future<UUID> checkAdminPolicy =
         getResSerOwner.compose(
             success ->
-                pool.withConnection(
+            {
+             return   pool.withConnection(
                         conn -> {
                           return conn.preparedQuery(CHECK_ADMIN_POLICY)
                               .execute(
@@ -1063,7 +1063,7 @@ public class PolicyServiceImpl implements PolicyService {
                             return Future.failedFuture(new ComposeException(r));
                           }
                           return Future.succeededFuture(obj);
-                        }));
+                        });});
 
     checkAdminPolicy
         .onSuccess(
@@ -1393,6 +1393,7 @@ public class PolicyServiceImpl implements PolicyService {
     if (itemSplit.length == 5
         && itemSplit[2].equals(catServerOptions.getString("catURL"))
         && (itemSplit[3] + "/" + itemSplit[4]).equals(catServerOptions.getString("catItem"))) {
+
       isCatalogue = true;
     }
 

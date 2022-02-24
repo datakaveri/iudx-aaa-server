@@ -9,6 +9,7 @@ import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
@@ -20,9 +21,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static iudx.aaa.server.policy.Constants.DELETE_POLICY;
 import static iudx.aaa.server.policy.Constants.ID_NOT_PRESENT;
 import static iudx.aaa.server.policy.Constants.INVALID_DELEGATE;
 import static iudx.aaa.server.policy.Constants.ITEMNOTFOUND;
@@ -130,7 +134,17 @@ public class DeletePolicyTest {
   @AfterAll
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing....");
-    vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
+    List<UUID> policyidList =new ArrayList<>();
+    policyidList.add(policyId.result());
+      pgclient
+              .withConnection(
+                      conn ->
+                              conn.preparedQuery(DELETE_POLICY)
+                                      .execute(Tuple.of(Constants.status.DELETED, Constants.status.ACTIVE)
+                                              .addArrayOfUUID(policyidList.toArray(UUID[]::new)))
+                                      .map(row -> row.iterator().next().getUUID(policyId.result().toString()))
+      .onComplete(ar->
+    vertxObj.close(testContext.succeeding(response -> testContext.completeNow()))));
   }
 
   @Test
@@ -196,7 +210,7 @@ public class DeletePolicyTest {
                 testContext.verify(
                     () -> {
                       JsonObject result = response;
-                      assertEquals(INVALID_DELEGATE, result.getString("title"));
+                      assertEquals(ITEMNOTFOUND, result.getString("title"));
                       testContext.completeNow();
                     })));
   }

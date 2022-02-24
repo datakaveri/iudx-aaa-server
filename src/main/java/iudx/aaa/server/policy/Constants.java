@@ -15,14 +15,7 @@ public class Constants {
   public static final String RESOURCETABLE = "resource";
   public static final String STATUS = "status";
   public static final String SUCCESS = "success";
-  public static final String FAILURE = "failure";
-  public static final String CATID = "catId";
-  public static final String OWNERDETAILS = "ownerDetails";
-  public static final String USERDETAILS = "userDetails";
   public static final String URL = "url";
-  public static final String POLICYBY = "policyBy";
-  public static final String POLICYFOR = "policyFor";
-  public static final String DESCRIPTION = "description";
   public static final String INTERNALERROR = "Internal server error";
   public static final String TYPE = "type";
   public static final String TITLE = "title";
@@ -44,7 +37,7 @@ public class Constants {
   public static final String PROVIDER_ROLE = "PROVIDER";
   public static final String DELEGATE_ROLE = "DELEGATE";
 
-  public static final String AUTH_SERVER_URL = "authdev.iudx.io";
+
   public static final String RESULTS = "results";
   public static final String CAT_ITEM_PATH = "/iudx/cat/v1/item";
   public static final String PROVIDER_ID = "provider_id";
@@ -122,15 +115,10 @@ public class Constants {
   public static final String REQ_ID_ALREADY_NOT_EXISTS = "requestId not exists";
   public static final String REQ_ID_ALREADY_PROCESSED = "requestId already processed";
 
-  // General
-  public static final String DETAIL = "detail";
-
   // verify policy queries
   public static final String GET_FROM_ROLES_TABLE =
       "Select role from  roles where user_id = $1::UUID "
           + "AND role = $2::role_enum AND status = $3::role_status_enum";
-  public static final String GET_RES_DETAIL = "select id,provider_id,resource_server_id from  ";
-  public static final String GET_RES_DETAIL_JOIN = " where cat_id = $1::text ";
 
   public static final String GET_CONSUMER_CONSTRAINTS =
       "select constraints from  policies where  user_id = $1::UUID "
@@ -213,8 +201,7 @@ public class Constants {
   public static final String CHECK_RES_SER =
       "select id, url as cat_id,owner_id as owner_id from resource_server "
           + "where owner_id = $1::UUID and url = ANY($2::text[])";
-  public static final String CHECKRESGRP =
-      "select cat_id from resource_group where cat_id = ANY($1::text[]) ";
+
 
   public static final String CHECK_RESOURCE_EXIST = "select cat_id from ";
   public static final String CHECK_RESOURCE_EXIST_JOIN = " where cat_id = ANY($1::text[]) ";
