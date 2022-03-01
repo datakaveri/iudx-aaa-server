@@ -11,6 +11,9 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.SqlResult;
 import io.vertx.sqlclient.Tuple;
+import iudx.aaa.server.apiserver.ResourceObj;
+import iudx.aaa.server.apiserver.Response;
+import iudx.aaa.server.apiserver.util.Urn;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -23,18 +26,14 @@ import java.util.UUID;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-import static iudx.aaa.server.policy.Constants.BAD_REQUEST;
 import static iudx.aaa.server.policy.Constants.CAT_ID;
-import static iudx.aaa.server.policy.Constants.CHECKRESGRP;
-import static iudx.aaa.server.policy.Constants.CHECK_AUTH_POLICY;
-import static iudx.aaa.server.policy.Constants.CHECK_DELEGATION;
-import static iudx.aaa.server.policy.Constants.CHECK_RES_SER;
+import static iudx.aaa.server.policy.Constants.CAT_SUCCESS_URN;
+import static iudx.aaa.server.policy.Constants.CHECK_RESOURCE_EXIST;
+import static iudx.aaa.server.policy.Constants.CHECK_RESOURCE_EXIST_JOIN;
 import static iudx.aaa.server.policy.Constants.EMAIL_HASH;
 import static iudx.aaa.server.policy.Constants.GET_PROVIDER_ID;
 import static iudx.aaa.server.policy.Constants.GET_RES_DETAILS;
 import static iudx.aaa.server.policy.Constants.GET_RES_GRP_DETAILS;
-import static iudx.aaa.server.policy.Constants.GET_RES_GRP_OWNER;
-import static iudx.aaa.server.policy.Constants.GET_RES_OWNERS;
 import static iudx.aaa.server.policy.Constants.GET_RES_SER_DETAIL;
 import static iudx.aaa.server.policy.Constants.GET_RES_SER_ID;
 import static iudx.aaa.server.policy.Constants.ID;
@@ -42,39 +41,34 @@ import static iudx.aaa.server.policy.Constants.INSERT_RES;
 import static iudx.aaa.server.policy.Constants.INSERT_RES_GRP;
 import static iudx.aaa.server.policy.Constants.INTERNALERROR;
 import static iudx.aaa.server.policy.Constants.ITEMNOTFOUND;
+import static iudx.aaa.server.policy.Constants.ITEMTYPE;
 import static iudx.aaa.server.policy.Constants.IUDX_RES;
 import static iudx.aaa.server.policy.Constants.IUDX_RES_GRP;
-import static iudx.aaa.server.policy.Constants.NO_AUTH_POLICY;
 import static iudx.aaa.server.policy.Constants.PROVIDER;
 import static iudx.aaa.server.policy.Constants.PROVIDER_ID;
 import static iudx.aaa.server.policy.Constants.PROVIDER_NOT_REGISTERED;
 import static iudx.aaa.server.policy.Constants.RES;
 import static iudx.aaa.server.policy.Constants.RESOURCE_GROUP;
+import static iudx.aaa.server.policy.Constants.RESOURCE_GROUP_TABLE;
 import static iudx.aaa.server.policy.Constants.RESOURCE_SERVER;
 import static iudx.aaa.server.policy.Constants.RESOURCE_SERVER_ID;
+import static iudx.aaa.server.policy.Constants.RESOURCE_TABLE;
 import static iudx.aaa.server.policy.Constants.RESULTS;
 import static iudx.aaa.server.policy.Constants.RES_GRP;
-import static iudx.aaa.server.policy.Constants.RES_GRP_OWNER;
-import static iudx.aaa.server.policy.Constants.RES_OWNER;
-import static iudx.aaa.server.policy.Constants.RES_SERVER;
-import static iudx.aaa.server.policy.Constants.SERVER_NOT_PRESENT;
-import static iudx.aaa.server.policy.Constants.STATUS;
 import static iudx.aaa.server.policy.Constants.TYPE;
 import static iudx.aaa.server.policy.Constants.URL;
-import static iudx.aaa.server.policy.Constants.CAT_SUCCESS_URN;
-import static iudx.aaa.server.policy.Constants.status;
 
 public class CatalogueClient {
   private static final Logger LOGGER = LogManager.getLogger(CatalogueClient.class);
 
   private final PgPool pool;
-  private WebClient client;
-  private String catHost;
-  private Integer catPort;
-  private String catItemPath;
-  private String authUrl;
-  private String resUrl;
-  private String domain;
+  private final WebClient client;
+  private final String catHost;
+  private final Integer catPort;
+  private final String catItemPath;
+  private final String authUrl;
+  private final String resUrl;
+  private final String domain;
 
   public CatalogueClient(Vertx vertx, PgPool pool, JsonObject options) {
 
@@ -95,76 +89,55 @@ public class CatalogueClient {
    * checks if item present in db, fetch if not present from catalog
    *
    * @param request - map of item type to list of item ids
-   * @param userId - the userId of the policySetter
-   * @return Map<String, UUID> -> map of cat_id to itemid
+   * @return Map<String, CatObj> -> map of cat_id to itemid
    */
-  public Future<Map<String, UUID>> checkReqItems(Map<String, List<String>> request, String userId) {
-    Promise<Map<String, UUID>> p = Promise.promise();
+  public Future<Map<String, ResourceObj>> checkReqItems(Map<String, List<String>> request) {
+    Promise<Map<String, ResourceObj>> p = Promise.promise();
+    Future<Map<String, List<String>>> resources = checkResExist(request);
 
-    if (request.containsKey(RES_SERVER)) {
+    Future<List<JsonObject>> fetchItem =
+        resources.compose(
+            obj -> {
+              if (obj.size() == 0) return Future.succeededFuture(new ArrayList<JsonObject>());
+              else return fetch(obj);
+            });
 
-      List<String> servers = request.get(RES_SERVER);
+    Future<Boolean> insertItems =
+        fetchItem.compose(
+            toInsert -> {
+              if (toInsert.size() == 0) return Future.succeededFuture(true);
+              else return insertItemToDb(toInsert);
+            });
 
-      if (servers.isEmpty()) {
-        p.fail(BAD_REQUEST);
-        return p.future();
-      }
+    Future<Map<String, ResourceObj>> resDetails =
+        insertItems.compose(
+            obj -> {
+              if (request.containsKey(RES)) return getResDetails(request.get(RES), RESOURCE_TABLE);
+              return Future.succeededFuture(new HashMap<>());
+            });
 
-      Future<Map<String, UUID>> checkSer = checkResSer(servers, userId);
-      checkSer
-          .onSuccess(
-              obj -> {
-                servers.removeAll(obj.keySet());
-                if (!servers.isEmpty()) p.fail(SERVER_NOT_PRESENT + servers.toString());
-                else p.complete(obj);
-              })
-          .onFailure(failHandler -> p.fail(failHandler.getLocalizedMessage()));
-    } else {
+    Future<Map<String, ResourceObj>> resGrpDetails =
+        insertItems.compose(
+            obj -> {
+              if (request.containsKey(RES_GRP))
+                return getResDetails(request.get(RES_GRP), RESOURCE_GROUP_TABLE);
+              return Future.succeededFuture(new HashMap<>());
+            });
 
-      Future<Map<String, List<String>>> resources = checkResExist(request);
+    Map<String, ResourceObj> result = new HashMap<>();
 
-      Future<List<JsonObject>> fetchItem =
-          resources.compose(
-              obj -> {
-                if (obj.size() == 0) return Future.succeededFuture(new ArrayList<JsonObject>());
-                else return fetch(obj);
-              });
-
-      Future<Boolean> insertItems =
-          fetchItem.compose(
-              toInsert -> {
-                if (toInsert.size() == 0) return Future.succeededFuture(true);
-                else return insertItemToDb(toInsert);
-              });
-
-      Future<Map<String, UUID>> resDetails =
-          insertItems.compose(
-              obj -> {
-                if (request.containsKey(RES)) return getResDetails(request.get(RES));
-                return Future.succeededFuture(new HashMap<>());
-              });
-
-      Future<Map<String, UUID>> resGrpDetails =
-          insertItems.compose(
-              obj -> {
-                if (request.containsKey(RES_GRP)) return getResGrpDetails(request.get(RES_GRP));
-                return Future.succeededFuture(new HashMap<>());
-              });
-
-      Map<String, UUID> result = new HashMap<>();
-
-      CompositeFuture.all(resDetails, resGrpDetails)
-          .onSuccess(
-              success -> {
-                if (!resDetails.result().isEmpty()) result.putAll(resDetails.result());
-                if (!resGrpDetails.result().isEmpty()) result.putAll(resGrpDetails.result());
-                p.complete(result);
-              })
-          .onFailure(failHandler -> p.fail(failHandler.getLocalizedMessage()));
-    }
+    CompositeFuture.all(resDetails, resGrpDetails)
+        .onSuccess(
+            success -> {
+              if (!resDetails.result().isEmpty()) result.putAll(resDetails.result());
+              if (!resGrpDetails.result().isEmpty()) result.putAll(resGrpDetails.result());
+              p.complete(result);
+            })
+        .onFailure(failHandler -> p.fail(failHandler));
 
     return p.future();
   }
+
   /**
    * checks if resource item/ resource groups present in db
    *
@@ -172,8 +145,9 @@ public class CatalogueClient {
    * @return Map<String, List<String>> -> map of item type to list of item ids that are not present
    *     in db
    */
+
   // method to check if resource present in db. returns, map of resType,List<CatId>(not present)
-  public Future<Map<String, List<String>>> checkResExist(Map<String, List<String>> request) {
+  private Future<Map<String, List<String>>> checkResExist(Map<String, List<String>> request) {
     Promise<Map<String, List<String>>> p = Promise.promise();
 
     Future<List<String>> resGrp;
@@ -181,12 +155,12 @@ public class CatalogueClient {
     if (request.containsKey(RES_GRP)) {
 
       List<String> resGrpIds = request.get(RES_GRP);
-      resGrp = checkResGrp(resGrpIds);
+      resGrp = checkRes(resGrpIds, Constants.itemTypes.RESOURCE_GROUP.toString().toLowerCase());
     } else resGrp = Future.succeededFuture(new ArrayList<String>());
 
     if (request.containsKey(RES)) {
       List<String> resIds = request.get(RES);
-      resItem = checkResource(resIds);
+      resItem = checkRes(resIds, Constants.itemTypes.RESOURCE.toString().toLowerCase());
     } else resItem = Future.succeededFuture(new ArrayList<String>());
 
     CompositeFuture.all(resGrp, resItem)
@@ -203,12 +177,12 @@ public class CatalogueClient {
   }
 
   /**
-   * Verify if resource groups are present in db
+   * Verify if resource are present in db
    *
-   * @param resGrpList - list of resource groups to be checked
+   * @param resources - list of resource groups to be checked
    * @return List<String> -> List of cat_id not present
    */
-  public Future<List<String>> checkResGrp(List<String> resGrpList) {
+  private Future<List<String>> checkRes(List<String> resources, String itemType) {
     Promise<List<String>> p = Promise.promise();
 
     Collector<Row, ?, List<String>> catIdCollector =
@@ -216,199 +190,33 @@ public class CatalogueClient {
 
     try {
 
-      if (resGrpList.isEmpty()) {
+      if (resources.isEmpty()) {
         p.complete(new ArrayList<>());
         return p.future();
       }
 
       pool.withConnection(
           conn ->
-              conn.preparedQuery(CHECKRESGRP)
+              conn.preparedQuery(CHECK_RESOURCE_EXIST + itemType + CHECK_RESOURCE_EXIST_JOIN)
                   .collecting(catIdCollector)
-                  .execute(Tuple.of(resGrpList.toArray(String[]::new)))
+                  .execute(Tuple.of(resources.toArray(String[]::new)))
                   .onFailure(
                       obj -> {
-                        LOGGER.error("checkResGrp db fail :: " + obj.getLocalizedMessage());
+                        LOGGER.error("checkRes db fail :: " + obj.getLocalizedMessage());
                         p.fail(INTERNALERROR);
                       })
                   .onSuccess(
                       success -> {
                         List<String> validItems = success.value();
                         List<String> invalid =
-                            resGrpList.stream()
+                            resources.stream()
                                 .filter(item -> !validItems.contains(item))
                                 .collect(Collectors.toList());
                         p.complete(invalid);
                       }));
     } catch (Exception e) {
-      LOGGER.error("Fail checkResGrp : " + e.toString());
+      LOGGER.error("Fail checkRes : " + e.toString());
       p.fail(INTERNALERROR);
-    }
-    return p.future();
-  }
-
-  /**
-   * Verify if resource items are present in db
-   *
-   * @param resourceList - list of resource groups to be checked
-   * @return List<String> -> List of cat_id not present
-   */
-  public Future<List<String>> checkResource(List<String> resourceList) {
-    Promise<List<String>> p = Promise.promise();
-
-    Collector<Row, ?, List<String>> catIdCollector =
-        Collectors.mapping(row -> row.getString("cat_id"), Collectors.toList());
-
-    try {
-
-      if (resourceList.isEmpty()) {
-        p.complete(new ArrayList<>());
-        return p.future();
-      }
-
-      pool.withConnection(
-          conn ->
-              conn.preparedQuery(GET_RES_DETAILS)
-                  .collecting(catIdCollector)
-                  .execute(Tuple.of(resourceList.toArray(String[]::new)))
-                  .onFailure(
-                      obj -> {
-                        LOGGER.error("checkResource db fail :: " + obj.getLocalizedMessage());
-                        p.fail("internal error");
-                      })
-                  .onSuccess(
-                      success -> {
-                        List<String> validItems = success.value();
-
-                        List<String> invalid =
-                            resourceList.stream()
-                                .filter(item -> !validItems.contains(item))
-                                .collect(Collectors.toList());
-
-                        p.complete(invalid);
-                      }));
-    } catch (Exception e) {
-      LOGGER.error("Fail: " + e.toString());
-      p.fail("internal error");
-    }
-    return p.future();
-  }
-
-  /**
-   * Verify if server present in db
-   *
-   * @param req - list of servers
-   * @param userId - the userId of the policySetter
-   * @return Map<String, UUID> -> map of cat_id to itemid if present, fail if not present
-   */
-  public Future<Map<String, UUID>> checkResSer(List<String> req, String userId) {
-    Promise<Map<String, UUID>> p = Promise.promise();
-
-    if (req.isEmpty()) {
-      p.complete(new HashMap<>());
-      return p.future();
-    }
-
-    Collector<Row, ?, Map<String, UUID>> nameCollector =
-        Collectors.toMap(row -> row.getString(CAT_ID), row -> row.getUUID(ID));
-
-    pool.withConnection(
-        conn ->
-            conn.preparedQuery(CHECK_RES_SER)
-                .collecting(nameCollector)
-                .execute(
-                    Tuple.of(UUID.fromString(userId)).addArrayOfString(req.toArray(String[]::new)))
-                .onFailure(
-                    obj -> {
-                      LOGGER.error("checkResSer db fail :: " + obj.getLocalizedMessage());
-                      p.fail(INTERNALERROR);
-                    })
-                .onSuccess(
-                    success -> {
-                      Map<String, UUID> servers = success.value();
-                      if (servers.isEmpty()) p.fail(SERVER_NOT_PRESENT + req.get(0));
-                      else p.complete(servers);
-                    }));
-    return p.future();
-  }
-
-  /**
-   * get itemid for list of cat_ids
-   *
-   * @param resourceList - list of resource items
-   * @return Map<String, UUID> -> map of cat_id to itemid
-   */
-  public Future<Map<String, UUID>> getResDetails(List<String> resourceList) {
-    Promise<Map<String, UUID>> p = Promise.promise();
-
-    Collector<Row, ?, Map<String, UUID>> catIdCollector =
-        Collectors.toMap(row -> row.getString(CAT_ID), row -> row.getUUID(ID));
-
-    try {
-      if (resourceList.isEmpty()) {
-        p.complete(new HashMap<>());
-        return p.future();
-      } else {
-        pool.withConnection(
-            conn ->
-                conn.preparedQuery(GET_RES_DETAILS)
-                    .collecting(catIdCollector)
-                    .execute(Tuple.of(resourceList.toArray(String[]::new)))
-                    .onFailure(
-                        obj -> {
-                          LOGGER.error("checkResource db fail :: " + obj.getLocalizedMessage());
-                          p.fail(INTERNALERROR);
-                        })
-                    .onSuccess(
-                        success -> {
-                          p.complete(success.value());
-                        }));
-      }
-    } catch (Exception e) {
-      LOGGER.error("Fail getResDetails: ");
-      p.fail(INTERNALERROR);
-    }
-
-    return p.future();
-  }
-
-  /**
-   * get itemid for list of cat_ids
-   *
-   * @param resGrpList - list of resource_group items
-   * @return Map<String, UUID> -> map of cat_id to itemid
-   */
-  public Future<Map<String, UUID>> getResGrpDetails(List<String> resGrpList) {
-    Promise<Map<String, UUID>> p = Promise.promise();
-
-    Collector<Row, ?, Map<String, UUID>> catIdCollector =
-        Collectors.toMap(row -> row.getString("cat_id"), row -> row.getUUID("id"));
-
-    try {
-
-      if (resGrpList.isEmpty()) {
-        p.complete(new HashMap<>());
-        return p.future();
-      }
-
-        pool.withConnection(
-          conn ->
-              conn.preparedQuery(GET_RES_GRP_DETAILS)
-                  .collecting(catIdCollector)
-                  .execute(Tuple.of(resGrpList.toArray(String[]::new)))
-                  .onFailure(
-                      obj -> {
-                        LOGGER.error("getResGrpDetails db fail :: " + obj.getLocalizedMessage());
-                        p.fail("internal error");
-                      })
-                  .onSuccess(
-                      success -> {
-                        p.complete(success.value());
-                      }));
-
-    } catch (Exception e) {
-      LOGGER.error("Fail: " + e.toString());
-      p.fail("internal error");
     }
     return p.future();
   }
@@ -470,17 +278,27 @@ public class CatalogueClient {
         .send()
         .onFailure(
             ar -> {
+              LOGGER.error("fetchItem error : " + ar.getCause());
               p.fail(INTERNALERROR);
             })
         .onSuccess(
             obj -> {
               JsonObject res = obj.bodyAsJsonObject();
               if (obj.statusCode() == 200) {
-                if (res.getString(TYPE).equals(CAT_SUCCESS_URN))
+                if (res.getString(TYPE).equals(CAT_SUCCESS_URN)) {
                   p.complete(obj.bodyAsJsonObject().getJsonArray(RESULTS).getJsonObject(0));
+                }
               } else {
-                if (obj.statusCode() == 404) p.fail(ITEMNOTFOUND + id);
-                else {
+                if (obj.statusCode() == 404) {
+                  Response r =
+                      new Response.ResponseBuilder()
+                          .type(Urn.URN_INVALID_INPUT.toString())
+                          .title(ITEMNOTFOUND)
+                          .detail(id)
+                          .status(400)
+                          .build();
+                  p.fail(new ComposeException(r));
+                } else {
                   LOGGER.error("failed fetchItem: " + res);
                   p.fail(INTERNALERROR);
                 }
@@ -548,8 +366,16 @@ public class CatalogueClient {
         CompositeFuture.all(resSerId, emailHash)
             .compose(
                 ar -> {
-                  if (emailHash.result() == null || emailHash.result().isEmpty())
-                    return Future.failedFuture(PROVIDER_NOT_REGISTERED);
+                  if (emailHash.result() == null || emailHash.result().isEmpty()) {
+                    Response r =
+                        new Response.ResponseBuilder()
+                            .type(Urn.URN_INVALID_INPUT.toString())
+                            .title(PROVIDER_NOT_REGISTERED)
+                            .detail(PROVIDER_NOT_REGISTERED)
+                            .status(403)
+                            .build();
+                    return Future.failedFuture(new ComposeException(r));
+                  }
 
                   List<Tuple> tuples = new ArrayList<>();
                   for (JsonObject jsonObject : resGrps) {
@@ -580,12 +406,12 @@ public class CatalogueClient {
             .collect(Collectors.toList());
 
     if (res.size() == 0) {
-        resGrpEntry.onSuccess(
-                ar -> p.complete(true)
-                ).onFailure(
-                failureHandler -> {
-                    p.fail(failureHandler.getLocalizedMessage());
-                });
+      resGrpEntry
+          .onSuccess(ar -> p.complete(true))
+          .onFailure(
+              failureHandler -> {
+                p.fail(failureHandler.getLocalizedMessage());
+              });
     } else {
       List<String> resGrpId =
           res.stream().map(e -> e.getString(RESOURCE_GROUP)).collect(Collectors.toList());
@@ -642,270 +468,59 @@ public class CatalogueClient {
   }
 
   /**
-   * checks if for user owns the resource
+   * get itemid for list of cat_ids
    *
-   * @param req - map of resource_type to list of resource id
-   * @param userId - userId of user
-   * @return Boolean - active policy exits true , else false
+   * @param resList - list of resource_group items
+   * @return Map<String, UUID> -> map of cat_id to itemid
    */
-  public Future<List<UUID>> checkOwner(Map<String, List<String>> req, String userId) {
-    Promise<List<UUID>> p = Promise.promise();
+  public Future<Map<String, ResourceObj>> getResDetails(List<String> resList, String itemType) {
+    Promise<Map<String, ResourceObj>> p = Promise.promise();
 
-    Future<List<UUID>> resGrp;
-    Future<List<UUID>> resItem;
-    if (req.containsKey(RES_GRP)) {
-
-      List<String> resGrpIds = req.get(RES_GRP);
-      resGrp = resGrpOwner(resGrpIds, userId);
-    } else resGrp = Future.succeededFuture(new ArrayList<>());
-
-    if (req.containsKey(RES)) {
-      List<String> resIds = req.get(RES);
-      resItem = resOwner(resIds, userId);
-    } else resItem = Future.succeededFuture(new ArrayList<>());
-
-    CompositeFuture.all(resGrp, resItem)
-        .onSuccess(
-            obj -> {
-              List<UUID> resp = new ArrayList<>();
-              if (!resGrp.result().isEmpty()) resp.addAll(resGrp.result());
-
-              if (!resItem.result().isEmpty()) resp.addAll(resItem.result());
-
-              p.complete(resp);
-            })
-        .onFailure(fail -> p.fail(INTERNALERROR));
-    // return map of res_id,iowners in place of user id
-    // check if userid is delegate for any of these owners
-    // compose
-    // check if user id is an active delegate of all of the owner ids for resource
-    // return list of not delegate
-    return p.future();
-  }
-
-  /**
-   * checks if for user owns the resource_groups
-   *
-   * @param ids - List of resource group id
-   * @param userId - userId of user
-   * @return List<UUID> - List of owner_ids
-   */
-  public Future<List<UUID>> resGrpOwner(List<String> ids, String userId) {
-    Promise<List<UUID>> p = Promise.promise();
-
-    Collector<Row, ?, List<UUID>> providerIdCollector =
-        Collectors.mapping(row -> row.getUUID(PROVIDER_ID), Collectors.toList());
-
-    pool.withConnection(
-        conn ->
-            conn.preparedQuery(RES_GRP_OWNER)
-                .collecting(providerIdCollector)
-                .execute(
-                    Tuple.of(UUID.fromString(userId)).addArrayOfString(ids.toArray(String[]::new)))
-                .onFailure(
-                    obj -> {
-                      LOGGER.error("resGrpOwner db fail :: " + obj.getLocalizedMessage());
-                      p.fail(INTERNALERROR);
-                    })
-                .onSuccess(
-                    success -> {
-                      p.complete(success.value());
-                    }));
-
-    return p.future();
-  }
-
-  /**
-   * checks if for user owns the resource_groups
-   *
-   * @param ids - List of resource id
-   * @param userId - userId of user
-   * @return List<UUID> - List of owner_ids
-   */
-  public Future<List<UUID>> resOwner(List<String> ids, String userId) {
-    Promise<List<UUID>> p = Promise.promise();
-
-    Collector<Row, ?, List<UUID>> providerIdCollector =
-        Collectors.mapping(row -> row.getUUID(PROVIDER_ID), Collectors.toList());
-
-    pool.withConnection(
-        conn ->
-            conn.preparedQuery(RES_OWNER)
-                .collecting(providerIdCollector)
-                .execute(
-                    Tuple.of(UUID.fromString(userId)).addArrayOfString(ids.toArray(String[]::new)))
-                .onFailure(
-                    obj -> {
-                      LOGGER.error("resOwner db fail :: " + obj.getLocalizedMessage());
-                      p.fail(INTERNALERROR);
-                    })
-                .onSuccess(
-                    success -> {
-                      p.complete(success.value());
-                    }));
-
-    return p.future();
-  }
-
-  /**
-   * checks if for user is a delegate for any of a list of users
-   *
-   * @param provider_ids - List of Providers that the user should be a delegate of
-   * @param userId - userId of user
-   * @return List<UUID> - List of owner_ids
-   */
-  public Future<List<UUID>> checkDelegate(List<UUID> provider_ids, String userId) {
-    Promise<List<UUID>> p = Promise.promise();
-    Collector<Row, ?, List<UUID>> idCollector =
-        Collectors.mapping(row -> row.getUUID(ID), Collectors.toList());
+    Collector<Row, ?, List<JsonObject>> ResDetailCollector =
+        Collectors.mapping(Row::toJson, Collectors.toList());
 
     try {
+
+      if (resList.isEmpty()) {
+        p.complete(new HashMap<>());
+        return p.future();
+      }
+
+      String query = "";
+      if (itemType.equals(RESOURCE_GROUP_TABLE)) {
+        query = GET_RES_GRP_DETAILS;
+      } else if ((itemType.equals(RESOURCE_TABLE))) {
+        query = GET_RES_DETAILS;
+      }
+
+      String finalQuery = query;
       pool.withConnection(
           conn ->
-              conn.preparedQuery(CHECK_DELEGATION)
-                  .collecting(idCollector)
-                  .execute(
-                      Tuple.of(authUrl, UUID.fromString(userId))
-                          .addArrayOfUUID(provider_ids.toArray(UUID[]::new)))
-                  .onSuccess(obj -> p.complete(obj.value()))
+              conn.preparedQuery(finalQuery)
+                  .collecting(ResDetailCollector)
+                  .execute(Tuple.of(resList.toArray(String[]::new)))
                   .onFailure(
                       obj -> {
-                        LOGGER.error("checkDelegate db fail :: " + obj.getLocalizedMessage());
-                        p.fail(INTERNALERROR);
-                      }));
-    } catch (Exception e) {
-      LOGGER.error("Fail checkDelegate:" + e.toString());
-      p.fail(INTERNALERROR);
-    }
-    return p.future();
-  }
-
-  /**
-   * checks if resource item/ resource groups present in db
-   *
-   * @param request - map of item type to list of item ids
-   * @return Map<String, UUID> -> map of cat_id to owner_id
-   */
-  public Future<Map<String, UUID>> getOwnerId(Map<String, List<String>> request) {
-    Promise<Map<String, UUID>> p = Promise.promise();
-
-    Future<Map<String, UUID>> resGrp;
-    Future<Map<String, UUID>> resItem;
-    /* if(request.containsKey(RES_SERVER))
-    {
-        List<String> resSerIds = request.get(RES_SERVER);
-        Future<Map<String,UUID>> resSer = getResGrpOwners(resSerIds);
-     } else {*/
-    if (request.containsKey(RES_GRP)) {
-
-      List<String> resGrpIds = request.get(RES_GRP);
-      resGrp = getResGrpOwners(resGrpIds);
-    } else resGrp = Future.succeededFuture(new HashMap<>());
-
-    if (request.containsKey(RES)) {
-      List<String> resIds = request.get(RES);
-      resItem = getResOwners(resIds);
-    } else resItem = Future.succeededFuture(new HashMap<>());
-
-    CompositeFuture.all(resGrp, resItem)
-        .onSuccess(
-            obj -> {
-              Map<String, UUID> resp = new HashMap<>();
-              if (!resGrp.result().isEmpty()) resp.putAll(resGrp.result());
-
-              if (!resItem.result().isEmpty()) resp.putAll(resItem.result());
-
-              p.complete(resp);
-            })
-        .onFailure(fail -> p.fail(INTERNALERROR));
-    // }
-    return p.future();
-  }
-
-  /**
-   * get owner_id for resource_group items
-   *
-   * @param resGrpId - List of resource group cat_ids
-   * @return Map<String, UUID> -> map of cat_id to owner_id
-   */
-  public Future<Map<String, UUID>> getResGrpOwners(List<String> resGrpId) {
-    Promise<Map<String, UUID>> p = Promise.promise();
-
-    Collector<Row, ?, Map<String, UUID>> ownerCollector =
-        Collectors.toMap(row -> row.getString(CAT_ID), row -> row.getUUID(PROVIDER_ID));
-    pool.withConnection(
-        conn ->
-            conn.preparedQuery(GET_RES_GRP_OWNER)
-                .collecting(ownerCollector)
-                .execute(Tuple.of(resGrpId.toArray()))
-                .onFailure(
-                    obj -> {
-                      LOGGER.error("getResGrpOwners db fail :: " + obj.getLocalizedMessage());
-                      p.fail(INTERNALERROR);
-                    })
-                .onSuccess(
-                    success -> {
-                      p.complete(success.value());
-                    }));
-
-    return p.future();
-  }
-
-  /**
-   * get owner_id for resource items
-   *
-   * @param resId - List of resource cat_ids
-   * @return Map<String, UUID> -> map of cat_id to owner_id
-   */
-  public Future<Map<String, UUID>> getResOwners(List<String> resId) {
-    {
-      Promise<Map<String, UUID>> p = Promise.promise();
-
-      Collector<Row, ?, Map<String, UUID>> ownerCollector =
-          Collectors.toMap(row -> row.getString(CAT_ID), row -> row.getUUID(PROVIDER_ID));
-      pool.withConnection(
-          conn ->
-              conn.preparedQuery(GET_RES_OWNERS)
-                  .collecting(ownerCollector)
-                  .execute(Tuple.of(resId.toArray()))
-                  .onFailure(
-                      obj -> {
-                        LOGGER.error("getResOwners db fail :: " + obj.getLocalizedMessage());
+                        LOGGER.error("getResGrpDetails db fail :: " + obj.getLocalizedMessage());
                         p.fail(INTERNALERROR);
                       })
                   .onSuccess(
                       success -> {
-                        p.complete(success.value());
+                        List<JsonObject> resDetailsList = success.value();
+                        resDetailsList.forEach(resource -> resource.put(ITEMTYPE, itemType));
+
+                        Map<String, ResourceObj> resDetailMap = new HashMap<>();
+                        resDetailsList.forEach(
+                            resource ->
+                                resDetailMap.put(
+                                    resource.getString(CAT_ID), new ResourceObj(resource)));
+                        p.complete(resDetailMap);
                       }));
 
-      return p.future();
+    } catch (Exception e) {
+      LOGGER.error("Fail: " + e.toString());
+      p.fail(INTERNALERROR);
     }
-  }
-
-  /**
-   * checks if there is a policy for user by auth admin
-   *
-   * @param userId - userId of user
-   * @return Boolean - active policy exits true , else false
-   */
-  public Future<Boolean> checkAuthPolicy(String userId) {
-    Promise<Boolean> p = Promise.promise();
-
-    pool.withConnection(
-        conn ->
-            conn.preparedQuery(CHECK_AUTH_POLICY)
-                .execute(Tuple.of(userId, authUrl, status.ACTIVE))
-                .onFailure(
-                    obj -> {
-                      LOGGER.error("checkAuthPolicy db fail :: " + obj.getLocalizedMessage());
-                      p.fail(INTERNALERROR);
-                    })
-                .onSuccess(
-                    obj -> {
-                      if (obj.rowCount() > 0) p.complete(true);
-                      else p.fail(NO_AUTH_POLICY);
-                    }));
-
     return p.future();
   }
 }

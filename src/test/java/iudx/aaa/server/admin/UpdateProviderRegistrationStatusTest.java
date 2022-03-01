@@ -364,7 +364,7 @@ public class UpdateProviderRegistrationStatusTest {
       Promise<JsonObject> p = i.getArgument(2);
       p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
       return i.getMock();
-    }).when(policyService).createPolicy(any(), any(), any());
+    }).when(policyService).createPolicy(any(),any(), any());
 
     @SuppressWarnings("unchecked")
     Map<String, JsonObject> resp = Mockito.mock(Map.class);
@@ -406,7 +406,7 @@ public class UpdateProviderRegistrationStatusTest {
       Promise<JsonObject> p = i.getArgument(2);
       p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
       return i.getMock();
-    }).when(policyService).createPolicy(any(), any(), any());
+    }).when(policyService).createPolicy(any(),any(), any());
 
     @SuppressWarnings("unchecked")
     Map<String, JsonObject> resp = Mockito.mock(Map.class);
@@ -475,7 +475,7 @@ public class UpdateProviderRegistrationStatusTest {
       Promise<JsonObject> p = i.getArgument(2);
       p.fail("Failed to set admin ");
       return i.getMock();
-    }).when(policyService).createPolicy(any(), any(), any());
+    }).when(policyService).createPolicy(any(),any(), any());
 
     @SuppressWarnings("unchecked")
     Map<String, JsonObject> resp = Mockito.mock(Map.class);

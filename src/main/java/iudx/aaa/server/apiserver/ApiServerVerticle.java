@@ -129,8 +129,8 @@ public class ApiServerVerticle extends AbstractVerticle {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
       connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
-          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
-          .setConnectTimeout(PG_CONNECTION_TIMEOUT).setProperties(schemaProp);
+              .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
+              .setConnectTimeout(PG_CONNECTION_TIMEOUT).setProperties(schemaProp);
     }
 
     /* Pool options */
@@ -149,7 +149,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     allowedHeaders.add(HEADER_ORIGIN);
     allowedHeaders.add(HEADER_REFERER);
     allowedHeaders.add(HEADER_ALLOW_ORIGIN);
-    
+
     allowedHeaders.add(HEADER_PROVIDER_ID);
     allowedHeaders.add(HEADER_EMAIL);
     allowedHeaders.add(HEADER_ROLE);
@@ -171,172 +171,172 @@ public class ApiServerVerticle extends AbstractVerticle {
     FailureHandler failureHandler = new FailureHandler();
 
     RouterBuilder.create(vertx, "docs/openapi.yaml").onFailure(Throwable::printStackTrace)
-        .onSuccess(routerBuilder -> {
-          LOGGER.debug("Info: Mouting routes from OpenApi3 spec");
+            .onSuccess(routerBuilder -> {
+              LOGGER.debug("Info: Mouting routes from OpenApi3 spec");
 
-          RouterBuilderOptions factoryOptions = new RouterBuilderOptions()
-              .setMountResponseContentTypeHandler(true);
-          //  .setRequireSecurityHandlers(false);
-          routerBuilder.setOptions(factoryOptions);
-          routerBuilder.securityHandler("authorization", oidcFlow);
+              RouterBuilderOptions factoryOptions = new RouterBuilderOptions()
+                      .setMountResponseContentTypeHandler(true);
+              //  .setRequireSecurityHandlers(false);
+              routerBuilder.setOptions(factoryOptions);
+              routerBuilder.securityHandler("authorization", oidcFlow);
 
-          // Post token create
-          routerBuilder.operation(CREATE_TOKEN)
-              .handler(clientFlow)
-              .handler(this::createTokenHandler)
-              .failureHandler(failureHandler);
+              // Post token create
+              routerBuilder.operation(CREATE_TOKEN)
+                      .handler(clientFlow)
+                      .handler(this::createTokenHandler)
+                      .failureHandler(failureHandler);
 
-          // Post token introspect
-          routerBuilder.operation(TIP_TOKEN)
-              .handler(this::validateTokenHandler)
-              .failureHandler(failureHandler);
+              // Post token introspect
+              routerBuilder.operation(TIP_TOKEN)
+                      .handler(this::validateTokenHandler)
+                      .failureHandler(failureHandler);
 
-          // Post token revoke
-          routerBuilder.operation(REVOKE_TOKEN)
-              .handler(this::revokeTokenHandler)
-              .failureHandler(failureHandler);
+              // Post token revoke
+              routerBuilder.operation(REVOKE_TOKEN)
+                      .handler(this::revokeTokenHandler)
+                      .failureHandler(failureHandler);
 
-          // Post user profile
-          routerBuilder.operation(CREATE_USER_PROFILE)
-              .handler(this::createUserProfileHandler)
-              .failureHandler(failureHandler);
+              // Post user profile
+              routerBuilder.operation(CREATE_USER_PROFILE)
+                      .handler(this::createUserProfileHandler)
+                      .failureHandler(failureHandler);
 
-          // Get user profile
-          routerBuilder.operation(GET_USER_PROFILE)
-              .handler(providerAuth)
-              .handler(searchUser)
-              .handler(this::listUserProfileHandler)
-              .failureHandler(failureHandler);
+              // Get user profile
+              routerBuilder.operation(GET_USER_PROFILE)
+                      .handler(providerAuth)
+                      .handler(searchUser)
+                      .handler(this::listUserProfileHandler)
+                      .failureHandler(failureHandler);
 
-          routerBuilder.operation(UPDATE_USER_PROFILE)
-              .handler(this::updateUserProfileHandler)
-              .failureHandler(failureHandler);
+              routerBuilder.operation(UPDATE_USER_PROFILE)
+                      .handler(this::updateUserProfileHandler)
+                      .failureHandler(failureHandler);
 
-          // Get Organization Details
-          routerBuilder.operation(GET_ORGANIZATIONS)
-              .handler(this::listOrganizationHandler)
-              .failureHandler(failureHandler);
+              // Get Organization Details
+              routerBuilder.operation(GET_ORGANIZATIONS)
+                      .handler(this::listOrganizationHandler)
+                      .failureHandler(failureHandler);
 
-          // Post Create Organization
-          routerBuilder.operation(CREATE_ORGANIZATIONS)
-              .handler(this::adminCreateOrganizationHandler)
-              .failureHandler(failureHandler);
+              // Post Create Organization
+              routerBuilder.operation(CREATE_ORGANIZATIONS)
+                      .handler(this::adminCreateOrganizationHandler)
+                      .failureHandler(failureHandler);
 
-          // Get Provider registrations
-          routerBuilder.operation(GET_PVDR_REGISTRATION)
-              .handler(this::adminGetProviderRegHandler)
-              .failureHandler(failureHandler);
+              // Get Provider registrations
+              routerBuilder.operation(GET_PVDR_REGISTRATION)
+                      .handler(this::adminGetProviderRegHandler)
+                      .failureHandler(failureHandler);
 
-          // Update Provider registration status
-          routerBuilder.operation(UPDATE_PVDR_REGISTRATION)
-              .handler(this::adminUpdateProviderRegHandler)
-              .failureHandler(failureHandler);
+              // Update Provider registration status
+              routerBuilder.operation(UPDATE_PVDR_REGISTRATION)
+                      .handler(this::adminUpdateProviderRegHandler)
+                      .failureHandler(failureHandler);
 
-          // Get/lists the User policies
-          routerBuilder.operation(GET_POLICIES)
-              .handler(providerAuth)
-              .handler(this::listPolicyHandler)
-              .failureHandler(failureHandler);
+              // Get/lists the User policies
+              routerBuilder.operation(GET_POLICIES)
+                      .handler(providerAuth)
+                      .handler(this::listPolicyHandler)
+                      .failureHandler(failureHandler);
 
-          // Create a new User policies
-          routerBuilder.operation(CREATE_POLICIES)
-              .handler(this::createPolicyHandler)
-              .failureHandler(failureHandler);
+              // Create a new User policies
+              routerBuilder.operation(CREATE_POLICIES)
+                      .handler(this::createPolicyHandler)
+                      .failureHandler(failureHandler);
 
-          // Delete a User policies
-          routerBuilder.operation(DELETE_POLICIES)
-              .handler(this::deletePolicyHandler)
-              .failureHandler(failureHandler);
+              // Delete a User policies
+              routerBuilder.operation(DELETE_POLICIES)
+                      .handler(this::deletePolicyHandler)
+                      .failureHandler(failureHandler);
 
-          // Lists all the policies related requests for user/provider
-          routerBuilder.operation(GET_POLICIES_REQUEST)
-              .handler(providerAuth)
-              .handler(this::getPolicyNotificationHandler)
-              .failureHandler(failureHandler);
+              // Lists all the policies related requests for user/provider
+              routerBuilder.operation(GET_POLICIES_REQUEST)
+                      .handler(providerAuth)
+                      .handler(this::getPolicyNotificationHandler)
+                      .failureHandler(failureHandler);
 
-          // Creates new policy request for user
-          routerBuilder.operation(POST_POLICIES_REQUEST)
-              .handler(this::createPolicyNotificationHandler)
-              .failureHandler(failureHandler);
+              // Creates new policy request for user
+              routerBuilder.operation(POST_POLICIES_REQUEST)
+                      .handler(this::createPolicyNotificationHandler)
+                      .failureHandler(failureHandler);
 
-          // Updates the policy request by provider/delegate
-          routerBuilder.operation(PUT_POLICIES_REQUEST)
-              .handler(providerAuth)
-              .handler(this::updatePolicyNotificationHandler)
-              .failureHandler(failureHandler);
+              // Updates the policy request by provider/delegate
+              routerBuilder.operation(PUT_POLICIES_REQUEST)
+                      .handler(providerAuth)
+                      .handler(this::updatePolicyNotificationHandler)
+                      .failureHandler(failureHandler);
 
-          // Get delegations by provider/delegate/auth delegate
-          routerBuilder.operation(GET_DELEGATIONS)
-              .handler(providerAuth)
-              .handler(this::listDelegationsHandler)
-              .failureHandler(failureHandler);
+              // Get delegations by provider/delegate/auth delegate
+              routerBuilder.operation(GET_DELEGATIONS)
+                      .handler(providerAuth)
+                      .handler(this::listDelegationsHandler)
+                      .failureHandler(failureHandler);
 
-          // Delete delegations by provider/delegate/auth delegate
-          routerBuilder.operation(DELETE_DELEGATIONS)
-              .handler(providerAuth)
-              .handler(this::deleteDelegationsHandler)
-              .failureHandler(failureHandler);
+              // Delete delegations by provider/delegate/auth delegate
+              routerBuilder.operation(DELETE_DELEGATIONS)
+                      .handler(providerAuth)
+                      .handler(this::deleteDelegationsHandler)
+                      .failureHandler(failureHandler);
 
-          // Create delegations
-          routerBuilder.operation(CREATE_DELEGATIONS)
-              .handler(providerAuth)
-              .handler(this::createDelegationsHandler)
-              .failureHandler(failureHandler);
+              // Create delegations
+              routerBuilder.operation(CREATE_DELEGATIONS)
+                      .handler(providerAuth)
+                      .handler(this::createDelegationsHandler)
+                      .failureHandler(failureHandler);
 
-          // Get PublicKey
-          routerBuilder.operation(GET_CERT)
-              .handler(this::pubCertHandler);
+              // Get PublicKey
+              routerBuilder.operation(GET_CERT)
+                      .handler(this::pubCertHandler);
 
-          /* TimeoutHandler needs to be added as rootHandler */
-          routerBuilder.rootHandler(TimeoutHandler.create(serverTimeout));
+              /* TimeoutHandler needs to be added as rootHandler */
+              routerBuilder.rootHandler(TimeoutHandler.create(serverTimeout));
 
-          // Router configuration- CORS, methods and headers
-          routerBuilder.rootHandler(CorsHandler.create(corsRegex)
-              .allowedHeaders(allowedHeaders)
-              .allowedMethods(allowedMethods));
+              // Router configuration- CORS, methods and headers
+              routerBuilder.rootHandler(CorsHandler.create(corsRegex)
+                      .allowedHeaders(allowedHeaders)
+                      .allowedMethods(allowedMethods));
 
-          router = routerBuilder.createRouter();
+              router = routerBuilder.createRouter();
 
-          // Static Resource Handler.Get openapiv3 spec
-          router.get(ROUTE_STATIC_SPEC)
-              .produces(MIME_APPLICATION_JSON)
-              .handler(routingContext -> {
+              // Static Resource Handler.Get openapiv3 spec
+              router.get(ROUTE_STATIC_SPEC)
+                      .produces(MIME_APPLICATION_JSON)
+                      .handler(routingContext -> {
+                        HttpServerResponse response = routingContext.response();
+                        response.sendFile("docs/openapi.yaml");
+                      });
+
+              // Get redoc
+              router.get(ROUTE_DOC).produces(MIME_TEXT_HTML)
+                      .handler(routingContext -> {
+                        HttpServerResponse response = routingContext.response();
+                        response.sendFile("docs/apidoc.html");
+                      });
+
+              /* In case API/method not implemented, this last route is triggered */
+              router.route().last().handler(routingContext-> {
                 HttpServerResponse response = routingContext.response();
-                response.sendFile("docs/openapi.yaml");
+                response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                        .setStatusCode(404).end(JSON_NOT_FOUND);
               });
 
-          // Get redoc
-          router.get(ROUTE_DOC).produces(MIME_TEXT_HTML)
-              .handler(routingContext -> {
-                HttpServerResponse response = routingContext.response();
-                response.sendFile("docs/apidoc.html");
+              HttpServerOptions serverOptions = new HttpServerOptions();
+              serverOptions.setSsl(false);
+
+              serverOptions.setCompressionSupported(true).setCompressionLevel(5);
+              server = vertx.createHttpServer(serverOptions);
+              server.requestHandler(router).listen(port).onSuccess(success -> {
+                LOGGER.debug("Info: Started HTTP server");
+              }).onFailure(err -> {
+                LOGGER.fatal("Info: Failed to start HTTP server - " + err.getMessage());
               });
 
-          /* In case API/method not implemented, this last route is triggered */
-          router.route().last().handler(routingContext-> {
-            HttpServerResponse response = routingContext.response();
-            response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-                .setStatusCode(404).end(JSON_NOT_FOUND);
-          });
-
-          HttpServerOptions serverOptions = new HttpServerOptions();
-          serverOptions.setSsl(false);
-
-          serverOptions.setCompressionSupported(true).setCompressionLevel(5);
-          server = vertx.createHttpServer(serverOptions);
-          server.requestHandler(router).listen(port).onSuccess(success -> {
-            LOGGER.debug("Info: Started HTTP server");
-          }).onFailure(err -> {
-            LOGGER.fatal("Info: Failed to start HTTP server - " + err.getMessage());
-          });
-          
-          /* Get a handler for the Service Discovery interface. */
-          policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
-          registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
-          tokenService = TokenService.createProxy(vertx, TOKEN_SERVICE_ADDRESS);
-          adminService = AdminService.createProxy(vertx, ADMIN_SERVICE_ADDRESS);
-          auditingService = AuditingService.createProxy(vertx, AUDITING_SERVICE_ADDRESS);
-        });
+              /* Get a handler for the Service Discovery interface. */
+              policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
+              registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
+              tokenService = TokenService.createProxy(vertx, TOKEN_SERVICE_ADDRESS);
+              adminService = AdminService.createProxy(vertx, ADMIN_SERVICE_ADDRESS);
+              auditingService = AuditingService.createProxy(vertx, AUDITING_SERVICE_ADDRESS);
+            });
   }
 
   /**
@@ -434,10 +434,10 @@ public class ApiServerVerticle extends AbstractVerticle {
     User user = context.get(USER);
 
     JsonObject authDelegateDetails =
-        Optional.ofNullable((JsonObject) context.get(DATA)).orElse(new JsonObject());
+            Optional.ofNullable((JsonObject) context.get(DATA)).orElse(new JsonObject());
 
     JsonObject searchUserDetails =
-        Optional.ofNullable((JsonObject) context.get(CONTEXT_SEARCH_USER)).orElse(new JsonObject());
+            Optional.ofNullable((JsonObject) context.get(CONTEXT_SEARCH_USER)).orElse(new JsonObject());
 
     registrationService.listUser(user, searchUserDetails, authDelegateDetails, handler -> {
       if (handler.succeeded()) {
@@ -584,7 +584,6 @@ public class ApiServerVerticle extends AbstractVerticle {
     JsonArray jsonRequest = arr.getJsonArray(REQUEST);
     List<CreatePolicyRequest> request = CreatePolicyRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
-
     policyService.createPolicy(request,user, handler -> {
 
       if (handler.succeeded()) {
@@ -689,7 +688,7 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     User user = context.get(USER);
     JsonObject authDelegateDetails =
-        Optional.ofNullable((JsonObject) context.get(DATA)).orElse(new JsonObject());
+            Optional.ofNullable((JsonObject) context.get(DATA)).orElse(new JsonObject());
 
     policyService.listDelegation(user, authDelegateDetails, handler -> {
       if (handler.succeeded()) {
@@ -713,7 +712,7 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     User user = context.get(USER);
     JsonObject authDelegateDetails =
-        Optional.ofNullable((JsonObject) context.get(DATA)).orElse(new JsonObject());
+            Optional.ofNullable((JsonObject) context.get(DATA)).orElse(new JsonObject());
 
     policyService.deleteDelegation(request, user, authDelegateDetails, handler -> {
       if (handler.succeeded()) {
@@ -768,11 +767,11 @@ public class ApiServerVerticle extends AbstractVerticle {
         String pubKeyCertEncoded = Base64.encodeBase64String(cert.getEncoded());
 
         String certKeyString = "-----BEGIN CERTIFICATE-----\n"
-            + pubKeyCertEncoded
-            + "\n-----END CERTIFICATE-----";
+                + pubKeyCertEncoded
+                + "\n-----END CERTIFICATE-----";
 
         context.response().putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-            .end(new JsonObject().put(CERTIFICATE, certKeyString).encode());
+                .end(new JsonObject().put(CERTIFICATE, certKeyString).encode());
 
       } else {
         processResponse(context.response(), KS_PARSE_ERROR);
@@ -801,21 +800,21 @@ public class ApiServerVerticle extends AbstractVerticle {
     response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON);
     return response.setStatusCode(500).end(rs.toJsonString());
   }
-  
+
   /**
    * Handles succeeded audit logs. Creates the required {@link JsonObject} from the
    * {@link RoutingContext} and pass on to it {@link AuditingService} for database storage when the
    * requests succeeded. Applicable to POST, PUT and DELETE HTTP operations.
-   * 
+   *
    * @param context which is {@link RoutingContext}
    * @return void which is {@link Future}
    */
   private Future<Void> handleAuditLogs(RoutingContext context, JsonObject result) {
 
     Promise<Void> promise = Promise.promise();
-    
+
     int status = result.getInteger(STATUS, 400);
-    
+
     if (!successStatus.contains(status)) {
       return promise.future();
     }
@@ -830,7 +829,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     auditLog.put(API, request.uri());
     auditLog.put(METHOD, request.method().toString());
     auditLog.put(USER_ID, userId);
-    
+
     auditingService.executeWriteQuery(auditLog, handler -> {
       if (handler.succeeded()) {
         LOGGER.info("{}; {}", SUCC_AUDIT_UPDATE, handler.result());

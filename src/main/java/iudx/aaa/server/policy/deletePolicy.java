@@ -15,20 +15,28 @@ import java.util.UUID;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-import static iudx.aaa.server.policy.Constants.*;
+import static iudx.aaa.server.policy.Constants.CHECK_DELPOLICY;
+import static iudx.aaa.server.policy.Constants.CHECK_POLICY_EXIST;
+import static iudx.aaa.server.policy.Constants.DELEGATE_CHECK;
+import static iudx.aaa.server.policy.Constants.DELETE_POLICY;
+import static iudx.aaa.server.policy.Constants.ID;
+import static iudx.aaa.server.policy.Constants.INTERNALERROR;
+import static iudx.aaa.server.policy.Constants.RES_OWNER_CHECK;
+import static iudx.aaa.server.policy.Constants.itemTypes;
+import static iudx.aaa.server.policy.Constants.status;
 
 public class deletePolicy {
   private static final Logger LOGGER = LogManager.getLogger(deletePolicy.class);
 
-  private PgPool pool;
-  private JsonObject options;
+  private final PgPool pool;
+  private final JsonObject options;
 
-  public deletePolicy(PgPool pool,JsonObject options) {
+  public deletePolicy(PgPool pool, JsonObject options) {
     this.pool = pool;
     this.options = options;
   }
 
-  public Future<List<UUID>> checkResExist(List<UUID> req) {
+  public Future<List<UUID>> checkPolicyExist(List<UUID> req) {
     Promise<List<UUID>> p = Promise.promise();
     Collector<Row, ?, List<UUID>> idCollector =
         Collectors.mapping(row -> row.getUUID(ID), Collectors.toList());
@@ -36,13 +44,13 @@ public class deletePolicy {
 
       pool.withConnection(
           conn ->
-              conn.preparedQuery(CHECK_RES_EXIST)
+              conn.preparedQuery(CHECK_POLICY_EXIST)
                   .collecting(idCollector)
                   .execute(
                       Tuple.of(Constants.status.ACTIVE).addArrayOfUUID(req.toArray(UUID[]::new)))
                   .onFailure(
                       obj -> {
-                        LOGGER.error("checkResExist db fail :: " + obj.getLocalizedMessage());
+                        LOGGER.error("CHECK_POLICY_EXIST db fail :: " + obj.getLocalizedMessage());
                         p.fail(INTERNALERROR);
                       })
                   .onSuccess(
@@ -55,7 +63,6 @@ public class deletePolicy {
       return p.future();
     } catch (Exception e) {
       LOGGER.error("Fail: ");
-      e.printStackTrace();
       p.fail(INTERNALERROR);
     }
     return p.future();
@@ -99,18 +106,17 @@ public class deletePolicy {
 
       pool.withConnection(
           conn ->
-              conn.preparedQuery(
-                      DELEGATE_CHECK)
+              conn.preparedQuery(DELEGATE_CHECK)
                   .collecting(idCollector)
                   .execute(
-                      Tuple.of(userId, Constants.status.ACTIVE,options.getString("authServerUrl"))
+                      Tuple.of(userId, Constants.status.ACTIVE, options.getString("authServerUrl"))
                           .addArrayOfUUID(request.toArray(UUID[]::new)))
                   .onSuccess(
                       obj -> {
                         List<UUID> resp = new ArrayList<>();
-                          resp.addAll(request);
-                          resp.removeAll(obj.value());
-                          p.complete(resp);
+                        resp.addAll(request);
+                        resp.removeAll(obj.value());
+                        p.complete(resp);
                       })
                   .onFailure(
                       obj -> {
@@ -124,7 +130,6 @@ public class deletePolicy {
     return p.future();
   }
 
-
   public Future<Boolean> checkDelegatePolicy(String userId, List<UUID> req) {
     Promise<Boolean> p = Promise.promise();
     try {
@@ -133,13 +138,17 @@ public class deletePolicy {
                   conn.preparedQuery(CHECK_DELPOLICY)
                       .execute(
                           Tuple.of(
-                              userId, itemTypes.RESOURCE_SERVER,options.getString("authServerUrl") , status.ACTIVE))
+                              userId,
+                              itemTypes.RESOURCE_SERVER,
+                              options.getString("authServerUrl"),
+                              status.ACTIVE))
                       .compose(
                           obj -> {
                             if (obj.rowCount() > 0) {
                               p.complete(true);
                             } else {
-                              LOGGER.error("checkDelegatePolicy :: Auth delegate policy does not exist");
+                              LOGGER.error(
+                                  "checkDelegatePolicy :: Auth delegate policy does not exist");
                               p.complete(false);
                             }
                             return p.future();
@@ -163,8 +172,7 @@ public class deletePolicy {
     try {
       pool.withConnection(
               conn ->
-                  conn.preparedQuery(
-                          DELETE_POLICY)
+                  conn.preparedQuery(DELETE_POLICY)
                       .execute(
                           Tuple.of(Constants.status.DELETED, Constants.status.ACTIVE)
                               .addArrayOfUUID(request.toArray(UUID[]::new)))

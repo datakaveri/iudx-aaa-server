@@ -59,7 +59,7 @@ public interface PolicyService {
    */
 
   @Fluent
-  PolicyService createPolicy(List<CreatePolicyRequest> request , User user , Handler<AsyncResult<JsonObject>> handler);
+  PolicyService createPolicy(List<CreatePolicyRequest> request ,User user , Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * The deletePolicy implements the policy delete operation.

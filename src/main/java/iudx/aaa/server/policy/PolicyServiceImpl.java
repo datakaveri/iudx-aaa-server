@@ -17,6 +17,7 @@ import iudx.aaa.server.apiserver.CreateDelegationRequest;
 import iudx.aaa.server.apiserver.CreatePolicyNotification;
 import iudx.aaa.server.apiserver.CreatePolicyRequest;
 import iudx.aaa.server.apiserver.DeleteDelegationRequest;
+import iudx.aaa.server.apiserver.ResourceObj;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.RoleStatus;
@@ -30,6 +31,9 @@ import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,11 +46,11 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.Duration;
-
-import static iudx.aaa.server.apiserver.util.Urn.*;
+import static iudx.aaa.server.apiserver.util.Urn.URN_ALREADY_EXISTS;
+import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
+import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
+import static iudx.aaa.server.apiserver.util.Urn.URN_MISSING_INFO;
+import static iudx.aaa.server.apiserver.util.Urn.URN_SUCCESS;
 import static iudx.aaa.server.policy.Constants.CAT_ID;
 import static iudx.aaa.server.policy.Constants.CHECK_ADMIN_POLICY;
 import static iudx.aaa.server.policy.Constants.CHECK_DELEGATOINS_VERIFY;
@@ -74,10 +78,9 @@ import static iudx.aaa.server.policy.Constants.GET_FROM_ROLES_TABLE;
 import static iudx.aaa.server.policy.Constants.GET_POLICIES;
 import static iudx.aaa.server.policy.Constants.GET_POLICIES_JOIN;
 import static iudx.aaa.server.policy.Constants.GET_POLICIES_JOIN_DELEGATE;
-import static iudx.aaa.server.policy.Constants.GET_RES_DETAIL;
-import static iudx.aaa.server.policy.Constants.GET_RES_DETAIL_JOIN;
 import static iudx.aaa.server.policy.Constants.GET_RES_OWNER;
 import static iudx.aaa.server.policy.Constants.GET_RES_SERVER_OWNER;
+import static iudx.aaa.server.policy.Constants.GET_RES_SERVER_OWNER_ID;
 import static iudx.aaa.server.policy.Constants.GET_RES_SER_OWNER;
 import static iudx.aaa.server.policy.Constants.GET_RES_SER_OWNER_JOIN;
 import static iudx.aaa.server.policy.Constants.GET_SERVER_POLICIES;
@@ -106,14 +109,13 @@ import static iudx.aaa.server.policy.Constants.OWNERID;
 import static iudx.aaa.server.policy.Constants.OWNER_DETAILS;
 import static iudx.aaa.server.policy.Constants.OWNER_ID;
 import static iudx.aaa.server.policy.Constants.POLICY_NOT_FOUND;
-import static iudx.aaa.server.policy.Constants.PROVIDER_ID;
 import static iudx.aaa.server.policy.Constants.PROVIDER_ROLE;
+import static iudx.aaa.server.policy.Constants.REQ_ID_ALREADY_NOT_EXISTS;
+import static iudx.aaa.server.policy.Constants.REQ_ID_ALREADY_PROCESSED;
 import static iudx.aaa.server.policy.Constants.RES;
-import static iudx.aaa.server.policy.Constants.RESOURCE_SERVER_ID;
 import static iudx.aaa.server.policy.Constants.RES_GRP;
 import static iudx.aaa.server.policy.Constants.RES_SERVER;
 import static iudx.aaa.server.policy.Constants.ROLE;
-import static iudx.aaa.server.policy.Constants.ROLE_NOT_FOUND;
 import static iudx.aaa.server.policy.Constants.SELECT_CONSUM_NOTIF_REQ;
 import static iudx.aaa.server.policy.Constants.SELECT_NOTIF_POLICY_REQUEST;
 import static iudx.aaa.server.policy.Constants.SELECT_PROVIDER_NOTIF_REQ;
@@ -131,7 +133,6 @@ import static iudx.aaa.server.policy.Constants.SUCC_TITLE_POLICY_DEL;
 import static iudx.aaa.server.policy.Constants.SUCC_TITLE_POLICY_READ;
 import static iudx.aaa.server.policy.Constants.SUCC_UPDATE_NOTIF_REQ;
 import static iudx.aaa.server.policy.Constants.TYPE;
-import static iudx.aaa.server.policy.Constants.UNAUTHORIZED;
 import static iudx.aaa.server.policy.Constants.UNAUTHORIZED_DELEGATE;
 import static iudx.aaa.server.policy.Constants.UPDATE_NOTIF_REQ_APPROVED;
 import static iudx.aaa.server.policy.Constants.UPDATE_NOTIF_REQ_REJECTED;
@@ -139,8 +140,7 @@ import static iudx.aaa.server.policy.Constants.URL;
 import static iudx.aaa.server.policy.Constants.USERID;
 import static iudx.aaa.server.policy.Constants.USER_DETAILS;
 import static iudx.aaa.server.policy.Constants.USER_ID;
-import static iudx.aaa.server.policy.Constants.REQ_ID_ALREADY_NOT_EXISTS;
-import static iudx.aaa.server.policy.Constants.*;
+import static iudx.aaa.server.token.Constants.INVALID_POLICY;
 
 /**
  * The Policy Service Implementation.
@@ -156,7 +156,6 @@ import static iudx.aaa.server.policy.Constants.*;
 public class PolicyServiceImpl implements PolicyService {
 
   private static final Logger LOGGER = LogManager.getLogger(PolicyServiceImpl.class);
-
   private final PgPool pool;
   private final RegistrationService registrationService;
   private final deletePolicy deletePolicy;
@@ -165,7 +164,6 @@ public class PolicyServiceImpl implements PolicyService {
   private final CatalogueClient catalogueClient;
   private final JsonObject authOptions;
   private final JsonObject catServerOptions;
-
   // Create the pooled client
   /* for converting getUserDetails's JsonObject to map */
   Function<JsonObject, Map<String, JsonObject>> jsonObjectToMap =
@@ -226,7 +224,7 @@ public class PolicyServiceImpl implements PolicyService {
     if (!roles.contains(Roles.ADMIN)
         && !roles.contains(Roles.PROVIDER)
         && !roles.contains(Roles.DELEGATE)) {
-      // 403 not allowed to create policy
+
       Response r =
           new Response.ResponseBuilder()
               .type(URN_INVALID_ROLE)
@@ -340,8 +338,10 @@ public class PolicyServiceImpl implements PolicyService {
       if (resGrpIds.size() > 0) catItem.put(RES_GRP, resGrpIds);
       if (resIds.size() > 0) catItem.put(RES, resIds);
     }
-    Future<Map<String, UUID>> reqItemDetail =
-        catalogueClient.checkReqItems(catItem, user.getUserId());
+    Future<Map<String, ResourceObj>> reqItemDetail;
+    if (catItem.containsKey(RES_SERVER)) {
+      reqItemDetail = createPolicy.getResSerDetails(catItem.get(RES_SERVER), user.getUserId());
+    } else reqItemDetail = catalogueClient.checkReqItems(catItem);
 
     Future<Boolean> ItemChecks =
         CompositeFuture.all(UserExist, validateExp, reqItemDetail)
@@ -349,10 +349,18 @@ public class PolicyServiceImpl implements PolicyService {
                 obj -> {
                   if (!UserExist.result().isEmpty()) {
                     LOGGER.debug("UserExist fail:: " + UserExist.result().toString());
-                    return Future.failedFuture(INVALID_USER + UserExist.result().iterator().next());
+                    Response r =
+                        new ResponseBuilder()
+                            .status(400)
+                            .type(URN_INVALID_INPUT)
+                            .title(INVALID_USER)
+                            .detail(UserExist.result().iterator().next().toString())
+                            .build();
+                    return Future.failedFuture(new ComposeException(r));
                   }
 
                   if (catItem.containsKey(RES_SERVER)) return Future.succeededFuture(false);
+
                   return Future.succeededFuture(true);
                 });
 
@@ -360,41 +368,34 @@ public class PolicyServiceImpl implements PolicyService {
         ItemChecks.compose(
             obj -> {
               if (ItemChecks.result().equals(false)) return Future.succeededFuture(false);
-              return catalogueClient.checkAuthPolicy(user.getUserId());
-            });
-
-    Future<List<UUID>> checkOwner =
-        checkAuthPolicy.compose(
-            succ -> {
-              if (succ.equals(false)) return Future.succeededFuture(new ArrayList<>());
-              return catalogueClient.checkOwner(catItem, user.getUserId());
+              return createPolicy.checkAuthPolicy(user.getUserId());
             });
 
     Future<List<UUID>> checkDelegate =
-        checkOwner.compose(
-            checkOwn -> {
-              if (checkOwn.isEmpty()) return Future.succeededFuture(new ArrayList<>());
-              List<UUID> distinctOwner = checkOwn.stream().distinct().collect(Collectors.toList());
-              return catalogueClient.checkDelegate(distinctOwner, user.getUserId());
+        checkAuthPolicy.compose(
+            checkAut -> {
+              if (checkAut.equals(false)) return Future.succeededFuture(new ArrayList<>());
+              List<ResourceObj> resourceObj = new ArrayList<>(reqItemDetail.result().values());
+
+              List<UUID> owners =
+                  resourceObj.stream()
+                      .distinct()
+                      .map(ResourceObj::getOwnerId)
+                      .collect(Collectors.toList());
+
+              List<UUID> owned =
+                  owners.stream()
+                      .filter(x -> !x.equals(UUID.fromString(user.getUserId())))
+                      .collect(Collectors.toList());
+
+              if (owned.isEmpty()) return Future.succeededFuture(new ArrayList<>());
+              else return createPolicy.checkDelegate(owned, user.getUserId());
             });
 
-    Future<Map<String, UUID>> getOwner =
-        checkDelegate.compose(
-            checkDel -> {
-              List<UUID> distinctOwner =
-                  checkOwner.result().stream().distinct().collect(Collectors.toList());
-              if (checkDel.size() < distinctOwner.size()) return Future.failedFuture(UNAUTHORIZED);
-
-              if (catItem.containsKey(RES_SERVER)) return Future.succeededFuture(new HashMap<>());
-
-              return catalogueClient.getOwnerId(catItem);
-            });
-
+    // use only reqItemDetail to insert items
     Future<Boolean> insertPolicy =
-        getOwner.compose(
-            succ ->
-                createPolicy.insertPolicy(
-                    request, reqItemDetail.result(), getOwner.result(), user));
+        checkDelegate.compose(
+            succ -> createPolicy.insertPolicy(request, reqItemDetail.result(), user));
 
     insertPolicy
         .onSuccess(
@@ -409,8 +410,11 @@ public class PolicyServiceImpl implements PolicyService {
             })
         .onFailure(
             obj -> {
-              Response r = createPolicy.getRespObj(obj.getLocalizedMessage());
-              handler.handle(Future.succeededFuture(r.toJson()));
+              LOGGER.error(obj.getMessage());
+              if (obj instanceof iudx.aaa.server.policy.ComposeException) {
+                ComposeException e = (ComposeException) obj;
+                handler.handle(Future.succeededFuture(e.getResponse().toJson()));
+              } else handler.handle(Future.failedFuture(INTERNALERROR));
             });
     return this;
   }
@@ -427,7 +431,7 @@ public class PolicyServiceImpl implements PolicyService {
       Response r =
           new Response.ResponseBuilder()
               .type(URN_MISSING_INFO)
-              .title(URN_MISSING_INFO.toString())
+              .title(String.valueOf(URN_MISSING_INFO))
               .detail(NO_USER)
               .status(401)
               .build();
@@ -459,12 +463,12 @@ public class PolicyServiceImpl implements PolicyService {
             .collect(Collectors.toList());
 
     deletePolicy
-        .checkResExist(req)
+        .checkPolicyExist(req)
         // if failed, End req
         .onFailure(
             // internal server error
             failureHandler -> {
-              LOGGER.error("failed checkResExist: " + failureHandler.getLocalizedMessage());
+              LOGGER.error("failed checkPolicyExist: " + failureHandler.getLocalizedMessage());
               handler.handle(Future.failedFuture(INTERNALERROR));
             })
         .onSuccess(
@@ -558,13 +562,12 @@ public class PolicyServiceImpl implements PolicyService {
                                                                         r.toJson()));
                                                               });
                                                     } else {
+                                                        LOGGER.error(INVALID_DELEGATE);
                                                       Response r =
                                                           new Response.ResponseBuilder()
                                                               .type(URN_INVALID_ROLE)
-                                                              .title(INVALID_DELEGATE)
-                                                              .detail(
-                                                                  "invalid role for "
-                                                                      + success.toString())
+                                                              .title(ITEMNOTFOUND)
+                                                              .detail(success.toString())
                                                               .status(403)
                                                               .build();
                                                       handler.handle(
@@ -627,7 +630,7 @@ public class PolicyServiceImpl implements PolicyService {
       Response r =
           new Response.ResponseBuilder()
               .type(URN_MISSING_INFO)
-              .title(URN_MISSING_INFO.toString())
+              .title(String.valueOf(URN_MISSING_INFO))
               .detail(NO_USER)
               .status(404)
               .build();
@@ -838,7 +841,7 @@ public class PolicyServiceImpl implements PolicyService {
   }
 
   Future<JsonObject> verifyConsumerPolicy(
-      UUID userId, String itemId, String itemType, JsonObject resGrpDetail, JsonObject resDetail) {
+      UUID userId, String itemId, String itemType, Map<String, ResourceObj> resDetails) {
     Promise<JsonObject> p = Promise.promise();
 
     /*check itemType,
@@ -847,18 +850,43 @@ public class PolicyServiceImpl implements PolicyService {
     for the resGrp the res belongs to
      */
 
-    Future<JsonObject> getResGrpConstraints =
-        pool.withConnection(
-            conn ->
-                conn.preparedQuery(GET_CONSUMER_CONSTRAINTS)
-                    .execute(
-                        Tuple.of(
-                            userId,
-                            resGrpDetail.getString(ID),
-                            itemTypes.RESOURCE_GROUP,
-                            status.ACTIVE))
-                    .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson() : null));
+    Future<JsonObject> getResGrpConstraints;
 
+    if (itemType.equals(itemTypes.RESOURCE_GROUP.toString())) {
+      Collector<Row, ?, List<JsonObject>> constraintCollector =
+          Collectors.mapping(row -> row.toJson(), Collectors.toList());
+      getResGrpConstraints =
+          pool.withConnection(
+              conn ->
+                  conn.preparedQuery(GET_CONSUMER_CONSTRAINTS)
+                      .collecting(constraintCollector)
+                      .execute(
+                          Tuple.of(
+                              userId,
+                              resDetails.get(itemId).getId(),
+                              itemTypes.RESOURCE_GROUP,
+                              status.ACTIVE))
+                      .map(res -> res.size() > 0 ? res.value().get(0) : null)
+                      .onFailure(
+                          failureHandler -> {
+                            LOGGER.error(
+                                "getResGrpConstraints db fail :: "
+                                    + failureHandler.getLocalizedMessage());
+                            p.fail(INTERNALERROR);
+                          }));
+    } else {
+      getResGrpConstraints =
+          pool.withConnection(
+              conn ->
+                  conn.preparedQuery(GET_CONSUMER_CONSTRAINTS)
+                      .execute(
+                          Tuple.of(
+                              userId,
+                              resDetails.get(itemId).getResGrpId(),
+                              itemTypes.RESOURCE_GROUP,
+                              status.ACTIVE))
+                      .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson() : null));
+    }
     Future<JsonObject> getResItemConstraints;
     if (itemType.equals(itemTypes.RESOURCE.toString())) {
       getResItemConstraints =
@@ -867,7 +895,10 @@ public class PolicyServiceImpl implements PolicyService {
                   conn.preparedQuery(GET_CONSUMER_CONSTRAINTS)
                       .execute(
                           Tuple.of(
-                              userId, resDetail.getString(ID), itemTypes.RESOURCE, status.ACTIVE))
+                              userId,
+                              resDetails.get(itemId).getId(),
+                              itemTypes.RESOURCE,
+                              status.ACTIVE))
                       .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson() : null));
     } else {
       getResItemConstraints = Future.succeededFuture(new JsonObject());
@@ -891,14 +922,22 @@ public class PolicyServiceImpl implements PolicyService {
         pool.withConnection(
                 conn ->
                     conn.preparedQuery(GET_URL)
-                        .execute(Tuple.of(resGrpDetail.getString(RESOURCE_SERVER_ID)))
+                        .execute(Tuple.of(resDetails.get(itemId).getResServerID()))
                         .map(
                             rows ->
                                 rows.rowCount() > 0 ? rows.iterator().next().getString(URL) : null))
             .compose(
                 ar -> {
-                  if (ar == null) return Future.failedFuture(NO_RES_SERVER);
-                  else {
+                  if (ar == null) {
+                    Response r =
+                        new ResponseBuilder()
+                            .status(403)
+                            .type(URN_INVALID_INPUT)
+                            .title(INVALID_POLICY)
+                            .detail(NO_RES_SERVER)
+                            .build();
+                    return Future.failedFuture(new ComposeException(r));
+                  } else {
                     return Future.succeededFuture(ar);
                   }
                 });
@@ -913,14 +952,26 @@ public class PolicyServiceImpl implements PolicyService {
                 details.put(CAT_ID, itemId);
                 details.put(URL, getUrl.result());
                 p.complete(details);
-              } else p.fail(POLICY_NOT_FOUND);
+              } else {
+                Response r =
+                    new ResponseBuilder()
+                        .status(403)
+                        .type(URN_INVALID_INPUT)
+                        .title(INVALID_POLICY)
+                        .detail(POLICY_NOT_FOUND)
+                        .build();
+                p.fail(new ComposeException(r));
+              }
             })
         .onFailure(
             failureHandler -> {
-              LOGGER.error("failed verifyConsumerPolicy: " + failureHandler.getLocalizedMessage());
-              p.fail(failureHandler.getLocalizedMessage());
-            });
+              // check if compose Exception, p.fail(composeExp)
 
+              LOGGER.error("failed verifyConsumerPolicy: " + failureHandler.getLocalizedMessage());
+              if (failureHandler instanceof iudx.aaa.server.policy.ComposeException)
+                p.fail(failureHandler);
+              else p.fail(INTERNALERROR);
+            });
     return p.future();
   }
 
@@ -941,7 +992,16 @@ public class PolicyServiceImpl implements PolicyService {
       getResSerOwner =
           getResOwner.compose(
               ar -> {
-                if (ar == null) return Future.failedFuture(NO_USER);
+                if (ar == null) {
+                  Response r =
+                      new ResponseBuilder()
+                          .status(403)
+                          .type(URN_INVALID_INPUT)
+                          .title(INVALID_POLICY)
+                          .detail(NO_USER)
+                          .build();
+                  return Future.failedFuture(new ComposeException(r));
+                }
                 return pool.withConnection(
                     conn ->
                         conn.preparedQuery(GET_RES_SERVER_OWNER)
@@ -954,7 +1014,16 @@ public class PolicyServiceImpl implements PolicyService {
       getResSerOwner =
           getResOwner.compose(
               ar -> {
-                if (!getResOwner.result().equals(userId)) return Future.failedFuture(NOT_RES_OWNER);
+                if (!getResOwner.result().equals(userId)) {
+                  Response r =
+                      new ResponseBuilder()
+                          .status(403)
+                          .type(URN_INVALID_INPUT)
+                          .title(INVALID_POLICY)
+                          .detail(NOT_RES_OWNER)
+                          .build();
+                  return Future.failedFuture(new ComposeException(r));
+                }
                 return pool.withConnection(
                     conn ->
                         conn.preparedQuery(GET_RES_SER_OWNER + itemType + GET_RES_SER_OWNER_JOIN)
@@ -968,7 +1037,8 @@ public class PolicyServiceImpl implements PolicyService {
     Future<UUID> checkAdminPolicy =
         getResSerOwner.compose(
             success ->
-                pool.withConnection(
+            {
+             return   pool.withConnection(
                         conn -> {
                           return conn.preparedQuery(CHECK_ADMIN_POLICY)
                               .execute(
@@ -982,14 +1052,18 @@ public class PolicyServiceImpl implements PolicyService {
                     .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().getUUID(ID) : null)
                     .compose(
                         obj -> {
-                          if (obj == null) return Future.failedFuture(NO_ADMIN_POLICY);
+                          if (obj == null) {
+                            Response r =
+                                new ResponseBuilder()
+                                    .status(403)
+                                    .type(URN_INVALID_INPUT)
+                                    .title(INVALID_POLICY)
+                                    .detail(NO_ADMIN_POLICY)
+                                    .build();
+                            return Future.failedFuture(new ComposeException(r));
+                          }
                           return Future.succeededFuture(obj);
-                        })
-                    .onFailure(
-                        failureHandler ->
-                            Future.failedFuture(
-                                "checkAdminPolicy db fail ::"
-                                    + failureHandler.getLocalizedMessage())));
+                        });});
 
     checkAdminPolicy
         .onSuccess(
@@ -1005,7 +1079,9 @@ public class PolicyServiceImpl implements PolicyService {
         .onFailure(
             failureHandler -> {
               LOGGER.error("failed verifyProviderPolicy: " + failureHandler.getLocalizedMessage());
-              p.fail(failureHandler.getLocalizedMessage());
+              if (failureHandler instanceof iudx.aaa.server.policy.ComposeException) {
+                p.fail(failureHandler);
+              } else p.fail(INTERNALERROR);
             });
 
     return p.future();
@@ -1016,8 +1092,7 @@ public class PolicyServiceImpl implements PolicyService {
       String itemId,
       String email_hash,
       String itemType,
-      JsonObject resGrpDetail,
-      JsonObject resDetail,
+      Map<String, ResourceObj> resDetails,
       boolean isCatalogue) {
     Promise<JsonObject> p = Promise.promise();
 
@@ -1030,14 +1105,23 @@ public class PolicyServiceImpl implements PolicyService {
                       .execute(Tuple.of(email_hash))
                       .map(
                           rows -> rows.rowCount() > 0 ? rows.iterator().next().getUUID(ID) : null));
-    else getOwner = Future.succeededFuture(UUID.fromString(resGrpDetail.getString(PROVIDER_ID)));
+    else getOwner = Future.succeededFuture(resDetails.get(itemId).getOwnerId());
 
     Future<JsonObject> getResSerOwner;
     if (isCatalogue) {
       getResSerOwner =
           getOwner.compose(
               ar -> {
-                if (ar == null) return Future.failedFuture(NO_USER);
+                if (ar == null) {
+                  Response r =
+                      new ResponseBuilder()
+                          .status(403)
+                          .type(URN_INVALID_INPUT)
+                          .title(INVALID_POLICY)
+                          .detail(NO_USER)
+                          .build();
+                  return Future.failedFuture(new ComposeException(r));
+                }
                 return pool.withConnection(
                     conn ->
                         conn.preparedQuery(GET_RES_SERVER_OWNER)
@@ -1050,11 +1134,20 @@ public class PolicyServiceImpl implements PolicyService {
       getResSerOwner =
           getOwner.compose(
               ar -> {
-                if (ar == null) return Future.failedFuture(NO_RES_SERVER);
+                if (ar == null) {
+                  Response r =
+                      new ResponseBuilder()
+                          .status(403)
+                          .type(URN_INVALID_INPUT)
+                          .title(INVALID_POLICY)
+                          .detail(NO_RES_SERVER)
+                          .build();
+                  return Future.failedFuture(new ComposeException(r));
+                }
                 return pool.withConnection(
                     conn ->
-                        conn.preparedQuery(GET_RES_SER_OWNER + itemType + GET_RES_SER_OWNER_JOIN)
-                            .execute(Tuple.of(itemId))
+                        conn.preparedQuery(GET_RES_SERVER_OWNER_ID)
+                            .execute(Tuple.of(resDetails.get(itemId).getResServerID()))
                             .map(
                                 rows ->
                                     rows.rowCount() > 0 ? rows.iterator().next().toJson() : null));
@@ -1064,7 +1157,16 @@ public class PolicyServiceImpl implements PolicyService {
     Future<UUID> checkDelegation =
         getResSerOwner.compose(
             ar -> {
-              if (getOwner.result() == null) return Future.failedFuture(UNAUTHORIZED_DELEGATE);
+              if (ar == null) {
+                Response r =
+                    new ResponseBuilder()
+                        .status(403)
+                        .type(URN_INVALID_INPUT)
+                        .title(INVALID_POLICY)
+                        .detail(UNAUTHORIZED_DELEGATE)
+                        .build();
+                return Future.failedFuture(new ComposeException(r));
+              }
               return pool.withConnection(
                   conn ->
                       conn.preparedQuery(CHECK_DELEGATOINS_VERIFY)
@@ -1082,16 +1184,37 @@ public class PolicyServiceImpl implements PolicyService {
     Future<JsonObject> checkPolicy;
     Future<JsonObject> checkResGrpPolicy;
     Future<JsonObject> checkResPolicy;
-    if (isCatalogue){
-        checkPolicy = checkDelegation.compose(obj ->{
-            if (obj == null) return Future.failedFuture(UNAUTHORIZED_DELEGATE);
-            return Future.succeededFuture(new JsonObject());});
-    }
-    else {
+    if (isCatalogue) {
+      checkPolicy =
+          checkDelegation.compose(
+              obj -> {
+                if (obj == null) {
+                  Response r =
+                      new ResponseBuilder()
+                          .status(403)
+                          .type(URN_INVALID_INPUT)
+                          .title(INVALID_POLICY)
+                          .detail(UNAUTHORIZED_DELEGATE)
+                          .build();
+                  return Future.failedFuture(new ComposeException(r));
+                }
+                return Future.succeededFuture(new JsonObject());
+              });
+    } else {
+
       checkResGrpPolicy =
           checkDelegation.compose(
               ar -> {
-                if (ar == null) return Future.failedFuture(UNAUTHORIZED_DELEGATE);
+                if (ar == null) {
+                  Response r =
+                      new ResponseBuilder()
+                          .status(403)
+                          .type(URN_INVALID_INPUT)
+                          .title(INVALID_POLICY)
+                          .detail(UNAUTHORIZED_DELEGATE)
+                          .build();
+                  return Future.failedFuture(new ComposeException(r));
+                }
                 return pool.withConnection(
                     conn ->
                         conn.preparedQuery(CHECK_POLICY)
@@ -1099,7 +1222,7 @@ public class PolicyServiceImpl implements PolicyService {
                                 Tuple.of(
                                     userId,
                                     getOwner.result(),
-                                    resGrpDetail.getString(ID),
+                                    resDetails.get(itemId).getResGrpId(),
                                     status.ACTIVE.toString()))
                             .map(
                                 rows ->
@@ -1109,7 +1232,16 @@ public class PolicyServiceImpl implements PolicyService {
       checkResPolicy =
           checkDelegation.compose(
               ar -> {
-                if (ar == null) return Future.failedFuture(UNAUTHORIZED_DELEGATE);
+                if (ar == null) {
+                  Response r =
+                      new ResponseBuilder()
+                          .status(403)
+                          .type(URN_INVALID_INPUT)
+                          .title(INVALID_POLICY)
+                          .detail(UNAUTHORIZED_DELEGATE)
+                          .build();
+                  return Future.failedFuture(new ComposeException(r));
+                }
                 return pool.withConnection(
                     conn ->
                         conn.preparedQuery(CHECK_POLICY)
@@ -1117,7 +1249,7 @@ public class PolicyServiceImpl implements PolicyService {
                                 Tuple.of(
                                     userId,
                                     getOwner.result(),
-                                    resDetail.getString(ID),
+                                    resDetails.get(itemId).getId(),
                                     status.ACTIVE.toString()))
                             .map(
                                 rows ->
@@ -1142,8 +1274,16 @@ public class PolicyServiceImpl implements PolicyService {
             success ->
                 pool.withConnection(
                         conn -> {
-                          if (checkPolicy.result() == null)
-                            return Future.failedFuture(UNAUTHORIZED_DELEGATE);
+                          if (checkPolicy.result() == null) {
+                            Response r =
+                                new ResponseBuilder()
+                                    .status(403)
+                                    .type(URN_INVALID_INPUT)
+                                    .title(INVALID_POLICY)
+                                    .detail(UNAUTHORIZED_DELEGATE)
+                                    .build();
+                            return Future.failedFuture(new ComposeException(r));
+                          }
                           return conn.preparedQuery(CHECK_ADMIN_POLICY)
                               .execute(
                                   Tuple.of(
@@ -1156,14 +1296,18 @@ public class PolicyServiceImpl implements PolicyService {
                     .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().getUUID(ID) : null)
                     .compose(
                         obj -> {
-                          if (obj == null) return Future.failedFuture(NO_ADMIN_POLICY);
+                          if (obj == null) {
+                            Response r =
+                                new ResponseBuilder()
+                                    .status(403)
+                                    .type(URN_INVALID_INPUT)
+                                    .title(INVALID_POLICY)
+                                    .detail(NO_ADMIN_POLICY)
+                                    .build();
+                            return Future.failedFuture(new ComposeException(r));
+                          }
                           return Future.succeededFuture(obj);
-                        })
-                    .onFailure(
-                        failureHandler ->
-                            Future.failedFuture(
-                                "checkAdminPolicy db fail ::"
-                                    + failureHandler.getLocalizedMessage())));
+                        }));
 
     checkAdminPolicy
         .onSuccess(
@@ -1178,8 +1322,11 @@ public class PolicyServiceImpl implements PolicyService {
             })
         .onFailure(
             failureHandler -> {
-              LOGGER.error("failed verifyDelegatePolicy: " + failureHandler.getLocalizedMessage());
-              p.fail(failureHandler.getLocalizedMessage());
+              LOGGER.error("failed verifyDelegatePolicy ");
+              if (failureHandler instanceof iudx.aaa.server.policy.ComposeException) {
+                ComposeException exp = (ComposeException) failureHandler;
+                p.fail(failureHandler);
+              } else p.fail(INTERNALERROR);
             });
 
     return p.future();
@@ -1196,17 +1343,32 @@ public class PolicyServiceImpl implements PolicyService {
     boolean isCatalogue = false;
     // verify policy does not expect the resServer itemType
     if (itemType.equals(itemTypes.RESOURCE_SERVER.toString())) {
-      handler.handle(Future.failedFuture(INCORRECT_ITEM_TYPE));
+      Response r =
+          new ResponseBuilder()
+              .status(403)
+              .type(URN_INVALID_INPUT)
+              .title(INVALID_POLICY)
+              .detail(INCORRECT_ITEM_TYPE)
+              .build();
+      handler.handle(Future.failedFuture(new ComposeException(r)));
       return this;
     }
 
     if (role.equals(roles.ADMIN.toString())) {
-      handler.handle(Future.failedFuture(INVALID_ROLE));
+      Response r =
+          new ResponseBuilder()
+              .status(403)
+              .type(URN_INVALID_INPUT)
+              .title(INVALID_POLICY)
+              .detail(INVALID_ROLE)
+              .build();
+      handler.handle(Future.failedFuture(new ComposeException(r)));
       return this;
     }
 
-    String emailHash = itemId.split("/")[0] + "/" + itemId.split("/")[1];
+    String[] itemSplit = itemId.split("/");
 
+    String emailHash = itemSplit[0] + "/" + itemSplit[1];
     Future<String> getRoles =
         pool.withConnection(
             conn ->
@@ -1216,28 +1378,49 @@ public class PolicyServiceImpl implements PolicyService {
                         ar -> {
                           if (ar.rowCount() > 0) {
                             return Future.succeededFuture(ar.iterator().next().getString(ROLE));
+                          } else {
+                            Response r =
+                                new ResponseBuilder()
+                                    .status(403)
+                                    .type(URN_INVALID_INPUT)
+                                    .title(INVALID_POLICY)
+                                    .detail(INVALID_ROLE)
+                                    .build();
+                            return Future.failedFuture(new ComposeException(r));
                           }
-                          return Future.failedFuture(ROLE_NOT_FOUND);
                         }));
 
-    if (itemId.split("/").length == 5
-        && itemId.split("/")[2].equals(catServerOptions.getString("catURL"))
-        && (itemId.split("/")[3] + "/" + itemId.split("/")[4])
-            .equals(catServerOptions.getString("catItem"))) {
+    if (itemSplit.length == 5
+        && itemSplit[2].equals(catServerOptions.getString("catURL"))
+        && (itemSplit[3] + "/" + itemSplit[4]).equals(catServerOptions.getString("catItem"))) {
+
       isCatalogue = true;
     }
 
-    Future<JsonObject> getResGrpDetail;
-    Future<JsonObject> getResDetail;
+    Future<Map<String, ResourceObj>> reqItemDetail;
     if (!isCatalogue) {
 
       if (itemType.equals(itemTypes.RESOURCE_GROUP.toString()) && itemId.split("/").length != 4) {
-        handler.handle(Future.failedFuture(INCORRECT_ITEM_TYPE));
+        Response r =
+            new ResponseBuilder()
+                .status(403)
+                .type(URN_INVALID_INPUT)
+                .title(INVALID_POLICY)
+                .detail(INCORRECT_ITEM_TYPE)
+                .build();
+        handler.handle(Future.failedFuture(new ComposeException(r)));
         return this;
       }
 
       if (itemType.equals(itemTypes.RESOURCE.toString()) && itemId.split("/").length <= 4) {
-        handler.handle(Future.failedFuture(INCORRECT_ITEM_TYPE));
+        Response r =
+            new ResponseBuilder()
+                .status(403)
+                .type(URN_INVALID_INPUT)
+                .title(INVALID_POLICY)
+                .detail(INCORRECT_ITEM_TYPE)
+                .build();
+        handler.handle(Future.failedFuture(new ComposeException(r)));
         return this;
       }
 
@@ -1254,81 +1437,17 @@ public class PolicyServiceImpl implements PolicyService {
         list.add(itemId);
         catItem.put(RES_GRP, list);
       }
-
-      Future<Map<String, UUID>> reqItemDetail =
-          catalogueClient.checkReqItems(catItem, userId.toString());
+      reqItemDetail = catalogueClient.checkReqItems(catItem);
       // trim itemid for resitem type
-      String resGroupId;
-      String resId;
-      if (itemType.equals(itemTypes.RESOURCE.toString())) {
-        resGroupId =
-            itemId.split("/")[0]
-                + "/"
-                + itemId.split("/")[1]
-                + "/"
-                + itemId.split("/")[2]
-                + "/"
-                + itemId.split("/")[3];
-        resId = itemId;
-      } else {
-        resGroupId = itemId;
-        resId = "";
-      }
-      getResGrpDetail =
-          reqItemDetail.compose(
-              res ->
-                  pool.withConnection(
-                      conn ->
-                          conn.preparedQuery(
-                                  GET_RES_DETAIL + itemTypes.RESOURCE_GROUP + GET_RES_DETAIL_JOIN)
-                              .execute(Tuple.of(resGroupId))
-                              .map(
-                                  rows ->
-                                      rows.rowCount() > 0 ? rows.iterator().next().toJson() : null)
-                              .onFailure(failHandler -> Future.failedFuture("getResGrpDetail fail"))
-                              .compose(
-                                  ar -> {
-                                    if (ar.size() <= 0) return Future.failedFuture(ITEMNOTFOUND);
-                                    else {
-                                      return Future.succeededFuture(ar);
-                                    }
-                                  })));
-
-      if (itemType.equals(itemTypes.RESOURCE.toString())) {
-        getResDetail =
-            reqItemDetail.compose(
-                res ->
-                    pool.withConnection(
-                        conn ->
-                            conn.preparedQuery(
-                                    GET_RES_DETAIL + itemTypes.RESOURCE + GET_RES_DETAIL_JOIN)
-                                .execute(Tuple.of(resId))
-                                .map(
-                                    rows ->
-                                        rows.rowCount() > 0
-                                            ? rows.iterator().next().toJson()
-                                            : null)
-                                .onFailure(failHandler -> Future.failedFuture("getResDetail fail"))
-                                .compose(
-                                    ar -> {
-                                      if (ar.size() <= 0) return Future.failedFuture(ITEMNOTFOUND);
-                                      else {
-                                        return Future.succeededFuture(ar);
-                                      }
-                                    })));
-      } else {
-        getResDetail = Future.succeededFuture(new JsonObject());
-      }
 
     } else {
-      getResGrpDetail = Future.succeededFuture(new JsonObject());
-      getResDetail = Future.succeededFuture(new JsonObject());
+      reqItemDetail = Future.succeededFuture(new HashMap<>());
     }
 
     boolean finalIsCatalogue = isCatalogue;
     String finalItem = itemId;
     Future<JsonObject> verifyRolePolicy =
-        CompositeFuture.all(getRoles, getResGrpDetail, getResDetail)
+        CompositeFuture.all(getRoles, reqItemDetail)
             .compose(
                 success -> {
                   Future<JsonObject> response;
@@ -1337,11 +1456,7 @@ public class PolicyServiceImpl implements PolicyService {
                       {
                         response =
                             verifyConsumerPolicy(
-                                userId,
-                                finalItem,
-                                itemType,
-                                getResGrpDetail.result(),
-                                getResDetail.result());
+                                userId, finalItem, itemType, reqItemDetail.result());
                         break;
                       }
                     case PROVIDER_ROLE:
@@ -1359,8 +1474,7 @@ public class PolicyServiceImpl implements PolicyService {
                                 finalItem,
                                 emailHash,
                                 itemType,
-                                getResGrpDetail.result(),
-                                getResDetail.result(),
+                                reqItemDetail.result(),
                                 finalIsCatalogue);
                         break;
                       }
@@ -1370,10 +1484,6 @@ public class PolicyServiceImpl implements PolicyService {
                       }
                   }
                   return response;
-                })
-            .onFailure(
-                f -> {
-                  Future.failedFuture(f.getLocalizedMessage());
                 });
 
     verifyRolePolicy.onSuccess(
@@ -1382,8 +1492,11 @@ public class PolicyServiceImpl implements PolicyService {
         });
 
     verifyRolePolicy.onFailure(
-        f -> {
-          handler.handle(Future.failedFuture(f.getLocalizedMessage()));
+        e -> {
+          LOGGER.error("verifyRolePolicy failed" + e.getMessage());
+          if (e instanceof iudx.aaa.server.policy.ComposeException) {
+            handler.handle(Future.failedFuture(e));
+          } else handler.handle(Future.failedFuture(INTERNALERROR));
         });
 
     return this;
@@ -1444,6 +1557,18 @@ public class PolicyServiceImpl implements PolicyService {
             .map(CreatePolicyNotification::getItemId)
             .collect(Collectors.toList());
 
+    if (!resGrpIds.stream().allMatch(itemTypeCheck -> itemTypeCheck.split("/").length == 4)) {
+      Response r =
+          new Response.ResponseBuilder()
+              .type(URN_INVALID_INPUT)
+              .title(INCORRECT_ITEM_TYPE)
+              .detail(INCORRECT_ITEM_TYPE)
+              .status(400)
+              .build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
+
     List<String> resIds =
         request.stream()
             .filter(
@@ -1451,6 +1576,18 @@ public class PolicyServiceImpl implements PolicyService {
                     tagObject.getItemType().toUpperCase().equals(itemTypes.RESOURCE.toString()))
             .map(CreatePolicyNotification::getItemId)
             .collect(Collectors.toList());
+
+    if (!resIds.stream().allMatch(itemTypeCheck -> itemTypeCheck.split("/").length > 4)) {
+      Response r =
+          new Response.ResponseBuilder()
+              .type(URN_INVALID_INPUT)
+              .title(INCORRECT_ITEM_TYPE)
+              .detail(INCORRECT_ITEM_TYPE)
+              .status(400)
+              .build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
 
     Map<String, List<String>> catItem = new HashMap<>();
 
@@ -1465,161 +1602,150 @@ public class PolicyServiceImpl implements PolicyService {
       }
     }
 
-    Future<Map<String, UUID>> reqCatItem = catalogueClient.checkReqItems(catItem, user.getUserId());
+    Future<Map<String, ResourceObj>> reqCatItem = catalogueClient.checkReqItems(catItem);
 
-    reqCatItem
-        .compose(
-            catHandler -> {
-              return catalogueClient.getOwnerId(catItem);
-            })
-        .onComplete(
-            dbHandler -> {
-              if (dbHandler.failed()) {
-                LOGGER.error("Fail: " + ITEMNOTFOUND);
-                Response resp =
-                    new ResponseBuilder()
-                        .status(400)
-                        .type(URN_INVALID_INPUT)
-                        .title(ITEMNOTFOUND)
-                        .detail(ITEMNOTFOUND)
-                        .build();
-                handler.handle(Future.succeededFuture(resp.toJson()));
-                return;
-              }
+    reqCatItem.onComplete(
+        dbHandler -> {
+          if (dbHandler.failed()) {
+            LOGGER.error("reqCatItem failed " + dbHandler.cause());
+            Response resp =
+                new ResponseBuilder()
+                    .status(400)
+                    .type(URN_INVALID_INPUT)
+                    .title(ITEMNOTFOUND)
+                    .detail(ITEMNOTFOUND)
+                    .build();
+            handler.handle(Future.succeededFuture(resp.toJson()));
+            return;
+          }
 
-              if (dbHandler.succeeded()) {
-                Future<List<Tuple>> tuples =
-                    mapTupleCreate(request, reqCatItem.result(), dbHandler.result(), user);
-                Future<List<Tuple>> checkDuplicate = checkDuplication(tuples.result());
+          if (dbHandler.succeeded()) {
+            Future<List<Tuple>> tuples = mapTupleCreate(request, reqCatItem.result(), user);
+            Future<List<Tuple>> checkDuplicate = checkDuplication(tuples.result());
 
-                CompositeFuture.all(tuples, checkDuplicate)
-                    .onComplete(
-                        resHandler -> {
-                          if (resHandler.failed()) {
-                            String msg = URN_INVALID_INPUT.toString();
-                            int status = 400;
-                            if (checkDuplicate.failed()) {
-                              msg = URN_ALREADY_EXISTS.toString();
-                              status = 409;
-                            }
-                            
-                            LOGGER.error(LOG_DB_ERROR + resHandler.cause().getLocalizedMessage());
-                            Response resp =
-                                new ResponseBuilder()
-                                    .status(status)
-                                    .type(msg)
-                                    .title(resHandler.cause().getLocalizedMessage())
-                                    .detail(resHandler.cause().getLocalizedMessage())
-                                    .build();
-                            handler.handle(Future.succeededFuture(resp.toJson()));
-                            return;
-                          }
+            CompositeFuture.all(tuples, checkDuplicate)
+                .onComplete(
+                    resHandler -> {
+                      if (resHandler.failed()) {
+                        String msg = URN_INVALID_INPUT.toString();
+                        int status = 400;
+                        if (checkDuplicate.failed()) {
+                          msg = URN_ALREADY_EXISTS.toString();
+                          status = 409;
+                        }
 
-                          if (resHandler.succeeded()) {
+                        LOGGER.error(LOG_DB_ERROR + resHandler.cause().getLocalizedMessage());
+                        Response resp =
+                            new ResponseBuilder()
+                                .status(status)
+                                .type(msg)
+                                .title(resHandler.cause().getLocalizedMessage())
+                                .detail(resHandler.cause().getLocalizedMessage())
+                                .build();
+                        handler.handle(Future.succeededFuture(resp.toJson()));
+                        return;
+                      }
 
-                            pool.withTransaction(
-                                conn ->
-                                    conn.preparedQuery(CREATE_NOTIFI_POLICY_REQUEST)
-                                        .executeBatch(tuples.result())
-                                        .onComplete(
-                                            insertHandler -> {
-                                              if (insertHandler.failed()) {
-                                                LOGGER.error(
-                                                    LOG_DB_ERROR
-                                                        + insertHandler
-                                                            .cause()
-                                                            .getLocalizedMessage());
-                                                Response resp =
-                                                    new ResponseBuilder()
-                                                        .status(400)
-                                                        .type(URN_INVALID_INPUT)
-                                                        .title(INTERNALERROR)
-                                                        .detail(INTERNALERROR)
-                                                        .build();
-                                                handler.handle(
-                                                    Future.succeededFuture(resp.toJson()));
-                                                return;
-                                              }
+                      if (resHandler.succeeded()) {
 
-                                              if (insertHandler.succeeded()) {
-                                                RowSet<Row> rows = insertHandler.result();
-                                                JsonArray resp = new JsonArray();
-                                                while (rows != null) {
-                                                  rows.iterator()
-                                                      .forEachRemaining(
-                                                          row -> {
-                                                            resp.add(row.toJson());
-                                                          });
-                                                  rows = rows.next();
-                                                }
+                        pool.withTransaction(
+                            conn ->
+                                conn.preparedQuery(CREATE_NOTIFI_POLICY_REQUEST)
+                                    .executeBatch(tuples.result())
+                                    .onComplete(
+                                        insertHandler -> {
+                                          if (insertHandler.failed()) {
+                                            LOGGER.error(
+                                                LOG_DB_ERROR
+                                                    + insertHandler.cause().getLocalizedMessage());
+                                            Response resp =
+                                                new ResponseBuilder()
+                                                    .status(400)
+                                                    .type(URN_INVALID_INPUT)
+                                                    .title(INTERNALERROR)
+                                                    .detail(INTERNALERROR)
+                                                    .build();
+                                            handler.handle(Future.succeededFuture(resp.toJson()));
+                                            return;
+                                          }
 
-                                                List<String> ids = new ArrayList<>();
-                                                ids.add(user.getUserId());
+                                          if (insertHandler.succeeded()) {
+                                            RowSet<Row> rows = insertHandler.result();
+                                            JsonArray resp = new JsonArray();
+                                            while (rows != null) {
+                                              rows.iterator()
+                                                  .forEachRemaining(
+                                                      row -> {
+                                                        resp.add(row.toJson());
+                                                      });
+                                              rows = rows.next();
+                                            }
 
-                                                List<String> ownerIds =
-                                                    dbHandler.result().values().stream()
-                                                        .map(each -> each.toString())
-                                                        .collect(Collectors.toList());
-                                                ids.addAll(ownerIds);
+                                            List<String> ids = new ArrayList<>();
+                                            ids.add(user.getUserId());
 
-                                                registrationService.getUserDetails(
-                                                    ids,
-                                                    userHandler -> {
-                                                      if (userHandler.failed()) {
-                                                        LOGGER.error(
-                                                            "Fail: Registration failure; "
-                                                                + userHandler.cause());
-                                                        handler.handle(
-                                                            Future.failedFuture(INTERNALERROR));
-                                                      }
+                                            List<String> ownerIds =
+                                                dbHandler.result().values().stream()
+                                                    .map(resObj -> resObj.getOwnerId().toString())
+                                                    .collect(Collectors.toList());
+                                            ids.addAll(ownerIds);
 
-                                                      if (userHandler.succeeded()) {
-                                                        Map<String, JsonObject> userInfo =
-                                                            jsonObjectToMap.apply(
-                                                                userHandler.result());
+                                            registrationService.getUserDetails(
+                                                ids,
+                                                userHandler -> {
+                                                  if (userHandler.failed()) {
+                                                    LOGGER.error(
+                                                        "Fail: Registration failure; "
+                                                            + userHandler.cause());
+                                                    handler.handle(
+                                                        Future.failedFuture(INTERNALERROR));
+                                                  }
 
-                                                        JsonObject userJson1 =
-                                                            userInfo.get(user.getUserId());
-                                                        userJson1.put(ID, user.getUserId());
+                                                  if (userHandler.succeeded()) {
+                                                    Map<String, JsonObject> userInfo =
+                                                        jsonObjectToMap.apply(userHandler.result());
 
-                                                        JsonArray results = new JsonArray();
-                                                        for (int i = 0; i < request.size(); i++) {
-                                                          JsonObject requestJson =
-                                                              request.get(i).toJson();
-                                                          String ownerId = ownerIds.get(i);
-                                                          JsonObject ownerInfo =
-                                                              userInfo.get(ownerId);
-                                                          ownerInfo.put(ID, ownerId);
-                                                          JsonObject eachJson =
-                                                              resp.getJsonObject(i)
-                                                                  .copy()
-                                                                  .mergeIn(requestJson)
-                                                                  .put(USER_DETAILS, userJson1)
-                                                                  .put(OWNER_DETAILS, ownerInfo);
-                                                          results.add(eachJson);
-                                                        }
+                                                    JsonObject userJson1 =
+                                                        userInfo.get(user.getUserId());
+                                                    userJson1.put(ID, user.getUserId());
 
-                                                        LOGGER.info(
-                                                            "Success: {}; Id: {}",
-                                                            SUCC_NOTIF_REQ,
-                                                            resp);
-                                                        Response res =
-                                                            new Response.ResponseBuilder()
-                                                                .type(URN_SUCCESS)
-                                                                .title(SUCC_TITLE_POLICY_READ)
-                                                                .status(200)
-                                                                .arrayResults(results)
-                                                                .build();
-                                                        handler.handle(
-                                                            Future.succeededFuture(res.toJson()));
-                                                      }
-                                                    });
-                                              }
-                                            }));
-                          }
-                        });
-              }
-            });
+                                                    JsonArray results = new JsonArray();
+                                                    for (int i = 0; i < request.size(); i++) {
+                                                      JsonObject requestJson =
+                                                          request.get(i).toJson();
+                                                      String ownerId = ownerIds.get(i);
+                                                      JsonObject ownerInfo = userInfo.get(ownerId);
+                                                      ownerInfo.put(ID, ownerId);
+                                                      JsonObject eachJson =
+                                                          resp.getJsonObject(i)
+                                                              .copy()
+                                                              .mergeIn(requestJson)
+                                                              .put(USER_DETAILS, userJson1)
+                                                              .put(OWNER_DETAILS, ownerInfo);
+                                                      results.add(eachJson);
+                                                    }
+
+                                                    LOGGER.info(
+                                                        "Success: {}; Id: {}",
+                                                        SUCC_NOTIF_REQ,
+                                                        resp);
+                                                    Response res =
+                                                        new Response.ResponseBuilder()
+                                                            .type(URN_SUCCESS)
+                                                            .title(SUCC_TITLE_POLICY_READ)
+                                                            .status(200)
+                                                            .arrayResults(results)
+                                                            .build();
+                                                    handler.handle(
+                                                        Future.succeededFuture(res.toJson()));
+                                                  }
+                                                });
+                                          }
+                                        }));
+                      }
+                    });
+          }
+        });
     return this;
   }
 
@@ -1798,19 +1924,19 @@ public class PolicyServiceImpl implements PolicyService {
         request.stream()
             .map(each -> UUID.fromString(each.getRequestId()))
             .collect(Collectors.toList());
-    
+
     Set<UUID> uniqueRequestIds = new HashSet<UUID>(requestIds);
-    if(requestIds.size() != uniqueRequestIds.size()) {
-    	LOGGER.error("Fail: {}", DUPLICATE);
-    	Response r =
-    			new Response.ResponseBuilder()
-    				.type(URN_INVALID_INPUT)
-    	            .title(SUCC_NOTIF_REQ)
-    	            .detail(DUPLICATE)
-    	            .status(400)
-    	            .build();
-    	handler.handle(Future.succeededFuture(r.toJson()));
-    	return this;
+    if (requestIds.size() != uniqueRequestIds.size()) {
+      LOGGER.error("Fail: {}", DUPLICATE);
+      Response r =
+          new Response.ResponseBuilder()
+              .type(URN_INVALID_INPUT)
+              .title(SUCC_NOTIF_REQ)
+              .detail(DUPLICATE)
+              .status(400)
+              .build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
     }
 
     Collector<Row, ?, List<JsonObject>> notifRequestCollect =
@@ -1846,20 +1972,20 @@ public class PolicyServiceImpl implements PolicyService {
           }
 
           if (dbHandler.succeeded()) {
-        	if(dbHandler.result().size() != request.size()) {
-        		LOGGER.debug("Info: {}", REQ_ID_ALREADY_NOT_EXISTS);
-        		
-                Response resp =
-                        new ResponseBuilder()
-                            .status(404)
-                            .type(URN_INVALID_INPUT)
-                            .title(SUCC_NOTIF_REQ)
-                            .detail(REQ_ID_ALREADY_NOT_EXISTS)
-                            .build();
-                    handler.handle(Future.succeededFuture(resp.toJson()));
-                    return;
-        	}
-        	
+            if (dbHandler.result().size() != request.size()) {
+              LOGGER.debug("Info: {}", REQ_ID_ALREADY_NOT_EXISTS);
+
+              Response resp =
+                  new ResponseBuilder()
+                      .status(404)
+                      .type(URN_INVALID_INPUT)
+                      .title(SUCC_NOTIF_REQ)
+                      .detail(REQ_ID_ALREADY_NOT_EXISTS)
+                      .build();
+              handler.handle(Future.succeededFuture(resp.toJson()));
+              return;
+            }
+
             List<JsonObject> notifReqlist = dbHandler.result();
             JsonArray createPolicyArr = new JsonArray();
 
@@ -1975,10 +2101,10 @@ public class PolicyServiceImpl implements PolicyService {
                                         })
                                     .onSuccess(
                                         updateSuccHandler -> {
-                                        	if(updateSuccHandler.rowCount() == 0) {
-                                        		futureHandler.fail(REQ_ID_ALREADY_PROCESSED);
-                                                return;
-                                        	}
+                                          if (updateSuccHandler.rowCount() == 0) {
+                                            futureHandler.fail(REQ_ID_ALREADY_PROCESSED);
+                                            return;
+                                          }
                                           List<CreatePolicyRequest> createPolicyArray =
                                               CreatePolicyRequest.jsonArrayToList(approvedReq);
 
@@ -1995,8 +2121,9 @@ public class PolicyServiceImpl implements PolicyService {
 
                                                 if (createHandler.succeeded()) {
                                                   JsonObject result = createHandler.result();
-                                                  if (URN_SUCCESS.toString().equalsIgnoreCase(
-                                                      result.getString(TYPE))) {
+                                                  if (URN_SUCCESS
+                                                      .toString()
+                                                      .equalsIgnoreCase(result.getString(TYPE))) {
 
                                                     Collector<Row, ?, List<Tuple>> policyCollector =
                                                         Collectors.mapping(
@@ -2041,14 +2168,15 @@ public class PolicyServiceImpl implements PolicyService {
                                             conn.preparedQuery(UPDATE_NOTIF_REQ_REJECTED)
                                                 .executeBatch(updateRejectedReq)
                                                 .map(res -> res.value().rowCount()));
-                               
-                                updateRejected.onComplete(comHandler -> {
-                                	if(comHandler.succeeded() && comHandler.result() == 0) {
-                                		futureHandler.fail(REQ_ID_ALREADY_PROCESSED);
-                                	} else {
-                                		futureHandler.complete(updateRejected.result());
-                                	}
-                                });
+
+                                updateRejected.onComplete(
+                                    comHandler -> {
+                                      if (comHandler.succeeded() && comHandler.result() == 0) {
+                                        futureHandler.fail(REQ_ID_ALREADY_PROCESSED);
+                                      } else {
+                                        futureHandler.complete(updateRejected.result());
+                                      }
+                                    });
                               }
                             });
 
@@ -2056,7 +2184,7 @@ public class PolicyServiceImpl implements PolicyService {
                         updateHandler -> {
                           if (updateHandler.failed()) {
                             String msg = updateHandler.cause().getMessage();
-                            LOGGER.error("Fail: {}",msg);
+                            LOGGER.error("Fail: {}", msg);
                             if (msg.contains(INTERNALERROR)) {
                               handler.handle(
                                   Future.failedFuture(updateHandler.cause().getMessage()));
@@ -2347,20 +2475,17 @@ public class PolicyServiceImpl implements PolicyService {
     return this;
   }
 
+  // TO-DO change method to accept only ResourceObject instead of resourceID
   /**
    * Create/map objects, fields to List<tuple>.
    *
    * @param request
-   * @param resourceId
-   * @param ownerIds
+   * @param objDetails
    * @param user
    * @return List<Tuple>
    */
   Future<List<Tuple>> mapTupleCreate(
-      List<CreatePolicyNotification> request,
-      Map<String, UUID> resourceId,
-      Map<String, UUID> ownerIds,
-      User user) {
+      List<CreatePolicyNotification> request, Map<String, ResourceObj> objDetails, User user) {
 
     Promise<List<Tuple>> promise = Promise.promise();
     List<Tuple> tuples = new ArrayList<>();
@@ -2370,8 +2495,9 @@ public class PolicyServiceImpl implements PolicyService {
       for (CreatePolicyNotification each : request) {
 
         String catId = each.getItemId();
-        UUID itemId = resourceId.get(catId);
-        UUID ownerId = ownerIds.get(catId);
+        ResourceObj resource = objDetails.get(catId);
+        UUID itemId = resource.getId();
+        UUID ownerId = resource.getOwnerId();
 
         String status = RoleStatus.PENDING.name();
         String itemType = each.getItemType().toUpperCase();

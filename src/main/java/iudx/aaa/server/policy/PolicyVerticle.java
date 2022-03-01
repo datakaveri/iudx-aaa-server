@@ -1,6 +1,5 @@
 package iudx.aaa.server.policy;
 
-import com.hazelcast.spi.impl.eventservice.impl.Registration;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
@@ -12,8 +11,9 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.serviceproxy.ServiceBinder;
 import io.vertx.sqlclient.PoolOptions;
 
+import static iudx.aaa.server.policy.Constants.POLICY_SERVICE_ADDRESS;
 import static iudx.aaa.server.policy.Constants.REGISTRATION_SERVICE_ADDRESS;
-import static iudx.aaa.server.token.Constants.POLICY_SERVICE_ADDRESS;
+
 import java.util.Map;
 
 /**
@@ -44,7 +44,6 @@ public class PolicyVerticle extends AbstractVerticle {
   private JsonObject catalogueOptions;
   private JsonObject authOptions;
   private JsonObject catOptions;
-  private static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
   private PolicyService policyService;
   private RegistrationService registrationService;
   private CatalogueClient catalogueClient;

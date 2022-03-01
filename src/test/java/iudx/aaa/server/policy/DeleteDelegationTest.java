@@ -2,7 +2,6 @@
 package iudx.aaa.server.policy;
 
 import static iudx.aaa.server.apiserver.util.Urn.*;
-import static iudx.aaa.server.policy.Constants.AUTH_SERVER_URL;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_DEL_DELEGATE_ROLES;
 import static iudx.aaa.server.policy.Constants.ERR_TITLE_AUTH_DELE_DELETE;
 import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ID;
@@ -10,6 +9,7 @@ import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ROLES;
 import static iudx.aaa.server.policy.Constants.NIL_UUID;
 import static iudx.aaa.server.policy.Constants.SUCC_TITLE_DELETE_DELE;
 import static iudx.aaa.server.policy.Constants.TYPE;
+import static iudx.aaa.server.policy.TestRequest.AUTH_SERVER_URL;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_ADMIN_SERVER;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_DELEG;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_ORG;

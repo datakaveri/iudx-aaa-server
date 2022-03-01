@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "2aecbac2-f440-4569-a625-59689b7d2fc4",
+		"_postman_id": "d7d30943-fe48-4c8a-aa54-0407eadbb468",
 		"name": "Integration Test",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -9430,14 +9430,14 @@
 							"response": []
 						},
 						{
-							"name": "Item exists, but does not belong to the provider - [400]",
+							"name": "Item exists, but does not belong to the provider - [403]",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
 										"exec": [
 											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(400);",
+											"    pm.response.to.have.status(403);",
 											"});",
 											"",
 											"pm.test(\"Check response header\", function () {",
@@ -9466,7 +9466,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n                        {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/surat-itms-realtime-information\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n                {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/fake-item/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n        {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n         {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n                        {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"datakaveri.org/9c13a2308bb0919bf146be8681eb886922d29282/rs.iudx.io/invalid-resource-for-ownership-test\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n                {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n        {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n         {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -9662,7 +9662,7 @@
 							"response": []
 						},
 						{
-							"name": "Test catalogue fetch - [400]",
+							"name": "INCORRECT!! Test catalogue fetch - [400]",
 							"event": [
 								{
 									"listen": "test",
@@ -10442,7 +10442,7 @@
 											"",
 											"pm.test(\"Check response body\", function () {    ",
 											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidRole\");",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
 											"});",
 											"",
 											""
@@ -10636,7 +10636,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        },\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/surat-itms-realtime-information\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        },\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"datakaveri.org/9c13a2308bb0919bf146be8681eb886922d29282/rs.iudx.io/invalid-resource-for-ownership-test\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
