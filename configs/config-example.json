@@ -77,6 +77,12 @@
       "required":["postgresOptions", "commonOptions", "keycloakOptions"],
       "poolSize": "5"
     },
+    {
+      "id": "iudx.aaa.server.apd.ApdVerticle",
+      "verticleInstances": 1,
+      "required":["postgresOptions", "commonOptions"],
+      "poolSize": "25"
+    },
      {
       "id": "iudx.aaa.server.auditing.AuditingVerticle",
       "verticleInstances": 1,

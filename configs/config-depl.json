@@ -78,6 +78,12 @@
       "poolSize": "25"
     },
     {
+      "id": "iudx.aaa.server.apd.ApdVerticle",
+      "verticleInstances": 1,
+      "required":["postgresOptions", "commonOptions"],
+      "poolSize": "25"
+    },
+    {
       "id": "iudx.aaa.server.auditing.AuditingVerticle",
       "verticleInstances": 1,
       "auditingDatabaseIP": "x.y.z.w",
