@@ -49,7 +49,7 @@ import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.configuration.Configuration;
-import iudx.aaa.server.registration.ComposeException;
+import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.registration.Utils;
 import java.util.List;

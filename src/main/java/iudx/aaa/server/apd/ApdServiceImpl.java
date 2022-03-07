@@ -32,7 +32,7 @@ import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
-import iudx.aaa.server.registration.ComposeException;
+import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.registration.RegistrationService;
 import java.util.List;
 import java.util.Map;

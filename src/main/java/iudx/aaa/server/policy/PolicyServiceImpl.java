@@ -24,6 +24,7 @@ import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.UpdatePolicyNotification;
 import iudx.aaa.server.apiserver.User;
+import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.policy.Constants.itemTypes;
 import iudx.aaa.server.policy.Constants.roles;
 import iudx.aaa.server.policy.Constants.status;
@@ -411,7 +412,7 @@ public class PolicyServiceImpl implements PolicyService {
         .onFailure(
             obj -> {
               LOGGER.error(obj.getMessage());
-              if (obj instanceof iudx.aaa.server.policy.ComposeException) {
+              if (obj instanceof ComposeException) {
                 ComposeException e = (ComposeException) obj;
                 handler.handle(Future.succeededFuture(e.getResponse().toJson()));
               } else handler.handle(Future.failedFuture(INTERNALERROR));
@@ -968,7 +969,7 @@ public class PolicyServiceImpl implements PolicyService {
               // check if compose Exception, p.fail(composeExp)
 
               LOGGER.error("failed verifyConsumerPolicy: " + failureHandler.getLocalizedMessage());
-              if (failureHandler instanceof iudx.aaa.server.policy.ComposeException)
+              if (failureHandler instanceof ComposeException)
                 p.fail(failureHandler);
               else p.fail(INTERNALERROR);
             });
@@ -1079,7 +1080,7 @@ public class PolicyServiceImpl implements PolicyService {
         .onFailure(
             failureHandler -> {
               LOGGER.error("failed verifyProviderPolicy: " + failureHandler.getLocalizedMessage());
-              if (failureHandler instanceof iudx.aaa.server.policy.ComposeException) {
+              if (failureHandler instanceof ComposeException) {
                 p.fail(failureHandler);
               } else p.fail(INTERNALERROR);
             });
@@ -1323,7 +1324,7 @@ public class PolicyServiceImpl implements PolicyService {
         .onFailure(
             failureHandler -> {
               LOGGER.error("failed verifyDelegatePolicy ");
-              if (failureHandler instanceof iudx.aaa.server.policy.ComposeException) {
+              if (failureHandler instanceof ComposeException) {
                 ComposeException exp = (ComposeException) failureHandler;
                 p.fail(failureHandler);
               } else p.fail(INTERNALERROR);
@@ -1494,7 +1495,7 @@ public class PolicyServiceImpl implements PolicyService {
     verifyRolePolicy.onFailure(
         e -> {
           LOGGER.error("verifyRolePolicy failed" + e.getMessage());
-          if (e instanceof iudx.aaa.server.policy.ComposeException) {
+          if (e instanceof ComposeException) {
             handler.handle(Future.failedFuture(e));
           } else handler.handle(Future.failedFuture(INTERNALERROR));
         });

@@ -11,6 +11,7 @@ import iudx.aaa.server.apiserver.CreatePolicyRequest;
 import iudx.aaa.server.apiserver.ResourceObj;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.User;
+import iudx.aaa.server.apiserver.util.ComposeException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -182,7 +183,7 @@ public class createPolicy {
         .onFailure(
             failureHandler -> {
               LOGGER.error("checkDuplicate fail :: " + failureHandler.getLocalizedMessage());
-              if (failureHandler instanceof iudx.aaa.server.policy.ComposeException) {
+              if (failureHandler instanceof ComposeException) {
                 p.fail(failureHandler);
               } else p.fail(INTERNALERROR);
             })
