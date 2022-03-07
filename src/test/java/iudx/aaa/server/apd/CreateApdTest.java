@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,6 +50,7 @@ import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.configuration.Configuration;
+import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.ComposeException;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.registration.Utils;
@@ -77,6 +79,7 @@ public class CreateApdTest {
   private static PgConnectOptions connectOptions;
   private static ApdWebClient apdWebClient = Mockito.mock(ApdWebClient.class);
   private static RegistrationService registrationService = Mockito.mock(RegistrationService.class);
+  private static PolicyService policyService = Mockito.mock(PolicyService.class);
 
   private static final String DUMMY_AUTH_SERVER =
       "auth" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + "iudx.io";
@@ -132,11 +135,13 @@ public class CreateApdTest {
         Map.of(Roles.PROVIDER, RoleStatus.APPROVED), false));
 
     CompositeFuture.all(trusteeUser, otherUser).onSuccess(succ -> {
-      apdService = new ApdServiceImpl(pool, apdWebClient, registrationService, options);
+      apdService =
+          new ApdServiceImpl(pool, apdWebClient, registrationService, policyService, options);
       testContext.completeNow();
     });
   }
 
+  @AfterAll
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing....");
     List<JsonObject> users = List.of(trusteeUser.result(), otherUser.result());
