@@ -36,11 +36,9 @@ public class Utils {
       "INSERT INTO organizations (name, url, created_at, updated_at) "
           + "VALUES ($1:: text, $2::text, NOW(), NOW()) RETURNING id";
 
-  public static final String SQL_DELETE_USRS =
-      "DELETE FROM users WHERE organization_id = $1::uuid";
+  public static final String SQL_DELETE_USRS = "DELETE FROM users WHERE organization_id = $1::uuid";
 
-  public static final String SQL_DELETE_ORG =
-      "DELETE FROM organizations WHERE id = $1::uuid";
+  public static final String SQL_DELETE_ORG = "DELETE FROM organizations WHERE id = $1::uuid";
 
   public static final String SQL_DELETE_CONSUMERS =
       "DELETE FROM users WHERE email_hash LIKE $1::text || '%'";
@@ -63,13 +61,16 @@ public class Utils {
 
   public static final String SQL_CREATE_DELEG = "INSERT INTO delegations "
       + "(owner_id, user_id, resource_server_id,status, created_at, updated_at) "
-      + "VALUES ($1::uuid, $2::uuid, $3::uuid, $4::" 
-      + "policy_status_enum, NOW(), NOW())" + " RETURNING id, resource_server_id";
+      + "VALUES ($1::uuid, $2::uuid, $3::uuid, $4::" + "policy_status_enum, NOW(), NOW())"
+      + " RETURNING id, resource_server_id";
 
-  public static final String SQL_GET_DELEG_IDS =
-      "SELECT d.id, url FROM delegations AS d JOIN "
-          + "resource_server ON d.resource_server_id = resource_server.id"
-          + " WHERE url = ANY($1::text[]) AND d.owner_id = $2::uuid";
+  public static final String SQL_GET_DELEG_IDS = "SELECT d.id, url FROM delegations AS d JOIN "
+      + "resource_server ON d.resource_server_id = resource_server.id"
+      + " WHERE url = ANY($1::text[]) AND d.owner_id = $2::uuid";
+
+  public static final String SQL_CREATE_APD =
+      "INSERT INTO apds (id, name, url, owner_id, status, created_at, updated_at) VALUES "
+          + "($1::uuid, $2::text, $3::text, $4::uuid, $5::apd_status_enum, NOW(), NOW()) ";
 
   /**
    * Create a mock user based on the supplied params. The user is created and the information of the
