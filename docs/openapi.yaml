@@ -2307,6 +2307,10 @@ paths:
 
 
         - `id` :is the policy id that the user wants to delete. The user can use the list policy api to get this value.
+
+
+        ## Auth delegate
+         - An auth delegate may use the API to delete policies on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
       parameters:
         - schema:
             type: string
@@ -2317,6 +2321,11 @@ paths:
           name: Authorization
           description: Keycloak Issued token
           required: true
+        - schema:
+            type: string
+          in: header
+          name: providerId
+          description: 'User ID of the provider, if an auth delegate wishes  to delete policy on behalf of a provider'
       requestBody:
         content:
           application/json:
@@ -2416,7 +2425,8 @@ paths:
           - A `provider` can set policies for a `delegate` or `consumer` for the resources owned by the `provider.`
         **A policy is set by the auth server admin for a provider when they are approved**
 
-        ## Policies created by delegate
+        ##Policies created by delegate
+          - An auth delegate may use the API to create policies on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
           - Valid item types - `resource`, `resource_group` 
           - A `delegate` can set policies for other `delegate` or `consumer` for the resources owned by the `provider` 
           - A policy must be set by the auth server admin for the `delegate` to be able to set policies. 
@@ -2432,6 +2442,11 @@ paths:
           name: Authorization
           description: Keycloak Issued token
           required: true
+        - schema:
+            type: string
+          in: header
+          name: providerId
+          description: 'User ID of the provider, if an auth delegate wishes to create policy on behalf of a provider'
       requestBody:
         content:
           application/json:
