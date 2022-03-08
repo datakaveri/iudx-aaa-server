@@ -154,6 +154,7 @@ public class DeletePolicyTest {
     policyService.deletePolicy(
         ResExistFail,
         allRolesUser,
+        new JsonObject(),
         testContext.succeeding(
             response ->
                 testContext.verify(
@@ -171,6 +172,7 @@ public class DeletePolicyTest {
     policyService.deletePolicy(
         ResOwnFail,
         ProviderUser,
+        new JsonObject(),
         testContext.succeeding(
             response ->
                 testContext.verify(
@@ -184,10 +186,11 @@ public class DeletePolicyTest {
   @Test
   @DisplayName("Testing Failure (delegate policy not present)")
   void delPolicyFailure(VertxTestContext testContext) {
-
+      JsonObject providerHeader = new JsonObject().put("providerId","a13eb955-c691-4fd3-b200-f18bc78810b5");
     policyService.deletePolicy(
         DelPolFail,
         DelegateUser,
+            providerHeader,
         testContext.succeeding(
             response ->
                 testContext.verify(
@@ -201,10 +204,11 @@ public class DeletePolicyTest {
   @Test
   @DisplayName("Testing Failure (not a delegate for owner)")
   void delFailure(VertxTestContext testContext) {
-
+      JsonObject providerHeader = new JsonObject().put("providerId","a13eb955-c691-4fd3-b200-f18bc78810b5");
     policyService.deletePolicy(
         DelFail,
         DelegateUserFail,
+            providerHeader,
         testContext.succeeding(
             response ->
                 testContext.verify(
@@ -223,6 +227,7 @@ public class DeletePolicyTest {
     policyService.deletePolicy(
         req,
         successProvider,
+        new JsonObject(),
         testContext.succeeding(
             response ->
                 testContext.verify(

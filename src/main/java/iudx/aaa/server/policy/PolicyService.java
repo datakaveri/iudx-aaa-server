@@ -71,7 +71,7 @@ public interface PolicyService {
    */
   
   @Fluent
-  PolicyService deletePolicy(JsonArray request, User user, Handler<AsyncResult<JsonObject>> handler);
+  PolicyService deletePolicy(JsonArray request, User user,JsonObject data, Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * The listPolicy implements the policy list operation.

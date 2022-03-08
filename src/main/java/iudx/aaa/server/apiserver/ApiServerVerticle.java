@@ -246,6 +246,7 @@ public class ApiServerVerticle extends AbstractVerticle {
 
               // Delete a User policies
               routerBuilder.operation(DELETE_POLICIES)
+                      .handler(providerAuth)
                       .handler(this::deletePolicyHandler)
                       .failureHandler(failureHandler);
 
@@ -609,8 +610,8 @@ public class ApiServerVerticle extends AbstractVerticle {
     JsonArray jsonRequest = arr.getJsonArray(REQUEST);
     List<DeletePolicyRequest> request = DeletePolicyRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
-
-    policyService.deletePolicy(jsonRequest, user, handler -> {
+    JsonObject data = Optional.ofNullable((JsonObject)context.get(DATA)).orElse(new JsonObject());
+    policyService.deletePolicy(jsonRequest, user,data, handler -> {
       if (handler.succeeded()) {
         JsonObject result = handler.result();
         Future.future(future -> handleAuditLogs(context, result));
