@@ -307,10 +307,10 @@ public class UpdateProviderRegistrationStatusTest {
 
     /** MOCKS -> mock PolicyService, kc.getDetails and kc.approveProvider **/
     Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(2);
+      Promise<JsonObject> p = i.getArgument(3);
       p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
       return i.getMock();
-    }).when(policyService).createPolicy(any(), any(), any());
+    }).when(policyService).createPolicy(any(), any(),any(),any());
 
     @SuppressWarnings("unchecked")
     Map<String, JsonObject> resp = Mockito.mock(Map.class);
@@ -361,10 +361,10 @@ public class UpdateProviderRegistrationStatusTest {
 
     /** MOCKS -> mock PolicyService, kc.getDetails and kc.approveProvider **/
     Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(2);
+      Promise<JsonObject> p = i.getArgument(3);
       p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
       return i.getMock();
-    }).when(policyService).createPolicy(any(),any(), any());
+    }).when(policyService).createPolicy(any(),any(),any(),any());
 
     @SuppressWarnings("unchecked")
     Map<String, JsonObject> resp = Mockito.mock(Map.class);
@@ -403,10 +403,10 @@ public class UpdateProviderRegistrationStatusTest {
 
     /** MOCKS -> mock PolicyService, kc.getDetails and kc.approveProvider **/
     Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(2);
+      Promise<JsonObject> p = i.getArgument(3);
       p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
       return i.getMock();
-    }).when(policyService).createPolicy(any(),any(), any());
+    }).when(policyService).createPolicy(any(),any(),any(),any());
 
     @SuppressWarnings("unchecked")
     Map<String, JsonObject> resp = Mockito.mock(Map.class);
@@ -472,10 +472,10 @@ public class UpdateProviderRegistrationStatusTest {
 
     /** MOCKS -> mock PolicyService, kc.getDetails and kc.approveProvider **/
     Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(2);
+      Promise<JsonObject> p = i.getArgument(3);
       p.fail("Failed to set admin ");
       return i.getMock();
-    }).when(policyService).createPolicy(any(),any(), any());
+    }).when(policyService).createPolicy(any(),any(),any(),any());
 
     @SuppressWarnings("unchecked")
     Map<String, JsonObject> resp = Mockito.mock(Map.class);

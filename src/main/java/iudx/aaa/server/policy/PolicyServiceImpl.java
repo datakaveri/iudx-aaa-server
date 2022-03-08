@@ -134,6 +134,7 @@ import static iudx.aaa.server.policy.Constants.SUCC_TITLE_POLICY_DEL;
 import static iudx.aaa.server.policy.Constants.SUCC_TITLE_POLICY_READ;
 import static iudx.aaa.server.policy.Constants.SUCC_UPDATE_NOTIF_REQ;
 import static iudx.aaa.server.policy.Constants.TYPE;
+import static iudx.aaa.server.policy.Constants.UNAUTHORIZED;
 import static iudx.aaa.server.policy.Constants.UNAUTHORIZED_DELEGATE;
 import static iudx.aaa.server.policy.Constants.UPDATE_NOTIF_REQ_APPROVED;
 import static iudx.aaa.server.policy.Constants.UPDATE_NOTIF_REQ_REJECTED;
@@ -192,11 +193,17 @@ public class PolicyServiceImpl implements PolicyService {
 
   @Override
   public PolicyService createPolicy(
-      List<CreatePolicyRequest> request, User user, Handler<AsyncResult<JsonObject>> handler) {
+      List<CreatePolicyRequest> request, User user,
+      JsonObject data, Handler<AsyncResult<JsonObject>> handler) {
 
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
     List<Roles> roles = user.getRoles();
-
+      boolean isDelegate = !data.isEmpty();
+      String providerId;
+      if(isDelegate)
+          providerId = data.getString("providerId");
+      else
+          providerId = user.getUserId();
     // check duplicate
     List<CreatePolicyRequest> duplicates =
         request.stream()
@@ -386,11 +393,23 @@ public class PolicyServiceImpl implements PolicyService {
 
               List<UUID> owned =
                   owners.stream()
-                      .filter(x -> !x.equals(UUID.fromString(user.getUserId())))
+                      .filter(x -> !x.equals(UUID.fromString(providerId)))
                       .collect(Collectors.toList());
 
-              if (owned.isEmpty()) return Future.succeededFuture(new ArrayList<>());
-              else return createPolicy.checkDelegate(owned, user.getUserId());
+              if (owned.isEmpty()){
+                  return Future.succeededFuture(new ArrayList<>());
+              }
+              else{
+                  Response r =
+                          new Response.ResponseBuilder()
+                                  .type(URN_INVALID_INPUT)
+                                  .title(UNAUTHORIZED)
+                                  .detail(UNAUTHORIZED)
+                                  .status(403)
+                                  .build();
+                  return Future.failedFuture(new ComposeException(r));
+                  //return createPolicy.checkDelegate(owned, user.getUserId());
+              }
             });
 
     // use only reqItemDetail to insert items
@@ -2112,6 +2131,7 @@ public class PolicyServiceImpl implements PolicyService {
                                           createPolicy(
                                               createPolicyArray,
                                               user,
+                                                  new JsonObject(),
                                               createHandler -> {
                                                 if (createHandler.failed()) {
                                                   handler.handle(

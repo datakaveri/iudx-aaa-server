@@ -240,6 +240,7 @@ public class ApiServerVerticle extends AbstractVerticle {
 
               // Create a new User policies
               routerBuilder.operation(CREATE_POLICIES)
+                      .handler(providerAuth)
                       .handler(this::createPolicyHandler)
                       .failureHandler(failureHandler);
 
@@ -584,7 +585,8 @@ public class ApiServerVerticle extends AbstractVerticle {
     JsonArray jsonRequest = arr.getJsonArray(REQUEST);
     List<CreatePolicyRequest> request = CreatePolicyRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
-    policyService.createPolicy(request,user, handler -> {
+    JsonObject data = Optional.ofNullable((JsonObject)context.get(DATA)).orElse(new JsonObject());
+    policyService.createPolicy(request,user,data, handler -> {
 
       if (handler.succeeded()) {
         JsonObject result = handler.result();
