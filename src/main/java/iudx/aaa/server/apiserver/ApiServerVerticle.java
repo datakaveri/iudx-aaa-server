@@ -35,6 +35,7 @@ import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import iudx.aaa.server.admin.AdminService;
+import iudx.aaa.server.apd.ApdService;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.util.ClientAuthentication;
 import iudx.aaa.server.apiserver.util.FailureHandler;
@@ -92,11 +93,13 @@ public class ApiServerVerticle extends AbstractVerticle {
   private static final String TOKEN_SERVICE_ADDRESS = "iudx.aaa.token.service";
   private static final String ADMIN_SERVICE_ADDRESS = "iudx.aaa.admin.service";
   private static final String AUDITING_SERVICE_ADDRESS = "iudx.aaa.auditing.service";
+  private static final String APD_SERVICE_ADDRESS = "iudx.aaa.apd.service";
   private PolicyService policyService;
   private RegistrationService registrationService;
   private TokenService tokenService;
   private AdminService adminService;
   private AuditingService auditingService;
+  private ApdService apdService;
 
   /**
    * This method is used to start the Verticle. It deploys a verticle in a cluster, reads the
@@ -285,6 +288,21 @@ public class ApiServerVerticle extends AbstractVerticle {
                       .handler(this::createDelegationsHandler)
                       .failureHandler(failureHandler);
 
+              // Create APD
+              routerBuilder.operation(CREATE_APD)
+                      .handler(this::createApdHandler)
+                      .failureHandler(failureHandler);
+              
+              // Update APD status
+              routerBuilder.operation(UPDATE_APD)
+                      .handler(this::updateApdHandler)
+                      .failureHandler(failureHandler);
+
+              // List APDs
+              routerBuilder.operation(LIST_APD)
+                      .handler(this::listApdHandler)
+                      .failureHandler(failureHandler);
+
               // Get PublicKey
               routerBuilder.operation(GET_CERT)
                       .handler(this::pubCertHandler);
@@ -318,7 +336,7 @@ public class ApiServerVerticle extends AbstractVerticle {
               router.route().last().handler(routingContext-> {
                 HttpServerResponse response = routingContext.response();
                 response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-                        .setStatusCode(404).end(JSON_NOT_FOUND);
+                .setStatusCode(404).end(JSON_NOT_FOUND);
               });
 
               HttpServerOptions serverOptions = new HttpServerOptions();
@@ -338,6 +356,7 @@ public class ApiServerVerticle extends AbstractVerticle {
               tokenService = TokenService.createProxy(vertx, TOKEN_SERVICE_ADDRESS);
               adminService = AdminService.createProxy(vertx, ADMIN_SERVICE_ADDRESS);
               auditingService = AuditingService.createProxy(vertx, AUDITING_SERVICE_ADDRESS);
+              apdService = ApdService.createProxy(vertx, APD_SERVICE_ADDRESS);
             });
   }
 
@@ -755,6 +774,72 @@ public class ApiServerVerticle extends AbstractVerticle {
     });
   }
 
+  /**
+   * Create an Access Policy Domain (APD).
+   * 
+   * @param context
+   */
+  private void createApdHandler(RoutingContext context) {
+
+    JsonObject jsonRequest = context.getBodyAsJson();
+    CreateApdRequest request = new CreateApdRequest(jsonRequest);
+    User user = context.get(USER);
+
+    apdService.createApd(request, user, handler -> {
+
+      if (handler.succeeded()) {
+        JsonObject result = handler.result();
+        Future.future(future -> handleAuditLogs(context, result));
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+
+  /**
+   * List Access Policy Domains (APDs).
+   * 
+   * @param context
+   */
+  private void listApdHandler(RoutingContext context) {
+
+    User user = context.get(USER);
+
+    apdService.listApd(user, handler -> {
+
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+
+  /**
+   * Update status of Access Policy Domains (APDs).
+   * 
+   * @param context
+   */
+  private void updateApdHandler(RoutingContext context) {
+
+    JsonObject arr = context.getBodyAsJson();
+    JsonArray jsonRequest = arr.getJsonArray(REQUEST);
+    List<ApdUpdateRequest> request = ApdUpdateRequest.jsonArrayToList(jsonRequest);
+    User user = context.get(USER);
+
+    apdService.updateApd(request, user, handler -> {
+
+      if (handler.succeeded()) {
+        JsonObject result = handler.result();
+        Future.future(future -> handleAuditLogs(context, result));
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+  
   /**
    * Lists JWT signing public key.
    *
