@@ -31,7 +31,7 @@ pipeline {
           sh 'docker-compose -f docker-compose-test.yml up test'
         }
         xunit (
-          thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '10') ],
+          thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
           tools: [ JUnit(pattern: 'target/surefire-reports/*.xml') ]
         )
         jacoco classPattern: 'target/classes', execPattern: 'target/jacoco.exec', sourcePattern: 'src/main/java', exclusionPattern:'iudx/aaa/server/apiserver/ApiServerVerticle.class,**/*VertxEBProxy.class,**/Constants.class,**/*VertxProxyHandler.class,**/*Verticle.class,iudx/aaa/server/deploy/*.class'
