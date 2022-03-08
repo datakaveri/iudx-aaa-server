@@ -39,6 +39,9 @@ pipeline {
       post{
         failure{
           error "Test failure. Stopping pipeline execution!"
+        } 
+        cleanup{
+          cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: 'target/', type: 'INCLUDE']]
         }
       }
     }
