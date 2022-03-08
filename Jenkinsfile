@@ -41,7 +41,9 @@ pipeline {
           error "Test failure. Stopping pipeline execution!"
         } 
         cleanup{
-          cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: 'target/', type: 'INCLUDE']]
+          script{
+            sh 'sudo rm -rf target/'
+          }
         }
       }
     }
