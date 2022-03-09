@@ -178,7 +178,7 @@ public class DeletePolicyTest {
                 testContext.verify(
                     () -> {
                       JsonObject result = response;
-                      assertEquals(ITEMNOTFOUND, result.getString("title"));
+                      assertEquals(ID_NOT_PRESENT, result.getString("title"));
                       testContext.completeNow();
                     })));
   }
@@ -196,7 +196,7 @@ public class DeletePolicyTest {
                 testContext.verify(
                     () -> {
                       JsonObject result = response;
-                      assertEquals(ITEMNOTFOUND, result.getString("title"));
+                      assertEquals(ID_NOT_PRESENT, result.getString("title"));
                       testContext.completeNow();
                     })));
   }
@@ -214,7 +214,7 @@ public class DeletePolicyTest {
                 testContext.verify(
                     () -> {
                       JsonObject result = response;
-                      assertEquals(ITEMNOTFOUND, result.getString("title"));
+                      assertEquals(ID_NOT_PRESENT, result.getString("title"));
                       testContext.completeNow();
                     })));
   }

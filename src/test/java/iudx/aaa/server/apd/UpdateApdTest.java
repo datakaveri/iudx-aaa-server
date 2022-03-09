@@ -534,10 +534,10 @@ public class UpdateApdTest {
     }).when(registrationService).getUserDetails(any(), any());
 
     Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(2);
+      Promise<JsonObject> p = i.getArgument(3);
       p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
       return i.getMock();
-    }).when(policyService).createPolicy(any(), any(), any());
+    }).when(policyService).createPolicy(any(), any(), any(), any());
 
     JsonArray req = new JsonArray()
         .add(new JsonObject().put("apdId", INACTIVE_A_ID.toString()).put("status", "active"));
@@ -581,7 +581,7 @@ public class UpdateApdTest {
     JsonObject trusteeBdets = trusteeUserB.result();
 
     Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(2);
+      Promise<JsonObject> p = i.getArgument(3);
       @SuppressWarnings("unchecked")
       CreatePolicyRequest obj = ((List<CreatePolicyRequest>) i.getArgument(0)).get(0);
 
@@ -591,7 +591,7 @@ public class UpdateApdTest {
         p.fail("Fail");
       }
       return i.getMock();
-    }).when(policyService).createPolicy(any(), any(), any());
+    }).when(policyService).createPolicy(any(), any(), any(), any());
 
     JsonArray req = new JsonArray()
         .add(new JsonObject().put("apdId", PENDING_A_ID.toString()).put("status", "active"))
@@ -618,7 +618,7 @@ public class UpdateApdTest {
     JsonObject trusteeBdets = trusteeUserB.result();
 
     Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(2);
+      Promise<JsonObject> p = i.getArgument(3);
       @SuppressWarnings("unchecked")
       CreatePolicyRequest obj = ((List<CreatePolicyRequest>) i.getArgument(0)).get(0);
 
@@ -628,7 +628,7 @@ public class UpdateApdTest {
         p.complete(new JsonObject().put("type", URN_INVALID_INPUT.toString()));
       }
       return i.getMock();
-    }).when(policyService).createPolicy(any(), any(), any());
+    }).when(policyService).createPolicy(any(), any(), any(), any());
 
     JsonArray req = new JsonArray()
         .add(new JsonObject().put("apdId", PENDING_A_ID.toString()).put("status", "active"))
@@ -655,7 +655,7 @@ public class UpdateApdTest {
     JsonObject trusteeBdets = trusteeUserB.result();
 
     Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(2);
+      Promise<JsonObject> p = i.getArgument(3);
       @SuppressWarnings("unchecked")
       CreatePolicyRequest obj = ((List<CreatePolicyRequest>) i.getArgument(0)).get(0);
 
@@ -665,7 +665,7 @@ public class UpdateApdTest {
         p.complete(new JsonObject().put("type", URN_ALREADY_EXISTS.toString()));
       }
       return i.getMock();
-    }).when(policyService).createPolicy(any(), any(), any());
+    }).when(policyService).createPolicy(any(), any(), any(), any());
 
     Mockito.doAnswer(i -> {
       Promise<JsonObject> p = i.getArgument(1);
@@ -698,7 +698,7 @@ public class UpdateApdTest {
     JsonObject trusteeBdets = trusteeUserB.result();
 
     Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(2);
+      Promise<JsonObject> p = i.getArgument(3);
       @SuppressWarnings("unchecked")
       CreatePolicyRequest obj = ((List<CreatePolicyRequest>) i.getArgument(0)).get(0);
 
@@ -708,7 +708,7 @@ public class UpdateApdTest {
         p.complete(new JsonObject().put("type", URN_ALREADY_EXISTS.toString()));
       }
       return i.getMock();
-    }).when(policyService).createPolicy(any(), any(), any());
+    }).when(policyService).createPolicy(any(), any(), any(), any());
 
     Mockito.doAnswer(i -> {
       Promise<JsonObject> p = i.getArgument(1);
@@ -800,10 +800,10 @@ public class UpdateApdTest {
     }).when(registrationService).getUserDetails(any(), any());
 
     Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(2);
+      Promise<JsonObject> p = i.getArgument(3);
       p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
       return i.getMock();
-    }).when(policyService).createPolicy(any(), any(), any());
+    }).when(policyService).createPolicy(any(), any(), any(), any());
 
     JsonArray req = new JsonArray()
         .add(new JsonObject().put("apdId", ACTIVE_B_ID.toString()).put("status", "inactive"));
