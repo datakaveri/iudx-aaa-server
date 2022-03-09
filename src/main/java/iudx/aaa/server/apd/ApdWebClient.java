@@ -16,7 +16,7 @@ import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import static iudx.aaa.server.apiserver.util.Urn.*;
-import iudx.aaa.server.registration.ComposeException;
+import iudx.aaa.server.apiserver.util.ComposeException;
 
 /**
  * 

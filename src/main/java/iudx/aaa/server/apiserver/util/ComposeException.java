@@ -1,4 +1,4 @@
-package iudx.aaa.server.registration;
+package iudx.aaa.server.apiserver.util;
 
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
@@ -41,6 +41,22 @@ public class ComposeException extends Exception {
     super(title);
     this.response =
         new ResponseBuilder().status(status).type(type).title(title).detail(detail).build();
+  }
+
+
+    /**
+   * Create a new ComposeException with the parameters needed to create an Response object
+   * representing an error. The title field is used as the Exception message.
+   *
+   * @param status The HTTP status code
+   * @param type The appropriate URN
+   * @param title The appropriate title
+   * @param detail The appropriate reason for the error
+   */
+  public ComposeException(int status, Urn type, String title, String detail) {
+    super(title);
+    this.response =
+            new ResponseBuilder().status(status).type(type).title(title).detail(detail).build();
   }
 
   public Response getResponse() {

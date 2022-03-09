@@ -49,8 +49,8 @@ import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
+import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.policy.PolicyService;
-import iudx.aaa.server.registration.ComposeException;
 import iudx.aaa.server.registration.RegistrationService;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -329,7 +329,7 @@ public class ApdServiceImpl implements ApdService {
       obj.put("itemType", "resource_server");
       CreatePolicyRequest req = new CreatePolicyRequest(obj);
       Promise<JsonObject> promise = Promise.promise();
-      policyService.createPolicy(List.of(req), user, promise);
+      policyService.createPolicy(List.of(req), user, new JsonObject(), promise);
       futures.add(promise.future());
     }
 

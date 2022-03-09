@@ -24,6 +24,7 @@ import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.UpdatePolicyNotification;
 import iudx.aaa.server.apiserver.User;
+import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.policy.Constants.itemTypes;
 import iudx.aaa.server.policy.Constants.roles;
 import iudx.aaa.server.policy.Constants.status;
@@ -113,6 +114,7 @@ import static iudx.aaa.server.policy.Constants.PROVIDER_ROLE;
 import static iudx.aaa.server.policy.Constants.REQ_ID_ALREADY_NOT_EXISTS;
 import static iudx.aaa.server.policy.Constants.REQ_ID_ALREADY_PROCESSED;
 import static iudx.aaa.server.policy.Constants.RES;
+import static iudx.aaa.server.policy.Constants.RESOURCE_SERVER_TABLE;
 import static iudx.aaa.server.policy.Constants.RES_GRP;
 import static iudx.aaa.server.policy.Constants.RES_SERVER;
 import static iudx.aaa.server.policy.Constants.ROLE;
@@ -133,6 +135,7 @@ import static iudx.aaa.server.policy.Constants.SUCC_TITLE_POLICY_DEL;
 import static iudx.aaa.server.policy.Constants.SUCC_TITLE_POLICY_READ;
 import static iudx.aaa.server.policy.Constants.SUCC_UPDATE_NOTIF_REQ;
 import static iudx.aaa.server.policy.Constants.TYPE;
+import static iudx.aaa.server.policy.Constants.UNAUTHORIZED;
 import static iudx.aaa.server.policy.Constants.UNAUTHORIZED_DELEGATE;
 import static iudx.aaa.server.policy.Constants.UPDATE_NOTIF_REQ_APPROVED;
 import static iudx.aaa.server.policy.Constants.UPDATE_NOTIF_REQ_REJECTED;
@@ -191,11 +194,17 @@ public class PolicyServiceImpl implements PolicyService {
 
   @Override
   public PolicyService createPolicy(
-      List<CreatePolicyRequest> request, User user, Handler<AsyncResult<JsonObject>> handler) {
+      List<CreatePolicyRequest> request, User user,
+      JsonObject data, Handler<AsyncResult<JsonObject>> handler) {
 
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
     List<Roles> roles = user.getRoles();
-
+      boolean isDelegate = !data.isEmpty();
+      String providerId;
+      if(isDelegate)
+          providerId = data.getString("providerId");
+      else
+          providerId = user.getUserId();
     // check duplicate
     List<CreatePolicyRequest> duplicates =
         request.stream()
@@ -385,11 +394,23 @@ public class PolicyServiceImpl implements PolicyService {
 
               List<UUID> owned =
                   owners.stream()
-                      .filter(x -> !x.equals(UUID.fromString(user.getUserId())))
+                      .filter(x -> !x.equals(UUID.fromString(providerId)))
                       .collect(Collectors.toList());
 
-              if (owned.isEmpty()) return Future.succeededFuture(new ArrayList<>());
-              else return createPolicy.checkDelegate(owned, user.getUserId());
+              if (owned.isEmpty()){
+                  return Future.succeededFuture(new ArrayList<>());
+              }
+              else{
+                  Response r =
+                          new Response.ResponseBuilder()
+                                  .type(URN_INVALID_INPUT)
+                                  .title(UNAUTHORIZED)
+                                  .detail(UNAUTHORIZED)
+                                  .status(403)
+                                  .build();
+                  return Future.failedFuture(new ComposeException(r));
+                  //return createPolicy.checkDelegate(owned, user.getUserId());
+              }
             });
 
     // use only reqItemDetail to insert items
@@ -411,7 +432,7 @@ public class PolicyServiceImpl implements PolicyService {
         .onFailure(
             obj -> {
               LOGGER.error(obj.getMessage());
-              if (obj instanceof iudx.aaa.server.policy.ComposeException) {
+              if (obj instanceof ComposeException) {
                 ComposeException e = (ComposeException) obj;
                 handler.handle(Future.succeededFuture(e.getResponse().toJson()));
               } else handler.handle(Future.failedFuture(INTERNALERROR));
@@ -421,202 +442,117 @@ public class PolicyServiceImpl implements PolicyService {
 
   @Override
   public PolicyService deletePolicy(
-      JsonArray request, User user, Handler<AsyncResult<JsonObject>> handler) {
-    // TODO Auto-generated method stub
-    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
-    // check if all req items exist to delete;
+      JsonArray request, User user,JsonObject data, Handler<AsyncResult<JsonObject>> handler) {
+      LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+      boolean isDelegate = !data.isEmpty();
+      // check if all req items exist to delete;
+      if (user.getUserId().equals(NIL_UUID)) {
+          // empty user object
+          Response r =
+                  new Response.ResponseBuilder()
+                          .type(URN_MISSING_INFO)
+                          .title(String.valueOf(URN_MISSING_INFO))
+                          .detail(NO_USER)
+                          .status(401)
+                          .build();
+          handler.handle(Future.succeededFuture(r.toJson()));
+          return this;
+      }
 
-    if (user.getUserId().equals(NIL_UUID)) {
-      // empty user object
-      Response r =
-          new Response.ResponseBuilder()
-              .type(URN_MISSING_INFO)
-              .title(String.valueOf(URN_MISSING_INFO))
-              .detail(NO_USER)
-              .status(401)
-              .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
-    }
-    List<Roles> roles = user.getRoles();
+      List<Roles> roles = user.getRoles();
 
-    if (!roles.contains(Roles.ADMIN)
-        && !roles.contains(Roles.PROVIDER)
-        && !roles.contains(Roles.DELEGATE)) {
-      // 403 not allowed to create policy
-      Response r =
-          new Response.ResponseBuilder()
-              .type(URN_INVALID_ROLE)
-              .title(INVALID_ROLE)
-              .detail(INVALID_ROLE)
-              .status(401)
-              .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
-    }
+      if (!roles.contains(Roles.ADMIN)
+              && !roles.contains(Roles.PROVIDER)
+              && !roles.contains(Roles.DELEGATE)) {
+          // 403 not allowed to create policy
+          Response r =
+                  new Response.ResponseBuilder()
+                          .type(URN_INVALID_ROLE)
+                          .title(INVALID_ROLE)
+                          .detail(INVALID_ROLE)
+                          .status(401)
+                          .build();
+          handler.handle(Future.succeededFuture(r.toJson()));
+          return this;
+      }
 
-    List<UUID> req =
-        request.stream()
-            .map(JsonObject.class::cast)
-            .filter(tagObject -> !tagObject.getString(ID).isEmpty())
-            .map(tagObject -> UUID.fromString(tagObject.getString(ID)))
-            .collect(Collectors.toList());
+      List<UUID> req =
+              request.stream()
+                      .map(JsonObject.class::cast)
+                      .filter(tagObject -> !tagObject.getString(ID).isEmpty())
+                      .map(tagObject -> UUID.fromString(tagObject.getString(ID)))
+                      .collect(Collectors.toList());
+      // map of policy to object with policy details
+      Future<Map<UUID, JsonObject>> policyDetails = deletePolicy.checkPolicyExist(req);
 
-    deletePolicy
-        .checkPolicyExist(req)
-        // if failed, End req
-        .onFailure(
-            // internal server error
-            failureHandler -> {
-              LOGGER.error("failed checkPolicyExist: " + failureHandler.getLocalizedMessage());
-              handler.handle(Future.failedFuture(INTERNALERROR));
-            })
-        .onSuccess(
-            checkSuc -> {
-              if (checkSuc.size() > 0)
-              // checkResExist returns items that do not exist
-              {
-                Response r =
-                    new Response.ResponseBuilder()
-                        .type(URN_MISSING_INFO)
-                        .title(ID_NOT_PRESENT)
-                        .detail(ID_NOT_PRESENT + checkSuc.toString())
-                        .status(400)
-                        .build();
-                handler.handle(Future.succeededFuture(r.toJson()));
-              } else {
-                deletePolicy
-                    .CheckResOwner(req, user.getUserId())
-                    .onFailure(
-                        failureHandler -> {
-                          LOGGER.error(
-                              "failed CheckResOwner: " + failureHandler.getLocalizedMessage());
-                          handler.handle(Future.failedFuture(INTERNALERROR));
-                        })
-                    .onSuccess(
-                        ar -> {
-                          if (ar.size() > 0) {
-                            // if false then check for delegate role
-                            if (user.getRoles().contains(Roles.DELEGATE)) {
-                              // check if delegate is delegate for all policies
-                              deletePolicy
-                                  .checkDelegatePolicy(user.getUserId(), req)
-                                  .onFailure(
-                                      // internal server error
-                                      failureHandler -> {
-                                        LOGGER.error(
-                                            "failed checkDelegatePolicy: "
-                                                + failureHandler.getLocalizedMessage());
-                                        handler.handle(Future.failedFuture(INTERNALERROR));
-                                      })
-                                  .onSuccess(
-                                      succ -> {
-                                        if (!succ) { // 403
-                                          Response r =
+     Future<Void> ownerCheck = policyDetails
+              .compose(
+                      checkSuc -> {
+                          List<UUID> ownerIds =
+                                  checkSuc.values().stream()
+                                          .map(map -> UUID.fromString(map.getString(OWNERID)))
+                                          .filter(x -> !x.equals(UUID.fromString(user.getUserId())))
+                                          .distinct()
+                                          .collect(Collectors.toList());
+
+                          if (!ownerIds.isEmpty()) {
+                              if (isDelegate) {
+                                  // not resource server type
+                                  List<UUID> ids =
+                                          checkSuc.values().stream()
+                                                  .filter(x -> !x.getString(ITEMTYPE)
+                                                          .equalsIgnoreCase(RESOURCE_SERVER_TABLE.toUpperCase()))
+                                                  .map(map -> UUID.fromString(map.getString(OWNERID)))
+                                                  .filter(x -> !x.equals(UUID.fromString(data.getString("providerId"))))
+                                                  .distinct()
+                                                  .collect(Collectors.toList());
+                                  if (!ids.isEmpty()) {
+                                      Response r =
                                               new Response.ResponseBuilder()
+                                                      .type(URN_INVALID_INPUT)
+                                                      .title(ID_NOT_PRESENT)
+                                                      .detail(ID_NOT_PRESENT)
+                                                      .status(400)
+                                                      .build();
+                                      return Future.failedFuture(new ComposeException(r));
+                                  }
+                                  return Future.succeededFuture();
+                              } else {
+                                  Response r =
+                                          new Response.ResponseBuilder()
                                                   .type(URN_INVALID_INPUT)
-                                                  .title(ITEMNOTFOUND)
-                                                  .detail(ITEMNOTFOUND)
+                                                  .title(ID_NOT_PRESENT)
+                                                  .detail(ID_NOT_PRESENT)
                                                   .status(400)
                                                   .build();
-                                          handler.handle(Future.succeededFuture(r.toJson()));
-                                        } else { // check delegate
-                                          deletePolicy
-                                              .checkDelegate(user.getUserId(), req)
-                                              .onFailure(
-                                                  // internal server error
-                                                  failureHandler -> {
-                                                    LOGGER.error(
-                                                        "failed checkDelegate: "
-                                                            + failureHandler.getLocalizedMessage());
-                                                    handler.handle(
-                                                        Future.failedFuture(INTERNALERROR));
-                                                  })
-                                              .onSuccess(
-                                                  success -> {
-                                                    if (success.size() <= 0) {
-                                                      deletePolicy
-                                                          .delPolicy(req)
-                                                          .onFailure(
-                                                              // internal server error
-                                                              failureHandler -> {
-                                                                LOGGER.error(
-                                                                    "failed checkDelegate: "
-                                                                        + failureHandler
-                                                                            .getLocalizedMessage());
-                                                                handler.handle(
-                                                                    Future.failedFuture(
-                                                                        INTERNALERROR));
-                                                              })
-                                                          .onSuccess(
-                                                              resp -> {
-                                                                Response r =
-                                                                    new Response.ResponseBuilder()
-                                                                        .type(URN_SUCCESS)
-                                                                        .title(
-                                                                            SUCC_TITLE_POLICY_DEL)
-                                                                        .status(200)
-                                                                        .build();
-                                                                handler.handle(
-                                                                    Future.succeededFuture(
-                                                                        r.toJson()));
-                                                              });
-                                                    } else {
-                                                        LOGGER.error(INVALID_DELEGATE);
-                                                      Response r =
-                                                          new Response.ResponseBuilder()
-                                                              .type(URN_INVALID_ROLE)
-                                                              .title(ITEMNOTFOUND)
-                                                              .detail(success.toString())
-                                                              .status(403)
-                                                              .build();
-                                                      handler.handle(
-                                                          Future.succeededFuture(r.toJson()));
-                                                    }
-                                                  });
-                                        }
-                                      });
-                            }
-                            // if not delegate, then 403
-                            else {
-                              Response r =
-                                  new Response.ResponseBuilder()
-                                      .type(URN_INVALID_INPUT)
-                                      .title(ITEMNOTFOUND)
-                                      .detail(ITEMNOTFOUND)
-                                      .status(400)
-                                      .build();
-                              handler.handle(Future.succeededFuture(r.toJson()));
-                            }
-                          } else {
-                            deletePolicy
-                                .delPolicy(req)
-                                .onFailure(
-                                    failure -> {
-                                      Response r =
-                                          new Response.ResponseBuilder()
-                                              .type(URN_INVALID_ROLE)
-                                              .title(DELETE_FAILURE)
-                                              .status(500)
-                                              .build();
-                                      handler.handle(Future.succeededFuture(r.toJson()));
-                                    })
-                                .onSuccess(
-                                    succ -> {
-                                      Response r =
-                                          new Response.ResponseBuilder()
-                                              .type(URN_SUCCESS)
-                                              .title(SUCC_TITLE_POLICY_DEL)
-                                              .status(200)
-                                              .build();
-                                      handler.handle(Future.succeededFuture(r.toJson()));
-                                    });
+                                  return Future.failedFuture(new ComposeException(r));
+                              }
                           }
-                        });
-              }
-            });
+                          return Future.succeededFuture();
+                      });
 
-    return this;
+      ownerCheck.compose( succ ->
+              deletePolicy
+                      .delPolicy(req)
+                      .onSuccess(
+                              resp -> {
+                                  Response r =
+                                          new Response.ResponseBuilder()
+                                                  .type(URN_SUCCESS)
+                                                  .title(SUCC_TITLE_POLICY_DEL)
+                                                  .status(200)
+                                                  .build();
+                                  handler.handle(Future.succeededFuture(r.toJson()));
+                              }))
+              .onFailure(
+                      obj -> {
+                          LOGGER.error(obj.getMessage());
+                          if (obj instanceof ComposeException) {
+                              ComposeException e = (ComposeException) obj;
+                              handler.handle(Future.succeededFuture(e.getResponse().toJson()));
+                          } else handler.handle(Future.failedFuture(INTERNALERROR));
+                      });
+      return this;
   }
 
   @Override
@@ -968,7 +904,7 @@ public class PolicyServiceImpl implements PolicyService {
               // check if compose Exception, p.fail(composeExp)
 
               LOGGER.error("failed verifyConsumerPolicy: " + failureHandler.getLocalizedMessage());
-              if (failureHandler instanceof iudx.aaa.server.policy.ComposeException)
+              if (failureHandler instanceof ComposeException)
                 p.fail(failureHandler);
               else p.fail(INTERNALERROR);
             });
@@ -1079,7 +1015,7 @@ public class PolicyServiceImpl implements PolicyService {
         .onFailure(
             failureHandler -> {
               LOGGER.error("failed verifyProviderPolicy: " + failureHandler.getLocalizedMessage());
-              if (failureHandler instanceof iudx.aaa.server.policy.ComposeException) {
+              if (failureHandler instanceof ComposeException) {
                 p.fail(failureHandler);
               } else p.fail(INTERNALERROR);
             });
@@ -1323,7 +1259,7 @@ public class PolicyServiceImpl implements PolicyService {
         .onFailure(
             failureHandler -> {
               LOGGER.error("failed verifyDelegatePolicy ");
-              if (failureHandler instanceof iudx.aaa.server.policy.ComposeException) {
+              if (failureHandler instanceof ComposeException) {
                 ComposeException exp = (ComposeException) failureHandler;
                 p.fail(failureHandler);
               } else p.fail(INTERNALERROR);
@@ -1494,7 +1430,7 @@ public class PolicyServiceImpl implements PolicyService {
     verifyRolePolicy.onFailure(
         e -> {
           LOGGER.error("verifyRolePolicy failed" + e.getMessage());
-          if (e instanceof iudx.aaa.server.policy.ComposeException) {
+          if (e instanceof ComposeException) {
             handler.handle(Future.failedFuture(e));
           } else handler.handle(Future.failedFuture(INTERNALERROR));
         });
@@ -2111,6 +2047,7 @@ public class PolicyServiceImpl implements PolicyService {
                                           createPolicy(
                                               createPolicyArray,
                                               user,
+                                                  new JsonObject(),
                                               createHandler -> {
                                                 if (createHandler.failed()) {
                                                   handler.handle(

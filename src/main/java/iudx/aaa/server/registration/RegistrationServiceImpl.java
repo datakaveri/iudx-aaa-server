@@ -79,6 +79,7 @@ import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.UpdateProfileRequest;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
+import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.token.TokenService;
 import java.security.SecureRandom;
 import java.util.ArrayList;

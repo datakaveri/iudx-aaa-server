@@ -10,6 +10,7 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import iudx.aaa.server.apiserver.ResourceObj;
 import iudx.aaa.server.apiserver.Response;
+import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.apiserver.util.Urn;
 import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.registration.RegistrationService;
@@ -161,6 +162,7 @@ public class CreatePolicyTest {
     policyService.createPolicy(
             validReq,
         consumerUser,
+            new JsonObject(),
         testContext.succeeding(
             response ->
                 testContext.verify(
@@ -187,6 +189,7 @@ public class CreatePolicyTest {
     policyService.createPolicy(
         itemFailure,
             validProvider,
+            new JsonObject(),
         testContext.succeeding(
             response ->
                 testContext.verify(
@@ -207,6 +210,7 @@ public class CreatePolicyTest {
     policyService.createPolicy(
         duplicate,
             validProvider,
+            new JsonObject(),
         testContext.succeeding(
             response ->
                 testContext.verify(
@@ -228,6 +232,7 @@ public class CreatePolicyTest {
     policyService.createPolicy(
             validReq,
         invalidProvider,
+            new JsonObject(),
         testContext.succeeding(
             response ->
                 testContext.verify(
@@ -244,11 +249,13 @@ public class CreatePolicyTest {
   void UnauthorizedDelegate(VertxTestContext testContext) {
     Map<String, ResourceObj> resp = new HashMap<>();
     ResourceObj resourceObj = new ResourceObj(validCatItem);
+    JsonObject providerHeader = new JsonObject().put("providerId","a13eb955-c691-4fd3-b200-f18bc78810b5");
     resp.put(resourceObj.getCatId(), resourceObj);
     Mockito.when(catClient.checkReqItems(any())).thenReturn(Future.succeededFuture(resp));
     policyService.createPolicy(
             validReq,
         invalidDelUser,
+            providerHeader,
         testContext.succeeding(
             response ->
                 testContext.verify(
@@ -267,10 +274,12 @@ public class CreatePolicyTest {
     Map<String, ResourceObj> resp = new HashMap<>();
     ResourceObj resourceObj = new ResourceObj(invalidProviderItem);
     resp.put(resourceObj.getCatId(), resourceObj);
+    JsonObject providerHeader = new JsonObject().put("providerId","844e251b-574b-46e6-9247-f76f1f70a637");
     Mockito.when(catClient.checkReqItems(any())).thenReturn(Future.succeededFuture(resp));
     policyService.createPolicy(
         unAuthProvider,
         validDelUser,
+            providerHeader,
         testContext.succeeding(
             response ->
                 testContext.verify(
@@ -294,6 +303,7 @@ public class CreatePolicyTest {
     policyService.createPolicy(
         MultipleProvider,
             validProvider,
+            new JsonObject(),
         testContext.succeeding(
             response ->
                 testContext.verify(
@@ -317,6 +327,7 @@ public class CreatePolicyTest {
     policyService.createPolicy(
         MultipleProvider,
         validDelUser,
+            new JsonObject(),
         testContext.succeeding(
             response ->
                 testContext.verify(
