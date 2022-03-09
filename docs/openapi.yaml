@@ -2240,6 +2240,10 @@ paths:
           required: true
         - schema:
             type: string
+            format: uuid
+            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+            minLength: 36
+            maxLength: 36
           in: header
           description: 'User ID of the provider, if an auth delegate wishes to view delegations of their provider'
           name: providerId
@@ -2323,6 +2327,10 @@ paths:
           required: true
         - schema:
             type: string
+            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+            minLength: 36
+            maxLength: 36
+            format: uuid
           in: header
           name: providerId
           description: 'User ID of the provider, if an auth delegate wishes  to delete policy on behalf of a provider'
@@ -2368,7 +2376,7 @@ paths:
       security:
         - authorization: []
     post:
-      summary: Create user Policies
+      summary: Create User Policies
       operationId: post-auth-v1-policies
       responses:
         '200':
@@ -2425,7 +2433,7 @@ paths:
           - A `provider` can set policies for a `delegate` or `consumer` for the resources owned by the `provider.`
         **A policy is set by the auth server admin for a provider when they are approved**
 
-        ##Policies created by delegate
+        ## Policies created by delegate
           - An auth delegate may use the API to create policies on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
           - Valid item types - `resource`, `resource_group` 
           - A `delegate` can set policies for other `delegate` or `consumer` for the resources owned by the `provider` 
@@ -2444,6 +2452,10 @@ paths:
           required: true
         - schema:
             type: string
+            format: uuid
+            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+            minLength: 36
+            maxLength: 36
           in: header
           name: providerId
           description: 'User ID of the provider, if an auth delegate wishes to create policy on behalf of a provider'
