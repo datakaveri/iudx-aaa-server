@@ -509,9 +509,9 @@ public class PolicyServiceImpl implements PolicyService {
                                   if (!ids.isEmpty()) {
                                       Response r =
                                               new Response.ResponseBuilder()
-                                                      .type(URN_INVALID_ROLE)
-                                                      .title(ITEMNOTFOUND)
-                                                      .detail(ids.toString())
+                                                      .type(URN_INVALID_INPUT)
+                                                      .title(ID_NOT_PRESENT)
+                                                      .detail(ID_NOT_PRESENT)
                                                       .status(400)
                                                       .build();
                                       return Future.failedFuture(new ComposeException(r));
@@ -521,8 +521,8 @@ public class PolicyServiceImpl implements PolicyService {
                                   Response r =
                                           new Response.ResponseBuilder()
                                                   .type(URN_INVALID_INPUT)
-                                                  .title(ITEMNOTFOUND)
-                                                  .detail(ITEMNOTFOUND)
+                                                  .title(ID_NOT_PRESENT)
+                                                  .detail(ID_NOT_PRESENT)
                                                   .status(400)
                                                   .build();
                                   return Future.failedFuture(new ComposeException(r));
