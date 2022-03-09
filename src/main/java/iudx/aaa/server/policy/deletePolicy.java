@@ -19,7 +19,7 @@ import java.util.UUID;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-import static iudx.aaa.server.apiserver.util.Urn.URN_MISSING_INFO;
+import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
 import static iudx.aaa.server.policy.Constants.CAT_ID;
 import static iudx.aaa.server.policy.Constants.CHECK_DELPOLICY;
 import static iudx.aaa.server.policy.Constants.CHECK_POLICY_EXIST;
@@ -85,7 +85,7 @@ public class deletePolicy {
                         else{
                             Response r =
                                     new Response.ResponseBuilder()
-                                            .type(URN_MISSING_INFO)
+                                            .type(URN_INVALID_INPUT)
                                             .title(ID_NOT_PRESENT)
                                             .detail(ID_NOT_PRESENT + resp.toString())
                                             .status(400)

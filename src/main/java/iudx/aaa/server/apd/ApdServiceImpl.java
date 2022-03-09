@@ -329,7 +329,7 @@ public class ApdServiceImpl implements ApdService {
       obj.put("itemType", "resource_server");
       CreatePolicyRequest req = new CreatePolicyRequest(obj);
       Promise<JsonObject> promise = Promise.promise();
-      policyService.createPolicy(List.of(req), user, promise);
+      policyService.createPolicy(List.of(req), user, new JsonObject(), promise);
       futures.add(promise.future());
     }
 

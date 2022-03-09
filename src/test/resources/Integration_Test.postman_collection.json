@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "d7d30943-fe48-4c8a-aa54-0407eadbb468",
-	"name": "Integration Test",
+		"_postman_id": "c9dd2a2b-7a8d-4b73-84ef-9c245bbd865a",
+		"name": "Integration Test",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -10426,14 +10426,14 @@
 					"name": "Auth delegate",
 					"item": [
 						{
-							"name": "Delegate (only role) calling API - [403]",
+							"name": "Invalid providerId - [400]",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
 										"exec": [
 											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(403);",
+											"    pm.response.to.have.status(400);",
 											"});",
 											"",
 											"pm.test(\"Check response header\", function () {",
@@ -10457,6 +10457,74 @@
 									{
 										"key": "Authorization",
 										"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
+										"type": "text"
+									},
+									{
+										"key": "providerId",
+										"value": "13d47a5a-213b-4ac8--10dbc70c4",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":{}\n    }]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delegate (only role) calling API - [403]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:MissingAuthenticationToken\");",
+											"});",
+											"",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
+										"type": "text"
+									},
+									{
+										"key": "providerId",
+										"value": "13d47a5a-213b-4ac8-b4db-10dbc70c48af",
 										"type": "text"
 									}
 								],
@@ -10516,11 +10584,74 @@
 										"key": "Authorization",
 										"value": "Bearer {{POSTMAN_DELEGATE_TOKEN}}",
 										"type": "text"
+									},
+									{
+										"key": "providerId",
+										"value": "13d47a5a-213b-4ac8-b4db-10dbc70c48af",
+										"type": "text"
 									}
 								],
 								"body": {
 									"mode": "raw",
 									"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":{}\n    }]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Postman.delegate not sending providerId header - [403]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(403);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"});",
+											"",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_DELEGATE_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        },\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {}\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -10573,6 +10704,11 @@
 									{
 										"key": "Authorization",
 										"value": "Bearer {{POSTMAN_DELEGATE_TOKEN}}",
+										"type": "text"
+									},
+									{
+										"key": "providerId",
+										"value": "13d47a5a-213b-4ac8-b4db-10dbc70c48af",
 										"type": "text"
 									}
 								],
@@ -10631,6 +10767,74 @@
 									{
 										"key": "Authorization",
 										"value": "Bearer {{POSTMAN_DELEGATE_TOKEN}}",
+										"type": "text"
+									},
+									{
+										"key": "providerId",
+										"value": "13d47a5a-213b-4ac8-b4db-10dbc70c48af",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        },\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"datakaveri.org/9c13a2308bb0919bf146be8681eb886922d29282/rs.iudx.io/invalid-resource-for-ownership-test\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Postman.delegate adding providerId header of user they are not delegate to - [401]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:MissingAuthenticationToken\");",
+											"});",
+											"",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_DELEGATE_TOKEN}}",
+										"type": "text"
+									},
+									{
+										"key": "providerId",
+										"value": "{{ALL_ROLES_USERID}}",
 										"type": "text"
 									}
 								],
@@ -16880,7 +17084,7 @@
 							"script": {
 								"exec": [
 									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(403);",
+									"    pm.response.to.have.status(400);",
 									"});",
 									"",
 									"pm.test(\"Check response header\", function () {",
@@ -16889,7 +17093,7 @@
 									"",
 									"pm.test(\"Check response body\", function () {    ",
 									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidRole\");",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
 									"});",
 									"",
 									""
@@ -16989,7 +17193,7 @@
 					"response": []
 				},
 				{
-					"name": "Provider trying to delete again- [200]",
+					"name": "Provider trying to delete again- [400]",
 					"event": [
 						{
 							"listen": "test",
@@ -17005,7 +17209,7 @@
 									"",
 									"pm.test(\"Check response body\", function () {    ",
 									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:MissingInformation\");",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
 									"});",
 									"",
 									""
@@ -17047,7 +17251,7 @@
 					"response": []
 				},
 				{
-					"name": "Auth delegate trying to delete that have already been deleted- [200]",
+					"name": "Auth delegate trying to delete that have already been deleted without providerId header- [400]",
 					"event": [
 						{
 							"listen": "test",
@@ -17063,7 +17267,7 @@
 									"",
 									"pm.test(\"Check response body\", function () {    ",
 									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:MissingInformation\");",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
 									"});",
 									"",
 									""
@@ -17117,6 +17321,265 @@
 					"response": []
 				},
 				{
+					"name": "Auth delegate trying to delete that have already been deleted  - [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const consumer_ids = JSON.parse(pm.environment.get(\"CONSUMER_POLICY_IDS\"));",
+									"const delegate_ids = JSON.parse(pm.environment.get(\"DELEGATE_POLICY_IDS\"));",
+									"",
+									"pm.environment.set(\"MERGED_POLICY_IDS\", JSON.stringify(consumer_ids.concat(delegate_ids)))"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_DELEGATE_TOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "providerId",
+								"value": "13d47a5a-213b-4ac8-b4db-10dbc70c48af",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": {{MERGED_POLICY_IDS}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Auth delegate putting invalid providerId - [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_DELEGATE_TOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "providerId",
+								"value": "13d47a5a-213b-4ac8-f",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": {{DELEGATE_POLICY_IDS}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Auth delegate putting providerId of provider who does not own the policies - [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_DELEGATE_TOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "providerId",
+								"value": "{{ALL_ROLES_USERID}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": {{DELEGATE_POLICY_IDS}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Auth delegate trying to delete without providerId- [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_DELEGATE_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": {{DELEGATE_POLICY_IDS}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Auth delegate successful delete - [200]",
 					"event": [
 						{
@@ -17148,6 +17611,11 @@
 							{
 								"key": "Authorization",
 								"value": "Bearer {{POSTMAN_DELEGATE_TOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "providerId",
+								"value": "13d47a5a-213b-4ac8-b4db-10dbc70c48af",
 								"type": "text"
 							}
 						],
