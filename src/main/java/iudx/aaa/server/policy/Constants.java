@@ -174,7 +174,7 @@ public class Constants {
           + "AND a.status = $3::policy_status_enum  AND a.expiry_time > NOW() And  a.owner_id = $1::UUID";
 
   public static final String CHECK_POLICY_EXIST =
-      "select id from policies"
+      "select id,owner_id,item_type from policies"
           + " where status = $1::policy_status_enum  and id = any($2::uuid[])";
   public static final String RES_OWNER_CHECK =
       "select id from policies where owner_id = $1::uuid "

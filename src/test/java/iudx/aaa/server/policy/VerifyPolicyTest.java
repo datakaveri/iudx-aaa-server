@@ -7,6 +7,7 @@ import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
@@ -138,7 +139,7 @@ public class VerifyPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
-                      iudx.aaa.server.policy.ComposeException exp = (ComposeException) response;
+                      ComposeException exp = (ComposeException) response;
                       assertEquals(INVALID_ROLE, exp.getResponse().getDetail());
                       testContext.completeNow();
                     })));
@@ -167,7 +168,7 @@ public class VerifyPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
-                      iudx.aaa.server.policy.ComposeException exp = (ComposeException) response;
+                      ComposeException exp = (ComposeException) response;
                       assertEquals(NO_ADMIN_POLICY, exp.getResponse().getDetail());
                       testContext.completeNow();
                     })));
@@ -210,7 +211,7 @@ public class VerifyPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
-                      iudx.aaa.server.policy.ComposeException exp = (ComposeException) response;
+                      ComposeException exp = (ComposeException) response;
                       assertEquals(UNAUTHORIZED_DELEGATE, exp.getResponse().getDetail());
                       testContext.completeNow();
                     })));
@@ -225,7 +226,7 @@ public class VerifyPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
-                      iudx.aaa.server.policy.ComposeException exp = (ComposeException) response;
+                      ComposeException exp = (ComposeException) response;
                       assertEquals(UNAUTHORIZED_DELEGATE, exp.getResponse().getDetail());
                       testContext.completeNow();
                     })));

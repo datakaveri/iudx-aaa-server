@@ -307,7 +307,7 @@ public class AdminServiceImpl implements AdminService {
     }).collect(Collectors.toList());
 
     Promise<JsonObject> promise = Promise.promise();
-    policyService.createPolicy(request, user, promise);
+    policyService.createPolicy(request, user,new JsonObject(), promise);
     promise.future().onSuccess(res -> {
       if (res.getString("type").equals(URN_SUCCESS.toString())) {
         response.complete();
