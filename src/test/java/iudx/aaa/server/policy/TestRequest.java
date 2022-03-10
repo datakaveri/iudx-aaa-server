@@ -165,12 +165,23 @@ public class TestRequest {
   public static JsonArray succDelReq = new JsonArray().add(obj4);
 
 
-  public static String INSERT_REQ =
-          "insert into test.policies "
-                  + "(user_id,item_id,item_type,owner_id,status,expiry_time,constraints,created_at,updated_at) "
-                  + "values('d1262b13-1cbe-4b66-a9b2-96df86437683','66ff82fb-1720-415d-a2f3-18ff65c0e050','RESOURCE', "
-                  + " '844e251b-574b-46e6-9247-f76f1f70a637','ACTIVE','2023-06-15 09:07:16.034289','{}', NOW(), NOW()) returning id";
+  public static String INSERT_USER_POL =
+      "insert into policies "
+          + "(id, user_id,item_id,item_type,owner_id,status,expiry_time,constraints,created_at,updated_at) "
+          + "values($1::uuid, 'd1262b13-1cbe-4b66-a9b2-96df86437683','66ff82fb-1720-415d-a2f3-18ff65c0e050','RESOURCE', "
+          + " '844e251b-574b-46e6-9247-f76f1f70a637','ACTIVE','2023-06-15 09:07:16.034289','{}', NOW(), NOW())";
 
+  public static String INSERT_EXPIRED_USER_POL =
+      "insert into policies "
+          + "(id, user_id,item_id,item_type,owner_id,status,expiry_time,constraints,created_at,updated_at) "
+          + "values($1::uuid, 'd1262b13-1cbe-4b66-a9b2-96df86437683','66ff82fb-1720-415d-a2f3-18ff65c0e050','RESOURCE', "
+          + " '844e251b-574b-46e6-9247-f76f1f70a637','ACTIVE','1998-06-15 09:07:16.034289','{}', NOW(), NOW())";
+
+  public static String INSERT_APD_POL =
+      "insert into apd_policies "
+          + "(id, apd_id, user_class,item_id,item_type,owner_id,status,expiry_time,constraints,created_at,updated_at) "
+          + "values($1::uuid, '88b7bdbc-936c-4478-8059-f95f4c8a6352','unitTest','66ff82fb-1720-415d-a2f3-18ff65c0e050','RESOURCE', "
+          + " '844e251b-574b-46e6-9247-f76f1f70a637','ACTIVE','2023-06-15 09:07:16.034289','{}', NOW(), NOW())";
 
   // create policy
   public static User consumerUser =

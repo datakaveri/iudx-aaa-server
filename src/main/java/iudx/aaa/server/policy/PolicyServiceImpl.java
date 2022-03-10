@@ -444,8 +444,7 @@ public class PolicyServiceImpl implements PolicyService {
   public PolicyService deletePolicy(JsonArray request, User user, JsonObject data,
       Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
-    boolean isDelegate = !data.isEmpty();
-    // check if all req items exist to delete;
+
     if (user.getUserId().equals(NIL_UUID)) {
       // empty user object
       Response r = new Response.ResponseBuilder().type(URN_MISSING_INFO)
@@ -458,7 +457,7 @@ public class PolicyServiceImpl implements PolicyService {
 
     if (!roles.contains(Roles.ADMIN) && !roles.contains(Roles.PROVIDER)
         && !roles.contains(Roles.DELEGATE)) {
-      // 403 not allowed to create policy
+      // cannot create policy
       Response r = new Response.ResponseBuilder().type(URN_INVALID_ROLE).title(INVALID_ROLE)
           .detail(INVALID_ROLE).status(401).build();
       handler.handle(Future.succeededFuture(r.toJson()));
@@ -469,21 +468,21 @@ public class PolicyServiceImpl implements PolicyService {
         .filter(tagObject -> !tagObject.getString(ID).isEmpty())
         .map(tagObject -> UUID.fromString(tagObject.getString(ID))).collect(Collectors.toList());
 
-    // map of policy to object with policy details
-    Future<Map<String, List<UUID>>> policyIds = deletePolicy.checkPolicyExist(req, user, data);
+    Future<Boolean> deletedPolicies = deletePolicy.checkPolicyExist(req, user, data)
+        .compose(policyIdsMap -> deletePolicy.delPolicy(policyIdsMap));
 
-    policyIds.compose(map -> deletePolicy.delPolicy(map)).onSuccess(resp -> {
-
+    deletedPolicies.onSuccess(resp -> {
       Response r = new Response.ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_POLICY_DEL)
           .status(200).build();
       handler.handle(Future.succeededFuture(r.toJson()));
     }).onFailure(obj -> {
-      LOGGER.error(obj.getMessage());
       if (obj instanceof ComposeException) {
         ComposeException e = (ComposeException) obj;
         handler.handle(Future.succeededFuture(e.getResponse().toJson()));
-      } else
-        handler.handle(Future.failedFuture(INTERNALERROR));
+        return;
+      }
+      LOGGER.error(obj.getMessage());
+      handler.handle(Future.failedFuture(INTERNALERROR));
     });
     return this;
   }
