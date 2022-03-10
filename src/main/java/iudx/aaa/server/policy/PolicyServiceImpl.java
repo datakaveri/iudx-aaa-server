@@ -13,6 +13,7 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.SqlResult;
 import io.vertx.sqlclient.Tuple;
+import iudx.aaa.server.apd.ApdService;
 import iudx.aaa.server.apiserver.CreateDelegationRequest;
 import iudx.aaa.server.apiserver.CreatePolicyNotification;
 import iudx.aaa.server.apiserver.CreatePolicyRequest;
@@ -161,6 +162,7 @@ public class PolicyServiceImpl implements PolicyService {
   private static final Logger LOGGER = LogManager.getLogger(PolicyServiceImpl.class);
   private final PgPool pool;
   private final RegistrationService registrationService;
+  private final ApdService apdService;
   private final deletePolicy deletePolicy;
   private final createPolicy createPolicy;
   private final createDelegate createDelegate;
@@ -179,11 +181,13 @@ public class PolicyServiceImpl implements PolicyService {
   public PolicyServiceImpl(
       PgPool pool,
       RegistrationService registrationService,
+      ApdService apdService,
       CatalogueClient catalogueClient,
       JsonObject authOptions,
       JsonObject catServerOptions) {
     this.pool = pool;
     this.registrationService = registrationService;
+    this.apdService = apdService;
     this.catalogueClient = catalogueClient;
     this.authOptions = authOptions;
     this.catServerOptions = catServerOptions;

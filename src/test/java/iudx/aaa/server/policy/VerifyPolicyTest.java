@@ -7,6 +7,7 @@ import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+import iudx.aaa.server.apd.ApdService;
 import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.registration.RegistrationService;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Map;
@@ -55,6 +57,7 @@ public class VerifyPolicyTest {
   private static PoolOptions poolOptions;
   private static PgConnectOptions connectOptions;
   private static PolicyService policyService;
+  private static ApdService apdService = Mockito.mock(ApdService.class);
   private static RegistrationService registrationService;
   private static CatalogueClient catalogueClient;
   private static JsonObject catalogueOptions;
@@ -119,8 +122,8 @@ public class VerifyPolicyTest {
     PgPool pool = PgPool.pool(vertx, connectOptions, poolOptions);
     registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
     catalogueClient = new CatalogueClient(vertx, pool, catalogueOptions);
-    policyService =
-        new PolicyServiceImpl(pool, registrationService, catalogueClient, authOptions, catOptions);
+    policyService = new PolicyServiceImpl(pool, registrationService, apdService, catalogueClient,
+        authOptions, catOptions);
     testContext.completeNow();
   }
 
