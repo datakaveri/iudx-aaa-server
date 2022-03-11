@@ -31,7 +31,7 @@ pipeline {
           sh 'docker-compose -f docker-compose-test.yml up test'
         }
         xunit (
-          thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '10') ],
+          thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
           tools: [ JUnit(pattern: 'target/surefire-reports/*.xml') ]
         )
         jacoco classPattern: 'target/classes', execPattern: 'target/jacoco.exec', sourcePattern: 'src/main/java', exclusionPattern:'iudx/aaa/server/apiserver/ApiServerVerticle.class,**/*VertxEBProxy.class,**/Constants.class,**/*VertxProxyHandler.class,**/*Verticle.class,iudx/aaa/server/deploy/*.class'
@@ -83,10 +83,13 @@ pipeline {
         always{
           node('master') {
             script{
-              archiveZap failHighAlerts: 1, failMediumAlerts: 1
+              archiveZap failHighAlerts: 1, failMediumAlerts: 1, failLowAlerts: 45
             }  
             publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '/var/lib/jenkins/iudx/aaa/Newman/report/', reportFiles: 'report.html', reportName: 'HTML Report', reportTitles: '', reportName: 'Integration Test Report'])
           }
+        }
+        failure{
+          error "Test failure. Stopping pipeline execution!"
         }
         cleanup{
           script{
