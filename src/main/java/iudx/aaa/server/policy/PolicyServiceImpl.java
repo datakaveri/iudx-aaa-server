@@ -53,7 +53,10 @@ import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
 import static iudx.aaa.server.apiserver.util.Urn.URN_MISSING_INFO;
 import static iudx.aaa.server.apiserver.util.Urn.URN_SUCCESS;
+import static iudx.aaa.server.policy.Constants.APD_DETAILS;
+import static iudx.aaa.server.policy.Constants.APD_ID;
 import static iudx.aaa.server.policy.Constants.CAT_ID;
+import static iudx.aaa.server.policy.Constants.ITEM_ID;
 import static iudx.aaa.server.policy.Constants.CHECK_ADMIN_POLICY;
 import static iudx.aaa.server.policy.Constants.CHECK_DELEGATOINS_VERIFY;
 import static iudx.aaa.server.policy.Constants.CHECK_POLICY;
@@ -77,15 +80,15 @@ import static iudx.aaa.server.policy.Constants.EXPIRYTIME;
 import static iudx.aaa.server.policy.Constants.GET_CONSUMER_CONSTRAINTS;
 import static iudx.aaa.server.policy.Constants.GET_DELEGATIONS_BY_ID;
 import static iudx.aaa.server.policy.Constants.GET_FROM_ROLES_TABLE;
-import static iudx.aaa.server.policy.Constants.GET_POLICIES;
-import static iudx.aaa.server.policy.Constants.GET_POLICIES_JOIN;
-import static iudx.aaa.server.policy.Constants.GET_POLICIES_JOIN_DELEGATE;
+import static iudx.aaa.server.policy.Constants.GET_APD_POLICIES;
+import static iudx.aaa.server.policy.Constants.GET_USER_POLICIES;
+import static iudx.aaa.server.policy.Constants.GET_USER_POLICIES_AUTH_DELEGATE;
 import static iudx.aaa.server.policy.Constants.GET_RES_OWNER;
 import static iudx.aaa.server.policy.Constants.GET_RES_SERVER_OWNER;
 import static iudx.aaa.server.policy.Constants.GET_RES_SERVER_OWNER_ID;
 import static iudx.aaa.server.policy.Constants.GET_RES_SER_OWNER;
 import static iudx.aaa.server.policy.Constants.GET_RES_SER_OWNER_JOIN;
-import static iudx.aaa.server.policy.Constants.GET_SERVER_POLICIES;
+import static iudx.aaa.server.policy.Constants.GET_RES_SER_URLS;
 import static iudx.aaa.server.policy.Constants.GET_URL;
 import static iudx.aaa.server.policy.Constants.ID;
 import static iudx.aaa.server.policy.Constants.ID_NOT_PRESENT;
@@ -145,6 +148,7 @@ import static iudx.aaa.server.policy.Constants.USERID;
 import static iudx.aaa.server.policy.Constants.USER_DETAILS;
 import static iudx.aaa.server.policy.Constants.USER_ID;
 import static iudx.aaa.server.token.Constants.INVALID_POLICY;
+import static org.junit.jupiter.api.DynamicTest.stream;
 
 /**
  * The Policy Service Implementation.
@@ -492,224 +496,219 @@ public class PolicyServiceImpl implements PolicyService {
   }
 
   @Override
-  public PolicyService listPolicy(
-      User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler) {
+  public PolicyService listPolicy(User user, JsonObject data,
+      Handler<AsyncResult<JsonObject>> handler) {
     // TODO Auto-generated method stub
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
     if (user.getUserId().equals(NIL_UUID)) {
       // empty user object
-      Response r =
-          new Response.ResponseBuilder()
-              .type(URN_MISSING_INFO)
-              .title(String.valueOf(URN_MISSING_INFO))
-              .detail(NO_USER)
-              .status(404)
-              .build();
+      Response r = new Response.ResponseBuilder().type(URN_MISSING_INFO)
+          .title(String.valueOf(URN_MISSING_INFO)).detail(NO_USER).status(404).build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
 
     boolean isDelegate = false;
-    JsonArray respPolicies = new JsonArray();
-    Future<List<JsonObject>> getResGrpPolicy;
-    Future<List<JsonObject>> getResIdPolicy;
-    Future<List<JsonObject>> getResSerPolicy;
+    String policyTableQuery;
+    UUID providerId;
 
-    UUID user_id;
     isDelegate = !data.isEmpty();
     if (isDelegate) {
-      user_id = UUID.fromString(data.getString("providerId"));
-    } else user_id = UUID.fromString(user.getUserId());
+      providerId = UUID.fromString(data.getString("providerId"));
+      policyTableQuery = GET_USER_POLICIES_AUTH_DELEGATE;
+    } else {
+      providerId = UUID.fromString(user.getUserId());
+      policyTableQuery = GET_USER_POLICIES;
+    }
 
     Collector<Row, ?, List<JsonObject>> policyCollector =
         Collectors.mapping(Row::toJson, Collectors.toList());
 
-    if (!isDelegate) {
-      getResGrpPolicy =
-          pool.withConnection(
-                  conn ->
-                      conn.preparedQuery(
-                              GET_POLICIES + itemTypes.RESOURCE_GROUP + GET_POLICIES_JOIN)
-                          .collecting(policyCollector)
-                          .execute(Tuple.of(user_id, itemTypes.RESOURCE_GROUP, status.ACTIVE))
-                          .map(SqlResult::value))
-              .onFailure(
-                  obj -> {
-                    LOGGER.error("failed getResGrpPolicy  " + obj.getMessage());
-                    handler.handle(Future.failedFuture(INTERNALERROR));
-                  });
+    Future<List<JsonObject>> userPolicies =
+        pool.withConnection(conn -> conn.preparedQuery(policyTableQuery).collecting(policyCollector)
+            .execute(Tuple.of(providerId)).map(SqlResult::value));
 
-      getResIdPolicy =
-          pool.withConnection(
-                  conn ->
-                      conn.preparedQuery(GET_POLICIES + itemTypes.RESOURCE + GET_POLICIES_JOIN)
-                          .collecting(policyCollector)
-                          .execute(Tuple.of(user_id, itemTypes.RESOURCE, status.ACTIVE))
-                          .map(SqlResult::value))
-              .onFailure(
-                  obj -> {
-                    LOGGER.error("failed getResIdPolicy  " + obj.getMessage());
-                    handler.handle(Future.failedFuture(INTERNALERROR));
-                  });
+    Future<List<JsonObject>> apdPolicies =
+        pool.withConnection(conn -> conn.preparedQuery(GET_APD_POLICIES).collecting(policyCollector)
+            .execute(Tuple.of(providerId)).map(SqlResult::value));
 
-      getResSerPolicy =
-          pool.withConnection(
-                  conn ->
-                      conn.preparedQuery(
-                              GET_SERVER_POLICIES + itemTypes.RESOURCE_SERVER + GET_POLICIES_JOIN)
-                          .collecting(policyCollector)
-                          .execute(Tuple.of(user_id, itemTypes.RESOURCE_SERVER, status.ACTIVE))
-                          .map(SqlResult::value))
-              .onFailure(
-                  obj -> {
-                    LOGGER.error("failed getResSerPolicy  " + obj.getMessage());
-                    handler.handle(Future.failedFuture(INTERNALERROR));
-                  });
+    Future<CompositeFuture> allDetails =
+        CompositeFuture.all(userPolicies, apdPolicies).compose(obj -> {
+          List<JsonObject> allPolicies = new ArrayList<>();
+          allPolicies.addAll(userPolicies.result());
+          allPolicies.addAll(apdPolicies.result());
 
-    } else {
-      getResGrpPolicy =
-          pool.withConnection(
-                  conn ->
-                      conn.preparedQuery(
-                              GET_POLICIES + itemTypes.RESOURCE_GROUP + GET_POLICIES_JOIN_DELEGATE)
-                          .collecting(policyCollector)
-                          .execute(Tuple.of(user_id, itemTypes.RESOURCE_GROUP, status.ACTIVE))
-                          .map(SqlResult::value))
-              .onFailure(
-                  obj -> {
-                    LOGGER.error("failed getResGrpPolicy  " + obj.getMessage());
-                    handler.handle(Future.failedFuture(INTERNALERROR));
-                  });
+          /*
+           * Using groupingBy, we create a map with key being itemTypes, and value being the
+           * corresponding list of itemIds. The first part of groupingBy groups the different JSON
+           * objects in policies by itemTypes. the second part extracts only the itemId from the
+           * JSON object, converts to UUID, and forms the UUID list.
+           */
+          Map<itemTypes, Set<UUID>> itemTypeToIds = allPolicies.stream().collect(
+              Collectors.groupingBy(j -> itemTypes.valueOf(j.getString(ITEMTYPE)), Collectors
+                  .mapping(res -> UUID.fromString(res.getString(ITEM_ID)), Collectors.toSet())));
 
-      getResIdPolicy =
-          pool.withConnection(
-                  conn ->
-                      conn.preparedQuery(
-                              GET_POLICIES + itemTypes.RESOURCE + GET_POLICIES_JOIN_DELEGATE)
-                          .collecting(policyCollector)
-                          .execute(Tuple.of(user_id, itemTypes.RESOURCE, status.ACTIVE))
-                          .map(SqlResult::value))
-              .onFailure(
-                  obj -> {
-                    LOGGER.error("failed getResIdPolicy  " + obj.getMessage());
-                    handler.handle(Future.failedFuture(INTERNALERROR));
-                  });
+          for (itemTypes i : itemTypes.values()) {
+            if (!itemTypeToIds.containsKey(i)) {
+              itemTypeToIds.put(i, new HashSet<UUID>());
+            }
+          }
 
-      getResSerPolicy =
-          pool.withConnection(
-                  conn ->
-                      conn.preparedQuery(
-                              GET_SERVER_POLICIES
-                                  + itemTypes.RESOURCE_SERVER
-                                  + GET_POLICIES_JOIN_DELEGATE)
-                          .collecting(policyCollector)
-                          .execute(Tuple.of(user_id, itemTypes.RESOURCE_SERVER, status.ACTIVE))
-                          .map(SqlResult::value))
-              .onFailure(
-                  obj -> {
-                    LOGGER.error("failed getResSerPolicy  " + obj.getMessage());
-                    handler.handle(Future.failedFuture(INTERNALERROR));
-                  });
-    }
+          Set<String> userIdSet =
+              allPolicies.stream().filter(tagObject -> tagObject.containsKey(USER_ID))
+                  .map(tagObject -> tagObject.getString(USER_ID)).collect(Collectors.toSet());
 
-    CompositeFuture.all(getResGrpPolicy, getResIdPolicy, getResSerPolicy)
-        .onSuccess(
-            obj -> {
-              List<JsonObject> policies = new ArrayList<>();
-              if (obj.list().get(0) != null) {
-                policies.addAll((List<JsonObject>) obj.list().get(0));
-              }
+          userIdSet.addAll(allPolicies.stream().filter(tagObject -> tagObject.containsKey(OWNER_ID))
+              .map(tagObject -> tagObject.getString(OWNER_ID)).collect(Collectors.toSet()));
 
-              if (obj.list().get(1) != null) {
-                policies.addAll((List<JsonObject>) obj.list().get(1));
-              }
+          List<String> userIds = new ArrayList<String>(userIdSet);
 
-              if (obj.list().get(2) != null) {
-                policies.addAll((List<JsonObject>) obj.list().get(2));
-              }
+          /*
+           * For APD IDs get IDs from policies where the item type is APD and from the APD IDs in
+           * APD policies
+           */
+          Set<String> apdIdSet = itemTypeToIds.get(itemTypes.APD).stream().map(id -> id.toString())
+              .collect(Collectors.toSet());
+          apdIdSet.addAll(apdPolicies.result().stream().map(j -> j.getString(APD_ID))
+              .collect(Collectors.toSet()));
 
-              policies = new ArrayList<>(new HashSet<>(policies));
+          List<String> apdIds = new ArrayList<String>(apdIdSet);
 
-              List<String> userId =
-                  policies.stream()
-                      .map(JsonObject.class::cast)
-                      .filter(tagObject -> !tagObject.getString(USER_ID).isEmpty())
-                      .map(tagObject -> tagObject.getString(USER_ID))
-                      .collect(Collectors.toList());
+          Promise<JsonObject> userDetails = Promise.promise();
+          registrationService.getUserDetails(userIds, userDetails);
 
-              userId.addAll(
-                  policies.stream()
-                      .map(JsonObject.class::cast)
-                      .filter(tagObject -> !tagObject.getString(OWNER_ID).isEmpty())
-                      .map(tagObject -> tagObject.getString(OWNER_ID))
-                      .collect(Collectors.toList()));
+          Promise<JsonObject> apdDetails = Promise.promise();
+          if (!apdIds.isEmpty()) {
+            apdService.getApdDetails(apdIds, apdDetails);
+          } else {
+            apdDetails.complete(new JsonObject());
+          }
 
-              if (userId != null) {
-                userId = new ArrayList<>(new HashSet<>(userId));
+          Future<Map<itemTypes, Map<UUID, String>>> resourceDetails =
+              getUrlAndCatIds(itemTypeToIds);
 
-                List<JsonObject> finalPolicies = policies;
-                registrationService.getUserDetails(
-                    userId,
-                    res -> {
-                      if (res.succeeded()) {
-                        String uid;
-                        String oid;
-                        String itemType;
-                        JsonObject object;
-                        Map<String, JsonObject> map = jsonObjectToMap.apply(res.result());
+          return CompositeFuture.all(userDetails.future(), apdDetails.future(), resourceDetails);
+        });
 
-                        for (JsonObject ar : finalPolicies) {
-                          uid = ar.getString(USER_ID);
-                          oid = ar.getString(OWNER_ID);
-                          itemType = ar.getString("itemType");
-                          ar.put("itemType", itemType.toLowerCase());
-                          if (map.containsKey(uid)) {
-                            ar.remove(USER_ID);
-                            object = map.get(uid);
-                            object.put("id", uid);
-                            ar.put(USER_DETAILS, object);
-                          }
+    allDetails.onSuccess(success -> {
+      JsonArray result = new JsonArray();
 
-                          if (map.containsKey(oid)) {
-                            ar.remove(OWNER_ID);
-                            object = map.get(oid);
-                            object.put("id", oid);
-                            ar.put(OWNER_DETAILS, object);
-                          }
-                          respPolicies.add(ar);
-                        }
-                        Response r =
-                            new Response.ResponseBuilder()
-                                .type(URN_SUCCESS)
-                                .title(SUCC_TITLE_POLICY_READ)
-                                .status(200)
-                                .arrayResults(respPolicies)
-                                .build();
-                        handler.handle(Future.succeededFuture(r.toJson()));
-                      } else if (res.failed()) {
-                        LOGGER.error("Registration failure :" + res.cause());
-                        handler.handle(Future.failedFuture(INTERNALERROR));
-                      }
-                    });
-              } else {
-                Response r =
-                    new Response.ResponseBuilder()
-                        .type(URN_SUCCESS)
-                        .title(SUCC_TITLE_POLICY_READ)
-                        .status(200)
-                        .detail("no policies")
-                        .build();
-                handler.handle(Future.succeededFuture(r.toJson()));
-              }
-            })
-        .onFailure(
-            obj -> {
-              LOGGER.error(obj.getMessage());
-              handler.handle(Future.failedFuture(INTERNALERROR));
-            });
+      JsonObject userDetails = (JsonObject) success.result().list().get(0);
+      Map<String, JsonObject> userDetailsMap = jsonObjectToMap.apply(userDetails);
 
+      JsonObject apdDetails = (JsonObject) success.result().list().get(1);
+      Map<String, JsonObject> apdDetailsMap = jsonObjectToMap.apply(apdDetails);
+
+      @SuppressWarnings("unchecked")
+      Map<itemTypes, Map<UUID, String>> allResDetails =
+          (Map<itemTypes, Map<UUID, String>>) success.result().list().get(2);
+
+      Map<UUID, String> resDetails = allResDetails.get(itemTypes.RESOURCE);
+      Map<UUID, String> resGrpDetails = allResDetails.get(itemTypes.RESOURCE_GROUP);
+      Map<UUID, String> resSerDetails = allResDetails.get(itemTypes.RESOURCE_SERVER);
+
+      List<JsonObject> allPolicies = new ArrayList<>();
+      allPolicies.addAll(userPolicies.result());
+      allPolicies.addAll(apdPolicies.result());
+
+      for (JsonObject obj : allPolicies) {
+
+        String itemType = obj.getString(ITEMTYPE);
+        obj.put("itemType", itemType.toLowerCase());
+        String itemId = (String) obj.remove(ITEM_ID);
+
+        switch (itemTypes.valueOf(itemType)) {
+          case RESOURCE_SERVER:
+            obj.put(ITEMID, resSerDetails.get(UUID.fromString(itemId)));
+            break;
+          case RESOURCE_GROUP:
+            obj.put(ITEMID, resGrpDetails.get(UUID.fromString(itemId)));
+            break;
+          case RESOURCE:
+            obj.put(ITEMID, resDetails.get(UUID.fromString(itemId)));
+            break;
+          case APD:
+            obj.put(ITEMID, apdDetailsMap.get(itemId).getString(URL));
+            break;
+        }
+
+        if (obj.containsKey(USER_ID)) {
+          String userId = (String) obj.remove(USER_ID);
+          JsonObject details = userDetailsMap.get(userId);
+          details.put(ID, userId);
+          obj.put(USER_DETAILS, details);
+        }
+
+        if (obj.containsKey(OWNER_ID)) {
+          String userId = (String) obj.remove(OWNER_ID);
+          JsonObject details = userDetailsMap.get(userId);
+          details.put(ID, userId);
+          obj.put(OWNER_DETAILS, details);
+        }
+
+        if (obj.containsKey(APD_ID)) {
+          String apdId = (String) obj.remove(APD_ID);
+          JsonObject details = apdDetailsMap.get(apdId);
+          details.put(ID, apdId);
+          obj.put(APD_DETAILS, details);
+        }
+
+        result.add(obj);
+      }
+
+      Response r = new Response.ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_POLICY_READ)
+          .status(200).arrayResults(result).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+    }).onFailure(obj -> {
+      LOGGER.error(obj.getMessage());
+      handler.handle(Future.failedFuture(INTERNALERROR));
+    });
     return this;
+  }
+  
+  /**
+   * Get cat IDs for resource and resource group items and URLs for resource servers using item IDs.
+   * 
+   * @param itemIds a Map of itemTypes to a set of item IDs in UUID. RESOURCE, RESOURCE_SERVER and
+   *        RESOURCE_GROUP are handled
+   * @return a future. A map of itemType that maps to another map containing item IDs mapped to the
+   *         cat ID/URL
+   */
+  private Future<Map<itemTypes, Map<UUID, String>>> getUrlAndCatIds(
+      Map<itemTypes, Set<UUID>> itemIds) {
+    Promise<Map<itemTypes, Map<UUID, String>>> promise = Promise.promise();
+
+    Set<UUID> resSerItemIds = itemIds.get(itemTypes.RESOURCE_SERVER);
+    Set<UUID> resGrpItemIds = itemIds.get(itemTypes.RESOURCE_GROUP);
+    Set<UUID> resItemIds = itemIds.get(itemTypes.RESOURCE);
+
+    Future<Map<UUID, String>> resGrpCatIds =
+        catalogueClient.getCatIds(resGrpItemIds, itemTypes.RESOURCE_GROUP);
+    Future<Map<UUID, String>> resCatIds = catalogueClient.getCatIds(resItemIds, itemTypes.RESOURCE);
+
+    Collector<Row, ?, Map<UUID, String>> collector =
+        Collectors.toMap(row -> row.getUUID(ID), row -> row.getString(URL));
+
+    Future<Map<UUID, String>> resSerUrls =
+        pool.withConnection(conn -> conn.preparedQuery(GET_RES_SER_URLS).collecting(collector)
+            .execute(Tuple.of(resSerItemIds.toArray(UUID[]::new))).map(res -> res.value()));
+
+    CompositeFuture.all(resGrpCatIds, resCatIds, resSerUrls).onSuccess(res -> {
+
+      Map<itemTypes, Map<UUID, String>> resultMap = new HashMap<itemTypes, Map<UUID, String>>();
+
+      resultMap.put(itemTypes.RESOURCE_SERVER, resSerUrls.result());
+      resultMap.put(itemTypes.RESOURCE_GROUP, resGrpCatIds.result());
+      resultMap.put(itemTypes.RESOURCE, resCatIds.result());
+
+      promise.complete(resultMap);
+    }).onFailure(err -> {
+      LOGGER.error(err.getMessage());
+      promise.fail(INTERNALERROR);
+    });
+
+    return promise.future();
   }
 
   Future<JsonObject> verifyConsumerPolicy(
