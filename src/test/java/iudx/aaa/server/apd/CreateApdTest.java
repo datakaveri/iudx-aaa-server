@@ -54,6 +54,7 @@ import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.registration.Utils;
+import iudx.aaa.server.token.TokenService;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -80,6 +81,7 @@ public class CreateApdTest {
   private static ApdWebClient apdWebClient = Mockito.mock(ApdWebClient.class);
   private static RegistrationService registrationService = Mockito.mock(RegistrationService.class);
   private static PolicyService policyService = Mockito.mock(PolicyService.class);
+  private static TokenService tokenService = Mockito.mock(TokenService.class);
 
   private static final String DUMMY_AUTH_SERVER =
       "auth" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + "iudx.io";
@@ -135,8 +137,8 @@ public class CreateApdTest {
         Map.of(Roles.PROVIDER, RoleStatus.APPROVED), false));
 
     CompositeFuture.all(trusteeUser, otherUser).onSuccess(succ -> {
-      apdService =
-          new ApdServiceImpl(pool, apdWebClient, registrationService, policyService, options);
+      apdService = new ApdServiceImpl(pool, apdWebClient, registrationService, policyService,
+          tokenService, options);
       testContext.completeNow();
     });
   }

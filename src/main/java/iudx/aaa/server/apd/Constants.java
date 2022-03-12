@@ -4,6 +4,7 @@ public class Constants {
 
   public static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
   public static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
+  public static final String TOKEN_SERVICE_ADDRESS = "iudx.aaa.token.service";
 
   public static final String NIL_UUID = "00000000-0000-0000-0000-000000000000";
 

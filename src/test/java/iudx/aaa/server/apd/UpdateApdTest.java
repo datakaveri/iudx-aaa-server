@@ -46,6 +46,7 @@ import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.registration.Utils;
+import iudx.aaa.server.token.TokenService;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -86,6 +87,7 @@ public class UpdateApdTest {
   private static ApdWebClient apdWebClient = Mockito.mock(ApdWebClient.class);
   private static RegistrationService registrationService = Mockito.mock(RegistrationService.class);
   private static PolicyService policyService = Mockito.mock(PolicyService.class);
+  private static TokenService tokenService = Mockito.mock(TokenService.class);
 
   private static final String DUMMY_SERVER =
       "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
@@ -194,8 +196,8 @@ public class UpdateApdTest {
       return pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_ADMIN_SERVER)
           .executeBatch(tup).compose(x -> conn.preparedQuery(SQL_CREATE_APD).executeBatch(apdTup)));
     }).onSuccess(x -> {
-      apdService =
-          new ApdServiceImpl(pool, apdWebClient, registrationService, policyService, options);
+      apdService = new ApdServiceImpl(pool, apdWebClient, registrationService, policyService,
+          tokenService, options);
       testContext.completeNow();
     });
   }

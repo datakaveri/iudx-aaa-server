@@ -11,6 +11,7 @@ import static iudx.aaa.server.apd.Constants.DATABASE_USERNAME;
 import static iudx.aaa.server.apd.Constants.DB_CONNECT_TIMEOUT;
 import static iudx.aaa.server.apd.Constants.REGISTRATION_SERVICE_ADDRESS;
 import static iudx.aaa.server.apd.Constants.POLICY_SERVICE_ADDRESS;
+import static iudx.aaa.server.apd.Constants.TOKEN_SERVICE_ADDRESS;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.MessageConsumer;
@@ -23,6 +24,7 @@ import io.vertx.serviceproxy.ServiceBinder;
 import io.vertx.sqlclient.PoolOptions;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
+import iudx.aaa.server.token.TokenService;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -60,6 +62,7 @@ public class ApdVerticle extends AbstractVerticle {
   private ApdWebClient apdWebClient;
   private RegistrationService registrationService;
   private PolicyService policyService;
+  private TokenService tokenService;
 
   private ApdService apdService;
   private ServiceBinder binder;
@@ -115,8 +118,9 @@ public class ApdVerticle extends AbstractVerticle {
 
     registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
     policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
-    apdService =
-        new ApdServiceImpl(pool, apdWebClient, registrationService, policyService, options);
+    tokenService = TokenService.createProxy(vertx, TOKEN_SERVICE_ADDRESS);
+    apdService = new ApdServiceImpl(pool, apdWebClient, registrationService, policyService,
+        tokenService, options);
     binder = new ServiceBinder(vertx);
     consumer = binder.setAddress(APD_SERVICE_ADDRESS).register(ApdService.class, apdService);
 

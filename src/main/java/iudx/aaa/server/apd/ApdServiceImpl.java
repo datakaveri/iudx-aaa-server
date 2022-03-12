@@ -52,6 +52,7 @@ import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
+import iudx.aaa.server.token.TokenService;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -84,13 +85,15 @@ public class ApdServiceImpl implements ApdService {
   private ApdWebClient apdWebClient;
   private RegistrationService registrationService;
   private PolicyService policyService;
+  private TokenService tokenService;
 
   public ApdServiceImpl(PgPool pool, ApdWebClient apdWebClient, RegistrationService regService,
-      PolicyService polService, JsonObject options) {
+      PolicyService polService, TokenService tokService, JsonObject options) {
     this.pool = pool;
     this.apdWebClient = apdWebClient;
     this.registrationService = regService;
     this.policyService = polService;
+    this.tokenService = tokService;
     AUTH_SERVER_URL = options.getString(CONFIG_AUTH_URL);
   }
 
