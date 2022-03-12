@@ -392,6 +392,18 @@ public class TokenServiceImpl implements TokenService {
   }
   
   /**
+   * {@inheritDoc}
+   */
+  @Override
+  public TokenService getAuthServerToken(String audienceUrl,
+      Handler<AsyncResult<JsonObject>> handler) {
+    JsonObject adminTokenReq = new JsonObject().put(USER_ID, CLAIM_ISSUER).put(URL, audienceUrl)
+        .put(ROLE, "").put(ITEM_TYPE, "").put(ITEM_ID, "");
+    handler.handle(Future.succeededFuture(getJwt(adminTokenReq)));
+    return this;
+  }
+  
+  /**
    * Handles the PostgreSQL query.
    * 
    * @param query which is SQL
