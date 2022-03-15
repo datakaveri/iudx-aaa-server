@@ -17,7 +17,10 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -26,7 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static iudx.aaa.server.policy.Constants.DELETE_POLICY;
+import static iudx.aaa.server.policy.Constants.DELETE_USR_POLICY;
+import static iudx.aaa.server.policy.Constants.DELETE_APD_POLICY;
 import static iudx.aaa.server.policy.Constants.ID_NOT_PRESENT;
 import static iudx.aaa.server.policy.Constants.INVALID_DELEGATE;
 import static iudx.aaa.server.policy.Constants.ITEMNOTFOUND;
@@ -35,7 +39,9 @@ import static iudx.aaa.server.policy.TestRequest.DelFail;
 import static iudx.aaa.server.policy.TestRequest.DelPolFail;
 import static iudx.aaa.server.policy.TestRequest.DelegateUser;
 import static iudx.aaa.server.policy.TestRequest.DelegateUserFail;
-import static iudx.aaa.server.policy.TestRequest.INSERT_REQ;
+import static iudx.aaa.server.policy.TestRequest.INSERT_EXPIRED_USER_POL;
+import static iudx.aaa.server.policy.TestRequest.INSERT_USER_POL;
+import static iudx.aaa.server.policy.TestRequest.INSERT_APD_POL;
 import static iudx.aaa.server.policy.TestRequest.ProviderUser;
 import static iudx.aaa.server.policy.TestRequest.ResExistFail;
 import static iudx.aaa.server.policy.TestRequest.ResOwnFail;
@@ -43,10 +49,10 @@ import static iudx.aaa.server.policy.TestRequest.allRolesUser;
 import static iudx.aaa.server.policy.TestRequest.successProvider;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@TestMethodOrder(OrderAnnotation.class)
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
 public class DeletePolicyTest {
   private static final Logger LOGGER = LogManager.getLogger(VerifyPolicyTest.class);
-  static Future<UUID> policyId;
   private static Configuration config;
   /* Database Properties */
   private static String databaseIP;
@@ -65,6 +71,10 @@ public class DeletePolicyTest {
   private static Vertx vertxObj;
   private static JsonObject authOptions;
   private static JsonObject catOptions;
+  
+  private static UUID userPolicyId = UUID.randomUUID();
+  private static UUID expiredUserPolicyId = UUID.randomUUID();
+  private static UUID apdPolicyId = UUID.randomUUID();
 
   @BeforeAll
   @DisplayName("Deploying Verticle")
@@ -114,39 +124,32 @@ public class DeletePolicyTest {
     /* Create the client pool */
     pgclient = PgPool.pool(vertx, connectOptions, poolOptions);
 
-    policyId =
-        pgclient
-            .withConnection(
-                conn ->
-                    conn.preparedQuery(INSERT_REQ)
-                        .execute()
-                        .map(row -> row.iterator().next().getUUID("id")))
-            .onSuccess(
-                obj -> {
-                  policyService =
-                      new PolicyServiceImpl(
-                          pgclient, registrationService, catalogueClient, authOptions, catOptions);
-                  testContext.completeNow();
-                })
-            .onFailure(err -> testContext.failNow(err.getMessage()));
+    /* We pass the UUID id when inserting the policy into the DB itself */
+    pgclient
+        .withConnection(conn -> conn.preparedQuery(INSERT_USER_POL).execute(Tuple.of(userPolicyId))
+            .compose(x -> conn.preparedQuery(INSERT_APD_POL).execute(Tuple.of(apdPolicyId)))
+            .compose(x -> conn.preparedQuery(INSERT_EXPIRED_USER_POL).execute(Tuple.of(expiredUserPolicyId))))
+        .onSuccess(obj -> {
+          policyService = new PolicyServiceImpl(pgclient, registrationService, catalogueClient,
+              authOptions, catOptions);
+          testContext.completeNow();
+        }).onFailure(err -> testContext.failNow(err.getMessage()));
   }
 
   @AfterAll
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing....");
-    List<UUID> policyidList =new ArrayList<>();
-    policyidList.add(policyId.result());
-      pgclient
-              .withConnection(
-                      conn ->
-                              conn.preparedQuery(DELETE_POLICY)
-                                      .execute(Tuple.of(Constants.status.DELETED, Constants.status.ACTIVE)
-                                              .addArrayOfUUID(policyidList.toArray(UUID[]::new)))
-                                      .map(row -> row.iterator().next().getUUID(policyId.result().toString()))
-      .onComplete(ar->
-    vertxObj.close(testContext.succeeding(response -> testContext.completeNow()))));
+    List<UUID> policyidList = new ArrayList<>();
+    policyidList.add(userPolicyId);
+    policyidList.add(apdPolicyId);
+    Tuple policyTup = Tuple.of(policyidList.toArray(UUID[]::new));
+    
+    pgclient.withConnection(conn -> conn.preparedQuery(DELETE_USR_POLICY).execute(policyTup)
+        .compose(x -> conn.preparedQuery(DELETE_APD_POLICY).execute(policyTup)).onComplete(
+            ar -> vertxObj.close(testContext.succeeding(response -> testContext.completeNow()))));
   }
 
+  @Order(1)
   @Test
   @DisplayName("Testing Failure(ID not present))")
   void resExistFailure(VertxTestContext testContext) {
@@ -165,6 +168,7 @@ public class DeletePolicyTest {
                     })));
   }
 
+  @Order(2)
   @Test
   @DisplayName("Testing Failure(user does not own resource)")
   void resOwnFailure(VertxTestContext testContext) {
@@ -183,6 +187,7 @@ public class DeletePolicyTest {
                     })));
   }
 
+  @Order(3)
   @Test
   @DisplayName("Testing Failure (delegate policy not present)")
   void delPolicyFailure(VertxTestContext testContext) {
@@ -201,6 +206,7 @@ public class DeletePolicyTest {
                     })));
   }
 
+  @Order(4)
   @Test
   @DisplayName("Testing Failure (not a delegate for owner)")
   void delFailure(VertxTestContext testContext) {
@@ -219,11 +225,52 @@ public class DeletePolicyTest {
                     })));
   }
 
+  @Order(5)
   @Test
-  @DisplayName("Testing successful deletion ")
-  void SuccessDel(VertxTestContext testContext) {
-    JsonObject obj = new JsonObject().put("id", policyId.result().toString());
+  @DisplayName("Testing successful deletion of user policy")
+  void SuccessDelUserPol(VertxTestContext testContext) {
+    JsonObject obj = new JsonObject().put("id", userPolicyId.toString());
     JsonArray req = new JsonArray().add(obj);
+    policyService.deletePolicy(
+        req,
+        successProvider,
+        new JsonObject(),
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      JsonObject result = response;
+                      assertEquals(SUCC_TITLE_POLICY_DEL, result.getString("title"));
+                      testContext.completeNow();
+                    })));
+  }
+
+  @Order(6)
+  @Test
+  @DisplayName("Testing failure when user policy already deleted and apd policy active ")
+  void FailDelApdPol(VertxTestContext testContext) {
+    JsonArray req = new JsonArray().add(new JsonObject().put("id", userPolicyId.toString()))
+        .add(new JsonObject().put("id", apdPolicyId.toString()));
+    policyService.deletePolicy(
+        req,
+        successProvider,
+        new JsonObject(),
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      JsonObject result = response;
+                      assertEquals(ID_NOT_PRESENT, result.getString("title"));
+                      testContext.completeNow();
+                    })));
+  }
+
+  @Order(7)
+  @Test
+  @DisplayName("Testing successful delete of apd policy and expired user policy")
+  void SuccessDelApdPol(VertxTestContext testContext) {
+    JsonArray req = new JsonArray().add(new JsonObject().put("id", expiredUserPolicyId.toString()))
+        .add(new JsonObject().put("id", apdPolicyId.toString()));
     policyService.deletePolicy(
         req,
         successProvider,

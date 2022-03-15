@@ -36,6 +36,8 @@ public class Constants {
   public static final String CONSUMER_ROLE = "CONSUMER";
   public static final String PROVIDER_ROLE = "PROVIDER";
   public static final String DELEGATE_ROLE = "DELEGATE";
+  public static final String USR_POL = "USER";
+  public static final String APD_POL = "APD";
 
 
   public static final String RESULTS = "results";
@@ -173,9 +175,16 @@ public class Constants {
           + "where  a.item_type = $2::item_enum  "
           + "AND a.status = $3::policy_status_enum  AND a.expiry_time > NOW() And  a.owner_id = $1::UUID";
 
-  public static final String CHECK_POLICY_EXIST =
-      "select id,owner_id,item_type from policies"
-          + " where status = $1::policy_status_enum  and id = any($2::uuid[])";
+  public static final String EXISTING_ACTIVE_USR_POL =
+      "SELECT id FROM policies WHERE owner_id = $1::uuid AND status = 'ACTIVE' AND id = ANY($2::uuid[]) ";
+
+  public static final String EXISTING_ACTIVE_USR_POL_NO_RES_SER =
+      "SELECT id FROM policies WHERE owner_id = $1::uuid AND status = 'ACTIVE'"
+      + " AND id = ANY($2::uuid[]) AND item_type != 'RESOURCE_SERVER'";
+
+  public static final String EXISTING_ACTIVE_APD_POL =
+      "SELECT id FROM apd_policies WHERE owner_id = $1::uuid AND status = 'ACTIVE' AND id = ANY($2::uuid[]) ";
+
   public static final String RES_OWNER_CHECK =
       "select id from policies where owner_id = $1::uuid "
           + "and status = $2::policy_status_enum and id = any($3::uuid[]) and expiry_time > now()";
@@ -191,10 +200,12 @@ public class Constants {
           + "where  a.user_id = $1::UUID and item_type = $2::item_enum "
           + "and a.owner_id = b.owner_id and b.url = $3::varchar "
           + "and a.status = $4::policy_status_enum and a.expiry_time > now()";
-  public static final String DELETE_POLICY =
-      "update policies set status = $1::policy_status_enum , updated_at = now()"
-          + " where status = $2::policy_status_enum and expiry_time > now() "
-          + " and id = any($3::uuid[])";
+
+  public static final String DELETE_USR_POLICY =
+"UPDATE policies SET status = 'DELETED', updated_at = NOW() WHERE id = ANY($1::uuid[])";
+
+  public static final String DELETE_APD_POLICY =
+"UPDATE apd_policies SET status = 'DELETED', updated_at = NOW() WHERE id = ANY($1::uuid[])";
   // create policy
 
   public static final String CHECKUSEREXIST = "select id from users where id = any($1::uuid[])";
