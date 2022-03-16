@@ -1,6 +1,25 @@
 package iudx.aaa.server.apd;
 
+import static iudx.aaa.server.apd.Constants.APD_NOT_ACTIVE;
+import static iudx.aaa.server.apd.Constants.APD_REQ_PROVIDER;
+import static iudx.aaa.server.apd.Constants.APD_REQ_RESOURCE;
+import static iudx.aaa.server.apd.Constants.APD_REQ_USER;
+import static iudx.aaa.server.apd.Constants.APD_REQ_USERCLASS;
+import static iudx.aaa.server.apd.Constants.APD_RESP_DETAIL;
+import static iudx.aaa.server.apd.Constants.APD_RESP_LINK;
+import static iudx.aaa.server.apd.Constants.APD_RESP_SESSIONID;
+import static iudx.aaa.server.apd.Constants.APD_RESP_TYPE;
+import static iudx.aaa.server.apd.Constants.APD_URN_ALLOW;
+import static iudx.aaa.server.apd.Constants.APD_URN_DENY;
 import static iudx.aaa.server.apd.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_APD_INTERAC;
+import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_CAT_ID;
+import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_CONSTRAINTS;
+import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_LINK;
+import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_SESSIONID;
+import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_STATUS;
+import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_SUCCESS;
+import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_URL;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_EXISTING_DOMAIN;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_INVALID_DOMAIN;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_NOT_TRUSTEE;
@@ -14,6 +33,7 @@ import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_DOMAIN;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_NOT_TRUSTEE;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_NO_ROLES_PUT;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_NO_USER_PROFILE;
+import static iudx.aaa.server.apd.Constants.ERR_TITLE_POLICY_EVAL_FAILED;
 import static iudx.aaa.server.apd.Constants.NIL_UUID;
 import static iudx.aaa.server.apd.Constants.RESP_APD_ID;
 import static iudx.aaa.server.apd.Constants.RESP_APD_NAME;
@@ -24,6 +44,7 @@ import static iudx.aaa.server.apd.Constants.RESP_OWNER_USER_ID;
 import static iudx.aaa.server.apd.Constants.SQL_CHECK_ADMIN_OF_SERVER;
 import static iudx.aaa.server.apd.Constants.SQL_GET_APDS_BY_ID_ADMIN;
 import static iudx.aaa.server.apd.Constants.SQL_GET_APDS_BY_ID_TRUSTEE;
+import static iudx.aaa.server.apd.Constants.SQL_GET_APD_URL_STATUS;
 import static iudx.aaa.server.apd.Constants.SQL_INSERT_APD_IF_NOT_EXISTS;
 import static iudx.aaa.server.apd.Constants.SQL_UPDATE_APD_STATUS;
 import static iudx.aaa.server.apd.Constants.SUCC_TITLE_REGISTERED_APD;
@@ -474,5 +495,128 @@ public class ApdServiceImpl implements ApdService {
         .onFailure(error -> p.fail(error.getMessage()));
 
     return p.future();
+  }
+
+  @Override
+  public ApdService callApd(JsonObject apdContext, Handler<AsyncResult<JsonObject>> handler) {
+
+    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+
+    UUID apdId = UUID.fromString(apdContext.getString("apdId"));
+    String userId = apdContext.getString("userId");
+    String providerId = apdContext.getString("providerId");
+    String resource = apdContext.getString("resource");
+    String rsUrl = apdContext.getString("resSerUrl");
+    String userClass = apdContext.getString("userClass");
+    JsonObject constraints = apdContext.getJsonObject("constraints");
+
+    Collector<Row, ?, List<JsonObject>> collector =
+        Collectors.mapping(row -> row.toJson(), Collectors.toList());
+
+    Future<List<JsonObject>> apdDetails =
+        pool.withConnection(conn -> conn.preparedQuery(SQL_GET_APD_URL_STATUS).collecting(collector)
+            .execute(Tuple.of(apdId)).map(res -> res.value()));
+
+    Future<Map<String, JsonObject>> userAndProviderDetails =
+        getTrusteeDetails(List.of(userId, providerId));
+
+    Future<JsonObject> authAccessToken = apdDetails.compose(list -> {
+      /* In case the apdId sent does not exist, should never happen */
+      if(list.isEmpty()) {
+        return Future.failedFuture("APD ID does not exist");
+      }
+
+      String apdUrl = list.get(0).getString("url");
+      Promise<JsonObject> promise = Promise.promise();
+      tokenService.getAuthServerToken(apdUrl, promise);
+      return promise.future();
+    });
+
+    Future<JsonObject> apdResponse =
+        CompositeFuture.all(authAccessToken, userAndProviderDetails).compose(res -> {
+          JsonObject apdRequest = new JsonObject();
+
+          JsonObject user = userAndProviderDetails.result().get(userId);
+          user.put("id", userId);
+          JsonObject provider = userAndProviderDetails.result().get(providerId);
+          provider.put("id", providerId);
+
+          String token = authAccessToken.result().getString("accessToken");
+          String apdUrl = apdDetails.result().get(0).getString("url");
+
+          apdRequest.put(APD_REQ_USER, user).put(APD_REQ_PROVIDER, provider)
+              .put(APD_REQ_RESOURCE, resource).put(APD_REQ_USERCLASS, userClass);
+
+          return apdWebClient.callVerifyApdEndpoint(apdUrl, token, apdRequest);
+        });
+
+    /*
+     * If the APD responds with an allow, a succeeded future is returned with a JSON object
+     * containing the required information for the createToken service to create the access token. A
+     * key `status` is set to `success` in the JSON object.
+     * 
+     * If the APD responds with a deny, but includes a session ID in the response, then a succeeded
+     * future is returned with a JSON object containing the required information for the createToken
+     * service to create an APD token which the user will use to interact with the APD. The `status`
+     * key is set to `apd-interaction`.
+     * 
+     * If the APD responds with a deny, a failed future is returned with a ComposeException
+     * containing the error message sent by the APD
+     * 
+     */
+    apdResponse.onSuccess(response -> {
+      JsonObject result = new JsonObject();
+
+      if (response.getString(APD_RESP_TYPE).equals(APD_URN_ALLOW)) {
+        result.put(CREATE_TOKEN_URL, rsUrl).put(CREATE_TOKEN_CONSTRAINTS, constraints)
+            .put(CREATE_TOKEN_CAT_ID, resource).put(CREATE_TOKEN_STATUS, CREATE_TOKEN_SUCCESS);
+
+        handler.handle(Future.succeededFuture(result));
+        return;
+      } else if (response.getString(APD_RESP_TYPE).equals(APD_URN_DENY)
+          && response.containsKey(APD_RESP_SESSIONID)) {
+        String apdUrl = apdDetails.result().get(0).getString("url");
+
+        result.put(CREATE_TOKEN_URL, apdUrl)
+            .put(CREATE_TOKEN_SESSIONID, response.getString(APD_RESP_SESSIONID))
+            .put(CREATE_TOKEN_LINK, response.getString(APD_RESP_LINK, apdUrl))
+            .put(CREATE_TOKEN_STATUS, CREATE_TOKEN_APD_INTERAC);
+
+        handler.handle(Future.succeededFuture(result));
+        return;
+      }
+
+      /* Add extra message if APD not active and has denied */
+      String apdStatus = apdDetails.result().get(0).getString("status");
+      String apdNotActiveMesg = APD_NOT_ACTIVE;
+      if (ApdStatus.valueOf(apdStatus).equals(ApdStatus.ACTIVE)) {
+        apdNotActiveMesg = "";
+      }
+
+      handler.handle(Future.failedFuture(
+          new ComposeException(403, URN_INVALID_INPUT, ERR_TITLE_POLICY_EVAL_FAILED,
+              response.getString(APD_RESP_DETAIL + apdNotActiveMesg))));
+    }).onFailure(e -> {
+      if (e instanceof ComposeException) {
+        /* Add extra message if APD not active and has denied */
+        String apdStatus = apdDetails.result().get(0).getString("status");
+        String apdNotActiveMesg = APD_NOT_ACTIVE;
+        if (ApdStatus.valueOf(apdStatus).equals(ApdStatus.ACTIVE)) {
+          apdNotActiveMesg = "";
+        }
+
+        ComposeException exp = (ComposeException) e;
+        Response err = exp.getResponse();
+        err.setDetail(err.getDetail() + apdNotActiveMesg);
+        err.setTitle(ERR_TITLE_POLICY_EVAL_FAILED);
+        /* send back failed future - returning to createToken and not API server */
+        handler.handle(Future.failedFuture(new ComposeException(err)));
+        return;
+      }
+      LOGGER.error(e.getMessage());
+      handler.handle(Future.failedFuture("Internal error"));
+    });
+
+    return this;
   }
 }
