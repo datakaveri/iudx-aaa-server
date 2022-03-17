@@ -92,7 +92,9 @@ public class Constants {
   /* Allowed APD URNs */
   public static final String APD_URN_ALLOW = "urn:apd:Allow";
   public static final String APD_URN_DENY = "urn:apd:Deny";
-  public static final String APD_URN_REGEX = "^(" + APD_URN_ALLOW + "|" + APD_URN_DENY + ")$";
+  public static final String APD_URN_DENY_NEEDS_INT = "urn:apd:DenyNeedsInteraction";
+  public static final String APD_URN_REGEX =
+      "^(" + APD_URN_ALLOW + "|" + APD_URN_DENY + "|" + APD_URN_DENY_NEEDS_INT + ")$";
   
   /* APD JSON request keys */
   public static final String APD_REQ_USER = "user";

@@ -2,9 +2,11 @@ package iudx.aaa.server.apd;
 
 import static iudx.aaa.server.apd.Constants.APD_READ_USERCLASSES_API;
 import static iudx.aaa.server.apd.Constants.APD_RESP_DETAIL;
+import static iudx.aaa.server.apd.Constants.APD_RESP_SESSIONID;
 import static iudx.aaa.server.apd.Constants.APD_RESP_TYPE;
 import static iudx.aaa.server.apd.Constants.APD_URN_ALLOW;
 import static iudx.aaa.server.apd.Constants.APD_URN_DENY;
+import static iudx.aaa.server.apd.Constants.APD_URN_DENY_NEEDS_INT;
 import static iudx.aaa.server.apd.Constants.APD_URN_REGEX;
 import static iudx.aaa.server.apd.Constants.APD_VERIFY_API;
 import static iudx.aaa.server.apd.Constants.APD_VERIFY_AUTH_HEADER;
@@ -144,6 +146,11 @@ public class ApdWebClient {
     } catch (DecodeException e) {
       return Future.failedFuture("Invalid JSON sent by APD");
     }
+    
+    Boolean nullsInJson = json.stream().anyMatch(key -> key.getValue() == null);
+    if (nullsInJson) {
+      return Future.failedFuture("Nulls in APD response");
+    }
 
     if (!json.containsKey(APD_RESP_TYPE) || !json.getString(APD_RESP_TYPE).matches(APD_URN_REGEX)) {
       return Future.failedFuture("No/invalid URN in APD response");
@@ -152,6 +159,12 @@ public class ApdWebClient {
     if (json.getString(APD_RESP_TYPE).equals(APD_URN_DENY)
         && (!json.containsKey(APD_RESP_DETAIL) || code != 403)) {
       return Future.failedFuture("Invalid status+URN or no detail in APD response");
+    }
+
+    if (json.getString(APD_RESP_TYPE).equals(APD_URN_DENY_NEEDS_INT)
+        && (!json.containsKey(APD_RESP_DETAIL) || !json.containsKey(APD_RESP_SESSIONID)
+            || code != 403)) {
+      return Future.failedFuture("Invalid status+URN or no session ID in response");
     }
 
     if (json.getString(APD_RESP_TYPE).equals(APD_URN_ALLOW) && code != 200) {

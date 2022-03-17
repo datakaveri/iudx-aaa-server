@@ -7,6 +7,7 @@ import static iudx.aaa.server.apd.Constants.APD_RESP_SESSIONID;
 import static iudx.aaa.server.apd.Constants.APD_RESP_TYPE;
 import static iudx.aaa.server.apd.Constants.APD_URN_ALLOW;
 import static iudx.aaa.server.apd.Constants.APD_URN_DENY;
+import static iudx.aaa.server.apd.Constants.APD_URN_DENY_NEEDS_INT;
 import static iudx.aaa.server.apd.Constants.CONFIG_AUTH_URL;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_APD_INTERAC;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_CAT_ID;
@@ -406,7 +407,7 @@ public class CallApdTest {
 
     String sessionId = UUID.randomUUID().toString();
     JsonObject webClientResp =
-        new JsonObject().put(APD_RESP_TYPE, APD_URN_DENY).put(APD_RESP_DETAIL, "Needs interaction")
+        new JsonObject().put(APD_RESP_TYPE, APD_URN_DENY_NEEDS_INT).put(APD_RESP_DETAIL, "Needs interaction")
             .put(APD_RESP_SESSIONID, sessionId).put(APD_RESP_LINK, ACTIVE_APD + ".com/apd");
 
     Mockito.when(apdWebClient.callVerifyApdEndpoint(any(), any(), any()))

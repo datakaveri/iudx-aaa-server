@@ -11,6 +11,7 @@ import static iudx.aaa.server.apd.Constants.APD_RESP_SESSIONID;
 import static iudx.aaa.server.apd.Constants.APD_RESP_TYPE;
 import static iudx.aaa.server.apd.Constants.APD_URN_ALLOW;
 import static iudx.aaa.server.apd.Constants.APD_URN_DENY;
+import static iudx.aaa.server.apd.Constants.APD_URN_DENY_NEEDS_INT;
 import static iudx.aaa.server.apd.Constants.CONFIG_AUTH_URL;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_APD_INTERAC;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_CAT_ID;
@@ -555,13 +556,13 @@ public class ApdServiceImpl implements ApdService {
      * containing the required information for the createToken service to create the access token. A
      * key `status` is set to `success` in the JSON object.
      * 
-     * If the APD responds with a deny, but includes a session ID in the response, then a succeeded
-     * future is returned with a JSON object containing the required information for the createToken
-     * service to create an APD token which the user will use to interact with the APD. The `status`
-     * key is set to `apd-interaction`.
+     * If the APD responds with a deny and needs interaction, then a succeeded future is returned
+     * with a JSON object containing the required information for the createToken service to create
+     * an APD token which the user will use to interact with the APD. The `status` key is set to
+     * `apd-interaction`.
      * 
      * If the APD responds with a deny, a failed future is returned with a ComposeException
-     * containing the error message sent by the APD
+     * containing the error message sent by the APD in the `detail`.
      * 
      */
     apdResponse.onSuccess(response -> {
@@ -573,10 +574,12 @@ public class ApdServiceImpl implements ApdService {
 
         handler.handle(Future.succeededFuture(result));
         return;
-      } else if (response.getString(APD_RESP_TYPE).equals(APD_URN_DENY)
-          && response.containsKey(APD_RESP_SESSIONID)) {
+      } else if (response.getString(APD_RESP_TYPE).equals(APD_URN_DENY_NEEDS_INT)) {
         String apdUrl = apdDetails.result().get(0).getString("url");
-
+        /*
+         * TODO: consider also passing the `detail` that the APD sends so that the createToken
+         * service can use it in it's response
+         */
         result.put(CREATE_TOKEN_URL, apdUrl)
             .put(CREATE_TOKEN_SESSIONID, response.getString(APD_RESP_SESSIONID))
             .put(CREATE_TOKEN_LINK, response.getString(APD_RESP_LINK, apdUrl))
@@ -595,7 +598,7 @@ public class ApdServiceImpl implements ApdService {
 
       handler.handle(Future.failedFuture(
           new ComposeException(403, URN_INVALID_INPUT, ERR_TITLE_POLICY_EVAL_FAILED,
-              response.getString(APD_RESP_DETAIL + apdNotActiveMesg))));
+              response.getString(APD_RESP_DETAIL) + apdNotActiveMesg)));
     }).onFailure(e -> {
       if (e instanceof ComposeException) {
         /* Add extra message if APD not active and has denied */
