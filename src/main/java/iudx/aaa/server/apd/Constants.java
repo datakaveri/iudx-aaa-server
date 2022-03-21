@@ -7,6 +7,8 @@ public class Constants {
   public static final String TOKEN_SERVICE_ADDRESS = "iudx.aaa.token.service";
 
   public static final String NIL_UUID = "00000000-0000-0000-0000-000000000000";
+  public static final String UUID_REGEX =
+          "^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$";
 
   /* Config related */
   public static final String CONFIG_AUTH_URL = "authServerDomain";
@@ -26,6 +28,7 @@ public class Constants {
   public static final String RESP_APD_STATUS = "status";
   public static final String RESP_APD_OWNER = "owner";
   public static final String RESP_OWNER_USER_ID = "id";
+  public static final String INTERNALERROR = "internal server error";
 
   /* Response title and details */
   public static final String SUCC_TITLE_REGISTERED_APD =
@@ -33,6 +36,8 @@ public class Constants {
 
   public static final String SUCC_TITLE_UPDATED_APD =
       "The status of the Access Policy Domains have been updated";
+
+  public static final String SUCC_TITLE_APD_READ = "Apd read successfully";
 
   public static final String ERR_TITLE_NO_USER_PROFILE = "User profile does not exist";
   public static final String ERR_DETAIL_NO_USER_PROFILE = "Please register to create user profile";
@@ -61,6 +66,11 @@ public class Constants {
   public static final String ERR_TITLE_NO_ROLES_PUT = "Invalid roles to call API";
   public static final String ERR_DETAIL_NO_ROLES_PUT =
       "Trustees and Auth Server Admin may call the API";
+
+  public static final String ERR_TITLE_INVALID_REQUEST =  "Invalid request";
+
+
+  public static final String ERR_DETAIL_INVALID_UUID = "Invalid UUID";
 
   /* SQL */
   public static final String SQL_INSERT_APD_IF_NOT_EXISTS =
@@ -121,4 +131,10 @@ public class Constants {
   
   public static final String APD_NOT_ACTIVE = " (NOTE: The APD is currently not in an active state.)";
   public static final String ERR_TITLE_POLICY_EVAL_FAILED = "Policy evaluation failed";
+
+  public static final String GET_APDINFO_ID = "SELECT id,name,url,status,owner_id as \"ownerId\" FROM apds where id = ANY($1::uuid[])";
+  public static final String GET_APDINFO_URL = "SELECT id,name,url,status,owner_id as \"ownerId\" FROM apds where url = ANY($1::text[])";
+  public static final String LIST_AUTH_QUERY = "SELECT id FROM apds where status = $1::apd_status_enum or status = $2::apd_status_enum or status = $3::apd_status_enum";
+  public static final String LIST_TRUSTEE_QUERY = "SELECT id FROM apds WHERE (owner_id = $1::UUID OR status = $2::apd_status_enum) ";
+  public static final String LIST_USER_QUERY = "SELECT id FROM apds WHERE status = $1::apd_status_enum  ";
 }
