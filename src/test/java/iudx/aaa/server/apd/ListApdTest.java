@@ -72,6 +72,7 @@ public class  ListApdTest {
   private static PolicyService policyService = Mockito.mock(PolicyService.class);
   private static TokenService tokenService = Mockito.mock(TokenService.class);
 
+
   private static final String DUMMY_SERVER =
       "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
   private static final String DUMMY_AUTH_SERVER =
@@ -430,7 +431,6 @@ public class  ListApdTest {
                         String ownerId1 = response.getJsonObject("results").
                                 getJsonObject(ACTIVE_A_ID.toString())
                                 .getJsonObject("owner").getString("id");
-
                         String status_ACTIVE_A =  response.getJsonObject("results").
                                 getJsonObject(ACTIVE_A_ID.toString()).getString("status");
 
