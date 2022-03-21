@@ -80,4 +80,15 @@ public interface TokenService {
   @Fluent
   TokenService validateToken(IntrospectToken introspectToken, Handler<AsyncResult<JsonObject>> handler);
 
+  /**
+   * Get an auth server JWT token. This token is used by the Auth server when calling other servers to
+   * authenticate itself.
+   * 
+   * @param audienceUrl the URL of the server to be called. The <i>aud</i> field in the token will contain
+   * this URL.
+   * @param handler which is a Request Handler
+   * @return TokenService which is a Service
+   */
+  @Fluent
+  TokenService getAuthServerToken(String audienceUrl, Handler<AsyncResult<JsonObject>> handler);
 }

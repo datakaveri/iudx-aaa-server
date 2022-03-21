@@ -100,4 +100,26 @@ public interface ApdService {
    */
   @Fluent
   ApdService getApdDetails(List<String> apdIds, Handler<AsyncResult<JsonObject>> handler);
+
+  /**
+   * The callApd implements the operation to call an APD to verify if a user can access a resource
+   * by belonging to a particular user class.
+   * 
+   * @param request a JsonObject containing the following keys with information required to call the
+   *        APD
+   *        <ul>
+   *        <li><em>apdId</em> : The APD ID that is to be called</li>
+   *        <li><em>userId</em> : The user ID of the user requesting access</li>
+   *        <li><em>resource</em> : The resource cat ID for which access is needed</li>
+   *        <li><em>resSerUrl</em> : The resource server URL hosting the resource</li>
+   *        <li><em>userClass</em> : The user class set in the APD policy</li>
+   *        <li><em>providerId</em> : The user ID of the provider who owns the resource</li>
+   *        <li><em>constraints</em> : JSON object containing constraints set for the APD
+   *        policy</li>
+   *        </ul>
+   * @param handler which is a request handler
+   * @return ApdService which is a Service
+   */
+  @Fluent
+  ApdService callApd(JsonObject apdContext, Handler<AsyncResult<JsonObject>> handler);
 }

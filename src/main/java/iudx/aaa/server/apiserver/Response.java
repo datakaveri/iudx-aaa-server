@@ -16,6 +16,16 @@ public class Response {
   private JsonArray arrayResults;
   private JsonObject objectResults;
   private String detail;
+  private JsonObject errorContext;
+  
+  public JsonObject getErrorContext() {
+    return errorContext;
+  }
+
+  public void setErrorContext(JsonObject context) {
+    this.errorContext = context;
+  }
+
   private int status;
 
   public JsonObject getObjectResults() {
@@ -91,6 +101,10 @@ public class Response {
       j.put("status", this.status); 
     }
 
+    if (this.errorContext != null) {
+      j.put("context", this.errorContext);
+    }
+
     return j;
   }
   
@@ -105,6 +119,7 @@ public class Response {
     this.objectResults = builder.objectResults;
     this.title = builder.title;
     this.status = builder.status;
+    this.errorContext = builder.errorContext;
   }
 
   public static class ResponseBuilder {
@@ -113,6 +128,7 @@ public class Response {
     private JsonArray arrayResults = null;
     private JsonObject objectResults = null;
     private String detail = null;
+    private JsonObject errorContext = null;
     private int status;
 
     public ResponseBuilder type(String type) {
@@ -149,6 +165,12 @@ public class Response {
 
     public ResponseBuilder status(int status) {
       this.status = status;
+      return this;
+    }
+
+    public ResponseBuilder errorContext(JsonObject context) {
+      this.errorContext = new JsonObject();
+      this.errorContext = context.copy();
       return this;
     }
 

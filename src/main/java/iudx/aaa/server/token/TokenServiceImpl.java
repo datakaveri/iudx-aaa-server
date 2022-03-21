@@ -20,6 +20,7 @@ import iudx.aaa.server.apiserver.RequestToken;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.RevokeToken;
 import iudx.aaa.server.apiserver.User;
+import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.policy.PolicyService;
 import java.util.List;
@@ -142,23 +143,40 @@ public class TokenServiceImpl implements TokenService {
         }
       });
     } else {
-      policyService.verifyPolicy(request, policyHandler -> {
-        if (policyHandler.succeeded()) {
+      Promise<JsonObject> policyHandler = Promise.promise();
+      policyService.verifyPolicy(request, policyHandler);
+      policyHandler.future().onSuccess(result -> {
 
-          request.mergeIn(policyHandler.result(), true);
+        request.mergeIn(result, true);
+
+        if (request.getString(STATUS).equals(SUCCESS)) {
+         
           JsonObject jwt = getJwt(request);
-
-          LOGGER.info(LOG_TOKEN_SUCC);
-          Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
-              .objectResults(jwt).build();
-          handler.handle(Future.succeededFuture(resp.toJson()));
-
-        } else if (policyHandler.failed()) {
-          LOGGER.error("Fail: {}; {}", INVALID_POLICY, policyHandler.cause().getMessage());
-          Response resp = new ResponseBuilder().status(403).type(URN_INVALID_INPUT)
-              .title(INVALID_POLICY).detail(policyHandler.cause().getLocalizedMessage()).build();
-          handler.handle(Future.succeededFuture(resp.toJson()));
+        Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
+            .objectResults(jwt).build();
+        
+        handler.handle(Future.succeededFuture(resp.toJson()));
+        } else if (request.getString(STATUS).equals(APD_INTERACTION)) {
+          
+          JsonObject apdJwt = getApdJwt(request);
+          /* Add context to the error response containing the APD token */
+          Response resp = new ResponseBuilder().status(403).type(URN_MISSING_INFO)
+              .title(ERR_TITLE_APD_INTERACT_REQUIRED).detail(ERR_DETAIL_APD_INTERACT_REQUIRED)
+              .errorContext(apdJwt).build();
+          
+        handler.handle(Future.succeededFuture(resp.toJson()));
         }
+
+        LOGGER.info(LOG_TOKEN_SUCC);
+
+      }).onFailure(fail -> {
+        if (fail instanceof ComposeException) {
+          ComposeException exp = (ComposeException) fail;
+          handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+          return;
+        }
+        LOGGER.error(fail.getMessage());
+        handler.handle(Future.failedFuture("Internal error"));
       });
     }
     
@@ -389,6 +407,58 @@ public class TokenServiceImpl implements TokenService {
     tokenResp.put(ACCESS_TOKEN, token).put("expiry", expiry).put("server",
         audience);
     return tokenResp;
+  }
+
+  /**
+   * Generates the JWT token used for APD interaction using the request data.
+   * 
+   * @param request a JSON object containing
+   *        <ul>
+   *        <li><em>url</em> : The URL of the APD to be called. This is placed in the <em>aud</em>
+   *        field</li>
+   *        <li><em>userId</em> : The user ID of the user requesting access</li>
+   *        <li><em>sessionId</em> : The sessionId sent by the APD</li>
+   *        <li><em>link</em> : The link to visit sent by the APD</li>
+   *        </ul>
+   * @return jwtToken a JSON object containing the <i>accessToken</i>, expiry and server (audience)
+   */
+  public JsonObject getApdJwt(JsonObject request) {
+    
+    JWTOptions options = new JWTOptions().setAlgorithm(JWT_ALGORITHM);
+    long timestamp = System.currentTimeMillis() / 1000;
+    long expiry = timestamp + CLAIM_EXPIRY;
+    String sessionId = request.getString(SESSION_ID);
+    String link = request.getString(LINK);
+    String audience = request.getString(URL);
+    
+    /* Populate the token claims */
+    JsonObject claims = new JsonObject();
+    claims.put(SUB, request.getString(USER_ID))
+          .put(ISS, CLAIM_ISSUER)
+          .put(AUD, audience)
+          .put(EXP, expiry)
+          .put(IAT, timestamp)
+          .put(SID, sessionId)
+          .put(LINK, link);
+    
+    String token = provider.generateToken(claims, options);
+
+    JsonObject tokenResp = new JsonObject();
+    tokenResp.put(APD_TOKEN, token).put("expiry", expiry).put("server",
+        audience).put(LINK, link);
+    return tokenResp;
+  }
+  
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public TokenService getAuthServerToken(String audienceUrl,
+      Handler<AsyncResult<JsonObject>> handler) {
+    JsonObject adminTokenReq = new JsonObject().put(USER_ID, CLAIM_ISSUER).put(URL, audienceUrl)
+        .put(ROLE, "").put(ITEM_TYPE, "").put(ITEM_ID, "");
+    handler.handle(Future.succeededFuture(getJwt(adminTokenReq)));
+    return this;
   }
   
   /**

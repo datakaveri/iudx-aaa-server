@@ -42,9 +42,11 @@ public class Constants {
   public static final String ALLOW = "allow";
   public static final String DENY = "deny";
   public static final String SUCCESS = "success";
+  public static final String APD_INTERACTION = "apd-interaction";
   public static final String FAILED = "failed";
   public static final String DESC = "desc";
   public static final String ACCESS_TOKEN = "accessToken";
+  public static final String APD_TOKEN = "apdToken";
   public static final String RS_URL = "rsUrl";
   public static final String HOST = "host";
   public static final String PORT = "port";
@@ -64,6 +66,7 @@ public class Constants {
   public static final String AUDIENCE = "audience";
   public static final String URL = "url";
   public static final String USER_ID = "userId";
+  public static final String SESSION_ID = "sessionId";
   public static final String CONSTRAINTS = "constraints";
   public static final String RESOURCE_SVR = "resource_server";
     
@@ -80,6 +83,11 @@ public class Constants {
   public static final String ITYPE = "ityp";
   public static final String IID = "iid";
   public static final String CONS = "cons";
+  
+  /* JWT Constants for APD token */
+  public static final String LINK = "link";
+  public static final String SID = "sid";
+
   
   public static final String GRANT_TYPE = "grant_type";
   public static final String CLIENT_CREDENTIALS = "client_credentials";
@@ -108,6 +116,10 @@ public class Constants {
   public static final String CANNOT_REVOKE_ON_AUTH = "Cannot revoke tokens on auth server";
   public static final String INVALID_POLICY = "Policy evaluation failed";
   public static final String TOKEN_SUCCESS = "Token created";
+  public static final String ERR_TITLE_APD_INTERACT_REQUIRED = "APD interaction required";
+  public static final String ERR_DETAIL_APD_INTERACT_REQUIRED =
+      "The APD requires extra information to grant access."
+      + " Please use the apdToken and visit the link to interact with the APD";
   public static final String TOKEN_REVOKED = "Token revoked";
   public static final String TOKEN_AUTHENTICATED = "Token authenticated";
   public static final String INVALID_USERID = "Empty/null userId";

@@ -9,6 +9,8 @@ import io.vertx.core.cli.CLI;
 import io.vertx.core.cli.Option;
 import io.vertx.core.cli.CommandLine;
 import io.vertx.core.json.JsonObject;
+import iudx.aaa.server.apiserver.util.ComposeException;
+import iudx.aaa.server.apiserver.util.ComposeExceptionMessageCodec;
 import io.vertx.core.DeploymentOptions;
 
 
@@ -80,6 +82,13 @@ public class DeployerDev {
       return;
     }
     Vertx vertx = Vertx.vertx(options);
+    /*
+     * Include ComposeException message codec so that ComposeException objects can be sent accross
+     * the event bus
+     */
+    vertx.eventBus().registerDefaultCodec(ComposeException.class,
+        new ComposeExceptionMessageCodec());
+    LOGGER.debug("Added ComposeException message codec");
     recursiveDeploy(vertx, configuration, 0);
   }
 

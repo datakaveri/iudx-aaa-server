@@ -4,6 +4,7 @@ public class Constants {
 
   public static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
   public static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
+  public static final String TOKEN_SERVICE_ADDRESS = "iudx.aaa.token.service";
 
   public static final String NIL_UUID = "00000000-0000-0000-0000-000000000000";
 
@@ -78,6 +79,46 @@ public class Constants {
 
   public static final String SQL_UPDATE_APD_STATUS =
       "UPDATE apds SET status = $1::apd_status_enum, updated_at = NOW() WHERE id = $2::uuid";
+  
+  public static final String SQL_GET_APD_URL_STATUS =
+      "SELECT url, status FROM apds WHERE id = $1::uuid";
 
+  /* APD API endpoints and request metadata */
   public static final String APD_READ_USERCLASSES_API = "/userclasses";
+  public static final String APD_VERIFY_API = "/verify";
+  public static final String APD_VERIFY_AUTH_HEADER = "Authorization";
+  public static final String APD_VERIFY_BEARER = "Bearer ";
+  
+  /* Allowed APD URNs */
+  public static final String APD_URN_ALLOW = "urn:apd:Allow";
+  public static final String APD_URN_DENY = "urn:apd:Deny";
+  public static final String APD_URN_DENY_NEEDS_INT = "urn:apd:DenyNeedsInteraction";
+  public static final String APD_URN_REGEX =
+      "^(" + APD_URN_ALLOW + "|" + APD_URN_DENY + "|" + APD_URN_DENY_NEEDS_INT + ")$";
+  
+  /* APD JSON request keys */
+  public static final String APD_REQ_USER = "user";
+  public static final String APD_REQ_PROVIDER = "provider";
+  public static final String APD_REQ_RESOURCE =  "resource";
+  public static final String APD_REQ_USERCLASS = "userClass";
+  
+  /* APD JSON response keys */
+  public static final String APD_RESP_TYPE = "type";
+  public static final String APD_RESP_TITLE = "title";
+  public static final String APD_RESP_DETAIL = "detail";
+  public static final String APD_RESP_SESSIONID = "sessionId";
+  public static final String APD_RESP_LINK = "link";
+  
+  /* create token service JSON key/values */
+  public static final String CREATE_TOKEN_URL = "url";
+  public static final String CREATE_TOKEN_CONSTRAINTS = "constraints";
+  public static final String CREATE_TOKEN_CAT_ID = "cat_id";
+  public static final String CREATE_TOKEN_SESSIONID = "session_id";
+  public static final String CREATE_TOKEN_LINK = "link";
+  public static final String CREATE_TOKEN_STATUS = "status";
+  public static final String CREATE_TOKEN_SUCCESS = "success";
+  public static final String CREATE_TOKEN_APD_INTERAC = "apd-interaction";
+  
+  public static final String APD_NOT_ACTIVE = " (NOTE: The APD is currently not in an active state.)";
+  public static final String ERR_TITLE_POLICY_EVAL_FAILED = "Policy evaluation failed";
 }

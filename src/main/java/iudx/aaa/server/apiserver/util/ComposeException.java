@@ -1,5 +1,6 @@
 package iudx.aaa.server.apiserver.util;
 
+import io.vertx.serviceproxy.ServiceException;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 
@@ -11,9 +12,10 @@ import iudx.aaa.server.apiserver.Response.ResponseBuilder;
  * response to be created and passed on in the event of the particular failure. The Response can
  * then be sent back to the API server when the exception is caught and handled.
  */
-public class ComposeException extends Exception {
+public class ComposeException extends ServiceException {
 
   private static final long serialVersionUID = 1L;
+  public static final int COMPOSE_FUTURE_ERROR = 1338;
 
   private final Response response;
 
@@ -24,7 +26,7 @@ public class ComposeException extends Exception {
    * @param response The Response object
    */
   public ComposeException(Response response) {
-    super(response.getTitle());
+    super(COMPOSE_FUTURE_ERROR, response.getDetail());
     this.response = response;
   }
 
@@ -38,7 +40,7 @@ public class ComposeException extends Exception {
    * @param detail The appropriate reason for the error
    */
   public ComposeException(int status, String type, String title, String detail) {
-    super(title);
+    super(COMPOSE_FUTURE_ERROR, detail);
     this.response =
         new ResponseBuilder().status(status).type(type).title(title).detail(detail).build();
   }
@@ -54,7 +56,7 @@ public class ComposeException extends Exception {
    * @param detail The appropriate reason for the error
    */
   public ComposeException(int status, Urn type, String title, String detail) {
-    super(title);
+    super(COMPOSE_FUTURE_ERROR, detail);
     this.response =
             new ResponseBuilder().status(status).type(type).title(title).detail(detail).build();
   }

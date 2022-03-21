@@ -1,20 +1,29 @@
 package iudx.aaa.server.token;
 
-import static iudx.aaa.server.apiserver.util.Urn.*;
+import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_AUTH_TOKEN;
+import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
+import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
+import static iudx.aaa.server.apiserver.util.Urn.URN_MISSING_INFO;
+import static iudx.aaa.server.apiserver.util.Urn.URN_SUCCESS;
 import static iudx.aaa.server.token.Constants.ACCESS_TOKEN;
+import static iudx.aaa.server.token.Constants.APD_TOKEN;
 import static iudx.aaa.server.token.Constants.AUD;
 import static iudx.aaa.server.token.Constants.CLAIM_ISSUER;
 import static iudx.aaa.server.token.Constants.CONS;
 import static iudx.aaa.server.token.Constants.DENY;
+import static iudx.aaa.server.token.Constants.ERR_DETAIL_APD_INTERACT_REQUIRED;
+import static iudx.aaa.server.token.Constants.ERR_TITLE_APD_INTERACT_REQUIRED;
 import static iudx.aaa.server.token.Constants.EXP;
 import static iudx.aaa.server.token.Constants.IID;
 import static iudx.aaa.server.token.Constants.ISS;
 import static iudx.aaa.server.token.Constants.ITEM_ID;
 import static iudx.aaa.server.token.Constants.ITEM_TYPE;
+import static iudx.aaa.server.token.Constants.LINK;
 import static iudx.aaa.server.token.Constants.PG_CONNECTION_TIMEOUT;
 import static iudx.aaa.server.token.Constants.RESOURCE_SVR;
 import static iudx.aaa.server.token.Constants.ROLE;
 import static iudx.aaa.server.token.Constants.RS_URL;
+import static iudx.aaa.server.token.Constants.SID;
 import static iudx.aaa.server.token.Constants.STATUS;
 import static iudx.aaa.server.token.Constants.SUB;
 import static iudx.aaa.server.token.Constants.TYPE;
@@ -24,12 +33,26 @@ import static iudx.aaa.server.token.RequestPayload.expiredTipPayload;
 import static iudx.aaa.server.token.RequestPayload.mapToInspctToken;
 import static iudx.aaa.server.token.RequestPayload.mapToRevToken;
 import static iudx.aaa.server.token.RequestPayload.randomToken;
-import static iudx.aaa.server.token.RequestPayload.user;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -54,23 +77,6 @@ import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.Utils;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
 public class TokenServiceTest {
@@ -318,6 +324,41 @@ public class TokenServiceTest {
           assertEquals(payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
           assertFalse(payload.getJsonObject(CONS).isEmpty());
           assertNotNull(payload.getString(EXP));
+          testContext.completeNow();
+        })));
+  }
+
+  @Test
+  @DisplayName("Get APD token as consumer [Success]")
+  void getApdTokenConsumerSuccess(VertxTestContext testContext) {
+
+    JsonObject userJson = consumer.result();
+
+    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+        .userId(userJson.getString("userId"))
+        .name(userJson.getString("firstName"), userJson.getString("lastName"))
+        .roles(List.of(Roles.CONSUMER)).build();
+
+    JsonObject jsonReq = new JsonObject().put("itemId", RESOURCE_ITEM).put("itemType", "resource")
+        .put("role", "consumer");
+    RequestToken request = new RequestToken(jsonReq);
+
+    mockPolicy.setResponse("apd-interaction", DUMMY_SERVER + "/apd-interact", DUMMY_SERVER);
+    tokenService.createToken(request, user,
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_MISSING_INFO.toString(), response.getString("type"));
+          assertEquals(ERR_TITLE_APD_INTERACT_REQUIRED.toString(), response.getString("title"));
+          assertEquals(ERR_DETAIL_APD_INTERACT_REQUIRED.toString(), response.getString("detail"));
+
+          JsonObject apdToken =
+              getJwtPayload(response.getJsonObject("context").getString(APD_TOKEN));
+          assertEquals(apdToken.getString(ISS), DUMMY_AUTH_SERVER);
+          assertEquals(apdToken.getString(AUD), DUMMY_SERVER);
+          assertTrue(apdToken.containsKey(SID));
+          assertEquals(apdToken.getString(LINK), DUMMY_SERVER + "/apd-interact");
+          assertNotNull(apdToken.getString(EXP));
+          assertEquals(response.getJsonObject("context").getString(LINK),
+              DUMMY_SERVER + "/apd-interact");
           testContext.completeNow();
         })));
   }

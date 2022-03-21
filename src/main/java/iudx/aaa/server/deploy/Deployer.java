@@ -30,6 +30,8 @@ import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.micrometer.VertxPrometheusOptions;
 import io.vertx.micrometer.backends.BackendRegistries;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import iudx.aaa.server.apiserver.util.ComposeException;
+import iudx.aaa.server.apiserver.util.ComposeExceptionMessageCodec;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -205,6 +207,13 @@ public class Deployer {
       if (res.succeeded()) {
         vertx = res.result();
         LOGGER.debug(vertx.isMetricsEnabled());
+        /*
+         * Include ComposeException message codec so that ComposeException objects can be sent
+         * accross the event bus
+         */
+        vertx.eventBus().registerDefaultCodec(ComposeException.class,
+            new ComposeExceptionMessageCodec());
+        LOGGER.debug("Added ComposeException message codec");
         setJVMmetrics();
         if (modules.isEmpty()) {
           recursiveDeploy(vertx, configuration, 0);
