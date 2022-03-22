@@ -91,21 +91,13 @@ public interface ApdService {
   ApdService createApd(CreateApdRequest request, User user,
       Handler<AsyncResult<JsonObject>> handler);
 
-  /**
-   * The getApdDetails implements the operation to get details of Access Policy Domains.
-   * 
-   * @param apdIds a list of valid APD IDs
-   * @param handler which is a request handler
-   * @return ApdService which is a Service
-   */
-  @Fluent
-  ApdService getApdDetails(List<String> apdIds, Handler<AsyncResult<JsonObject>> handler);
+
 
   /**
    * The callApd implements the operation to call an APD to verify if a user can access a resource
    * by belonging to a particular user class.
    * 
-   * @param request a JsonObject containing the following keys with information required to call the
+   * @param apdContext a JsonObject containing the following keys with information required to call the
    *        APD
    *        <ul>
    *        <li><em>apdId</em> : The APD ID that is to be called</li>
@@ -122,4 +114,16 @@ public interface ApdService {
    */
   @Fluent
   ApdService callApd(JsonObject apdContext, Handler<AsyncResult<JsonObject>> handler);
+
+  /**
+   * The getApdDetails implements the operation to get details of Access Policy Domains.
+   *
+   * @param apdUrl a list of valid APD urls
+   * @param apdIds a list of valid APD IDs
+   * @param handler which is a request handler
+   * @return ApdService which is a Service
+   */
+  @Fluent
+  ApdService getApdDetails(List<String> apdUrl,List<String> apdIds, Handler<AsyncResult<JsonObject>> handler);
+
 }
