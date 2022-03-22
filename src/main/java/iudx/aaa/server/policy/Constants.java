@@ -67,12 +67,8 @@ public class Constants {
   public static final String RESOURCE_SERVER_ID = "resource_server_id";
   public static final String RESOURCE_GROUP_ID = "resource_group_id";
   // failed messages
-  public static final String ROLE_NOT_FOUND = "role not found";
   public static final String POLICY_NOT_FOUND = "policy not found";
   public static final String NOT_DELEGATE = "user is not a delegate:";
-  public static final String URL_NOT_FOUND = "url not found";
-  public static final String AUTH_DEL_POL_FAIL = "Not an auth delegate";
-  public static final String AUTH_DEL_FAIL = "Not a delegate for resource owner";
   public static final String ITEMNOTFOUND = "Item does not exist";
   public static final String NO_RES_SERVER = "Res server does not exist";
   public static final String DUPLICATE = "Request must be unique";
@@ -81,9 +77,7 @@ public class Constants {
   public static final String SUCC_TITLE_POLICY_DEL = "policy deleted";
   public static final String SUCC_TITLE_LIST_DELEGS = "Delegations";
   public static final String SUCC_TITLE_DELETE_DELE = "Deleted requested delegations";
-  public static final String DELETE_FAILURE = "Cannot delete policy";
   public static final String INVALID_ROLE = "Invalid role to perform operation";
-  public static final String INVALID_DELEGATE_POL = "user does not have access to auth server";
   public static final String INVALID_DELEGATE = "user does not have access to resource";
   public static final String ERR_TITLE_INVALID_ID = "Invalid delegation ID";
   public static final String ERR_TITLE_INVALID_ROLES = "User does not have roles to use API";
