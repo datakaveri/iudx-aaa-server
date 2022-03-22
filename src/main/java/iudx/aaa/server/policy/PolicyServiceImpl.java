@@ -580,7 +580,7 @@ public class PolicyServiceImpl implements PolicyService {
 
           Promise<JsonObject> apdDetails = Promise.promise();
           if (!apdIds.isEmpty()) {
-            apdService.getApdDetails(apdIds, apdDetails);
+            apdService.getApdDetails(List.of(), apdIds, apdDetails);
           } else {
             apdDetails.complete(new JsonObject());
           }

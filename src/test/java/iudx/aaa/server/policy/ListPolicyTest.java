@@ -137,15 +137,15 @@ public class ListPolicyTest {
     }).when(catalogueClient).getCatIds(any(), any());
 
     Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(1);
+      Promise<JsonObject> p = i.getArgument(2);
       JsonObject result = new JsonObject();
-      List<String> ids = i.getArgument(0);
+      List<String> ids = i.getArgument(1);
       for (String x : ids) {
-        result.put(x, new JsonObject());
+        result.put(x, new JsonObject().put(URL, "<apd-url-placeholder>"));
       }
       p.complete(result);
       return i.getMock();
-    }).when(apdService).getApdDetails(any(), any());
+    }).when(apdService).getApdDetails(any(), any(), any());
 
     Mockito.doAnswer(i -> {
       Promise<JsonObject> p = i.getArgument(1);
@@ -180,15 +180,15 @@ public class ListPolicyTest {
     }).when(catalogueClient).getCatIds(any(), any());
 
     Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(1);
+      Promise<JsonObject> p = i.getArgument(2);
       JsonObject result = new JsonObject();
-      List<String> ids = i.getArgument(0);
+      List<String> ids = i.getArgument(1);
       for (String x : ids) {
-        result.put(x, new JsonObject());
+        result.put(x, new JsonObject().put(URL, "<apd-url-placeholder>"));
       }
       p.complete(result);
       return i.getMock();
-    }).when(apdService).getApdDetails(any(), any());
+    }).when(apdService).getApdDetails(any(), any(), any());
 
     Mockito.doAnswer(i -> {
       Promise<JsonObject> p = i.getArgument(1);

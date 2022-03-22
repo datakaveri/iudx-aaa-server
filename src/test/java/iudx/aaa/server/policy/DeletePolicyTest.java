@@ -133,8 +133,8 @@ public class DeletePolicyTest {
             .compose(x -> conn.preparedQuery(INSERT_APD_POL).execute(Tuple.of(apdPolicyId)))
             .compose(x -> conn.preparedQuery(INSERT_EXPIRED_USER_POL).execute(Tuple.of(expiredUserPolicyId))))
         .onSuccess(obj -> {
-          policyService = new PolicyServiceImpl(pgclient, registrationService, catalogueClient,
-              authOptions, catOptions);
+          policyService = new PolicyServiceImpl(pgclient, registrationService, apdService,
+              catalogueClient, authOptions, catOptions);
           testContext.completeNow();
         }).onFailure(err -> testContext.failNow(err.getMessage()));
   }
