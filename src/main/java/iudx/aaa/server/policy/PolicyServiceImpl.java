@@ -56,12 +56,20 @@ import static iudx.aaa.server.apiserver.util.Urn.URN_SUCCESS;
 import static iudx.aaa.server.policy.Constants.APD_DETAILS;
 import static iudx.aaa.server.policy.Constants.APD_ID;
 import static iudx.aaa.server.policy.Constants.CAT_ID;
+import static iudx.aaa.server.policy.Constants.CALL_APD_APDID;
+import static iudx.aaa.server.policy.Constants.CALL_APD_CONSTRAINTS;;
+import static iudx.aaa.server.policy.Constants.CALL_APD_PROVIDERID;
+import static iudx.aaa.server.policy.Constants.CALL_APD_RES_SER_URL;
+import static iudx.aaa.server.policy.Constants.CALL_APD_RESOURCE;
+import static iudx.aaa.server.policy.Constants.CALL_APD_USERCLASS;
+import static iudx.aaa.server.policy.Constants.CALL_APD_USERID;
 import static iudx.aaa.server.policy.Constants.ITEM_ID;
 import static iudx.aaa.server.policy.Constants.CHECK_ADMIN_POLICY;
 import static iudx.aaa.server.policy.Constants.CHECK_DELEGATOINS_VERIFY;
 import static iudx.aaa.server.policy.Constants.CHECK_POLICY;
 import static iudx.aaa.server.policy.Constants.COMPOSE_FAILURE;
 import static iudx.aaa.server.policy.Constants.CONSUMER_ROLE;
+import static iudx.aaa.server.policy.Constants.CONSTRAINTS;
 import static iudx.aaa.server.policy.Constants.CREATE_NOTIFI_POLICY_REQUEST;
 import static iudx.aaa.server.policy.Constants.DELEGATE_ROLE;
 import static iudx.aaa.server.policy.Constants.DELETE_DELEGATIONS;
@@ -77,7 +85,8 @@ import static iudx.aaa.server.policy.Constants.ERR_TITLE_AUTH_DELE_DELETE;
 import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ID;
 import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ROLES;
 import static iudx.aaa.server.policy.Constants.EXPIRYTIME;
-import static iudx.aaa.server.policy.Constants.GET_CONSUMER_CONSTRAINTS;
+import static iudx.aaa.server.policy.Constants.GET_CONSUMER_USER_POL_CONSTRAINTS;
+import static iudx.aaa.server.policy.Constants.GET_CONSUMER_APD_POL_DETAILS;
 import static iudx.aaa.server.policy.Constants.GET_DELEGATIONS_BY_ID;
 import static iudx.aaa.server.policy.Constants.GET_FROM_ROLES_TABLE;
 import static iudx.aaa.server.policy.Constants.GET_APD_POLICIES;
@@ -145,6 +154,7 @@ import static iudx.aaa.server.policy.Constants.UPDATE_NOTIF_REQ_APPROVED;
 import static iudx.aaa.server.policy.Constants.UPDATE_NOTIF_REQ_REJECTED;
 import static iudx.aaa.server.policy.Constants.URL;
 import static iudx.aaa.server.policy.Constants.USERID;
+import static iudx.aaa.server.policy.Constants.USER_CLASS;
 import static iudx.aaa.server.policy.Constants.USER_DETAILS;
 import static iudx.aaa.server.policy.Constants.USER_ID;
 import static iudx.aaa.server.token.Constants.INVALID_POLICY;
@@ -711,138 +721,150 @@ public class PolicyServiceImpl implements PolicyService {
     return promise.future();
   }
 
-  Future<JsonObject> verifyConsumerPolicy(
-      UUID userId, String itemId, String itemType, Map<String, ResourceObj> resDetails) {
+  Future<JsonObject> verifyConsumerPolicy(UUID userId, String itemId, String itemType,
+      Map<String, ResourceObj> resDetails) {
+
     Promise<JsonObject> p = Promise.promise();
 
-    /*check itemType,
-    if resGrp check only resGrp table
-    else get resGrp from item id and check both res and resGrp tables as there may be a policy
-    for the resGrp the res belongs to
+    /*
+     * check itemType, if resGrp check only resGrp table else get resGrp from item id and check both
+     * res and resGrp tables as there may be a policy for the resGrp the res belongs to
      */
 
     Future<JsonObject> getResGrpConstraints;
+    Tuple resGroupTuple;
 
     if (itemType.equals(itemTypes.RESOURCE_GROUP.toString())) {
-      Collector<Row, ?, List<JsonObject>> constraintCollector =
-          Collectors.mapping(row -> row.toJson(), Collectors.toList());
-      getResGrpConstraints =
-          pool.withConnection(
-              conn ->
-                  conn.preparedQuery(GET_CONSUMER_CONSTRAINTS)
-                      .collecting(constraintCollector)
-                      .execute(
-                          Tuple.of(
-                              userId,
-                              resDetails.get(itemId).getId(),
-                              itemTypes.RESOURCE_GROUP,
-                              status.ACTIVE))
-                      .map(res -> res.size() > 0 ? res.value().get(0) : null)
-                      .onFailure(
-                          failureHandler -> {
-                            LOGGER.error(
-                                "getResGrpConstraints db fail :: "
-                                    + failureHandler.getLocalizedMessage());
-                            p.fail(INTERNALERROR);
-                          }));
+      resGroupTuple =
+          Tuple.of(userId, resDetails.get(itemId).getId(), itemTypes.RESOURCE_GROUP, status.ACTIVE);
     } else {
-      getResGrpConstraints =
-          pool.withConnection(
-              conn ->
-                  conn.preparedQuery(GET_CONSUMER_CONSTRAINTS)
-                      .execute(
-                          Tuple.of(
-                              userId,
-                              resDetails.get(itemId).getResGrpId(),
-                              itemTypes.RESOURCE_GROUP,
-                              status.ACTIVE))
-                      .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson() : null));
+
+      resGroupTuple = Tuple.of(userId, resDetails.get(itemId).getResGrpId(),
+          itemTypes.RESOURCE_GROUP, status.ACTIVE);
     }
+    getResGrpConstraints = pool.withConnection(
+        conn -> conn.preparedQuery(GET_CONSUMER_USER_POL_CONSTRAINTS).execute(resGroupTuple)
+            .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson() : null));
+
     Future<JsonObject> getResItemConstraints;
+
     if (itemType.equals(itemTypes.RESOURCE.toString())) {
       getResItemConstraints =
-          pool.withConnection(
-              conn ->
-                  conn.preparedQuery(GET_CONSUMER_CONSTRAINTS)
-                      .execute(
-                          Tuple.of(
-                              userId,
-                              resDetails.get(itemId).getId(),
-                              itemTypes.RESOURCE,
-                              status.ACTIVE))
-                      .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson() : null));
+          pool.withConnection(conn -> conn.preparedQuery(GET_CONSUMER_USER_POL_CONSTRAINTS)
+              .execute(Tuple.of(userId, resDetails.get(itemId).getId(), itemTypes.RESOURCE,
+                  status.ACTIVE))
+              .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson() : null));
     } else {
       getResItemConstraints = Future.succeededFuture(new JsonObject());
     }
 
-    Future<JsonObject> getConstraints =
-        CompositeFuture.all(getResGrpConstraints, getResItemConstraints)
-            .compose(
-                ar -> {
-                  if (itemType.equals(itemTypes.RESOURCE_GROUP.toString())) {
-                    return getResGrpConstraints;
-                  } else {
-                    if (getResItemConstraints.result() == null) return getResGrpConstraints;
-                    else {
-                      return getResItemConstraints;
-                    }
-                  }
-                });
+    Future<JsonObject> getUserPolicyConstraints =
+        CompositeFuture.all(getResGrpConstraints, getResItemConstraints).compose(ar -> {
+          if (itemType.equals(itemTypes.RESOURCE_GROUP.toString())) {
+            return getResGrpConstraints;
+          } else {
+            if (getResItemConstraints.result() == null)
+              return getResGrpConstraints;
+            else {
+              return getResItemConstraints;
+            }
+          }
+        });
 
-    Future<String> getUrl =
-        pool.withConnection(
-                conn ->
-                    conn.preparedQuery(GET_URL)
-                        .execute(Tuple.of(resDetails.get(itemId).getResServerID()))
-                        .map(
-                            rows ->
-                                rows.rowCount() > 0 ? rows.iterator().next().getString(URL) : null))
-            .compose(
-                ar -> {
-                  if (ar == null) {
-                    Response r =
-                        new ResponseBuilder()
-                            .status(403)
-                            .type(URN_INVALID_INPUT)
-                            .title(INVALID_POLICY)
-                            .detail(NO_RES_SERVER)
-                            .build();
-                    return Future.failedFuture(new ComposeException(r));
-                  } else {
-                    return Future.succeededFuture(ar);
-                  }
-                });
+    Future<JsonObject> getApdPolicyDetails = getUserPolicyConstraints.compose(userPol -> {
+      if (userPol != null) {
+        return Future.succeededFuture(null);
+      }
 
-    CompositeFuture.all(getConstraints, getUrl)
-        .onSuccess(
-            success -> {
-              if (getConstraints.result() != null && !getUrl.result().isEmpty()) {
-                JsonObject details = new JsonObject();
-                details.mergeIn(getConstraints.result());
-                details.put(STATUS, SUCCESS);
-                details.put(CAT_ID, itemId);
-                details.put(URL, getUrl.result());
-                p.complete(details);
-              } else {
-                Response r =
-                    new ResponseBuilder()
-                        .status(403)
-                        .type(URN_INVALID_INPUT)
-                        .title(INVALID_POLICY)
-                        .detail(POLICY_NOT_FOUND)
-                        .build();
-                p.fail(new ComposeException(r));
-              }
-            })
-        .onFailure(
-            failureHandler -> {
-              // check if compose Exception, p.fail(composeExp)
+      Future<JsonObject> resGrpApdPolicy;
+      Future<JsonObject> resItemApdPolicy;
+      Tuple tuple;
 
-              LOGGER.error("failed verifyConsumerPolicy: " + failureHandler.getLocalizedMessage());
-              if (failureHandler instanceof ComposeException)
-                p.fail(failureHandler);
-              else p.fail(INTERNALERROR);
-            });
+      if (itemType.equals(itemTypes.RESOURCE_GROUP.toString())) {
+        tuple =
+            Tuple.of(resDetails.get(itemId).getId(), itemTypes.RESOURCE_GROUP, status.ACTIVE);
+      } else {
+        tuple =
+            Tuple.of(resDetails.get(itemId).getResGrpId(), itemTypes.RESOURCE_GROUP, status.ACTIVE);
+      }
+
+      /* NOTE: Not checking for APD policy expiry in the queries */
+      resGrpApdPolicy = pool.withConnection(
+          conn -> conn.preparedQuery(GET_CONSUMER_APD_POL_DETAILS).execute(tuple)
+              .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson() : null));
+
+      if (itemType.equals(itemTypes.RESOURCE.toString())) {
+        resItemApdPolicy =
+            pool.withConnection(conn -> conn.preparedQuery(GET_CONSUMER_APD_POL_DETAILS)
+                .execute(
+                    Tuple.of(resDetails.get(itemId).getId(), itemTypes.RESOURCE, status.ACTIVE))
+                .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson() : null));
+      } else {
+        resItemApdPolicy = Future.succeededFuture(new JsonObject());
+      }
+
+      return CompositeFuture.all(resGrpApdPolicy, resItemApdPolicy).compose(ar -> {
+        if (itemType.equals(itemTypes.RESOURCE_GROUP.toString())) {
+          return resGrpApdPolicy;
+        } else {
+          if (resItemApdPolicy.result() == null)
+            return resGrpApdPolicy;
+          else {
+            return resItemApdPolicy;
+          }
+        }
+      });
+    });
+
+    Future<String> getUrl = pool
+        .withConnection(conn -> conn.preparedQuery(GET_URL)
+            .execute(Tuple.of(resDetails.get(itemId).getResServerID()))
+            .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().getString(URL) : null))
+        .compose(ar -> {
+          if (ar == null) {
+            Response r = new ResponseBuilder().status(403).type(URN_INVALID_INPUT)
+                .title(INVALID_POLICY).detail(NO_RES_SERVER).build();
+            return Future.failedFuture(new ComposeException(r));
+          } else {
+            return Future.succeededFuture(ar);
+          }
+        });
+
+    CompositeFuture.all(getUserPolicyConstraints, getApdPolicyDetails, getUrl)
+        .onSuccess(success -> {
+          if (getUserPolicyConstraints.result() != null) {
+            JsonObject details = new JsonObject();
+            details.mergeIn(getUserPolicyConstraints.result());
+            details.put(STATUS, SUCCESS);
+            details.put(CAT_ID, itemId);
+            details.put(URL, getUrl.result());
+            p.complete(details);
+          } else if (getApdPolicyDetails.result() != null) {
+            JsonObject apdDetails = getApdPolicyDetails.result();
+            JsonObject apdContext = new JsonObject();
+
+            apdContext.put(CALL_APD_APDID, apdDetails.getString(APD_ID))
+                .put(CALL_APD_USERID, userId.toString()).put(CALL_APD_RESOURCE, itemId)
+                .put(CALL_APD_RES_SER_URL, getUrl.result())
+                .put(CALL_APD_USERCLASS, apdDetails.getString(USER_CLASS))
+                .put(CALL_APD_PROVIDERID, resDetails.get(itemId).getOwnerId().toString())
+                .put(CALL_APD_CONSTRAINTS, apdDetails.getJsonObject(CONSTRAINTS));
+
+            apdService.callApd(apdContext, p);
+          } else {
+            Response r = new ResponseBuilder().status(403).type(URN_INVALID_INPUT)
+                .title(INVALID_POLICY).detail(POLICY_NOT_FOUND).build();
+            p.fail(new ComposeException(r));
+          }
+        }).onFailure(failureHandler -> {
+          // check if compose Exception, p.fail(composeExp)
+
+          LOGGER.error("failed verifyConsumerPolicy: " + failureHandler.getLocalizedMessage());
+          if (failureHandler instanceof ComposeException)
+            p.fail(failureHandler);
+          else
+            p.fail(INTERNALERROR);
+        });
     return p.future();
   }
 
