@@ -27,6 +27,7 @@ public class Constants {
   public static final String USER_ID = "user_id";
   public static final String ITEM_ID = "item_id";
   public static final String APD_ID = "apd_id";
+  public static final String USER_CLASS = "user_class";
   public static final String ITEM_TYPE = "item_type";
   public static final String EXPIRY_TIME = "expiry_time";
   public static final String OWNER_ID = "owner_id";
@@ -42,6 +43,13 @@ public class Constants {
   public static final String USR_POL = "USER";
   public static final String APD_POL = "APD";
 
+  public static final String CALL_APD_APDID = "apdId";
+  public static final String CALL_APD_USERID = "userId";
+  public static final String CALL_APD_RESOURCE = "resource";
+  public static final String CALL_APD_RES_SER_URL = "resSerUrl";
+  public static final String CALL_APD_USERCLASS = "userClass";
+  public static final String CALL_APD_PROVIDERID = "providerId";
+  public static final String CALL_APD_CONSTRAINTS = "constraints";
 
   public static final String RESULTS = "results";
   public static final String CAT_ITEM_PATH = "/iudx/cat/v1/item";
@@ -125,10 +133,15 @@ public class Constants {
       "Select role from  roles where user_id = $1::UUID "
           + "AND role = $2::role_enum AND status = $3::role_status_enum";
 
-  public static final String GET_CONSUMER_CONSTRAINTS =
+  public static final String GET_CONSUMER_USER_POL_CONSTRAINTS =
       "select constraints from  policies where  user_id = $1::UUID "
           + "and item_id = $2::UUID and item_type = $3::item_enum "
           + "and status = $4::policy_status_enum and expiry_time > now()";
+
+  public static final String GET_CONSUMER_APD_POL_DETAILS =
+      "select apd_id, constraints, user_class from apd_policies where"
+          + " item_id = $1::UUID and item_type = $2::item_enum"
+          + " and status = $3::policy_status_enum";
 
   public static final String GET_URL = "select url from resource_server where id = $1::UUID ";
 
