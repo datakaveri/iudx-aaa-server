@@ -3556,6 +3556,591 @@ paths:
                       -----END CERTIFICATE-----
       operationId: get-auth-v1-cert
       description: Get the JsonObject having certificate to authenticate/validate the generated JWT using `/auth/v1/token`
+  /auth/v1/apd:
+    get:
+      summary: Get registered Access Policy Domains
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+                x-examples:
+                  example-1:
+                    results:
+                      - name: RBAC APD for IISc
+                        url: apd.iisc.ac.in
+                        status: active
+                        owner:
+                          email: someone@iisc.ac.in
+                          name:
+                            firstName: a
+                            lastName: b
+                          id: 844e251b-574b-46e6-9247-f76f1f70a637
+                properties:
+                  results:
+                    type: array
+                    uniqueItems: true
+                    minItems: 1
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          minLength: 1
+                        url:
+                          type: string
+                          minLength: 1
+                        status:
+                          type: string
+                          minLength: 1
+                        owner:
+                          type: object
+                          properties:
+                            email:
+                              type: string
+                              minLength: 1
+                            name:
+                              type: object
+                              required:
+                                - firstName
+                                - lastName
+                              properties:
+                                firstName:
+                                  type: string
+                                  minLength: 1
+                                lastName:
+                                  type: string
+                                  minLength: 1
+                            id:
+                              type: string
+                              minLength: 1
+                          required:
+                            - email
+                            - name
+                            - id
+                      required:
+                        - name
+                        - url
+                        - status
+                  type:
+                    type: string
+                  title:
+                    type: string
+                required:
+                  - results
+              examples:
+                Example:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: Access Policy Domains
+                    results:
+                      - apdId: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                        name: DataKaveri APD
+                        url: apd.datakaveri.org
+                        status: pending
+                        owner:
+                          email: trustee@datakaveri.org
+                          name:
+                            firstName: Trustee
+                            lastName: DataKaveri
+                          id: 28c387e8-5807-44f7-830f-998e595d1bbe
+                      - apdId: 540972fd-43df-43c1-9627-df2402a6b731
+                        name: IISc APD
+                        url: apd.iisc.ac.in
+                        status: active
+                        owner:
+                          email: trustee@datakaveri.org
+                          name:
+                            firstName: Trustee
+                            lastName: IISc
+                          id: 7d379bda-c204-4a97-918f-c24590b0cd6f
+        '401':
+          description: '- Unauthorized - `token` invalid/expired'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+              examples:
+                Example:
+                  value:
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
+        '404':
+          description: '- A user profile for the user does not exist'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+              examples:
+                User profile for the user does not exist:
+                  value:
+                    type: 'urn:dx:as:MissingInformation'
+                    title: User profile does not exist
+                    detail: Please register to create user profile
+      operationId: get-auth-v1-apd
+      description: |-
+        Returns registered APDs. 
+
+        - If called by the AAA admin, returns all APD registrations
+        - If called by a user with `trustee` role, returns all APDs the user has registered
+        - If called by a user with any other roles, returns all APDs in the **active** state
+      security:
+        - authorization: []
+    post:
+      summary: Register an Access Policy Domain
+      operationId: post-auth-v1-apd
+      responses:
+        '200':
+          description: The APD has been successfully registered and is pending AAA Admin approval
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+                properties:
+                  type:
+                    type: string
+                    minLength: 1
+                  title:
+                    type: string
+                    minLength: 1
+                  results:
+                    type: object
+                    properties:
+                      apdId:
+                        type: string
+                        minLength: 1
+                      name:
+                        type: string
+                        minLength: 1
+                      url:
+                        type: string
+                        minLength: 1
+                      status:
+                        type: string
+                        minLength: 1
+                      owner:
+                        type: object
+                        properties:
+                          email:
+                            type: string
+                            minLength: 1
+                          name:
+                            type: object
+                            properties:
+                              firstName:
+                                type: string
+                                minLength: 1
+                              lastName:
+                                type: string
+                                minLength: 1
+                            required:
+                              - firstName
+                              - lastName
+                          id:
+                            type: string
+                            minLength: 1
+                        required:
+                          - email
+                          - name
+                          - id
+                    required:
+                      - apdId
+                      - name
+                      - url
+                      - status
+                      - owner
+                required:
+                  - type
+                  - title
+                  - results
+                x-examples:
+                  example-1:
+                    type: 'urn:dx:as:Success'
+                    title: The Access Policy Domain has been registered
+                    results:
+                      apdId: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                      name: zppcw
+                      url: zppcw.com
+                      status: pending
+                      owner:
+                        email: vgmwddiczi@gmail.com
+                        name:
+                          firstName: uirsxfqyuj
+                          lastName: lgbbcwgcax
+                        id: 28c387e8-5807-44f7-830f-998e595d1bbe
+              examples:
+                Example:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: The Access Policy Domain has been registered
+                    results:
+                      apdId: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                      name: DataKaveri APD
+                      url: apd.datakaveri.org
+                      status: pending
+                      owner:
+                        email: trustee@datakaveri.org
+                        name:
+                          firstName: Trustee
+                          lastName: DataKaveri
+                        id: 28c387e8-5807-44f7-830f-998e595d1bbe
+        '400':
+          description: |-
+            - Malformed or missing data
+            - Invalid `url`
+            - The APD (`url`) is not responding or has responded incorrectly
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+              examples:
+                APD not responding/responded incorrectly:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Invalid APD response
+                    detail: The APD is not responsive/has not responded correctly
+                Invalid url:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Invalid URL
+                    detail: The URL is invalid
+        '401':
+          description: '- Unauthorized - `token` invalid/expired'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+              examples:
+                Example:
+                  value:
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
+        '403':
+          description: '- User does not have the `trustee` role'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+              examples:
+                Example:
+                  value:
+                    type: 'urn:dx:as:InvalidRole'
+                    title: Not a trustee
+                    detail: Use does not have the trustee role
+        '404':
+          description: '- A user profile for the user does not exist'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+              examples:
+                User profile for the user does not exist:
+                  value:
+                    type: 'urn:dx:as:MissingInformation'
+                    title: User profile does not exist
+                    detail: Please register to create user profile
+        '409':
+          description: '- An APD with the provided `url` already exists'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+              examples:
+                Example:
+                  value:
+                    type: 'urn:dx:as:AlreadyExists'
+                    title: URL already exists
+                    detail: An APD with the requested URL already exists
+      description: |-
+        A registered trustee can register an Access Policy Domain. The AAA admin must approve the registration and set the APD into the **active** state, after which policies can be written using the APD. 
+
+        # APD Requirements during registration
+        The APD URL must be provided during registration. The URL must be **reachable** as well as:
+        - Must be served on HTTPS at port 443
+        - Must not redirect
+
+        Additionally, The `GET /userclasses` API must be implemented and should 
+        - return `200 OK` with content-type `application/json` 
+        - send at least an empty JSON object in the response body
+      tags:
+        - Access Policy Domain (APD) APIs
+      security:
+        - authorization: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                name:
+                  type: string
+                  pattern: '^[a-zA-Z0-9]+(?:(?: |['' -])[a-zA-Z0-9]+)*$'
+                  minLength: 1
+                  maxLength: 100
+                  description: The name of the APD
+                url:
+                  type: string
+                  description: The APD URL
+              required:
+                - name
+                - url
+            examples:
+              Example:
+                value:
+                  name: DataKaveri APD
+                  url: apd.datakaveri.org
+        required: true
+        description: |-
+          - Registered users with the `trustee` role are permitted to call the API
+          - `url` must be a **valid reachable domain/hostname**. Examples of invalid `url`s are:
+            - `https://example.com`
+            - `example.com:8080`
+            - `example.com/apd`
+    put:
+      summary: Update Access Policy Domain status
+      operationId: put-auth-v1-apd
+      responses:
+        '200':
+          description: The statuses of the requested APDs have been updated successfully
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+                properties:
+                  type:
+                    type: string
+                    minLength: 1
+                  title:
+                    type: string
+                    minLength: 1
+                  results:
+                    type: array
+                    uniqueItems: true
+                    minItems: 1
+                    items:
+                      required:
+                        - apdId
+                        - name
+                        - url
+                        - status
+                      properties:
+                        apdId:
+                          type: string
+                          minLength: 1
+                        name:
+                          type: string
+                          minLength: 1
+                        url:
+                          type: string
+                          minLength: 1
+                        status:
+                          type: string
+                          minLength: 1
+                        owner:
+                          type: object
+                          properties:
+                            email:
+                              type: string
+                              minLength: 1
+                            name:
+                              type: object
+                              properties:
+                                firstName:
+                                  type: string
+                                  minLength: 1
+                                lastName:
+                                  type: string
+                                  minLength: 1
+                              required:
+                                - firstName
+                                - lastName
+                            id:
+                              type: string
+                              minLength: 1
+                          required:
+                            - email
+                            - name
+                            - id
+                required:
+                  - type
+                  - title
+                  - results
+                x-examples:
+                  example-1:
+                    type: 'urn:dx:as:Success'
+                    title: The status of the Access Policy Domains have been updated
+                    results:
+                      - apdId: 11f0335d-0d0a-4f58-99b1-08e60e3f4750
+                        name: zwcev
+                        url: zwcev.com
+                        status: inactive
+                        owner:
+                          email: iisjnaawjw@gmail.com
+                          name:
+                            firstName: dxzptlevqi
+                            lastName: yfuwqntzmg
+                          id: 55530f92-7d84-428c-8c0d-f8b37818ac13
+              examples:
+                Example:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: The status of the Access Policy Domains have been updated
+                    results:
+                      - apdId: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                        name: DataKaveri APD
+                        url: apd.datakaveri.org
+                        status: active
+                        owner:
+                          email: trustee@datakaveri.org
+                          name:
+                            firstName: Trustee
+                            lastName: DataKaveri
+                          id: 28c387e8-5807-44f7-830f-998e595d1bbe
+                      - apdId: 540972fd-43df-43c1-9627-df2402a6b731
+                        name: IISc APD
+                        url: apd.iisc.ac.in
+                        status: inactive
+                        owner:
+                          email: trustee@datakaveri.org
+                          name:
+                            firstName: Trustee
+                            lastName: IISc
+                          id: 7d379bda-c204-4a97-918f-c24590b0cd6f
+        '400':
+          description: |-
+            - Malformed or missing data
+            - Invalid/non-existent `apdId`
+            - Duplicate APD IDs in `request` array
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+              examples:
+                Invalid APD ID:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Invalid APD ID
+                    detail: 00e3035b-c91d-487a-b67a-a7f7daa12723
+                Duplicate APD IDs in request array:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Duplicate APD ID in request
+                    detail: 22bf1df3-7704-4be3-b64a-7f1fb8d1e97d
+        '401':
+          description: '- Unauthorized - `token` invalid/expired'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+              examples:
+                Example:
+                  value:
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
+        '403':
+          description: |-
+            - User is not AAA admin or does not have `trustee` role
+            - Cannot change status of a particular APD
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+              examples:
+                Invalid Roles:
+                  value:
+                    type: 'urn:dx:as:InvalidRole'
+                    title: Invalid roles to call API
+                    detail: Trustees and Auth Server Admin may call the API
+                Cannot change status of an APD:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Not allowed to change status for APD ID
+                    detail: 073a3628-1f21-4828-bdeb-9620dfd6ed42
+        '404':
+          description: '- A user profile for the user does not exist'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+              examples:
+                User profile for the user does not exist:
+                  value:
+                    type: 'urn:dx:as:MissingInformation'
+                    title: User profile does not exist
+                    detail: Please register to create user profile
+      description: |-
+        Allows the AAA admins and trustees who have registered APDs to update status.
+
+        The AAA admin may change status:
+        - from **pending** to **active**, to allow policies to be written for the APD.
+        - from **active** to **inactive**, in case the APD is not responsive or has been compromised
+        - from **inactive** to **active**
+
+        The trustee may change status of APDs they have registered:
+        - from **active** to **inactive**, to indicate that no new policies may be written using the APD. 
+        - from **inactive** to **pending**, to allow the AAA admin to reconsider activating the APD
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ''
+              x-examples:
+                example-1:
+                  request:
+                    - apdId: 3f08e1ba-f4c0-4ed0-86da-edf7092d6333
+                      status: active
+              additionalProperties: false
+              properties:
+                request:
+                  type: array
+                  uniqueItems: true
+                  minItems: 1
+                  items:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      apdId:
+                        type: string
+                        minLength: 36
+                        format: uuid
+                        pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+                        maxLength: 36
+                        description: The APD ID
+                      status:
+                        type: string
+                        minLength: 1
+                        enum:
+                          - active
+                          - inactive
+                          - pending
+                        description: The status to be changed to
+                    required:
+                      - apdId
+                      - status
+              required:
+                - request
+            examples:
+              Example:
+                value:
+                  request:
+                    - apdId: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                      status: active
+                    - apdId: 540972fd-43df-43c1-9627-df2402a6b731
+                      status: inactive
+      security:
+        - authorization: []
 components:
   schemas:
     RequestToken:
