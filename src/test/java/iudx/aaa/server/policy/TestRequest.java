@@ -34,6 +34,14 @@ public class TestRequest {
           .put("role", "consumer")
           .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5");
 
+  public static JsonObject apdResourceGrpPolicy =
+      new JsonObject()
+          .put(
+              "itemId",
+              "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/sub-sample")
+          .put("itemType", "resource_group")
+          .put("role", "consumer")
+          .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5");
 
   public static JsonObject NoCataloguePolicy =
       new JsonObject()

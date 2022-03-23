@@ -1,6 +1,7 @@
 package iudx.aaa.server.policy;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -29,6 +30,7 @@ import static iudx.aaa.server.policy.Constants.REGISTRATION_SERVICE_ADDRESS;
 import static iudx.aaa.server.policy.Constants.STATUS;
 import static iudx.aaa.server.policy.Constants.SUCCESS;
 import static iudx.aaa.server.policy.Constants.UNAUTHORIZED_DELEGATE;
+import static iudx.aaa.server.policy.TestRequest.apdResourceGrpPolicy;
 import static iudx.aaa.server.policy.TestRequest.NoCataloguePolicy;
 import static iudx.aaa.server.policy.TestRequest.NoCatalogueProviderPolicy;
 import static iudx.aaa.server.policy.TestRequest.consumerVerification;
@@ -37,6 +39,7 @@ import static iudx.aaa.server.policy.TestRequest.roleFailure;
 import static iudx.aaa.server.policy.TestRequest.validDelegateVerification;
 import static iudx.aaa.server.policy.TestRequest.validProviderCat;
 import static iudx.aaa.server.policy.TestRequest.validProviderVerification;
+import static org.mockito.ArgumentMatchers.any;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
@@ -158,6 +161,30 @@ public class VerifyPolicyTest {
                 testContext.verify(
                     () -> {
                       assertEquals(SUCCESS, response.getString(STATUS));
+                      testContext.completeNow();
+                    })));
+  }
+
+  @Test
+  @DisplayName("Testing Successful APD Policy verification consumer")
+  void consumerApdPolicySuccess(VertxTestContext testContext) {
+    
+    /*
+     * Since verifyPolicy does not check the response of callApd, we just send an empty JSON object
+     * as the mocked response for callApd here.
+     */
+    Mockito.doAnswer(i -> { 
+      Promise<JsonObject> promise = i.getArgument(1);
+      promise.complete(new JsonObject());
+      return i.getMock();
+    }).when(apdService).callApd(any(), any());
+    
+    policyService.verifyPolicy(
+        apdResourceGrpPolicy,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
                       testContext.completeNow();
                     })));
   }
