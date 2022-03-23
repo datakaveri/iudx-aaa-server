@@ -3,6 +3,7 @@ package iudx.aaa.server.policy;
 public class Constants {
 
   public static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
+  public static final String APD_SERVICE_ADDRESS = "iudx.aaa.apd.service";
   public static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
   // db columns
   public static final String USERID = "userId";
@@ -25,12 +26,14 @@ public class Constants {
   public static final String RES = "res";
   public static final String USER_ID = "user_id";
   public static final String ITEM_ID = "item_id";
+  public static final String APD_ID = "apd_id";
   public static final String ITEM_TYPE = "item_type";
   public static final String EXPIRY_TIME = "expiry_time";
   public static final String OWNER_ID = "owner_id";
   public static final String RESOURCE_GROUP_TABLE = "resource_group";
   public static final String RESOURCE_TABLE = "resource";
   public static final String CAT_ID = "cat_id";
+  public static final String APD_DETAILS = "apd";
   public static final String OWNER_DETAILS = "owner";
   public static final String USER_DETAILS = "user";
   public static final String CONSUMER_ROLE = "CONSUMER";
@@ -160,20 +163,6 @@ public class Constants {
           + "status = $4::policy_status_enum "
           + " and expiry_time > now()";
   // List Policy queries
-  public static final String GET_POLICIES =
-      "Select a.id as  \"policyId\", a.user_id, a.owner_id ,a.item_type as \"itemType\" ,"
-          + " a.expiry_time as \"expiryTime\" ,a.constraints, b.cat_id  as \"itemId\" from policies a INNER JOIN ";
-  public static final String GET_SERVER_POLICIES =
-      "Select a.id as  \"policyId\", a.user_id, a.owner_id ,a.item_type as \"itemType\" ,"
-          + " a.expiry_time as \"expiryTime\" ,a.constraints, b.url  as \"itemId\" from policies a INNER JOIN ";
-  public static final String GET_POLICIES_JOIN =
-      " b on a.item_id = b.id "
-          + "where  a.item_type = $2::item_enum  "
-          + "AND a.status = $3::policy_status_enum  AND a.expiry_time > NOW() And (a.owner_id = $1::UUID or  a.user_id = $1::UUID)";
-  public static final String GET_POLICIES_JOIN_DELEGATE =
-      " b on a.item_id = b.id "
-          + "where  a.item_type = $2::item_enum  "
-          + "AND a.status = $3::policy_status_enum  AND a.expiry_time > NOW() And  a.owner_id = $1::UUID";
 
   public static final String EXISTING_ACTIVE_USR_POL =
       "SELECT id FROM policies WHERE owner_id = $1::uuid AND status = 'ACTIVE' AND id = ANY($2::uuid[]) ";
@@ -184,6 +173,25 @@ public class Constants {
 
   public static final String EXISTING_ACTIVE_APD_POL =
       "SELECT id FROM apd_policies WHERE owner_id = $1::uuid AND status = 'ACTIVE' AND id = ANY($2::uuid[]) ";
+
+  public static final String GET_USER_POLICIES_AUTH_DELEGATE =
+      "SELECT id AS \"policyId\", user_id, owner_id, item_id, item_type AS \"itemType\","
+          + " expiry_time AS \"expiryTime\", constraints FROM policies WHERE status = 'ACTIVE'"
+          + " AND owner_id = $1::uuid";
+  
+  public static final String GET_USER_POLICIES =
+      "SELECT id AS \"policyId\", user_id, owner_id, item_id, item_type AS \"itemType\","
+          + " expiry_time AS \"expiryTime\", constraints FROM policies WHERE status = 'ACTIVE'"
+          + " AND (owner_id = $1::uuid OR user_id = $1::uuid)";
+  
+  public static final String GET_APD_POLICIES =
+      "SELECT id AS \"policyId\", apd_id, user_class AS \"userClass\", owner_id, item_id,"
+      + " item_type AS \"itemType\", expiry_time AS \"expiryTime\", constraints FROM apd_policies "
+          + "WHERE status = 'ACTIVE' AND owner_id = $1::uuid";
+  
+  public static final String CHECK_POLICY_EXIST =
+      "select id,owner_id,item_type from policies"
+          + " where status = $1::policy_status_enum  and id = any($2::uuid[])";
 
   public static final String RES_OWNER_CHECK =
       "select id from policies where owner_id = $1::uuid "
@@ -230,6 +238,15 @@ public class Constants {
 
   public static final String GET_RES_SER_ID =
       "select url,id from resource_server where url = any($1::text[])";
+
+  public static final String GET_RES_GRP_CAT_IDS =
+      "SELECT id, cat_id FROM resource_group WHERE id = ANY($1::uuid[]) ";
+
+  public static final String GET_RES_CAT_IDS =
+      "SELECT id, cat_id FROM resource WHERE id = ANY($1::uuid[]) ";
+
+  public static final String GET_RES_SER_URLS =
+      "SELECT url, id FROM resource_server WHERE id = ANY($1::uuid[])";
 
   public static final String GET_PROVIDER_ID =
       "select email_hash,id from users where email_hash = any($1::text[])";
@@ -363,7 +380,8 @@ public class Constants {
   public enum itemTypes {
     RESOURCE_SERVER("RESOURCE_SERVER"),
     RESOURCE_GROUP("RESOURCE_GROUP"),
-    RESOURCE("RESOURCE");
+    RESOURCE("RESOURCE"),
+    APD("APD");
 
     private final String type;
 

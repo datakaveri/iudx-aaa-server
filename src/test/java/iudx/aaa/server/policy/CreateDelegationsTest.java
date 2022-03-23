@@ -19,8 +19,10 @@ import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+import iudx.aaa.server.apd.ApdService;
 import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.registration.RegistrationService;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
@@ -43,6 +45,7 @@ public class CreateDelegationsTest {
     private static PgConnectOptions connectOptions;
     private static PolicyService policyService;
     private static RegistrationService registrationService;
+    private static ApdService apdService = Mockito.mock(ApdService.class);
     private static CatalogueClient catalogueClient;
     private static JsonObject authOptions;
     private static JsonObject catOptions;
@@ -99,7 +102,8 @@ public class CreateDelegationsTest {
 
         pgclient = PgPool.pool(vertx, connectOptions, poolOptions);
 
-        policyService = new PolicyServiceImpl(pgclient,registrationService,catalogueClient,authOptions,catOptions);
+        policyService = new PolicyServiceImpl(pgclient, registrationService, apdService,
+            catalogueClient, authOptions, catOptions);
         testContext.completeNow();
     }
 

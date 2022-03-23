@@ -31,6 +31,7 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
+import iudx.aaa.server.apd.ApdService;
 import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
@@ -75,6 +76,7 @@ public class ListDelegationTest {
   private static PoolOptions poolOptions;
   private static PgConnectOptions connectOptions;
   private static PolicyService policyService;
+  private static ApdService apdService = Mockito.mock(ApdService.class);
   private static RegistrationService registrationService;
   private static JsonObject authOptions;
   private static JsonObject catOptions;
@@ -190,8 +192,9 @@ public class ListDelegationTest {
     }).onSuccess(r -> {
 
       registrationService = mockRegistrationFactory.getInstance();
-      policyService = new PolicyServiceImpl(pool, registrationService, catalogueClient, authOptions,
-          catOptions);
+      policyService =
+          new PolicyServiceImpl(
+              pool, registrationService,apdService, catalogueClient, authOptions, catOptions);
       testContext.completeNow();
     });
   }

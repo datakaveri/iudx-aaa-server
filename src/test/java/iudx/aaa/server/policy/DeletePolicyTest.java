@@ -10,6 +10,7 @@ import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Tuple;
+import iudx.aaa.server.apd.ApdService;
 import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
@@ -66,6 +68,7 @@ public class DeletePolicyTest {
   private static PoolOptions poolOptions;
   private static PgConnectOptions connectOptions;
   private static PolicyService policyService;
+  private static ApdService apdService = Mockito.mock(ApdService.class);
   private static RegistrationService registrationService;
   private static CatalogueClient catalogueClient;
   private static Vertx vertxObj;
@@ -130,8 +133,8 @@ public class DeletePolicyTest {
             .compose(x -> conn.preparedQuery(INSERT_APD_POL).execute(Tuple.of(apdPolicyId)))
             .compose(x -> conn.preparedQuery(INSERT_EXPIRED_USER_POL).execute(Tuple.of(expiredUserPolicyId))))
         .onSuccess(obj -> {
-          policyService = new PolicyServiceImpl(pgclient, registrationService, catalogueClient,
-              authOptions, catOptions);
+          policyService = new PolicyServiceImpl(pgclient, registrationService, apdService,
+              catalogueClient, authOptions, catOptions);
           testContext.completeNow();
         }).onFailure(err -> testContext.failNow(err.getMessage()));
   }

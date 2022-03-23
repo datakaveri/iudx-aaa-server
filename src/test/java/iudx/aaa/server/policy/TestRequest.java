@@ -101,7 +101,7 @@ public class TestRequest {
 
   // Requests for List Policy
   public static User validListPolicyProvider =
-      new User(new JsonObject().put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5"));
+      new User(new JsonObject().put("userId", "844e251b-574b-46e6-9247-f76f1f70a637"));
 
   // List as a consumer
   public static User validListPolicyConsumer =

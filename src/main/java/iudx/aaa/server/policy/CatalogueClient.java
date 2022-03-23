@@ -15,6 +15,7 @@ import iudx.aaa.server.apiserver.ResourceObj;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.apiserver.util.Urn;
+import iudx.aaa.server.policy.Constants.itemTypes;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -23,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -33,7 +35,9 @@ import static iudx.aaa.server.policy.Constants.CHECK_RESOURCE_EXIST;
 import static iudx.aaa.server.policy.Constants.CHECK_RESOURCE_EXIST_JOIN;
 import static iudx.aaa.server.policy.Constants.EMAIL_HASH;
 import static iudx.aaa.server.policy.Constants.GET_PROVIDER_ID;
+import static iudx.aaa.server.policy.Constants.GET_RES_CAT_IDS;
 import static iudx.aaa.server.policy.Constants.GET_RES_DETAILS;
+import static iudx.aaa.server.policy.Constants.GET_RES_GRP_CAT_IDS;
 import static iudx.aaa.server.policy.Constants.GET_RES_GRP_DETAILS;
 import static iudx.aaa.server.policy.Constants.GET_RES_SER_DETAIL;
 import static iudx.aaa.server.policy.Constants.GET_RES_SER_ID;
@@ -523,5 +527,46 @@ public class CatalogueClient {
       p.fail(INTERNALERROR);
     }
     return p.future();
+  }
+  
+  /**
+   * Get Cat IDs of resource/resource group given item IDs.
+   * 
+   * @param itemIds Set of item IDs in UUID
+   * @param itemType itemTypes enum accepting either RESOURCE or RESOURCE_GROUP
+   * @return a future of map, mapping item ID to Cat ID
+   */
+  public Future<Map<UUID, String>> getCatIds(Set<UUID> itemIds, itemTypes itemType)
+  {
+    Promise<Map<UUID, String>> promise = Promise.promise();
+
+    if (itemIds.isEmpty()) {
+      promise.complete(new HashMap<UUID, String>());
+      return promise.future();
+    }
+
+    String query;
+    if (itemType.equals(itemTypes.RESOURCE_GROUP)) {
+      query = GET_RES_GRP_CAT_IDS;
+    } else if ((itemType.equals(itemTypes.RESOURCE))) {
+      query = GET_RES_CAT_IDS;
+    } else {
+      promise.fail("Invalid resource type passed");
+      return promise.future();
+    }
+
+    Collector<Row, ?, Map<UUID, String>> collector =
+        Collectors.toMap(row -> row.getUUID(ID), row -> row.getString(CAT_ID));
+
+    pool.withConnection(conn -> conn.preparedQuery(query).collecting(collector)
+        .execute(Tuple.of(itemIds.toArray(UUID[]::new))).map(res -> res.value()))
+        .onSuccess(resp -> {
+          promise.complete(resp);
+        }).onFailure(err -> {
+          err.printStackTrace();
+          LOGGER.error("Fail: " + err.toString());
+          promise.fail(INTERNALERROR);
+        });
+    return promise.future();
   }
 }

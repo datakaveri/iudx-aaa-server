@@ -1,6 +1,7 @@
 package iudx.aaa.server.policy;
 
 import io.vertx.core.json.JsonObject;
+import iudx.aaa.server.apd.ApdService;
 import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,6 +12,7 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.serviceproxy.ServiceBinder;
 import io.vertx.sqlclient.PoolOptions;
 
+import static iudx.aaa.server.policy.Constants.APD_SERVICE_ADDRESS;
 import static iudx.aaa.server.policy.Constants.POLICY_SERVICE_ADDRESS;
 import static iudx.aaa.server.policy.Constants.REGISTRATION_SERVICE_ADDRESS;
 
@@ -46,6 +48,7 @@ public class PolicyVerticle extends AbstractVerticle {
   private JsonObject catOptions;
   private PolicyService policyService;
   private RegistrationService registrationService;
+  private ApdService apdService;
   private CatalogueClient catalogueClient;
   private ServiceBinder binder;
   private MessageConsumer<JsonObject> consumer;
@@ -101,10 +104,12 @@ public class PolicyVerticle extends AbstractVerticle {
 
     /* Create the client pool */
 
-    PgPool pool = PgPool.pool(vertx,connectOptions, poolOptions);
+    PgPool pool = PgPool.pool(vertx, connectOptions, poolOptions);
     registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
-    catalogueClient = new CatalogueClient(vertx,pool,catalogueOptions);
-    policyService = new PolicyServiceImpl(pool,registrationService,catalogueClient,authOptions,catOptions);
+    apdService = ApdService.createProxy(vertx, APD_SERVICE_ADDRESS);
+    catalogueClient = new CatalogueClient(vertx, pool, catalogueOptions);
+    policyService = new PolicyServiceImpl(pool, registrationService, apdService, catalogueClient,
+        authOptions, catOptions);
 
     binder = new ServiceBinder(vertx);
     consumer =

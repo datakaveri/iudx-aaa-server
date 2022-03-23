@@ -8,6 +8,7 @@ import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+import iudx.aaa.server.apd.ApdService;
 import iudx.aaa.server.apiserver.ResourceObj;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.util.ComposeException;
@@ -70,6 +71,7 @@ public class CreatePolicyTest {
   private static JsonObject authOptions;
   private static JsonObject catOptions;
   private static RegistrationService registrationService;
+  private static ApdService apdService = Mockito.mock(ApdService.class);
   private static MockRegistrationFactory mockRegistrationFactory;
   private static CatalogueClient catClient;
 
@@ -125,9 +127,8 @@ public class CreatePolicyTest {
                   catClient = Mockito.mock(CatalogueClient.class);
                   mockRegistrationFactory = new MockRegistrationFactory();
                   registrationService = mockRegistrationFactory.getInstance();
-                  policyService =
-                      new PolicyServiceImpl(
-                          pgclient, registrationService, catClient, authOptions, catOptions);
+                  policyService = new PolicyServiceImpl(pgclient, registrationService, apdService,
+                      catClient, authOptions, catOptions);
                   testContext.completeNow();
           ;
   }
