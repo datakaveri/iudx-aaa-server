@@ -33,7 +33,6 @@ services:
       - ./src/:/usr/share/app/src
     command: bash -c "mvn clean compile exec:java@aaa-server"
     ports:
-      - "8443:8443"
       - "8080:8080"
     networks:
       - auth-net
