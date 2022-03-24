@@ -69,7 +69,8 @@ public class ApiServerVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LogManager.getLogger(ApiServerVerticle.class);
   private HttpServer server;
   private Router router;
-  private final int port = 8443;
+  private int port = 8443;
+  private boolean isSSL;
   private String keystorePath;
   private String keystorePassword;
 
@@ -124,8 +125,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     serverTimeout = Long.parseLong(config().getString(SERVER_TIMEOUT_MS));
     corsRegex = config().getString(CORS_REGEX);
     authServerDomain = config().getString(AUTHSERVER_DOMAIN);
-    keystorePath = config().getString(KEYSTORE_PATH);
-    keystorePassword = config().getString(KEYSTPRE_PASSWORD);
+
 
     /* Set Connection Object and schema */
     if (connectOptions == null) {
@@ -339,8 +339,22 @@ public class ApiServerVerticle extends AbstractVerticle {
                 .setStatusCode(404).end(JSON_NOT_FOUND);
               });
 
-              HttpServerOptions serverOptions = new HttpServerOptions();
-              serverOptions.setSsl(false);
+          LOGGER.info("starting server");
+          HttpServerOptions serverOptions = new HttpServerOptions();
+
+            LOGGER.debug("Info: Starting HTTP server");
+
+            /* Setup the HTTP server properties, APIs and port. */
+
+            serverOptions.setSsl(false);
+            /*
+             * Default port when ssl is disabled is 8080. If set through config, then that value is
+             * taken
+             */
+            port = config().getInteger("httpPort") == null ? 8080 : config().getInteger("httpPort");
+            LOGGER.info("Info: Starting HTTP server at port " + port);
+
+
 
               serverOptions.setCompressionSupported(true).setCompressionLevel(5);
               server = vertx.createHttpServer(serverOptions);

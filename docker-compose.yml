@@ -17,6 +17,7 @@ services:
       - ./configs/keystore.jks:/usr/share/app/configs/keystore.jks
     ports:
       - "8443:8443"
+      - "8080:8080"
       - "9000:9000"
     restart: on-failure
     depends_on:
@@ -42,6 +43,7 @@ services:
     ports:
       - "8443:8443"
       - "9000:9000"
+      - "8080:8080"
     restart: on-failure
     networks: 
       - auth-net

@@ -21,6 +21,7 @@ services:
     ports:
       - "8443:8443"
       - "9000:9000"
+      - "8080:8080"
     restart: on-failure
     networks: 
       - overlay-net
@@ -43,6 +44,7 @@ services:
     ports:
       - "8443:8443"
       - "9000:9000"
+      - "8080:8080"
     restart: on-failure
     networks: 
       - overlay-net
