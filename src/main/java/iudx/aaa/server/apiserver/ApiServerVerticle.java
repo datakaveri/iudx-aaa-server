@@ -69,10 +69,9 @@ public class ApiServerVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LogManager.getLogger(ApiServerVerticle.class);
   private HttpServer server;
   private Router router;
-  private int port = 8443;
-  private boolean isSSL;
-  private String keystorePath;
-  private String keystorePassword;
+  private int port;
+  private String jwtKeystorePath;
+  private String jwtKeystorePassword;
 
   private String databaseIP;
   private int databasePort;
@@ -105,7 +104,7 @@ public class ApiServerVerticle extends AbstractVerticle {
   /**
    * This method is used to start the Verticle. It deploys a verticle in a cluster, reads the
    * configuration, obtains a proxy for the Event bus services exposed through service discovery,
-   * start an HTTP server at port 8443
+   * start an HTTP server at port 8080 unless another port is supplied in the configuration.
    *
    * @throws Exception which is a startup exception TODO Need to add documentation for all the
    *
@@ -125,7 +124,8 @@ public class ApiServerVerticle extends AbstractVerticle {
     serverTimeout = Long.parseLong(config().getString(SERVER_TIMEOUT_MS));
     corsRegex = config().getString(CORS_REGEX);
     authServerDomain = config().getString(AUTHSERVER_DOMAIN);
-
+    jwtKeystorePath = config().getString(KEYSTORE_PATH);
+    jwtKeystorePassword = config().getString(KEYSTPRE_PASSWORD);
 
     /* Set Connection Object and schema */
     if (connectOptions == null) {
@@ -339,22 +339,16 @@ public class ApiServerVerticle extends AbstractVerticle {
                 .setStatusCode(404).end(JSON_NOT_FOUND);
               });
 
-          LOGGER.info("starting server");
-          HttpServerOptions serverOptions = new HttpServerOptions();
+              HttpServerOptions serverOptions = new HttpServerOptions();
+              LOGGER.debug("Info: Starting HTTP server");
 
-            LOGGER.debug("Info: Starting HTTP server");
-
-            /* Setup the HTTP server properties, APIs and port. */
-
-            serverOptions.setSsl(false);
-            /*
-             * Default port when ssl is disabled is 8080. If set through config, then that value is
-             * taken
-             */
-            port = config().getInteger("httpPort") == null ? 8080 : config().getInteger("httpPort");
-            LOGGER.info("Info: Starting HTTP server at port " + port);
-
-
+              /*
+               * Setup the HTTP server properties, APIs and port. Default port is 8080. If set through
+               * config, then that value is taken
+               */
+              serverOptions.setSsl(false);
+              port = config().getInteger("httpPort") == null ? 8080 : config().getInteger("httpPort");
+              LOGGER.info("Info: Starting HTTP server at port " + port);
 
               serverOptions.setCompressionSupported(true).setCompressionLevel(5);
               server = vertx.createHttpServer(serverOptions);
@@ -861,7 +855,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void pubCertHandler(RoutingContext context) {
 
-    JksOptions options = new JksOptions().setPath(keystorePath).setPassword(keystorePassword);
+    JksOptions options = new JksOptions().setPath(jwtKeystorePath).setPassword(jwtKeystorePassword);
     try {
       KeyStore ks = options.loadKeyStore(vertx);
       if (ks.containsAlias(KS_ALIAS)) {
