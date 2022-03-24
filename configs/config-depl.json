@@ -95,7 +95,6 @@
     },
     {
       "id": "iudx.aaa.server.apiserver.ApiServerVerticle",
-      "httpPort": 8443,
       "verticleInstances": 1,
       "required":["postgresOptions", "commonOptions", "keycloakOptions", "jwtKeystoreOptions"],
       "poolSize": "5",
