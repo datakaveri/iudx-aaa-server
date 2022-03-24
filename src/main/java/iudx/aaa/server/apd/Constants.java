@@ -123,7 +123,7 @@ public class Constants {
   public static final String CREATE_TOKEN_URL = "url";
   public static final String CREATE_TOKEN_CONSTRAINTS = "constraints";
   public static final String CREATE_TOKEN_CAT_ID = "cat_id";
-  public static final String CREATE_TOKEN_SESSIONID = "session_id";
+  public static final String CREATE_TOKEN_SESSIONID = "sessionId";
   public static final String CREATE_TOKEN_LINK = "link";
   public static final String CREATE_TOKEN_STATUS = "status";
   public static final String CREATE_TOKEN_SUCCESS = "success";

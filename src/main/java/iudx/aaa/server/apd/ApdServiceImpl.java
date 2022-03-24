@@ -341,7 +341,7 @@ public class ApdServiceImpl implements ApdService {
           .map(r -> UUID.fromString(r.getApdId())).collect(Collectors.toList());
 
       return ids.stream().map(r -> queryResult.result().get(r).getString("owner_id"))
-          .map(id -> UUID.fromString(id)).collect(Collectors.toList());
+          .map(id -> UUID.fromString(id)).distinct().collect(Collectors.toList());
     };
 
     /* Function to get list of trustee user IDs from the query result map */
@@ -483,6 +483,13 @@ public class ApdServiceImpl implements ApdService {
       Handler<AsyncResult<JsonObject>> handler) {
 
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+
+    if (user.getUserId().equals(NIL_UUID)) {
+      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
+          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
 
     if (!user.getRoles().contains(Roles.TRUSTEE)) {
       Response resp = new ResponseBuilder().type(URN_INVALID_ROLE).title(ERR_TITLE_NOT_TRUSTEE)
