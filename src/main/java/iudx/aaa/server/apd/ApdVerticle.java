@@ -1,6 +1,7 @@
 package iudx.aaa.server.apd;
 
 import static iudx.aaa.server.apd.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.apd.Constants.CONFIG_WEBCLI_TIMEOUTMS;
 import static iudx.aaa.server.apd.Constants.DATABASE_IP;
 import static iudx.aaa.server.apd.Constants.DATABASE_NAME;
 import static iudx.aaa.server.apd.Constants.DATABASE_PASSWORD;
@@ -51,12 +52,15 @@ public class ApdVerticle extends AbstractVerticle {
   private String databaseUserName;
   private String databasePassword;
   private int poolSize;
+  
+  private int webClientTimeout;
 
   private PgPool pool;
   private PoolOptions poolOptions;
   private PgConnectOptions connectOptions;
   private static final String APD_SERVICE_ADDRESS = "iudx.aaa.apd.service";
-  private static JsonObject options;
+  private static JsonObject apdServiceOptions;
+  private static JsonObject apdWebCliConfig;
   private WebClient webClient;
   private WebClientOptions webClientOptions;
   private ApdWebClient apdWebClient;
@@ -91,7 +95,13 @@ public class ApdVerticle extends AbstractVerticle {
     /*
      * Pass an `options` JSON object to the serviceImpl with a key:val being the authServerDomain
      */
-    options = new JsonObject().put(CONFIG_AUTH_URL, config().getString(CONFIG_AUTH_URL));
+    apdServiceOptions = new JsonObject().put(CONFIG_AUTH_URL, config().getString(CONFIG_AUTH_URL));
+
+    /*
+     * Pass an `options` JSON object to the webClient with a key:val being the default timeout
+     */
+    apdWebCliConfig =
+        new JsonObject().put(CONFIG_WEBCLI_TIMEOUTMS, config().getInteger(CONFIG_WEBCLI_TIMEOUTMS));
 
     /* Set Connection Object and schema */
     if (connectOptions == null) {
@@ -114,13 +124,13 @@ public class ApdVerticle extends AbstractVerticle {
     webClientOptions = new WebClientOptions().setSsl(true).setVerifyHost(true).setTrustAll(true)
         .setFollowRedirects(false);
     webClient = WebClient.create(vertx, webClientOptions);
-    apdWebClient = new ApdWebClient(webClient);
+    apdWebClient = new ApdWebClient(webClient, apdWebCliConfig);
 
     registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
     policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
     tokenService = TokenService.createProxy(vertx, TOKEN_SERVICE_ADDRESS);
     apdService = new ApdServiceImpl(pool, apdWebClient, registrationService, policyService,
-        tokenService, options);
+        tokenService, apdServiceOptions);
     binder = new ServiceBinder(vertx);
     consumer = binder.setAddress(APD_SERVICE_ADDRESS).register(ApdService.class, apdService);
 

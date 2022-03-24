@@ -11,6 +11,7 @@ import static iudx.aaa.server.apd.Constants.APD_URN_REGEX;
 import static iudx.aaa.server.apd.Constants.APD_VERIFY_API;
 import static iudx.aaa.server.apd.Constants.APD_VERIFY_AUTH_HEADER;
 import static iudx.aaa.server.apd.Constants.APD_VERIFY_BEARER;
+import static iudx.aaa.server.apd.Constants.CONFIG_WEBCLI_TIMEOUTMS;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_APD_NOT_RESPOND;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_APD_NOT_RESPOND;
 import static iudx.aaa.server.apiserver.util.Urn.*;
@@ -42,9 +43,11 @@ import org.apache.logging.log4j.Logger;
 public class ApdWebClient {
   private WebClient webClient;
   private static final Logger LOGGER = LogManager.getLogger(ApdWebClient.class);
+  private static int webClientTimeoutMs;
 
-  public ApdWebClient(WebClient wc) {
+  public ApdWebClient(WebClient wc, JsonObject options) {
     this.webClient = wc;
+    webClientTimeoutMs = options.getInteger(CONFIG_WEBCLI_TIMEOUTMS);
   }
 
   static Response failureResponse = new ResponseBuilder().type(URN_INVALID_INPUT)
@@ -65,8 +68,8 @@ public class ApdWebClient {
     RequestOptions options = new RequestOptions();
     options.setHost(url).setPort(443).setURI(APD_READ_USERCLASSES_API);
 
-    webClient.request(HttpMethod.GET, options).expect(ResponsePredicate.SC_OK)
-        .expect(ResponsePredicate.JSON).send().onSuccess(resp -> {
+    webClient.request(HttpMethod.GET, options).timeout(webClientTimeoutMs)
+        .expect(ResponsePredicate.SC_OK).expect(ResponsePredicate.JSON).send().onSuccess(resp -> {
           Optional<JsonObject> response = Optional.ofNullable(resp.bodyAsJsonObject());
           /*
            * Currently, the only validation we do is to check if the APD returns a JSON object. We
@@ -101,9 +104,9 @@ public class ApdWebClient {
     options.setHost(url).setPort(443).setURI(APD_VERIFY_API);
     options.addHeader(APD_VERIFY_AUTH_HEADER, APD_VERIFY_BEARER + authToken);
 
-    webClient.request(HttpMethod.POST, options).expect(ResponsePredicate.JSON)
-        .sendJsonObject(request).compose(body -> checkApdResponse(body))
-        .onSuccess(resp -> {
+    webClient.request(HttpMethod.POST, options).timeout(webClientTimeoutMs)
+        .expect(ResponsePredicate.JSON).sendJsonObject(request)
+        .compose(body -> checkApdResponse(body)).onSuccess(resp -> {
           promise.complete(resp);
           LOGGER.info("APD {} responded to access request by {}", url,
               request.getJsonObject("user").getString("id"));

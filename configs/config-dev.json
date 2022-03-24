@@ -81,6 +81,7 @@
       "id": "iudx.aaa.server.apd.ApdVerticle",
       "verticleInstances": 1,
       "required":["postgresOptions", "commonOptions"],
+      "webClientTimeoutMs": 4000,
       "poolSize": "25"
     },
      {
