@@ -1,6 +1,7 @@
 package iudx.aaa.server.apd;
 
 import static iudx.aaa.server.apd.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.apd.Constants.CONFIG_WEBCLI_CHECKSSL;
 import static iudx.aaa.server.apd.Constants.DATABASE_IP;
 import static iudx.aaa.server.apd.Constants.DATABASE_NAME;
 import static iudx.aaa.server.apd.Constants.DATABASE_PASSWORD;
@@ -52,6 +53,8 @@ public class ApdVerticle extends AbstractVerticle {
   private String databasePassword;
   private int poolSize;
 
+  private boolean webClientCheckSsl = true; 
+  
   private PgPool pool;
   private PoolOptions poolOptions;
   private PgConnectOptions connectOptions;
@@ -93,6 +96,12 @@ public class ApdVerticle extends AbstractVerticle {
      */
     options = new JsonObject().put(CONFIG_AUTH_URL, config().getString(CONFIG_AUTH_URL));
 
+    /* Check if APD web client uses HTTPS, true by default */
+    webClientCheckSsl = config().getBoolean(CONFIG_WEBCLI_CHECKSSL, true);
+    if(!webClientCheckSsl) {
+      LOGGER.warn("APD Web Client not enforcing HTTPS-only connections");
+    }
+    
     /* Set Connection Object and schema */
     if (connectOptions == null) {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
@@ -111,8 +120,8 @@ public class ApdVerticle extends AbstractVerticle {
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
 
     /* Create the APD web client */
-    webClientOptions = new WebClientOptions().setSsl(true).setVerifyHost(true).setTrustAll(true)
-        .setFollowRedirects(false);
+    webClientOptions = new WebClientOptions().setSsl(webClientCheckSsl)
+        .setVerifyHost(webClientCheckSsl).setTrustAll(webClientCheckSsl).setFollowRedirects(false);
     webClient = WebClient.create(vertx, webClientOptions);
     apdWebClient = new ApdWebClient(webClient);
 
