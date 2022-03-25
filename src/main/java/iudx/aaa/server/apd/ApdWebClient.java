@@ -29,6 +29,7 @@ import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.util.ComposeException;
+import java.util.Optional;
 import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,10 +44,17 @@ public class ApdWebClient {
   private WebClient webClient;
   private static final Logger LOGGER = LogManager.getLogger(ApdWebClient.class);
   private static int webClientTimeoutMs;
+  private static int PORT = 443;
 
   public ApdWebClient(WebClient wc, JsonObject options) {
     this.webClient = wc;
     webClientTimeoutMs = options.getInteger(CONFIG_WEBCLI_TIMEOUTMS);
+  }
+
+  public ApdWebClient(WebClient wc, JsonObject options, int port) {
+    this.webClient = wc;
+    webClientTimeoutMs = options.getInteger(CONFIG_WEBCLI_TIMEOUTMS);
+    PORT = port;
   }
 
   static Response failureResponse = new ResponseBuilder().type(URN_INVALID_INPUT)
@@ -65,7 +73,7 @@ public class ApdWebClient {
   public Future<Boolean> checkApdExists(String url) {
     Promise<Boolean> promise = Promise.promise();
     RequestOptions options = new RequestOptions();
-    options.setHost(url).setPort(443).setURI(APD_READ_USERCLASSES_API);
+    options.setHost(url).setPort(PORT).setURI(APD_READ_USERCLASSES_API);
 
     webClient.request(HttpMethod.GET, options).timeout(webClientTimeoutMs)
         .expect(ResponsePredicate.SC_OK).expect(ResponsePredicate.JSON).send().onSuccess(resp -> {
@@ -74,7 +82,8 @@ public class ApdWebClient {
            * can add further validations if required
            */
           try {
-            JsonObject json = resp.bodyAsJsonObject();
+            JsonObject json =
+                Optional.ofNullable(resp.bodyAsJsonObject()).orElseThrow(DecodeException::new);
             promise.complete(true);
           } catch (DecodeException e) {
             LOGGER.error("Invalid JSON sent by APD");
@@ -101,7 +110,7 @@ public class ApdWebClient {
     Promise<JsonObject> promise = Promise.promise();
     
     RequestOptions options = new RequestOptions();
-    options.setHost(url).setPort(443).setURI(APD_VERIFY_API);
+    options.setHost(url).setPort(PORT).setURI(APD_VERIFY_API);
     options.addHeader(APD_VERIFY_AUTH_HEADER, APD_VERIFY_BEARER + authToken);
 
     webClient.request(HttpMethod.POST, options).timeout(webClientTimeoutMs)
@@ -145,7 +154,7 @@ public class ApdWebClient {
     JsonObject json;
 
     try {
-      json = body.bodyAsJsonObject();
+      json = Optional.ofNullable(body.bodyAsJsonObject()).orElseThrow(DecodeException::new);
     } catch (DecodeException e) {
       return Future.failedFuture("Invalid JSON sent by APD");
     }
