@@ -95,7 +95,6 @@
     },
     {
       "id": "iudx.aaa.server.apiserver.ApiServerVerticle",
-      "ssl": false,
       "verticleInstances": 1,
       "required":["postgresOptions", "commonOptions", "keycloakOptions", "jwtKeystoreOptions"],
       "poolSize": "5",
