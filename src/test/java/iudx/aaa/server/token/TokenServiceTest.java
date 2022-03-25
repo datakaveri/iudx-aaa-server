@@ -23,6 +23,7 @@ import static iudx.aaa.server.token.Constants.PG_CONNECTION_TIMEOUT;
 import static iudx.aaa.server.token.Constants.RESOURCE_SVR;
 import static iudx.aaa.server.token.Constants.ROLE;
 import static iudx.aaa.server.token.Constants.RS_URL;
+import static iudx.aaa.server.token.Constants.SESSION_ID;
 import static iudx.aaa.server.token.Constants.SID;
 import static iudx.aaa.server.token.Constants.STATUS;
 import static iudx.aaa.server.token.Constants.SUB;
@@ -676,7 +677,6 @@ public class TokenServiceTest {
     token.remove("expiry");
     token.remove("server");
 
-    mockPolicy.setResponse("valid");
     tokenService.validateToken(mapToInspctToken(token),
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
@@ -702,7 +702,6 @@ public class TokenServiceTest {
     token.remove("expiry");
     token.remove("server");
 
-    mockPolicy.setResponse("valid");
     tokenService.validateToken(mapToInspctToken(token),
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
@@ -714,25 +713,6 @@ public class TokenServiceTest {
           assertEquals(payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
           assertTrue(payload.getJsonObject(CONS).isEmpty());
           assertNotNull(payload.getString(EXP));
-          testContext.completeNow();
-        })));
-  }
-
-  @Test
-  @DisplayName("validateToken [Failed-01 invalidPolicy]")
-  void validateTokenFailed01(VertxTestContext testContext) {
-
-    JsonObject tokenRequest = new JsonObject().put(ITEM_TYPE, "resourceGroup")
-        .put(ITEM_ID, RESOURCE_GROUP).put(USER_ID, consumer.result().getString("userId"))
-        .put(URL, DUMMY_SERVER).put(ROLE, Roles.CONSUMER.toString().toLowerCase());
-    JsonObject token = tokenServiceImplObj.getJwt(tokenRequest);
-    token.remove("expiry");
-    token.remove("server");
-
-    mockPolicy.setResponse("invalid");
-    tokenService.validateToken(mapToInspctToken(token),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
           testContext.completeNow();
         })));
   }
@@ -799,19 +779,36 @@ public class TokenServiceTest {
   }
 
   @Test
-  @DisplayName("validateToken [Failed-06 user does not exist - should never happen]")
+  @DisplayName("validateToken success [APD token]")
   void validateTokenFailed06(VertxTestContext testContext) {
 
-    JsonObject tokenRequest = new JsonObject().put(Constants.ITEM_TYPE, "resourceGroup")
-        .put(Constants.ITEM_ID, RESOURCE_GROUP).put(Constants.USER_ID, UUID.randomUUID().toString())
-        .put(Constants.ROLE, Roles.CONSUMER.toString().toLowerCase());
-    JsonObject token = tokenServiceImplObj.getJwt(tokenRequest);
+    String sessId = UUID.randomUUID().toString();
+    JsonObject apdTokenRequest = new JsonObject().put(URL, DUMMY_SERVER)
+        .put(SESSION_ID, sessId).put(USER_ID, consumer.result().getString("userId"))
+        .put(LINK, DUMMY_SERVER + "/apd");
+    JsonObject token = tokenServiceImplObj.getApdJwt(apdTokenRequest);
     token.remove("expiry");
     token.remove("server");
+    token.remove("link");
+    
+    /* The JWT response has the key `apdToken`, introspect expects `accessToken`*/
+    token.put(ACCESS_TOKEN, token.remove(APD_TOKEN));
 
     tokenService.validateToken(mapToInspctToken(token),
         testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_AUTH_TOKEN.toString(), response.getString(TYPE));
+          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+          JsonObject payload = response.getJsonObject("results");
+          assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
+          assertEquals(payload.getString(SUB), consumer.result().getString("userId"));
+          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+          assertEquals(payload.getString(SID), sessId);
+          assertEquals(payload.getString(LINK), DUMMY_SERVER + "/apd");
+          assertNotNull(payload.getString(EXP));
+          
+          assertTrue(!payload.containsKey(CONS));
+          assertTrue(!payload.containsKey(ROLE));
+          assertTrue(!payload.containsKey(IID));
+          
           testContext.completeNow();
         })));
   }
