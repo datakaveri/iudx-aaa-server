@@ -23,6 +23,7 @@ public class Constants {
   public static final String ID = "id";
   public static final String RES_SERVER = "resServer";
   public static final String RES_GRP = "resGrp";
+  public static final String APD = "APD";
   public static final String RES = "res";
   public static final String USER_ID = "user_id";
   public static final String ITEM_ID = "item_id";
@@ -78,6 +79,7 @@ public class Constants {
   public static final String SUCC_TITLE_LIST_DELEGS = "Delegations";
   public static final String SUCC_TITLE_DELETE_DELE = "Deleted requested delegations";
   public static final String INVALID_ROLE = "Invalid role to perform operation";
+  public static final String INVALID_INPUT = "Invalid Input";
   public static final String INVALID_DELEGATE = "user does not have access to resource";
   public static final String ERR_TITLE_INVALID_ID = "Invalid delegation ID";
   public static final String ERR_TITLE_INVALID_ROLES = "User does not have roles to use API";
@@ -100,6 +102,7 @@ public class Constants {
   public static final String INVALID_DATETIME = "invalid date time:";
   public static final String INVALID_USER = "user does not exist";
   public static final String NO_AUTH_POLICY = "No auth policy for user";
+  public static final String NO_AUTH_TRUSTEE_POLICY = "No auth policy for user by trustee";
   public static final String INCORRECT_ITEM_TYPE = "incorrect item type";
   public static final String UNAUTHORIZED = "Not allowed to create policies for resource";
   public static final String PROVIDER_NOT_REGISTERED = "Provider not a registered user";
@@ -195,26 +198,10 @@ public class Constants {
       "SELECT id AS \"policyId\", apd_id, user_class AS \"userClass\", owner_id, item_id,"
       + " item_type AS \"itemType\", expiry_time AS \"expiryTime\", constraints FROM apd_policies "
           + "WHERE status = 'ACTIVE' AND owner_id = $1::uuid";
-  
-  public static final String CHECK_POLICY_EXIST =
-      "select id,owner_id,item_type from policies"
-          + " where status = $1::policy_status_enum  and id = any($2::uuid[])";
 
-  public static final String RES_OWNER_CHECK =
-      "select id from policies where owner_id = $1::uuid "
-          + "and status = $2::policy_status_enum and id = any($3::uuid[]) and expiry_time > now()";
-  public static final String DELEGATE_CHECK =
-      "select a.id from policies a inner join delegations b "
-          + " on a.owner_id = b.owner_id inner join resource_server c "
-          + " on b.resource_server_id = c.id where b.user_id = $1::UUID and "
-          + "b.status =$2::policy_status_enum and c.url = $3::text and a.id = any($4::uuid[]) ";
 
   // delete policy queries
-  public static final String CHECK_DELPOLICY =
-      "select a.id from policies a inner join resource_server b on a.item_id = b.id "
-          + "where  a.user_id = $1::UUID and item_type = $2::item_enum "
-          + "and a.owner_id = b.owner_id and b.url = $3::varchar "
-          + "and a.status = $4::policy_status_enum and a.expiry_time > now()";
+
 
   public static final String DELETE_USR_POLICY =
 "UPDATE policies SET status = 'DELETED', updated_at = NOW() WHERE id = ANY($1::uuid[])";
@@ -236,6 +223,10 @@ public class Constants {
           + " on a.item_id = b.id where a.user_id = $1::UUID and "
           + "  a.owner_id = b.owner_id and b.url = $2::varchar and "
           + " a.status = $3::policy_status_enum and a.expiry_time > now() ";
+
+  public static final String CHECK_TRUSTEE_POLICY =
+          "select id from policies where user_id = $1::UUID and status = $2::test.policy_status_enum " +
+                  "and expiry_time > now() and  item_id = ANY($3::UUID[])";
 
   public static final String GET_RES_GRP_DETAILS =
       "select id,cat_id ,provider_id as owner_id, resource_server_id from resource_group where cat_id = ANY($1::text[]) ";
@@ -274,11 +265,6 @@ public class Constants {
           + " ($1::text, $2::UUID, $3::UUID,$4::UUID,now(),now()) "
           + "on conflict (cat_id,provider_id,resource_group_id) do nothing";
 
-  public static final String CHECK_DELEGATION =
-      "Select a.owner_id from delegations a inner join resource_server b "
-          + " on a.resource_server_id = b.id where b.url = $1::text "
-          + " and a.user_id = $2::UUID and a.status = $3::policy_status_enum"
-          + " and a.owner_id = any($4::UUID[])";
 
   public static final String INSERT_POLICY =
       "insert into policies (user_id,item_id,item_type,owner_id,status,"
@@ -286,10 +272,22 @@ public class Constants {
           + " ($1::UUID, $2::UUID, $3::item_enum, $4::UUID,$5::policy_status_enum "
           + ", $6::timestamp without time zone, $7::jsonb, now() ,now()) ";
 
+  public static final String INSERT_APD_POLICY =
+          "insert into apd_policies (apd_id,user_class,item_id,item_type,owner_id,status,"
+                  + "expiry_time,constraints,created_at,updated_at) values"
+                  + " ($1::UUID,$2::text,$3::UUID, $4::item_enum, $5::UUID,$6::policy_status_enum "
+                  + ", $7::timestamp without time zone, $8::jsonb, now() ,now()) ";
+
+
   public static final String CHECK_EXISTING_POLICY =
       "select id from policies where user_id =$1::UUID "
           + " and item_id =$2::UUID and item_type = $3::item_enum and owner_id = $4::UUID "
           + " and status = $5::policy_status_enum and expiry_time > now()";
+
+  public static final String CHECK_EXISTING_APD_POLICY =
+          "select id from apd_policies where apd_id =$1::UUID and user_class = $2::text "
+                  + " and item_id =$3::UUID and item_type = $4::item_enum and owner_id = $5::UUID "
+                  + " and status = $6::policy_status_enum and expiry_time > now()";
 
   public static final String LIST_DELEGATE_AUTH_DELEGATE =
       "SELECT d.id, d.owner_id, d.user_id, url, name AS server "

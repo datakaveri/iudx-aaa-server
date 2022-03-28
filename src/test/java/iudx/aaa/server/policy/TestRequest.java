@@ -227,6 +227,12 @@ public class TestRequest {
               .put("roles", new JsonArray().add(Roles.DELEGATE))
               .put("keycloakId", "c5a34d2d-9553-4925-81fe-09aa08f29dea"));
 
+  public static User validTrusteeUser =
+          new User(
+                  new JsonObject()
+                          .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683")
+                          .put("roles", new JsonArray().add(Roles.TRUSTEE))
+                          .put("keycloakId", "c5a34d2d-9553-4925-81fe-09aa08f29dea"));
   public static JsonObject constraints = new JsonObject();
 
   public static JsonObject validReqItem =
@@ -296,6 +302,41 @@ public class TestRequest {
           .put("id", "a57cdc77-44a3-44b9-ba39-f339e40d3d21")
           .put("resource_server_id", "551955e9-e450-4b23-b69e-f0b7e554f394");
 
+
+  public static JsonObject invalidTrusteeItem =
+          new JsonObject()
+                  .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5")
+                  .put("itemId", "authdev.iudx.io")
+                  .put("itemType", "apd")
+                  .put("expiryTime", "")
+                  .put("constraints", constraints);
+
+  public static JsonObject invalidApdTrusteeItem =
+          new JsonObject()
+                  .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5")
+                  .put("itemId", "authdev.iudx.ip")
+                  .put("itemType", "apd")
+                  .put("expiryTime", "")
+                  .put("constraints", constraints);
+
+  public static JsonObject invalidApdIdPolicyItem =
+          new JsonObject()
+                  .put("userClass", "testUserClass")
+                  .put("apdId", "authdev.iudx.ip")
+                  .put("itemId", "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg")
+                  .put("itemType", "resource_group")
+                  .put("expiryTime", "")
+                  .put("constraints", constraints);
+
+  public static JsonObject invalidApdItemIdPolicyItem =
+          new JsonObject()
+                  .put("userClass", "testUserClass")
+                  .put("apdId", "authdev.iudx.io")
+                  .put("itemId", "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/invalidRes")
+                  .put("itemType", "resource_group")
+                  .put("expiryTime", "")
+                  .put("constraints", constraints);
+
   public static List<CreatePolicyRequest> validReq =
       CreatePolicyRequest.jsonArrayToList(new JsonArray().add(validReqItem));
 
@@ -313,6 +354,18 @@ public class TestRequest {
 
   public static List<CreatePolicyRequest> MultipleProvider =
       CreatePolicyRequest.jsonArrayToList(new JsonArray().add(validReqItem).add(invalidReqItem));
+
+  public static List<CreatePolicyRequest> invalidTrustee =
+          CreatePolicyRequest.jsonArrayToList(new JsonArray().add(invalidTrusteeItem));
+
+  public static List<CreatePolicyRequest> invalidApdTrustee =
+          CreatePolicyRequest.jsonArrayToList(new JsonArray().add(invalidApdTrusteeItem));
+
+  public static List<CreatePolicyRequest> invalidApdPolicyId =
+          CreatePolicyRequest.jsonArrayToList(new JsonArray().add(invalidApdIdPolicyItem));
+
+  public static List<CreatePolicyRequest> invalidApdPolicyItemType =
+          CreatePolicyRequest.jsonArrayToList(new JsonArray().add(invalidApdItemIdPolicyItem));
 
   // createDelegations
   public static User createDelUser =

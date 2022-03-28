@@ -4,6 +4,7 @@ import io.vertx.core.json.JsonObject;
 
 import java.util.UUID;
 
+import static iudx.aaa.server.policy.Constants.APD;
 import static iudx.aaa.server.policy.Constants.CAT_ID;
 import static iudx.aaa.server.policy.Constants.ID;
 import static iudx.aaa.server.policy.Constants.ITEMTYPE;
@@ -35,18 +36,23 @@ public class ResourceObj {
   }
 
   public ResourceObj(JsonObject object) {
-    ;
     this.itemType = object.getString(ITEMTYPE);
     this.id = UUID.fromString(object.getString(ID));
     this.catId = object.getString(CAT_ID);
     this.ownerId = UUID.fromString(object.getString(OWNER_ID));
 
-    if (!object.getString(ITEMTYPE).equals(RESOURCE_SERVER_TABLE)) {
+    if (!object.getString(ITEMTYPE).equals(APD)) {
+      if (!object.getString(ITEMTYPE).equals(RESOURCE_SERVER_TABLE)) {
+        this.resServerID = UUID.fromString(object.getString(RESOURCE_SERVER_ID));
+        if (!object.getString(ITEMTYPE).equals(RESOURCE_GROUP_TABLE))
+          this.resGrpId = UUID.fromString(object.getString(RESOURCE_GROUP_ID));
+        else this.resGrpId = UUID.fromString(object.getString(ID));
+      }
+    }
+    else
+    {
       this.resServerID = UUID.fromString(object.getString(RESOURCE_SERVER_ID));
-      if (!object.getString(ITEMTYPE).equals(RESOURCE_GROUP_TABLE))
-        this.resGrpId = UUID.fromString(object.getString(RESOURCE_GROUP_ID));
-      else
-        this.resGrpId = UUID.fromString(object.getString(ID));
+      this.resGrpId = UUID.fromString(object.getString(RESOURCE_GROUP_ID));
     }
   }
 

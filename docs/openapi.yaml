@@ -2421,23 +2421,30 @@ paths:
                 type: object
                 properties: {}
       description: |
-        Create new policies of an authenticated User
+        Create new policies of an authenticated User.
+
         **NOTE : A `consumer` cannot set policies**
             
         ## Policies created by admin
           - Valid item types - `resource_server`. 
-          - An `admin` can set policies for a `provider` or `delegate` for their server. 
+          - An `admin` can set policies for a `provider`,`delegate` or `trustee` for their server. 
+          
+        ## Policies created by trustee
+          - A `Trustee` can write policies for `providers` for `apdIds`.
 
         ## Policies created by provider
-          - Valid item types - `resource`, `resource_group` 
+          - Valid item types - `resource`, `resource_group`
           - A `provider` can set policies for a `delegate` or `consumer` for the resources owned by the `provider.`
+          - A `provider` can set policies for a `userClass` for a `apdId`.  
+
         **A policy is set by the auth server admin for a provider when they are approved**
 
         ## Policies created by delegate
           - An auth delegate may use the API to create policies on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
-          - Valid item types - `resource`, `resource_group` 
-          - A `delegate` can set policies for other `delegate` or `consumer` for the resources owned by the `provider` 
-          - A policy must be set by the auth server admin for the `delegate` to be able to set policies. 
+          - Valid item types - `resource`, `resource_group`.
+          - A `delegate` can set user policies and apd policies for other `delegate` or `consumer` for the resources owned by the `provider` 
+          - A policy must be set by the auth server admin for the `delegate` to be able to setpolicies.
+          - A delegegate does not need a direct policy by the `trustee` 
             
         **NOTE : Only Auth server delegates are allowed to create policies**
       parameters:
@@ -2484,37 +2491,70 @@ paths:
                   uniqueItems: true
                   minItems: 1
                   items:
+                    anyOf:
+                      - additionalProperties: false
+                        properties:
+                          userId:
+                            type: string
+                            format: uuid
+                            minLength: 36
+                            maxLength: 36
+                            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+                          itemId:
+                            type: string
+                            minLength: 1
+                            maxLength: 512
+                            pattern: '^[a-zA-Z0-9_*\-*\.\/]+$'
+                          itemType:
+                            type: string
+                            minLength: 1
+                            enum:
+                              - resource
+                              - resource_group
+                              - resource_server
+                              - apd
+                          expiryTime:
+                            type: string
+                            minLength: 1
+                            pattern: '^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$'
+                          constraints:
+                            type: object
+                        required:
+                          - userId
+                          - itemId
+                          - itemType
+                          - constraints
+                      - additionalProperties: false
+                        properties:
+                          apdId:
+                            type: string
+                          itemId:
+                            type: string
+                            pattern: '^[a-zA-Z0-9_*\-*\.\/]+$'
+                            minLength: 1
+                            maxLength: 512
+                          itemType:
+                            type: string
+                            enum:
+                              - resource
+                              - resource_group
+                          userClass:
+                            type: string
+                            pattern: '^[A-Za-z0-9-_]+$'
+                            minLength: 1
+                            maxLength: 20
+                          expiryTime:
+                            type: string
+                            pattern: '^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$'
+                          constraints:
+                            type: object
+                        required:
+                          - apdId
+                          - itemId
+                          - itemType
+                          - userClass
+                          - constraints
                     type: object
-                    properties:
-                      userId:
-                        type: string
-                        format: uuid
-                        minLength: 36
-                        maxLength: 36
-                        pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-                      itemId:
-                        type: string
-                        minLength: 1
-                        maxLength: 512
-                        pattern: '^[a-zA-Z0-9_*\-*\.\/]+$'
-                      itemType:
-                        type: string
-                        minLength: 1
-                        enum:
-                          - resource
-                          - resource_group
-                          - resource_server
-                      expiryTime:
-                        type: string
-                        minLength: 1
-                        pattern: '^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$'
-                      constraints:
-                        type: object
-                    required:
-                      - userId
-                      - itemId
-                      - itemType
-                      - constraints
               required:
                 - request
             examples:
@@ -2561,13 +2601,41 @@ paths:
                         access:
                           - api
                           - sub
+              single req for apd user policy:
+                value:
+                  request:
+                    - userId: 2c4a230c-5085-4924-a3e1-25fb4fc5965b
+                      itemId: string
+                      itemType: apd
+                      expiryTime: '2022-10-10T04:00:19'
+                      constraints: {}
+              single req for apd policy:
+                value:
+                  request:
+                    - userId: 2c4a230c-5085-4924-a3e1-25fb4fc5965b
+                      itemId: string
+                      itemType: resource
+                      expiryTime: '2022-10-10T04:00:19'
+                      constraints: {}
           application/xml:
             schema:
               type: object
               properties: {}
-        description: |-
+        description: |
           Request body will be an JsonObject containing JsonArray of requests
+
+          the request can be either for a userPolicy or apdPolicy
+
+          userPolicy request :
           - `userId` : UUID of the user for whom policy is to be set.
+          - `itemId` : String value of the item for which policy is to be set 
+          - `itemType` : String value of the item type
+          - `expiryTime` : ISO8601 compatible time in UTC(yyyy-MM-dd'T'HH:mm:ss). optional field, if not sent default expiry is set for the policy
+          - `constraints` : JsonObject of the constraints that the resource server can recognize.
+
+          apdPolicy request :
+          - `userClass` : String value of the userClass for whom the policy is to be set.
+          - `apdId` : String value of the url of the APD for which the policy is being written.
           - `itemId` : String value of the item for which policy is to be set 
           - `itemType` : String value of the item type
           - `expiryTime` : ISO8601 compatible time in UTC(yyyy-MM-dd'T'HH:mm:ss). optional field, if not sent default expiry is set for the policy

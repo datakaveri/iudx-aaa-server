@@ -68,7 +68,7 @@ public class Constants {
       "Trustees and Auth Server Admin may call the API";
 
   public static final String ERR_TITLE_INVALID_REQUEST =  "Invalid request";
-
+  public static final String ERR_TITLE_INVALID_REQUEST_ID  =  "Id not present";
 
   public static final String ERR_DETAIL_INVALID_UUID = "Invalid UUID";
 
