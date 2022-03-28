@@ -287,8 +287,8 @@ public class TokenServiceImpl implements TokenService {
     String accessToken = introspectToken.getAccessToken();
     if (accessToken == null || accessToken.isBlank()) {
       LOGGER.error(LOG_PARSE_TOKEN);
-      Response resp = new ResponseBuilder().status(400).type(URN_MISSING_INFO)
-          .title(MISSING_TOKEN).detail(MISSING_TOKEN).build();
+      Response resp = new ResponseBuilder().status(400).type(URN_MISSING_INFO).title(MISSING_TOKEN)
+          .detail(MISSING_TOKEN).build();
       handler.handle(Future.succeededFuture(resp.toJson()));
       return this;
     }
@@ -303,74 +303,15 @@ public class TokenServiceImpl implements TokenService {
     }).onSuccess(jwtDetails -> {
 
       JsonObject accessTokenJwt = jwtDetails.attributes().getJsonObject(ACCESS_TOKEN);
-      String userId = accessTokenJwt.getString(SUB);
-      
-      /* If the sub field is equal to the auth server domain, it is a
-       * special admin token. Immediately send the decoded JWT back, as
-       * there is no role/item information to be checked/validated.
-       */
-      if(userId.equals(CLAIM_ISSUER)) {
-        Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS)
-            .title(TOKEN_AUTHENTICATED).objectResults(accessTokenJwt).build();
-        handler.handle(Future.succeededFuture(resp.toJson()));
-        return;
-      }
-      
-      String role = accessTokenJwt.getString(ROLE);
-      
-      String[] item = accessTokenJwt.getString(IID).split(":");
-      String itemId = item[1];
-      String itemType = ITEM_TYPE_MAP.get(item[0]);
 
-      Tuple tuple = Tuple.of(userId);
-      pgSelelctQuery(CHECK_USER, tuple).onComplete(dbHandler -> {
+      Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_AUTHENTICATED)
+          .objectResults(accessTokenJwt).build();
+      handler.handle(Future.succeededFuture(resp.toJson()));
+      return;
 
-        if (dbHandler.failed()) {
-          LOGGER.error(LOG_DB_ERROR + dbHandler.cause().getMessage());
-          handler.handle(Future.failedFuture(INTERNAL_SVR_ERR));
-        } else if (dbHandler.succeeded()) {
-
-        JsonObject dbExistsRow = dbHandler.result().getJsonObject(0);
-        boolean flag = dbExistsRow.getBoolean(EXISTS);
-        if (flag == Boolean.FALSE) {
-            LOGGER.error(LOG_TOKEN_AUTH + INVALID_SUB);
-            Response resp = new ResponseBuilder().status(400).type(URN_INVALID_AUTH_TOKEN)
-                .title(TOKEN_FAILED).detail(INVALID_SUB).build();
-            handler.handle(Future.succeededFuture(resp.toJson()));
-            return;
-          }
-          
-          if (RESOURCE_SVR.equals(itemType)) {
-            Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS)
-                .title(TOKEN_AUTHENTICATED).objectResults(accessTokenJwt).build();
-            LOGGER.info("Info: {}; {}", POLICY_SUCCESS, TOKEN_AUTHENTICATED);
-            handler.handle(Future.succeededFuture(resp.toJson()));
-            return;
-          }
-
-          JsonObject request = new JsonObject();
-          request.put(USER_ID, userId)
-                 .put(ROLE, role)
-                 .put(ITEM_ID, itemId)
-                 .put(ITEM_TYPE, itemType);
-
-          policyService.verifyPolicy(request, policyHandler -> {
-            if (policyHandler.succeeded()) {
-
-              Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS)
-                  .title(TOKEN_AUTHENTICATED).objectResults(accessTokenJwt).build();
-              LOGGER.info("Info: {}; {}", POLICY_SUCCESS, TOKEN_AUTHENTICATED);
-              handler.handle(Future.succeededFuture(resp.toJson()));
-              
-            } else if (policyHandler.failed()) {
-              LOGGER.error("Fail: {}; {}", INVALID_POLICY, policyHandler.cause().getMessage());
-              Response resp = new ResponseBuilder().status(403).type(URN_INVALID_INPUT)
-                  .title(INVALID_POLICY).detail(INVALID_POLICY).build();
-              handler.handle(Future.succeededFuture(resp.toJson()));
-            }
-          });
-        }
-      });
+    }).onFailure(fail -> {
+      LOGGER.error(fail.getMessage());
+      handler.handle(Future.failedFuture("Internal error"));
     });
     return this;
   }

@@ -362,7 +362,10 @@ paths:
                         access:
                           - api
         '400':
-          description: Invalid/missing information
+          description: |-
+            - Missing/malformed token
+            - The token has not been issued by the IUDX AAA server
+            - The token is expired
           content:
             application/json:
               schema:
@@ -375,19 +378,34 @@ paths:
                   title:
                     type: string
                     minLength: 1
-                  detail:
-                    type: string
-                    minLength: 1
+                  results:
+                    type: array
+                    uniqueItems: true
+                    minItems: 1
+                    items:
+                      required:
+                        - status
+                      properties:
+                        status:
+                          type: string
+                          minLength: 1
                 required:
                   - type
                   - title
-                  - detail
+                  - results
+                x-examples:
+                  example-1:
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    results:
+                      - status: deny
               examples:
                 Invalid/missing information:
                   value:
-                    type: string
-                    title: string
-                    detail: string
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    results:
+                      - status: deny
       requestBody:
         content:
           application/json:
@@ -413,7 +431,6 @@ paths:
         - validates the token structure
         - checks if the token has been issued by the IUDX AAA server
         - checks if the token is expired
-        - checks if the policy associated with user, provider (if applicable) and item is valid (not expired or deleted)
 
         If all checks pass, the decoded token is returned
       tags:
