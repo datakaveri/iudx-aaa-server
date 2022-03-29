@@ -8,13 +8,17 @@ import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
+import static iudx.aaa.server.policy.Constants.NIL_UUID;
+
 @DataObject(generateConverter = true)
 public class CreatePolicyRequest {
-    private UUID userId;
+    private UUID userId =  UUID.fromString(NIL_UUID);
     private String itemId;
     private String itemType;
     private String expiryTime = "";
     private JsonObject constraints;
+    private String apdId = NIL_UUID;
+    private String userClass;
 
     public String getUserId() {
         return userId.toString();
@@ -54,6 +58,22 @@ public class CreatePolicyRequest {
 
     public void setConstraints(JsonObject constraints) {
         this.constraints = constraints;
+    }
+
+    public String getApdId() {
+        return apdId;
+    }
+
+    public void setApdId(String apdId) {
+        this.apdId = apdId;
+    }
+
+    public String getUserClass() {
+        return userClass;
+    }
+
+    public void setUserClass(String userClass) {
+        this.userClass = userClass;
     }
 
     public CreatePolicyRequest(JsonObject json) {

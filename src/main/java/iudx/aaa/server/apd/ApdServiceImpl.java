@@ -33,6 +33,7 @@ import static iudx.aaa.server.apd.Constants.ERR_TITLE_EXISTING_DOMAIN;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_APDID;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_DOMAIN;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_REQUEST;
+import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_REQUEST_ID;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_NOT_TRUSTEE;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_NO_ROLES_PUT;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_NO_USER_PROFILE;
@@ -566,6 +567,7 @@ public class ApdServiceImpl implements ApdService {
     String req;
     String query;
     Tuple tuple;
+    List<String> request;
     Set<UUID> uniqueIds = new HashSet<UUID>();
     // either apdUrl or apdId must be empty
     if (apdUrl.isEmpty() == apdIds.isEmpty()) {
@@ -587,10 +589,12 @@ public class ApdServiceImpl implements ApdService {
       req = "id";
       query = GET_APDINFO_ID;
       tuple = Tuple.of(uniqueIds.toArray(UUID[]::new));
+      request = apdIds;
     } else {
       req = "url";
       query = GET_APDINFO_URL;
       tuple = Tuple.of(apdUrl.toArray());
+      request = apdUrl;
     }
 
     Collector<Row, ?, List<JsonObject>> ApdCollector =
@@ -612,8 +616,8 @@ public class ApdServiceImpl implements ApdService {
                                                         new ComposeException(
                                                                 400,
                                                                 URN_INVALID_INPUT,
-                                                                ERR_TITLE_INVALID_REQUEST,
-                                                                "id not present"));
+                                                                ERR_TITLE_INVALID_REQUEST_ID,
+                                                                request.toString()));
                                               }
                                               List<UUID> apdIdList =
                                                       apdResp.stream()
@@ -634,6 +638,7 @@ public class ApdServiceImpl implements ApdService {
                                               apdResp.forEach(
                                                       obj -> {
                                                         apdInfo.add(new ApdInfoObj(obj));
+
                                                       });
                                               return Future.succeededFuture(apdInfo);
                                             }));
@@ -658,9 +663,9 @@ public class ApdServiceImpl implements ApdService {
                                         RESP_APD_OWNER,
                                         trusteeDetails.get(details.getOwnerId()).put("id", details.getOwnerId()));
                                 apdResponse.put("url", details.getUrl());
-                                apdResponse.put("status", details.getStatus());
+                                apdResponse.put("status", details.getStatus().toString().toLowerCase());
                                 apdResponse.put("name", details.getName());
-                                apdResponse.remove("id");
+                                apdResponse.put("id",details.getId());
                                 apdResponse.remove("ownerId");
                                 if (req.equalsIgnoreCase("id")) {
                                   response.put(details.getId(), apdResponse);
@@ -678,7 +683,7 @@ public class ApdServiceImpl implements ApdService {
                     e -> {
                       if (e instanceof ComposeException) {
                         ComposeException exp = (ComposeException) e;
-                        handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                        handler.handle(Future.failedFuture(exp));
                         return;
                       }
                       LOGGER.error(e.getMessage());

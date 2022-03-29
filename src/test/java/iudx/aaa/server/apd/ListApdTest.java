@@ -16,6 +16,7 @@ import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
+import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
@@ -39,6 +40,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static iudx.aaa.server.apd.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_REQUEST_ID;
 import static iudx.aaa.server.apd.Constants.NIL_UUID;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_ADMIN_SERVER;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_APD;
@@ -71,6 +73,7 @@ public class  ListApdTest {
   private static RegistrationService registrationService = Mockito.mock(RegistrationService.class);
   private static PolicyService policyService = Mockito.mock(PolicyService.class);
   private static TokenService tokenService = Mockito.mock(TokenService.class);
+
 
   private static final String DUMMY_SERVER =
       "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
@@ -228,13 +231,16 @@ public class  ListApdTest {
 
     String randString =  RandomStringUtils.randomAlphabetic(7).toLowerCase();
     apdService.getApdDetails(List.of(randString), List.of(),
-            testContext.succeeding(response -> {
+            testContext.failing(response -> {
               testContext.verify(() -> {
-                        assertEquals(response.getInteger("status"),400);
-                        assertEquals(response.getString("title"),"Invalid request");
-                        testContext.completeNow();
+                  if (response instanceof ComposeException) {
+                      ComposeException e = (ComposeException) response;
+                      JsonObject result = e.getResponse().toJson();
+                        assertEquals(result.getInteger("status"),400);
+                        assertEquals(result.getString("title"),ERR_TITLE_INVALID_REQUEST_ID);
                       }
-              );
+                  testContext.completeNow();
+            });
             }));
   }
 
@@ -303,8 +309,8 @@ public class  ListApdTest {
                   () -> {
                     JsonObject respOne = response.getJsonObject(ACTIVE_A_ID.toString());
                     JsonObject respTwo = response.getJsonObject(ACTIVE_B_ID.toString());
-                    assertEquals(respOne.getString("status"), "ACTIVE");
-                    assertEquals(respTwo.getString("status"), "ACTIVE");
+                    assertEquals(respOne.getString("status"), "active");
+                    assertEquals(respTwo.getString("status"), "active");
                     assertEquals(
                         respOne.getJsonObject("owner").getString("email"),
                         trusteeAdets.getString("email"));
@@ -430,7 +436,6 @@ public class  ListApdTest {
                         String ownerId1 = response.getJsonObject("results").
                                 getJsonObject(ACTIVE_A_ID.toString())
                                 .getJsonObject("owner").getString("id");
-
                         String status_ACTIVE_A =  response.getJsonObject("results").
                                 getJsonObject(ACTIVE_A_ID.toString()).getString("status");
 
@@ -456,13 +461,13 @@ public class  ListApdTest {
                                 getJsonObject(ACTIVE_B_ID.toString()).getString("status");
 
                         assertEquals(ownerId1,trusteeAdets.getString("userId"));
-                        assertEquals(status_ACTIVE_A, ApdStatus.ACTIVE.toString());
+                        assertEquals(status_ACTIVE_A, ApdStatus.ACTIVE.toString().toLowerCase());
                         assertEquals(ownerId2,trusteeAdets.getString("userId"));
-                        assertEquals(status_PENDING_A, ApdStatus.PENDING.toString());
+                        assertEquals(status_PENDING_A, ApdStatus.PENDING.toString().toLowerCase());
                         assertEquals(ownerId3,trusteeAdets.getString("userId"));
-                        assertEquals(status_INACTIVE_A, ApdStatus.INACTIVE.toString());
+                        assertEquals(status_INACTIVE_A, ApdStatus.INACTIVE.toString().toLowerCase());
                         assertEquals(ownerId4,trusteeBdets.getString("userId"));
-                        assertEquals(status_ACTIVE_B, ApdStatus.ACTIVE.toString());
+                        assertEquals(status_ACTIVE_B, ApdStatus.ACTIVE.toString().toLowerCase());
                                 testContext.completeNow();
                             }
                     );
