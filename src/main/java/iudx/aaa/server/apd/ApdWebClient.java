@@ -29,7 +29,6 @@ import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.util.ComposeException;
-import java.util.Optional;
 import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -70,14 +69,15 @@ public class ApdWebClient {
 
     webClient.request(HttpMethod.GET, options).timeout(webClientTimeoutMs)
         .expect(ResponsePredicate.SC_OK).expect(ResponsePredicate.JSON).send().onSuccess(resp -> {
-          Optional<JsonObject> response = Optional.ofNullable(resp.bodyAsJsonObject());
           /*
            * Currently, the only validation we do is to check if the APD returns a JSON object. We
            * can add further validations if required
            */
-          if (response.isPresent()) {
+          try {
+            JsonObject json = resp.bodyAsJsonObject();
             promise.complete(true);
-          } else {
+          } catch (DecodeException e) {
+            LOGGER.error("Invalid JSON sent by APD");
             promise.fail(new ComposeException(failureResponse));
           }
         }).onFailure(err -> {
