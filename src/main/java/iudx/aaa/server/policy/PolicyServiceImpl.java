@@ -225,6 +225,8 @@ public class PolicyServiceImpl implements PolicyService {
     if (isDelegate) providerId = data.getString("providerId");
     else providerId = user.getUserId();
     // check duplicate
+    // same test works for both userpolicies and apdUserpolicies as there can only be one apd_policy for any given resource
+    //no need to check if the requests have different apdId/userClass
     List<CreatePolicyRequest> duplicates =
         request.stream()
             .collect(

@@ -362,7 +362,10 @@ paths:
                         access:
                           - api
         '400':
-          description: Invalid/missing information
+          description: |-
+            - Missing/malformed token
+            - The token has not been issued by the IUDX AAA server
+            - The token is expired
           content:
             application/json:
               schema:
@@ -375,19 +378,34 @@ paths:
                   title:
                     type: string
                     minLength: 1
-                  detail:
-                    type: string
-                    minLength: 1
+                  results:
+                    type: array
+                    uniqueItems: true
+                    minItems: 1
+                    items:
+                      required:
+                        - status
+                      properties:
+                        status:
+                          type: string
+                          minLength: 1
                 required:
                   - type
                   - title
-                  - detail
+                  - results
+                x-examples:
+                  example-1:
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    results:
+                      - status: deny
               examples:
                 Invalid/missing information:
                   value:
-                    type: string
-                    title: string
-                    detail: string
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    results:
+                      - status: deny
       requestBody:
         content:
           application/json:
@@ -413,7 +431,6 @@ paths:
         - validates the token structure
         - checks if the token has been issued by the IUDX AAA server
         - checks if the token is expired
-        - checks if the policy associated with user, provider (if applicable) and item is valid (not expired or deleted)
 
         If all checks pass, the decoded token is returned
       tags:
@@ -2422,31 +2439,27 @@ paths:
                 properties: {}
       description: |
         Create new policies of an authenticated User.
-
-        **NOTE : A `consumer` cannot set policies**
-            
-        ## Policies created by admin
-          - Valid item types - `resource_server`. 
-          - An `admin` can set policies for a `provider`,`delegate` or `trustee` for their server. 
-          
-        ## Policies created by trustee
-          - A `Trustee` can write policies for `providers` for `apdIds`.
-
-        ## Policies created by provider
-          - Valid item types - `resource`, `resource_group`
-          - A `provider` can set policies for a `delegate` or `consumer` for the resources owned by the `provider.`
-          - A `provider` can set policies for a `userClass` for a `apdId`.  
-
-        **A policy is set by the auth server admin for a provider when they are approved**
-
-        ## Policies created by delegate
-          - An auth delegate may use the API to create policies on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
-          - Valid item types - `resource`, `resource_group`.
-          - A `delegate` can set user policies and apd policies for other `delegate` or `consumer` for the resources owned by the `provider` 
-          - A policy must be set by the auth server admin for the `delegate` to be able to setpolicies.
-          - A delegegate does not need a direct policy by the `trustee` 
-            
-        **NOTE : Only Auth server delegates are allowed to create policies**
+         **NOTE : A `consumer` cannot set policies**
+             
+         ## Policies created by admin
+           - Valid item types - `resource_server`. 
+           - An `admin` can set policies for a `provider`,`delegate` or `trustee` for their server. 
+           
+         ## Policies created by trustee
+           - A `Trustee` can write policies for `providers` for `apdIds`.
+         ## Policies created by provider
+           - Valid item types - `resource`, `resource_group`
+           - A `provider` can set policies for a `delegate` or `consumer` for the resources owned by the `provider.`
+           - A `provider` can set policies for a `userClass` for a `apdId`.  
+         **A policy is set by the auth server admin for a provider when they are approved**
+         ## Policies created by delegate
+           - An auth delegate may use the API to create policies on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
+           - Valid item types - `resource`, `resource_group`.
+           - A `delegate` can set user policies and apd policies for other `delegate` or `consumer` for the resources owned by the `provider` 
+           - A policy must be set by the auth server admin for the `delegate` to be able to setpolicies.
+           - A delegegate does not need a direct policy by the `trustee` 
+             
+         **NOTE : Only Auth server delegates are allowed to create policies**
       parameters:
         - schema:
             type: string
@@ -2623,16 +2636,13 @@ paths:
               properties: {}
         description: |
           Request body will be an JsonObject containing JsonArray of requests
-
           the request can be either for a userPolicy or apdPolicy
-
           userPolicy request :
           - `userId` : UUID of the user for whom policy is to be set.
           - `itemId` : String value of the item for which policy is to be set 
           - `itemType` : String value of the item type
           - `expiryTime` : ISO8601 compatible time in UTC(yyyy-MM-dd'T'HH:mm:ss). optional field, if not sent default expiry is set for the policy
           - `constraints` : JsonObject of the constraints that the resource server can recognize.
-
           apdPolicy request :
           - `userClass` : String value of the userClass for whom the policy is to be set.
           - `apdId` : String value of the url of the APD for which the policy is being written.
@@ -3649,11 +3659,23 @@ paths:
                     minItems: 1
                     items:
                       required:
+                        - apdId
+                        - name
                         - url
                         - status
-                        - name
-                        - apdId
                       properties:
+                        apdId:
+                          type: string
+                          minLength: 1
+                        name:
+                          type: string
+                          minLength: 1
+                        url:
+                          type: string
+                          minLength: 1
+                        status:
+                          type: string
+                          minLength: 1
                         owner:
                           type: object
                           properties:
@@ -3679,18 +3701,6 @@ paths:
                             - email
                             - name
                             - id
-                        url:
-                          type: string
-                          minLength: 1
-                        status:
-                          type: string
-                          minLength: 1
-                        name:
-                          type: string
-                          minLength: 1
-                        apdId:
-                          type: string
-                          minLength: 1
                 required:
                   - type
                   - title
@@ -3698,30 +3708,28 @@ paths:
                 x-examples:
                   example-1:
                     type: 'urn:dx:as:Success'
-                    title: Apd read successfully
+                    title: Access Policy Domains
                     results:
-                      - owner:
-                          email: bryan.robert@datakaveri.org
+                      - apdId: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                        name: DataKaveri APD
+                        url: apd.datakaveri.org
+                        status: pending
+                        owner:
+                          email: trustee@datakaveri.org
                           name:
-                            firstName: Bryan
-                            lastName: Robert
-                          id: fcbecd18-2ecb-4066-8a9e-f073aacbe579
-                        url: authdev.iudx.io
+                            firstName: Trustee
+                            lastName: DataKaveri
+                          id: 28c387e8-5807-44f7-830f-998e595d1bbe
+                      - apdId: 540972fd-43df-43c1-9627-df2402a6b731
+                        name: IISc APD
+                        url: apd.iisc.ac.in
                         status: active
-                        name: Unit Test APD
-                        apdId: 88b7bdbc-936c-4478-8059-f95f4c8a6352
-                      - owner:
-                          id: a2a03275-65cd-4d97-8289-bdadac5dea5c
-                        url: uyzik.com
-                        status: active
-                        name: uyzik
-                        apdId: 824970f0-ddbc-4350-8dc8-e2e77c51286f
-                      - owner:
-                          id: a0315028-5c29-4b5e-b2e5-0605c7010a85
-                        url: epaeh.com
-                        status: active
-                        name: epaeh
-                        apdId: 04fd9720-3f6a-40f1-9dd6-e10b4360d525
+                        owner:
+                          email: trustee@datakaveri.org
+                          name:
+                            firstName: Trustee
+                            lastName: IISc
+                          id: 7d379bda-c204-4a97-918f-c24590b0cd6f
               examples:
                 Example:
                   value:
@@ -3777,7 +3785,7 @@ paths:
         Returns registered APDs. 
 
         - If called by the AAA admin, returns all APD registrations
-        - If called by a user with `trustee` role, returns all APDs in the *active** state and all the APDs the user has registered
+        - If called by a user with `trustee` role, returns all APDs in the **active** state and all the APDs the user has registered
         - If called by a user with any other roles, returns all APDs in the **active** state
       security:
         - authorization: []
