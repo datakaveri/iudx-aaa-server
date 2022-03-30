@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "52211a8c-9545-49ff-ac0e-8a01a9a4db4a",
+		"_postman_id": "d06fe8a7-02ce-4925-ae76-16438c7b84b2",
 		"name": "Integration Test",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -11711,6 +11711,238 @@
 					"response": []
 				},
 				{
+					"name": "Adding userclass to User policy - [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {},\n            \"userClass\":\"something\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Adding extra field apdId to User policy - [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {},\n            \"apdId\":\"example.com\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Adding extra field apdId, userclass to User policy - [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {},\n            \"apdId\":\"example.com\",\n            \"userClass\":\"something\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ApdId instead of userId - [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {},\n            \"apdId\":\"example.com\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Duplicate elements - [400]",
 					"event": [
 						{
@@ -21148,702 +21380,6 @@
 			]
 		},
 		{
-			"name": "Delete Delegations",
-			"item": [
-				{
-					"name": "No Token",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(401);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:MissingAuthenticationToken\");",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies",
-								"delegations"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Empty Body",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(400);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies",
-								"delegations"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "No request key - [400]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(400);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-									"});",
-									"",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"hello\":1234\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies",
-								"delegations"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Request array invalid objects- [400]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(400);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-									"});",
-									"",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": [1,2,{}]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies",
-								"delegations"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Duplicate objects- [400]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(400);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-									"});",
-									"",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{NO_PROFILE_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"id\": \"921f439e-7c9b-40b4-b6a7-9cb1e6771eef\"\n        },\n        {\n            \"id\": \"921f439e-7c9b-40b4-b6a7-9cb1e6771eef\"\n        }\n    ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies",
-								"delegations"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "No profile calling API - [401]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(401);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidRole\");",
-									"});",
-									"",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{NO_PROFILE_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"id\": \"921f439e-7c9b-40b4-b6a7-9cb1e6771eef\"\n        }\n    ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies",
-								"delegations"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Consumer calling API - [401]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(401);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidRole\");",
-									"});",
-									"",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": {{POSTMAN_PROVIDER_DELEGATION_IDS}}\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies",
-								"delegations"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Other Provider calling API  - [400]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(400);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-									"});",
-									"",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{ALL_ROLES_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": {{POSTMAN_PROVIDER_DELEGATION_IDS}}\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies",
-								"delegations"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Auth delegate fail to delete (since auth delegation present in array)- [403]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(403);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-									"});",
-									"",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_DELEGATE_TOKEN}}",
-								"type": "text"
-							},
-							{
-								"key": "providerId",
-								"value": "13d47a5a-213b-4ac8-b4db-10dbc70c48af",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": {{POSTMAN_PROVIDER_DELEGATION_IDS}}\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies",
-								"delegations"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Provider calling API successfully - [200]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
-									"});",
-									"",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": {{POSTMAN_PROVIDER_DELEGATION_IDS}}\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies",
-								"delegations"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Provider trying to delete again- [400]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(400);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-									"});",
-									"",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": {{POSTMAN_PROVIDER_DELEGATION_IDS}}\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies",
-								"delegations"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Auth delegate not permitted to call API (auth delegation deleted)- [401]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(401);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:MissingAuthenticationToken\");",
-									"    pm.expect(body).to.have.property(\"title\", \"Invalid delegate request\");",
-									"});",
-									"",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_DELEGATE_TOKEN}}",
-								"type": "text"
-							},
-							{
-								"key": "providerId",
-								"value": "13d47a5a-213b-4ac8-b4db-10dbc70c48af",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": {{POSTMAN_PROVIDER_DELEGATION_IDS}}\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies",
-								"delegations"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
 			"name": "Create APD",
 			"item": [
 				{
@@ -22830,6 +22366,34 @@
 				},
 				{
 					"name": "Listing as Auth Admin - [200]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    pm.expect(body.results).to.not.be.empty;",
+									"    pm.expect(body.results.length).to.be.eq(4);",
+									"    body.results.forEach((r) => {",
+									"        pm.expect(r.status).to.be.oneOf([\"active\", \"inactive\",\"pending\"]);",
+									"    })",
+									"",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [
@@ -22855,6 +22419,35 @@
 				},
 				{
 					"name": "Listing as postman.trustee - [200]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    pm.expect(body.results).to.not.be.empty;",
+									"    pm.expect(body.results.length).to.be.eq(3);",
+									"    body.results.forEach((r) => {",
+									"        pm.expect(r.status).to.be.oneOf([\"active\", \"inactive\",\"pending\"]);",
+									"        pm.expect(r.owner.id).to.be.eq(\"dafa6537-18ab-4b6a-9deb-35822e6755d4\");",
+									"    })",
+									"",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [
@@ -22880,6 +22473,37 @@
 				},
 				{
 					"name": "Listing as other trustee (rejprovider.delegate user) - [200]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    pm.expect(body.results).to.not.be.empty;",
+									"    pm.expect(body.results.length).to.be.eq(2);",
+									"    body.results.forEach((r) => {",
+									"        pm.expect(r.status).to.be.oneOf([\"active\", \"pending\"]);",
+									"        if(r.status == 'pending')",
+									"            pm.expect(r.owner.id).to.be.eq(pm.environment.get(\"REJPROVIDER_DELEGATE_USERID\"));",
+									"        if(r.status == 'active')",
+									"            pm.expect(r.owner.id).to.be.eq(\"dafa6537-18ab-4b6a-9deb-35822e6755d4\");        ",
+									"    })",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [
@@ -22905,6 +22529,33 @@
 				},
 				{
 					"name": "Listing as consumer - [200]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    pm.expect(body.results).to.not.be.empty;",
+									"    pm.expect(body.results.length).to.be.eq(1);",
+									"    body.results.forEach((r) => {",
+									"        pm.expect(r.status).to.be.oneOf([\"active\"]);",
+									"    })",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [
@@ -22930,6 +22581,33 @@
 				},
 				{
 					"name": "Listing as provider - [200]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    pm.expect(body.results).to.not.be.empty;",
+									"    pm.expect(body.results.length).to.be.eq(1);",
+									"    body.results.forEach((r) => {",
+									"        pm.expect(r.status).to.be.oneOf([\"active\"]);",
+									"    })",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [
@@ -22955,6 +22633,33 @@
 				},
 				{
 					"name": "Listing as other admin - [200]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    pm.expect(body.results).to.not.be.empty;",
+									"    pm.expect(body.results.length).to.be.eq(1);",
+									"    body.results.forEach((r) => {",
+									"        pm.expect(r.status).to.be.oneOf([\"active\"]);",
+									"    })",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [
@@ -24191,6 +23896,4744 @@
 								"auth",
 								"v1",
 								"apd"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cleanup - postman.trustee setting pendingapd.integration-iudx.io to inactive - [200]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [\n        {\n            \"apdId\": \"8e2741ad-34a3-4de2-a9e5-b97631f2fd8f\",\n            \"status\": \"inactive\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/apd",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"apd"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cleanup - postman.trustee setting pendingapd.integration-iudx.io to pending - [200]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [\n        {\n            \"apdId\": \"8e2741ad-34a3-4de2-a9e5-b97631f2fd8f\",\n            \"status\": \"pending\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/apd",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"apd"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cleanup - auth.admin setting activeapd.integration-iudx.io to active - [200]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [\n        {\n            \"apdId\": \"4f51cee5-e6ce-4e31-8c30-66d298c7d4a6\",\n            \"status\": \"active\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/apd",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"apd"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Create APD Policy and Trustee-Provider policies",
+			"item": [
+				{
+					"name": "Setup",
+					"item": [
+						{
+							"name": "Setup - Get all existing policies for consumer",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+											"    let id_array = [];",
+											"    pm.expect(body.results).to.not.be.empty;",
+											"    body.results.forEach((r) =>{",
+											"            pm.expect(r.owner.id == \"13d47a5a-213b-4ac8-b4db-10dbc70c48af\").to.be.true;",
+											"            pm.expect(r.user.id).to.be.eq(pm.environment.get(\"CONSUMER_GMAIL_USERID\"));",
+											"            pm.expect(r.user.email).to.be.eq(\"consumer@gmail.com\");",
+											"            pm.expect(r.itemId.startsWith(\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/\")).to.be.true;",
+											"            pm.expect(r.constraints).to.exist;",
+											"            pm.expect(r.policyId).to.exist;",
+											"            pm.expect(r.expiryTime).to.exist;",
+											"            id_array.push({id:r.policyId});",
+											"    })",
+											"    pm.environment.set(\"CONSUMER_POLICY_IDS\", JSON.stringify(id_array));",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Setup - Delete policies that consumer had",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": {{CONSUMER_POLICY_IDS}}\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Validation",
+					"item": [
+						{
+							"name": "Invalid APD URL - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"userClass\":\"userClass\",\n            \"apdId\": 123,\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Missing APD URL - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"userClass\":\"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Putting userId instead of APD URL in APD policy object - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"userId\": \"this should not be here\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Adding extra userId field in APD policy object - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"userId\": \"this should not be here\",\n            \"apdId\":\"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Invalid item ID - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/????\",\n            \"itemType\": \"resource\",\n            \"apdId\":\"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Missing item ID - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemType\": \"resource\",\n            \"apdId\":\"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Invalid item type (apd not allowed )- [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"rs.iudx.io\",\n            \"itemType\": \"apd\",\n            \"userClass\":\"userClass\",\n            \"apdId\": \"example.com\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Invalid item type (resource_server not allowed )- [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"rs.iudx.io\",\n            \"itemType\": \"resource_server\",\n            \"userClass\":\"userClass\",\n            \"apdId\": \"example.com\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Missing itemType - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"rs.iudx.io\",\n            \"userClass\":\"userClass\",\n            \"apdId\": \"example.com\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Missing constraints - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"example.com\",\n            \"userClass\": \"userClass\"\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Invalid constraints - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"apdId\":\"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": []\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Invalid userClass - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"example.com\",\n            \"userClass\": \"?\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Missing userClass - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"example.com\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Invalid expiryTime - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {},\n            \"expiryTime\": \"2133231-23-232T90320\"\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Duplicate requests - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Trustee APD item Type policies",
+					"item": [
+						{
+							"name": "Admin setting 'apd' policy - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(403);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidRole\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"{{TEST_APD_URL}}\",\n            \"itemType\": \"apd\",\n            \"userId\":\"13d47a5a-213b-4ac8-b4db-10dbc70c48af\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Provider setting 'apd' policy - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(403);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidRole\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"{{TEST_APD_URL}}\",\n            \"itemType\": \"apd\",\n            \"userId\":\"13d47a5a-213b-4ac8-b4db-10dbc70c48af\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Duplicate requests - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"    pm.expect(body).to.have.property(\"title\", \"Request must be unique\");",
+											"",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"inactiveapd.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"13d47a5a-213b-4ac8-b4db-10dbc70c48af\",\n            \"constraints\": {}\n        },\n        {\n            \"itemId\": \"inactiveapd.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"13d47a5a-213b-4ac8-b4db-10dbc70c48af\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Setting many policies w/ different item types - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"inactiveapd.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"13d47a5a-213b-4ac8-b4db-10dbc70c48af\",\n            \"constraints\": {}\n        },\n        {\n            \"itemId\": \"inactiveapd.integration-iudx.io\",\n            \"itemType\": \"resource_server\",\n            \"userId\": \"13d47a5a-213b-4ac8-b4db-10dbc70c48af\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Postman trustee setting policy for non existent APD - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"thisdoesnotexist.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"13d47a5a-213b-4ac8-b4db-10dbc70c48af\",\n            \"constraints\": {}\n        },\n                {\n            \"itemId\": \"inactiveapd.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"13d47a5a-213b-4ac8-b4db-10dbc70c48af\",\n            \"constraints\": {}\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Postman trustee setting policy for provider for inactive APD - [200]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+											"",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"inactiveapd.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"13d47a5a-213b-4ac8-b4db-10dbc70c48af\",\n            \"constraints\": {}\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Existing policy - [409]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(409);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:AlreadyExists\");",
+											"",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"inactiveapd.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"13d47a5a-213b-4ac8-b4db-10dbc70c48af\",\n            \"constraints\": {}\n        },\n        {\n            \"itemId\": \"activeapd.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"13d47a5a-213b-4ac8-b4db-10dbc70c48af\",\n            \"constraints\": {}\n        },\n        {\n            \"itemId\": \"pendingapd.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"13d47a5a-213b-4ac8-b4db-10dbc70c48af\",\n            \"constraints\": {}\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Postman trustee setting policy for provider for pending APD - [200]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+											"",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"pendingapd.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"13d47a5a-213b-4ac8-b4db-10dbc70c48af\",\n            \"constraints\": {}\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Postman trustee setting policy for provider for TEST_APD_URL does not own - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(403);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"    pm.expect(body).to.have.property(\"title\", \"Not allowed to create policies for resource\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"{{TEST_APD_URL}}\",\n            \"itemType\": \"apd\",\n            \"userId\": \"13d47a5a-213b-4ac8-b4db-10dbc70c48af\",\n            \"constraints\": {}\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Other trustee setting policy for provider for TEST_APD_URL - [200]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+											"",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"{{TEST_APD_URL}}\",\n            \"itemType\": \"apd\",\n            \"userId\": \"13d47a5a-213b-4ac8-b4db-10dbc70c48af\",\n            \"constraints\": {}\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Provider setting APD policies",
+					"item": [
+						{
+							"name": "Provider cannot set APD policy for activeapd.integration-iudx.io - no trustee policy - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(403);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"    pm.expect(body).to.have.property(\"title\", \"No auth policy for user by trustee\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"activeapd.integration-iudx.io\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Postman trustee setting policy for provider for active APD - [200]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+											"",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"activeapd.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"13d47a5a-213b-4ac8-b4db-10dbc70c48af\",\n            \"constraints\": {}\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Provider cannot set APD policy for pendingapd.integration-iudx.io - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"pendingapd.integration-iudx.io\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Provider cannot set APD policy for inactiveapd.integration-iudx.io - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"inactiveapd.integration-iudx.io\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Provider cannot set APD policy for non-existent APD - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"nonexistentapd.integration-iudx.io\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Invalid itemId - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"    pm.expect(body).to.have.property(\"title\",\"Item does not exist\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a5dandjns05/rs.iudx.io/iasd\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Invalid itemId:itemType mapping - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a5dandjns05/rs.iudx.io/iasd\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Item does not belong to provider - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(403);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"    pm.expect(body).to.have.property(\"title\",\"Not allowed to create policies for resource\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/9c13a2308bb0919bf146be8681eb886922d29282/rs.iudx.io/invalid-resource-for-ownership-test\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Duplicate APD policies for a resource (same APD, different userclasses)- [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"    pm.expect(body).to.have.property(\"title\",\"Request must be unique\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestDeny\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Duplicate APD policies for a resource (different APDs)- [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"    pm.expect(body).to.have.property(\"title\",\"Request must be unique\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"activeapd.integration-iudx.io\",\n            \"userClass\": \"TestDeny\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Duplicate APD policies for a resource (different expiry)- [400] Copy",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"    pm.expect(body).to.have.property(\"title\",\"Request must be unique\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\": \"2030-01-01T01:01:01\"\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\": \"2030-12-01T01:01:01\"\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set APD policy for RSG integration-test-rsg-one (API constraint, TestAllow userclass) and USER policy for RSI integration-test-rsg-one/test-resource-one (sub constraint) all for consumer- [200]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"constraints\": {\n                \"access\": [\n                    \"sub\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Auth delegate setting APD policies",
+					"item": [
+						{
+							"name": "Item does not belong to provider - [400]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(403);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+											"    pm.expect(body).to.have.property(\"title\",\"Not allowed to create policies for resource\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_DELEGATE_TOKEN}}",
+										"type": "text"
+									},
+									{
+										"key": "providerId",
+										"value": "13d47a5a-213b-4ac8-b4db-10dbc70c48af",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/9c13a2308bb0919bf146be8681eb886922d29282/rs.iudx.io/invalid-resource-for-ownership-test\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set  APD policy for RSI integration-test-rsg-two/test-resource-one, two (API constraint, TestDeny, TestDenyNInteraction) for consumer- [200]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_DELEGATE_TOKEN}}",
+										"type": "text"
+									},
+									{
+										"key": "providerId",
+										"value": "13d47a5a-213b-4ac8-b4db-10dbc70c48af",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestDeny\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n         {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestDenyNInteraction\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"policies"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Token API w/ User policies and APD policies",
+			"item": [
+				{
+					"name": "Consumer get token for integration-test-rsg-one (APD policy for it)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    const moment = require('moment');",
+									"",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    const result = body.results;",
+									"    pm.expect(result).to.have.property(\"accessToken\");",
+									"    pm.expect(result.expiry).to.be.greaterThan(moment().unix());",
+									"    pm.expect(result.server).to.be.eq(\"rs.iudx.io\");",
+									"",
+									"    pm.environment.set(\"INTROSPECT_TOKEN\", result.accessToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Introspect token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    const moment = require('moment');",
+									"",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    const result = body.results;",
+									"    pm.expect(result).to.have.property(\"sub\");",
+									"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
+									"    pm.expect(result.aud).to.be.eq(\"rs.iudx.io\");",
+									"    pm.expect(result.iid).to.be.eq(\"rg:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\");",
+									"    pm.expect(result.role).to.be.eq(\"consumer\");",
+									"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
+									"    pm.expect(result.cons).to.not.be.empty;",
+									"    pm.expect(result.cons.access).to.contain(\"api\");",
+									"",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"accessToken\" : \"{{INTROSPECT_TOKEN}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/introspect",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"introspect"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consumer get token for integration-test-rsg-one/test-resource-one (User policy for it)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    const moment = require('moment');",
+									"",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    const result = body.results;",
+									"    pm.expect(result).to.have.property(\"accessToken\");",
+									"    pm.expect(result.expiry).to.be.greaterThan(moment().unix());",
+									"    pm.expect(result.server).to.be.eq(\"rs.iudx.io\");",
+									"",
+									"    pm.environment.set(\"INTROSPECT_TOKEN\", result.accessToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n    \"itemType\": \"resource\",\n    \"role\": \"consumer\"\n\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Introspect token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    const moment = require('moment');",
+									"",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    const result = body.results;",
+									"    pm.expect(result).to.have.property(\"sub\");",
+									"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
+									"    pm.expect(result.aud).to.be.eq(\"rs.iudx.io\");",
+									"    pm.expect(result.iid).to.be.eq(\"ri:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\");",
+									"    pm.expect(result.role).to.be.eq(\"consumer\");",
+									"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
+									"    pm.expect(result.cons).to.not.be.empty;",
+									"    pm.expect(result.cons.access).to.contain(\"sub\");",
+									"",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"accessToken\" : \"{{INTROSPECT_TOKEN}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/introspect",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"introspect"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consumer cannot get token for integration-test-rsg-two (No user or APD policy)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consumer cannot get token for integration-test-rsg-two/test-resource-one (APD policy, but will return deny)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"    pm.expect(body.detail).to.include(\"APD\");",
+									"",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-one\",\n    \"itemType\": \"resource\",\n    \"role\": \"consumer\"\n\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consumer gets APD token for integration-test-rsg-two/test-resource-one  (DenyNeedsInteraction)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    const moment = require('moment');",
+									"",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:MissingInformation\");",
+									"    pm.expect(body.detail).to.include(\"APD\");",
+									"    let apdUrl = pm.environment.get(\"TEST_APD_URL\"); ",
+									"    pm.expect(body).to.have.property(\"context\");",
+									"    const result = body.context;",
+									"    pm.expect(result).to.have.property(\"apdToken\");",
+									"    pm.expect(result.expiry).to.be.greaterThan(moment().unix());",
+									"    pm.expect(result.server).to.be.eq(apdUrl);",
+									"",
+									"    pm.environment.set(\"INTROSPECT_TOKEN\", result.apdToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-two\",\n    \"itemType\": \"resource\",\n    \"role\": \"consumer\"\n\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Introspect APD token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    const moment = require('moment');",
+									"",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    const result = body.results;",
+									"    let apdUrl = pm.environment.get(\"TEST_APD_URL\"); ",
+									"    pm.expect(result).to.have.property(\"sub\");",
+									"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
+									"    pm.expect(result.aud).to.be.eq(apdUrl);",
+									"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
+									"    pm.expect(result.sid).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"accessToken\" : \"{{INTROSPECT_TOKEN}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/introspect",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"introspect"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Additional Token tests with APD and user policies",
+			"item": [
+				{
+					"name": "Provider set APD policy for RSG integration-test-rsg-two for consumer (allow, API constraint)- [200]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consumer can now get token for integration-test-rsg-two - [200]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    const moment = require('moment');",
+									"",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    const result = body.results;",
+									"    pm.expect(result).to.have.property(\"accessToken\");",
+									"    pm.expect(result.expiry).to.be.greaterThan(moment().unix());",
+									"    pm.expect(result.server).to.be.eq(\"rs.iudx.io\");",
+									"",
+									"    pm.environment.set(\"INTROSPECT_TOKEN\", result.accessToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Introspect token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    const moment = require('moment');",
+									"",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    const result = body.results;",
+									"    pm.expect(result).to.have.property(\"sub\");",
+									"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
+									"    pm.expect(result.aud).to.be.eq(\"rs.iudx.io\");",
+									"    pm.expect(result.iid).to.be.eq(\"rg:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\");",
+									"    pm.expect(result.role).to.be.eq(\"consumer\");",
+									"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
+									"    pm.expect(result.cons).to.not.be.empty;",
+									"    pm.expect(result.cons.access).to.contain(\"api\");",
+									"",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"accessToken\" : \"{{INTROSPECT_TOKEN}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/introspect",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"introspect"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Provider set User policy for RSG integration-test-rsg-two for consumer (Sub constraint)- [200]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n            \"itemType\": \"resource_group\",\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"constraints\": {\n                \"access\": [\n                    \"sub\"\n                ]\n            }\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consumer get's token for integration-test-rsg-two but with sub constraint (user policy activates) - [200]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    const moment = require('moment');",
+									"",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    const result = body.results;",
+									"    pm.expect(result).to.have.property(\"accessToken\");",
+									"    pm.expect(result.expiry).to.be.greaterThan(moment().unix());",
+									"    pm.expect(result.server).to.be.eq(\"rs.iudx.io\");",
+									"",
+									"    pm.environment.set(\"INTROSPECT_TOKEN\", result.accessToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Introspect rsg token - will have sub constraint",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    const moment = require('moment');",
+									"",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    const result = body.results;",
+									"    pm.expect(result).to.have.property(\"sub\");",
+									"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
+									"    pm.expect(result.aud).to.be.eq(\"rs.iudx.io\");",
+									"    pm.expect(result.iid).to.be.eq(\"rg:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\");",
+									"    pm.expect(result.role).to.be.eq(\"consumer\");",
+									"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
+									"    pm.expect(result.cons).to.not.be.empty;",
+									"    pm.expect(result.cons.access).to.contain(\"sub\");",
+									"",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"accessToken\" : \"{{INTROSPECT_TOKEN}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/introspect",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"introspect"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consumer gets token for integration-test-rsg-two/test-resource-one but with sub constraint (user policy for resource group supercedes APD policy) [200]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    const moment = require('moment');",
+									"",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    const result = body.results;",
+									"    pm.expect(result).to.have.property(\"accessToken\");",
+									"    pm.expect(result.expiry).to.be.greaterThan(moment().unix());",
+									"    pm.expect(result.server).to.be.eq(\"rs.iudx.io\");",
+									"",
+									"    pm.environment.set(\"INTROSPECT_TOKEN\", result.accessToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-one\",\n    \"itemType\": \"resource\",\n    \"role\": \"consumer\"\n\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Introspect token - will have sub constraint",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    const moment = require('moment');",
+									"",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    const result = body.results;",
+									"    pm.expect(result).to.have.property(\"sub\");",
+									"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
+									"    pm.expect(result.aud).to.be.eq(\"rs.iudx.io\");",
+									"    pm.expect(result.iid).to.be.eq(\"ri:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-one\");",
+									"    pm.expect(result.role).to.be.eq(\"consumer\");",
+									"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
+									"    pm.expect(result.cons).to.not.be.empty;",
+									"    pm.expect(result.cons.access).to.contain(\"sub\");",
+									"",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"accessToken\" : \"{{INTROSPECT_TOKEN}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/introspect",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"introspect"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "List APD policies",
+			"item": [
+				{
+					"name": "Postman.trustee viewing policies",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    let apdcount = 0;",
+									"    pm.expect(body.results).to.not.be.empty;",
+									"    body.results.forEach((r) => {",
+									"        if(r.itemType === 'apd'){",
+									"            pm.expect(r.user.id).to.be.eq(\"13d47a5a-213b-4ac8-b4db-10dbc70c48af\");",
+									"            pm.expect(r.user.email).to.be.eq(\"postman.provider-admin@datakaveri.org\");",
+									"            pm.expect(r.constraints).to.exist;",
+									"            pm.expect(r.policyId).to.exist;",
+									"            pm.expect(r.expiryTime).to.exist;",
+									"            apdcount++;",
+									"    }",
+									"    })",
+									"    pm.expect(apdcount).to.be.eq(3);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consumer cannot see any apd policies",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"       let id_array = [];",
+									"    pm.expect(body.results).to.not.be.empty;",
+									"    body.results.forEach((r) =>{",
+									"            pm.expect(r.itemType).to.be.not.eq(\"apd\");",
+									"            pm.expect(r.owner.id == \"13d47a5a-213b-4ac8-b4db-10dbc70c48af\").to.be.true;",
+									"            pm.expect(r.user.id).to.be.eq(pm.environment.get(\"CONSUMER_GMAIL_USERID\"));",
+									"            pm.expect(r.user.email).to.be.eq(\"consumer@gmail.com\");",
+									"            pm.expect(r.itemId.startsWith(\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/\")).to.be.true;",
+									"            pm.expect(r.constraints).to.exist;",
+									"            pm.expect(r.policyId).to.exist;",
+									"            pm.expect(r.expiryTime).to.exist;",
+									"            id_array.push({id:r.policyId});",
+									"    })",
+									"    pm.environment.set(\"CONSUMER_POLICY_IDS\", JSON.stringify(id_array));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Postman.provider viewing policies",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"       let id_array = [];",
+									"    pm.expect(body.results).to.not.be.empty;",
+									"    body.results.forEach((r) => {",
+									"        if(\"apd\" in r){",
+									"            pm.expect(r.owner.id == \"13d47a5a-213b-4ac8-b4db-10dbc70c48af\").to.be.true;",
+									"            pm.expect(r.user).to.not.exist;",
+									"            pm.expect(r.constraints).to.exist;",
+									"            pm.expect(r.policyId).to.exist;",
+									"            pm.expect(r.expiryTime).to.exist;",
+									"            pm.expect(r.apd.status).to.be.eq(\"active\");",
+									"            pm.expect(r.apd.url).to.be.eq(pm.environment.get(\"TEST_APD_URL\"));",
+									"            id_array.push({id:r.policyId});",
+									"    }",
+									"    pm.environment.set(\"APD_AND_USER_POLICY_IDS\", JSON.stringify(id_array.concat(JSON.parse(pm.environment.get(\"CONSUMER_POLICY_IDS\")))));",
+									"",
+									"    })",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Postman delegate auth delegate viewing policies",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    pm.expect(body.results).to.not.be.empty;",
+									"    body.results.forEach((r) => {",
+									"        if(\"apd\" in r){",
+									"            pm.expect(r.owner.id == \"13d47a5a-213b-4ac8-b4db-10dbc70c48af\").to.be.true;",
+									"            pm.expect(r.user).to.not.exist;",
+									"            pm.expect(r.constraints).to.exist;",
+									"            pm.expect(r.policyId).to.exist;",
+									"            pm.expect(r.expiryTime).to.exist;",
+									"            pm.expect(r.apd.status).to.be.eq(\"active\");",
+									"            pm.expect(r.apd.url).to.be.eq(pm.environment.get(\"TEST_APD_URL\"));",
+									"    }",
+									"    })",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_DELEGATE_TOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "providerId",
+								"value": "13d47a5a-213b-4ac8-b4db-10dbc70c48af",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Delete user and APD policies",
+			"item": [
+				{
+					"name": "Provider deleting APD and user policies together",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": {{APD_AND_USER_POLICY_IDS}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Provider deleting again",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": {{APD_AND_USER_POLICY_IDS}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Auth delegate deleting deleted policies",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_DELEGATE_TOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "providerId",
+								"value": "13d47a5a-213b-4ac8-b4db-10dbc70c48af",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": {{APD_AND_USER_POLICY_IDS}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Postman.provider viewing policies after delete",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"       let id_array = [];",
+									"    pm.expect(body.results).to.not.be.empty;",
+									"    body.results.forEach((r) => {",
+									"    pm.expect(r).to.not.haveOwnProperty(\"apd\");",
+									"    })",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Delete Delegations",
+			"item": [
+				{
+					"name": "No Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:MissingAuthenticationToken\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies",
+								"delegations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Empty Body",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies",
+								"delegations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "No request key - [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"hello\":1234\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies",
+								"delegations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Request array invalid objects- [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [1,2,{}]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies",
+								"delegations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Duplicate objects- [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{NO_PROFILE_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [\n        {\n            \"id\": \"921f439e-7c9b-40b4-b6a7-9cb1e6771eef\"\n        },\n        {\n            \"id\": \"921f439e-7c9b-40b4-b6a7-9cb1e6771eef\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies",
+								"delegations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "No profile calling API - [401]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidRole\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{NO_PROFILE_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [\n        {\n            \"id\": \"921f439e-7c9b-40b4-b6a7-9cb1e6771eef\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies",
+								"delegations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consumer calling API - [401]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidRole\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": {{POSTMAN_PROVIDER_DELEGATION_IDS}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies",
+								"delegations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Other Provider calling API  - [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ALL_ROLES_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": {{POSTMAN_PROVIDER_DELEGATION_IDS}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies",
+								"delegations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Auth delegate fail to delete (since auth delegation present in array)- [403]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_DELEGATE_TOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "providerId",
+								"value": "13d47a5a-213b-4ac8-b4db-10dbc70c48af",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": {{POSTMAN_PROVIDER_DELEGATION_IDS}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies",
+								"delegations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Provider calling API successfully - [200]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": {{POSTMAN_PROVIDER_DELEGATION_IDS}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies",
+								"delegations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Provider trying to delete again- [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": {{POSTMAN_PROVIDER_DELEGATION_IDS}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies",
+								"delegations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Auth delegate not permitted to call API (auth delegation deleted)- [401]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:MissingAuthenticationToken\");",
+									"    pm.expect(body).to.have.property(\"title\", \"Invalid delegate request\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_DELEGATE_TOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "providerId",
+								"value": "13d47a5a-213b-4ac8-b4db-10dbc70c48af",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": {{POSTMAN_PROVIDER_DELEGATION_IDS}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies",
+								"delegations"
 							]
 						}
 					},
