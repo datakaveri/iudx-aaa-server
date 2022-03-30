@@ -362,10 +362,7 @@ paths:
                         access:
                           - api
         '400':
-          description: |-
-            - Missing/malformed token
-            - The token has not been issued by the IUDX AAA server
-            - The token is expired
+          description: Invalid/missing information
           content:
             application/json:
               schema:
@@ -378,34 +375,19 @@ paths:
                   title:
                     type: string
                     minLength: 1
-                  results:
-                    type: array
-                    uniqueItems: true
-                    minItems: 1
-                    items:
-                      required:
-                        - status
-                      properties:
-                        status:
-                          type: string
-                          minLength: 1
+                  detail:
+                    type: string
+                    minLength: 1
                 required:
                   - type
                   - title
-                  - results
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:InvalidAuthenticationToken'
-                    title: Token authentication failed
-                    results:
-                      - status: deny
+                  - detail
               examples:
                 Invalid/missing information:
                   value:
-                    type: 'urn:dx:as:InvalidAuthenticationToken'
-                    title: Token authentication failed
-                    results:
-                      - status: deny
+                    type: string
+                    title: string
+                    detail: string
       requestBody:
         content:
           application/json:
@@ -431,6 +413,7 @@ paths:
         - validates the token structure
         - checks if the token has been issued by the IUDX AAA server
         - checks if the token is expired
+        - checks if the policy associated with user, provider (if applicable) and item is valid (not expired or deleted)
 
         If all checks pass, the decoded token is returned
       tags:
@@ -3653,35 +3636,24 @@ paths:
               schema:
                 description: ''
                 type: object
-                x-examples:
-                  example-1:
-                    results:
-                      - name: RBAC APD for IISc
-                        url: apd.iisc.ac.in
-                        status: active
-                        owner:
-                          email: someone@iisc.ac.in
-                          name:
-                            firstName: a
-                            lastName: b
-                          id: 844e251b-574b-46e6-9247-f76f1f70a637
                 properties:
+                  type:
+                    type: string
+                    minLength: 1
+                  title:
+                    type: string
+                    minLength: 1
                   results:
                     type: array
                     uniqueItems: true
                     minItems: 1
                     items:
-                      type: object
+                      required:
+                        - url
+                        - status
+                        - name
+                        - apdId
                       properties:
-                        name:
-                          type: string
-                          minLength: 1
-                        url:
-                          type: string
-                          minLength: 1
-                        status:
-                          type: string
-                          minLength: 1
                         owner:
                           type: object
                           properties:
@@ -3690,9 +3662,6 @@ paths:
                               minLength: 1
                             name:
                               type: object
-                              required:
-                                - firstName
-                                - lastName
                               properties:
                                 firstName:
                                   type: string
@@ -3700,6 +3669,9 @@ paths:
                                 lastName:
                                   type: string
                                   minLength: 1
+                              required:
+                                - firstName
+                                - lastName
                             id:
                               type: string
                               minLength: 1
@@ -3707,16 +3679,49 @@ paths:
                             - email
                             - name
                             - id
-                      required:
-                        - name
-                        - url
-                        - status
-                  type:
-                    type: string
-                  title:
-                    type: string
+                        url:
+                          type: string
+                          minLength: 1
+                        status:
+                          type: string
+                          minLength: 1
+                        name:
+                          type: string
+                          minLength: 1
+                        apdId:
+                          type: string
+                          minLength: 1
                 required:
+                  - type
+                  - title
                   - results
+                x-examples:
+                  example-1:
+                    type: 'urn:dx:as:Success'
+                    title: Apd read successfully
+                    results:
+                      - owner:
+                          email: bryan.robert@datakaveri.org
+                          name:
+                            firstName: Bryan
+                            lastName: Robert
+                          id: fcbecd18-2ecb-4066-8a9e-f073aacbe579
+                        url: authdev.iudx.io
+                        status: active
+                        name: Unit Test APD
+                        apdId: 88b7bdbc-936c-4478-8059-f95f4c8a6352
+                      - owner:
+                          id: a2a03275-65cd-4d97-8289-bdadac5dea5c
+                        url: uyzik.com
+                        status: active
+                        name: uyzik
+                        apdId: 824970f0-ddbc-4350-8dc8-e2e77c51286f
+                      - owner:
+                          id: a0315028-5c29-4b5e-b2e5-0605c7010a85
+                        url: epaeh.com
+                        status: active
+                        name: epaeh
+                        apdId: 04fd9720-3f6a-40f1-9dd6-e10b4360d525
               examples:
                 Example:
                   value:
@@ -3772,7 +3777,7 @@ paths:
         Returns registered APDs. 
 
         - If called by the AAA admin, returns all APD registrations
-        - If called by a user with `trustee` role, returns all APDs the user has registered
+        - If called by a user with `trustee` role, returns all APDs in the *active** state and all the APDs the user has registered
         - If called by a user with any other roles, returns all APDs in the **active** state
       security:
         - authorization: []

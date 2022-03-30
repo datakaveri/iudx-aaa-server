@@ -198,6 +198,9 @@ public class ApdServiceImpl implements ApdService {
     Future<JsonObject> apdDetails =
             apdIds.compose(
                     ids -> {
+                      if(ids.isEmpty())
+                        return Future.succeededFuture(new JsonObject());
+
                       Promise<JsonObject> response = Promise.promise();
                       Promise<JsonObject> promise = Promise.promise();
                       getApdDetails(new ArrayList<>(), ids, promise);
@@ -214,8 +217,18 @@ public class ApdServiceImpl implements ApdService {
     apdDetails
             .compose(
                     details -> {
-                      JsonObject response = new JsonObject();
-                      response.mergeIn(details);
+                      if(details.isEmpty())
+                      {
+                        return Future.succeededFuture(new JsonArray());
+                      }
+                      JsonArray response = new JsonArray();
+                        apdIds.result().forEach(id->{
+                        JsonObject result = details.getJsonObject(id);
+                        String apdId = result.getString("id");
+                        result.remove("id");
+                        result.put("apdId",apdId);
+                        response.add(result);
+                      });
                       return Future.succeededFuture(response);
                     })
             .onSuccess(
@@ -225,7 +238,7 @@ public class ApdServiceImpl implements ApdService {
                                       .status(200)
                                       .type(URN_SUCCESS)
                                       .title(SUCC_TITLE_APD_READ)
-                                      .objectResults(ar)
+                                      .arrayResults(ar)
                                       .build();
                       handler.handle(Future.succeededFuture(resp.toJson()));
                     })
