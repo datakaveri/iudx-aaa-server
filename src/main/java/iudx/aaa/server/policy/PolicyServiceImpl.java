@@ -442,14 +442,14 @@ public class PolicyServiceImpl implements PolicyService {
                           return Future.succeededFuture(true);
                         else
                         {
-                          List<UUID> apdIds = new ArrayList<>();
+                          Set<UUID> apdIds = new HashSet<UUID>();
                           List<String> urls =
                                   apdPolicyRequests.stream().map(CreatePolicyRequest::getApdId).collect(Collectors.toList());
                           urls.forEach(url ->
                           {
                             apdIds.add(UUID.fromString(validApd.result().getJsonObject(url).getString(ID)));
                           });
-                          return createPolicy.checkAuthTrusteePolicy(providerId,apdIds);
+                          return createPolicy.checkAuthTrusteePolicy(providerId, apdIds);
                         }
                     }
             );

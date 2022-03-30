@@ -369,7 +369,7 @@ public class createPolicy {
     return p.future();
   }
 
-  public Future<Boolean> checkAuthTrusteePolicy(String providerId, List<UUID> apdIds) {
+  public Future<Boolean> checkAuthTrusteePolicy(String providerId, Set<UUID> apdIds) {
     Promise<Boolean> p = Promise.promise();
     pool.withConnection(
         conn ->
@@ -383,7 +383,7 @@ public class createPolicy {
                     })
                 .onSuccess(
                     obj -> {
-                      if (obj.rowCount() > 0) p.complete(true);
+                      if (obj.rowCount() == apdIds.size()) p.complete(true);
                       else {
                         Response r =
                             new Response.ResponseBuilder()

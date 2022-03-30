@@ -647,14 +647,13 @@ public class ApdServiceImpl implements ApdService {
 
                           if (!apdIdList.containsAll(request))
                           {
-                            apdIdList.removeAll(apdIds);
-                            apdIdList.removeAll(apdUrl);
+                            request.removeAll(apdIdList);
                             return Future.failedFuture(
                                 new ComposeException(
                                     400,
                                     URN_INVALID_INPUT,
                                         ERR_TITLE_INVALID_REQUEST_ID,
-                                    apdIdList.get(0).toString()));
+                                    request.get(0).toString()));
                           }
 
                           List<ApdInfoObj> apdInfo = new ArrayList<>();
