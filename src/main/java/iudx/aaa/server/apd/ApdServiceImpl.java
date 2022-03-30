@@ -582,6 +582,7 @@ public class ApdServiceImpl implements ApdService {
     Tuple tuple;
     List<String> request;
     Set<UUID> uniqueIds = new HashSet<UUID>();
+    Set<String> uniqueUrl = new HashSet<>();
     // either apdUrl or apdId must be empty
     if (apdUrl.isEmpty() == apdIds.isEmpty()) {
       handler.handle(Future.failedFuture(INTERNALERROR));
@@ -604,57 +605,65 @@ public class ApdServiceImpl implements ApdService {
       tuple = Tuple.of(uniqueIds.toArray(UUID[]::new));
       request = apdIds;
     } else {
+      for (String ids : apdUrl)
+        uniqueUrl.add(ids);
       req = "url";
       query = GET_APDINFO_URL;
-      tuple = Tuple.of(apdUrl.toArray());
+      tuple = Tuple.of(uniqueUrl.toArray(String[]::new));
       request = apdUrl;
     }
 
     Collector<Row, ?, List<JsonObject>> ApdCollector =
             Collectors.mapping(row -> row.toJson(), Collectors.toList());
     Future<List<ApdInfoObj>> apdDetails =
-            pool.withTransaction(
-                    conn ->
-                            conn.preparedQuery(query)
-                                    .collecting(ApdCollector)
-                                    .execute(tuple)
-                                    .map(res -> res.value())
-                                    .onFailure(
-                                            failureHandler ->
-                                                    LOGGER.error("get policy db " + failureHandler.getLocalizedMessage()))
-                                    .compose(
-                                            apdResp -> {
-                                              if (apdResp.isEmpty()) {
-                                                return Future.failedFuture(
-                                                        new ComposeException(
-                                                                400,
-                                                                URN_INVALID_INPUT,
-                                                                ERR_TITLE_INVALID_REQUEST_ID,
-                                                                request.toString()));
-                                              }
-                                              List<UUID> apdIdList =
-                                                      apdResp.stream()
-                                                              .map(obj -> UUID.fromString(obj.getString("id")))
-                                                              .collect(Collectors.toList());
-                                              if (!apdIdList.containsAll(apdIds) && !apdIdList.containsAll(apdUrl)) {
-                                                apdIdList.removeAll(apdIds);
-                                                apdIdList.removeAll(apdUrl);
-                                                return Future.failedFuture(
-                                                        new ComposeException(
-                                                                400,
-                                                                URN_INVALID_INPUT,
-                                                                ERR_TITLE_INVALID_REQUEST,
-                                                                apdIdList.get(0).toString()));
-                                              }
+        pool.withTransaction(
+            conn ->
+                conn.preparedQuery(query)
+                    .collecting(ApdCollector)
+                    .execute(tuple)
+                    .map(res -> res.value())
+                    .compose(
+                        apdResp -> {
+                          if (apdResp.isEmpty()) {
+                            return Future.failedFuture(
+                                new ComposeException(
+                                    400,
+                                    URN_INVALID_INPUT,
+                                    ERR_TITLE_INVALID_REQUEST_ID,
+                                    request.toString()));
+                          }
+                          List<String> apdIdList = new ArrayList<>();
+                          if (req.equalsIgnoreCase("id")) {
+                            apdIdList =
+                                apdResp.stream()
+                                    .map(obj -> obj.getString("id"))
+                                    .collect(Collectors.toList());
+                          } else {
+                            apdIdList =
+                                apdResp.stream()
+                                    .map(obj -> obj.getString("url"))
+                                    .collect(Collectors.toList());
+                          }
 
-                                              List<ApdInfoObj> apdInfo = new ArrayList<>();
-                                              apdResp.forEach(
-                                                      obj -> {
-                                                        apdInfo.add(new ApdInfoObj(obj));
+                          if (!apdIdList.containsAll(request))
+                          {
+                            apdIdList.removeAll(apdIds);
+                            apdIdList.removeAll(apdUrl);
+                            return Future.failedFuture(
+                                new ComposeException(
+                                    400,
+                                    URN_INVALID_INPUT,
+                                        ERR_TITLE_INVALID_REQUEST_ID,
+                                    apdIdList.get(0).toString()));
+                          }
 
-                                                      });
-                                              return Future.succeededFuture(apdInfo);
-                                            }));
+                          List<ApdInfoObj> apdInfo = new ArrayList<>();
+                          apdResp.forEach(
+                              obj -> {
+                                apdInfo.add(new ApdInfoObj(obj));
+                              });
+                          return Future.succeededFuture(apdInfo);
+                        }));
 
     Future<Map<String, JsonObject>> trusteeDetailsFuture =
             apdDetails.compose(

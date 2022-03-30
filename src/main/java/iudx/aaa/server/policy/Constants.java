@@ -101,6 +101,7 @@ public class Constants {
   public static final String VALIDATE_EXPIRY_FAIL = "expiry cannot be in the past:";
   public static final String INVALID_DATETIME = "invalid date time:";
   public static final String INVALID_USER = "user does not exist";
+  public static final String INVALID_APD_STATUS = "APD not in active state";
   public static final String NO_AUTH_POLICY = "No auth policy for user";
   public static final String NO_AUTH_TRUSTEE_POLICY = "No auth policy for user by trustee";
   public static final String INCORRECT_ITEM_TYPE = "incorrect item type";

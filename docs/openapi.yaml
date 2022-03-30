@@ -3637,7 +3637,6 @@ paths:
   /auth/v1/apd:
     get:
       summary: Get registered Access Policy Domains
-      tags: []
       responses:
         '200':
           description: OK
@@ -3789,6 +3788,8 @@ paths:
         - If called by a user with any other roles, returns all APDs in the **active** state
       security:
         - authorization: []
+      tags:
+        - Access Policy Domain (APD) APIs
     post:
       summary: Register an Access Policy Domain
       operationId: post-auth-v1-apd
@@ -3967,8 +3968,6 @@ paths:
         Additionally, The `GET /userclasses` API must be implemented and should 
         - return `200 OK` with content-type `application/json` 
         - send at least an empty JSON object in the response body
-      tags:
-        - Access Policy Domain (APD) APIs
       security:
         - authorization: []
       requestBody:
@@ -4002,6 +4001,8 @@ paths:
             - `https://example.com`
             - `example.com:8080`
             - `example.com/apd`
+      tags:
+        - Access Policy Domain (APD) APIs
     put:
       summary: Update Access Policy Domain status
       operationId: put-auth-v1-apd
@@ -4239,6 +4240,8 @@ paths:
                       status: inactive
       security:
         - authorization: []
+      tags:
+        - Access Policy Domain (APD) APIs
 components:
   schemas:
     RequestToken:
