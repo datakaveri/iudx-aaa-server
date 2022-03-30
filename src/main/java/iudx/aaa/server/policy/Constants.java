@@ -101,6 +101,7 @@ public class Constants {
   public static final String VALIDATE_EXPIRY_FAIL = "expiry cannot be in the past:";
   public static final String INVALID_DATETIME = "invalid date time:";
   public static final String INVALID_USER = "user does not exist";
+  public static final String INVALID_APD_STATUS = "APD not in active state";
   public static final String NO_AUTH_POLICY = "No auth policy for user";
   public static final String NO_AUTH_TRUSTEE_POLICY = "No auth policy for user by trustee";
   public static final String INCORRECT_ITEM_TYPE = "incorrect item type";
@@ -225,7 +226,7 @@ public class Constants {
           + " a.status = $3::policy_status_enum and a.expiry_time > now() ";
 
   public static final String CHECK_TRUSTEE_POLICY =
-          "select id from policies where user_id = $1::UUID and status = $2::test.policy_status_enum " +
+          "select id from policies where user_id = $1::UUID and status = $2::policy_status_enum " +
                   "and expiry_time > now() and  item_id = ANY($3::UUID[])";
 
   public static final String GET_RES_GRP_DETAILS =
@@ -285,9 +286,8 @@ public class Constants {
           + " and status = $5::policy_status_enum and expiry_time > now()";
 
   public static final String CHECK_EXISTING_APD_POLICY =
-          "select id from apd_policies where apd_id =$1::UUID and user_class = $2::text "
-                  + " and item_id =$3::UUID and item_type = $4::item_enum and owner_id = $5::UUID "
-                  + " and status = $6::policy_status_enum and expiry_time > now()";
+          "select id from item_id =$1::UUID and item_type = $2::item_enum and owner_id = $3::UUID "
+                  + " and status = $4::policy_status_enum and expiry_time > now()";
 
   public static final String LIST_DELEGATE_AUTH_DELEGATE =
       "SELECT d.id, d.owner_id, d.user_id, url, name AS server "

@@ -27,9 +27,7 @@ import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.UpdatePolicyNotification;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.util.ComposeException;
-import iudx.aaa.server.policy.Constants.itemTypes;
-import iudx.aaa.server.policy.Constants.roles;
-import iudx.aaa.server.policy.Constants.status;
+import iudx.aaa.server.policy.Constants.*;
 import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,111 +52,7 @@ import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
 import static iudx.aaa.server.apiserver.util.Urn.URN_MISSING_INFO;
 import static iudx.aaa.server.apiserver.util.Urn.URN_SUCCESS;
-import static iudx.aaa.server.policy.Constants.APD;
-import static iudx.aaa.server.policy.Constants.APD_DETAILS;
-import static iudx.aaa.server.policy.Constants.APD_ID;
-import static iudx.aaa.server.policy.Constants.CAT_ID;
-import static iudx.aaa.server.policy.Constants.CALL_APD_APDID;
-import static iudx.aaa.server.policy.Constants.CALL_APD_CONSTRAINTS;;
-import static iudx.aaa.server.policy.Constants.CALL_APD_PROVIDERID;
-import static iudx.aaa.server.policy.Constants.CALL_APD_RES_SER_URL;
-import static iudx.aaa.server.policy.Constants.CALL_APD_RESOURCE;
-import static iudx.aaa.server.policy.Constants.CALL_APD_USERCLASS;
-import static iudx.aaa.server.policy.Constants.CALL_APD_USERID;
-import static iudx.aaa.server.policy.Constants.ITEM_ID;
-import static iudx.aaa.server.policy.Constants.CHECK_ADMIN_POLICY;
-import static iudx.aaa.server.policy.Constants.CHECK_DELEGATOINS_VERIFY;
-import static iudx.aaa.server.policy.Constants.CHECK_POLICY;
-import static iudx.aaa.server.policy.Constants.COMPOSE_FAILURE;
-import static iudx.aaa.server.policy.Constants.CONSUMER_ROLE;
-import static iudx.aaa.server.policy.Constants.CONSTRAINTS;
-import static iudx.aaa.server.policy.Constants.CREATE_NOTIFI_POLICY_REQUEST;
-import static iudx.aaa.server.policy.Constants.DELEGATE_ROLE;
-import static iudx.aaa.server.policy.Constants.DELETE_DELEGATIONS;
-import static iudx.aaa.server.policy.Constants.DUPLICATE;
-import static iudx.aaa.server.policy.Constants.DUP_NOTIF_REQ;
-import static iudx.aaa.server.policy.Constants.ERR_DETAIL_DEL_DELEGATE_ROLES;
-import static iudx.aaa.server.policy.Constants.ERR_DETAIL_LIST_DELEGATE_ROLES;
-import static iudx.aaa.server.policy.Constants.ERR_DUP_NOTIF_REQ;
-import static iudx.aaa.server.policy.Constants.ERR_LIST_NOTIF;
-import static iudx.aaa.server.policy.Constants.ERR_TITLE_AUTH_DELE_CREATE;
-import static iudx.aaa.server.policy.Constants.ERR_TITLE_AUTH_DELE_DELETE;
-import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ID;
-import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ROLES;
-import static iudx.aaa.server.policy.Constants.EXPIRYTIME;
-import static iudx.aaa.server.policy.Constants.GET_CONSUMER_USER_POL_CONSTRAINTS;
-import static iudx.aaa.server.policy.Constants.GET_CONSUMER_APD_POL_DETAILS;
-import static iudx.aaa.server.policy.Constants.GET_APD_POLICIES;
-import static iudx.aaa.server.policy.Constants.GET_DELEGATIONS_BY_ID;
-import static iudx.aaa.server.policy.Constants.GET_FROM_ROLES_TABLE;
-import static iudx.aaa.server.policy.Constants.GET_RES_OWNER;
-import static iudx.aaa.server.policy.Constants.GET_RES_SERVER_OWNER;
-import static iudx.aaa.server.policy.Constants.GET_RES_SERVER_OWNER_ID;
-import static iudx.aaa.server.policy.Constants.GET_RES_SER_OWNER;
-import static iudx.aaa.server.policy.Constants.GET_RES_SER_OWNER_JOIN;
-import static iudx.aaa.server.policy.Constants.GET_RES_SER_URLS;
-import static iudx.aaa.server.policy.Constants.GET_URL;
-import static iudx.aaa.server.policy.Constants.GET_USER_POLICIES;
-import static iudx.aaa.server.policy.Constants.GET_USER_POLICIES_AUTH_DELEGATE;
-import static iudx.aaa.server.policy.Constants.ID;
-import static iudx.aaa.server.policy.Constants.INCORRECT_ITEM_TYPE;
-import static iudx.aaa.server.policy.Constants.INSERT_APD_POLICY;
-import static iudx.aaa.server.policy.Constants.INSERT_NOTIF_APPROVED_ID;
-import static iudx.aaa.server.policy.Constants.INSERT_POLICY;
-import static iudx.aaa.server.policy.Constants.INTERNALERROR;
-import static iudx.aaa.server.policy.Constants.INVALID_INPUT;
-import static iudx.aaa.server.policy.Constants.INVALID_ROLE;
-import static iudx.aaa.server.policy.Constants.INVALID_TUPLE;
-import static iudx.aaa.server.policy.Constants.INVALID_USER;
-import static iudx.aaa.server.policy.Constants.ITEMID;
-import static iudx.aaa.server.policy.Constants.ITEMNOTFOUND;
-import static iudx.aaa.server.policy.Constants.ITEMTYPE;
-import static iudx.aaa.server.policy.Constants.ITEM_ID;
-import static iudx.aaa.server.policy.Constants.LIST_DELEGATE_AS_PROVIDER_DELEGATE;
-import static iudx.aaa.server.policy.Constants.LIST_DELEGATE_AUTH_DELEGATE;
-import static iudx.aaa.server.policy.Constants.LOG_DB_ERROR;
-import static iudx.aaa.server.policy.Constants.NIL_UUID;
-import static iudx.aaa.server.policy.Constants.NOT_RES_OWNER;
-import static iudx.aaa.server.policy.Constants.NO_ADMIN_POLICY;
-import static iudx.aaa.server.policy.Constants.NO_RES_SERVER;
-import static iudx.aaa.server.policy.Constants.NO_USER;
-import static iudx.aaa.server.policy.Constants.OWNERID;
-import static iudx.aaa.server.policy.Constants.OWNER_DETAILS;
-import static iudx.aaa.server.policy.Constants.OWNER_ID;
-import static iudx.aaa.server.policy.Constants.POLICY_NOT_FOUND;
-import static iudx.aaa.server.policy.Constants.PROVIDER_ROLE;
-import static iudx.aaa.server.policy.Constants.REQ_ID_ALREADY_NOT_EXISTS;
-import static iudx.aaa.server.policy.Constants.REQ_ID_ALREADY_PROCESSED;
-import static iudx.aaa.server.policy.Constants.RES;
-import static iudx.aaa.server.policy.Constants.RES_GRP;
-import static iudx.aaa.server.policy.Constants.RES_SERVER;
-import static iudx.aaa.server.policy.Constants.ROLE;
-import static iudx.aaa.server.policy.Constants.SELECT_CONSUM_NOTIF_REQ;
-import static iudx.aaa.server.policy.Constants.SELECT_NOTIF_POLICY_REQUEST;
-import static iudx.aaa.server.policy.Constants.SELECT_PROVIDER_NOTIF_REQ;
-import static iudx.aaa.server.policy.Constants.SEL_NOTIF_ITEM_ID;
-import static iudx.aaa.server.policy.Constants.SEL_NOTIF_POLICY_ID;
-import static iudx.aaa.server.policy.Constants.SEL_NOTIF_REQ_ID;
-import static iudx.aaa.server.policy.Constants.SET_INTERVALSTYLE;
-import static iudx.aaa.server.policy.Constants.STATUS;
-import static iudx.aaa.server.policy.Constants.SUCCESS;
-import static iudx.aaa.server.policy.Constants.SUCC_LIST_NOTIF_REQ;
-import static iudx.aaa.server.policy.Constants.SUCC_NOTIF_REQ;
-import static iudx.aaa.server.policy.Constants.SUCC_TITLE_DELETE_DELE;
-import static iudx.aaa.server.policy.Constants.SUCC_TITLE_LIST_DELEGS;
-import static iudx.aaa.server.policy.Constants.SUCC_TITLE_POLICY_DEL;
-import static iudx.aaa.server.policy.Constants.SUCC_TITLE_POLICY_READ;
-import static iudx.aaa.server.policy.Constants.SUCC_UPDATE_NOTIF_REQ;
-import static iudx.aaa.server.policy.Constants.TYPE;
-import static iudx.aaa.server.policy.Constants.UNAUTHORIZED;
-import static iudx.aaa.server.policy.Constants.UNAUTHORIZED_DELEGATE;
-import static iudx.aaa.server.policy.Constants.UPDATE_NOTIF_REQ_APPROVED;
-import static iudx.aaa.server.policy.Constants.UPDATE_NOTIF_REQ_REJECTED;
-import static iudx.aaa.server.policy.Constants.URL;
-import static iudx.aaa.server.policy.Constants.USERID;
-import static iudx.aaa.server.policy.Constants.USER_CLASS;
-import static iudx.aaa.server.policy.Constants.USER_DETAILS;
-import static iudx.aaa.server.policy.Constants.USER_ID;
+import static iudx.aaa.server.policy.Constants.*;
 import static iudx.aaa.server.token.Constants.INVALID_POLICY;
 
 /**
@@ -225,6 +119,8 @@ public class PolicyServiceImpl implements PolicyService {
     if (isDelegate) providerId = data.getString("providerId");
     else providerId = user.getUserId();
     // check duplicate
+    // same test works for both userpolicies and apdUserpolicies as there can only be one apd_policy for any given resource
+    //no need to check if the requests have different apdId/userClass
     List<CreatePolicyRequest> duplicates =
         request.stream()
             .collect(
@@ -288,6 +184,7 @@ public class PolicyServiceImpl implements PolicyService {
           apdPolicyRequests.stream().map(e -> e.getApdId()).collect(Collectors.toList());
       Promise<JsonObject> promise = Promise.promise();
       apdService.getApdDetails(urls, List.of(), promise);
+
       validApd = promise.future();
     } else validApd = Future.succeededFuture(new JsonObject());
 
@@ -504,6 +401,27 @@ public class PolicyServiceImpl implements PolicyService {
                     return Future.failedFuture(new ComposeException(r));
                   }
 
+                  List<String> urls =
+                          apdPolicyRequests.stream().map(CreatePolicyRequest::getApdId).collect(Collectors.toList());
+
+                  List<String> invalidUrl = new ArrayList<>();
+                  urls.forEach(url ->
+                  {
+                    if(!validApd.result().getJsonObject(url).getString(STATUS).equals(ApdStatus.ACTIVE.toString().toLowerCase()))
+                      invalidUrl.add(url);
+                  });
+
+                  if(!invalidUrl.isEmpty())
+                  {
+                    Response r =
+                            new ResponseBuilder()
+                                    .status(400)
+                                    .type(URN_INVALID_INPUT)
+                                    .title(INVALID_APD_STATUS)
+                                    .detail(invalidUrl.toString())
+                                    .build();
+                    return Future.failedFuture(new ComposeException(r));
+                  }
                  if (catItem.containsKey(RES_SERVER)) return Future.succeededFuture(false);
 
                   return Future.succeededFuture(true);

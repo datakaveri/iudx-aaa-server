@@ -38,7 +38,7 @@ public class Constants {
   public static final String SUCC_TITLE_UPDATED_APD =
       "The status of the Access Policy Domains have been updated";
 
-  public static final String SUCC_TITLE_APD_READ = "Apd read successfully";
+  public static final String SUCC_TITLE_APD_READ = "Access Policy Domains";
 
   public static final String ERR_TITLE_NO_USER_PROFILE = "User profile does not exist";
   public static final String ERR_DETAIL_NO_USER_PROFILE = "Please register to create user profile";
@@ -69,7 +69,7 @@ public class Constants {
       "Trustees and Auth Server Admin may call the API";
 
   public static final String ERR_TITLE_INVALID_REQUEST =  "Invalid request";
-  public static final String ERR_TITLE_INVALID_REQUEST_ID  =  "Id not present";
+  public static final String ERR_TITLE_INVALID_REQUEST_ID  =  "APD not present";
 
   public static final String ERR_DETAIL_INVALID_UUID = "Invalid UUID";
 

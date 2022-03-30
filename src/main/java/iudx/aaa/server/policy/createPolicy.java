@@ -455,13 +455,11 @@ public class createPolicy {
 
     List<Tuple> selectTuples = new ArrayList<>();
     for (int i = 0; i < tuples.size(); i++) {
-      UUID apdId = tuples.get(i).getUUID(0);
-      String userClass = tuples.get(i).getString(1);
       UUID itemId = tuples.get(i).getUUID(2);
       String itemType = tuples.get(i).getString(3);
       UUID providerId = tuples.get(i).getUUID(4);
       String status = tuples.get(i).getString(5);
-      selectTuples.add(Tuple.of(apdId, userClass, itemId, itemType, providerId, status));
+      selectTuples.add(Tuple.of(itemId, itemType, providerId, status));
     }
     pool.withTransaction(
         conn ->
