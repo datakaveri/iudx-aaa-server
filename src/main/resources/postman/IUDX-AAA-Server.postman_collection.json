@@ -2281,6 +2281,296 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Access Policy Domain (APD) APIs",
+			"item": [
+				{
+					"name": "Create an Access Policy Domain",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "authUrl",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\":\"Example\",\n    \"url\":\"aaa.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/apd",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"apd"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Access Policy Domains",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "authUrl",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/apd",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"apd"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update status of Access Policy Domains Copy",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "state",
+									"value": "{{$randomAlphaNumeric}}",
+									"type": "string"
+								},
+								{
+									"key": "authUrl",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Token",
+									"type": "string"
+								},
+								{
+									"key": "useBrowser",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "scope",
+									"value": "email",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "account",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{provider_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{provider_username}}",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [\n        {\n            \"apdId\": \"3f08e1ba-f4c0-4ed0-86da-edf7092d6333\",\n            \"status\": \"active\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/apd",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"apd"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	]
 }

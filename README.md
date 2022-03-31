@@ -124,7 +124,10 @@ The JAR requires 3 runtime arguments when running:
 * --hostname/-i : the hostname for clustering</li>
 * --modules/-m : comma separated list of module names to deploy</li>
 
- e.g. `java -Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.Log4j2LogDelegateFactory -jar target/iudx.aaa.server-cluster-0.0.1-SNAPSHOT-fat.jar --host $(hostname) -c configs/config.json -m iudx.aaa.server.admin.AdminVerticle,iudx.aaa.server.token.TokenVerticle ,iudx.aaa.server.registration.RegistrationVerticle,iudx.aaa.server.auditing.AuditingVerticle`
+ e.g. 
+ ```
+ java -Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.Log4j2LogDelegateFactory -jar target/iudx.aaa.server-cluster-0.0.1-SNAPSHOT-fat.jar --host $(hostname) -c configs/config.json -m iudx.aaa.server.admin.AdminVerticle,iudx.aaa.server.token.TokenVerticle,iudx.aaa.server.registration.RegistrationVerticle,iudx.aaa.server.auditing.AuditingVerticle
+```
 
 Use the `--help/-h` argument for more information. You may additionally append an `AUTH_JAVA_OPTS` environment variable containing any Java options to pass to the application.
 
@@ -139,7 +142,10 @@ The JAR requires 1 runtime argument when running:
 
 * --config/-c : path to the config file</li>
 
-e.g. `java -Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.Log4j2LogDelegateFactory -jar target/iudx.aaa.server-dev-0.0.1-SNAPSHOT-fat.jar -c configs/config.json`
+e.g. 
+```
+java -Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.Log4j2LogDelegateFactory -jar target/iudx.aaa.server-dev-0.0.1-SNAPSHOT-fat.jar -c configs/config.json
+```
 
 Use the `--help/-h` argument for more information. You may additionally append an `AUTH_JAVA_OPTS` environment variable containing any Java options to pass to the application.
 
