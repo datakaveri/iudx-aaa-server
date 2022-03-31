@@ -340,7 +340,7 @@ public class CreateApdTest {
     String url = name + ".com";
 
     JsonObject jsonRequest = new JsonObject().put("name", name).put("url", url);
-    Mockito.when(apdWebClient.checkApdExists(url)).thenReturn(Future.succeededFuture(true));
+    Mockito.when(apdWebClient.checkApdExists(any())).thenReturn(Future.succeededFuture(true));
 
     Mockito.doAnswer(i -> {
       Promise<JsonObject> p = i.getArgument(1);

@@ -286,7 +286,7 @@ public class Constants {
           + " and status = $5::policy_status_enum and expiry_time > now()";
 
   public static final String CHECK_EXISTING_APD_POLICY =
-          "select id from item_id =$1::UUID and item_type = $2::item_enum and owner_id = $3::UUID "
+          "select id from apd_policies where item_id =$1::UUID and item_type = $2::item_enum and owner_id = $3::UUID "
                   + " and status = $4::policy_status_enum and expiry_time > now()";
 
   public static final String LIST_DELEGATE_AUTH_DELEGATE =
