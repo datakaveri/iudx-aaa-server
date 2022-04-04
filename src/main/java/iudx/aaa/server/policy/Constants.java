@@ -313,7 +313,7 @@ public class Constants {
       "INSERT INTO access_requests (user_id, item_id,item_type, owner_id, status, "
           + "expiry_duration, constraints, created_at, updated_at)\n"
           + "VALUES ($1::UUID, $2::UUID, $3::item_enum,$4::UUID,$5::acc_reqs_status_enum,"
-          + "$6::interval,$7::jsonb, now() ,now()) RETURNING id as \"requestId\";";
+          + "$6::interval,$7::jsonb, now() ,now()) RETURNING id as \"requestId\"";
 
   public static final String SELECT_NOTIF_POLICY_REQUEST =
       "SELECT id FROM access_requests WHERE user_id = $1::UUID AND "
@@ -354,7 +354,7 @@ public class Constants {
 
   public static final String INSERT_NOTIF_APPROVED_ID =
       "INSERT INTO approved_access_requests(request_id,policy_id,created_at,updated_at) "
-          + "VALUES ($1::UUID,$2::UUID, NOW(),NOW());";
+          + "VALUES ($1::UUID,$2::UUID, NOW(),NOW())";
 
   public static final String SET_INTERVALSTYLE = "SET LOCAL intervalstyle = 'iso_8601'";
 
