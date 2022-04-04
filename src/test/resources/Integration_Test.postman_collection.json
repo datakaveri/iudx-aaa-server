@@ -3024,6 +3024,66 @@
 					"response": []
 				},
 				{
+					"name": "Duplicate userId but different status - [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"status\": \"rejected\"\n        },\n        \n        {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"status\": \"rejected\"\n        },\n                {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"status\": \"approved\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/admin/provider/registrations",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"admin",
+								"provider",
+								"registrations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Not an admin - [401]",
 					"event": [
 						{

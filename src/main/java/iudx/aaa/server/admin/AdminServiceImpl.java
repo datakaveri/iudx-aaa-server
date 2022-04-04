@@ -7,6 +7,7 @@ import static iudx.aaa.server.admin.Constants.ERR_DETAIL_INVALID_DOMAIN;
 import static iudx.aaa.server.admin.Constants.ERR_DETAIL_NOT_AUTH_ADMIN;
 import static iudx.aaa.server.admin.Constants.ERR_DETAIL_NO_USER_PROFILE;
 import static iudx.aaa.server.admin.Constants.ERR_TITLE_DOMAIN_EXISTS;
+import static iudx.aaa.server.admin.Constants.ERR_TITLE_DUPLICATE_REQ;
 import static iudx.aaa.server.admin.Constants.ERR_TITLE_INVALID_DOMAIN;
 import static iudx.aaa.server.admin.Constants.ERR_TITLE_INVALID_USER;
 import static iudx.aaa.server.admin.Constants.ERR_TITLE_NOT_AUTH_ADMIN;
@@ -196,6 +197,25 @@ public class AdminServiceImpl implements AdminService {
       return this;
     }
 
+    /*
+     * Check for duplicate userIds - same user ID but different status - across objects. OpenAPI
+     * can't catch this. Set.add(x) returns false if x already exists in set.
+     */
+
+    Set<UUID> ids = new HashSet<UUID>();
+    List<UUID> requestedUserIds =
+        request.stream().map(r -> UUID.fromString(r.getUserId())).collect(Collectors.toList());
+    List<UUID> duplicates =
+        requestedUserIds.stream().filter(id -> ids.add(id) == false).collect(Collectors.toList());
+
+    if (!duplicates.isEmpty()) {
+      String firstOffendingId = duplicates.get(0).toString();
+      Response resp = new ResponseBuilder().type(URN_INVALID_INPUT).title(ERR_TITLE_DUPLICATE_REQ)
+          .detail(firstOffendingId).status(400).build();
+      handler.handle(Future.succeededFuture(resp.toJson()));
+      return this;
+    }
+
     Future<Boolean> checkAdmin = checkAdminServer(user, AUTH_SERVER_URL).compose(res -> {
       if (res) {
         return Future.succeededFuture(true);
@@ -205,9 +225,6 @@ public class AdminServiceImpl implements AdminService {
       handler.handle(Future.succeededFuture(r.toJson()));
       return Future.failedFuture(COMPOSE_FAILURE);
     });
-
-    Set<UUID> ids =
-        request.stream().map(obj -> UUID.fromString(obj.getUserId())).collect(Collectors.toSet());
 
     Collector<Row, ?, Map<UUID, UUID>> collect =
         Collectors.toMap(row -> row.getUUID("id"), row -> row.getUUID("keycloak_id"));
