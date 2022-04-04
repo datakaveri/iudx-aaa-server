@@ -27478,6 +27478,7 @@
 									"    const body = pm.response.json();",
 									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
 									"    let apdcount = 0;",
+									"    let id_array = [];",
 									"    pm.expect(body.results).to.not.be.empty;",
 									"    body.results.forEach((r) => {",
 									"        if(r.itemType === 'apd'){",
@@ -27487,8 +27488,10 @@
 									"            pm.expect(r.policyId).to.exist;",
 									"            pm.expect(r.expiryTime).to.exist;",
 									"            apdcount++;",
+									"            id_array.push({id:r.policyId});",
 									"    }",
 									"    })",
+									"    pm.environment.set(\"TRUSTEE_POLICY_IDS\", JSON.stringify(id_array));",
 									"    pm.expect(apdcount).to.be.eq(3);",
 									"});"
 								],
@@ -27892,6 +27895,180 @@
 					"response": []
 				},
 				{
+					"name": "Provider trying to delete trustee policies",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": {{TRUSTEE_POLICY_IDS}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Postman.trustee deleting trustee policies",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": {{TRUSTEE_POLICY_IDS}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Postman.trustee deleting same again",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": {{TRUSTEE_POLICY_IDS}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Postman.provider viewing policies after delete",
 					"event": [
 						{
@@ -27926,6 +28103,57 @@
 							{
 								"key": "Authorization",
 								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Postman.trustee viewing policies after delete",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    pm.expect(body.results).to.not.be.empty;",
+									"    body.results.forEach((r) => {",
+									"    pm.expect(r.itemType).to.not.be.eq(\"apd\");",
+									"    })",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
 								"type": "text"
 							}
 						],

@@ -556,7 +556,7 @@ public class PolicyServiceImpl implements PolicyService {
     List<Roles> roles = user.getRoles();
 
     if (!roles.contains(Roles.ADMIN) && !roles.contains(Roles.PROVIDER)
-        && !roles.contains(Roles.DELEGATE)) {
+        && !roles.contains(Roles.DELEGATE) && ! roles.contains(Roles.TRUSTEE)) {
       // cannot create policy
       Response r = new Response.ResponseBuilder().type(URN_INVALID_ROLE).title(INVALID_ROLE)
           .detail(INVALID_ROLE).status(401).build();
