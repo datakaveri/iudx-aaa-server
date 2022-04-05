@@ -105,14 +105,14 @@ pipeline {
     stage('Push Image') {
       when{
         expression {
-          return env.GIT_BRANCH == 'origin/main';
+          return env.GIT_BRANCH == 'origin/v3.5.0';
         }
       }
       steps{
         script {
           docker.withRegistry( registryUri, registryCredential ) {
-            devImage.push("3.0-${env.GIT_HASH}")
-            deplImage.push("3.0-${env.GIT_HASH}")
+            devImage.push("3.5.0-${env.GIT_HASH}")
+            deplImage.push("3.5.0-${env.GIT_HASH}")
           }
         }
       }
