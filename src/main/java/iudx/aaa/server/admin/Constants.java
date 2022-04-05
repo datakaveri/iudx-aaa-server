@@ -39,6 +39,8 @@ public class Constants {
   public static final String ERR_TITLE_INVALID_USER =
       "Invalid User ID, not a provider/pending provider";
 
+  public static final String ERR_TITLE_DUPLICATE_REQ = "Duplicate user ID in request";
+
   public static final String ERR_TITLE_NO_USER_PROFILE = "User profile does not exist";
   public static final String ERR_DETAIL_NO_USER_PROFILE = "Please register to create user profile";
 

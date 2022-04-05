@@ -4,6 +4,7 @@ import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.admin.Constants.CONFIG_AUTH_URL;
 import static iudx.aaa.server.admin.Constants.ERR_DETAIL_NOT_AUTH_ADMIN;
 import static iudx.aaa.server.admin.Constants.ERR_DETAIL_NO_USER_PROFILE;
+import static iudx.aaa.server.admin.Constants.ERR_TITLE_DUPLICATE_REQ;
 import static iudx.aaa.server.admin.Constants.ERR_TITLE_INVALID_USER;
 import static iudx.aaa.server.admin.Constants.ERR_TITLE_NOT_AUTH_ADMIN;
 import static iudx.aaa.server.admin.Constants.ERR_TITLE_NO_USER_PROFILE;
@@ -274,6 +275,36 @@ public class UpdateProviderRegistrationStatusTest {
           assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
           assertEquals(ERR_TITLE_NOT_AUTH_ADMIN, response.getString("title"));
           assertEquals(ERR_DETAIL_NOT_AUTH_ADMIN, response.getString("detail"));
+          testContext.completeNow();
+        })));
+  }
+
+  @Test
+  @DisplayName("Test duplicate user IDs in request")
+  void duplicateUserIds(VertxTestContext testContext) {
+    JsonObject userJson = adminAuthUser.result();
+    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
+        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+
+    JsonObject providerOneJson = providerPending1.result();
+    JsonObject providerTwoJson = providerPending2.result();
+
+    JsonArray req = new JsonArray()
+        .add(new JsonObject().put("userId", providerOneJson.getString("userId")).put("status",
+            "approved"))
+        .add(new JsonObject().put("userId", providerTwoJson.getString("userId")).put("status",
+            "rejected"))
+        .add(new JsonObject().put("userId", providerOneJson.getString("userId")).put("status",
+            "rejected"));
+    List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
+
+    adminService.updateProviderRegistrationStatus(request, user,
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(response.getInteger("status"), 400);
+          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+          assertEquals(ERR_TITLE_DUPLICATE_REQ, response.getString("title"));
+          assertEquals(providerOneJson.getString("userId"), response.getString("detail"));
           testContext.completeNow();
         })));
   }
