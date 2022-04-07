@@ -18,7 +18,7 @@ paths:
       operationId: post-auth-v1-token
       responses:
         '200':
-          description: Token has been successfully generated upon required validation and authentication.
+          description: Access token has been successfully generated upon required validation and authentication.
           content:
             application/json:
               schema:
@@ -59,7 +59,7 @@ paths:
                       expiry: 1626836784
                       server: foobar.iudx.io
               examples:
-                General Structure:
+                Example:
                   value:
                     type: 'urn:dx:as:Success'
                     title: Token created
@@ -67,14 +67,6 @@ paths:
                       accessToken: eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJzdWIiOiIzNDliNGI1NS0wMjUxLTQ5MGUtYmVlOS0wMGYzYTVkM2U2NDMiLCJpc3MiOiJhdXRoLnRlc3QuY29tIiwiYXVkIjoiZm9vYmFyLml1ZHguaW8iLCJleHAiOjE2MjY4MzY3ODQsImlhdCI6MTYyNjc5MzU4NCwiaWlkIjoicmc6ZXhhbXBsZS5jb20vNzllN2JmYTYyZmFkNmM3NjViYWM2OTE1NGMyZjI0Yzk0Yzk1MjIwYS9yZXNvdXJjZS1ncm91cCIsInJvbGUiOiJjb25zdW1lciIsImNvbnMiOnt9fQ.eAWKamrRdV4c1MPuoLU6j0bWB6iiM_of5F3LA-_DZGhyu_6aFP4cmCI1Y3ZN2ZRklOSGcrL5aHC8Ccga6dtTrg
                       expiry: 1626836784
                       server: foobar.iudx.io
-                example-1:
-                  value:
-                    type: string
-                    title: string
-                    results:
-                      accessToken: string
-                      expiry: 0
-                      server: string
           headers:
             Content-Type:
               schema:
@@ -126,6 +118,37 @@ paths:
               schema:
                 type: string
               description: application/json
+        '403':
+          description: |-
+            - User policy does not exist for the user and resource
+            - APD policy does not exist for the resource
+            - The user does not belong to the user class specified by the APD policy
+            - The user is required to interact with the APD 
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                APD needs interaction:
+                  value:
+                    type: 'urn:dx:as:MissingInformation'
+                    title: APD interaction required
+                    detail: The APD requires extra information to grant access. Please use the apdToken and visit the link to interact with the APD
+                    context:
+                      apdToken: eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJzdWIiOiJmY2JlY2QxOC0yZWNiLTQwNjYtOGE5ZS1mMDczYWFjYmU1NzkiLCJpc3MiOiJhdXRodmVydHguaXVkeC5pbyIsImF1ZCI6ImF1dGhkZXYuaXVkeC5pbyIsImV4cCI6MTY0ODg0MzEwNCwiaWF0IjoxNjQ4Nzk5OTA0LCJzaWQiOiI5ZGQ2NjNlZS02NWExLTQ4ZTctYTJiMC0wNTQwMmY5ZjlkOWYiLCJsaW5rIjoiYXV0aGRldi5pdWR4LmlvIn0.lP3Dn7aroXqVUdp0fbTh1uhrnjwo5Yx3l1lKorEIKhjzZivgBWkflbVN9Lly0yq5gefvYYXgf01nxmU3QNA2EQ
+                      expiry: 1648843104
+                      server: authdev.iudx.io
+                      link: authdev.iudx.io
+                APD policy verification failed (deny):
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Policy evaluation failed
+                    detail: 'Not allowed, please contact APD Admin'
+                No valid policy found:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Policy evaluation failed
+                    detail: policy not found
       parameters:
         - schema:
             type: string
@@ -227,7 +250,7 @@ paths:
           - `itemType` : the kind of item the desired resource is
           - `role` : the role as which the user wants to get token for
         required: true
-      description: |-
+      description: |
         Request for a JWT (token). One can generate token using either by providing token header or providing clientId and clientSecret in the header. 
 
         **NOTE : Either the JWT token in the `Authorization` header or `clientId`+`clientSecret` headers are required, not both**
@@ -262,16 +285,35 @@ paths:
         - Valid item types - `resource_server`
         - An admin may identify themselves with the servers they manage by getting an admin token, by setting `itemType` as `resource_server` and `itemId` as the server URL.
 
-        # JWT Token Response Structure
+        # JWT Access Token Response Structure
          A valid IUDX AAA access token contains the following fields:
-            `sub`: `userId` of the user for whom the token is issued
-            `iss`: this tag contains the url of the server from the where the token was issued(IUDX auth server)
-            `aud`: the 'audience' tag contains the url of the server for which the token is valid
-            `exp`: when the token will expire in unix format
-            `iat`: indicates when the token was issued in unix format
-            `iid`: resource type and resource id of the item for which the token is valid
-            `role`: role of the user 
-            `cons`: the constraints that the resource server recognizes. It is only returned for policies set for consumer 
+        - `sub`: `userId` of the user for whom the token is issued
+        - `iss`: this tag contains the url of the server from the where the token was issued(IUDX auth server)
+        - `aud`: the 'audience' tag contains the url of the server for which the token is valid
+        - `exp`: when the token will expire in Unix format
+        - `iat`: indicates when the token was issued in unix format
+        - `iid`: resource type and resource id of the item for which the token is valid
+        - `role`: role of the user 
+        - `cons`: the constraints that the resource server recognizes. It is only returned for policies set for consumer 
+
+        # Resources restricted by APD Policies
+         
+        In case access to a resource is defined using an APD policy (and there is no valid user policy for the requesting user and resource), the AAA server queries the APD with relevant information to see if the user belongs to the **_user class_** specified in the APD policy. The APD may respond in three ways:
+
+        - **Allow** : The user belongs to the user class. The AAA server generates the access token based on the constraints defined in the policy and sends it back.
+        - **Deny** : The user does not belong to the user class. The AAA server returns a `403 Forbidden`.
+        - **Deny but the APD needs interaction** : The user does not belong to the user class, but the APD provides a mechanism for the user to interact with it. This interaction **may or may not** result in the user being included in the user class. The AAA server sends a `403 Forbidden` but includes a special **APD JWT token** that the user must use when interacting with the APD. 
+
+        ## JWT APD Token Response Structure
+         A valid IUDX AAA APD token contains the following fields:
+        - `sub`: `userId` of the user for whom the token is issued
+        - `iss`: this tag contains the url of the server from the where the token was issued(IUDX auth server)
+        - `aud`: the 'audience' tag contains the url of the server for which the token is valid - in this case, will be the APD URL
+        - `exp`: when the token will expire in Unix format
+        - `iat`: indicates when the token was issued in unix format
+        - `sid`: a session ID sent by the APD
+        - `link`: a link to which the user can interact with the APD 
+           
       tags:
         - Token APIs
       security:
@@ -2033,18 +2075,13 @@ paths:
         - authorization: []
   /auth/v1/policies:
     get:
-      summary: Get User Policies
+      summary: Get Policies
       tags:
         - Policies APIs
       responses:
         '200':
           description: |-
-            Successfully listing the User policies
-             `results` : array of response objects
-              ` itemType` : 
-               -resource/resource_group for item policies 
-               -resource_server for server policies
-               ` itemId` : the cat ID of the item for which policy is set
+            Successfully lists the policies
                
           content:
             application/json:
@@ -2151,6 +2188,31 @@ paths:
                             id:
                               type: string
                               minLength: 1
+                        apd:
+                          type: object
+                          properties:
+                            owner:
+                              type: object
+                              properties:
+                                email:
+                                  type: string
+                                '':
+                                  type: object
+                                  properties:
+                                    firstName:
+                                      type: string
+                                    lastName:
+                                      type: string
+                                id:
+                                  type: string
+                            url:
+                              type: string
+                            status:
+                              type: string
+                            name:
+                              type: string
+                            id:
+                              type: string
                       required:
                         - policyId
                         - itemType
@@ -2163,7 +2225,7 @@ paths:
                   - title
                   - results
               examples:
-                policy for resource server:
+                Listing of policies set for a resource server:
                   value:
                     type: 'urn:dx:as:Success'
                     title: policy read
@@ -2185,7 +2247,7 @@ paths:
                             firstName: B
                             lastName: Robert
                           id: 844e251b-574b-46e6-9247-f76f1f70a637
-                policy for resource_group:
+                Listing of policies set for a resource group:
                   value:
                     type: 'urn:dx:as:Success'
                     title: policy read
@@ -2209,7 +2271,7 @@ paths:
                             firstName: B
                             lastName: Robert
                           id: 844e251b-574b-46e6-9247-f76f1f70a637
-                policy for resource:
+                Listing of policies set for a resource:
                   value:
                     type: 'urn:dx:as:Success'
                     title: policy read
@@ -2231,6 +2293,56 @@ paths:
                             firstName: B
                             lastName: Robert
                           id: 844e251b-574b-46e6-9247-f76f1f70a637
+                Listing of policies set by a trustee for a provider:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: policy read
+                    results:
+                      - policyId: 21abcc77-8917-4a12-8a48-42016552ed30
+                        itemType: apd
+                        expiryTime: '2027-03-22T00:00'
+                        constraints: {}
+                        itemId: apd-test.datakaveri.org
+                        user:
+                          email: provider@datakaveri.org
+                          name:
+                            firstName: Provider
+                            lastName: DK
+                          id: 1d4e251b-514b-46e6-9547-f7661f70ae37
+                        owner:
+                          email: trustee@datakaveri.org
+                          name:
+                            firstName: Trustee
+                            lastName: DK
+                          id: a3be2d18-24cb-40d6-8a5e-f073aacbe519
+                Listing of APD policies:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: policy read
+                    results:
+                      - policyId: 36f9ffe1-0b27-412a-80c6-7c90ee2c0421
+                        userClass: TestingUserClass
+                        itemType: resource_group
+                        expiryTime: '2027-03-22T00:00'
+                        constraints: {}
+                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/sub-sample
+                        owner:
+                          email: provider@datakaveri.org
+                          name:
+                            firstName: Provider
+                            lastName: DK
+                          id: 1d4e251b-514b-46e6-9547-f7661f70ae37
+                        apd:
+                          owner:
+                            email: trustee@datakaveri.org
+                            name:
+                              firstName: Trustee
+                              lastName: DK
+                            id: a3be2d18-24cb-40d6-8a5e-f073aacbe519
+                          url: apd-testing.datakaveri.org
+                          status: active
+                          name: Test APD
+                          id: 88b7bdbc-936c-4478-8059-f95f4c8a6352
           headers:
             Content-Type:
               schema:
@@ -2238,10 +2350,11 @@ paths:
               description: application/json
       operationId: get-auth-v1-policies
       description: |-
-        Get policies related to a particular user if the user is a 
-        - `provider` : returns all policies created by the provider/auth delegate of the provider and the policies set for the provider
-        - `delegate` : returns all pollicies set for the delegate
+        Get policies related to a particular user. The response depends on the roles the user ha 
+        - `provider` : returns all policies created by the provider/auth delegate of the provider and the policies set for the provider. Also returns any **APD policies** set by the provider.
+        - `delegate` : returns all policies set for the delegate
         - `consumer` : returns the policies set for the consumer
+        - `trustee` or `admin` : returns all policies set by them
 
         ## Auth delegate
         An auth delegate may use the API to view policies on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
@@ -2268,7 +2381,7 @@ paths:
         - authorization: []
     parameters: []
     delete:
-      summary: Delete User Policies
+      summary: Delete Policies
       operationId: delete-auth-v1-policies
       responses:
         '200':
@@ -2324,11 +2437,9 @@ paths:
                 type: string
               description: application/json
       description: |-
-        Delete policies of an authenticated User.
+        Delete policies created by a user. User policies and APD policies can be deleted.
 
-
-        - `id` :is the policy id that the user wants to delete. The user can use the list policy api to get this value.
-
+        The request would contain objects with a key `id`, i.e. the ID of the user policy or APD policy that the user wants to delete. The user can use the List Policy API to get the policy IDs.
 
         ## Auth delegate
          - An auth delegate may use the API to delete policies on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
@@ -2393,17 +2504,23 @@ paths:
       security:
         - authorization: []
     post:
-      summary: Create User Policies
+      summary: Create Policies
       operationId: post-auth-v1-policies
       responses:
         '200':
-          description: OK
+          description: The policies have been created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
         '400':
-          description: |
-            Bad Request
-            Invalid expiry - dateTime in the past or invalid format
-            Invalid user - UserId is not present in db
-            Invalid resource Servers - If the resource server that the policy is being set for is not present in the db
+          description: |-
+            - Missing or malformed data
+            - Invalid expiry - dateTime in the past or invalid format
+            - Invalid user - UserId is not present in db
+            - Invalid resource Servers - If the resource server that the policy is being set for is not present in the db
+            - Invalid APDs - If the APD that the policy is being set for is not present in the db
           content:
             application/json:
               schema:
@@ -2426,40 +2543,59 @@ paths:
               description: application/json
         '403':
           description: |-
-            Forbidden
-             
-            - if the user trying to set a policy does not have an Admin,provider or delegate role
-            - if the user trying to set a policy does not have a policy by the auth server admin
-            - if the user is neither the owner of the resource item/group or a delegate to the owner of the resource
-            - if a valid policy already exists
+            - If the user trying to set a policy does not have an `admin`, `provider`, `trustee` or `delegate` role
+            - If the user trying to set a policy does not have a policy by the AAA admin or trustee (in case of APD policies)
+            - If the user is neither the owner of the resource item/group or a delegate to the owner of the resource
+            - If a valid policy already exists
           content:
             application/json:
               schema:
                 type: object
                 properties: {}
       description: |
-        Create new policies of an authenticated User.
-         **NOTE : A `consumer` cannot set policies**
+        Allows users to create policies for entities they own. There are mainly 2 kinds of policies that can be set:
+
+        - **User Policies** : A policy set for a particular user.
+        - **APD Policies** : A policy set for **_user class_** defined by an Access Policy Domain (APD). If the APD claims that a particular user belongs to said user class, access is granted.  
+
+        **NOTE : A `consumer` cannot set policies**
              
-         ## Policies created by admin
-           - Valid item types - `resource_server`. 
-           - An `admin` can set policies for a `provider`,`delegate` or `trustee` for their server. 
+        ## Policies created by admin
+        - Valid item types - `resource_server`. 
+        - An `admin` can set **user policies** for a `provider`,`delegate` or `trustee` for their server.
+        - **A policy is automatically set by the AAA admin for a provider when they are approved.**
+        - **A policy is automatically set by the AAA admin for a trustee when their APD is set to active state.**
            
-         ## Policies created by trustee
-           - A `Trustee` can write policies for `providers` for `apdIds`.
-         ## Policies created by provider
-           - Valid item types - `resource`, `resource_group`
-           - A `provider` can set policies for a `delegate` or `consumer` for the resources owned by the `provider.`
-           - A `provider` can set policies for a `userClass` for a `apdId`.  
-         **A policy is set by the auth server admin for a provider when they are approved**
-         ## Policies created by delegate
-           - An auth delegate may use the API to create policies on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
-           - Valid item types - `resource`, `resource_group`.
-           - A `delegate` can set user policies and apd policies for other `delegate` or `consumer` for the resources owned by the `provider` 
-           - A policy must be set by the auth server admin for the `delegate` to be able to setpolicies.
-           - A delegegate does not need a direct policy by the `trustee` 
+        ## Policies created by trustee
+        - Valid item types - `apd`. 
+        - A `trustee` can write **user policies** for `providers` for APDs they own.
+        - This policy allows providers to be able to use the APD for APD policies on their own resources. 
+           
+        ## Policies created by provider
+        ### User Policies
+        - Valid item types - `resource`, `resource_group`
+        - A `provider` can set **user policies** for a `delegate` or `consumer` for the resources owned by the `provider.`
+        ### APD Policies
+        - Valid item types - `resource`, `resource_group`
+        - A `provider` can set **APD policies** for the resources owned by the `provider.` Access is granted if the user belongs to a `userClass` defined by the APD. 
+        - **Providers must have a policy set by the concerned trustee to be able to set APD policies using a particular APD.** 
+        - **The trustee policy also allows auth delegates working on behalf of the provider to set APD policies.**
+        - **The concerned APD must be in `active` state.**
              
-         **NOTE : Only Auth server delegates are allowed to create policies**
+        ## Policies created by delegate
+        - **NOTE : Only auth delegates are allowed to create policies**
+        - An auth delegate may use the API to create policies on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
+        - **A policy must be set by the auth server admin for the `delegate` to be able to set policies.**
+        ### User Policies
+        - Valid item types - `resource`, `resource_group`
+        - A `delegate` can set **user policies** for other `delegate` or `consumer` for the resources owned by the `provider`
+        ### APD Policies
+        - Valid item types - `resource`, `resource_group`
+        - A `delegate` can set **APD policies** for the resources owned by the `provider`.
+        - The `provider` for whom the auth delegate is operating **must have a policy set by the concerned trustee for the particular APD**. The `delegate` need not have any such policy.
+        - **The concerned APD must be in `active` state.**
+
+             
       parameters:
         - schema:
             type: string
@@ -2571,15 +2707,17 @@ paths:
               required:
                 - request
             examples:
-              single req for res_group policy:
+              Single request for resource group user policy:
                 value:
                   request:
                     - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
                       itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood
                       itemType: resource_group
                       expiryTime: '2022-08-04T20:00:19'
-                      constraints: {}
-              single req for resource policy:
+                      constraints:
+                        access:
+                          - sub
+              Single request for resource user policy:
                 value:
                   request:
                     - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
@@ -2590,7 +2728,7 @@ paths:
                         access:
                           - api
                           - sub
-              single req for resource_server policy:
+              Single request for resource server user policy:
                 value:
                   request:
                     - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
@@ -2598,7 +2736,7 @@ paths:
                       itemType: resource_server
                       expiryTime: '2022-05-12T04:00:19'
                       constraints: {}
-              multiple requests:
+              Multiple user policy requests:
                 value:
                   request:
                     - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
@@ -2614,36 +2752,39 @@ paths:
                         access:
                           - api
                           - sub
-              single req for apd user policy:
+              Single request for trustee 'apd' itemType policy:
                 value:
                   request:
                     - userId: 2c4a230c-5085-4924-a3e1-25fb4fc5965b
-                      itemId: string
+                      itemId: apd-testing.datakaveri.org
                       itemType: apd
                       expiryTime: '2022-10-10T04:00:19'
                       constraints: {}
-              single req for apd policy:
+              Single request for APD policy:
                 value:
                   request:
-                    - userId: 2c4a230c-5085-4924-a3e1-25fb4fc5965b
-                      itemId: string
-                      itemType: resource
-                      expiryTime: '2022-10-10T04:00:19'
-                      constraints: {}
+                    - apdId: apd-testing.datakaveri.org
+                      userClass: TestUserClass
+                      itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/surat-itms-realtime-info
+                      itemType: resource_group
+                      constraints:
+                        access:
+                          - apd
           application/xml:
             schema:
               type: object
               properties: {}
         description: |
-          Request body will be an JsonObject containing JsonArray of requests
-          the request can be either for a userPolicy or apdPolicy
-          userPolicy request :
+          Request body will be an JsonObject containing JsonArray of requests. The requests can be either for user policies or APD policies.
+
+          ### User Policy Request :
           - `userId` : UUID of the user for whom policy is to be set.
           - `itemId` : String value of the item for which policy is to be set 
           - `itemType` : String value of the item type
           - `expiryTime` : ISO8601 compatible time in UTC(yyyy-MM-dd'T'HH:mm:ss). optional field, if not sent default expiry is set for the policy
           - `constraints` : JsonObject of the constraints that the resource server can recognize.
-          apdPolicy request :
+
+          ### APD Policy Request :
           - `userClass` : String value of the userClass for whom the policy is to be set.
           - `apdId` : String value of the url of the APD for which the policy is being written.
           - `itemId` : String value of the item for which policy is to be set 
@@ -4283,6 +4424,11 @@ components:
     ErrorResponse:
       description: ''
       type: object
+      x-examples:
+        Example:
+          type: string
+          title: string
+          detail: string
       properties:
         type:
           type: string
@@ -4293,15 +4439,13 @@ components:
         detail:
           type: string
           minLength: 1
+        context:
+          type: object
+          description: Any additional information required
       required:
         - type
         - title
         - detail
-      x-examples:
-        example-1:
-          type: string
-          title: string
-          detail: string
     UserAlreadyExists:
       description: ''
       type: object
