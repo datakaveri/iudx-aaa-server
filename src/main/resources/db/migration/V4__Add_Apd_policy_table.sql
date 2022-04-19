@@ -26,7 +26,3 @@ ALTER TABLE ONLY apd_policies
     ADD CONSTRAINT apd_policies_apd_id_fkey FOREIGN KEY (apd_id) REFERENCES apds(id);
 
 GRANT SELECT,INSERT,UPDATE ON TABLE apd_policies TO ${authUser};
-
--- Update resource_enum with apd type
-
-ALTER TYPE item_enum ADD VALUE 'APD' AFTER 'RESOURCE';
