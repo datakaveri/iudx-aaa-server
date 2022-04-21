@@ -10,8 +10,8 @@ services:
       - LOG_LEVEL=INFO
       - AUTH_JAVA_OPTS=-Xmx1024m
     volumes:
-      - /home/ubuntu/configs/aaa-config-test.json:/usr/share/app/configs/config-test.json
-      - /home/ubuntu/configs/aaa-keystore.jks:/usr/share/app/configs/keystore.jks
+      - /home/ubuntu/configs/3.5.0/aaa-config-test.json:/usr/share/app/configs/config-test.json
+      - /home/ubuntu/configs/3.5.0/aaa-keystore.jks:/usr/share/app/configs/keystore.jks
       - ./docker/runTests.sh:/usr/share/app/docker/runTests.sh
       - ./src/:/usr/share/app/src
       - ${WORKSPACE}:/tmp/test
@@ -26,9 +26,9 @@ services:
       - LOG_LEVEL=INFO
       - AUTH_JAVA_OPTS=-Xmx1024m
     volumes:
-      - /home/ubuntu/configs/aaa-config-integ.json:/usr/share/app/configs/config-dev.json
-      - /home/ubuntu/configs/aaa-keystore.jks:/usr/share/app/configs/keystore.jks
-      - /home/ubuntu/configs/aaa-flyway.conf:/usr/share/app/flyway.conf
+      - /home/ubuntu/configs/3.5.0/aaa-config-integ.json:/usr/share/app/configs/config-dev.json
+      - /home/ubuntu/configs/3.5.0/aaa-keystore.jks:/usr/share/app/configs/keystore.jks
+      - /home/ubuntu/configs/3.5.0/aaa-flyway.conf:/usr/share/app/flyway.conf
       - ./docs/:/usr/share/app/docs
       - ./src/:/usr/share/app/src
     command: bash -c "mvn clean compile exec:java@aaa-server"
