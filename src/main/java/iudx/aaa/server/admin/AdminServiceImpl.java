@@ -1,6 +1,5 @@
 package iudx.aaa.server.admin;
 
-import static iudx.aaa.server.admin.Constants.COMPOSE_FAILURE;
 import static iudx.aaa.server.admin.Constants.CONFIG_AUTH_URL;
 import static iudx.aaa.server.admin.Constants.ERR_DETAIL_DOMAIN_EXISTS;
 import static iudx.aaa.server.admin.Constants.ERR_DETAIL_INVALID_DOMAIN;
@@ -47,6 +46,7 @@ import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
+import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.KcAdmin;
 import java.util.HashSet;
@@ -101,10 +101,8 @@ public class AdminServiceImpl implements AdminService {
       if (res) {
         return Future.succeededFuture(true);
       }
-      Response r = new ResponseBuilder().status(401).type(URN_INVALID_ROLE)
-          .title(ERR_TITLE_NOT_AUTH_ADMIN).detail(ERR_DETAIL_NOT_AUTH_ADMIN).build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return Future.failedFuture(COMPOSE_FAILURE);
+      return Future.failedFuture(new ComposeException(401, URN_INVALID_ROLE,
+          ERR_TITLE_NOT_AUTH_ADMIN, ERR_DETAIL_NOT_AUTH_ADMIN));
     });
 
     /*
@@ -123,10 +121,12 @@ public class AdminServiceImpl implements AdminService {
                 return Future.succeededFuture(res);
               }
 
+              /* Using ComposeException here to end the compose chain early in case
+               * there are no entries. Not a standard use of ComposeException, but
+               * it works out. */
               Response r = new ResponseBuilder().status(200).type(URN_SUCCESS)
                   .title(SUCC_TITLE_PROVIDER_REGS).arrayResults(new JsonArray()).build();
-              handler.handle(Future.succeededFuture(r.toJson()));
-              return Future.failedFuture(COMPOSE_FAILURE);
+              return Future.failedFuture(new ComposeException(r));
             })));
 
     /* Get array of orgId UUIDs from data map to get org details */
@@ -175,8 +175,10 @@ public class AdminServiceImpl implements AdminService {
           .status(200).arrayResults(resp).build();
       handler.handle(Future.succeededFuture(r.toJson()));
     }).onFailure(e -> {
-      if (e.getMessage().equals(COMPOSE_FAILURE)) {
-        return; // do nothing
+      if (e instanceof ComposeException) {
+        ComposeException exp = (ComposeException) e;
+        handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+        return;
       }
       LOGGER.error(e.getMessage());
       handler.handle(Future.failedFuture("Internal error"));
@@ -220,10 +222,8 @@ public class AdminServiceImpl implements AdminService {
       if (res) {
         return Future.succeededFuture(true);
       }
-      Response r = new ResponseBuilder().status(401).type(URN_INVALID_ROLE)
-          .title(ERR_TITLE_NOT_AUTH_ADMIN).detail(ERR_DETAIL_NOT_AUTH_ADMIN).build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return Future.failedFuture(COMPOSE_FAILURE);
+      return Future.failedFuture(new ComposeException(401, URN_INVALID_ROLE,
+          ERR_TITLE_NOT_AUTH_ADMIN, ERR_DETAIL_NOT_AUTH_ADMIN));
     });
 
     Collector<Row, ?, Map<UUID, UUID>> collect =
@@ -237,10 +237,8 @@ public class AdminServiceImpl implements AdminService {
       if (res.size() != ids.size()) {
         UUID firstMissing = ids.stream().filter(id -> !res.containsKey(id)).findFirst().get();
 
-        Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-            .title(ERR_TITLE_INVALID_USER).detail(firstMissing.toString()).build();
-        handler.handle(Future.succeededFuture(r.toJson()));
-        return Future.failedFuture(COMPOSE_FAILURE);
+        return Future.failedFuture(new ComposeException(400, URN_INVALID_INPUT,
+            ERR_TITLE_INVALID_USER, firstMissing.toString()));
       }
       return Future.succeededFuture(res);
     });
@@ -286,8 +284,10 @@ public class AdminServiceImpl implements AdminService {
           .title(SUCC_TITLE_PROV_STATUS_UPDATE).arrayResults(resp).build();
       handler.handle(Future.succeededFuture(r.toJson()));
     }).onFailure(e -> {
-      if (e.getMessage().equals(COMPOSE_FAILURE)) {
-        return; // do nothing
+      if (e instanceof ComposeException) {
+        ComposeException exp = (ComposeException) e;
+        handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+        return;
       }
       LOGGER.error(e.getMessage());
       handler.handle(Future.failedFuture("Internal error"));
@@ -357,10 +357,8 @@ public class AdminServiceImpl implements AdminService {
       if (res) {
         return Future.succeededFuture(true);
       }
-      Response r = new ResponseBuilder().status(401).type(URN_INVALID_ROLE)
-          .title(ERR_TITLE_NOT_AUTH_ADMIN).detail(ERR_DETAIL_NOT_AUTH_ADMIN).build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return Future.failedFuture(COMPOSE_FAILURE);
+      return Future.failedFuture(new ComposeException(401, URN_INVALID_ROLE,
+          ERR_TITLE_NOT_AUTH_ADMIN, ERR_DETAIL_NOT_AUTH_ADMIN));
     });
 
     try {
@@ -393,8 +391,10 @@ public class AdminServiceImpl implements AdminService {
           .objectResults(resp).build();
       handler.handle(Future.succeededFuture(r.toJson()));
     }).onFailure(e -> {
-      if (e.getMessage().equals(COMPOSE_FAILURE)) {
-        return; // do nothing
+      if (e instanceof ComposeException) {
+        ComposeException exp = (ComposeException) e;
+        handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+        return;
       }
       LOGGER.error(e.getMessage());
       handler.handle(Future.failedFuture("Internal error"));
