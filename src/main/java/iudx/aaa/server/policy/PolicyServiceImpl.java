@@ -2388,15 +2388,8 @@ public class PolicyServiceImpl implements PolicyService {
                 List<UUID> badIds =
                     ids.stream().filter(id -> !data.containsKey(id)).collect(Collectors.toList());
 
-                Response r =
-                    new Response.ResponseBuilder()
-                        .type(URN_INVALID_INPUT)
-                        .title(ERR_TITLE_INVALID_ID)
-                        .detail(badIds.get(0).toString())
-                        .status(400)
-                        .build();
-                handler.handle(Future.succeededFuture(r.toJson()));
-                return Future.failedFuture(COMPOSE_FAILURE);
+                return Future.failedFuture(new ComposeException(400, URN_INVALID_INPUT,
+                    ERR_TITLE_INVALID_ID, badIds.get(0).toString()));
               }
 
               if (!isAuthDelegate) {
@@ -2410,15 +2403,8 @@ public class PolicyServiceImpl implements PolicyService {
                       .collect(Collectors.toList());
 
               if (!authDelegs.isEmpty()) {
-                Response r =
-                    new Response.ResponseBuilder()
-                        .type(URN_INVALID_INPUT)
-                        .title(ERR_TITLE_AUTH_DELE_DELETE)
-                        .detail(authDelegs.get(0).toString())
-                        .status(403)
-                        .build();
-                handler.handle(Future.succeededFuture(r.toJson()));
-                return Future.failedFuture(COMPOSE_FAILURE);
+                return Future.failedFuture(new ComposeException(403, URN_INVALID_INPUT,
+                    ERR_TITLE_AUTH_DELE_DELETE, authDelegs.get(0).toString()));
               }
               return Future.succeededFuture();
             });
@@ -2439,14 +2425,15 @@ public class PolicyServiceImpl implements PolicyService {
                       .build();
               handler.handle(Future.succeededFuture(r.toJson()));
             })
-        .onFailure(
-            e -> {
-              if (e.getMessage().equals(COMPOSE_FAILURE)) {
-                return; // do nothing
-              }
-              LOGGER.error(e.getMessage());
-              handler.handle(Future.failedFuture("Internal error"));
-            });
+        .onFailure(e -> {
+          if (e instanceof ComposeException) {
+            ComposeException exp = (ComposeException) e;
+            handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+            return;
+          }
+          LOGGER.error(e.getMessage());
+          handler.handle(Future.failedFuture("Internal error"));
+        });
 
     return this;
   }
