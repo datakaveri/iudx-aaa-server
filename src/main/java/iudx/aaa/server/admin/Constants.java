@@ -3,7 +3,6 @@ package iudx.aaa.server.admin;
 public class Constants {
 
   public static final String NIL_UUID = "00000000-0000-0000-0000-000000000000";
-  public static final String COMPOSE_FAILURE = "COMPOSE_FAILURE";
   public static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
 
   /* Config related */

@@ -2,7 +2,6 @@ package iudx.aaa.server.registration;
 
 import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.registration.Constants.CLIENT_SECRET_BYTES;
-import static iudx.aaa.server.registration.Constants.COMPOSE_FAILURE;
 import static iudx.aaa.server.registration.Constants.CONFIG_AUTH_URL;
 import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
 import static iudx.aaa.server.registration.Constants.DEFAULT_CLIENT;
@@ -187,26 +186,20 @@ public class RegistrationServiceImpl implements RegistrationService {
           String orgDetails = (String) arr.list().get(2);
 
           if (userRow != 0) {
-            Response r = new ResponseBuilder().status(409).type(URN_ALREADY_EXISTS)
-                .title(ERR_TITLE_USER_EXISTS).detail(ERR_DETAIL_USER_EXISTS).build();
-            handler.handle(Future.succeededFuture(r.toJson()));
-            return Future.failedFuture(COMPOSE_FAILURE);
+            return Future.failedFuture(new ComposeException(409, URN_ALREADY_EXISTS,
+                ERR_TITLE_USER_EXISTS, ERR_DETAIL_USER_EXISTS));
           }
 
           if (emailId.length() == 0) {
-            Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                .title(ERR_TITLE_USER_NOT_KC).detail(ERR_DETAIL_USER_NOT_KC).build();
-            handler.handle(Future.succeededFuture(r.toJson()));
-            return Future.failedFuture(COMPOSE_FAILURE);
+            return Future.failedFuture(new ComposeException(400, URN_INVALID_INPUT,
+                ERR_TITLE_USER_NOT_KC, ERR_DETAIL_USER_NOT_KC));
           }
 
           String emailDomain = emailId.split("@")[1];
 
           if (orgDetails == null) {
-            Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                .title(ERR_TITLE_ORG_NO_EXIST).detail(ERR_DETAIL_ORG_NO_EXIST).build();
-            handler.handle(Future.succeededFuture(r.toJson()));
-            return Future.failedFuture(COMPOSE_FAILURE);
+            return Future.failedFuture(new ComposeException(400, URN_INVALID_INPUT,
+                ERR_TITLE_ORG_NO_EXIST, ERR_DETAIL_ORG_NO_EXIST));
           } else if (orgDetails == NO_ORG_CHECK) {
             return Future.succeededFuture(emailId);
           }
@@ -214,10 +207,8 @@ public class RegistrationServiceImpl implements RegistrationService {
           String url = new JsonObject(orgDetails).getString("url");
 
           if (!url.equals(emailDomain)) {
-            Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                .title(ERR_TITLE_ORG_NO_MATCH).detail(ERR_DETAIL_ORG_NO_MATCH).build();
-            handler.handle(Future.succeededFuture(r.toJson()));
-            return Future.failedFuture(COMPOSE_FAILURE);
+            return Future.failedFuture(new ComposeException(400, URN_INVALID_INPUT,
+                ERR_TITLE_ORG_NO_MATCH, ERR_DETAIL_ORG_NO_MATCH));
           }
 
           return Future.succeededFuture(emailId);
@@ -303,9 +294,12 @@ public class RegistrationServiceImpl implements RegistrationService {
       LOGGER.info("Created user profile for " + userId.result() + " with roles "
           + request.getRoles().toString());
     }).onFailure(e -> {
-      if (e.getMessage().equals(COMPOSE_FAILURE)) {
-        return; // do nothing
+      if (e instanceof ComposeException) {
+        ComposeException exp = (ComposeException) e;
+        handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+        return;
       }
+
       LOGGER.error(e.getMessage());
       handler.handle(Future.failedFuture("Internal error"));
     });
@@ -379,9 +373,12 @@ public class RegistrationServiceImpl implements RegistrationService {
           .objectResults(response).build();
       handler.handle(Future.succeededFuture(r.toJson()));
     }).onFailure(e -> {
-      if (e.getMessage().equals(COMPOSE_FAILURE)) {
-        return; // do nothing
+      if (e instanceof ComposeException) {
+        ComposeException exp = (ComposeException) e;
+        handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+        return;
       }
+
       LOGGER.error(e.getMessage());
       handler.handle(Future.failedFuture("Internal error"));
     });
@@ -552,8 +549,8 @@ public class RegistrationServiceImpl implements RegistrationService {
     /* Function to complete user-KC map promise and create list of Keycloak IDs */
     Function<Map<String, String>, Future<List<String>>> getKcIdsList = (u2k) -> {
       if (u2k.size() != size) {
-        handler.handle(Future.failedFuture("Invalid user ID"));
-        return Future.failedFuture(COMPOSE_FAILURE);
+        return Future.failedFuture(
+            new ComposeException(400, URN_INVALID_INPUT, "Invalid user ID", "Invalid user ID"));
       }
 
       userToKc.complete(u2k);
@@ -575,8 +572,9 @@ public class RegistrationServiceImpl implements RegistrationService {
       user2kc.forEach((userId, kcId) -> userDetails.put(userId, kcToDetails.get(kcId)));
       handler.handle(Future.succeededFuture(userDetails));
     }).onFailure(e -> {
-      if (e.getMessage().equals(COMPOSE_FAILURE)) {
-        return; // do nothing
+      if (e instanceof ComposeException) {
+        handler.handle(Future.failedFuture(e.getMessage()));
+        return;
       }
       LOGGER.error(e.getMessage());
       handler.handle(Future.failedFuture("Internal error"));
@@ -858,8 +856,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     Future<UUID> exists = foundUser.compose(res -> {
       if (res.isEmpty()) {
-        promise.complete(getSearchErr.get().toJson());
-        return Future.failedFuture(COMPOSE_FAILURE);
+        return Future.failedFuture(new ComposeException(getSearchErr.get()));
       }
 
       UUID keycloakId = UUID.fromString(res.getString("keycloakId"));
@@ -876,8 +873,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     Future<JsonObject> getOrgIfNeeded = getUserId.compose(res -> {
       if (res.isEmpty()) {
-        promise.complete(getSearchErr.get().toJson());
-        return Future.failedFuture(COMPOSE_FAILURE);
+        return Future.failedFuture(new ComposeException(getSearchErr.get()));
       }
 
       if (res.getString("organization_id") != null) {
@@ -906,8 +902,9 @@ public class RegistrationServiceImpl implements RegistrationService {
           .objectResults(response).build();
       promise.complete(r.toJson());
     }).onFailure(e -> {
-      if (e.getMessage().equals(COMPOSE_FAILURE)) {
-        return; // do nothing
+      if (e instanceof ComposeException) {
+        promise.complete(((ComposeException) e).getResponse().toJson());
+        return;
       }
       LOGGER.error(e.getMessage());
       promise.fail("Internal error");

@@ -113,7 +113,6 @@ public class Constants {
   public static final String NOT_RES_OWNER = "does not own the resource";
   public static final String NO_ADMIN_POLICY = "No admin policy";
   public static final String UNAUTHORIZED_DELEGATE = "Unauthorized";
-  public static final String COMPOSE_FAILURE = "COMPOSE_FAILURE";
 
   public static final String LOG_DB_ERROR = "Fail: Databse query; ";
   public static final String ERR_DUP_NOTIF_REQ = "Fail: Duplicate Access notification request; ";
