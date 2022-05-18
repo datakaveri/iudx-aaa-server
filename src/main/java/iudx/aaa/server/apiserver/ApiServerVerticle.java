@@ -253,23 +253,6 @@ public class ApiServerVerticle extends AbstractVerticle {
                       .handler(this::deletePolicyHandler)
                       .failureHandler(failureHandler);
 
-              // Lists all the policies related requests for user/provider
-              routerBuilder.operation(GET_POLICIES_REQUEST)
-                      .handler(providerAuth)
-                      .handler(this::getPolicyNotificationHandler)
-                      .failureHandler(failureHandler);
-
-              // Creates new policy request for user
-              routerBuilder.operation(POST_POLICIES_REQUEST)
-                      .handler(this::createPolicyNotificationHandler)
-                      .failureHandler(failureHandler);
-
-              // Updates the policy request by provider/delegate
-              routerBuilder.operation(PUT_POLICIES_REQUEST)
-                      .handler(providerAuth)
-                      .handler(this::updatePolicyNotificationHandler)
-                      .failureHandler(failureHandler);
-
               // Get delegations by provider/delegate/auth delegate
               routerBuilder.operation(GET_DELEGATIONS)
                       .handler(providerAuth)
@@ -642,66 +625,6 @@ public class ApiServerVerticle extends AbstractVerticle {
       if (handler.succeeded()) {
         JsonObject result = handler.result();
         Future.future(future -> handleAuditLogs(context, result));
-        processResponse(context.response(), handler.result());
-      } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
-      }
-    });
-  }
-
-  /**
-   * Get all the resource access requests by user to provider/delegate.
-   *
-   * @param context
-   */
-  private void getPolicyNotificationHandler(RoutingContext context) {
-
-    User user = context.get(USER);
-    JsonObject data = Optional.ofNullable((JsonObject)context.get(DATA)).orElse(new JsonObject());
-
-    policyService.listPolicyNotification(user, data, handler -> {
-      if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
-      } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
-      }
-    });
-  }
-
-  /**
-   * Create the resource access requests by user to provider/delegate.
-   *
-   * @param context
-   */
-  private void createPolicyNotificationHandler(RoutingContext context) {
-
-    JsonArray jsonRequest = context.getBodyAsJson().getJsonArray(REQUEST);
-    List<CreatePolicyNotification> request = CreatePolicyNotification.jsonArrayToList(jsonRequest);
-    User user = context.get(USER);
-
-    policyService.createPolicyNotification(request, user, handler -> {
-      if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
-      } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
-      }
-    });
-  }
-
-  /**
-   * Update the access status, expiry of resources by provider/delegate for user.
-   *
-   * @param context
-   */
-  private void updatePolicyNotificationHandler(RoutingContext context) {
-
-    JsonArray jsonRequest = context.getBodyAsJson().getJsonArray(REQUEST);
-    List<UpdatePolicyNotification> request = UpdatePolicyNotification.jsonArrayToList(jsonRequest);
-    JsonObject data = Optional.ofNullable((JsonObject)context.get(DATA)).orElse(new JsonObject());
-    User user = context.get(USER);
-
-    policyService.updatelistPolicyNotification(request, user, data, handler -> {
-      if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {
         processResponse(context.response(), handler.cause().getLocalizedMessage());
