@@ -265,13 +265,19 @@
 					<excludes>
 						<!-- classes are excluded since they are not testable or don't add 
 							any value if test cases are written. -->
-						<!-- ApiServerVerticle testing is covered in integration for now. -->
-						<exclude>iudx/aaa/server/apiserver/ApiServerVerticle.class</exclude>
 						<exclude>**/*VertxEBProxy.class</exclude>
 						<exclude>**/Constants.class</exclude>
 						<exclude>**/*VertxProxyHandler.class</exclude>
 						<exclude>**/*Verticle.class</exclude>
 						<exclude>iudx/aaa/server/deploy/*.class</exclude>
+						<!-- KcAdmin cannot be tested in unit tests -->
+						<exclude>iudx/aaa/server/registration/KcAdmin.class</exclude>
+                        <!-- Omit apiserver -->
+                        <!-- Contains ApiServerVerticle, data objects and main classes -->
+                        <exclude>iudx/aaa/server/apiserver/*</exclude>
+                        <!-- Omit apiserver/util -->
+                        <!-- Contains OIDC, client creds authn and auth delegate authn -->
+                        <exclude>iudx/aaa/server/apiserver/util/*</exclude>
 					</excludes>
 				</configuration>
 			</plugin>
