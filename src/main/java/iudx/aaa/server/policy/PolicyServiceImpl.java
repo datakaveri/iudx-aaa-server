@@ -2018,7 +2018,7 @@ public class PolicyServiceImpl implements PolicyService {
                   List<CreatePolicyRequest> createPolicyArray =
                       CreatePolicyRequest.jsonArrayToList(approvedReq);
 
-                  createPolicy(createPolicyArray, user, new JsonObject(), createHandler -> {
+                  createPolicy(createPolicyArray, user, data, createHandler -> {
                     if (createHandler.failed()) {
                       handler.handle(Future.succeededFuture(createHandler.result()));
                       return;
