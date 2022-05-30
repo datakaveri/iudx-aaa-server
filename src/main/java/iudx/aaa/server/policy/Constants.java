@@ -350,7 +350,8 @@ public class Constants {
       "SELECT ar.id AS \"requestId\", pol.id AS \"policyId\" FROM "
           + "access_requests ar "
           + "LEFT JOIN policies pol ON ar.user_id = pol.user_id AND ar.item_id = pol.item_id AND ar.owner_id = pol.owner_id \n"
-          + "WHERE pol.user_id= $1::UUID AND pol.item_id = $2::UUID AND ar.owner_id = $3::UUID AND pol.status = 'ACTIVE'";
+          + "WHERE pol.user_id= $1::UUID AND pol.item_id = $2::UUID AND ar.owner_id = $3::UUID AND ar.id = $4::UUID"
+          + " AND pol.status = 'ACTIVE'";
 
   public static final String INSERT_NOTIF_APPROVED_ID =
       "INSERT INTO approved_access_requests(request_id,policy_id,created_at,updated_at) "
