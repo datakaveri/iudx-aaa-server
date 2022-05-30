@@ -83,6 +83,7 @@ public class Constants {
   public static final String ITYPE = "ityp";
   public static final String IID = "iid";
   public static final String CONS = "cons";
+  public static final String APD = "apd";
   
   /* JWT Constants for APD token */
   public static final String LINK = "link";

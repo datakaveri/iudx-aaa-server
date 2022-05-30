@@ -26,6 +26,7 @@ import iudx.aaa.server.policy.PolicyService;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static iudx.aaa.server.apd.Constants.APD_CONSTRAINTS;
 import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_USER_PROFILE;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_USER_PROFILE;
@@ -333,6 +334,7 @@ public class TokenServiceImpl implements TokenService {
     
     /* Populate the token claims */
     JsonObject claims = new JsonObject();
+    //add apd cons
     claims.put(SUB, request.getString(USER_ID))
           .put(ISS, CLAIM_ISSUER)
           .put(AUD, audience)
@@ -341,7 +343,10 @@ public class TokenServiceImpl implements TokenService {
           .put(IID, iid)
           .put(ROLE, request.getString(ROLE))
           .put(CONS, request.getJsonObject(CONSTRAINTS, new JsonObject()));
-    
+
+    if(request.containsKey(APD_CONSTRAINTS))
+      claims.put(APD,request.getJsonObject(APD_CONSTRAINTS, new JsonObject()));
+
     String token = provider.generateToken(claims, options);
 
     JsonObject tokenResp = new JsonObject();

@@ -119,10 +119,12 @@ public class Constants {
   public static final String APD_RESP_DETAIL = "detail";
   public static final String APD_RESP_SESSIONID = "sessionId";
   public static final String APD_RESP_LINK = "link";
+  public static final String APD_CONSTRAINTS = "apdConstraints";
   
   /* create token service JSON key/values */
   public static final String CREATE_TOKEN_URL = "url";
   public static final String CREATE_TOKEN_CONSTRAINTS = "constraints";
+  public static final String CREATE_TOKEN_APD_CONSTRAINTS = "apdConstraints";
   public static final String CREATE_TOKEN_CAT_ID = "cat_id";
   public static final String CREATE_TOKEN_SESSIONID = "sessionId";
   public static final String CREATE_TOKEN_LINK = "link";
