@@ -1981,7 +1981,7 @@ public class PolicyServiceImpl implements PolicyService {
                   each.put(EXPIRYTIME, interval.getEnd().toString());
                   each.put(ITEMID, idMap.get(UUID.fromString(itemId)));
                   selectPolicy
-                      .add(Tuple.of(each.getString(USERID), itemId, each.getString(OWNERID)));
+                      .add(Tuple.of(each.getString(USERID), itemId, each.getString(OWNERID), each.getString(ID)));
 
                   return each;
                 }).collect(Collector.of(JsonArray::new, JsonArray::add, JsonArray::add));
