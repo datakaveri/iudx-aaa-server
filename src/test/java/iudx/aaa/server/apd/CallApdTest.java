@@ -1,5 +1,6 @@
 package iudx.aaa.server.apd;
 
+import static iudx.aaa.server.apd.Constants.APD_CONSTRAINTS;
 import static iudx.aaa.server.apd.Constants.APD_NOT_ACTIVE;
 import static iudx.aaa.server.apd.Constants.APD_RESP_DETAIL;
 import static iudx.aaa.server.apd.Constants.APD_RESP_LINK;
@@ -9,6 +10,7 @@ import static iudx.aaa.server.apd.Constants.APD_URN_ALLOW;
 import static iudx.aaa.server.apd.Constants.APD_URN_DENY;
 import static iudx.aaa.server.apd.Constants.APD_URN_DENY_NEEDS_INT;
 import static iudx.aaa.server.apd.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_APD_CONSTRAINTS;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_APD_INTERAC;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_CAT_ID;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_CONSTRAINTS;
@@ -28,6 +30,7 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -332,6 +335,55 @@ public class CallApdTest {
       assertEquals(response.getString(CREATE_TOKEN_CAT_ID), resource);
       assertEquals(response.getString(CREATE_TOKEN_URL), resSerUrl);
       assertEquals(response.getJsonObject(CREATE_TOKEN_CONSTRAINTS), new JsonObject());
+      testContext.completeNow();
+    })));
+  }
+
+  //add test  for apd response with constraints
+  @Test
+  @DisplayName("ApdWebClient success - APD allow with constraints")
+  void apdWebClientSuccessAllowWConstraints(VertxTestContext testContext) {
+    Mockito.doAnswer(i -> {
+      Promise<JsonObject> p = i.getArgument(1);
+      List<String> ids = i.getArgument(0);
+      JsonObject resp = new JsonObject();
+      for (String id : ids) {
+        resp.put(id, new JsonObject());
+      }
+      p.complete(resp);
+      return i.getMock();
+    }).when(registrationService).getUserDetails(any(), any());
+
+    Mockito.doAnswer(i -> {
+      Promise<JsonObject> p = i.getArgument(1);
+      JsonObject resp = new JsonObject().put("accessToken", RandomStringUtils.randomAlphabetic(30));
+      p.complete(resp);
+      return i.getMock();
+    }).when(tokenService).getAuthServerToken(any(), any());
+
+    JsonObject webClientResp = new JsonObject().put(APD_RESP_TYPE, APD_URN_ALLOW)
+        .put(APD_CONSTRAINTS,new JsonObject());
+
+    Mockito.when(apdWebClient.callVerifyApdEndpoint(any(), any(), any()))
+        .thenReturn(Future.succeededFuture(webClientResp));
+
+    UUID userId = UUID.randomUUID();
+    UUID providerId = UUID.randomUUID();
+    String resource = RandomStringUtils.randomAlphabetic(20).toLowerCase();
+    String resSerUrl = RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com";
+    String userClass = RandomStringUtils.randomAlphabetic(5).toLowerCase();
+
+    JsonObject apdContext = new JsonObject().put("userId", userId.toString())
+        .put("providerId", providerId.toString()).put("apdId", ACTIVE_APD_ID.toString())
+        .put("resource", resource).put("resSerUrl", resSerUrl).put("constraints", new JsonObject())
+        .put("userClass", userClass);
+
+    apdService.callApd(apdContext, testContext.succeeding(response -> testContext.verify(() -> {
+      assertEquals(response.getString(CREATE_TOKEN_STATUS), CREATE_TOKEN_SUCCESS);
+      assertEquals(response.getString(CREATE_TOKEN_CAT_ID), resource);
+      assertEquals(response.getString(CREATE_TOKEN_URL), resSerUrl);
+      assertEquals(response.getJsonObject(CREATE_TOKEN_CONSTRAINTS), new JsonObject());
+      assertEquals(response.getJsonObject(CREATE_TOKEN_APD_CONSTRAINTS),new JsonObject());
       testContext.completeNow();
     })));
   }

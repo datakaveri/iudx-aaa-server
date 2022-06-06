@@ -1,5 +1,6 @@
 package iudx.aaa.server.apd;
 
+import static iudx.aaa.server.apd.Constants.APD_CONSTRAINTS;
 import static iudx.aaa.server.apd.Constants.APD_READ_USERCLASSES_API;
 import static iudx.aaa.server.apd.Constants.APD_REQ_USERCLASS;
 import static iudx.aaa.server.apd.Constants.APD_RESP_DETAIL;
@@ -14,6 +15,7 @@ import static iudx.aaa.server.apd.Constants.APD_VERIFY_API;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -25,7 +27,7 @@ import org.apache.logging.log4j.Logger;
 public class TestApdServerVerticle extends AbstractVerticle {
 
   public static final int USERCLASS_ERRORS = 10;
-  public static final int VERIFY_ERRORS = 21;
+  public static final int VERIFY_ERRORS = 22;
   private Router router = Router.router(vertx);
   private int userclassErrorCounter = 0;
   private int verifyErrorCounter = 0;
@@ -62,8 +64,15 @@ public class TestApdServerVerticle extends AbstractVerticle {
             .put(APD_RESP_LINK, "example.com");
         response.setStatusCode(403).putHeader("Content-type", "application/json")
             .end(jsonResponse.encode());
-      } else {
-
+      }
+      //add else if allow with userClass
+      else if(body.getString(APD_REQ_USERCLASS).equals("TestSuccessWConstraints")){
+        HttpServerResponse response = context.response();
+        JsonObject jsonResponse = new JsonObject().put(APD_RESP_TYPE, APD_URN_ALLOW).put(APD_CONSTRAINTS,new JsonObject());
+        response.setStatusCode(200).putHeader("Content-type", "application/json")
+            .end(jsonResponse.encode());
+      }
+      else {
         HttpServerResponse response = context.response();
         JsonObject jsonResponse = new JsonObject().put(APD_RESP_TYPE, APD_URN_ALLOW);
         response.setStatusCode(200).putHeader("Content-type", "application/json")
@@ -92,6 +101,7 @@ public class TestApdServerVerticle extends AbstractVerticle {
   private void postVerify(RoutingContext context, int counter) {
     HttpServerResponse response = context.response();
     JsonObject jsonResponse;
+    //add cases
     switch (counter) {
       case 1:
         response.setStatusCode(200).putHeader("Content-type", "application/html")
@@ -191,6 +201,13 @@ public class TestApdServerVerticle extends AbstractVerticle {
         /* sending denyNeedsInteraction, sessionId, detail but 200 */
         jsonResponse = new JsonObject().put(APD_RESP_TYPE, APD_URN_DENY_NEEDS_INT)
             .put(APD_RESP_SESSIONID, "something").put(APD_RESP_DETAIL, "something");
+        response.setStatusCode(200).putHeader("Content-type", "application/json")
+            .end(jsonResponse.encode());
+        break;
+      case 21:
+        /* sending allow with constraints, apdConstraints is not a JsonObject */
+        jsonResponse = new JsonObject().put(APD_RESP_TYPE, APD_URN_ALLOW)
+            .put(APD_RESP_SESSIONID, "something").put(APD_RESP_DETAIL, "something").put(APD_CONSTRAINTS, new JsonArray());
         response.setStatusCode(200).putHeader("Content-type", "application/json")
             .end(jsonResponse.encode());
         break;

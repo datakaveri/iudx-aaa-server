@@ -1,5 +1,6 @@
 package iudx.aaa.server.apd;
 
+import static iudx.aaa.server.apd.Constants.APD_CONSTRAINTS;
 import static iudx.aaa.server.apd.Constants.APD_READ_USERCLASSES_API;
 import static iudx.aaa.server.apd.Constants.APD_RESP_DETAIL;
 import static iudx.aaa.server.apd.Constants.APD_RESP_SESSIONID;
@@ -22,6 +23,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.RequestOptions;
 import io.vertx.core.json.DecodeException;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
@@ -181,6 +183,18 @@ public class ApdWebClient {
 
     if (json.getString(APD_RESP_TYPE).equals(APD_URN_ALLOW) && code != 200) {
       return Future.failedFuture("Invalid status+URN");
+    }
+
+    //check if respType is allow and if response json contains key 'apdConstraints',
+    // it should be a valid jsonObject else fail 'invalid constraints'
+    if(json.getString(APD_RESP_TYPE).equals(APD_URN_ALLOW) && json.containsKey(APD_CONSTRAINTS))
+    {
+      try {
+        Optional.ofNullable(json.getJsonObject(APD_CONSTRAINTS)).orElseThrow(DecodeException::new);
+      } catch (DecodeException e) {
+
+        return Future.failedFuture("Invalid Constraints JSON sent by APD");
+      }
     }
 
     return Future.succeededFuture(json);

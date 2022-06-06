@@ -1,5 +1,6 @@
 package iudx.aaa.server.apd;
 
+import static iudx.aaa.server.apd.Constants.APD_CONSTRAINTS;
 import static iudx.aaa.server.apd.Constants.APD_REQ_PROVIDER;
 import static iudx.aaa.server.apd.Constants.APD_REQ_RESOURCE;
 import static iudx.aaa.server.apd.Constants.APD_REQ_USER;
@@ -124,7 +125,23 @@ public class ApdWebClientTest {
         }).onSuccess(x -> testContext.completeNow());
   }
 
+  //add Test post verify allow with constraints
   @Order(5)
+  @Test
+  @DisplayName("Test post verify allow with constraints")
+  void testPostVerifyAllowWCons(VertxTestContext testContext) {
+      JsonObject request =
+          new JsonObject().put(APD_REQ_USER, new JsonObject()).put(APD_REQ_PROVIDER, new JsonObject())
+              .put(APD_REQ_RESOURCE, "resource").put(APD_REQ_USERCLASS, "TestSuccessWConstraints");
+      testContext.assertComplete(apdWebClient.callVerifyApdEndpoint("localhost", "token", request))
+          .compose(r -> {
+              assertEquals(r.getString(APD_RESP_TYPE), APD_URN_ALLOW);
+              assertTrue(r.containsKey(APD_CONSTRAINTS));
+              return Future.succeededFuture();
+          }).onSuccess(x -> testContext.completeNow());
+  }
+
+  @Order(6)
   @Test
   @DisplayName("Test post verify deny")
   void testPostVerifyDeny(VertxTestContext testContext) {
@@ -140,7 +157,7 @@ public class ApdWebClientTest {
         }).onSuccess(x -> testContext.completeNow());
   }
 
-  @Order(6)
+  @Order(7)
   @Test
   @DisplayName("Test post verify deny-needs-interaction")
   void testPostVerifyDenyNeedsInteraction(VertxTestContext testContext) {

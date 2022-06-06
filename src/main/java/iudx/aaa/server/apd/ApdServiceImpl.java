@@ -1,5 +1,6 @@
 package iudx.aaa.server.apd;
 
+import static iudx.aaa.server.apd.Constants.APD_CONSTRAINTS;
 import static iudx.aaa.server.apd.Constants.APD_NOT_ACTIVE;
 import static iudx.aaa.server.apd.Constants.APD_REQ_PROVIDER;
 import static iudx.aaa.server.apd.Constants.APD_REQ_RESOURCE;
@@ -13,6 +14,7 @@ import static iudx.aaa.server.apd.Constants.APD_URN_ALLOW;
 import static iudx.aaa.server.apd.Constants.APD_URN_DENY;
 import static iudx.aaa.server.apd.Constants.APD_URN_DENY_NEEDS_INT;
 import static iudx.aaa.server.apd.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_APD_CONSTRAINTS;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_APD_INTERAC;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_CAT_ID;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_CONSTRAINTS;
@@ -130,6 +132,7 @@ public class ApdServiceImpl implements ApdService {
     this.policyService = polService;
     this.tokenService = tokService;
     AUTH_SERVER_URL = options.getString(CONFIG_AUTH_URL);
+
   }
 
   /**
@@ -832,6 +835,11 @@ public class ApdServiceImpl implements ApdService {
       JsonObject result = new JsonObject();
 
       if (response.getString(APD_RESP_TYPE).equals(APD_URN_ALLOW)) {
+        //check if 'apdConstraints' are present
+        if(response.containsKey(APD_CONSTRAINTS))
+        {
+          result.put(CREATE_TOKEN_APD_CONSTRAINTS,response.getJsonObject(APD_CONSTRAINTS));
+        }
         result.put(CREATE_TOKEN_URL, rsUrl).put(CREATE_TOKEN_CONSTRAINTS, constraints)
             .put(CREATE_TOKEN_CAT_ID, resource).put(CREATE_TOKEN_STATUS, CREATE_TOKEN_SUCCESS);
 
