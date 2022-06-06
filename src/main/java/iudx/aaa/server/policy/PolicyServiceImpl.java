@@ -20,10 +20,10 @@ import iudx.aaa.server.apiserver.CreateDelegationRequest;
 import iudx.aaa.server.apiserver.CreatePolicyNotification;
 import iudx.aaa.server.apiserver.CreatePolicyRequest;
 import iudx.aaa.server.apiserver.DeleteDelegationRequest;
+import iudx.aaa.server.apiserver.NotifRequestStatus;
 import iudx.aaa.server.apiserver.ResourceObj;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
-import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.UpdatePolicyNotification;
 import iudx.aaa.server.apiserver.User;
@@ -1928,7 +1928,7 @@ public class PolicyServiceImpl implements PolicyService {
        * ID already processed', we do it here
        */
       Boolean nonPendingReqIds = dbHandler.stream()
-          .anyMatch(obj -> !obj.getString("status").equals(RoleStatus.PENDING.name()));
+          .anyMatch(obj -> !obj.getString("status").equals(NotifRequestStatus.PENDING.name()));
 
       if (nonPendingReqIds) {
         return Future.failedFuture(
@@ -1974,7 +1974,8 @@ public class PolicyServiceImpl implements PolicyService {
       JsonArray resArr = new JsonArray();
 
       JsonArray approvedReq = createPolicyArray.result().stream().map(JsonObject.class::cast)
-          .filter(each -> each.getString(STATUS).equals(RoleStatus.APPROVED.name())).map(each -> {
+          .filter(each -> each.getString(STATUS).equals(NotifRequestStatus.APPROVED.name()))
+          .map(each -> {
             String expiry = each.getString("expiryDuration");
             String itemId = each.getString(ITEMID);
 
@@ -1992,7 +1993,8 @@ public class PolicyServiceImpl implements PolicyService {
 
       List<Tuple> updateRejectedReq = createPolicyArray.result().stream()
           .map(JsonObject.class::cast)
-          .filter(each -> each.getString(STATUS).equals(RoleStatus.REJECTED.name())).map(each -> {
+          .filter(each -> each.getString(STATUS).equals(NotifRequestStatus.REJECTED.name()))
+          .map(each -> {
             UUID requestId = UUID.fromString(each.getString("requestId"));
             String status = each.getString(STATUS);
 
@@ -2353,7 +2355,7 @@ public class PolicyServiceImpl implements PolicyService {
         UUID itemId = resource.getId();
         UUID ownerId = resource.getOwnerId();
 
-        String status = RoleStatus.PENDING.name();
+        String status = NotifRequestStatus.PENDING.name();
         String itemType = each.getItemType().toUpperCase();
 
         Duration duration = DatatypeFactory.newInstance().newDuration(each.getExpiryDuration());
@@ -2434,7 +2436,7 @@ public class PolicyServiceImpl implements PolicyService {
       UUID userId = tuples.get(i).getUUID(0);
       UUID itemId = tuples.get(i).getUUID(1);
       UUID ownerId = tuples.get(i).getUUID(3);
-      String status = RoleStatus.PENDING.name();
+      String status = NotifRequestStatus.PENDING.name();
       selectTuples.add(Tuple.of(userId, itemId, ownerId, status));
     }
     pool.withConnection(
