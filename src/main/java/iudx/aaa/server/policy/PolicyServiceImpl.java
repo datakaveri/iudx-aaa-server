@@ -2104,6 +2104,9 @@ public class PolicyServiceImpl implements PolicyService {
       for (int i = 0; i < resArr.size(); i++) {
         JsonObject requestJson = resArr.getJsonObject(i);
 
+        LOGGER.info("Updated status of request ID {} to {}", requestJson.getString(ID),
+            requestJson.getString(STATUS).toUpperCase());
+
         requestJson.remove(EXPIRYTIME);
         requestJson.remove(USERID);
         requestJson.remove(OWNERID);
