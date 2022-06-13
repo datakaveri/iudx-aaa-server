@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: IUDX-AAA-Server
-  version: 3.0.0
+  version: 3.5.0
   description: 'API specification for IUDX AAA Server. These APIs are used by users manage tokens, policy etc. These APIs requires valid token or client details for authentication.'
   license:
     name: MIT
@@ -204,6 +204,7 @@ paths:
                     - delegate
                     - consumer
                     - admin
+                    - trustee
               required:
                 - itemId
                 - itemType
@@ -244,6 +245,21 @@ paths:
                   itemId: datakaveri.org/04a15c9960ffda227e9546f3f46e629e1fe4132b/catalogue.iudx.org.in/catalogue/crud
                   itemType: resource
                   role: delegate
+              identity token for APD as consumer:
+                value:
+                  itemId: url of apd
+                  itemType: resource_server
+                  role: consumer
+              identity token for APD as trustee:
+                value:
+                  itemId: url of apd
+                  itemType: resource_server
+                  role: trustee
+              identity token for resource_server as provider:
+                value:
+                  itemId: rs.iudx.org.in
+                  itemType: resource_server
+                  role: provider
         description: |-
           - `itemId` : the string value of the id of the resource
             - e.g. `datakaveri.org/facec5182e3bf44cc3ac42b0b611263676d668a2/rs.iudx.org.in/agartala-env-aqm`
@@ -254,12 +270,26 @@ paths:
         Request for a JWT (token). One can generate token using either by providing token header or providing clientId and clientSecret in the header. 
 
         **NOTE : Either the JWT token in the `Authorization` header or `clientId`+`clientSecret` headers are required, not both**
+
+        ## Identity Token
+
+        An Identity token is used by a user to identify themself to a `resource_server` or `APD`.
+          - Item Type - `resource_server`.
+          - Item Id - url of the server or apd.
+          - Users with any role can get an identity token for either a `resource_server` or `apd`.
+          
+          **NOTE :If role is `admin` or `trustee`, the user must own the `resource_server` or `apd` respectively.**   
+              
+
+        ## Access Token
             
-        ## Tokens for providers
-        - Valid item types - `resource`, `resource_group` 
-        - users with the `provider` role can get tokens for all of the resources that belong to them without having to set any specific policies to access them.
-        - If the provider wishes to get a token to access a particular server, they require a **policy by the server admin**.
-            eg:  A provider can get a token for the IUDX catalogue server by using the `itemId` as
+        An Access token is used to gain access to an Item on the resource server.
+
+          ## Tokens for providers
+            - Valid item types - `resource`, `resource_group` 
+            - users with the `provider` role can get tokens for all of the resources that belong to them without having to set any specific policies to access them.
+            - If the provider wishes to get a token to access a particular server, they require a **policy by the server admin**.
+              eg:  A provider can get a token for the IUDX catalogue server by using the `itemId` as
            `<provider-domain>/<SHA1-of-provider-email>/<catalogue-url>/catalogue/crud`
         For example, if the provider is *provider.foobar@datakaveri.org*, the `itemId` will be
 
@@ -267,36 +297,36 @@ paths:
         datakaveri.org/49276e9045a8a4c5c5bcc5b3b6923786896ff02d/catalogue.iudx.org.in/catalogue/crud
         ```
            
-        ## Tokens for delegates
-        - Valid item types - `resource`, `resource_group` 
-        - Users with the `delegate` role can get tokens for resources if they:
-           1. Are a delegate to the provider who owns the resource
-           2. Have a policy set by the provider to access the resource 
-           3. Must have a valid policy set by the admin of the server
+          ## Tokens for delegates
+            - Valid item types - `resource`, `resource_group` 
+            - Users with the `delegate` role can get tokens for resources if they:
+               1. Are a delegate to the provider who owns the resource
+               2. Have a policy set by the provider to access the resource 
+               3. Must have a valid policy set by the admin of the server
 
         **Note**: The IUDX Catalogue server does not require a policy to be set by the provider (2nd point).
            
-        ## Tokens for consumers
-        - Valid item types - `resource`, `resource_group`, `resource_server`
-        - Consumers can access the private resources for which they have a policy set by either the `provider` or by a `delegate`
-        - The IUDX Resource Server **requires a token for accessing public resources**. A consumer may obtain a token for this by setting `itemType` as `resource_server` and `itemId` as the resource server URL.
+          ## Tokens for consumers
+            - Valid item types - `resource`, `resource_group`, `resource_server`
+            - Consumers can access the private resources for which they have a policy set by either the `provider` or by a `delegate`
 
-        ## Tokens for admins
-        - Valid item types - `resource_server`
-        - An admin may identify themselves with the servers they manage by getting an admin token, by setting `itemType` as `resource_server` and `itemId` as the server URL.
 
-        # JWT Access Token Response Structure
-         A valid IUDX AAA access token contains the following fields:
-        - `sub`: `userId` of the user for whom the token is issued
-        - `iss`: this tag contains the url of the server from the where the token was issued(IUDX auth server)
-        - `aud`: the 'audience' tag contains the url of the server for which the token is valid
-        - `exp`: when the token will expire in Unix format
-        - `iat`: indicates when the token was issued in unix format
-        - `iid`: resource type and resource id of the item for which the token is valid
-        - `role`: role of the user 
-        - `cons`: the constraints that the resource server recognizes. It is only returned for policies set for consumer 
+          ## Tokens for admins
+            - Valid item types - `resource_server`
+            - An admin may identify themselves with the servers they manage by getting an admin token, by setting `itemType` as `resource_server` and `itemId` as the server URL.
 
-        # Resources restricted by APD Policies
+          # JWT Access Token Response Structure
+             A valid IUDX AAA access token contains the following fields:
+                - `sub`: `userId` of the user for whom the token is issued
+                - `iss`: this tag contains the url of the server from the where the token was issued(IUDX auth server)
+                - `aud`: the 'audience' tag contains the url of the server for which the token is valid
+                - `exp`: when the token will expire in Unix format
+                - `iat`: indicates when the token was issued in unix format
+                - `iid`: resource type and resource id of the item for which the token is valid
+                - `role`: role of the user 
+                - `cons`: the constraints that the resource server recognizes. It is only returned for policies set for consumer 
+
+          # Resources restricted by APD Policies
          
         In case access to a resource is defined using an APD policy (and there is no valid user policy for the requesting user and resource), the AAA server queries the APD with relevant information to see if the user belongs to the **_user class_** specified in the APD policy. The APD may respond in three ways:
 
@@ -305,6 +335,9 @@ paths:
         - **Deny but the APD needs interaction** : The user does not belong to the user class, but the APD provides a mechanism for the user to interact with it. This interaction **may or may not** result in the user being included in the user class. The AAA server sends a `403 Forbidden` but includes a special **APD JWT token** that the user must use when interacting with the APD. 
 
         ## JWT APD Token Response Structure
+
+        The jwt is created using the ES256 algorithm.
+
          A valid IUDX AAA APD token contains the following fields:
         - `sub`: `userId` of the user for whom the token is issued
         - `iss`: this tag contains the url of the server from the where the token was issued(IUDX auth server)
