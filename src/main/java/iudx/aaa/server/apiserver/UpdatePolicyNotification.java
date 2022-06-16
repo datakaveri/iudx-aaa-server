@@ -12,7 +12,7 @@ import static iudx.aaa.server.apiserver.util.Constants.*;
 public class UpdatePolicyNotification {
 
   UUID requestId;
-  RoleStatus status;
+  NotifRequestStatus status;
   String expiryDuration;
   JsonObject constraints;
   
@@ -42,11 +42,11 @@ public class UpdatePolicyNotification {
     this.requestId = UUID.fromString(requestId);
   }
 
-  public RoleStatus getStatus() {
+  public NotifRequestStatus getStatus() {
     return status;
   }
 
-  public void setStatus(RoleStatus status) {
+  public void setStatus(NotifRequestStatus status) {
     this.status = status;
   }
 
