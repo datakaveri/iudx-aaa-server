@@ -1344,6 +1344,19 @@ public class PolicyServiceImpl implements PolicyService {
 
     String[] itemSplit = itemId.split("/");
 
+    if (itemSplit.length < 4 && (itemType.equals(itemTypes.RESOURCE.toString())
+        || itemType.equals(itemTypes.RESOURCE_GROUP.toString()))) {
+        Response r =
+            new ResponseBuilder()
+                .status(403)
+                .type(URN_INVALID_INPUT)
+                .title(INVALID_POLICY)
+                .detail(INCORRECT_ITEM_ID)
+                .build();
+        handler.handle(Future.failedFuture(new ComposeException(r)));
+        return this;
+    }
+    
     String emailHash = itemSplit[0] + "/" + itemSplit[1];
     Future<String> getRoles =
         pool.withConnection(
