@@ -1,5 +1,7 @@
 package iudx.aaa.server.token;
 
+import io.vertx.core.CompositeFuture;
+import io.vertx.core.json.Json;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,6 +26,7 @@ import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.policy.PolicyService;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static iudx.aaa.server.apd.Constants.APD_CONSTRAINTS;
@@ -92,58 +95,75 @@ public class TokenServiceImpl implements TokenService {
       handler.handle(Future.succeededFuture(resp.toJson()));
       return this;
     }
-    
-    if (RESOURCE_SVR.equals(itemType)
-        && (role.equalsIgnoreCase(ADMIN) || role.equalsIgnoreCase(CONSUMER))) {
-      
-      Tuple tuple = Tuple.of(requestToken.getItemId());
-      pgSelelctQuery(GET_RS, tuple).onComplete(dbHandler -> {
-        if (dbHandler.failed()) {
-          LOGGER.error(LOG_DB_ERROR + dbHandler.cause());
-          handler.handle(Future.failedFuture(INTERNAL_SVR_ERR));
-          return;
-        }
 
-        if (dbHandler.succeeded() && dbHandler.result().size() > 0) {
-          JsonObject dbExistsRow = dbHandler.result().getJsonObject(0);
-          String flag = dbExistsRow.getString(OWNER);
-          
-          if (role.equalsIgnoreCase(ADMIN)) {
-            if (!user.getUserId().equals(flag)) {
-              LOGGER.error("Fail: " + ERR_ADMIN);
-              Response resp = new ResponseBuilder().status(403).type(URN_INVALID_INPUT)
-                  .title(ERR_ADMIN).detail(ERR_ADMIN).build();
-              handler.handle(Future.succeededFuture(resp.toJson()));
-              return;
-            }
-          }
-          
-          if(role.equalsIgnoreCase(CONSUMER)) {
-            if(flag != null && flag.isEmpty()) {
-              LOGGER.error("Fail: " + INVALID_RS_URL);
-              Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                  .title(INVALID_RS_URL).detail(INVALID_RS_URL).build();
-              handler.handle(Future.succeededFuture(resp.toJson()));
-              return; 
-            }
-          }
-          
-          request.put(URL, requestToken.getItemId());
-          JsonObject jwt = getJwt(request);
-          LOGGER.info(LOG_TOKEN_SUCC);
-          Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
-              .objectResults(jwt).build();
-          handler.handle(Future.succeededFuture(resp.toJson()));
-          return;
-        } else {
-          LOGGER.error("Fail: " + INVALID_RS_URL);
-          Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-              .title(INVALID_RS_URL).detail(INVALID_RS_URL).build();
-          handler.handle(Future.succeededFuture(resp.toJson()));
-          return;
-        }
-      });
-    } else {
+    //update check to not include role check
+    if (RESOURCE_SVR.equals(itemType)) {
+      Future<JsonObject> ownerId = getOwnerId(requestToken.getItemId());
+
+      ownerId
+          .onSuccess(
+              owner -> {
+                // admin role request must be owner for resource server
+                if (role.equalsIgnoreCase(ADMIN)
+                    && !owner.getString(RESOURCE_SVR,"").equalsIgnoreCase(user.getUserId()))
+                {
+                    LOGGER.error("Fail: " + ERR_ADMIN);
+                    Response resp =
+                        new ResponseBuilder()
+                            .status(403)
+                            .type(URN_INVALID_INPUT)
+                            .title(ERR_ADMIN)
+                            .detail(ERR_ADMIN)
+                            .build();
+                    handler.handle(Future.succeededFuture(resp.toJson()));
+                    return;
+                  }
+
+
+                if (role.equalsIgnoreCase(TRUSTEE)
+                    && !owner.getString(APD,"").equalsIgnoreCase(user.getUserId()))
+                {
+                    LOGGER.error("Fail: " + ERR_ADMIN);
+                    Response resp =
+                        new ResponseBuilder()
+                            .status(403)
+                            .type(URN_INVALID_INPUT)
+                            .title(ERR_ADMIN)
+                            .detail(ERR_ADMIN)
+                            .build();
+                    handler.handle(Future.succeededFuture(resp.toJson()));
+                    return;
+                }
+
+                request.put(URL, requestToken.getItemId());
+                JsonObject jwt = getJwt(request);
+                LOGGER.info(LOG_TOKEN_SUCC);
+                Response resp =
+                    new ResponseBuilder()
+                        .status(200)
+                        .type(URN_SUCCESS)
+                        .title(TOKEN_SUCCESS)
+                        .objectResults(jwt)
+                        .build();
+                handler.handle(Future.succeededFuture(resp.toJson()));
+                return;
+              })
+          .onFailure(
+              failureHandler -> {
+                LOGGER.error("Fail: " + INVALID_RS_URL);
+                Response resp =
+                    new ResponseBuilder()
+                        .status(400)
+                        .type(URN_INVALID_INPUT)
+                        .title(INVALID_RS_URL)
+                        .detail(INVALID_RS_URL)
+                        .build();
+                handler.handle(Future.succeededFuture(resp.toJson()));
+                return;
+              });
+
+    }
+    else {
       Promise<JsonObject> policyHandler = Promise.promise();
       policyService.verifyPolicy(request, policyHandler);
       policyHandler.future().onSuccess(result -> {
@@ -429,6 +449,39 @@ public class TokenServiceImpl implements TokenService {
             promise.fail(handler.cause());
           }
         });
+    return promise.future();
+  }
+
+  Future<JsonObject> getOwnerId(String itemId ) {
+
+    Promise<JsonObject> promise = Promise.promise();
+    Future<JsonArray> resServer =  pgSelelctQuery(GET_RS, Tuple.of(itemId));
+    Future<JsonArray> apd = pgSelelctQuery(GET_APD,Tuple.of(itemId));
+
+    Future<JsonObject> ownerID =
+        CompositeFuture.all(resServer, apd)
+            .compose(
+                res -> {
+                  if (resServer.result().isEmpty() && apd.result().isEmpty())
+                    return Future.failedFuture("resource does not exist");
+                  else {
+                    if (resServer.result().size() > 0)
+                      return Future.succeededFuture(
+                          new JsonObject().put(RESOURCE_SVR,resServer.result().getJsonObject(0).getString("owner")));
+                    else
+                      return Future.succeededFuture(
+                          new JsonObject().put(APD,apd.result().getJsonObject(0).getString("owner")));
+                  }
+                });
+
+   ownerID.onSuccess(id ->
+    promise.complete(id)
+
+   ).onFailure(failureHandler -> {
+      LOGGER.error(LOG_DB_ERROR + failureHandler.toString());
+      promise.fail("failed");
+    });
+
     return promise.future();
   }
 }

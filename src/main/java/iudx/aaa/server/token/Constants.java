@@ -132,11 +132,11 @@ public class Constants {
   public static final String TOKEN_FAILED = "Token authentication failed";
   public static final String POLICY_SUCCESS =  "Policy evaluation succeeded";
   public static final String INVALID_SUB = "Invalid subject ID";
-  public static final String ERR_ADMIN = "Not admin of the request resource";
-  
+  public static final String ERR_ADMIN = "Invalid role for requested resource";
   public static final String ADMIN = "admin";
   public static final String CONSUMER = "consumer";
   public static final String PROVIDER = "provider";
+  public static final String TRUSTEE = "trustee";
   
   /* SQL Queries */
   public static final String CHECK_USER =
@@ -149,5 +149,5 @@ public class Constants {
       "SELECT EXISTS (SELECT 1 FROM resource_server WHERE url = $1)";
   
   public static final String GET_RS = "SELECT owner_id AS owner FROM resource_server WHERE url = $1";
-
+  public static final String GET_APD = "SELECT owner_id AS owner FROM apds WHERE url = $1";
 }

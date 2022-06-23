@@ -394,6 +394,66 @@ public class TokenServiceTest {
         })));
   }
 
+    @Test
+    @DisplayName("create token as delegate (resource server) [Success]")
+    void createTokenResServDelegateSuccess(VertxTestContext testContext) {
+
+        JsonObject userJson = delegate.result();
+
+        User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+            .userId(userJson.getString("userId"))
+            .name(userJson.getString("firstName"), userJson.getString("lastName"))
+            .roles(List.of(Roles.DELEGATE)).build();
+
+        JsonObject jsonReq = new JsonObject().put("itemId", DUMMY_SERVER)
+            .put("itemType", "resource_server").put("role", "delegate");
+        RequestToken request = new RequestToken(jsonReq);
+
+        tokenService.createToken(request, user,
+            testContext.succeeding(response -> testContext.verify(() -> {
+                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                JsonObject payload =
+                    getJwtPayload(response.getJsonObject("results").getString(ACCESS_TOKEN));
+                assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
+                assertEquals(payload.getString(AUD), DUMMY_SERVER);
+                assertEquals(payload.getString(IID), "rs:" + DUMMY_SERVER);
+                assertEquals(payload.getString(ROLE), Roles.DELEGATE.toString().toLowerCase());
+                assertTrue(payload.getJsonObject(CONS).isEmpty());
+                assertNotNull(payload.getString(EXP));
+                testContext.completeNow();
+            })));
+    }
+
+    @Test
+    @DisplayName("create token as provider (resource server) [Success]")
+    void createTokenResServProviderSuccess(VertxTestContext testContext) {
+
+        JsonObject userJson = providerAdmin.result();
+
+        User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+            .userId(userJson.getString("userId"))
+            .name(userJson.getString("firstName"), userJson.getString("lastName"))
+            .roles(List.of(Roles.PROVIDER)).build();
+
+        JsonObject jsonReq = new JsonObject().put("itemId", DUMMY_SERVER)
+            .put("itemType", "resource_server").put("role", "provider");
+        RequestToken request = new RequestToken(jsonReq);
+
+        tokenService.createToken(request, user,
+            testContext.succeeding(response -> testContext.verify(() -> {
+                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                JsonObject payload =
+                    getJwtPayload(response.getJsonObject("results").getString(ACCESS_TOKEN));
+                assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
+                assertEquals(payload.getString(AUD), DUMMY_SERVER);
+                assertEquals(payload.getString(IID), "rs:" + DUMMY_SERVER);
+                assertEquals(payload.getString(ROLE), Roles.PROVIDER.toString().toLowerCase());
+                assertTrue(payload.getJsonObject(CONS).isEmpty());
+                assertNotNull(payload.getString(EXP));
+                testContext.completeNow();
+            })));
+    }
+    
   @Test
   @DisplayName("create token as admin for resource server [Success]")
   void createTokenAdminSuccess(VertxTestContext testContext) {
