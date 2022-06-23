@@ -105,6 +105,7 @@ public class Constants {
   public static final String NO_AUTH_POLICY = "No auth policy for user";
   public static final String NO_AUTH_TRUSTEE_POLICY = "No auth policy for user by trustee";
   public static final String INCORRECT_ITEM_TYPE = "incorrect item type";
+  public static final String INCORRECT_ITEM_ID = "incorrect item ID";
   public static final String UNAUTHORIZED = "Not allowed to create policies for resource";
   public static final String PROVIDER_NOT_REGISTERED = "Provider not a registered user";
   public static final String DUPLICATE_POLICY = "Policy already exists:";

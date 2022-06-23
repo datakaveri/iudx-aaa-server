@@ -25,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Map;
 
 import static iudx.aaa.server.policy.Constants.INVALID_ROLE;
+import static iudx.aaa.server.policy.Constants.INCORRECT_ITEM_ID;
 import static iudx.aaa.server.policy.Constants.NO_ADMIN_POLICY;
 import static iudx.aaa.server.policy.Constants.REGISTRATION_SERVICE_ADDRESS;
 import static iudx.aaa.server.policy.Constants.STATUS;
@@ -35,6 +36,7 @@ import static iudx.aaa.server.policy.TestRequest.NoCataloguePolicy;
 import static iudx.aaa.server.policy.TestRequest.NoCatalogueProviderPolicy;
 import static iudx.aaa.server.policy.TestRequest.consumerVerification;
 import static iudx.aaa.server.policy.TestRequest.invalidDelegate;
+import static iudx.aaa.server.policy.TestRequest.invalidItemId;
 import static iudx.aaa.server.policy.TestRequest.roleFailure;
 import static iudx.aaa.server.policy.TestRequest.validDelegateVerification;
 import static iudx.aaa.server.policy.TestRequest.validProviderCat;
@@ -147,6 +149,21 @@ public class VerifyPolicyTest {
                     () -> {
                       ComposeException exp = (ComposeException) response;
                       assertEquals(INVALID_ROLE, exp.getResponse().getDetail());
+                      testContext.completeNow();
+                    })));
+  }
+
+  @Test
+  @DisplayName("Invalid item ID - sending URL instead of resource")
+  void invalidItemId(VertxTestContext testContext) {
+    policyService.verifyPolicy(
+        invalidItemId,
+        testContext.failing(
+            response ->
+                testContext.verify(
+                    () -> {
+                      ComposeException exp = (ComposeException) response;
+                      assertEquals(INCORRECT_ITEM_ID, exp.getResponse().getDetail());
                       testContext.completeNow();
                     })));
   }
