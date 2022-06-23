@@ -7721,63 +7721,6 @@
 					"name": "Provider",
 					"item": [
 						{
-							"name": "Provider role - Cannot get resource_server token - [400]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(403);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-											"",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"authorization.iudx.io\",\n    \"itemType\": \"resource_server\",\n    \"role\": \"provider\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"token"
-									]
-								}
-							},
-							"response": []
-						},
-						{
 							"name": "Provider role - Cannot get catalogue token - [403] (no cat admin policy)",
 							"event": [
 								{
@@ -8310,62 +8253,6 @@
 				{
 					"name": "Delegate",
 					"item": [
-						{
-							"name": "Delegate cannot get resource_server token - [403]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(403);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"authorization.iudx.io\",\n    \"itemType\": \"resource_server\",\n    \"role\": \"delegate\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"token"
-									]
-								}
-							},
-							"response": []
-						},
 						{
 							"name": "Delegate cannot get resource_group token (no delegation + no admin policy) - [403]",
 							"event": [

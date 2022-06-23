@@ -98,36 +98,69 @@ public class TokenServiceImpl implements TokenService {
 
     //update check to not include role check
     if (RESOURCE_SVR.equals(itemType)) {
-      Future<UUID> ownerId = getOwnerId(requestToken.getItemId());
+      Future<JsonObject> ownerId = getOwnerId(requestToken.getItemId());
 
-      ownerId.onSuccess(owner -> {
+      ownerId
+          .onSuccess(
+              owner -> {
+                // admin role request must be owner for resource server
+                if (role.equalsIgnoreCase(ADMIN)
+                    && !owner.getString(RESOURCE_SVR,"").equalsIgnoreCase(user.getUserId()))
+                {
+                    LOGGER.error("Fail: " + ERR_ADMIN);
+                    Response resp =
+                        new ResponseBuilder()
+                            .status(403)
+                            .type(URN_INVALID_INPUT)
+                            .title(ERR_ADMIN)
+                            .detail(ERR_ADMIN)
+                            .build();
+                    handler.handle(Future.succeededFuture(resp.toJson()));
+                    return;
+                  }
 
-        if((role.equalsIgnoreCase(ADMIN) || role.equalsIgnoreCase(TRUSTEE) )
-            && !owner.toString().equalsIgnoreCase(user.getUserId()))
-        {
-          LOGGER.error("Fail: " + ERR_ADMIN);
-          Response resp = new ResponseBuilder().status(403).type(URN_INVALID_INPUT)
-              .title(ERR_ADMIN).detail(ERR_ADMIN).build();
-          handler.handle(Future.succeededFuture(resp.toJson()));
-          return;
-        }
-      
 
-        request.put(URL, requestToken.getItemId());
-        JsonObject jwt = getJwt(request);
-        LOGGER.info(LOG_TOKEN_SUCC);
-        Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
-            .objectResults(jwt).build();
-        handler.handle(Future.succeededFuture(resp.toJson()));
-        return;
-      }).onFailure(failureHandler ->
-      {
-        LOGGER.error("Fail: " + INVALID_RS_URL);
-        Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-            .title(INVALID_RS_URL).detail(INVALID_RS_URL).build();
-        handler.handle(Future.succeededFuture(resp.toJson()));
-        return;
-      });
+                if (role.equalsIgnoreCase(TRUSTEE)
+                    && !owner.getString(APD,"").equalsIgnoreCase(user.getUserId()))
+                {
+                    LOGGER.error("Fail: " + ERR_ADMIN);
+                    Response resp =
+                        new ResponseBuilder()
+                            .status(403)
+                            .type(URN_INVALID_INPUT)
+                            .title(ERR_ADMIN)
+                            .detail(ERR_ADMIN)
+                            .build();
+                    handler.handle(Future.succeededFuture(resp.toJson()));
+                    return;
+                }
+
+                request.put(URL, requestToken.getItemId());
+                JsonObject jwt = getJwt(request);
+                LOGGER.info(LOG_TOKEN_SUCC);
+                Response resp =
+                    new ResponseBuilder()
+                        .status(200)
+                        .type(URN_SUCCESS)
+                        .title(TOKEN_SUCCESS)
+                        .objectResults(jwt)
+                        .build();
+                handler.handle(Future.succeededFuture(resp.toJson()));
+                return;
+              })
+          .onFailure(
+              failureHandler -> {
+                LOGGER.error("Fail: " + INVALID_RS_URL);
+                Response resp =
+                    new ResponseBuilder()
+                        .status(400)
+                        .type(URN_INVALID_INPUT)
+                        .title(INVALID_RS_URL)
+                        .detail(INVALID_RS_URL)
+                        .build();
+                handler.handle(Future.succeededFuture(resp.toJson()));
+                return;
+              });
 
     }
     else {
@@ -419,13 +452,13 @@ public class TokenServiceImpl implements TokenService {
     return promise.future();
   }
 
-  Future<UUID> getOwnerId(String itemId ) {
+  Future<JsonObject> getOwnerId(String itemId ) {
 
-    Promise<UUID> promise = Promise.promise();
+    Promise<JsonObject> promise = Promise.promise();
     Future<JsonArray> resServer =  pgSelelctQuery(GET_RS, Tuple.of(itemId));
-    Future<JsonArray> apd = pgSelelctQuery(GET_APD,Tuple.of(itemId,"ACTIVE"));
+    Future<JsonArray> apd = pgSelelctQuery(GET_APD,Tuple.of(itemId));
 
-    Future<UUID> ownerID =
+    Future<JsonObject> ownerID =
         CompositeFuture.all(resServer, apd)
             .compose(
                 res -> {
@@ -434,11 +467,10 @@ public class TokenServiceImpl implements TokenService {
                   else {
                     if (resServer.result().size() > 0)
                       return Future.succeededFuture(
-                          UUID.fromString(
-                              resServer.result().getJsonObject(0).getString("owner")));
+                          new JsonObject().put(RESOURCE_SVR,resServer.result().getJsonObject(0).getString("owner")));
                     else
                       return Future.succeededFuture(
-                          UUID.fromString(apd.result().getJsonObject(0).getString("owner")));
+                          new JsonObject().put(APD,apd.result().getJsonObject(0).getString("owner")));
                   }
                 });
 

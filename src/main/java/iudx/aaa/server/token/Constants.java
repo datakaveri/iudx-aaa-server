@@ -149,5 +149,5 @@ public class Constants {
       "SELECT EXISTS (SELECT 1 FROM resource_server WHERE url = $1)";
   
   public static final String GET_RS = "SELECT owner_id AS owner FROM resource_server WHERE url = $1";
-  public static final String GET_APD = "SELECT owner_id AS owner FROM apds WHERE url = $1 and status = $2";
+  public static final String GET_APD = "SELECT owner_id AS owner FROM apds WHERE url = $1";
 }
