@@ -12,11 +12,13 @@ public class Constants {
   public static final String HEADER_ACCEPT = "Accept";
   public static final String HEADER_CONTENT_LENGTH = "Content-Length";
   public static final String HEADER_CONTENT_TYPE = "Content-Type";
+  public static final String HEADER_X_CONTENT_TYPE_OPTIONS = "X-Content-Type-Options";
   public static final String HEADER_ORIGIN = "Origin";
   public static final String HEADER_REFERER = "Referer";
   public static final String HEADER_ALLOW_ORIGIN = "Access-Control-Allow-Origin";
   public static final String HEADER_OPTIONS = "options";
   public static final String BEARER = "Bearer";
+  public static final String X_CONTENT_TYPE_OPTIONS_NOSNIFF = "nosniff";
 
   /* Implementation specific headers */
   public static final String HEADER_PROVIDER_ID = "providerId";
