@@ -25,6 +25,13 @@ public class TestRequest {
           .put("role", "consumer")
           .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
 
+  public static JsonObject invalidItemId =
+      new JsonObject()
+          .put("itemId", "rs.iudx.io")
+          .put("itemType", "resource_group")
+          .put("role", "consumer")
+          .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+
   public static JsonObject consumerVerification =
       new JsonObject()
           .put(
