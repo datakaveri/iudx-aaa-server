@@ -888,12 +888,14 @@ public class ApiServerVerticle extends AbstractVerticle {
     int status = msg.getInteger(STATUS, 400);
     msg.remove(STATUS);
     response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON);
+    response.putHeader(HEADER_X_CONTENT_TYPE_OPTIONS, X_CONTENT_TYPE_OPTIONS_NOSNIFF);
     return response.setStatusCode(status).end(msg.toString());
   }
 
   private Future<Void> processResponse(HttpServerResponse response, String msg) {
     Response rs = new ResponseBuilder().title(INTERNAL_SVR_ERR).detail(msg).build();
     response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON);
+    response.putHeader(HEADER_X_CONTENT_TYPE_OPTIONS, X_CONTENT_TYPE_OPTIONS_NOSNIFF);
     return response.setStatusCode(500).end(rs.toJsonString());
   }
 
