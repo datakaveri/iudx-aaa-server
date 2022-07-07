@@ -9,7 +9,10 @@ info:
     name: For support contact IUDX Team at
     email: support@iudx.org.in
 servers:
-  - url: 'http://localhost:3000'
+  - url: 'https://authorization.iudx.org.in'
+    description: Production
+  - url: 'https://authvertx.iudx.io'
+    description: Development
 paths:
   /auth/v1/token:
     parameters: []
