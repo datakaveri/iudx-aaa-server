@@ -36,6 +36,8 @@ public class Constants {
   public static final String KEYCLOAK_AAA_SERVER_CLIENT_ID = "keycloakAaaClientId";
   public static final String KEYCLOAK_AAA_SERVER_CLIENT_SECRET = "keycloakAaaClientSecret";
   public static final int PG_CONNECTION_TIMEOUT = 10000;
+  public static final int DB_RECONNECT_ATTEMPTS = 5;
+  public static final long DB_RECONNECT_INTERVAL_MS = 10000;
   
   /* General */ 
   public static final String STATUS = "status";

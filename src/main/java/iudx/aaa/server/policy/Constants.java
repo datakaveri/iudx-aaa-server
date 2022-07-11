@@ -5,6 +5,9 @@ public class Constants {
   public static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
   public static final String APD_SERVICE_ADDRESS = "iudx.aaa.apd.service";
   public static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
+  public static final int DB_RECONNECT_ATTEMPTS = 5;
+  public static final long DB_RECONNECT_INTERVAL_MS = 10000;
+  
   // db columns
   public static final String USERID = "userId";
   public static final String ITEMID = "itemId";

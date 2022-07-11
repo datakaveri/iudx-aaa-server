@@ -10,6 +10,8 @@ import static iudx.aaa.server.apd.Constants.DATABASE_PORT;
 import static iudx.aaa.server.apd.Constants.DATABASE_SCHEMA;
 import static iudx.aaa.server.apd.Constants.DATABASE_USERNAME;
 import static iudx.aaa.server.apd.Constants.DB_CONNECT_TIMEOUT;
+import static iudx.aaa.server.admin.Constants.DB_RECONNECT_ATTEMPTS;
+import static iudx.aaa.server.admin.Constants.DB_RECONNECT_INTERVAL_MS;
 import static iudx.aaa.server.apd.Constants.REGISTRATION_SERVICE_ADDRESS;
 import static iudx.aaa.server.apd.Constants.POLICY_SERVICE_ADDRESS;
 import static iudx.aaa.server.apd.Constants.TOKEN_SERVICE_ADDRESS;
@@ -104,12 +106,22 @@ public class ApdVerticle extends AbstractVerticle {
         new JsonObject().put(CONFIG_WEBCLI_TIMEOUTMS, config().getInteger(CONFIG_WEBCLI_TIMEOUTMS));
 
     /* Set Connection Object and schema */
+    /* In Linux, default keepalive time is 7200 seconds (2 hours), i.e. the first keepalive
+     * packet is sent only after 7200 seconds .To shorten this add the following lines to 
+     * /etc/sysctl.conf
+     *
+     * net.ipv4.tcp_keepalive_time = 120 # send first packet after 120 seconds
+     * net.ipv4.tcp_keepalive_intvl = 30 # after first packet, send next after 30 seconds
+     * net.ipv4.tcp_keepalive_probes = 8 # if no response after 8 such packets, conn is broken
+     */
     if (connectOptions == null) {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
       connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
           .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
-          .setConnectTimeout(DB_CONNECT_TIMEOUT).setProperties(schemaProp);
+          .setConnectTimeout(DB_CONNECT_TIMEOUT).setProperties(schemaProp).setTcpKeepAlive(true)
+          .setReconnectAttempts(DB_RECONNECT_ATTEMPTS)
+          .setReconnectInterval(DB_RECONNECT_INTERVAL_MS);
     }
 
     /* Pool options */

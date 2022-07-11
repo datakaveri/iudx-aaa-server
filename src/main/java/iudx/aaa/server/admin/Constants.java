@@ -15,6 +15,8 @@ public class Constants {
   public static final String DATABASE_PASSWORD = "databasePassword";
   public static final String DATABASE_POOLSIZE = "poolSize";
   public static final int DB_CONNECT_TIMEOUT = 10000;
+  public static final int DB_RECONNECT_ATTEMPTS = 5;
+  public static final long DB_RECONNECT_INTERVAL_MS = 10000;
 
   public static final String KEYCLOAK_URL = "keycloakUrl";
   public static final String KEYCLOAK_REALM = "keycloakRealm";
