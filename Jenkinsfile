@@ -134,10 +134,10 @@ pipeline {
               sh "ssh azureuser@docker-swarm 'docker service update auth_auth --image ghcr.io/datakaveri/aaa-depl:4.0-alpha-${env.GIT_HASH}'"
               sh 'sleep 10'
             }
-            post{
-              failure{
-                error "Failed to deploy image in Docker Swarm"
-              }
+          }
+          post{
+            failure{
+              error "Failed to deploy image in Docker Swarm"
             }
           }
         }
