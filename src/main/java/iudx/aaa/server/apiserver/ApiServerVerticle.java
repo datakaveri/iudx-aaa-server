@@ -317,6 +317,8 @@ public class ApiServerVerticle extends AbstractVerticle {
                       .allowedHeaders(allowedHeaders)
                       .allowedMethods(allowedMethods));
 
+              routerBuilder.rootHandler(BodyHandler.create());
+
               router = routerBuilder.createRouter();
 
               // Static Resource Handler.Get openapiv3 spec
