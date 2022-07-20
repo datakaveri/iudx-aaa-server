@@ -128,20 +128,12 @@ public class ApiServerVerticle extends AbstractVerticle {
     jwtKeystorePassword = config().getString(KEYSTPRE_PASSWORD);
 
     /* Set Connection Object and schema */
-    /* In Linux, default keepalive time is 7200 seconds (2 hours), i.e. the first keepalive
-     * packet is sent only after 7200 seconds. To shorten this, add the following lines to 
-     * /etc/sysctl.conf
-     *
-     * net.ipv4.tcp_keepalive_time = 120 # send first packet after 120 seconds
-     * net.ipv4.tcp_keepalive_intvl = 30 # after first packet, send next after 30 seconds
-     * net.ipv4.tcp_keepalive_probes = 8 # if no response after 8 such packets, conn is broken
-     */
     if (connectOptions == null) {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
       connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
           .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
-          .setConnectTimeout(PG_CONNECTION_TIMEOUT).setProperties(schemaProp).setTcpKeepAlive(true)
+          .setConnectTimeout(PG_CONNECTION_TIMEOUT).setProperties(schemaProp)
           .setReconnectAttempts(DB_RECONNECT_ATTEMPTS)
           .setReconnectInterval(DB_RECONNECT_INTERVAL_MS);
     }
