@@ -201,9 +201,4 @@ public class OIDCAuthentication implements AuthenticationHandler {
 
     return roles;
   }
-
-  @Override
-  public void parseCredentials(RoutingContext context, Handler<AsyncResult<Credentials>> handler) {
-    handler.handle(Future.succeededFuture());
-  }
 }
