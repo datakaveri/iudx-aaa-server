@@ -44,7 +44,7 @@ public class TestApdServerVerticle extends AbstractVerticle {
     });
 
     router.post(APD_VERIFY_API).handler(BodyHandler.create()).handler(context -> {
-      JsonObject body = context.getBodyAsJson();
+      JsonObject body = context.body().asJsonObject();
       if (body.getString(APD_REQ_USERCLASS).equals("TestError")) {
 
         verifyErrorCounter++;
