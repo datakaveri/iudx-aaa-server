@@ -6,9 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpHeaders;
@@ -17,9 +15,8 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.authentication.Credentials;
+import io.vertx.ext.auth.authentication.TokenCredentials;
 import io.vertx.ext.auth.oauth2.OAuth2Auth;
-import io.vertx.ext.auth.oauth2.OAuth2FlowType;
 import io.vertx.ext.auth.oauth2.OAuth2Options;
 import io.vertx.ext.auth.oauth2.providers.KeycloakAuth;
 import io.vertx.ext.web.RoutingContext;
@@ -71,7 +68,7 @@ public class OIDCAuthentication implements AuthenticationHandler {
      * A combination of routingContext.fail and routingContext.end ends the compose
      * chain and prevents all the onFailure blocks from being triggered */
     if (token != null && !token.isBlank()) {
-      JsonObject credentials = new JsonObject().put("access_token", token);
+      TokenCredentials credentials = new TokenCredentials().setToken(token);
       keycloak.authenticate(credentials).onFailure(authHandler -> {
         Response rs = new ResponseBuilder().status(401).type(URN_INVALID_AUTH_TOKEN)
             .title(TOKEN_FAILED).detail(authHandler.getLocalizedMessage()).build();
@@ -148,8 +145,8 @@ public class OIDCAuthentication implements AuthenticationHandler {
     String realm = keycloakOptions.getString(KEYCLOAK_REALM);
 
     /* Options for OAuth2, KeyCloack. */
-    OAuth2Options options = new OAuth2Options().setFlow(OAuth2FlowType.CLIENT)
-        .setClientID(keycloakOptions.getString(KEYCLOAK_AAA_SERVER_CLIENT_ID))
+    OAuth2Options options = new OAuth2Options()
+        .setClientId(keycloakOptions.getString(KEYCLOAK_AAA_SERVER_CLIENT_ID))
         .setClientSecret(keycloakOptions.getString(KEYCLOAK_AAA_SERVER_CLIENT_SECRET))
         .setTenant(realm).setSite(site)
         .setJWTOptions(new JWTOptions().setLeeway(keycloakOptions.getInteger(KEYCLOAK_JWT_LEEWAY)));
