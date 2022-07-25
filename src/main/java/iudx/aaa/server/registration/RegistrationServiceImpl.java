@@ -12,6 +12,7 @@ import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_NO_EXIST;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_NO_MATCH;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ROLE_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_SEARCH_USR_INVALID_ROLE;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_SEARCH_USR_TRUSTEE_ONLY_CONSUMER;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_FOUND;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_KC;
@@ -841,7 +842,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     List<Roles> roles = user.getRoles();
 
     if (!(roles.contains(Roles.PROVIDER) || roles.contains(Roles.ADMIN)
-        || (roles.contains(Roles.DELEGATE) && isAuthDelegate))) {
+        || roles.contains(Roles.TRUSTEE) || (roles.contains(Roles.DELEGATE) && isAuthDelegate))) {
       Response r = new ResponseBuilder().status(401).type(URN_INVALID_ROLE)
           .title(ERR_TITLE_SEARCH_USR_INVALID_ROLE).detail(ERR_DETAIL_SEARCH_USR_INVALID_ROLE)
           .build();
@@ -851,6 +852,15 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     String email = searchUserDetails.getString("email").toLowerCase();
     Roles role = Roles.valueOf(searchUserDetails.getString("role").toUpperCase());
+    
+    /* Allow a user having trustee role to only search for consumers */
+    if (roles.size() == 1 && roles.contains(Roles.TRUSTEE) && !role.equals(Roles.CONSUMER)) {
+      Response r = new ResponseBuilder().status(401).type(URN_INVALID_ROLE)
+          .title(ERR_TITLE_SEARCH_USR_INVALID_ROLE)
+          .detail(ERR_DETAIL_SEARCH_USR_TRUSTEE_ONLY_CONSUMER).build();
+      promise.complete(r.toJson());
+      return;
+    }
 
     Future<JsonObject> foundUser = kc.findUserByEmail(email);
 
