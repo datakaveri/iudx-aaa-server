@@ -85,14 +85,16 @@ public class TokenVerticle extends AbstractVerticle {
 
       connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
           .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
-          .setConnectTimeout(PG_CONNECTION_TIMEOUT).setProperties(schemaProp);
+          .setConnectTimeout(PG_CONNECTION_TIMEOUT).setProperties(schemaProp)
+          .setReconnectAttempts(DB_RECONNECT_ATTEMPTS)
+          .setReconnectInterval(DB_RECONNECT_INTERVAL_MS);
     }
 
     /* Pool options */
     if (poolOptions == null) {
       poolOptions = new PoolOptions().setMaxSize(poolSize);
     }
-        
+
     /* Initializing the services */
     provider = jwtInitConfig();
     revokeService = new TokenRevokeService(vertx);

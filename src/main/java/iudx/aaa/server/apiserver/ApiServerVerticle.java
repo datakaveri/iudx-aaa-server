@@ -132,8 +132,10 @@ public class ApiServerVerticle extends AbstractVerticle {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
       connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
-              .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
-              .setConnectTimeout(PG_CONNECTION_TIMEOUT).setProperties(schemaProp);
+          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
+          .setConnectTimeout(PG_CONNECTION_TIMEOUT).setProperties(schemaProp)
+          .setReconnectAttempts(DB_RECONNECT_ATTEMPTS)
+          .setReconnectInterval(DB_RECONNECT_INTERVAL_MS);
     }
 
     /* Pool options */
@@ -315,6 +317,8 @@ public class ApiServerVerticle extends AbstractVerticle {
                       .allowedHeaders(allowedHeaders)
                       .allowedMethods(allowedMethods));
 
+              routerBuilder.rootHandler(BodyHandler.create());
+
               router = routerBuilder.createRouter();
 
               // Static Resource Handler.Get openapiv3 spec
@@ -376,7 +380,7 @@ public class ApiServerVerticle extends AbstractVerticle {
   private void createTokenHandler(RoutingContext context) {
 
     /* Mapping request body to Object */
-    JsonObject tokenRequestJson = context.getBodyAsJson();
+    JsonObject tokenRequestJson = context.body().asJsonObject();
     tokenRequestJson.put(CLIENT_ID, context.get(CLIENT_ID));
     RequestToken requestTokenDTO = tokenRequestJson.mapTo(RequestToken.class);
     User user = context.get(USER);
@@ -398,7 +402,8 @@ public class ApiServerVerticle extends AbstractVerticle {
    * @param context
    */
   private void validateTokenHandler(RoutingContext context) {
-    JsonObject tokenRequestJson = context.getBodyAsJson();
+    System.out.println(context.body().available());
+    JsonObject tokenRequestJson = context.body().asJsonObject();
     IntrospectToken introspectToken = tokenRequestJson.mapTo(IntrospectToken.class);
 
     tokenService.validateToken(introspectToken, handler -> {
@@ -417,7 +422,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void revokeTokenHandler(RoutingContext context) {
     /* Mapping request body to Object */
-    JsonObject tokenRequestJson = context.getBodyAsJson();
+    JsonObject tokenRequestJson = context.body().asJsonObject();
     RevokeToken revokeTokenDTO = tokenRequestJson.mapTo(RevokeToken.class);
 
     User user = context.get(USER);
@@ -439,7 +444,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    * @param context
    */
   private void createUserProfileHandler(RoutingContext context) {
-    JsonObject jsonRequest = context.getBodyAsJson();
+    JsonObject jsonRequest = context.body().asJsonObject();
     RegistrationRequest request = new RegistrationRequest(jsonRequest);
     User user = context.get(USER);
 
@@ -483,7 +488,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    * @param context
    */
   private void updateUserProfileHandler(RoutingContext context) {
-    JsonObject jsonRequest = context.getBodyAsJson();
+    JsonObject jsonRequest = context.body().asJsonObject();
     UpdateProfileRequest request = new UpdateProfileRequest(jsonRequest);
     User user = context.get(USER);
 
@@ -519,7 +524,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    * @param context
    */
   private void adminCreateOrganizationHandler(RoutingContext context) {
-    JsonObject jsonRequest = context.getBodyAsJson();
+    JsonObject jsonRequest = context.body().asJsonObject();
     CreateOrgRequest request = new CreateOrgRequest(jsonRequest);
     User user = context.get(USER);
 
@@ -568,7 +573,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    * @param context
    */
   private void adminUpdateProviderRegHandler(RoutingContext context) {
-    JsonObject jsonRequest = context.getBodyAsJson();
+    JsonObject jsonRequest = context.body().asJsonObject();
     JsonArray arr = jsonRequest.getJsonArray(REQUEST);
     List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(arr);
 
@@ -609,7 +614,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void createPolicyHandler(RoutingContext context) {
 
-    JsonObject arr = context.getBodyAsJson();
+    JsonObject arr = context.body().asJsonObject();
     JsonArray jsonRequest = arr.getJsonArray(REQUEST);
     List<CreatePolicyRequest> request = CreatePolicyRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
@@ -633,7 +638,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void deletePolicyHandler(RoutingContext context) {
 
-    JsonObject arr = context.getBodyAsJson();
+    JsonObject arr = context.body().asJsonObject();
     JsonArray jsonRequest = arr.getJsonArray(REQUEST);
     List<DeletePolicyRequest> request = DeletePolicyRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
@@ -675,7 +680,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void createPolicyNotificationHandler(RoutingContext context) {
 
-    JsonArray jsonRequest = context.getBodyAsJson().getJsonArray(REQUEST);
+    JsonArray jsonRequest = context.body().asJsonObject().getJsonArray(REQUEST);
     List<CreatePolicyNotification> request = CreatePolicyNotification.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
 
@@ -695,7 +700,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void updatePolicyNotificationHandler(RoutingContext context) {
 
-    JsonArray jsonRequest = context.getBodyAsJson().getJsonArray(REQUEST);
+    JsonArray jsonRequest = context.body().asJsonObject().getJsonArray(REQUEST);
     List<UpdatePolicyNotification> request = UpdatePolicyNotification.jsonArrayToList(jsonRequest);
     JsonObject data = Optional.ofNullable((JsonObject)context.get(DATA)).orElse(new JsonObject());
     User user = context.get(USER);
@@ -736,7 +741,7 @@ public class ApiServerVerticle extends AbstractVerticle {
 
   private void deleteDelegationsHandler(RoutingContext context) {
 
-    JsonObject jsonRequest = context.getBodyAsJson();
+    JsonObject jsonRequest = context.body().asJsonObject();
     JsonArray arr = jsonRequest.getJsonArray(REQUEST);
     List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(arr);
 
@@ -763,7 +768,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void createDelegationsHandler(RoutingContext context) {
 
-    JsonObject arr = context.getBodyAsJson();
+    JsonObject arr = context.body().asJsonObject();
     JsonArray jsonRequest = arr.getJsonArray(REQUEST);
     List<CreateDelegationRequest> request = CreateDelegationRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
@@ -789,7 +794,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void createApdHandler(RoutingContext context) {
 
-    JsonObject jsonRequest = context.getBodyAsJson();
+    JsonObject jsonRequest = context.body().asJsonObject();
     CreateApdRequest request = new CreateApdRequest(jsonRequest);
     User user = context.get(USER);
 
@@ -831,7 +836,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void updateApdHandler(RoutingContext context) {
 
-    JsonObject arr = context.getBodyAsJson();
+    JsonObject arr = context.body().asJsonObject();
     JsonArray jsonRequest = arr.getJsonArray(REQUEST);
     List<ApdUpdateRequest> request = ApdUpdateRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
@@ -919,7 +924,7 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     HttpServerRequest request = context.request();
     User user = context.get(USER);
-    JsonObject requestBody = context.getBodyAsJson();
+    JsonObject requestBody = context.body().asJsonObject();
     String userId = user.getUserId();
 
     JsonObject auditLog = new JsonObject();

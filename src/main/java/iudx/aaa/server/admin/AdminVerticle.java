@@ -9,6 +9,8 @@ import static iudx.aaa.server.admin.Constants.DATABASE_PORT;
 import static iudx.aaa.server.admin.Constants.DATABASE_SCHEMA;
 import static iudx.aaa.server.admin.Constants.DATABASE_USERNAME;
 import static iudx.aaa.server.admin.Constants.DB_CONNECT_TIMEOUT;
+import static iudx.aaa.server.admin.Constants.DB_RECONNECT_ATTEMPTS;
+import static iudx.aaa.server.admin.Constants.DB_RECONNECT_INTERVAL_MS;
 import static iudx.aaa.server.admin.Constants.KC_ADMIN_CLIENT_ID;
 import static iudx.aaa.server.admin.Constants.KC_ADMIN_CLIENT_SEC;
 import static iudx.aaa.server.admin.Constants.KC_ADMIN_POOLSIZE;
@@ -104,7 +106,9 @@ public class AdminVerticle extends AbstractVerticle {
 
       connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
           .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
-          .setConnectTimeout(DB_CONNECT_TIMEOUT).setProperties(schemaProp);
+          .setConnectTimeout(DB_CONNECT_TIMEOUT).setProperties(schemaProp)
+          .setReconnectAttempts(DB_RECONNECT_ATTEMPTS)
+          .setReconnectInterval(DB_RECONNECT_INTERVAL_MS);
     }
 
     /* Pool options */

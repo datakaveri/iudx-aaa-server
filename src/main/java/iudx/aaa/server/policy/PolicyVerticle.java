@@ -13,6 +13,8 @@ import io.vertx.serviceproxy.ServiceBinder;
 import io.vertx.sqlclient.PoolOptions;
 
 import static iudx.aaa.server.policy.Constants.APD_SERVICE_ADDRESS;
+import static iudx.aaa.server.policy.Constants.DB_RECONNECT_ATTEMPTS;
+import static iudx.aaa.server.policy.Constants.DB_RECONNECT_INTERVAL_MS;
 import static iudx.aaa.server.policy.Constants.POLICY_SERVICE_ADDRESS;
 import static iudx.aaa.server.policy.Constants.REGISTRATION_SERVICE_ADDRESS;
 
@@ -92,9 +94,11 @@ public class PolicyVerticle extends AbstractVerticle {
     if (connectOptions == null) {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
-      connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
-          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
-          .setProperties(schemaProp);
+      connectOptions =
+          new PgConnectOptions().setPort(databasePort).setHost(databaseIP).setDatabase(databaseName)
+              .setUser(databaseUserName).setPassword(databasePassword).setProperties(schemaProp)
+              .setReconnectAttempts(DB_RECONNECT_ATTEMPTS)
+              .setReconnectInterval(DB_RECONNECT_INTERVAL_MS);
     }
 
     /* Pool options */

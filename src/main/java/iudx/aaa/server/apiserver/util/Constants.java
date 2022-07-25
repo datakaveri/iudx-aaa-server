@@ -40,6 +40,8 @@ public class Constants {
   public static final String AUTHSERVER_DOMAIN = "authServerDomain";
   public static final String KEYCLOACK_OPTIONS = "keycloakOptions";
   public static final int PG_CONNECTION_TIMEOUT = 10000;
+  public static final int DB_RECONNECT_ATTEMPTS = 5;
+  public static final long DB_RECONNECT_INTERVAL_MS = 10000;
   public static final String SERVER_TIMEOUT_MS = "serverTimeoutMs";
   public static final String CORS_REGEX = "corsRegexString";
 

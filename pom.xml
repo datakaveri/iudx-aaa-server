@@ -7,7 +7,7 @@
 	<version>0.0.1-SNAPSHOT</version>
 
 	<properties>
-		<vertx.version>4.0.3</vertx.version>
+		<vertx.version>4.3.2</vertx.version>
 		<hazelcast.version>4.0.2</hazelcast.version>
 		<micrometer.version>1.6.2</micrometer.version>
 		<curator.version>5.1.0</curator.version>
@@ -26,7 +26,7 @@
 		<maven-checkstyle-plugin-google.version>3.1.2</maven-checkstyle-plugin-google.version>
 		<maven-surefire-report-plugin.version>3.0.0-M5</maven-surefire-report-plugin.version>
 		<openjdk.version>11</openjdk.version>
-		<keycloak.version>15.0.2</keycloak.version>
+		<keycloak.version>18.0.2</keycloak.version>
 		<resteasy.version>3.13.2.Final</resteasy.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<exec.mainClass>iudx.aaa.server.deploy.Deployer</exec.mainClass>
@@ -129,10 +129,15 @@
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-pg-client</artifactId>
 		</dependency>
+        <dependency>
+            <groupId>com.ongres.scram</groupId>
+            <artifactId>client</artifactId>
+            <version>2.1</version>
+        </dependency>
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
-			<version>42.3.3</version>
+			<version>42.4.0</version>
 		</dependency>
 		<!-- Packages for Vertx metrics through micrometer  -->
 		<dependency>
@@ -299,7 +304,7 @@
 			<plugin>
 				<groupId>org.flywaydb</groupId>
 				<artifactId>flyway-maven-plugin</artifactId>
-				<version>7.11.1</version>
+				<version>8.5.13</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

@@ -42,7 +42,7 @@ import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 
-public class ClientAuthentication implements AuthenticationHandler{
+public class ClientAuthentication implements Handler<RoutingContext>{
 
   private static final Logger LOGGER = LogManager.getLogger(ClientAuthentication.class);
   private PgPool pgPool;
@@ -165,10 +165,5 @@ public class ClientAuthentication implements AuthenticationHandler{
         .map(a -> Roles.valueOf(a.toString())).collect(Collectors.toList());
 
     return roles;
-  }
-
-  @Override
-  public void parseCredentials(RoutingContext context, Handler<AsyncResult<Credentials>> handler) {
-    handler.handle(Future.succeededFuture());
   }
 }

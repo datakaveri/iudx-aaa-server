@@ -4,6 +4,8 @@ import static iudx.aaa.server.registration.Constants.CONFIG_AUTH_URL;
 import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
 import static iudx.aaa.server.registration.Constants.DATABASE_IP;
 import static iudx.aaa.server.registration.Constants.DB_CONNECT_TIMEOUT;
+import static iudx.aaa.server.registration.Constants.DB_RECONNECT_ATTEMPTS;
+import static iudx.aaa.server.registration.Constants.DB_RECONNECT_INTERVAL_MS;
 import static iudx.aaa.server.registration.Constants.DATABASE_NAME;
 import static iudx.aaa.server.registration.Constants.DATABASE_PASSWORD;
 import static iudx.aaa.server.registration.Constants.DATABASE_POOLSIZE;
@@ -105,7 +107,9 @@ public class RegistrationVerticle extends AbstractVerticle {
 
       connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
           .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
-          .setConnectTimeout(DB_CONNECT_TIMEOUT).setProperties(schemaProp);
+          .setConnectTimeout(DB_CONNECT_TIMEOUT).setProperties(schemaProp)
+          .setReconnectAttempts(DB_RECONNECT_ATTEMPTS)
+          .setReconnectInterval(DB_RECONNECT_INTERVAL_MS);
     }
 
     /* Pool options */

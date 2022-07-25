@@ -330,9 +330,6 @@ public class TokenServiceImpl implements TokenService {
       handler.handle(Future.succeededFuture(resp.toJson()));
       return;
 
-    }).onFailure(fail -> {
-      LOGGER.error(fail.getMessage());
-      handler.handle(Future.failedFuture("Internal error"));
     });
     return this;
   }
