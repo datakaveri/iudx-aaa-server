@@ -15,12 +15,13 @@ import static iudx.aaa.server.auditing.util.Constants.USERID_NOT_FOUND;
 import static iudx.aaa.server.auditing.util.Constants.USER_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import iudx.aaa.server.configuration.Configuration;
+import java.time.ZonedDateTime;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -161,23 +162,32 @@ public class AuditingServiceTest {
     jsonObject.put("method", "POST");
     jsonObject.put("endPoint", "/post");
     jsonObject.put("startTime", "1970-01-01T05:30:00+05:30[Asia/Kolkata]");
-    jsonObject.put("endTime", "2021-09-17T02:00:00+05:30[Asia/Kolkata]");
+    jsonObject.put("endTime", ZonedDateTime.now().toString());
     return jsonObject;
   }
 
   @Test
   @DisplayName("Success- Reading Query")
   void readData(VertxTestContext vertxTestContext) {
+    /*
+     * We write to DB first instead of using ordered tests (without order, writeData can occur at
+     * any point of time)
+     */
+    JsonObject dataToWrite = writeRequest();
     JsonObject jsonObject = readRequest();
-    auditingService.executeReadQuery(
-        jsonObject,
-        vertxTestContext.succeeding(
-            response ->
-                vertxTestContext.verify(
-                    () -> {
-                      assertTrue(response.getString("title").equals("Success"));
-                      vertxTestContext.completeNow();
-                    })));
+
+    Promise<JsonObject> promise = Promise.promise();
+    auditingService.executeWriteQuery(dataToWrite, promise);
+
+    promise.future().onComplete(written -> {
+      auditingService.executeReadQuery(jsonObject,
+          vertxTestContext.succeeding(response -> vertxTestContext.verify(() -> {
+            
+            assertTrue(response.getString("title").equals("Success"));
+            vertxTestContext.completeNow();
+
+          })));
+    });
   }
 
   @Test
