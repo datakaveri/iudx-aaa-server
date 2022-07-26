@@ -102,19 +102,66 @@ pipeline {
       }
     }
 
-    stage('Push Image') {
-      when{
-        expression {
-          return env.GIT_BRANCH == 'origin/main';
-        }
-      }
-      steps{
-        script {
-          docker.withRegistry( registryUri, registryCredential ) {
-            devImage.push("4.0-alpha-${env.GIT_HASH}")
-            deplImage.push("4.0-alpha-${env.GIT_HASH}")
+    stage('Continuous Deployment') {
+      when {
+        allOf {
+          anyOf {
+            changeset "docker/**"
+            changeset "docs/**"
+            changeset "pom.xml"
+            changeset "src/main/**"
+            triggeredBy cause: 'UserIdCause'
+          }
+          expression {
+            return env.GIT_BRANCH == 'origin/main';
           }
         }
+      }
+      stages {
+        stage('Push Images') {
+          steps {
+            script {
+              docker.withRegistry( registryUri, registryCredential ) {
+                devImage.push("4.0-alpha-${env.GIT_HASH}")
+                deplImage.push("4.0-alpha-${env.GIT_HASH}")
+              }
+            }
+          }
+        }
+        stage('Docker Swarm deployment') {
+          steps {
+            script {
+              sh "ssh azureuser@docker-swarm 'docker service update auth_auth --image ghcr.io/datakaveri/aaa-depl:4.0-alpha-${env.GIT_HASH}'"
+              sh 'sleep 10'
+            }
+          }
+          post{
+            failure{
+              error "Failed to deploy image in Docker Swarm"
+            }
+          }
+        }
+        // stage('Integration test on swarm deployment') {
+        //   steps {
+        //     node('master') {
+        //       script{
+        //         sh 'newman run /var/lib/jenkins/iudx/aaa/Newman/Integration_Test.postman_collection.json -e /home/ubuntu/configs/cd/aaa-postman-env.json --insecure -r htmlextra --reporter-htmlextra-export /var/lib/jenkins/iudx/aaa/Newman/report/cd-report.html --reporter-htmlextra-skipSensitiveData'
+        //       }
+        //     }
+        //   }
+        //   post{
+        //     always{
+        //       node('master') {
+        //         script{
+        //           publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '/var/lib/jenkins/iudx/aaa/Newman/report/', reportFiles: 'cd-report.html', reportTitles: '', reportName: 'Docker-Swarm Integration Test Report'])
+        //         }
+        //       }
+        //     }
+        //     failure{
+        //       error "Test failure. Stopping pipeline execution!"
+        //     }
+        //   }
+        // }
       }
     }
   }
