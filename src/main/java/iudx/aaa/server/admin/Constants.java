@@ -58,7 +58,7 @@ public class Constants {
           + "VALUES ($1::text, $2::text, NOW(), NOW()) ON CONFLICT (url) DO NOTHING RETURNING id";
 
   public static final String SQL_CHECK_ADMIN_OF_SERVER = "SELECT id FROM " 
-      + "resource_server WHERE owner_id = $1::uuid AND url = $2::text";
+      + "resource_server_view WHERE owner_id = $1::uuid AND url = $2::text";
 
   public static final String SQL_GET_PROVIDERS_BY_STATUS =
       "SELECT users.id, keycloak_id, organization_id FROM users JOIN "

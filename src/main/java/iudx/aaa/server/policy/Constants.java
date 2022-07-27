@@ -64,7 +64,7 @@ public class Constants {
   public static final String IUDX_RES_GRP = "iudx:ResourceGroup";
   public static final String PROVIDER = "provider";
   public static final String RESOURCE_SERVER = "resourceServer";
-  public static final String RESOURCE_SERVER_TABLE = "resource_server";
+  public static final String RESOURCE_SERVER_TABLE = "resource_server_view";
   public static final String EMAIL_HASH = "email_hash";
   public static final String IUDX_RES = "iudx:Resource";
   public static final String RESOURCE_GROUP = "resourceGroup";
@@ -144,18 +144,18 @@ public class Constants {
           + " item_id = $1::UUID and item_type = $2::item_enum"
           + " and status = $3::policy_status_enum";
 
-  public static final String GET_URL = "select url from resource_server where id = $1::UUID ";
+  public static final String GET_URL = "select url from resource_server_view where id = $1::UUID ";
 
   public static final String GET_RES_OWNER = "select id from users where email_hash = $1::text";
 
   public static final String GET_RES_SERVER_OWNER =
-      "select id,url,owner_id from resource_server where url = $1::text";
+      "select id,url,owner_id from resource_server_view where url = $1::text";
 
   public static final String GET_RES_SERVER_OWNER_ID =
-      "select id,url,owner_id from resource_server where id = $1::UUID";
+      "select id,url,owner_id from resource_server_view where id = $1::UUID";
 
   public static final String GET_RES_SER_OWNER =
-      "select a.id,a.url,a.owner_id from resource_server a inner join ";
+      "select a.id,a.url,a.owner_id from resource_server_view a inner join ";
 
   public static final String GET_RES_SER_OWNER_JOIN =
       " b on a.id = b.resource_server_id where b.cat_id = $1::text";
@@ -216,14 +216,14 @@ public class Constants {
 
   public static final String CHECKUSEREXIST = "select id from users where id = any($1::uuid[])";
   public static final String CHECK_RES_SER =
-      "select id, url as cat_id,owner_id as owner_id from resource_server "
+      "select id, url as cat_id,owner_id as owner_id from resource_server_view "
           + "where owner_id = $1::UUID and url = ANY($2::text[])";
 
 
   public static final String CHECK_RESOURCE_EXIST = "select cat_id from ";
   public static final String CHECK_RESOURCE_EXIST_JOIN = " where cat_id = ANY($1::text[]) ";
   public static final String CHECK_AUTH_POLICY =
-      "select a.id from policies a inner join resource_server b "
+      "select a.id from policies a inner join resource_server_view b "
           + " on a.item_id = b.id where a.user_id = $1::UUID and "
           + "  a.owner_id = b.owner_id and b.url = $2::varchar and "
           + " a.status = $3::policy_status_enum and a.expiry_time > now() ";
@@ -239,7 +239,7 @@ public class Constants {
       "select id,cat_id ,provider_id as owner_id,resource_group_id, resource_server_id from resource where cat_id = ANY($1::text[]) ";
 
   public static final String GET_RES_SER_ID =
-      "select url,id from resource_server where url = any($1::text[])";
+      "select url,id from resource_server_view where url = any($1::text[])";
 
   public static final String GET_RES_GRP_CAT_IDS =
       "SELECT id, cat_id FROM resource_group WHERE id = ANY($1::uuid[]) ";
@@ -248,7 +248,7 @@ public class Constants {
       "SELECT id, cat_id FROM resource WHERE id = ANY($1::uuid[]) ";
 
   public static final String GET_RES_SER_URLS =
-      "SELECT url, id FROM resource_server WHERE id = ANY($1::uuid[])";
+      "SELECT url, id FROM resource_server_view WHERE id = ANY($1::uuid[])";
 
   public static final String GET_PROVIDER_ID =
       "select email_hash,id from users where email_hash = any($1::text[])";
@@ -294,18 +294,18 @@ public class Constants {
 
   public static final String LIST_DELEGATE_AUTH_DELEGATE =
       "SELECT d.id, d.owner_id, d.user_id, url, name AS server "
-          + "FROM delegations AS d JOIN resource_server ON"
-          + " d.resource_server_id = resource_server.id WHERE d.owner_id = $1::uuid AND url != $2::text AND d.status = 'ACTIVE'";
+          + "FROM delegations AS d JOIN resource_server_view ON"
+          + " d.resource_server_id = resource_server_view.id WHERE d.owner_id = $1::uuid AND url != $2::text AND d.status = 'ACTIVE'";
 
   public static final String LIST_DELEGATE_AS_PROVIDER_DELEGATE =
       "SELECT d.id, d.owner_id, d.user_id, url, name AS server "
-          + "FROM delegations AS d JOIN resource_server ON"
-          + " d.resource_server_id = resource_server.id"
+          + "FROM delegations AS d JOIN resource_server_view ON"
+          + " d.resource_server_id = resource_server_view.id"
           + " WHERE d.status = 'ACTIVE' AND (d.owner_id = $1::uuid OR d.user_id = $1::uuid)";
 
   public static final String GET_DELEGATIONS_BY_ID =
-      "SELECT d.id, url FROM delegations AS d JOIN resource_server ON"
-          + " d.resource_server_id = resource_server.id"
+      "SELECT d.id, url FROM delegations AS d JOIN resource_server_view ON"
+          + " d.resource_server_id = resource_server_view.id"
           + " WHERE d.owner_id = $1::uuid AND d.id = ANY($2::uuid[]) AND d.status = 'ACTIVE'";
 
   public static final String DELETE_DELEGATIONS =
@@ -339,7 +339,7 @@ public class Constants {
 
   public static final String SEL_NOTIF_ITEM_ID =
       "SELECT * FROM (SELECT id, cat_id AS url FROM resource\n"
-          + "UNION SELECT id, url AS url FROM resource_server\n"
+          + "UNION SELECT id, url AS url FROM resource_server_view\n"
           + "UNION select id, cat_id AS url FROM resource_group) view WHERE id = ANY($1::UUID[])";
 
   public static final String UPDATE_NOTIF_REQ_APPROVED =
@@ -373,10 +373,10 @@ public class Constants {
           + " and status = $2::role_status_enum and user_id = ANY($3::UUID[]) ";
 
   public static final String GET_SERVER_DETAILS =
-      "select url,id from resource_server where url =  ANY($1::text[])";
+      "select url,id from resource_server_view where url =  ANY($1::text[])";
 
   public static final String CHECK_AUTH_POLICY_DELEGATION =
-      "select * from policies a inner join resource_server b on a.item_id = b.id "
+      "select * from policies a inner join resource_server_view b on a.item_id = b.id "
           + " where a.user_id = $1::UUID and a.item_type = $2::item_enum and"
           + " b.url = $3::text and a.status =$4::policy_status_enum and a.expiry_time > now() ";
 

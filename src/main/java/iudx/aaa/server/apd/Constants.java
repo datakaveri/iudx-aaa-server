@@ -82,7 +82,7 @@ public class Constants {
           + "ON CONFLICT (url) DO NOTHING RETURNING id";
 
   public static final String SQL_CHECK_ADMIN_OF_SERVER =
-      "SELECT id FROM " + "resource_server WHERE owner_id = $1::uuid AND url = $2::text";
+      "SELECT id FROM " + "resource_server_view WHERE owner_id = $1::uuid AND url = $2::text";
 
   public static final String SQL_GET_APDS_BY_ID_ADMIN =
       "SELECT id AS \"apdId\", name, url, owner_id, status FROM apds WHERE id = ANY($1::uuid[])";

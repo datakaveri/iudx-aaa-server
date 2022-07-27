@@ -177,7 +177,7 @@ public class Constants {
   
   public static final String GET_DELEGATE = 
       "WITH auth AS (\n" + 
-      "    SELECT owner_id, id FROM resource_server WHERE url = $1::text\n" + 
+      "    SELECT owner_id, id FROM resource_server_view WHERE url = $1::text\n" +
       "), delegate AS (\n" + 
       "    SELECT resource_server_id, user_id,owner_id FROM delegations \n" + 
       "    WHERE user_id = $2::uuid \n" + 
