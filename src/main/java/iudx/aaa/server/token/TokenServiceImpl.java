@@ -98,14 +98,19 @@ public class TokenServiceImpl implements TokenService {
 
     //update check to not include role check
     if (RESOURCE_SVR.equals(itemType)) {
-      Future<JsonObject> ownerId = getOwnerId(requestToken.getItemId());
+
+      // TODO: Refactor the Future Object ownerId since the check has been updated to verify if the userId holds
+      //  ownership/admin privileges of the resource server rather than directly returning the ownerId of the
+      //  resource_server
+
+      Future<JsonObject> ownerId = getOwnerId(requestToken.getItemId(), UUID.fromString(user.getUserId()));
 
       ownerId
           .onSuccess(
               owner -> {
                 // admin role request must be owner for resource server
                 if (role.equalsIgnoreCase(ADMIN)
-                    && !owner.getString(RESOURCE_SVR,"").equalsIgnoreCase(user.getUserId()))
+                    && !owner.containsKey(RESOURCE_SVR))
                 {
                     LOGGER.error("Fail: " + ERR_ADMIN);
                     Response resp =
@@ -449,10 +454,10 @@ public class TokenServiceImpl implements TokenService {
     return promise.future();
   }
 
-  Future<JsonObject> getOwnerId(String itemId ) {
+  Future<JsonObject> getOwnerId(String itemId, UUID userId) {
 
     Promise<JsonObject> promise = Promise.promise();
-    Future<JsonArray> resServer =  pgSelelctQuery(GET_RS, Tuple.of(itemId));
+    Future<JsonArray> resServer =  pgSelelctQuery(GET_RS, Tuple.of(itemId, userId));
     Future<JsonArray> apd = pgSelelctQuery(GET_APD,Tuple.of(itemId));
 
     Future<JsonObject> ownerID =
@@ -464,7 +469,7 @@ public class TokenServiceImpl implements TokenService {
                   else {
                     if (resServer.result().size() > 0)
                       return Future.succeededFuture(
-                          new JsonObject().put(RESOURCE_SVR,resServer.result().getJsonObject(0).getString("owner")));
+                          new JsonObject().put(RESOURCE_SVR, true));
                     else
                       return Future.succeededFuture(
                           new JsonObject().put(APD,apd.result().getJsonObject(0).getString("owner")));
