@@ -103,7 +103,12 @@ public class TokenServiceImpl implements TokenService {
       //  ownership/admin privileges of the resource server rather than directly returning the ownerId of the
       //  resource_server
 
-      Future<JsonObject> ownerId = getOwnerId(requestToken.getItemId(), UUID.fromString(user.getUserId()));
+      Future<JsonObject> ownerId;
+      if (role.equalsIgnoreCase(ADMIN) || role.equalsIgnoreCase(TRUSTEE)) {
+        ownerId = getOwnerId(requestToken.getItemId(), UUID.fromString(user.getUserId()));
+      } else {
+        ownerId = getOwnerId(requestToken.getItemId());
+      }
 
       ownerId
           .onSuccess(
@@ -458,6 +463,39 @@ public class TokenServiceImpl implements TokenService {
 
     Promise<JsonObject> promise = Promise.promise();
     Future<JsonArray> resServer =  pgSelelctQuery(GET_RS, Tuple.of(itemId, userId));
+    Future<JsonArray> apd = pgSelelctQuery(GET_APD,Tuple.of(itemId));
+
+    Future<JsonObject> ownerID =
+        CompositeFuture.all(resServer, apd)
+            .compose(
+                res -> {
+                  if (resServer.result().isEmpty() && apd.result().isEmpty())
+                    return Future.failedFuture("resource does not exist");
+                  else {
+                    if (resServer.result().size() > 0)
+                      return Future.succeededFuture(
+                          new JsonObject().put(RESOURCE_SVR, true));
+                    else
+                      return Future.succeededFuture(
+                          new JsonObject().put(APD,apd.result().getJsonObject(0).getString("owner")));
+                  }
+                });
+
+   ownerID.onSuccess(id ->
+    promise.complete(id)
+
+   ).onFailure(failureHandler -> {
+      LOGGER.error(LOG_DB_ERROR + failureHandler.toString());
+      promise.fail("failed");
+    });
+
+    return promise.future();
+  }
+
+  Future<JsonObject> getOwnerId(String itemId) {
+
+    Promise<JsonObject> promise = Promise.promise();
+    Future<JsonArray> resServer =  pgSelelctQuery(GET_URL, Tuple.of(itemId));
     Future<JsonArray> apd = pgSelelctQuery(GET_APD,Tuple.of(itemId));
 
     Future<JsonObject> ownerID =
