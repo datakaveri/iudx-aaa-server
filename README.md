@@ -16,6 +16,7 @@ IUDX-AAA is the Authentication, Authorization, and Accounting server for accessi
 
 ## Get Started
 
+
 ### Prerequisite - Make configuration
 - Make a config file based on the template in `./configs/config-example.json` 
 - Setup the key used to sign JWT tokens
