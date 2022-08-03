@@ -150,6 +150,16 @@ public class Constants {
   public static final String GET_URL =
       "SELECT EXISTS (SELECT 1 FROM resource_server WHERE url = $1)";
   
-  public static final String GET_RS = "SELECT owner_id AS owner FROM resource_server WHERE url = $1";
-  public static final String GET_APD = "SELECT owner_id AS owner FROM apds WHERE url = $1";
+  public static final String GET_RS = "SELECT resource_server.id FROM resource_server LEFT JOIN resource_server_admins" +
+          " ON resource_server.id = resource_server_admins.resource_server_id" +
+          " WHERE url = $1::text" +
+          " AND (resource_server.owner_id = $2::uuid OR resource_server_admins.admin_id = $2::uuid)" +
+          " LIMIT 1";
+
+  public static final String CHECK_APD_EXISTS_BY_URL = "SELECT id FROM apds WHERE url = $1";
+
+  public static final String CHECK_RS_EXISTS_BY_URL = "SELECT id FROM resource_server WHERE url = $1";
+
+  public static final String CHECK_APD_OWNER =
+      "SELECT owner_id AS owner FROM apds WHERE url = $1 AND owner_id = $2::uuid";
 }
