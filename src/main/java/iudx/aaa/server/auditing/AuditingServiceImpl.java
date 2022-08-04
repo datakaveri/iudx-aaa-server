@@ -5,6 +5,7 @@ import static iudx.aaa.server.auditing.util.Constants.BODY_COLUMN_INDEX;
 import static iudx.aaa.server.auditing.util.Constants.EMPTY_RESPONSE;
 import static iudx.aaa.server.auditing.util.Constants.ENDPOINT;
 import static iudx.aaa.server.auditing.util.Constants.ENDPOINT_COLUMN_INDEX;
+import static iudx.aaa.server.auditing.util.Constants.DATABASE_TABLE_NAME;
 import static iudx.aaa.server.auditing.util.Constants.ERROR;
 import static iudx.aaa.server.auditing.util.Constants.FAILED;
 import static iudx.aaa.server.auditing.util.Constants.MESSAGE;
@@ -51,6 +52,7 @@ public class AuditingServiceImpl implements AuditingService {
   private String databaseName;
   private String databaseUserName;
   private String databasePassword;
+  private String databaseTableName;
   private int databasePoolSize;
   private ResponseBuilder responseBuilder;
 
@@ -62,6 +64,7 @@ public class AuditingServiceImpl implements AuditingService {
       databaseName = propObj.getString("auditingDatabaseName");
       databaseUserName = propObj.getString("auditingDatabaseUserName");
       databasePassword = propObj.getString("auditingDatabasePassword");
+      databaseTableName = propObj.getString("auditingDatabaseTableName");
       databasePoolSize = propObj.getInteger("auditingPoolSize");
     }
 
@@ -83,6 +86,7 @@ public class AuditingServiceImpl implements AuditingService {
   @Override
   public AuditingService executeWriteQuery(
       JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+    request.put(DATABASE_TABLE_NAME, databaseTableName);
     query = queryBuilder.buildWritingQuery(request);
 
     if (query.containsKey(ERROR)) {
@@ -118,6 +122,7 @@ public class AuditingServiceImpl implements AuditingService {
       handler.handle(Future.failedFuture(responseBuilder.getResponse().toString()));
       return null;
     }
+    request.put(DATABASE_TABLE_NAME, databaseTableName);
     query = queryBuilder.buildReadingQuery(request);
 
     if (query.containsKey(ERROR)) {
