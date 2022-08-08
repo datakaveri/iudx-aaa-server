@@ -1,21 +1,22 @@
 package iudx.aaa.server.auditing;
 
 import static iudx.aaa.server.auditing.util.Constants.BODY;
-import static iudx.aaa.server.auditing.util.Constants.BODY_COLUMN_NAME;
+import static iudx.aaa.server.auditing.util.Constants.BODY_COLUMN_INDEX;
+import static iudx.aaa.server.auditing.util.Constants.DATABASE_TABLE_NAME;
 import static iudx.aaa.server.auditing.util.Constants.EMPTY_RESPONSE;
 import static iudx.aaa.server.auditing.util.Constants.ENDPOINT;
-import static iudx.aaa.server.auditing.util.Constants.ENDPOINT_COLUMN_NAME;
+import static iudx.aaa.server.auditing.util.Constants.ENDPOINT_COLUMN_INDEX;
 import static iudx.aaa.server.auditing.util.Constants.ERROR;
 import static iudx.aaa.server.auditing.util.Constants.FAILED;
 import static iudx.aaa.server.auditing.util.Constants.MESSAGE;
 import static iudx.aaa.server.auditing.util.Constants.METHOD;
-import static iudx.aaa.server.auditing.util.Constants.METHOD_COLUMN_NAME;
+import static iudx.aaa.server.auditing.util.Constants.METHOD_COLUMN_INDEX;
 import static iudx.aaa.server.auditing.util.Constants.QUERY_KEY;
 import static iudx.aaa.server.auditing.util.Constants.RESULTS;
 import static iudx.aaa.server.auditing.util.Constants.SUCCESS;
 import static iudx.aaa.server.auditing.util.Constants.TIME;
-import static iudx.aaa.server.auditing.util.Constants.TIME_COLUMN_NAME;
-import static iudx.aaa.server.auditing.util.Constants.USERID_COLUMN_NAME;
+import static iudx.aaa.server.auditing.util.Constants.TIME_COLUMN_INDEX;
+import static iudx.aaa.server.auditing.util.Constants.USERID_COLUMN_INDEX;
 import static iudx.aaa.server.auditing.util.Constants.USERID_NOT_FOUND;
 import static iudx.aaa.server.auditing.util.Constants.USER_ID;
 
@@ -43,14 +44,15 @@ public class AuditingServiceImpl implements AuditingService {
   PgConnectOptions connectOptions;
   PoolOptions poolOptions;
   PgPool pool;
-  private Vertx vertx;
-  private QueryBuilder queryBuilder = new QueryBuilder();
+  private final Vertx vertx;
+  private final QueryBuilder queryBuilder = new QueryBuilder();
   private JsonObject query = new JsonObject();
   private String databaseIP;
   private int databasePort;
   private String databaseName;
   private String databaseUserName;
   private String databasePassword;
+  private String databaseTableName;
   private int databasePoolSize;
   private ResponseBuilder responseBuilder;
 
@@ -62,6 +64,7 @@ public class AuditingServiceImpl implements AuditingService {
       databaseName = propObj.getString("auditingDatabaseName");
       databaseUserName = propObj.getString("auditingDatabaseUserName");
       databasePassword = propObj.getString("auditingDatabasePassword");
+      databaseTableName = propObj.getString("auditingDatabaseTableName");
       databasePoolSize = propObj.getInteger("auditingPoolSize");
     }
 
@@ -83,8 +86,8 @@ public class AuditingServiceImpl implements AuditingService {
   @Override
   public AuditingService executeWriteQuery(
       JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+    request.put(DATABASE_TABLE_NAME, databaseTableName);
     query = queryBuilder.buildWritingQuery(request);
-
     if (query.containsKey(ERROR)) {
       LOGGER.error("Fail: Query returned with an error: " + query.getString(ERROR));
       responseBuilder =
@@ -118,6 +121,7 @@ public class AuditingServiceImpl implements AuditingService {
       handler.handle(Future.failedFuture(responseBuilder.getResponse().toString()));
       return null;
     }
+    request.put(DATABASE_TABLE_NAME, databaseTableName);
     query = queryBuilder.buildReadingQuery(request);
 
     if (query.containsKey(ERROR)) {
@@ -204,17 +208,17 @@ public class AuditingServiceImpl implements AuditingService {
 
   private JsonObject getJsonObject(Row rs) {
     JsonObject entries = new JsonObject();
-    LOGGER.debug("COUNT: " + (rs.getString(METHOD_COLUMN_NAME)));
-    LOGGER.debug("TIME: " + (rs.getLong(TIME_COLUMN_NAME)));
-    LOGGER.debug("USERID: " + (rs.getString(USERID_COLUMN_NAME)));
-    LOGGER.debug("BODY: " + (rs.getString(BODY_COLUMN_NAME).replaceAll("\"", " ")));
-    LOGGER.debug("ENDPOINT: " + (rs.getString(ENDPOINT_COLUMN_NAME)));
+    LOGGER.debug("COUNT: " + (rs.getString(METHOD_COLUMN_INDEX)));
+    LOGGER.debug("TIME: " + (rs.getLong(TIME_COLUMN_INDEX)));
+    LOGGER.debug("USERID: " + (rs.getString(USERID_COLUMN_INDEX)));
+    LOGGER.debug("BODY: " + (rs.getString(BODY_COLUMN_INDEX).replaceAll("\"", " ")));
+    LOGGER.debug("ENDPOINT: " + (rs.getString(ENDPOINT_COLUMN_INDEX)));
 
-    entries.put(METHOD, rs.getString(METHOD_COLUMN_NAME));
-    entries.put(TIME, new Timestamp(rs.getLong(TIME_COLUMN_NAME)).toLocalDateTime().toString());
-    entries.put(USER_ID, rs.getString(USERID_COLUMN_NAME));
-    entries.put(BODY, rs.getString(BODY_COLUMN_NAME).replaceAll("\"", " "));
-    entries.put(ENDPOINT, rs.getString(ENDPOINT_COLUMN_NAME));
+    entries.put(METHOD, rs.getString(METHOD_COLUMN_INDEX));
+    entries.put(TIME, new Timestamp(rs.getLong(TIME_COLUMN_INDEX)).toLocalDateTime().toString());
+    entries.put(USER_ID, rs.getString(USERID_COLUMN_INDEX));
+    entries.put(BODY, rs.getString(BODY_COLUMN_INDEX).replaceAll("\"", " "));
+    entries.put(ENDPOINT, rs.getString(ENDPOINT_COLUMN_INDEX));
     return entries;
   }
 }

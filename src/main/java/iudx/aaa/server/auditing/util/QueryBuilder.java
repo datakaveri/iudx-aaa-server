@@ -2,6 +2,7 @@ package iudx.aaa.server.auditing.util;
 
 import static iudx.aaa.server.auditing.util.Constants.API;
 import static iudx.aaa.server.auditing.util.Constants.BODY;
+import static iudx.aaa.server.auditing.util.Constants.DATABASE_TABLE_NAME;
 import static iudx.aaa.server.auditing.util.Constants.DATA_NOT_FOUND;
 import static iudx.aaa.server.auditing.util.Constants.ENDPOINT;
 import static iudx.aaa.server.auditing.util.Constants.ENDPOINT_QUERY;
@@ -51,15 +52,12 @@ public class QueryBuilder {
     ZonedDateTime zst = ZonedDateTime.now();
     long time = getEpochTime(zst);
     String userId = request.getString(USER_ID);
-
-    LOGGER.info("body: " + body);
-    LOGGER.info("endpoint: " + endPoint);
-    LOGGER.info("methodName: " + methodName);
-    LOGGER.info("userId: " + userId);
+    String databaseTableName=request.getString(DATABASE_TABLE_NAME);
 
     StringBuilder query =
         new StringBuilder(
             WRITE_QUERY
+                .replace("$0", databaseTableName)
                 .replace("$1", primaryKey)
                 .replace("$2", body)
                 .replace("$3", endPoint)
@@ -67,7 +65,7 @@ public class QueryBuilder {
                 .replace("$5", Long.toString(time))
                 .replace("$6", userId));
 
-    LOGGER.info("Info: Query " + query);
+    LOGGER.debug("Info: Query " + query);
     return new JsonObject().put(QUERY_KEY, query);
   }
 
@@ -83,6 +81,7 @@ public class QueryBuilder {
     String endTime = request.getString(END_TIME);
     String method = request.getString(METHOD);
     String endPoint = request.getString(ENDPOINT);
+    String databaseTableName=request.getString(DATABASE_TABLE_NAME);
     long fromTime = 0;
     long toTime = 0;
     ZonedDateTime zdt;
@@ -132,8 +131,8 @@ public class QueryBuilder {
 
     LOGGER.debug("Epoch fromTime: " + fromTime);
     LOGGER.debug("Epoch toTime: " + toTime);
-    StringBuilder userIdQuery = new StringBuilder(READ_QUERY.replace("$1", userId));
-    LOGGER.info("Info: QUERY " + userIdQuery);
+    StringBuilder userIdQuery = new StringBuilder(READ_QUERY.replace("$0",databaseTableName).replace("$1", userId));
+    LOGGER.debug("Info: QUERY " + userIdQuery);
 
     if (request.containsKey(START_TIME) && request.containsKey(END_TIME)) {
       StringBuilder tempQuery = userIdQuery;
@@ -142,13 +141,13 @@ public class QueryBuilder {
               START_TIME_QUERY.replace("$2", Long.toString(fromTime)),
               END_TIME_QUERY.replace("$3", Long.toString(toTime)))) tempQuery.append(s);
       userIdQuery = tempQuery;
-      LOGGER.info("Info: QUERY with start and end time" + userIdQuery);
+      LOGGER.debug("Info: QUERY with start and end time" + userIdQuery);
     }
     if (request.containsKey(METHOD) && request.containsKey(ENDPOINT)) {
       StringBuilder tempQuery = userIdQuery;
       tempQuery.append(ENDPOINT_QUERY.replace("$4", endPoint));
       tempQuery.append(METHOD_QUERY.replace("$5", method));
-      LOGGER.info("Info: QUERY with method and endpoint " + tempQuery);
+      LOGGER.debug("Info: QUERY with method and endpoint " + tempQuery);
       return new JsonObject().put(QUERY_KEY, tempQuery);
     }
     return new JsonObject().put(QUERY_KEY, userIdQuery);

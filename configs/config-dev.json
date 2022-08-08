@@ -92,7 +92,8 @@
       "auditingDatabaseName": "",
       "auditingDatabaseUserName": "",
       "auditingDatabasePassword": "",
-      "auditingPoolSize": 25
+       "auditingDatabaseTableName": "",
+       "auditingPoolSize": 25
     },
     {
       "id": "iudx.aaa.server.apiserver.ApiServerVerticle",

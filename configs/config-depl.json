@@ -92,6 +92,7 @@
       "auditingDatabaseName": "ddqwd",
       "auditingDatabaseUserName": "qwdd",
       "auditingDatabasePassword": "qdwqw",
+      "auditingDatabaseTableName": "table-name",
       "auditingPoolSize": 25
     },
     {

@@ -21,6 +21,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import iudx.aaa.server.configuration.Configuration;
+import java.time.ZonedDateTime;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,7 @@ public class AuditingServiceTest {
   private static String databaseUserName;
   private static String databasePassword;
   private static int databasePoolSize;
+  private static String databaseTableName;
   private static Configuration config;
 
   @BeforeAll
@@ -49,6 +51,7 @@ public class AuditingServiceTest {
     databaseName = dbConfig.getString("auditingDatabaseName");
     databaseUserName = dbConfig.getString("auditingDatabaseUserName");
     databasePassword = dbConfig.getString("auditingDatabasePassword");
+    databaseTableName= dbConfig.getString("auditingDatabaseTableName");
     databasePoolSize = dbConfig.getInteger("auditingPoolSize");
     auditingService = new AuditingServiceImpl(dbConfig, vertxObj);
     vertxTestContext.completeNow();
