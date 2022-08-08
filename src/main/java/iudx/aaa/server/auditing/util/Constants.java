@@ -26,7 +26,6 @@ public class Constants {
   public static final String MISSING_START_TIME = "Start-Time not found.";
   public static final String MISSING_END_TIME = "End-Time not found.";
   public static final String INVALID_TIME = "End-Time cannot be before Start-Time.";
-
   /* Auditing Service Constants*/
 
   public static final String METHOD = "method";
@@ -34,11 +33,12 @@ public class Constants {
   public static final String BODY = "body";
   public static final String API = "api";
   public static final String WRITE_QUERY =
-      "INSERT INTO table_auditing (id,body,endpoint,method,time,userid) VALUES ('$1','$2','$3','$4',$5,'$6')";
+      "INSERT INTO $0 (id,body,endpoint,method,time,userid) VALUES ('$1','$2','$3','$4',$5,'$6')";
 
   public static final String MESSAGE = "message";
+  public static final String DATABASE_TABLE_NAME= "databaseTableName";
   public static final String READ_QUERY =
-      "SELECT body,endpoint,method,time,userid from table_auditing where userid='$1'";
+      "SELECT body,endpoint,method,time,userid from $0 where userid='$1'";
   public static final String START_TIME_QUERY = " and time>=$2";
   public static final String END_TIME_QUERY = " and time<=$3";
   public static final String ENDPOINT_QUERY = " and endpoint='$4'";
