@@ -49,10 +49,11 @@ public class Constants {
 
   public static final String CALL_APD_APDID = "apdId";
   public static final String CALL_APD_USERID = "userId";
-  public static final String CALL_APD_RESOURCE = "resource";
+  public static final String CALL_APD_ITEM_ID = "itemId";
+  public static final String CALL_APD_ITEM_TYPE = "itemType";
   public static final String CALL_APD_RES_SER_URL = "resSerUrl";
   public static final String CALL_APD_USERCLASS = "userClass";
-  public static final String CALL_APD_PROVIDERID = "providerId";
+  public static final String CALL_APD_OWNERID = "ownerId";
   public static final String CALL_APD_CONSTRAINTS = "constraints";
 
   public static final String RESULTS = "results";

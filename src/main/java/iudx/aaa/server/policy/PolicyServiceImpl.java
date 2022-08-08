@@ -926,11 +926,16 @@ public class PolicyServiceImpl implements PolicyService {
             JsonObject apdDetails = getApdPolicyDetails.result();
             JsonObject apdContext = new JsonObject();
 
+            /*
+             * itemType is in uppercase when it comes from the CatalogueClient, making it lowercase
+             * explicitly since in the token request, policy listing it's lowercase
+             */
             apdContext.put(CALL_APD_APDID, apdDetails.getString(APD_ID))
-                .put(CALL_APD_USERID, userId.toString()).put(CALL_APD_RESOURCE, itemId)
+                .put(CALL_APD_USERID, userId.toString()).put(CALL_APD_ITEM_ID, itemId)
+                .put(CALL_APD_ITEM_TYPE, itemType.toLowerCase())
                 .put(CALL_APD_RES_SER_URL, getUrl.result())
                 .put(CALL_APD_USERCLASS, apdDetails.getString(USER_CLASS))
-                .put(CALL_APD_PROVIDERID, resDetails.get(itemId).getOwnerId().toString())
+                .put(CALL_APD_OWNERID, resDetails.get(itemId).getOwnerId().toString())
                 .put(CALL_APD_CONSTRAINTS, apdDetails.getJsonObject(CONSTRAINTS));
 
             apdService.callApd(apdContext, p);

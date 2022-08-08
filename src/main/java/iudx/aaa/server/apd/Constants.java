@@ -111,8 +111,8 @@ public class Constants {
   
   /* APD JSON request keys */
   public static final String APD_REQ_USER = "user";
-  public static final String APD_REQ_PROVIDER = "provider";
-  public static final String APD_REQ_RESOURCE =  "resource";
+  public static final String APD_REQ_OWNER = "owner";
+  public static final String APD_REQ_ITEM =  "item";
   public static final String APD_REQ_USERCLASS = "userClass";
   
   /* APD JSON response keys */
