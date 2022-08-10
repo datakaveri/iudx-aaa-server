@@ -24,23 +24,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Map;
 
-import static iudx.aaa.server.policy.Constants.INVALID_ROLE;
-import static iudx.aaa.server.policy.Constants.INCORRECT_ITEM_ID;
-import static iudx.aaa.server.policy.Constants.NO_ADMIN_POLICY;
-import static iudx.aaa.server.policy.Constants.REGISTRATION_SERVICE_ADDRESS;
-import static iudx.aaa.server.policy.Constants.STATUS;
-import static iudx.aaa.server.policy.Constants.SUCCESS;
-import static iudx.aaa.server.policy.Constants.UNAUTHORIZED_DELEGATE;
-import static iudx.aaa.server.policy.TestRequest.apdResourceGrpPolicy;
-import static iudx.aaa.server.policy.TestRequest.NoCataloguePolicy;
-import static iudx.aaa.server.policy.TestRequest.NoCatalogueProviderPolicy;
-import static iudx.aaa.server.policy.TestRequest.consumerVerification;
-import static iudx.aaa.server.policy.TestRequest.invalidDelegate;
-import static iudx.aaa.server.policy.TestRequest.invalidItemId;
-import static iudx.aaa.server.policy.TestRequest.roleFailure;
-import static iudx.aaa.server.policy.TestRequest.validDelegateVerification;
-import static iudx.aaa.server.policy.TestRequest.validProviderCat;
-import static iudx.aaa.server.policy.TestRequest.validProviderVerification;
+import static iudx.aaa.server.policy.Constants.*;
+import static iudx.aaa.server.policy.TestRequest.*;
+import static iudx.aaa.server.token.Constants.INVALID_POLICY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -153,6 +139,36 @@ public class VerifyPolicyTest {
                     })));
   }
 
+    @Test
+    @DisplayName("role does not match - failure")
+    void roleFailure2(VertxTestContext testContext) {
+        policyService.verifyPolicy(
+                roleFailure2,
+                testContext.failing(
+                        response ->
+                                testContext.verify(
+                                        () -> {
+                                            ComposeException exp = (ComposeException) response;
+                                            assertEquals(INCORRECT_ITEM_TYPE, exp.getResponse().getDetail());
+                                            testContext.completeNow();
+                                        })));
+    }
+
+    @Test
+    @DisplayName("role does not match - failure")
+    void roleFailure3(VertxTestContext testContext) {
+        policyService.verifyPolicy(
+                roleFailure3,
+                testContext.failing(
+                        response ->
+                                testContext.verify(
+                                        () -> {
+                                            ComposeException exp = (ComposeException) response;
+                                            assertEquals(INVALID_ROLE, exp.getResponse().getDetail());
+                                            testContext.completeNow();
+                                        })));
+    }
+
   @Test
   @DisplayName("Invalid item ID - sending URL instead of resource")
   void invalidItemId(VertxTestContext testContext) {
@@ -167,6 +183,35 @@ public class VerifyPolicyTest {
                       testContext.completeNow();
                     })));
   }
+    @Test
+    @DisplayName("Resource Group < 4 Error")
+    void invalidItemId2(VertxTestContext testContext) {
+        policyService.verifyPolicy(
+                invalidItemId2,
+                testContext.failing(
+                        response ->
+                                testContext.verify(
+                                        () -> {
+                                            ComposeException exp = (ComposeException) response;
+                                            assertEquals(INVALID_POLICY, exp.getResponse().getTitle());
+                                            testContext.completeNow();
+                                        })));
+    }
+
+    @Test
+    @DisplayName("Resource > 5 Error")
+    void invalidItemId3(VertxTestContext testContext) {
+        policyService.verifyPolicy(
+                invalidItemId3,
+                testContext.failing(
+                        response ->
+                                testContext.verify(
+                                        () -> {
+                                            ComposeException exp = (ComposeException) response;
+                                            assertEquals(INVALID_POLICY, exp.getResponse().getTitle());
+                                            testContext.completeNow();
+                                        })));
+    }
 
   @Test
   @DisplayName("Testing Successful Policy verification consumer")

@@ -2,10 +2,7 @@ package iudx.aaa.server.policy;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import iudx.aaa.server.apiserver.CreateDelegationRequest;
-import iudx.aaa.server.apiserver.CreatePolicyRequest;
-import iudx.aaa.server.apiserver.Roles;
-import iudx.aaa.server.apiserver.User;
+import iudx.aaa.server.apiserver.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +21,22 @@ public class TestRequest {
           .put("itemType", "resource_group")
           .put("role", "consumer")
           .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+  public static JsonObject roleFailure2 =
+          new JsonObject()
+                  .put(
+                          "itemId",
+                          "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg")
+                  .put("itemType", "RESOURCE_SERVER")
+                  .put("role", "consumer")
+                  .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+  public static JsonObject roleFailure3 =
+          new JsonObject()
+                  .put(
+                          "itemId",
+                          "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg")
+                  .put("itemType", "ADMIN")
+                  .put("role", "ADMIN")
+                  .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
 
   public static JsonObject invalidItemId =
       new JsonObject()
@@ -31,6 +44,20 @@ public class TestRequest {
           .put("itemType", "resource_group")
           .put("role", "consumer")
           .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+
+  public static JsonObject invalidItemId2 =
+          new JsonObject()
+                  .put("itemId", "rs.iudx.io")
+                  .put("itemType", "RESOURCE_GROUP")
+                  .put("role", "consumer")
+                  .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+
+  public static JsonObject invalidItemId3 =
+          new JsonObject()
+                  .put("itemId", "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg/rs.iudx.io")
+                  .put("itemType", "RESOURCE")
+                  .put("role", "consumer")
+                  .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
 
   public static JsonObject consumerVerification =
       new JsonObject()
@@ -402,4 +429,54 @@ public class TestRequest {
           .put("resSerId", "authvertx.iudx.io");
   public static List<CreateDelegationRequest> duplicateFailure =
       CreateDelegationRequest.jsonArrayToList(new JsonArray().add(duplicateFail));
+
+  public static JsonObject rejectedUpdate =
+          new JsonObject()
+                  .put("status", NotifRequestStatus.REJECTED)
+                  .put("requestId", "d34b1547-7281-4f66-b550-ed79f9bb0c36");
+  public static List<UpdatePolicyNotification> updateSuccess =
+          UpdatePolicyNotification.jsonArrayToList(new JsonArray().add(rejectedUpdate));
+
+  public static JsonObject pendingUpdate =
+          new JsonObject()
+                  .put("status", NotifRequestStatus.PENDING)
+                  .put("requestId", "d34b1547-7281-4f66-b550-ed79f9bb0c36");
+  public static List<UpdatePolicyNotification> updateSuccessPending =
+          UpdatePolicyNotification.jsonArrayToList(new JsonArray().add(pendingUpdate));
+
+  public static JsonObject approvedUpdate =
+          new JsonObject()
+                  .put("status", NotifRequestStatus.APPROVED)
+                  .put("requestId", "d34b1547-7281-4f66-b550-ed79f9bb0c36");
+  public static List<UpdatePolicyNotification> updateSuccessApproved =
+          UpdatePolicyNotification.jsonArrayToList(new JsonArray().add(approvedUpdate));
+
+  public static User createDelUser2 =
+          new User(
+                  new JsonObject()
+                          .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683")
+                          .put("roles", new JsonArray().add(Roles.CONSUMER))
+                          .put("keycloakId", "04617f23-7e5d-4118-8773-1b6c85da14ed"));
+
+  public static User createUser3 =
+          new User(
+                  new JsonObject()
+                          .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683")
+                          .put("roles", new JsonArray().add(Roles.ADMIN))
+                          .put("keycloakId", "04617f23-7e5d-4118-8773-1b6c85da14ed"));
+  public static User createUser4=
+          new User(
+                  new JsonObject()
+                          .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683")
+                          .put("roles", new JsonArray().add(Roles.PROVIDER))
+                          .put("keycloakId", "04617f23-7e5d-4118-8773-1b6c85da14ed"));
+
+  public static JsonObject validProviderCat2 =
+          new JsonObject()
+                  .put(
+                          "providerId",
+                          "iisc.ac.in/89a3e64392547f86")
+                  .put("itemType", "catalogue")
+                  .put("role", "provider")
+                  .put("userId", "844e251b-574b-46e6-9247-f76f1f70a637");
 }
