@@ -181,11 +181,12 @@ public class CallApdTest {
   void apdIdNotExist(VertxTestContext testContext) {
 
     UUID userId = UUID.randomUUID();
-    UUID providerId = UUID.randomUUID();
+    UUID ownerId = UUID.randomUUID();
 
     JsonObject apdContext = new JsonObject().put("userId", userId.toString())
-        .put("providerId", providerId.toString()).put("apdId", UUID.randomUUID().toString())
-        .put("resource", RandomStringUtils.randomAlphabetic(20).toLowerCase())
+        .put("ownerId", ownerId.toString()).put("apdId", UUID.randomUUID().toString())
+        .put("itemId", RandomStringUtils.randomAlphabetic(20).toLowerCase())
+        .put("itemType", RandomStringUtils.randomAlphabetic(10).toLowerCase())
         .put("resSerUrl", RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com")
         .put("constraints", new JsonObject())
         .put("userClass", RandomStringUtils.randomAlphabetic(5).toLowerCase());
@@ -206,11 +207,12 @@ public class CallApdTest {
     }).when(registrationService).getUserDetails(any(), any());
 
     UUID userId = UUID.randomUUID();
-    UUID providerId = UUID.randomUUID();
+    UUID ownerId = UUID.randomUUID();
 
     JsonObject apdContext = new JsonObject().put("userId", userId.toString())
-        .put("providerId", providerId.toString()).put("apdId", ACTIVE_APD_ID.toString())
-        .put("resource", RandomStringUtils.randomAlphabetic(20).toLowerCase())
+        .put("ownerId", ownerId.toString()).put("apdId", ACTIVE_APD_ID.toString())
+        .put("itemId", RandomStringUtils.randomAlphabetic(20).toLowerCase())
+        .put("itemType", RandomStringUtils.randomAlphabetic(10).toLowerCase())
         .put("resSerUrl", RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com")
         .put("constraints", new JsonObject())
         .put("userClass", RandomStringUtils.randomAlphabetic(5).toLowerCase());
@@ -232,11 +234,12 @@ public class CallApdTest {
     }).when(tokenService).getAuthServerToken(any(), any());
 
     UUID userId = UUID.randomUUID();
-    UUID providerId = UUID.randomUUID();
+    UUID ownerId = UUID.randomUUID();
 
     JsonObject apdContext = new JsonObject().put("userId", userId.toString())
-        .put("providerId", providerId.toString()).put("apdId", ACTIVE_APD_ID.toString())
-        .put("resource", RandomStringUtils.randomAlphabetic(20).toLowerCase())
+        .put("ownerId", ownerId.toString()).put("apdId", ACTIVE_APD_ID.toString())
+        .put("itemId", RandomStringUtils.randomAlphabetic(20).toLowerCase())
+        .put("itemType", RandomStringUtils.randomAlphabetic(10).toLowerCase())
         .put("resSerUrl", RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com")
         .put("constraints", new JsonObject())
         .put("userClass", RandomStringUtils.randomAlphabetic(5).toLowerCase());
@@ -274,11 +277,12 @@ public class CallApdTest {
         .thenReturn(Future.failedFuture(new ComposeException(failureResponse)));
 
     UUID userId = UUID.randomUUID();
-    UUID providerId = UUID.randomUUID();
+    UUID ownerId = UUID.randomUUID();
 
     JsonObject apdContext = new JsonObject().put("userId", userId.toString())
-        .put("providerId", providerId.toString()).put("apdId", PENDING_APD_ID.toString())
+        .put("ownerId", ownerId.toString()).put("apdId", PENDING_APD_ID.toString())
         .put("resource", RandomStringUtils.randomAlphabetic(20).toLowerCase())
+        .put("itemType", RandomStringUtils.randomAlphabetic(10).toLowerCase())
         .put("resSerUrl", RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com")
         .put("constraints", new JsonObject())
         .put("userClass", RandomStringUtils.randomAlphabetic(5).toLowerCase());
@@ -320,19 +324,21 @@ public class CallApdTest {
         .thenReturn(Future.succeededFuture(webClientResp));
 
     UUID userId = UUID.randomUUID();
-    UUID providerId = UUID.randomUUID();
-    String resource = RandomStringUtils.randomAlphabetic(20).toLowerCase();
+    UUID ownerId = UUID.randomUUID();
+    String itemId = RandomStringUtils.randomAlphabetic(20).toLowerCase();
+    String itemType = RandomStringUtils.randomAlphabetic(10).toLowerCase();
     String resSerUrl = RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com";
     String userClass = RandomStringUtils.randomAlphabetic(5).toLowerCase();
 
     JsonObject apdContext = new JsonObject().put("userId", userId.toString())
-        .put("providerId", providerId.toString()).put("apdId", ACTIVE_APD_ID.toString())
-        .put("resource", resource).put("resSerUrl", resSerUrl).put("constraints", new JsonObject())
+        .put("ownerId", ownerId.toString()).put("apdId", ACTIVE_APD_ID.toString())
+        .put("itemId", itemId)
+        .put("itemType", itemType).put("resSerUrl", resSerUrl).put("constraints", new JsonObject())
         .put("userClass", userClass);
 
     apdService.callApd(apdContext, testContext.succeeding(response -> testContext.verify(() -> {
       assertEquals(response.getString(CREATE_TOKEN_STATUS), CREATE_TOKEN_SUCCESS);
-      assertEquals(response.getString(CREATE_TOKEN_CAT_ID), resource);
+      assertEquals(response.getString(CREATE_TOKEN_CAT_ID), itemId);
       assertEquals(response.getString(CREATE_TOKEN_URL), resSerUrl);
       assertEquals(response.getJsonObject(CREATE_TOKEN_CONSTRAINTS), new JsonObject());
       testContext.completeNow();
@@ -368,19 +374,21 @@ public class CallApdTest {
         .thenReturn(Future.succeededFuture(webClientResp));
 
     UUID userId = UUID.randomUUID();
-    UUID providerId = UUID.randomUUID();
-    String resource = RandomStringUtils.randomAlphabetic(20).toLowerCase();
+    UUID ownerId = UUID.randomUUID();
+    String itemId = RandomStringUtils.randomAlphabetic(20).toLowerCase();
+    String itemType = RandomStringUtils.randomAlphabetic(10).toLowerCase();
     String resSerUrl = RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com";
     String userClass = RandomStringUtils.randomAlphabetic(5).toLowerCase();
 
     JsonObject apdContext = new JsonObject().put("userId", userId.toString())
-        .put("providerId", providerId.toString()).put("apdId", ACTIVE_APD_ID.toString())
-        .put("resource", resource).put("resSerUrl", resSerUrl).put("constraints", new JsonObject())
+        .put("ownerId", ownerId.toString()).put("apdId", ACTIVE_APD_ID.toString()).put("itemType", itemType)
+        .put("itemId", itemId)
+        .put("itemType", itemType).put("resSerUrl", resSerUrl).put("constraints", new JsonObject())
         .put("userClass", userClass);
 
     apdService.callApd(apdContext, testContext.succeeding(response -> testContext.verify(() -> {
       assertEquals(response.getString(CREATE_TOKEN_STATUS), CREATE_TOKEN_SUCCESS);
-      assertEquals(response.getString(CREATE_TOKEN_CAT_ID), resource);
+      assertEquals(response.getString(CREATE_TOKEN_CAT_ID), itemId);
       assertEquals(response.getString(CREATE_TOKEN_URL), resSerUrl);
       assertEquals(response.getJsonObject(CREATE_TOKEN_CONSTRAINTS), new JsonObject());
       assertEquals(response.getJsonObject(CREATE_TOKEN_APD_CONSTRAINTS),new JsonObject());
@@ -416,14 +424,16 @@ public class CallApdTest {
         .thenReturn(Future.succeededFuture(webClientResp));
 
     UUID userId = UUID.randomUUID();
-    UUID providerId = UUID.randomUUID();
-    String resource = RandomStringUtils.randomAlphabetic(20).toLowerCase();
+    UUID ownerId = UUID.randomUUID();
+    String itemId = RandomStringUtils.randomAlphabetic(20).toLowerCase();
+    String itemType = RandomStringUtils.randomAlphabetic(10).toLowerCase();
     String resSerUrl = RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com";
     String userClass = RandomStringUtils.randomAlphabetic(5).toLowerCase();
 
     JsonObject apdContext = new JsonObject().put("userId", userId.toString())
-        .put("providerId", providerId.toString()).put("apdId", ACTIVE_APD_ID.toString())
-        .put("resource", resource).put("resSerUrl", resSerUrl).put("constraints", new JsonObject())
+        .put("ownerId", ownerId.toString()).put("apdId", ACTIVE_APD_ID.toString())
+        .put("itemId", itemId)
+        .put("itemType", itemType).put("resSerUrl", resSerUrl).put("constraints", new JsonObject())
         .put("userClass", userClass);
 
     apdService.callApd(apdContext, testContext.failing(response -> testContext.verify(() -> {
@@ -466,14 +476,16 @@ public class CallApdTest {
         .thenReturn(Future.succeededFuture(webClientResp));
 
     UUID userId = UUID.randomUUID();
-    UUID providerId = UUID.randomUUID();
-    String resource = RandomStringUtils.randomAlphabetic(20).toLowerCase();
+    UUID ownerId = UUID.randomUUID();
+    String itemId = RandomStringUtils.randomAlphabetic(20).toLowerCase();
+    String itemType = RandomStringUtils.randomAlphabetic(10).toLowerCase();
     String resSerUrl = RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com";
     String userClass = RandomStringUtils.randomAlphabetic(5).toLowerCase();
 
     JsonObject apdContext = new JsonObject().put("userId", userId.toString())
-        .put("providerId", providerId.toString()).put("apdId", ACTIVE_APD_ID.toString())
-        .put("resource", resource).put("resSerUrl", resSerUrl).put("constraints", new JsonObject())
+        .put("ownerId", ownerId.toString()).put("apdId", ACTIVE_APD_ID.toString())
+        .put("itemId", itemId)
+        .put("itemType", itemType).put("resSerUrl", resSerUrl).put("constraints", new JsonObject())
         .put("userClass", userClass);
 
     apdService.callApd(apdContext, testContext.succeeding(response -> testContext.verify(() -> {

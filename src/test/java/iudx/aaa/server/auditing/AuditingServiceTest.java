@@ -37,6 +37,7 @@ public class AuditingServiceTest {
   private static String databaseUserName;
   private static String databasePassword;
   private static int databasePoolSize;
+  private static String databaseTableName;
   private static Configuration config;
 
   @BeforeAll
@@ -51,6 +52,7 @@ public class AuditingServiceTest {
     databaseUserName = dbConfig.getString("auditingDatabaseUserName");
     databasePassword = dbConfig.getString("auditingDatabasePassword");
     databasePoolSize = dbConfig.getInteger("auditingPoolSize");
+    databaseTableName= dbConfig.getString("auditingDatabaseTableName");
     auditingService = new AuditingServiceImpl(dbConfig, vertxObj);
     vertxTestContext.completeNow();
   }

@@ -2,6 +2,7 @@ package iudx.aaa.server.auditing.util;
 
 import static iudx.aaa.server.auditing.util.Constants.API;
 import static iudx.aaa.server.auditing.util.Constants.BODY;
+import static iudx.aaa.server.auditing.util.Constants.DATABASE_TABLE_NAME;
 import static iudx.aaa.server.auditing.util.Constants.DATA_NOT_FOUND;
 import static iudx.aaa.server.auditing.util.Constants.ENDPOINT;
 import static iudx.aaa.server.auditing.util.Constants.ENDPOINT_QUERY;
@@ -51,15 +52,12 @@ public class QueryBuilder {
     ZonedDateTime zst = ZonedDateTime.now();
     long time = getEpochTime(zst);
     String userId = request.getString(USER_ID);
-
-    LOGGER.info("body: " + body);
-    LOGGER.info("endpoint: " + endPoint);
-    LOGGER.info("methodName: " + methodName);
-    LOGGER.info("userId: " + userId);
+    String databaseTableName= request.getString(DATABASE_TABLE_NAME);
 
     StringBuilder query =
         new StringBuilder(
             WRITE_QUERY
+                .replace("$0",databaseTableName)
                 .replace("$1", primaryKey)
                 .replace("$2", body)
                 .replace("$3", endPoint)
@@ -83,6 +81,8 @@ public class QueryBuilder {
     String endTime = request.getString(END_TIME);
     String method = request.getString(METHOD);
     String endPoint = request.getString(ENDPOINT);
+    String databaseTableName= request.getString(DATABASE_TABLE_NAME);
+
     long fromTime = 0;
     long toTime = 0;
     ZonedDateTime zdt;
@@ -132,7 +132,7 @@ public class QueryBuilder {
 
     LOGGER.debug("Epoch fromTime: " + fromTime);
     LOGGER.debug("Epoch toTime: " + toTime);
-    StringBuilder userIdQuery = new StringBuilder(READ_QUERY.replace("$1", userId));
+    StringBuilder userIdQuery = new StringBuilder(READ_QUERY.replace("$0",databaseTableName).replace("$1", userId));
     LOGGER.info("Info: QUERY " + userIdQuery);
 
     if (request.containsKey(START_TIME) && request.containsKey(END_TIME)) {

@@ -2,8 +2,8 @@ package iudx.aaa.server.apd;
 
 import static iudx.aaa.server.apd.Constants.APD_CONSTRAINTS;
 import static iudx.aaa.server.apd.Constants.APD_NOT_ACTIVE;
-import static iudx.aaa.server.apd.Constants.APD_REQ_PROVIDER;
-import static iudx.aaa.server.apd.Constants.APD_REQ_RESOURCE;
+import static iudx.aaa.server.apd.Constants.APD_REQ_ITEM;
+import static iudx.aaa.server.apd.Constants.APD_REQ_OWNER;
 import static iudx.aaa.server.apd.Constants.APD_REQ_USER;
 import static iudx.aaa.server.apd.Constants.APD_REQ_USERCLASS;
 import static iudx.aaa.server.apd.Constants.APD_RESP_DETAIL;
@@ -768,11 +768,13 @@ public class ApdServiceImpl implements ApdService {
   public ApdService callApd(JsonObject apdContext, Handler<AsyncResult<JsonObject>> handler) {
 
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
-
+    
+    /* TODO: make apdContext a class */
     UUID apdId = UUID.fromString(apdContext.getString("apdId"));
     String userId = apdContext.getString("userId");
-    String providerId = apdContext.getString("providerId");
-    String resource = apdContext.getString("resource");
+    String ownerId = apdContext.getString("ownerId");
+    String itemId = apdContext.getString("itemId");
+    String itemType = apdContext.getString("itemType");
     String rsUrl = apdContext.getString("resSerUrl");
     String userClass = apdContext.getString("userClass");
     JsonObject constraints = apdContext.getJsonObject("constraints");
@@ -784,8 +786,8 @@ public class ApdServiceImpl implements ApdService {
         pool.withConnection(conn -> conn.preparedQuery(SQL_GET_APD_URL_STATUS).collecting(collector)
             .execute(Tuple.of(apdId)).map(res -> res.value()));
 
-    Future<Map<String, JsonObject>> userAndProviderDetails =
-        getTrusteeDetails(List.of(userId, providerId));
+    Future<Map<String, JsonObject>> userAndOwnerDetails =
+        getTrusteeDetails(List.of(userId, ownerId));
 
     Future<JsonObject> authAccessToken = apdDetails.compose(list -> {
       /* In case the apdId sent does not exist, should never happen */
@@ -800,19 +802,20 @@ public class ApdServiceImpl implements ApdService {
     });
 
     Future<JsonObject> apdResponse =
-        CompositeFuture.all(authAccessToken, userAndProviderDetails).compose(res -> {
+        CompositeFuture.all(authAccessToken, userAndOwnerDetails).compose(res -> {
           JsonObject apdRequest = new JsonObject();
 
-          JsonObject user = userAndProviderDetails.result().get(userId);
+          JsonObject user = userAndOwnerDetails.result().get(userId);
           user.put("id", userId);
-          JsonObject provider = userAndProviderDetails.result().get(providerId);
-          provider.put("id", providerId);
+          JsonObject owner = userAndOwnerDetails.result().get(ownerId);
+          owner.put("id", ownerId);
+          JsonObject item = new JsonObject().put("itemId", itemId).put("itemType", itemType);
 
           String token = authAccessToken.result().getString("accessToken");
           String apdUrl = apdDetails.result().get(0).getString("url");
 
-          apdRequest.put(APD_REQ_USER, user).put(APD_REQ_PROVIDER, provider)
-              .put(APD_REQ_RESOURCE, resource).put(APD_REQ_USERCLASS, userClass);
+          apdRequest.put(APD_REQ_USER, user).put(APD_REQ_OWNER, owner)
+              .put(APD_REQ_ITEM, item).put(APD_REQ_USERCLASS, userClass);
 
           return apdWebClient.callVerifyApdEndpoint(apdUrl, token, apdRequest);
         });
@@ -841,7 +844,7 @@ public class ApdServiceImpl implements ApdService {
           result.put(CREATE_TOKEN_APD_CONSTRAINTS,response.getJsonObject(APD_CONSTRAINTS));
         }
         result.put(CREATE_TOKEN_URL, rsUrl).put(CREATE_TOKEN_CONSTRAINTS, constraints)
-            .put(CREATE_TOKEN_CAT_ID, resource).put(CREATE_TOKEN_STATUS, CREATE_TOKEN_SUCCESS);
+            .put(CREATE_TOKEN_CAT_ID, itemId).put(CREATE_TOKEN_STATUS, CREATE_TOKEN_SUCCESS);
 
         handler.handle(Future.succeededFuture(result));
         return;

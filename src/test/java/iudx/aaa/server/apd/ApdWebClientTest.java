@@ -1,8 +1,8 @@
 package iudx.aaa.server.apd;
 
 import static iudx.aaa.server.apd.Constants.APD_CONSTRAINTS;
-import static iudx.aaa.server.apd.Constants.APD_REQ_PROVIDER;
-import static iudx.aaa.server.apd.Constants.APD_REQ_RESOURCE;
+import static iudx.aaa.server.apd.Constants.APD_REQ_OWNER;
+import static iudx.aaa.server.apd.Constants.APD_REQ_ITEM;
 import static iudx.aaa.server.apd.Constants.APD_REQ_USER;
 import static iudx.aaa.server.apd.Constants.APD_REQ_USERCLASS;
 import static iudx.aaa.server.apd.Constants.APD_RESP_DETAIL;
@@ -97,12 +97,11 @@ public class ApdWebClientTest {
   @DisplayName("Test post verify error cases")
   void testPostVerifyErrors(VertxTestContext testContext) {
     /*
-     * We just put empty objects for user and provider and dummy placeholders for the auth token and
-     * resource ID
+     * We just put empty objects for user, owner and item and dummy placeholders for the auth token
      */
     JsonObject request =
-        new JsonObject().put(APD_REQ_USER, new JsonObject()).put(APD_REQ_PROVIDER, new JsonObject())
-            .put(APD_REQ_RESOURCE, "resource").put(APD_REQ_USERCLASS, "TestError");
+        new JsonObject().put(APD_REQ_USER, new JsonObject()).put(APD_REQ_OWNER, new JsonObject())
+            .put(APD_REQ_ITEM, new JsonObject()).put(APD_REQ_USERCLASS, "TestError");
     testContext.assertFailure(apdWebClient.callVerifyApdEndpoint("localhost", "token", request))
         .recover(r -> {
           assertTrue(r instanceof ComposeException);
@@ -116,8 +115,8 @@ public class ApdWebClientTest {
   @DisplayName("Test post verify allow")
   void testPostVerifyAllow(VertxTestContext testContext) {
     JsonObject request =
-        new JsonObject().put(APD_REQ_USER, new JsonObject()).put(APD_REQ_PROVIDER, new JsonObject())
-            .put(APD_REQ_RESOURCE, "resource").put(APD_REQ_USERCLASS, "TestAllow");
+        new JsonObject().put(APD_REQ_USER, new JsonObject()).put(APD_REQ_OWNER, new JsonObject())
+            .put(APD_REQ_ITEM, new JsonObject()).put(APD_REQ_USERCLASS, "TestAllow");
     testContext.assertComplete(apdWebClient.callVerifyApdEndpoint("localhost", "token", request))
         .compose(r -> {
           assertEquals(r.getString(APD_RESP_TYPE), APD_URN_ALLOW);
@@ -131,8 +130,8 @@ public class ApdWebClientTest {
   @DisplayName("Test post verify allow with constraints")
   void testPostVerifyAllowWCons(VertxTestContext testContext) {
       JsonObject request =
-          new JsonObject().put(APD_REQ_USER, new JsonObject()).put(APD_REQ_PROVIDER, new JsonObject())
-              .put(APD_REQ_RESOURCE, "resource").put(APD_REQ_USERCLASS, "TestSuccessWConstraints");
+          new JsonObject().put(APD_REQ_USER, new JsonObject()).put(APD_REQ_OWNER, new JsonObject())
+              .put(APD_REQ_ITEM, new JsonObject()).put(APD_REQ_USERCLASS, "TestSuccessWConstraints");
       testContext.assertComplete(apdWebClient.callVerifyApdEndpoint("localhost", "token", request))
           .compose(r -> {
               assertEquals(r.getString(APD_RESP_TYPE), APD_URN_ALLOW);
@@ -146,8 +145,8 @@ public class ApdWebClientTest {
   @DisplayName("Test post verify deny")
   void testPostVerifyDeny(VertxTestContext testContext) {
     JsonObject request =
-        new JsonObject().put(APD_REQ_USER, new JsonObject()).put(APD_REQ_PROVIDER, new JsonObject())
-            .put(APD_REQ_RESOURCE, "resource").put(APD_REQ_USERCLASS, "TestDeny");
+        new JsonObject().put(APD_REQ_USER, new JsonObject()).put(APD_REQ_OWNER, new JsonObject())
+            .put(APD_REQ_ITEM, new JsonObject()).put(APD_REQ_USERCLASS, "TestDeny");
     testContext.assertComplete(apdWebClient.callVerifyApdEndpoint("localhost", "token", request))
         .compose(r -> {
           assertEquals(r.getString(APD_RESP_TYPE), APD_URN_DENY);
@@ -162,8 +161,8 @@ public class ApdWebClientTest {
   @DisplayName("Test post verify deny-needs-interaction")
   void testPostVerifyDenyNeedsInteraction(VertxTestContext testContext) {
     JsonObject request =
-        new JsonObject().put(APD_REQ_USER, new JsonObject()).put(APD_REQ_PROVIDER, new JsonObject())
-            .put(APD_REQ_RESOURCE, "resource").put(APD_REQ_USERCLASS, "TestDenyNInteraction");
+        new JsonObject().put(APD_REQ_USER, new JsonObject()).put(APD_REQ_OWNER, new JsonObject())
+            .put(APD_REQ_ITEM, new JsonObject()).put(APD_REQ_USERCLASS, "TestDenyNInteraction");
     testContext.assertComplete(apdWebClient.callVerifyApdEndpoint("localhost", "token", request))
         .compose(r -> {
           assertEquals(r.getString(APD_RESP_TYPE), APD_URN_DENY_NEEDS_INT);
