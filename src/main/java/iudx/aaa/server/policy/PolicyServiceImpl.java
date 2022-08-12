@@ -1529,17 +1529,6 @@ public class PolicyServiceImpl implements PolicyService {
       return this;
     }
 
-    List<String> resServerIds =
-        request.stream()
-            .filter(
-                tagObject ->
-                    tagObject
-                        .getItemType()
-                        .toUpperCase()
-                        .equals(itemTypes.RESOURCE_SERVER.toString()))
-            .map(CreatePolicyNotification::getItemId)
-            .collect(Collectors.toList());
-
     List<String> resGrpIds =
         request.stream()
             .filter(
@@ -1585,15 +1574,11 @@ public class PolicyServiceImpl implements PolicyService {
 
     Map<String, List<String>> catItem = new HashMap<>();
 
-    if (resServerIds.size() > 0) {
-      catItem.put(RES_SERVER, resServerIds);
-    } else {
-      if (resGrpIds.size() > 0) {
-        catItem.put(RES_GRP, resGrpIds);
-      }
-      if (resIds.size() > 0) {
-        catItem.put(RES, resIds);
-      }
+    if (resGrpIds.size() > 0) {
+      catItem.put(RES_GRP, resGrpIds);
+    }
+    if (resIds.size() > 0) {
+      catItem.put(RES, resIds);
     }
 
     Future<Map<String, ResourceObj>> reqCatItem = catalogueClient.checkReqItems(catItem);
