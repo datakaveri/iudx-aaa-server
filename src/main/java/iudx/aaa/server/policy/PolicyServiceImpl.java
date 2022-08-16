@@ -1529,6 +1529,19 @@ public class PolicyServiceImpl implements PolicyService {
       return this;
     }
 
+    List<CreatePolicyNotification> duplicates = request.stream()
+        .collect(
+            Collectors.groupingBy(p -> p.getItemId() + "-" + p.getItemType(), Collectors.toList()))
+        .values().stream().filter(i -> i.size() > 1).flatMap(j -> j.stream())
+        .collect(Collectors.toList());
+
+    if (duplicates.size() > 0) {
+      Response r = new Response.ResponseBuilder().type(URN_INVALID_INPUT).title(SUCC_NOTIF_REQ)
+          .detail(DUPLICATE).status(400).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
+
     List<String> resGrpIds =
         request.stream()
             .filter(
