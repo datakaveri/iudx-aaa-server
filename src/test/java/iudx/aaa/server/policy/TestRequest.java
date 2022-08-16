@@ -381,6 +381,12 @@ public class TestRequest {
               .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683")
               .put("roles", new JsonArray().add(Roles.PROVIDER))
               .put("keycloakId", "04617f23-7e5d-4118-8773-1b6c85da14ed"));
+  public static User notDelUser =
+          new User(
+                  new JsonObject()
+                          .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683")
+                          .put("roles", new JsonArray().add(Roles.CONSUMER))
+                          .put("keycloakId", "04617f23-7e5d-4118-8773-1b6c85da14ed"));
 
   public static JsonObject invalidUser =
       new JsonObject()

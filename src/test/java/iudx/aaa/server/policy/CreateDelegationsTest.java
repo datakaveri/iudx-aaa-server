@@ -149,5 +149,18 @@ public class CreateDelegationsTest {
                 })));
     }
 
+    @Test
+    @DisplayName("Delegate excepted Provider (Not valid Delegate)")
+    void notValidDelegate(VertxTestContext vertxTestContext){
+
+        policyService.createDelegation(userFailure,notDelUser,new JsonObject(),
+                vertxTestContext.succeeding(response -> vertxTestContext.verify(() -> {
+                    assertEquals("User does not have roles to use API", response.getString("title"));
+                    assertEquals("User does not have roles to use API", response.getString("title"));
+                    vertxTestContext.completeNow();
+                })));
+
+    }
+
 }
 
