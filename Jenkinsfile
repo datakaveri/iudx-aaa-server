@@ -34,7 +34,7 @@ pipeline {
           thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
           tools: [ JUnit(pattern: 'target/surefire-reports/*.xml') ]
         )
-        jacoco classPattern: 'target/classes', execPattern: 'target/jacoco.exec', sourcePattern: 'src/main/java', exclusionPattern:'**/*VertxEBProxy.class,**/Constants.class,**/*VertxProxyHandler.class,**/*Verticle.class,iudx/aaa/server/deploy/*.class,iudx/aaa/server/registration/KcAdmin.class,iudx/aaa/server/apiserver/*,iudx/aaa/server/apiserver/util/*'
+        jacoco classPattern: 'target/classes', execPattern: 'target/jacoco.exec', sourcePattern: 'src/main/java', exclusionPattern:'**/*VertxEBProxy.class,**/Constants.class,**/*VertxProxyHandler.class,**/*Verticle.class,iudx/aaa/server/deploy/*.class,iudx/aaa/server/registration/KcAdmin.class,iudx/aaa/server/apiserver/*,iudx/aaa/server/apiserver/util/*,iudx/aaa/server/admin/AdminService.class,iudx/aaa/server/apd/ApdService.class,iudx/aaa/server/auditing/AuditingService.class,iudx/aaa/server/auditing/AuditingService.class,iudx/aaa/server/registration/RegistrationService.class,iudx/aaa/server/token/TokenService.class'
       }
       post{
         failure{
