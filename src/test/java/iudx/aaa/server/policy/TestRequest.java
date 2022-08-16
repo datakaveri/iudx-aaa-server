@@ -171,7 +171,7 @@ public class TestRequest {
     public static User allRolesUser2 =
             new User(
                     new JsonObject()
-                            .put("userId", "00000000-0000-0000-0000-000000000000")
+                            .put("userId", "00000000-0000-0000-0000-0000000000000")
                             .put("roles", new JsonArray().add(Roles.ADMIN)));
 
     public static User allRolesUser3 =
