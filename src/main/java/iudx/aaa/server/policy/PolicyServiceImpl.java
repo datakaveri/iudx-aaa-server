@@ -1705,6 +1705,9 @@ public class PolicyServiceImpl implements PolicyService {
                                                     for (int i = 0; i < request.size(); i++) {
                                                       JsonObject requestJson =
                                                           request.get(i).toJson();
+                                                      requestJson.put(STATUS, NotifRequestStatus.PENDING
+                                                          .name().toLowerCase());
+                                                      
                                                       String ownerId = ownerIds.get(i);
                                                       JsonObject ownerInfo = userInfo.get(ownerId);
                                                       ownerInfo.put(ID, ownerId);
