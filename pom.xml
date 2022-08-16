@@ -274,6 +274,11 @@
 						<exclude>**/Constants.class</exclude>
 						<exclude>**/*VertxProxyHandler.class</exclude>
 						<exclude>**/*Verticle.class</exclude>
+						<exclude>iudx/aaa/server/policy/PolicyService.class</exclude>
+						<exclude>iudx/aaa/server/admin/AdminService.class</exclude>
+						<exclude>iudx/aaa/server/auditing/AuditingService.class</exclude>
+						<exclude>iudx/aaa/server/apd/ApdService.class</exclude>
+						<exclude>iudx/aaa/server/token/TokenService.class</exclude>
 						<exclude>iudx/aaa/server/deploy/*.class</exclude>
 						<!-- KcAdmin cannot be tested in unit tests -->
 						<exclude>iudx/aaa/server/registration/KcAdmin.class</exclude>
