@@ -34,8 +34,8 @@ import java.util.UUID;
 import static iudx.aaa.server.policy.Constants.DELETE_USR_POLICY;
 import static iudx.aaa.server.policy.Constants.DELETE_APD_POLICY;
 import static iudx.aaa.server.policy.Constants.ID_NOT_PRESENT;
-import static iudx.aaa.server.policy.Constants.INVALID_DELEGATE;
-import static iudx.aaa.server.policy.Constants.ITEMNOTFOUND;
+import static iudx.aaa.server.policy.Constants.NO_USER;
+import static iudx.aaa.server.policy.Constants.INVALID_ROLE;
 import static iudx.aaa.server.policy.Constants.SUCC_TITLE_POLICY_DEL;
 import static iudx.aaa.server.policy.TestRequest.DelFail;
 import static iudx.aaa.server.policy.TestRequest.DelPolFail;
@@ -48,6 +48,8 @@ import static iudx.aaa.server.policy.TestRequest.ProviderUser;
 import static iudx.aaa.server.policy.TestRequest.ResExistFail;
 import static iudx.aaa.server.policy.TestRequest.ResOwnFail;
 import static iudx.aaa.server.policy.TestRequest.allRolesUser;
+import static iudx.aaa.server.policy.TestRequest.allRolesUser2;
+import static iudx.aaa.server.policy.TestRequest.allRolesUser3;
 import static iudx.aaa.server.policy.TestRequest.successProvider;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -287,4 +289,48 @@ public class DeletePolicyTest {
                       testContext.completeNow();
                     })));
   }
+
+  @Order(8)
+  @Test
+  @DisplayName("Testing Failure(ID is NIL_UUID(No USER) present))")
+  void failCaseNil_User(VertxTestContext testContext) {
+
+      policyService.deletePolicy(
+              ResExistFail,
+              allRolesUser2,
+              new JsonObject(),
+              testContext.succeeding(
+                      response ->
+                              testContext.verify(
+                                      () -> {
+                                          JsonObject result = response;
+                                          assertEquals(NO_USER, result.getString("detail"));
+                                          assertEquals("urn:dx:as:MissingInformation", result.getString("title"));
+                                          assertEquals(401, result.getInteger("status"));
+                                          testContext.completeNow();
+                                      })));
+
+    }
+
+    @Order(9)
+    @Test
+    @DisplayName("Testing Failure because Consumer trying to Delete the Policy")
+    void deletePolicyFaliureByConsumer(VertxTestContext testContext) {
+
+        policyService.deletePolicy(
+                ResExistFail,
+                allRolesUser3,
+                new JsonObject(),
+                testContext.succeeding(
+                        response ->
+                                testContext.verify(
+                                        () -> {
+                                            JsonObject result = response;
+                                            assertEquals("urn:dx:as:InvalidRole", result.getString("type"));
+                                            assertEquals(INVALID_ROLE, result.getString("detail"));
+                                            assertEquals(INVALID_ROLE, result.getString("title"));
+                                            assertEquals(401, result.getInteger("status"));
+                                            testContext.completeNow();
+                                        })));
+    }
 }

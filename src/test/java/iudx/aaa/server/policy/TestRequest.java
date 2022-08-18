@@ -134,6 +134,17 @@ public class TestRequest {
           new JsonObject()
               .put("userId", "844e251b-574b-46e6-9247-f76f1f70a637")
               .put("roles", new JsonArray().add(Roles.ADMIN)));
+  public static User allRolesUser2 =
+          new User(
+                  new JsonObject()
+                          .put("userId", "00000000-0000-0000-0000-000000000000")
+                          .put("roles", new JsonArray().add(Roles.ADMIN)));
+
+  public static User allRolesUser3 =
+          new User(
+                  new JsonObject()
+                          .put("userId", "844e251b-574c-46e6-9247-f76f1f70a637")
+                          .put("roles", new JsonArray().add(Roles.CONSUMER)));
   public static JsonObject obj1 = new JsonObject().put("id", UUID.randomUUID());
   public static JsonObject obj2 = new JsonObject().put("id", UUID.randomUUID());
   public static JsonArray ResExistFail = new JsonArray().add(obj1).add(obj2);
