@@ -1529,16 +1529,18 @@ public class PolicyServiceImpl implements PolicyService {
       return this;
     }
 
-    List<String> resServerIds =
-        request.stream()
-            .filter(
-                tagObject ->
-                    tagObject
-                        .getItemType()
-                        .toUpperCase()
-                        .equals(itemTypes.RESOURCE_SERVER.toString()))
-            .map(CreatePolicyNotification::getItemId)
-            .collect(Collectors.toList());
+    List<CreatePolicyNotification> duplicates = request.stream()
+        .collect(
+            Collectors.groupingBy(p -> p.getItemId() + "-" + p.getItemType(), Collectors.toList()))
+        .values().stream().filter(i -> i.size() > 1).flatMap(j -> j.stream())
+        .collect(Collectors.toList());
+
+    if (duplicates.size() > 0) {
+      Response r = new Response.ResponseBuilder().type(URN_INVALID_INPUT).title(SUCC_NOTIF_REQ)
+          .detail(DUPLICATE).status(400).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
 
     List<String> resGrpIds =
         request.stream()
@@ -1585,15 +1587,11 @@ public class PolicyServiceImpl implements PolicyService {
 
     Map<String, List<String>> catItem = new HashMap<>();
 
-    if (resServerIds.size() > 0) {
-      catItem.put(RES_SERVER, resServerIds);
-    } else {
-      if (resGrpIds.size() > 0) {
-        catItem.put(RES_GRP, resGrpIds);
-      }
-      if (resIds.size() > 0) {
-        catItem.put(RES, resIds);
-      }
+    if (resGrpIds.size() > 0) {
+      catItem.put(RES_GRP, resGrpIds);
+    }
+    if (resIds.size() > 0) {
+      catItem.put(RES, resIds);
     }
 
     Future<Map<String, ResourceObj>> reqCatItem = catalogueClient.checkReqItems(catItem);
@@ -1707,6 +1705,9 @@ public class PolicyServiceImpl implements PolicyService {
                                                     for (int i = 0; i < request.size(); i++) {
                                                       JsonObject requestJson =
                                                           request.get(i).toJson();
+                                                      requestJson.put(STATUS, NotifRequestStatus.PENDING
+                                                          .name().toLowerCase());
+                                                      
                                                       String ownerId = ownerIds.get(i);
                                                       JsonObject ownerInfo = userInfo.get(ownerId);
                                                       ownerInfo.put(ID, ownerId);
