@@ -283,6 +283,12 @@
                         <!-- Omit apiserver/util -->
                         <!-- Contains OIDC, client creds authn and auth delegate authn -->
                         <exclude>iudx/aaa/server/apiserver/util/*</exclude>
+						<!-- Interface excluded -->
+						<exclude>iudx/aaa/server/policy/PolicyService.class</exclude>
+						<exclude>iudx/aaa/server/admin/AdminService.class</exclude>
+						<exclude>iudx/aaa/server/auditing/AuditingService.class</exclude>
+						<exclude>iudx/aaa/server/apd/ApdService.class</exclude>
+						<exclude>iudx/aaa/server/token/TokenService.class</exclude>
 					</excludes>
 				</configuration>
 			</plugin>
