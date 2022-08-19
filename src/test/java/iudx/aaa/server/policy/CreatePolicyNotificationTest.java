@@ -42,6 +42,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -470,7 +471,7 @@ public class CreatePolicyNotificationTest {
 
   }
 
-  @Test
+  @RepeatedTest(150)
   @DisplayName("Notification request already exists")
   void failNotifAlreadyExists(VertxTestContext testContext) {
     // create a notification successfully
