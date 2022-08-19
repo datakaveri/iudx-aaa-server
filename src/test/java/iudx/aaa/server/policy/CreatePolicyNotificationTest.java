@@ -603,4 +603,109 @@ public class CreatePolicyNotificationTest {
                     testContext.completeNow();
                 })));
     }
+
+  @Test
+  @DisplayName("Testing failure of registration service and create transaction rollback")
+  void regServiceFailAndRollback(VertxTestContext testContext) {
+
+    /*
+     * The creation of the notification in DB should be rolled back after registration service
+     * failed. So we should be able to:
+     * 
+     * - create a notif request, fail registration service and assert a failed future in response
+     * 
+     * - create the same notification again with successful registration service and get a 200
+     * instead of a 409 in response
+     */
+    String resourceGroup = url + "/da39a3ee5e6b4b0d3255bfef95601890afd80709/" + "rs." + url + "/"
+        + RandomStringUtils.randomAlphabetic(10).toLowerCase();
+
+    Map<String, List<String>> catClientRequest = new HashMap<String, List<String>>();
+    catClientRequest.put(RES_GRP, List.of(resourceGroup));
+
+    JsonObject ownerJson = provider.result();
+    JsonObject consumerJson = consumer.result();
+
+    UUID consumerId = UUID.fromString(consumerJson.getString("userId"));
+    UUID ownerId = UUID.fromString(ownerJson.getString("userId"));
+    UUID itemIdInDb = UUID.randomUUID();
+    UUID resServerId = UUID.randomUUID();
+
+    /* Mocking CatalogueClient.checkReqItems */
+    Mockito.doAnswer(i -> {
+      Map<String, List<String>> req = i.getArgument(0);
+      String catId = req.get(RES_GRP).get(0);
+      ResourceObj obj = new ResourceObj(RES_GRP, itemIdInDb, catId, ownerId, resServerId, null);
+
+      Map<String, ResourceObj> resp = new HashMap<String, ResourceObj>();
+      resp.put(catId, obj);
+      return Future.succeededFuture(resp);
+    }).when(catalogueClient).checkReqItems(catClientRequest);
+
+    /* mock registrationService to fail */
+    mockRegistrationFactory.setResponse("invalid");
+
+    User user = new UserBuilder().keycloakId(consumerJson.getString("keycloakId"))
+        .userId(consumerJson.getString("userId"))
+        .name(consumerJson.getString("firstName"), consumerJson.getString("lastName"))
+        .roles(List.of(Roles.CONSUMER)).build();
+
+    JsonArray req = new JsonArray()
+        .add(new JsonObject().put("itemId", resourceGroup).put("itemType", "resource_group")
+            .put("expiryDuration", "P1Y").put("constraints", new JsonObject()));
+
+    List<CreatePolicyNotification> request = CreatePolicyNotification.jsonArrayToList(req);
+
+    Checkpoint failed = testContext.checkpoint();
+    Checkpoint success = testContext.checkpoint();
+    policyService.createPolicyNotification(request, user,
+        testContext.failing(fail -> testContext.verify(() -> {
+
+          failed.flag();
+
+          /* Now mocking RegistrationService.getUserDetails to give proper response */
+          JsonObject ownerDetails = new JsonObject().put("email", ownerJson.getString("email"))
+              .put("name", new JsonObject().put("firstName", ownerJson.getString("firstName"))
+                  .put("lastName", ownerJson.getString("lastName")));
+
+          JsonObject consumerDetails =
+              new JsonObject().put("email", consumerJson.getString("email")).put("name",
+                  new JsonObject().put("firstName", consumerJson.getString("firstName"))
+                      .put("lastName", consumerJson.getString("lastName")));
+          JsonObject userDetailsResp = new JsonObject().put(consumerId.toString(), consumerDetails)
+              .put(ownerId.toString(), ownerDetails);
+
+          mockRegistrationFactory.setResponse(userDetailsResp);
+
+          policyService.createPolicyNotification(request, user, testContext.succeeding(response -> {
+            assertEquals(200, response.getInteger("status"));
+            assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+            assertEquals(SUCC_TITLE_POLICY_READ, response.getString(TITLE));
+            assertTrue(response.containsKey(RESULTS));
+            assertFalse(response.getJsonArray(RESULTS).isEmpty());
+
+            JsonObject obj = response.getJsonArray(RESULTS).getJsonObject(0);
+
+            assertTrue(obj.containsKey("requestId"));
+
+            // checking user, owner objects. omitted checks for name
+            assertTrue(obj.getJsonObject(OWNER_DETAILS).getString("id")
+                .equals(ownerJson.getString("userId")));
+            assertTrue(obj.getJsonObject(OWNER_DETAILS).getString("email")
+                .equals(ownerJson.getString("email")));
+            assertTrue(obj.getJsonObject(USER_DETAILS).getString("email")
+                .equals(consumerJson.getString("email")));
+            assertTrue(obj.getJsonObject(USER_DETAILS).getString("id")
+                .equals(consumerJson.getString("userId")));
+
+            assertEquals(obj.getString(STATUS), NotifRequestStatus.PENDING.name().toLowerCase());
+            assertEquals(obj.getString("expiryDuration"), request.get(0).getExpiryDuration());
+            assertEquals(obj.getString(ITEMID), resourceGroup);
+            assertEquals(obj.getString(ITEMTYPE), "resource_group");
+            assertTrue(obj.getValue(CONSTRAINTS) instanceof JsonObject);
+            success.flag();
+          }));
+        })));
+  }
+
 }
