@@ -1663,9 +1663,8 @@ public class PolicyServiceImpl implements PolicyService {
                                   registrationService.getUserDetails(ids, userHandler -> {
                                     
                                     if (userHandler.failed()) {
-                                      LOGGER.error(
+                                      response.fail(
                                           "Fail: Registration failure; " + userHandler.cause());
-                                      handler.handle(Future.failedFuture(INTERNALERROR));
                                     }
 
                                     if (userHandler.succeeded()) {
