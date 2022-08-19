@@ -222,7 +222,14 @@ public class TestRequest {
                   new JsonObject()
                           .put("userId", "844e251b-574b-46e6-9247-f76f1f70a637")
                           .put("roles", new JsonArray().add(Roles.PROVIDER))
-                          .put("keycloakId", "b2c27f3f-2524-4a84-816e-91f9ab23f837"));;
+                          .put("keycloakId", "b2c27f3f-2524-4a84-816e-91f9ab23f837"));
+
+  public static User validAdmin1 =
+          new User(
+                  new JsonObject()
+                          .put("userId", "844e251b-574b-46e6-9247-f76f1f70a637")
+                          .put("roles", new JsonArray().add(Roles.ADMIN))
+                          .put("keycloakId", "b2c27f3f-2524-4a84-816e-91f9ab23f837"));
 
   public static User invalidProvider =
       new User(
@@ -259,6 +266,22 @@ public class TestRequest {
                   .put("itemId", "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg")
                   .put("itemType", "resource_group")
                   .put("expiryTime", "")
+                  .put("constraints", constraints);
+
+  public static JsonObject validReqItem1 =
+          new JsonObject()
+                  .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5")
+                  .put("itemId", "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg")
+                  .put("itemType", "resource_group")
+                  .put("expiryTime", "P1Y")
+                  .put("constraints", constraints);
+
+  public static JsonObject validReqItem2 =
+          new JsonObject()
+                  .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5")
+                  .put("itemId", "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg")
+                  .put("itemType", "resource_group")
+                  .put("expiryTime", "P1Y")
                   .put("constraints", constraints);
 
   public static JsonObject invalidReqItem =
@@ -357,6 +380,9 @@ public class TestRequest {
 
   public static List<CreatePolicyRequest> validReq =
       CreatePolicyRequest.jsonArrayToList(new JsonArray().add(validReqItem));
+
+  public static List<CreatePolicyRequest> validReqDuplicate =
+          CreatePolicyRequest.jsonArrayToList(new JsonArray().add(validReqItem1).add(validReqItem2));
 
   public static List<CreatePolicyRequest> itemFailure =
       CreatePolicyRequest.jsonArrayToList(new JsonArray().add(invalidReqItem));
