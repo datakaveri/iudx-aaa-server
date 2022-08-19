@@ -196,43 +196,6 @@ public class CreatePolicyTest {
                                             testContext.completeNow();
                                         })));
     }
-
-    @Test
-    @DisplayName("Testing Failure for RES_Grp(Item does not exist))")
-    void itemFailure4Regp(VertxTestContext testContext) {
-
-        policyService.createPolicy(
-                ItemfailureResGroup,
-                validProvider,
-                new JsonObject(),
-                testContext.succeeding(
-                        response ->
-                                testContext.verify(
-                                        () -> {
-                                            JsonObject result = response;
-                                            assertEquals(URN_INVALID_INPUT.toString(), result.getString(TYPE));
-                                            testContext.completeNow();
-                                        })));
-    }
-
-    @Test
-    @DisplayName("Testing Failure for RES_Id(Item does not exist))")
-    void itemFailure4ResId(VertxTestContext testContext) {
-
-        policyService.createPolicy(
-                ItemfailureRes,
-                validProvider,
-                new JsonObject(),
-                testContext.succeeding(
-                        response ->
-                                testContext.verify(
-                                        () -> {
-                                            JsonObject result = response;
-                                            assertEquals(URN_INVALID_INPUT.toString(), result.getString(TYPE));
-                                            testContext.completeNow();
-                                        })));
-    }
-
     @Test
     @DisplayName("Testing Duplicate policy")
     void duplicateFailure(VertxTestContext testContext) {
@@ -544,6 +507,42 @@ public class CreatePolicyTest {
                                             testContext.completeNow();
                                         })));
     }
+    @Test
+    @DisplayName("Testing Failure for RES_Grp(Item does not exist))")
+    void itemFailure4Resgp(VertxTestContext testContext) {
+
+        policyService.createPolicy(
+                ItemfailureResGroup,
+                validProvider,
+                new JsonObject(),
+                testContext.succeeding(
+                        response ->
+                                testContext.verify(
+                                        () -> {
+                                            JsonObject result = response;
+                                            assertEquals(URN_INVALID_INPUT.toString(), result.getString(TYPE));
+                                            testContext.completeNow();
+                                        })));
+    }
+
+    @Test
+    @DisplayName("Testing Failure for RES_Id(Item does not exist))")
+    void itemFailure4ResId(VertxTestContext testContext) {
+
+        policyService.createPolicy(
+                ItemfailureRes,
+                validProvider,
+                new JsonObject(),
+                testContext.succeeding(
+                        response ->
+                                testContext.verify(
+                                        () -> {
+                                            JsonObject result = response;
+                                            assertEquals(URN_INVALID_INPUT.toString(), result.getString(TYPE));
+                                            testContext.completeNow();
+                                        })));
+    }
+
 
     @Test
     @DisplayName("Duplicate IDs in request array")
