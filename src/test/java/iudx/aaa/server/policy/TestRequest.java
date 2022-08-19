@@ -323,6 +323,21 @@ public class TestRequest {
                   .put("expiryTime", "")
                   .put("constraints", constraints);
 
+  public static JsonObject invalidReqItem4Resgrp =
+          new JsonObject()
+                  .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5")
+                  .put("itemId", "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io")
+                  .put("itemType", "resource_group")
+                  .put("expiryTime", "")
+                  .put("constraints", constraints);
+  public static JsonObject invalidReqItem4Res =
+          new JsonObject()
+                  .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5")
+                  .put("itemId", "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io")
+                  .put("itemType", "resource")
+                  .put("expiryTime", "")
+                  .put("constraints", constraints);
+
   public static JsonObject validCatItem =
           new JsonObject()
                   .put(
@@ -414,6 +429,10 @@ public class TestRequest {
 
   public static List<CreatePolicyRequest> validReqDuplicate =
           CreatePolicyRequest.jsonArrayToList(new JsonArray().add(validReqItem1).add(validReqItem2));
+  public static List<CreatePolicyRequest> ItemfailureResGroup =
+          CreatePolicyRequest.jsonArrayToList(new JsonArray().add(invalidReqItem4Resgrp));
+  public static List<CreatePolicyRequest> ItemfailureRes =
+          CreatePolicyRequest.jsonArrayToList(new JsonArray().add(invalidReqItem4Res));
 
   public static List<CreatePolicyRequest> itemFailure =
       CreatePolicyRequest.jsonArrayToList(new JsonArray().add(invalidReqItem));
