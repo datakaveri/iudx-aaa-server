@@ -1641,102 +1641,75 @@ public class PolicyServiceImpl implements PolicyService {
                       if (resHandler.succeeded()) {
 
                         pool.withTransaction(
-                            conn ->
-                                conn.preparedQuery(CREATE_NOTIFI_POLICY_REQUEST)
-                                    .executeBatch(tuples.result())
-                                    .onComplete(
-                                        insertHandler -> {
-                                          if (insertHandler.failed()) {
-                                            LOGGER.error(
-                                                LOG_DB_ERROR
-                                                    + insertHandler.cause().getLocalizedMessage());
-                                            Response resp =
-                                                new ResponseBuilder()
-                                                    .status(400)
-                                                    .type(URN_INVALID_INPUT)
-                                                    .title(INTERNALERROR)
-                                                    .detail(INTERNALERROR)
-                                                    .build();
-                                            handler.handle(Future.succeededFuture(resp.toJson()));
-                                            return;
-                                          }
+                            conn -> conn.preparedQuery(CREATE_NOTIFI_POLICY_REQUEST)
+                                .executeBatch(tuples.result()).compose(rows -> {
+                                  JsonArray resp = new JsonArray();
+                                  while (rows != null) {
+                                    rows.iterator().forEachRemaining(row -> {
+                                      resp.add(row.toJson());
+                                    });
+                                    rows = rows.next();
+                                  }
 
-                                          if (insertHandler.succeeded()) {
-                                            RowSet<Row> rows = insertHandler.result();
-                                            JsonArray resp = new JsonArray();
-                                            while (rows != null) {
-                                              rows.iterator()
-                                                  .forEachRemaining(
-                                                      row -> {
-                                                        resp.add(row.toJson());
-                                                      });
-                                              rows = rows.next();
-                                            }
+                                  List<String> ids = new ArrayList<>();
+                                  ids.add(user.getUserId());
 
-                                            List<String> ids = new ArrayList<>();
-                                            ids.add(user.getUserId());
+                                  List<String> ownerIds = dbHandler.result().values().stream()
+                                      .map(resObj -> resObj.getOwnerId().toString())
+                                      .collect(Collectors.toList());
+                                  ids.addAll(ownerIds);
 
-                                            List<String> ownerIds =
-                                                dbHandler.result().values().stream()
-                                                    .map(resObj -> resObj.getOwnerId().toString())
-                                                    .collect(Collectors.toList());
-                                            ids.addAll(ownerIds);
+                                  Promise<JsonArray> response = Promise.promise();
+                                  registrationService.getUserDetails(ids, userHandler -> {
+                                    
+                                    if (userHandler.failed()) {
+                                      LOGGER.error(
+                                          "Fail: Registration failure; " + userHandler.cause());
+                                      handler.handle(Future.failedFuture(INTERNALERROR));
+                                    }
 
-                                            registrationService.getUserDetails(
-                                                ids,
-                                                userHandler -> {
-                                                  if (userHandler.failed()) {
-                                                    LOGGER.error(
-                                                        "Fail: Registration failure; "
-                                                            + userHandler.cause());
-                                                    handler.handle(
-                                                        Future.failedFuture(INTERNALERROR));
-                                                  }
+                                    if (userHandler.succeeded()) {
+                                      Map<String, JsonObject> userInfo =
+                                          jsonObjectToMap.apply(userHandler.result());
 
-                                                  if (userHandler.succeeded()) {
-                                                    Map<String, JsonObject> userInfo =
-                                                        jsonObjectToMap.apply(userHandler.result());
+                                      JsonObject userJson1 = userInfo.get(user.getUserId());
+                                      userJson1.put(ID, user.getUserId());
 
-                                                    JsonObject userJson1 =
-                                                        userInfo.get(user.getUserId());
-                                                    userJson1.put(ID, user.getUserId());
+                                      JsonArray results = new JsonArray();
+                                      for (int i = 0; i < request.size(); i++) {
+                                        JsonObject requestJson = request.get(i).toJson();
+                                        requestJson.put(STATUS,
+                                            NotifRequestStatus.PENDING.name().toLowerCase());
 
-                                                    JsonArray results = new JsonArray();
-                                                    for (int i = 0; i < request.size(); i++) {
-                                                      JsonObject requestJson =
-                                                          request.get(i).toJson();
-                                                      requestJson.put(STATUS, NotifRequestStatus.PENDING
-                                                          .name().toLowerCase());
-                                                      
-                                                      String ownerId = ownerIds.get(i);
-                                                      JsonObject ownerInfo = userInfo.get(ownerId);
-                                                      ownerInfo.put(ID, ownerId);
-                                                      JsonObject eachJson =
-                                                          resp.getJsonObject(i)
-                                                              .copy()
-                                                              .mergeIn(requestJson)
-                                                              .put(USER_DETAILS, userJson1)
-                                                              .put(OWNER_DETAILS, ownerInfo);
-                                                      results.add(eachJson);
-                                                    }
+                                        String ownerId = ownerIds.get(i);
+                                        JsonObject ownerInfo = userInfo.get(ownerId);
+                                        ownerInfo.put(ID, ownerId);
+                                        JsonObject eachJson = resp.getJsonObject(i).copy()
+                                            .mergeIn(requestJson).put(USER_DETAILS, userJson1)
+                                            .put(OWNER_DETAILS, ownerInfo);
+                                        results.add(eachJson);
+                                      }
+                                      response.complete(results);
+                                    }
+                                  });
+                                  return response.future();
+                                }))
+                            .onSuccess(created -> {
 
-                                                    LOGGER.info(
-                                                        "Success: {}; Id: {}",
-                                                        SUCC_NOTIF_REQ,
-                                                        resp);
-                                                    Response res =
-                                                        new Response.ResponseBuilder()
-                                                            .type(URN_SUCCESS)
-                                                            .title(SUCC_TITLE_POLICY_READ)
-                                                            .status(200)
-                                                            .arrayResults(results)
-                                                            .build();
-                                                    handler.handle(
-                                                        Future.succeededFuture(res.toJson()));
-                                                  }
-                                                });
-                                          }
-                                        }));
+                              LOGGER.info("Success: {}; Id: {}", SUCC_NOTIF_REQ, created);
+                              Response res = new Response.ResponseBuilder().type(URN_SUCCESS)
+                                  .title(SUCC_TITLE_POLICY_READ).status(200).arrayResults(created)
+                                  .build();
+                              handler.handle(Future.succeededFuture(res.toJson()));
+                            }).onFailure(fail -> {
+
+                              LOGGER.error(LOG_DB_ERROR + fail.getLocalizedMessage());
+                              Response resp =
+                                  new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+                                      .title(INTERNALERROR).detail(INTERNALERROR).build();
+                              handler.handle(Future.succeededFuture(resp.toJson()));
+                              return;
+                            });
                       }
                     });
           }
