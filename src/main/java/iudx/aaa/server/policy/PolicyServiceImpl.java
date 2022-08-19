@@ -1702,12 +1702,8 @@ public class PolicyServiceImpl implements PolicyService {
                                   .build();
                               handler.handle(Future.succeededFuture(res.toJson()));
                             }).onFailure(fail -> {
-
                               LOGGER.error(LOG_DB_ERROR + fail.getLocalizedMessage());
-                              Response resp =
-                                  new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                                      .title(INTERNALERROR).detail(INTERNALERROR).build();
-                              handler.handle(Future.succeededFuture(resp.toJson()));
+                              handler.handle(Future.failedFuture("Internal error"));
                               return;
                             });
                       }
