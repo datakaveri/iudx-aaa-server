@@ -235,7 +235,6 @@ public class CatalogueClient {
   private Future<List<JsonObject>> fetch(Map<String, List<String>> request) {
     Promise<List<JsonObject>> p = Promise.promise();
     List<String> resIds = new ArrayList<>();
-
     if (request.containsKey(RES)) {
       resIds.addAll(request.get(RES));
 
@@ -275,7 +274,7 @@ public class CatalogueClient {
    * @param id - cat_id of item to be fetched from catalogue
    * @return JsonObject - result from the catalogue server
    */
-  private Future<JsonObject> fetchItem(String id) {
+  Future<JsonObject> fetchItem(String id) {
     Promise<JsonObject> p = Promise.promise();
     client
         .get(catPort, catHost, catItemPath)
@@ -320,7 +319,6 @@ public class CatalogueClient {
    */
   private Future<Boolean> insertItemToDb(List<JsonObject> request) {
     Promise<Boolean> p = Promise.promise();
-
     // stream list of Json request to get list of resource groups,id,.resource server
     List<JsonObject> resGrps =
         request.stream()
@@ -329,7 +327,6 @@ public class CatalogueClient {
 
     List<String> emailSHA =
         resGrps.stream().map(e -> e.getString(PROVIDER)).collect(Collectors.toList());
-
     // stream resGrps to get list of ResourceServers, parse to get url of server, check for
     // file/video, use to get resource server id
 
@@ -420,7 +417,6 @@ public class CatalogueClient {
     } else {
       List<String> resGrpId =
           res.stream().map(e -> e.getString(RESOURCE_GROUP)).collect(Collectors.toList());
-
       Future<Map<String, JsonObject>> resourceItemDetails =
           resGrpEntry.compose(
               ar -> {
