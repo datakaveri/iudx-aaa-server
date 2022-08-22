@@ -1,6 +1,7 @@
 
 package iudx.aaa.server.policy;
 
+import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
 import static iudx.aaa.server.policy.Constants.*;
 import static iudx.aaa.server.policy.TestRequest.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -155,8 +156,9 @@ public class CreateDelegationsTest {
 
         policyService.createDelegation(userFailure,notDelUser,new JsonObject(),
                 vertxTestContext.succeeding(response -> vertxTestContext.verify(() -> {
-                    assertEquals("User does not have roles to use API", response.getString("title"));
-                    assertEquals("User does not have roles to use API", response.getString("title"));
+                    assertEquals(ERR_TITLE_INVALID_ROLES.toString(), response.getString("title"));
+                    assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                    assertEquals(401, response.getInteger("status"));
                     vertxTestContext.completeNow();
                 })));
 
