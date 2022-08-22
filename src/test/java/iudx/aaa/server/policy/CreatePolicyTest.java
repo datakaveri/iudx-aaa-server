@@ -37,31 +37,8 @@ import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_REQUEST_ID;
 import static iudx.aaa.server.apiserver.util.Urn.URN_ALREADY_EXISTS;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
-import static iudx.aaa.server.policy.Constants.ITEMNOTFOUND;
-import static iudx.aaa.server.policy.Constants.NIL_UUID;
-import static iudx.aaa.server.policy.Constants.TITLE;
-import static iudx.aaa.server.policy.Constants.TYPE;
-import static iudx.aaa.server.policy.Constants.UNAUTHORIZED;
-import static iudx.aaa.server.policy.Constants.URL;
-import static iudx.aaa.server.policy.TestRequest.MultipleProvider;
-import static iudx.aaa.server.policy.TestRequest.consumerUser;
-import static iudx.aaa.server.policy.TestRequest.duplicate;
-import static iudx.aaa.server.policy.TestRequest.invalidApdPolicyId;
-import static iudx.aaa.server.policy.TestRequest.invalidApdPolicyItemType;
-import static iudx.aaa.server.policy.TestRequest.invalidApdTrustee;
-import static iudx.aaa.server.policy.TestRequest.invalidDelUser;
-import static iudx.aaa.server.policy.TestRequest.invalidProvider;
-import static iudx.aaa.server.policy.TestRequest.invalidProviderItem;
-import static iudx.aaa.server.policy.TestRequest.invalidTrustee;
-import static iudx.aaa.server.policy.TestRequest.invalidTrusteeItem;
-import static iudx.aaa.server.policy.TestRequest.itemFailure;
-import static iudx.aaa.server.policy.TestRequest.validReq;
-import static iudx.aaa.server.policy.TestRequest.unAuthProvider;
-import static iudx.aaa.server.policy.TestRequest.validCatItem;
-import static iudx.aaa.server.policy.TestRequest.validDelUser;
-import static iudx.aaa.server.policy.TestRequest.validDelegateItem;
-import static iudx.aaa.server.policy.TestRequest.validProvider;
-import static iudx.aaa.server.policy.TestRequest.validTrusteeUser;
+import static iudx.aaa.server.policy.Constants.*;
+import static iudx.aaa.server.policy.TestRequest.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 
@@ -525,6 +502,29 @@ public class CreatePolicyTest {
                                             assertEquals("Item does not exist", result.getString(TITLE));
                                             testContext.completeNow();
                                         })));
+    }
+
+    @Test
+    @DisplayName("Duplicate IDs in request array")
+    void failDuplicateIds(VertxTestContext testContext){
+
+      policyService.createPolicy(
+              validReqDuplicate,validAdmin1,
+              new JsonObject(),
+              testContext.succeeding(
+                      response->
+                          testContext.verify(
+                                  ()->{
+                                      JsonObject result= response;
+                                      assertEquals(400,result.getInteger("status"));
+                                      assertEquals(DUPLICATE,result.getString("title"));
+                                      assertEquals(URN_INVALID_INPUT.toString(),result.getString("type"));
+                                      testContext.completeNow();
+                                  }
+                          )
+
+              )
+      );
     }
 
 }
