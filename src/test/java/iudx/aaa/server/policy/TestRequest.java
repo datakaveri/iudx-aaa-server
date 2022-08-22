@@ -25,12 +25,43 @@ public class TestRequest {
           .put("role", "consumer")
           .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
 
+  public static JsonObject roleFailure2 =
+          new JsonObject()
+                  .put(
+                          "itemId",
+                          "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg")
+                  .put("itemType", "RESOURCE_SERVER")
+                  .put("role", "consumer")
+                  .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+  public static JsonObject roleFailure3 =
+          new JsonObject()
+                  .put(
+                          "itemId",
+                          "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg")
+                  .put("itemType", "ADMIN")
+                  .put("role", "ADMIN")
+                  .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+
   public static JsonObject invalidItemId =
       new JsonObject()
           .put("itemId", "rs.iudx.io")
           .put("itemType", "resource_group")
           .put("role", "consumer")
           .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+
+  public static JsonObject invalidItemId2 =
+          new JsonObject()
+                  .put("itemId", "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg/rs.iudx.io/testing-insert-rsg/rs.iudx.io")
+                  .put("itemType", "RESOURCE_GROUP")
+                  .put("role", "consumer")
+                  .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+
+  public static JsonObject invalidItemId3 =
+          new JsonObject()
+                  .put("itemId", "iisc.ac.in/89a36273d7/rs.iudx.io/testing-insert-rsg")
+                  .put("itemType", "RESOURCE")
+                  .put("role", "consumer")
+                  .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
 
   public static JsonObject consumerVerification =
       new JsonObject()
