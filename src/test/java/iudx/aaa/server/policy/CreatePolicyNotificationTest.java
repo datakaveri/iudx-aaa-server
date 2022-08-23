@@ -554,11 +554,11 @@ public class CreatePolicyNotificationTest {
      * - create the same notification again with successful registration service and get a 200
      * instead of a 409 in response
      */
-    String resourceGroup = url + "/da39a3ee5e6b4b0d3255bfef95601890afd80709/" + "rs." + url + "/"
-        + RandomStringUtils.randomAlphabetic(10).toLowerCase();
+    String resource = url + "/da39a3ee5e6b4b0d3255bfef95601890afd80709/" + "rs." + url + "/"
+        + RandomStringUtils.randomAlphabetic(10).toLowerCase() + "/" + RandomStringUtils.randomAlphabetic(10).toLowerCase();
 
     Map<String, List<String>> catClientRequest = new HashMap<String, List<String>>();
-    catClientRequest.put(RES_GRP, List.of(resourceGroup));
+    catClientRequest.put(RES, List.of(resource));
 
     JsonObject ownerJson = provider.result();
     JsonObject consumerJson = consumer.result();
@@ -567,12 +567,13 @@ public class CreatePolicyNotificationTest {
     UUID ownerId = UUID.fromString(ownerJson.getString("userId"));
     UUID itemIdInDb = UUID.randomUUID();
     UUID resServerId = UUID.randomUUID();
+    UUID resGroupId = UUID.randomUUID();
 
     /* Mocking CatalogueClient.checkReqItems */
     Mockito.doAnswer(i -> {
       Map<String, List<String>> req = i.getArgument(0);
-      String catId = req.get(RES_GRP).get(0);
-      ResourceObj obj = new ResourceObj(RES_GRP, itemIdInDb, catId, ownerId, resServerId, null);
+      String catId = req.get(RES).get(0);
+      ResourceObj obj = new ResourceObj(RES, itemIdInDb, catId, ownerId, resServerId, resGroupId);
 
       Map<String, ResourceObj> resp = new HashMap<String, ResourceObj>();
       resp.put(catId, obj);
@@ -587,8 +588,8 @@ public class CreatePolicyNotificationTest {
         .name(consumerJson.getString("firstName"), consumerJson.getString("lastName"))
         .roles(List.of(Roles.CONSUMER)).build();
 
-    JsonArray req = new JsonArray()
-        .add(new JsonObject().put("itemId", resourceGroup).put("itemType", "resource_group")
+    JsonArray req =
+        new JsonArray().add(new JsonObject().put("itemId", resource).put("itemType", "resource")
             .put("expiryDuration", "P1Y").put("constraints", new JsonObject()));
 
     List<CreatePolicyNotification> request = CreatePolicyNotification.jsonArrayToList(req);
@@ -637,8 +638,8 @@ public class CreatePolicyNotificationTest {
 
             assertEquals(obj.getString(STATUS), NotifRequestStatus.PENDING.name().toLowerCase());
             assertEquals(obj.getString("expiryDuration"), request.get(0).getExpiryDuration());
-            assertEquals(obj.getString(ITEMID), resourceGroup);
-            assertEquals(obj.getString(ITEMTYPE), "resource_group");
+            assertEquals(obj.getString(ITEMID), resource);
+            assertEquals(obj.getString(ITEMTYPE), "resource");
             assertTrue(obj.getValue(CONSTRAINTS) instanceof JsonObject);
             success.flag();
           }));
