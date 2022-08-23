@@ -1,6 +1,7 @@
 
 package iudx.aaa.server.policy;
 
+import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
 import static iudx.aaa.server.policy.Constants.*;
 import static iudx.aaa.server.policy.TestRequest.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -147,6 +148,20 @@ public class CreateDelegationsTest {
                     assertEquals(DUPLICATE_DELEGATION, response.getString("title"));
                     testContext.completeNow();
                 })));
+    }
+
+    @Test
+    @DisplayName("Delegate excepted Provider (Not valid Delegate)")
+    void notValidDelegate(VertxTestContext vertxTestContext){
+
+        policyService.createDelegation(userFailure,notDelUser,new JsonObject(),
+                vertxTestContext.succeeding(response -> vertxTestContext.verify(() -> {
+                    assertEquals(ERR_TITLE_INVALID_ROLES.toString(), response.getString("title"));
+                    assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                    assertEquals(401, response.getInteger("status"));
+                    vertxTestContext.completeNow();
+                })));
+
     }
 
 }
