@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.Map;
 import java.util.Set;
+
+import iudx.aaa.server.apiserver.User;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -233,6 +235,23 @@ public class ListPolicyTest {
           assertEquals(INTERNALERROR, response.getMessage());
           testContext.completeNow();
         })));
+  }
+
+  @Test
+  @DisplayName("ListPolicy failure due to NIL_UUID")
+  void listPolicyNILUUID(VertxTestContext testContext){
+
+    User nilUUID =
+            new User(new JsonObject().put("userId", "00000000-0000-0000-0000-000000000000"));
+
+    policyService.listPolicy(nilUUID, new JsonObject(),
+            testContext.succeeding(response -> testContext.verify(() -> {
+              assertEquals(URN_MISSING_INFO.toString(), response.getString("type"));
+              assertEquals(URN_MISSING_INFO.toString(), response.getString("title"));
+              assertEquals(NO_USER.toString(), response.getString("detail"));
+              assertEquals(404, response.getInteger("status"));
+            })));
+    testContext.completeNow();
   }
 }
 
