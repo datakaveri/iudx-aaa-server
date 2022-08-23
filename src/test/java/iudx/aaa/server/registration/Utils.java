@@ -86,6 +86,12 @@ public class Utils {
 
   private static final String SQL_DELETE_RESOURCE_SERVER_BY_OWNER_ID =
       "DELETE FROM resource_server WHERE owner_id = ANY($1::uuid[])";
+  
+  public static final String SQL_CREATE_NOTIFICATION =
+      "INSERT INTO access_requests (id, user_id, item_id, item_type, owner_id, status,"
+      + " expiry_duration, constraints, created_at, updated_at) VALUES"
+      + " ($1::UUID, $2::UUID, $3::UUID, $4::item_enum, $5::UUID, $6::acc_reqs_status_enum,"
+      + " $7::interval, $8::jsonb, NOW(), NOW())";
 
   /**
    * Create a mock user based on the supplied params. The user is created and the information of the
