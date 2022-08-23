@@ -1770,19 +1770,20 @@ public class PolicyServiceImpl implements PolicyService {
               Collector<Row, ?, Map<UUID, String>> collectItemName =
                   Collectors.toMap(row -> row.getUUID(ID), row -> row.getString(URL));
 
-              List<UUID> itemIds =
+              Set<UUID> itemIds =
                   result.stream()
                       .map(each -> UUID.fromString(each.getString(ITEMID)))
-                      .collect(Collectors.toList());
+                      .collect(Collectors.toSet());
 
-              Tuple tuple = Tuple.of(itemIds.toArray(UUID[]::new));
               Future<Map<UUID, String>> getNames =
-                  pool.withTransaction(
-                      conn ->
-                          conn.preparedQuery(SEL_NOTIF_ITEM_ID)
-                              .collecting(collectItemName)
-                              .execute(tuple)
-                              .map(res -> res.value()));
+                  CompositeFuture.all(catalogueClient.getCatIds(itemIds, itemTypes.RESOURCE_GROUP),
+                      catalogueClient.getCatIds(itemIds, itemTypes.RESOURCE)).compose(res -> {
+                        Map<UUID, String> resGroups = res.resultAt(0);
+                        Map<UUID, String> resItems = res.resultAt(1);
+                        /* merging the two maps into resGroups */
+                        resGroups.putAll(resItems);
+                        return Future.succeededFuture(resGroups);
+                      });
 
               getNames
                   .onFailure(
