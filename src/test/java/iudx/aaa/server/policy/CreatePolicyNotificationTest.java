@@ -1,20 +1,7 @@
 package iudx.aaa.server.policy;
 
-import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
-import static iudx.aaa.server.apiserver.util.Urn.URN_SUCCESS;
-import static iudx.aaa.server.policy.Constants.CONSTRAINTS;
-import static iudx.aaa.server.policy.Constants.INVALID_ROLE;
-import static iudx.aaa.server.policy.Constants.ITEMID;
-import static iudx.aaa.server.policy.Constants.ITEMTYPE;
-import static iudx.aaa.server.policy.Constants.NIL_UUID;
-import static iudx.aaa.server.policy.Constants.OWNER_DETAILS;
-import static iudx.aaa.server.policy.Constants.RESULTS;
-import static iudx.aaa.server.policy.Constants.RES_GRP;
-import static iudx.aaa.server.policy.Constants.STATUS;
-import static iudx.aaa.server.policy.Constants.SUCC_TITLE_POLICY_READ;
-import static iudx.aaa.server.policy.Constants.TITLE;
-import static iudx.aaa.server.policy.Constants.TYPE;
-import static iudx.aaa.server.policy.Constants.USER_DETAILS;
+import static iudx.aaa.server.apiserver.util.Urn.*;
+import static iudx.aaa.server.policy.Constants.*;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_ORG;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_ORG;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -236,14 +223,74 @@ public class CreatePolicyNotificationTest {
         })));
 
     // repeat for provider, trustee, delegate roles
-    checkProvider.flag();
-    checkTrustee.flag();
-    checkDelegate.flag();
+
+    User providerUser = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+            .userId(userJson.getString("userId"))
+            .name(userJson.getString("firstName"), userJson.getString("lastName"))
+            .roles(List.of(Roles.PROVIDER)).build();
+
+    policyService.createPolicyNotification(request, providerUser,
+            testContext.succeeding(response -> testContext.verify(() -> {
+              assertEquals(403, response.getInteger("status"));
+              assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
+              assertEquals(INVALID_ROLE, response.getString("detail"));
+              assertEquals(INVALID_ROLE, response.getString(TITLE));
+              checkProvider.flag();
+            })));
+
+    User trusteeUser = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+            .userId(userJson.getString("userId"))
+            .name(userJson.getString("firstName"), userJson.getString("lastName"))
+            .roles(List.of(Roles.TRUSTEE)).build();
+
+    policyService.createPolicyNotification(request, trusteeUser,
+            testContext.succeeding(response -> testContext.verify(() -> {
+              assertEquals(403, response.getInteger("status"));
+              assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
+              assertEquals(INVALID_ROLE, response.getString("detail"));
+              assertEquals(INVALID_ROLE, response.getString(TITLE));
+              checkTrustee.flag();
+            })));
+
+    User delegateUser = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+            .userId(userJson.getString("userId"))
+            .name(userJson.getString("firstName"), userJson.getString("lastName"))
+            .roles(List.of(Roles.DELEGATE)).build();
+
+    policyService.createPolicyNotification(request, delegateUser,
+            testContext.succeeding(response -> testContext.verify(() -> {
+              assertEquals(403, response.getInteger("status"));
+              assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
+              assertEquals(INVALID_ROLE, response.getString("detail"));
+              assertEquals(INVALID_ROLE, response.getString(TITLE));
+              checkDelegate.flag();
+            })));
+
   }
 
   @Test
   @DisplayName("Invalid itemId:itemType - resource sent with itemType resource_group")
   void failInvalidItemResource(VertxTestContext testContext) {
+    JsonObject userJson = consumer.result();
+
+    /* use the consumer user itself but create user object with required role */
+    User consumerUser = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+            .userId(userJson.getString("userId"))
+            .name(userJson.getString("firstName"), userJson.getString("lastName"))
+            .roles(List.of(Roles.CONSUMER)).build();
+
+    JsonArray req = new JsonArray()
+            .add(new JsonObject().put("itemId", RESOURCE).put("itemType", "resource_group")
+                    .put("expiryDuration", "P1Y").put("constraints", new JsonObject()));
+    List<CreatePolicyNotification> request = CreatePolicyNotification.jsonArrayToList(req);
+
+    policyService.createPolicyNotification(request, consumerUser,
+            testContext.succeeding(response -> testContext.verify(() -> {
+              assertEquals(400, response.getInteger("status"));
+              assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+              assertEquals(INCORRECT_ITEM_TYPE, response.getString("detail"));
+              assertEquals(INCORRECT_ITEM_TYPE, response.getString(TITLE));
+            })));
 
     testContext.completeNow();
   }
@@ -251,8 +298,28 @@ public class CreatePolicyNotificationTest {
   @Test
   @DisplayName("Invalid itemId:itemType - resource_group sent with itemType resource")
   void failInvalidItemResourceGrp(VertxTestContext testContext) {
+      JsonObject userJson = consumer.result();
 
-    testContext.completeNow();
+      /* use the consumer user itself but create user object with required role */
+      User consumerUser = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+              .userId(userJson.getString("userId"))
+              .name(userJson.getString("firstName"), userJson.getString("lastName"))
+              .roles(List.of(Roles.CONSUMER)).build();
+
+      JsonArray req = new JsonArray()
+              .add(new JsonObject().put("itemId", RESOURCE_GROUP).put("itemType", "resource")
+                      .put("expiryDuration", "P1Y").put("constraints", new JsonObject()));
+      List<CreatePolicyNotification> request = CreatePolicyNotification.jsonArrayToList(req);
+
+      policyService.createPolicyNotification(request, consumerUser,
+              testContext.succeeding(response -> testContext.verify(() -> {
+                  assertEquals(400, response.getInteger("status"));
+                  assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                  assertEquals(INCORRECT_ITEM_TYPE, response.getString("detail"));
+                  assertEquals(INCORRECT_ITEM_TYPE, response.getString(TITLE));
+              })));
+
+      testContext.completeNow();
   }
 
   @Test
@@ -260,6 +327,29 @@ public class CreatePolicyNotificationTest {
   void failDuplicateRequestIds(VertxTestContext testContext) {
     // add 2 requests to the JSON array/list of requests but both having same resource ID, other
     // options different
+
+      JsonObject userJson = consumer.result();
+
+      /* use the consumer user itself but create user object with required role */
+      User consumerUser = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+              .userId(userJson.getString("userId"))
+              .name(userJson.getString("firstName"), userJson.getString("lastName"))
+              .roles(List.of(Roles.CONSUMER)).build();
+
+      JsonArray req = new JsonArray()
+              .add(new JsonObject().put("itemId", RESOURCE).put("itemType", "resource")
+                      .put("expiryDuration", "P1Y").put("constraints", new JsonObject()))
+              .add(new JsonObject().put("itemId", RESOURCE).put("itemType", "resource")
+              .put("expiryDuration", "P1Y1M").put("constraints", new JsonObject()));
+      List<CreatePolicyNotification> request = CreatePolicyNotification.jsonArrayToList(req);
+
+      policyService.createPolicyNotification(request, consumerUser,
+              testContext.succeeding(response -> testContext.verify(() -> {
+                  assertEquals(400, response.getInteger("status"));
+                  assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                  assertEquals(DUPLICATE, response.getString("detail"));
+                  assertEquals(SUCC_NOTIF_REQ, response.getString(TITLE));
+              })));
     testContext.completeNow();
   }
 
@@ -273,6 +363,25 @@ public class CreatePolicyNotificationTest {
         .thenReturn(Future.failedFuture("Item does not exist"));
 
     // call create notification with the same resource group, perform assertions
+      JsonObject userJson = consumer.result();
+
+      User consumerUser = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+              .userId(userJson.getString("userId"))
+              .name(userJson.getString("firstName"), userJson.getString("lastName"))
+              .roles(List.of(Roles.CONSUMER)).build();
+
+      JsonArray req = new JsonArray()
+              .add(new JsonObject().put("itemId", RESOURCE_GROUP).put("itemType", "resource_group")
+                      .put("expiryDuration", "P1Y").put("constraints", new JsonObject()));
+      List<CreatePolicyNotification> request = CreatePolicyNotification.jsonArrayToList(req);
+
+      policyService.createPolicyNotification(request, consumerUser,
+              testContext.succeeding(response -> testContext.verify(() -> {
+                  assertEquals(400, response.getInteger("status"));
+                  assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                  assertEquals(ITEMNOTFOUND, response.getString("detail"));
+                  assertEquals(ITEMNOTFOUND, response.getString(TITLE));
+              })));
     testContext.completeNow();
   }
 
@@ -368,8 +477,130 @@ public class CreatePolicyNotificationTest {
     // in the .succeeding method, create the exact same thing (i.e. repeat the createNotification
     // call)
     // assert that you get a 409 + whatever else
-    testContext.completeNow();
+
+      String resourceGroup = url + "/da39a3ee5e6b4b0d3255bfef95601890afd80709/" + "rs." + url + "/"
+              + RandomStringUtils.randomAlphabetic(10).toLowerCase();
+
+      Map<String, List<String>> catClientRequest = new HashMap<String, List<String>>();
+      catClientRequest.put(RES_GRP, List.of(resourceGroup));
+
+      JsonObject ownerJson = provider.result();
+      JsonObject consumerJson = consumer.result();
+
+      UUID consumerId = UUID.fromString(consumerJson.getString("userId"));
+      UUID ownerId = UUID.fromString(ownerJson.getString("userId"));
+      UUID itemIdInDb = UUID.randomUUID();
+      UUID resServerId = UUID.randomUUID();
+
+      /* Mocking CatalogueClient.checkReqItems */
+      Mockito.doAnswer(i -> {
+          Map<String, List<String>> req = i.getArgument(0);
+          String catId = req.get(RES_GRP).get(0);
+          ResourceObj obj = new ResourceObj(RES_GRP, itemIdInDb, catId, ownerId, resServerId, null);
+
+          Map<String, ResourceObj> resp = new HashMap<String, ResourceObj>();
+          resp.put(catId, obj);
+          return Future.succeededFuture(resp);
+      }).when(catalogueClient).checkReqItems(catClientRequest);
+
+      /* Mocking RegistrationService.getUserDetails */
+      JsonObject ownerDetails = new JsonObject().put("email", ownerJson.getString("email"))
+              .put("name", new JsonObject().put("firstName", ownerJson.getString("firstName"))
+                      .put("lastName", ownerJson.getString("lastName")));
+
+      JsonObject consumerDetails = new JsonObject().put("email", consumerJson.getString("email"))
+              .put("name", new JsonObject().put("firstName", consumerJson.getString("firstName"))
+                      .put("lastName", consumerJson.getString("lastName")));
+      JsonObject userDetailsResp = new JsonObject().put(consumerId.toString(), consumerDetails)
+              .put(ownerId.toString(), ownerDetails);
+
+      mockRegistrationFactory.setResponse(userDetailsResp);
+
+      User user = new UserBuilder().keycloakId(consumerJson.getString("keycloakId"))
+              .userId(consumerJson.getString("userId"))
+              .name(consumerJson.getString("firstName"), consumerJson.getString("lastName"))
+              .roles(List.of(Roles.CONSUMER)).build();
+
+      JsonArray req = new JsonArray()
+              .add(new JsonObject().put("itemId", resourceGroup).put("itemType", "resource_group")
+                      .put("expiryDuration", "P1Y").put("constraints", new JsonObject()));
+
+      List<CreatePolicyNotification> request = CreatePolicyNotification.jsonArrayToList(req);
+
+      policyService.createPolicyNotification(request, user,
+              testContext.succeeding(
+                      response-> {
+                          policyService.createPolicyNotification(request, user, testContext.succeeding(
+                                  responses -> testContext.verify(() -> {
+                                      assertEquals(409, responses.getInteger("status"));
+                                      assertEquals(URN_ALREADY_EXISTS.toString(), responses.getString(TYPE));
+                                      assertEquals(DUP_NOTIF_REQ, responses.getString(TITLE));
+                                      testContext.completeNow();
+                                  })));
+                      }
+              ));
   }
 
+    @Test
+    @DisplayName("Failing Insertion Handler in DB due to null as constraints")
+    void failedInsertHandler(VertxTestContext testContext) {
 
+        String resourceGroup = url + "/da39a3ee5e6b4b0d3255bfef95601890afd80709/" + "rs." + url + "/"
+                + RandomStringUtils.randomAlphabetic(10).toLowerCase();
+
+        Map<String, List<String>> catClientRequest = new HashMap<String, List<String>>();
+        catClientRequest.put(RES_GRP, List.of(resourceGroup));
+
+        JsonObject ownerJson = provider.result();
+        JsonObject consumerJson = consumer.result();
+
+        UUID consumerId = UUID.fromString(consumerJson.getString("userId"));
+        UUID ownerId = UUID.fromString(ownerJson.getString("userId"));
+        UUID itemIdInDb = UUID.randomUUID();
+        UUID resServerId = UUID.randomUUID();
+
+        /* Mocking CatalogueClient.checkReqItems */
+        Mockito.doAnswer(i -> {
+            Map<String, List<String>> req = i.getArgument(0);
+            String catId = req.get(RES_GRP).get(0);
+            ResourceObj obj = new ResourceObj(RES_GRP, itemIdInDb, catId, ownerId, resServerId, null);
+
+            Map<String, ResourceObj> resp = new HashMap<String, ResourceObj>();
+            resp.put(catId, obj);
+            return Future.succeededFuture(resp);
+        }).when(catalogueClient).checkReqItems(catClientRequest);
+
+        /* Mocking RegistrationService.getUserDetails */
+        JsonObject ownerDetails = new JsonObject().put("email", ownerJson.getString("email"))
+                .put("name", new JsonObject().put("firstName", ownerJson.getString("firstName"))
+                        .put("lastName", ownerJson.getString("lastName")));
+
+        JsonObject consumerDetails = new JsonObject().put("email", consumerJson.getString("email"))
+                .put("name", new JsonObject().put("firstName", consumerJson.getString("firstName"))
+                        .put("lastName", consumerJson.getString("lastName")));
+        JsonObject userDetailsResp = new JsonObject().put(consumerId.toString(), consumerDetails)
+                .put(ownerId.toString(), ownerDetails);
+
+        mockRegistrationFactory.setResponse(userDetailsResp);
+
+        User user = new UserBuilder().keycloakId(consumerJson.getString("keycloakId"))
+                .userId(consumerJson.getString("userId"))
+                .name(consumerJson.getString("firstName"), consumerJson.getString("lastName"))
+                .roles(List.of(Roles.CONSUMER)).build();
+
+        JsonArray req = new JsonArray()
+                .add(new JsonObject().put("itemId", resourceGroup).put("itemType", "resource_group")
+                        .put("expiryDuration", "P1Y").put("constraints", null));
+
+        List<CreatePolicyNotification> request = CreatePolicyNotification.jsonArrayToList(req);
+
+        policyService.createPolicyNotification(request, user,
+                testContext.succeeding(response -> testContext.verify(() -> {
+                    assertEquals(400, response.getInteger("status"));
+                    assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                    assertEquals(INTERNALERROR, response.getString(TITLE));
+                    assertEquals(INTERNALERROR, response.getString("detail"));
+                    testContext.completeNow();
+                })));
+    }
 }
