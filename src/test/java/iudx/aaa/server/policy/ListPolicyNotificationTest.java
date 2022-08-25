@@ -308,6 +308,37 @@ public class ListPolicyNotificationTest {
   @DisplayName("Test admin/trustee calling API")
   void failDisallowedRoles(VertxTestContext testContext) {
     // same as the create notification tests here
+    Checkpoint checkAdmin = testContext.checkpoint();
+    Checkpoint checkTrustee = testContext.checkpoint();
+    JsonObject admin = consumer.result();
+    String randomUserId = UUID.randomUUID().toString();
+    User userAdmin = new UserBuilder().keycloakId(admin.getString("keycloakId")).userId(randomUserId)
+            .name(admin.getString("firstName"), admin.getString("lastName"))
+            .roles(List.of(Roles.ADMIN)).build();
+
+    policyService.listPolicyNotification(userAdmin, new JsonObject(),
+            testContext.succeeding(response -> testContext.verify(() -> {
+              assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
+              assertEquals(ERR_DETAIL_LIST_DELEGATE_ROLES, response.getString("detail"));
+              assertEquals(ERR_TITLE_INVALID_ROLES, response.getString("title"));
+              assertEquals(401, response.getInteger("status"));
+              checkAdmin.flag();
+            })));
+
+    JsonObject trustee = consumer.result();
+    User trusteeUser = new UserBuilder().keycloakId(trustee.getString("keycloakId")).userId(randomUserId)
+            .name(trustee.getString("firstName"), trustee.getString("lastName"))
+            .roles(List.of(Roles.TRUSTEE)).build();
+
+    policyService.listPolicyNotification(trusteeUser, new JsonObject(),
+            testContext.succeeding(response -> testContext.verify(() -> {
+              assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
+              assertEquals(ERR_DETAIL_LIST_DELEGATE_ROLES, response.getString("detail"));
+              assertEquals(ERR_TITLE_INVALID_ROLES, response.getString("title"));
+              assertEquals(401, response.getInteger("status"));
+              checkTrustee.flag();
+            })));
+
     testContext.completeNow();
   }
 
@@ -424,6 +455,70 @@ public class ListPolicyNotificationTest {
 
     // add mocks
     // must get requests 1 and 3
+
+    /* Mock catalogue client to get correct list of cat IDs */
+    Mockito.doAnswer(i -> {
+      Set<UUID> itemIds = i.getArgument(0);
+      Map<UUID, String> resMap =
+              itemIds.stream().collect(Collectors.toMap(id -> id, id -> itemIdToCatId.get(id)));
+      return Future.succeededFuture(resMap);
+    }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
+
+    /* Mock registration service details */
+    Mockito.doAnswer(i -> {
+      List<String> userIds = i.getArgument(0);
+      Promise<JsonObject> promise = i.getArgument(1);
+
+      promise.complete(fetchUserDetail(userIds));
+      return i.getMock();
+    }).when(registrationService).getUserDetails(Mockito.any(), Mockito.any());
+
+    Checkpoint request1Cp = testContext.checkpoint();
+    Checkpoint request2Cp = testContext.checkpoint();
+
+    policyService.listPolicyNotification(user, new JsonObject(),
+            testContext.succeeding(response -> testContext.verify(() -> {
+              assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+              assertEquals(SUCC_LIST_NOTIF_REQ, response.getString("title"));
+              assertEquals(200, response.getInteger("status"));
+              assertTrue(response.containsKey(RESULTS));
+
+              JsonArray results = response.getJsonArray(RESULTS);
+              assertTrue(results.size() == 2);
+
+              results.forEach(object -> {
+                JsonObject j = (JsonObject) object;
+
+                if (j.getString("requestId").equals(request1.toString())) {
+                  assertEquals(j.getString(ITEMID), providerARsgCatId);
+                  assertEquals(j.getString(STATUS),
+                          NotifRequestStatus.PENDING.toString().toLowerCase());
+                  assertEquals(j.getString(ITEMTYPE), "resource_group");
+                  assertEquals(j.getJsonObject(OWNER_DETAILS).getString(ID),
+                          providerA.result().getString("userId"));
+                  assertEquals(j.getJsonObject(USER_DETAILS).getString(ID),
+                          providerA.result().getString("userId"));
+                  assertEquals(j.getString("expiryDuration"), EXPIRY_DURATION);
+                  assertEquals(j.getJsonObject(CONSTRAINTS), new JsonObject());
+                  request1Cp.flag();
+                }
+
+                if (j.getString("requestId").equals(request2.toString())) {
+                  assertEquals(j.getString(ITEMID), providerAResCatId);
+                  assertEquals(j.getString(STATUS),
+                          NotifRequestStatus.REJECTED.toString().toLowerCase());
+                  assertEquals(j.getString(ITEMTYPE), "resource");
+                  assertEquals(j.getJsonObject(OWNER_DETAILS).getString(ID),
+                          providerA.result().getString("userId"));
+                  assertEquals(j.getJsonObject(USER_DETAILS).getString(ID),
+                          providerA.result().getString("userId"));
+                  assertEquals(j.getString("expiryDuration"), EXPIRY_DURATION);
+                  assertEquals(j.getJsonObject(CONSTRAINTS), new JsonObject());
+                  request2Cp.flag();
+                }
+              });
+            })));
+
     testContext.completeNow();
   }
 
@@ -438,6 +533,70 @@ public class ListPolicyNotificationTest {
 
     // add mocks
     // must get requests 2 and 4
+
+    /* Mock catalogue client to get correct list of cat IDs */
+    Mockito.doAnswer(i -> {
+      Set<UUID> itemIds = i.getArgument(0);
+      Map<UUID, String> resMap =
+              itemIds.stream().collect(Collectors.toMap(id -> id, id -> itemIdToCatId.get(id)));
+      return Future.succeededFuture(resMap);
+    }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
+
+    /* Mock registration service details */
+    Mockito.doAnswer(i -> {
+      List<String> userIds = i.getArgument(0);
+      Promise<JsonObject> promise = i.getArgument(1);
+
+      promise.complete(fetchUserDetail(userIds));
+      return i.getMock();
+    }).when(registrationService).getUserDetails(Mockito.any(), Mockito.any());
+
+    Checkpoint request1Cp = testContext.checkpoint();
+    Checkpoint request2Cp = testContext.checkpoint();
+
+    policyService.listPolicyNotification(user, new JsonObject(),
+            testContext.succeeding(response -> testContext.verify(() -> {
+              assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+              assertEquals(SUCC_LIST_NOTIF_REQ, response.getString("title"));
+              assertEquals(200, response.getInteger("status"));
+              assertTrue(response.containsKey(RESULTS));
+
+              JsonArray results = response.getJsonArray(RESULTS);
+              assertTrue(results.size() == 2);
+
+              results.forEach(object -> {
+                JsonObject j = (JsonObject) object;
+
+                if (j.getString("requestId").equals(request1.toString())) {
+                  assertEquals(j.getString(ITEMID), providerBRsgCatId);
+                  assertEquals(j.getString(STATUS),
+                          NotifRequestStatus.PENDING.toString().toLowerCase());
+                  assertEquals(j.getString(ITEMTYPE), "resource_group");
+                  assertEquals(j.getJsonObject(OWNER_DETAILS).getString(ID),
+                          providerB.result().getString("userId"));
+                  assertEquals(j.getJsonObject(USER_DETAILS).getString(ID),
+                          providerB.result().getString("userId"));
+                  assertEquals(j.getString("expiryDuration"), EXPIRY_DURATION);
+                  assertEquals(j.getJsonObject(CONSTRAINTS), new JsonObject());
+                  request1Cp.flag();
+                }
+
+                if (j.getString("requestId").equals(request2.toString())) {
+                  assertEquals(j.getString(ITEMID), providerBResCatId);
+                  assertEquals(j.getString(STATUS),
+                          NotifRequestStatus.APPROVED.toString().toLowerCase());
+                  assertEquals(j.getString(ITEMTYPE), "resource");
+                  assertEquals(j.getJsonObject(OWNER_DETAILS).getString(ID),
+                          providerB.result().getString("userId"));
+                  assertEquals(j.getJsonObject(USER_DETAILS).getString(ID),
+                          providerB.result().getString("userId"));
+                  assertEquals(j.getString("expiryDuration"), EXPIRY_DURATION);
+                  assertEquals(j.getJsonObject(CONSTRAINTS), new JsonObject());
+                  request2Cp.flag();
+                }
+              });
+            })));
+
     testContext.completeNow();
   }
 
@@ -452,6 +611,69 @@ public class ListPolicyNotificationTest {
 
     // add mocks
     // must get requests 3 and 4
+
+    /* Mock catalogue client to get correct list of cat IDs */
+    Mockito.doAnswer(i -> {
+      Set<UUID> itemIds = i.getArgument(0);
+      Map<UUID, String> resMap =
+              itemIds.stream().collect(Collectors.toMap(id -> id, id -> itemIdToCatId.get(id)));
+      return Future.succeededFuture(resMap);
+    }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
+
+    /* Mock registration service details */
+    Mockito.doAnswer(i -> {
+      List<String> userIds = i.getArgument(0);
+      Promise<JsonObject> promise = i.getArgument(1);
+
+      promise.complete(fetchUserDetail(userIds));
+      return i.getMock();
+    }).when(registrationService).getUserDetails(Mockito.any(), Mockito.any());
+
+    Checkpoint request1Cp = testContext.checkpoint();
+    Checkpoint request2Cp = testContext.checkpoint();
+
+    policyService.listPolicyNotification(user, new JsonObject(),
+            testContext.succeeding(response -> testContext.verify(() -> {
+              assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+              assertEquals(SUCC_LIST_NOTIF_REQ, response.getString("title"));
+              assertEquals(200, response.getInteger("status"));
+              assertTrue(response.containsKey(RESULTS));
+
+              JsonArray results = response.getJsonArray(RESULTS);
+              assertTrue(results.size() == 2);
+
+              results.forEach(object -> {
+                JsonObject j = (JsonObject) object;
+
+                if (j.getString("requestId").equals(request1.toString())) {
+                  assertEquals(j.getString(ITEMID), providerBRsgCatId);
+                  assertEquals(j.getString(STATUS),
+                          NotifRequestStatus.PENDING.toString().toLowerCase());
+                  assertEquals(j.getString(ITEMTYPE), "resource_group");
+                  assertEquals(j.getJsonObject(OWNER_DETAILS).getString(ID),
+                          providerB.result().getString("userId"));
+                  assertEquals(j.getJsonObject(USER_DETAILS).getString(ID),
+                          delegateConsumer.result().getString("userId"));
+                  assertEquals(j.getString("expiryDuration"), EXPIRY_DURATION);
+                  assertEquals(j.getJsonObject(CONSTRAINTS), new JsonObject());
+                  request1Cp.flag();
+                }
+
+                if (j.getString("requestId").equals(request2.toString())) {
+                  assertEquals(j.getString(ITEMID), providerAResCatId);
+                  assertEquals(j.getString(STATUS),
+                          NotifRequestStatus.REJECTED.toString().toLowerCase());
+                  assertEquals(j.getString(ITEMTYPE), "resource");
+                  assertEquals(j.getJsonObject(OWNER_DETAILS).getString(ID),
+                          providerA.result().getString("userId"));
+                  assertEquals(j.getJsonObject(USER_DETAILS).getString(ID),
+                          delegateConsumer.result().getString("userId"));
+                  assertEquals(j.getString("expiryDuration"), EXPIRY_DURATION);
+                  assertEquals(j.getJsonObject(CONSTRAINTS), new JsonObject());
+                  request2Cp.flag();
+                }
+              });
+            })));
     testContext.completeNow();
   }
 
@@ -471,6 +693,69 @@ public class ListPolicyNotificationTest {
 
     // add mocks
     // must get requests 1 and 3
+
+    /* Mock catalogue client to get correct list of cat IDs */
+    Mockito.doAnswer(i -> {
+      Set<UUID> itemIds = i.getArgument(0);
+      Map<UUID, String> resMap =
+              itemIds.stream().collect(Collectors.toMap(id -> id, id -> itemIdToCatId.get(id)));
+      return Future.succeededFuture(resMap);
+    }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
+
+    /* Mock registration service details */
+    Mockito.doAnswer(i -> {
+      List<String> userIds = i.getArgument(0);
+      Promise<JsonObject> promise = i.getArgument(1);
+
+      promise.complete(fetchUserDetail(userIds));
+      return i.getMock();
+    }).when(registrationService).getUserDetails(Mockito.any(), Mockito.any());
+
+    Checkpoint request1Cp = testContext.checkpoint();
+    Checkpoint request2Cp = testContext.checkpoint();
+
+    policyService.listPolicyNotification(user, providerDetails,
+            testContext.succeeding(response -> testContext.verify(() -> {
+              assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+              assertEquals(SUCC_LIST_NOTIF_REQ, response.getString("title"));
+              assertEquals(200, response.getInteger("status"));
+              assertTrue(response.containsKey(RESULTS));
+
+              JsonArray results = response.getJsonArray(RESULTS);
+              assertTrue(results.size() == 2);
+
+              results.forEach(object -> {
+                JsonObject j = (JsonObject) object;
+
+                if (j.getString("requestId").equals(request1.toString())) {
+                  assertEquals(j.getString(ITEMID), providerARsgCatId);
+                  assertEquals(j.getString(STATUS),
+                          NotifRequestStatus.PENDING.toString().toLowerCase());
+                  assertEquals(j.getString(ITEMTYPE), "resource_group");
+                  assertEquals(j.getJsonObject(OWNER_DETAILS).getString(ID),
+                          providerA.result().getString("userId"));
+                  assertEquals(j.getJsonObject(USER_DETAILS).getString(ID),
+                          delegateConsumer.result().getString("userId"));
+                  assertEquals(j.getString("expiryDuration"), EXPIRY_DURATION);
+                  assertEquals(j.getJsonObject(CONSTRAINTS), new JsonObject());
+                  request1Cp.flag();
+                }
+
+                if (j.getString("requestId").equals(request2.toString())) {
+                  assertEquals(j.getString(ITEMID), providerAResCatId);
+                  assertEquals(j.getString(STATUS),
+                          NotifRequestStatus.REJECTED.toString().toLowerCase());
+                  assertEquals(j.getString(ITEMTYPE), "resource");
+                  assertEquals(j.getJsonObject(OWNER_DETAILS).getString(ID),
+                          providerA.result().getString("userId"));
+                  assertEquals(j.getJsonObject(USER_DETAILS).getString(ID),
+                          delegateConsumer.result().getString("userId"));
+                  assertEquals(j.getString("expiryDuration"), EXPIRY_DURATION);
+                  assertEquals(j.getJsonObject(CONSTRAINTS), new JsonObject());
+                  request2Cp.flag();
+                }
+              });
+            })));
     testContext.completeNow();
   }
 }
