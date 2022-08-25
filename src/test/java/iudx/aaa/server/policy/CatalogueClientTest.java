@@ -412,12 +412,7 @@ public class CatalogueClientTest {
                                   respObj.getOwnerId(), UUID.fromString(providerUser.result().getString("userId")));
                           assertEquals(respObj.getResServerID(), resourceSerID);
                           testContext.completeNow();
-                      })
-              .onFailure(
-                      fail -> {
-                          testContext.completeNow();
-                      }
-              );
+                      });
   }
 
     @Test
