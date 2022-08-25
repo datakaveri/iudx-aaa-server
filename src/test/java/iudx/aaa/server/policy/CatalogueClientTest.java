@@ -395,7 +395,6 @@ public class CatalogueClientTest {
                           Promise<JsonObject> p = Promise.promise();
                           String item = i.getArgument(0);
                           p.complete(resGrpItem.put(ID, item));
-
                           return p.future();
                       })
               .when(spyCatalogueClient)
