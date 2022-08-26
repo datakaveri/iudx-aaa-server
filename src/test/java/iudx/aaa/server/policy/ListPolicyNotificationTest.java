@@ -339,7 +339,6 @@ public class ListPolicyNotificationTest {
               checkTrustee.flag();
             })));
 
-    testContext.completeNow();
   }
 
   @Test
@@ -474,7 +473,7 @@ public class ListPolicyNotificationTest {
     }).when(registrationService).getUserDetails(Mockito.any(), Mockito.any());
 
     Checkpoint request1Cp = testContext.checkpoint();
-    Checkpoint request2Cp = testContext.checkpoint();
+    Checkpoint request3Cp = testContext.checkpoint();
 
     policyService.listPolicyNotification(user, new JsonObject(),
             testContext.succeeding(response -> testContext.verify(() -> {
@@ -497,13 +496,13 @@ public class ListPolicyNotificationTest {
                   assertEquals(j.getJsonObject(OWNER_DETAILS).getString(ID),
                           providerA.result().getString("userId"));
                   assertEquals(j.getJsonObject(USER_DETAILS).getString(ID),
-                          providerA.result().getString("userId"));
+                          consumer.result().getString("userId"));
                   assertEquals(j.getString("expiryDuration"), EXPIRY_DURATION);
                   assertEquals(j.getJsonObject(CONSTRAINTS), new JsonObject());
                   request1Cp.flag();
                 }
 
-                if (j.getString("requestId").equals(request2.toString())) {
+                if (j.getString("requestId").equals(request3.toString())) {
                   assertEquals(j.getString(ITEMID), providerAResCatId);
                   assertEquals(j.getString(STATUS),
                           NotifRequestStatus.REJECTED.toString().toLowerCase());
@@ -511,15 +510,14 @@ public class ListPolicyNotificationTest {
                   assertEquals(j.getJsonObject(OWNER_DETAILS).getString(ID),
                           providerA.result().getString("userId"));
                   assertEquals(j.getJsonObject(USER_DETAILS).getString(ID),
-                          providerA.result().getString("userId"));
+                          delegateConsumer.result().getString("userId"));
                   assertEquals(j.getString("expiryDuration"), EXPIRY_DURATION);
                   assertEquals(j.getJsonObject(CONSTRAINTS), new JsonObject());
-                  request2Cp.flag();
+                  request3Cp.flag();
                 }
               });
             })));
 
-    testContext.completeNow();
   }
 
   @Test
@@ -551,8 +549,8 @@ public class ListPolicyNotificationTest {
       return i.getMock();
     }).when(registrationService).getUserDetails(Mockito.any(), Mockito.any());
 
-    Checkpoint request1Cp = testContext.checkpoint();
     Checkpoint request2Cp = testContext.checkpoint();
+    Checkpoint request4Cp = testContext.checkpoint();
 
     policyService.listPolicyNotification(user, new JsonObject(),
             testContext.succeeding(response -> testContext.verify(() -> {
@@ -567,7 +565,7 @@ public class ListPolicyNotificationTest {
               results.forEach(object -> {
                 JsonObject j = (JsonObject) object;
 
-                if (j.getString("requestId").equals(request1.toString())) {
+                if (j.getString("requestId").equals(request4.toString())) {
                   assertEquals(j.getString(ITEMID), providerBRsgCatId);
                   assertEquals(j.getString(STATUS),
                           NotifRequestStatus.PENDING.toString().toLowerCase());
@@ -575,10 +573,10 @@ public class ListPolicyNotificationTest {
                   assertEquals(j.getJsonObject(OWNER_DETAILS).getString(ID),
                           providerB.result().getString("userId"));
                   assertEquals(j.getJsonObject(USER_DETAILS).getString(ID),
-                          providerB.result().getString("userId"));
+                          delegateConsumer.result().getString("userId"));
                   assertEquals(j.getString("expiryDuration"), EXPIRY_DURATION);
                   assertEquals(j.getJsonObject(CONSTRAINTS), new JsonObject());
-                  request1Cp.flag();
+                  request4Cp.flag();
                 }
 
                 if (j.getString("requestId").equals(request2.toString())) {
@@ -589,15 +587,13 @@ public class ListPolicyNotificationTest {
                   assertEquals(j.getJsonObject(OWNER_DETAILS).getString(ID),
                           providerB.result().getString("userId"));
                   assertEquals(j.getJsonObject(USER_DETAILS).getString(ID),
-                          providerB.result().getString("userId"));
+                          consumer.result().getString("userId"));
                   assertEquals(j.getString("expiryDuration"), EXPIRY_DURATION);
                   assertEquals(j.getJsonObject(CONSTRAINTS), new JsonObject());
                   request2Cp.flag();
                 }
               });
             })));
-
-    testContext.completeNow();
   }
 
   @Test
@@ -629,8 +625,8 @@ public class ListPolicyNotificationTest {
       return i.getMock();
     }).when(registrationService).getUserDetails(Mockito.any(), Mockito.any());
 
-    Checkpoint request1Cp = testContext.checkpoint();
-    Checkpoint request2Cp = testContext.checkpoint();
+    Checkpoint request3Cp = testContext.checkpoint();
+    Checkpoint request4Cp = testContext.checkpoint();
 
     policyService.listPolicyNotification(user, new JsonObject(),
             testContext.succeeding(response -> testContext.verify(() -> {
@@ -645,7 +641,7 @@ public class ListPolicyNotificationTest {
               results.forEach(object -> {
                 JsonObject j = (JsonObject) object;
 
-                if (j.getString("requestId").equals(request1.toString())) {
+                if (j.getString("requestId").equals(request4.toString())) {
                   assertEquals(j.getString(ITEMID), providerBRsgCatId);
                   assertEquals(j.getString(STATUS),
                           NotifRequestStatus.PENDING.toString().toLowerCase());
@@ -656,10 +652,10 @@ public class ListPolicyNotificationTest {
                           delegateConsumer.result().getString("userId"));
                   assertEquals(j.getString("expiryDuration"), EXPIRY_DURATION);
                   assertEquals(j.getJsonObject(CONSTRAINTS), new JsonObject());
-                  request1Cp.flag();
+                  request4Cp.flag();
                 }
 
-                if (j.getString("requestId").equals(request2.toString())) {
+                if (j.getString("requestId").equals(request3.toString())) {
                   assertEquals(j.getString(ITEMID), providerAResCatId);
                   assertEquals(j.getString(STATUS),
                           NotifRequestStatus.REJECTED.toString().toLowerCase());
@@ -670,11 +666,10 @@ public class ListPolicyNotificationTest {
                           delegateConsumer.result().getString("userId"));
                   assertEquals(j.getString("expiryDuration"), EXPIRY_DURATION);
                   assertEquals(j.getJsonObject(CONSTRAINTS), new JsonObject());
-                  request2Cp.flag();
+                  request3Cp.flag();
                 }
               });
             })));
-    testContext.completeNow();
   }
 
   @Test
@@ -712,7 +707,7 @@ public class ListPolicyNotificationTest {
     }).when(registrationService).getUserDetails(Mockito.any(), Mockito.any());
 
     Checkpoint request1Cp = testContext.checkpoint();
-    Checkpoint request2Cp = testContext.checkpoint();
+    Checkpoint request3Cp = testContext.checkpoint();
 
     policyService.listPolicyNotification(user, providerDetails,
             testContext.succeeding(response -> testContext.verify(() -> {
@@ -735,13 +730,13 @@ public class ListPolicyNotificationTest {
                   assertEquals(j.getJsonObject(OWNER_DETAILS).getString(ID),
                           providerA.result().getString("userId"));
                   assertEquals(j.getJsonObject(USER_DETAILS).getString(ID),
-                          delegateConsumer.result().getString("userId"));
+                          consumer.result().getString("userId"));
                   assertEquals(j.getString("expiryDuration"), EXPIRY_DURATION);
                   assertEquals(j.getJsonObject(CONSTRAINTS), new JsonObject());
                   request1Cp.flag();
                 }
 
-                if (j.getString("requestId").equals(request2.toString())) {
+                if (j.getString("requestId").equals(request3.toString())) {
                   assertEquals(j.getString(ITEMID), providerAResCatId);
                   assertEquals(j.getString(STATUS),
                           NotifRequestStatus.REJECTED.toString().toLowerCase());
@@ -752,10 +747,9 @@ public class ListPolicyNotificationTest {
                           delegateConsumer.result().getString("userId"));
                   assertEquals(j.getString("expiryDuration"), EXPIRY_DURATION);
                   assertEquals(j.getJsonObject(CONSTRAINTS), new JsonObject());
-                  request2Cp.flag();
+                  request3Cp.flag();
                 }
               });
             })));
-    testContext.completeNow();
   }
 }
