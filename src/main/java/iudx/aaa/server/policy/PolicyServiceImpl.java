@@ -2002,12 +2002,12 @@ public class PolicyServiceImpl implements PolicyService {
 
     Future<JsonObject> userDetails = approvedRejectedQueryData.compose(res -> {
 
-      List<String> ownerIds = createPolicyArray.result().stream().map(JsonObject.class::cast)
-          .map(each -> each.getString(OWNERID)).collect(Collectors.toList());
+      List<String> consumerIds = createPolicyArray.result().stream().map(JsonObject.class::cast)
+          .map(each -> each.getString(USERID)).collect(Collectors.toList());
 
       List<String> ids = new ArrayList<String>();
       ids.add(user.getUserId());
-      ids.addAll(ownerIds);
+      ids.addAll(consumerIds);
 
       Promise<JsonObject> p = Promise.promise();
       registrationService.getUserDetails(ids, p);
@@ -2083,31 +2083,27 @@ public class PolicyServiceImpl implements PolicyService {
     updatedRequests.compose(result -> {
       Map<String, JsonObject> userInfo = jsonObjectToMap.apply(userDetails.result());
 
-      JsonObject userJson1 = userInfo.get(user.getUserId());
-
-      List<String> ownerIds = createPolicyArray.result().stream().map(JsonObject.class::cast)
-          .map(each -> each.getString(OWNERID)).collect(Collectors.toList());
+      JsonObject ownerJson = userInfo.get(user.getUserId()).put(ID, user.getUserId());
 
       JsonArray results = new JsonArray();
       JsonArray resArr = rejectedRequestArray.future().result();
       resArr.addAll(approvedRequestArray.future().result());
       for (int i = 0; i < resArr.size(); i++) {
         JsonObject requestJson = resArr.getJsonObject(i);
-
         LOGGER.info("Updated status of request ID {} to {}", requestJson.getString(ID),
             requestJson.getString(STATUS).toUpperCase());
 
         requestJson.remove(EXPIRYTIME);
-        requestJson.remove(USERID);
+        String consumerId = (String) requestJson.remove(USERID);
         requestJson.remove(OWNERID);
         requestJson.remove(ID);
+
         requestJson.put(STATUS, requestJson.getString(STATUS).toLowerCase());
         requestJson.put(ITEMTYPE, requestJson.getString(ITEMTYPE).toLowerCase());
+        requestJson.put(USER_DETAILS, userInfo.get(consumerId).put(ID, consumerId));
+        requestJson.put(OWNER_DETAILS, ownerJson);
 
-        JsonObject eachJson = requestJson.put(USER_DETAILS, userJson1).put(OWNER_DETAILS,
-            userInfo.get(ownerIds.get(i)));
-
-        results.add(eachJson);
+        results.add(requestJson.copy());
       }
       return Future.succeededFuture(results);
     }).onSuccess(results -> {
