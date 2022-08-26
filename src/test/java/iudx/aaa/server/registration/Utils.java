@@ -92,6 +92,14 @@ public class Utils {
       + " expiry_duration, constraints, created_at, updated_at) VALUES"
       + " ($1::UUID, $2::UUID, $3::UUID, $4::item_enum, $5::UUID, $6::acc_reqs_status_enum,"
       + " $7::interval, $8::jsonb, NOW(), NOW())";
+  
+  public static final String SQL_CREATE_VALID_AUTH_POLICY = "INSERT INTO policies (owner_id, item_id,"
+      + " item_type, user_id, status, expiry_time, constraints, created_at, updated_at)"
+      + " SELECT owner_id, id, 'RESOURCE_SERVER'::item_enum, $1::uuid, 'ACTIVE'::policy_status_enum,"
+      + " NOW() + INTERVAL '5 years', '{}'::jsonb, NOW(), NOW() FROM resource_server WHERE url = $2::text";
+  
+  public static final String SQL_DELETE_ANY_POLICIES = "UPDATE policies SET status = 'DELETED' WHERE"
+      + " owner_id = ANY($1::uuid[]) OR user_id = ANY($1::uuid[])";
 
   /**
    * Create a mock user based on the supplied params. The user is created and the information of the
