@@ -1939,15 +1939,17 @@ public class PolicyServiceImpl implements PolicyService {
     });
 
     Future<Map<UUID, String>> getItemIdName = createPolicyArray.compose(createPolicyArr -> {
-      List<UUID> itemIds = createPolicyArr.stream().map(JsonObject.class::cast)
-          .map(each -> UUID.fromString(each.getString(ITEMID))).collect(Collectors.toList());
+      Set<UUID> itemIds = createPolicyArr.stream().map(JsonObject.class::cast)
+          .map(each -> UUID.fromString(each.getString(ITEMID))).collect(Collectors.toSet());
 
-      Collector<Row, ?, Map<UUID, String>> collectItemName =
-          Collectors.toMap(row -> row.getUUID(ID), row -> row.getString(URL));
-
-      return pool
-          .withTransaction(conn -> conn.preparedQuery(SEL_NOTIF_ITEM_ID).collecting(collectItemName)
-              .execute(Tuple.of(itemIds.toArray(UUID[]::new))).map(res -> res.value()));
+      return CompositeFuture.all(catalogueClient.getCatIds(itemIds, itemTypes.RESOURCE_GROUP),
+          catalogueClient.getCatIds(itemIds, itemTypes.RESOURCE)).compose(res -> {
+            Map<UUID, String> resGroups = res.resultAt(0);
+            Map<UUID, String> resItems = res.resultAt(1);
+            /* merging the two maps into resGroups */
+            resGroups.putAll(resItems);
+            return Future.succeededFuture(resGroups);
+          });
     });
 
     Promise<JsonArray> approvedRequestArray = Promise.promise();
