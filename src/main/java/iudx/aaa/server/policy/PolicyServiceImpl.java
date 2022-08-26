@@ -1863,7 +1863,7 @@ public class PolicyServiceImpl implements PolicyService {
 
   /** {@inheritDoc} */
   @Override
-  public PolicyService updatelistPolicyNotification(List<UpdatePolicyNotification> request,
+  public PolicyService updatePolicyNotification(List<UpdatePolicyNotification> request,
       User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler) {
 
     boolean isDelegate = !data.isEmpty();
