@@ -68,15 +68,15 @@ public class Utils {
 
   private static final String SQL_CREATE_RES_SERVER =
       "INSERT INTO resource_server(id,name,owner_id,url,created_at,updated_at) "
-          + "Values ($1::uuid,2::text,$3::uuid,$4::text,NOW(),NOW())";
+          + "Values ($1::uuid,$2::text,$3::uuid,$4::text,NOW(),NOW())";
 
   private static final String SQL_CREATE_RES_GRP =
       "INSERT INTO resource_group(id,cat_id,provider_id,resource_server_id,created_at,updated_at) "
-          + "Values ($1::uuid,2::text,$3::uuid,$4::uuid,NOW(),NOW())";
+          + "Values ($1::uuid,$2::text,$3::uuid,$4::uuid,NOW(),NOW())";
 
   private static final String SQL_CREATE_RES =
       "INSERT INTO resource(id,cat_id,provider_id,resource_group_id,created_at,updated_at,"
-          + "resource_server_id) Values ($1::uuid,2::text,$3::uuid,$4::uuid,NOW(),NOW(),$5::UUID)";
+          + "resource_server_id) Values ($1::uuid,$2::text,$3::uuid,$4::uuid,NOW(),NOW(),$5::UUID)";
 
   private static final String SQL_DELETE_RESOURCE_BY_OWNER_ID =
       "DELETE FROM resource WHERE provider_id = ANY($1::uuid[])";

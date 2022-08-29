@@ -24,32 +24,16 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
-import static iudx.aaa.server.policy.Constants.ID;
-import static iudx.aaa.server.policy.Constants.ITEMNOTFOUND;
-import static iudx.aaa.server.policy.Constants.IUDX_RES;
-import static iudx.aaa.server.policy.Constants.IUDX_RES_GRP;
-import static iudx.aaa.server.policy.Constants.PROVIDER;
-import static iudx.aaa.server.policy.Constants.RES;
-import static iudx.aaa.server.policy.Constants.RESOURCE_GROUP;
-import static iudx.aaa.server.policy.Constants.RESOURCE_SERVER;
-import static iudx.aaa.server.policy.Constants.STATUS;
-import static iudx.aaa.server.policy.Constants.TITLE;
-import static iudx.aaa.server.policy.Constants.TYPE;
+import static iudx.aaa.server.policy.Constants.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
@@ -165,7 +149,7 @@ public class CatalogueClientTest {
               resourceSerID = UUID.randomUUID();
               resourceIdOne = UUID.randomUUID();
               resourceServerUrl = "rs.server.com";
-              resourceGrp = "rs.server.com/rsg";
+              resourceGrp = "emailsha/xyz/"+ resourceServerUrl+"/rsg";
               resourceOne = resourceGrp + "/ri1";
               Utils.createFakeResourceServer(
                       pgclient, adminUser.result(), resourceSerID, resourceServerUrl)
@@ -269,91 +253,297 @@ public class CatalogueClientTest {
   @Test
   @DisplayName("Test resource group does not exist")
   void InvalidResGrp(VertxTestContext testContext) {
-    testContext.completeNow();
+      String item =
+              RandomStringUtils.randomAlphabetic(2)
+                      + "/"
+                      + RandomStringUtils.randomAlphabetic(2)
+                      + "/"
+                      + RandomStringUtils.randomAlphabetic(2)
+                      + "/"
+                      + RandomStringUtils.randomAlphabetic(2);
+      List<String> resItems = new ArrayList<>();
+      resItems.add(item);
+      Map<String, List<String>> catItem = new HashMap<>();
+      catItem.put(RES_GRP, resItems);
+      Response r =
+              new Response.ResponseBuilder()
+                      .type(Urn.URN_INVALID_INPUT.toString())
+                      .title(ITEMNOTFOUND)
+                      .detail(item)
+                      .status(400)
+                      .build();
+      ComposeException e = new ComposeException(r);
+
+      Mockito.doReturn(Future.failedFuture(e)).when(spyCatalogueClient).fetchItem(Mockito.any());
+
+      spyCatalogueClient
+              .checkReqItems(catItem)
+              .onFailure(
+                      fail -> {
+                          JsonObject response = new JsonObject();
+                          if (fail instanceof ComposeException) {
+                              ComposeException exp = (ComposeException) fail;
+                              response = exp.getResponse().toJson();
+                              assertEquals(response.getString(TITLE), ITEMNOTFOUND);
+                              assertEquals(response.getInteger(STATUS), 400);
+                              assertEquals(response.getString(TYPE), Urn.URN_INVALID_INPUT.toString());
+                          }
+                          testContext.completeNow();
+                      });
   }
 
   @Test
   @DisplayName("Test get res details from cat server")
   void getItemfromCatServerSucc(VertxTestContext testContext) {
-    String resourceGrp =
-        RandomStringUtils.randomAlphabetic(2)
-            + "/"
-            + RandomStringUtils.randomAlphabetic(2)
-            + "/"
-            + RandomStringUtils.randomAlphabetic(2)
-            + "/"
-            + RandomStringUtils.randomAlphabetic(2);
-    String resource = resourceGrp + "/" + RandomStringUtils.randomAlphabetic(2);
-    List<String> resItems = new ArrayList<>();
-    resItems.add(resource);
-    // request
-    Map<String, List<String>> catItem = new HashMap<>();
-    catItem.put(RES, resItems);
+      String resourceGrp =
+              RandomStringUtils.randomAlphabetic(2)
+                      + "/"
+                      + RandomStringUtils.randomAlphabetic(2)
+                      + "/"
+                      + RandomStringUtils.randomAlphabetic(2)
+                      + "/"
+                      + RandomStringUtils.randomAlphabetic(2);
+      String resource = resourceGrp + "/" + RandomStringUtils.randomAlphabetic(2);
+      List<String> resItems = new ArrayList<>();
+      resItems.add(resource);
+      // request
+      Map<String, List<String>> catItem = new HashMap<>();
+      catItem.put(RES, resItems);
 
-    // mock response
-    JsonObject resItem = new JsonObject();
-    JsonObject resGrpItem = new JsonObject();
-    JsonArray resTypeArray = new JsonArray();
-    JsonArray resGrpTypeArray = new JsonArray();
-    resTypeArray.add(IUDX_RES);
-    resGrpTypeArray.add(IUDX_RES_GRP);
-    String emailId = providerUser.result().getString("email");
-    String hash = DigestUtils.sha1Hex(emailId.getBytes());
-    String emailHash = emailId.split("@")[1] + '/' + hash;
-    resItem
-        .put(TYPE, resTypeArray)
-        .put(PROVIDER, emailHash)
-        .put(RESOURCE_SERVER, emailHash + "/" + resourceServerUrl)
-        .put(RESOURCE_GROUP, resourceGrp);
+      // mock response
+      JsonObject resItem = new JsonObject();
+      JsonObject resGrpItem = new JsonObject();
+      JsonArray resTypeArray = new JsonArray();
+      JsonArray resGrpTypeArray = new JsonArray();
+      resTypeArray.add(IUDX_RES);
+      resGrpTypeArray.add(IUDX_RES_GRP);
+      String emailId = providerUser.result().getString("email");
+      String hash = DigestUtils.sha1Hex(emailId.getBytes());
+      String emailHash = emailId.split("@")[1] + '/' + hash;
+      resItem
+              .put(TYPE, resTypeArray)
+              .put(PROVIDER, emailHash)
+              .put(RESOURCE_SERVER, emailHash + "/" + resourceServerUrl)
+              .put(RESOURCE_GROUP, resourceGrp);
 
-    resGrpItem
-        .put(TYPE, resGrpTypeArray)
-        .put(PROVIDER, emailHash)
-        .put(RESOURCE_SERVER, emailHash + "/" + resourceServerUrl);
+      resGrpItem
+              .put(TYPE, resGrpTypeArray)
+              .put(PROVIDER, emailHash)
+              .put(RESOURCE_SERVER, emailHash + "/" + resourceServerUrl);
 
-    // mock
-    Mockito.doAnswer(
-            i -> {
-              Promise<JsonObject> p = Promise.promise();
-              String item = i.getArgument(0);
-              String[] itemSplit = item.split("/");
-              if (itemSplit.length < 5) p.complete(resGrpItem.put(ID, item));
-              else p.complete(resItem.put(ID, item));
-              return p.future();
-            })
-        .when(spyCatalogueClient)
-        .fetchItem(any());
+      // mock
+      Mockito.doAnswer(
+                      i -> {
+                          Promise<JsonObject> p = Promise.promise();
+                          String item = i.getArgument(0);
+                          String[] itemSplit = item.split("/");
+                          if (itemSplit.length < 5) p.complete(resGrpItem.put(ID, item));
+                          else p.complete(resItem.put(ID, item));
+                          return p.future();
+                      })
+              .when(spyCatalogueClient)
+              .fetchItem(any());
 
-    spyCatalogueClient
-        .checkReqItems(catItem)
-        .onSuccess(
-            succ -> {
-              Map<String, ResourceObj> resp = succ;
-              ResourceObj respObj = resp.get(resource);
-              assertEquals(respObj.getCatId(), resource);
-              assertEquals(respObj.getItemType(), "resource");
-              assertEquals(
-                  respObj.getOwnerId(), UUID.fromString(providerUser.result().getString("userId")));
-              assertEquals(respObj.getResServerID(), resourceSerID);
-              testContext.completeNow();
-            });
+      spyCatalogueClient
+              .checkReqItems(catItem)
+              .onSuccess(
+                      succ -> {
+                          Map<String, ResourceObj> resp = succ;
+                          ResourceObj respObj = resp.get(resource);
+                          assertEquals(respObj.getCatId(), resource);
+                          assertEquals(respObj.getItemType(), "resource");
+                          assertEquals(
+                                  respObj.getOwnerId(), UUID.fromString(providerUser.result().getString("userId")));
+                          assertEquals(respObj.getResServerID(), resourceSerID);
+                          testContext.completeNow();
+                      });
   }
-
   @Test
   @DisplayName("Test resource group details from cat server")
   void getGrpfromCatServerSucc(VertxTestContext testContext) {
-    testContext.completeNow();
+      String resourceGrp =
+              RandomStringUtils.randomAlphabetic(2)
+                      + "/"
+                      + RandomStringUtils.randomAlphabetic(2)
+                      + "/"
+                      + RandomStringUtils.randomAlphabetic(2)
+                      + "/"
+                      + RandomStringUtils.randomAlphabetic(2);
+      String resource = resourceGrp + "/" + RandomStringUtils.randomAlphabetic(2);
+      List<String> resItems = new ArrayList<>();
+      resItems.add(resourceGrp);
+      // request
+      Map<String, List<String>> catItem = new HashMap<>();
+      catItem.put(RES_GRP, resItems);
+
+      // mock response
+      JsonObject resGrpItem = new JsonObject();
+      JsonArray resGrpTypeArray = new JsonArray();
+      resGrpTypeArray.add(IUDX_RES_GRP);
+      String emailId = providerUser.result().getString("email");
+      String hash = DigestUtils.sha1Hex(emailId.getBytes());
+      String emailHash = emailId.split("@")[1] + '/' + hash;
+
+      resGrpItem
+              .put(TYPE, resGrpTypeArray)
+              .put(PROVIDER, emailHash)
+              .put(RESOURCE_SERVER, emailHash + "/" + resourceServerUrl);
+
+      // mock
+      Mockito.doAnswer(
+                      i -> {
+                          Promise<JsonObject> p = Promise.promise();
+                          String item = i.getArgument(0);
+                          p.complete(resGrpItem.put(ID, item));
+                          return p.future();
+                      })
+              .when(spyCatalogueClient)
+              .fetchItem(any());
+
+      spyCatalogueClient
+              .checkReqItems(catItem)
+              .onSuccess(
+                      succ -> {
+                          Map<String, ResourceObj> resp = succ;
+                          ResourceObj respObj = resp.get(resourceGrp);
+                          assertEquals(respObj.getCatId(), resourceGrp);
+                          assertEquals(respObj.getItemType(), "resource_group");
+                          assertEquals(
+                                  respObj.getOwnerId(), UUID.fromString(providerUser.result().getString("userId")));
+                          assertEquals(respObj.getResServerID(), resourceSerID);
+                          testContext.completeNow();
+                      });
   }
 
-  @Test
-  @DisplayName("Test resource exists on DB")
-  void succResExistsinDB(VertxTestContext testContext) {
-    testContext.completeNow();
-  }
+    @Test
+    @DisplayName("Test resource exists on DB")
+    void succResExistsinDB(VertxTestContext testContext) {
+        List<String> resItems = new ArrayList<>();
+        resItems.add(resourceOne);
+        // request
+        Map<String, List<String>> catItem = new HashMap<>();
+        catItem.put(RES, resItems);
+        catalogueClient.checkReqItems(catItem)
+                .onSuccess(succ -> {
+                    Map<String, ResourceObj> resp = succ;
+                    ResourceObj respObj = resp.get(resourceOne);
+                    assertEquals(respObj.getCatId(), resourceOne);
+                    assertEquals(respObj.getItemType(), "resource");
+                    assertEquals(
+                            respObj.getOwnerId(), UUID.fromString(providerUser.result().getString("userId")));
+                    assertEquals(respObj.getResServerID(), resourceSerID);
+                    testContext.completeNow();
+                });
+    }
 
-  @Test
-  @DisplayName("Test resource group exists on DB")
-  void succResGrpExistsinDB(VertxTestContext testContext) {
-    testContext.completeNow();
-  }
+    @Test
+    @DisplayName("Test resource group exists on DB")
+    void succResGrpExistsinDB(VertxTestContext testContext) {
+        List<String> resItems = new ArrayList<>();
+        resItems.add(resourceGrp);
+        // request
+        Map<String, List<String>> catItem = new HashMap<>();
+        catItem.put(RES_GRP, resItems);
+        spyCatalogueClient
+                .checkReqItems(catItem)
+                .onSuccess(succ -> {
+                    Map<String, ResourceObj> resp = succ;
+                    ResourceObj respObj = resp.get(resourceGrp);
+                    assertEquals(respObj.getCatId(), resourceGrp);
+                    assertEquals(respObj.getItemType(), "resource_group");
+                    assertEquals(
+                            respObj.getOwnerId(), UUID.fromString(providerUser.result().getString("userId")));
+                    assertEquals(respObj.getResServerID(), resourceSerID);
+                    testContext.completeNow();
+                });
+    }
+
+    @Test
+    @DisplayName("Test resource group details not available in cat server")
+    void getGrpfromCatServerFail(VertxTestContext testContext) {
+        String resourceGrp =
+                RandomStringUtils.randomAlphabetic(2)
+                        + "/"
+                        + RandomStringUtils.randomAlphabetic(2)
+                        + "/"
+                        + RandomStringUtils.randomAlphabetic(2)
+                        + "/"
+                        + RandomStringUtils.randomAlphabetic(2);
+        List<String> resItems = new ArrayList<>();
+        resItems.add(resourceGrp);
+        // request
+        Map<String, List<String>> catItem = new HashMap<>();
+        catItem.put(RES_GRP, resItems);
+
+        // mock response
+        JsonObject resGrpItem = new JsonObject();
+        JsonArray resGrpTypeArray = new JsonArray();
+        resGrpTypeArray.add(IUDX_RES_GRP);
+        String emailId = providerUser.result().getString("email");
+        String hash = DigestUtils.sha1Hex(emailId.getBytes());
+        String emailHash = emailId.split("@")[1] + '/' + hash;
+        JsonArray resTypeArray = new JsonArray();
+
+        resTypeArray.add(IUDX_RES);
+        resGrpItem
+                .put(TYPE, resGrpTypeArray)
+                .put(PROVIDER, "emailHash")
+                .put(RESOURCE_SERVER, emailHash + "/" + resourceServerUrl);
+
+
+        // mock
+        Mockito.doAnswer(
+                        i -> {
+                            Promise<JsonObject> p = Promise.promise();
+                            String item = i.getArgument(0);
+                            p.complete(resGrpItem.put(ID, item));
+                            return p.future();
+                        })
+                .when(spyCatalogueClient)
+                .fetchItem(any());
+        spyCatalogueClient
+                .checkReqItems(catItem)
+                .onFailure(
+                        failure -> {
+                            JsonObject response = new JsonObject();
+                            if (failure instanceof ComposeException) {
+                                ComposeException exp = (ComposeException) failure;
+                                response = exp.getResponse().toJson();
+                                assertEquals(response.getString(TITLE), PROVIDER_NOT_REGISTERED);
+                                assertEquals(response.getInteger(STATUS), 403);
+                                assertEquals(response.getString(TYPE), Urn.URN_INVALID_INPUT.toString());
+                            }
+                            testContext.completeNow();
+                        });
+    }
+
+    @Test
+    @DisplayName("Test Get Cat IDs of resource")
+    void getCatIDForRes(VertxTestContext testContext) {
+        Set<UUID> itemIds = new HashSet<>();
+        itemIds.add(resourceIdOne);
+        spyCatalogueClient.getCatIds(itemIds, itemTypes.RESOURCE)
+                .onSuccess(
+                        succ -> {
+                            Map<UUID, String> resp = new HashMap<>(succ);
+                            assertTrue(resp.containsKey(resourceIdOne));
+                            assertEquals(resp.get(resourceIdOne),resourceOne);
+                            testContext.completeNow();
+                        });
+    }
+
+    @Test
+    @DisplayName("Test Get Cat IDs of resource")
+    void getCatIDForRes1(VertxTestContext testContext) {
+        Set<UUID> itemIds = new HashSet<>();
+        itemIds.add(resourceGrpID);
+        spyCatalogueClient.getCatIds(itemIds, itemTypes.RESOURCE_GROUP)
+                .onSuccess(
+                        succ -> {
+                            Map<UUID, String> resp = new HashMap<>(succ);
+                            assertTrue(resp.containsKey(resourceGrpID));
+                            assertEquals(resp.get(resourceGrpID),resourceGrp);
+                            testContext.completeNow();
+                        });
+    }
 }
