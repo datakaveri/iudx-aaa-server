@@ -14,6 +14,8 @@ import static iudx.aaa.server.policy.Constants.ITEMID;
 import static iudx.aaa.server.policy.Constants.ITEMTYPE;
 import static iudx.aaa.server.policy.Constants.NIL_UUID;
 import static iudx.aaa.server.policy.Constants.OWNER_DETAILS;
+import static iudx.aaa.server.policy.Constants.REQ_ID_ALREADY_NOT_EXISTS;
+import static iudx.aaa.server.policy.Constants.RES;
 import static iudx.aaa.server.policy.Constants.RESULTS;
 import static iudx.aaa.server.policy.Constants.RES_GRP;
 import static iudx.aaa.server.policy.Constants.STATUS;
@@ -119,8 +121,9 @@ public class UpdatePolicyNotificationTest {
    * for the policy ID after a successful approval. Hence, the actual createPolicy must be called.
    * 
    * As a result, we need to create an auth server entry in the resource_server table and add an
-   * auth policy set for the provider by the auth server admin (without this, createPolicy will
-   * fail). We also need to mock the CatalogueClient.checkReqItems, since it's used in createPolicy
+   * auth policy set for the provider and delegate by the auth server admin (without this,
+   * createPolicy will fail). We also need to mock the CatalogueClient.checkReqItems, since it's
+   * used in createPolicy
    */
 
   @Captor
@@ -208,13 +211,15 @@ public class UpdatePolicyNotificationTest {
     CompositeFuture.all(orgIdFut, provider, delegate, consumer, admin).compose(r -> {
       UUID adminId = UUID.fromString(admin.result().getString("userId"));
       UUID providerId = UUID.fromString(provider.result().getString("userId"));
+      UUID delegateId = UUID.fromString(delegate.result().getString("userId"));
 
       Tuple authTup = Tuple.of("Auth Server", adminId, DUMMY_AUTH_SERVER);
-      Tuple authPolicyTup = Tuple.of(providerId, DUMMY_AUTH_SERVER);
+      Tuple authPolicyProvider = Tuple.of(providerId, DUMMY_AUTH_SERVER);
+      Tuple authPolicyDelegate = Tuple.of(delegateId, DUMMY_AUTH_SERVER);
 
-      return pool.withConnection(
-          conn -> conn.preparedQuery(SQL_CREATE_ADMIN_SERVER).execute(authTup).compose(
-              succ -> conn.preparedQuery(SQL_CREATE_VALID_AUTH_POLICY).execute(authPolicyTup)));
+      return pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_ADMIN_SERVER)
+          .execute(authTup).compose(succ -> conn.preparedQuery(SQL_CREATE_VALID_AUTH_POLICY)
+              .executeBatch(List.of(authPolicyProvider, authPolicyDelegate))));
     }).onSuccess(res -> {
 
       policyService = new PolicyServiceImpl(pool, registrationService, apdService, catalogueClient,
@@ -230,7 +235,8 @@ public class UpdatePolicyNotificationTest {
     Tuple servers = Tuple.of(List.of(DUMMY_AUTH_SERVER).toArray());
     UUID adminId = UUID.fromString(admin.result().getString("userId"));
     UUID providerId = UUID.fromString(provider.result().getString("userId"));
-    Tuple policyOwners = Tuple.of(List.of(adminId, providerId).toArray(UUID[]::new));
+    UUID delegateId = UUID.fromString(delegate.result().getString("userId"));
+    Tuple policyOwners = Tuple.of(List.of(adminId, providerId, delegateId).toArray(UUID[]::new));
 
     List<JsonObject> users =
         List.of(provider.result(), delegate.result(), consumer.result(), admin.result());
@@ -243,7 +249,8 @@ public class UpdatePolicyNotificationTest {
           if (x.failed()) {
             LOGGER.warn(x.cause().getMessage());
             LOGGER.error(
-                "Data is NOT deleted after this test since policy table does not allow deletes and therefore cascade delete fails");
+                "Data is NOT deleted after this test since policy table"
+                + " does not allow deletes and therefore cascade delete fails");
           }
           vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
         });
@@ -415,6 +422,44 @@ public class UpdatePolicyNotificationTest {
                 assertEquals(SUCC_NOTIF_REQ, response.getString(TITLE));
                 assertEquals(DUPLICATE, response.getString("detail"));
                 assertEquals(400, response.getInteger("status"));
+                testContext.completeNow();
+              })));
+        });
+  }
+
+  @Test
+  @DisplayName("Test random provider trying to reject notification not owned by them")
+  void failProviderDoesNotOwnRequest(VertxTestContext testContext) {
+
+    UUID itemId = randResourceGroup.get();
+    PolicyService spiedPolicyService = Mockito.spy(policyService);
+
+    createNotification(itemId, "RESOURCE_GROUP", NotifRequestStatus.PENDING, "P1Y",
+        new JsonObject()).onSuccess(id -> {
+          String requestId = id.toString();
+
+          /*
+           * NOTE: we take the delegate user and add a fake userId, and the provider role.
+           */
+          JsonObject userJson = delegate.result();
+
+          User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+              .userId(UUID.randomUUID().toString())
+              .name(userJson.getString("firstName"), userJson.getString("lastName"))
+              .roles(List.of(Roles.PROVIDER)).build();
+
+          JsonArray req = new JsonArray().add(new JsonObject().put("requestId", requestId)
+              .put(STATUS, NotifRequestStatus.APPROVED.toString().toLowerCase()));
+
+          List<UpdatePolicyNotification> request = UpdatePolicyNotification.jsonArrayToList(req);
+
+          spiedPolicyService.updatePolicyNotification(request, user, new JsonObject(),
+              testContext.succeeding(response -> testContext.verify(() -> {
+                assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                assertEquals(SUCC_NOTIF_REQ, response.getString(TITLE));
+                assertEquals(REQ_ID_ALREADY_NOT_EXISTS, response.getString("detail"));
+                assertEquals(404, response.getInteger("status"));
+
                 testContext.completeNow();
               })));
         });
@@ -632,8 +677,8 @@ public class UpdatePolicyNotificationTest {
     Mockito.doAnswer(i -> {
       Map<String, List<String>> itemList = i.getArgument(0);
       Map<String, ResourceObj> map = new HashMap<String, ResourceObj>();
-      String resourceGroup = itemList.get(RES_GRP).get(0);
-      map.put(resourceGroup, catIdToResObj.get(resourceGroup));
+      String resource = itemList.get(RES).get(0);
+      map.put(resource, catIdToResObj.get(resource));
       return Future.succeededFuture(map);
     }).when(catalogueClient).checkReqItems(Mockito.any());
 
@@ -818,8 +863,8 @@ public class UpdatePolicyNotificationTest {
     Mockito.doAnswer(i -> {
       Map<String, List<String>> itemList = i.getArgument(0);
       Map<String, ResourceObj> map = new HashMap<String, ResourceObj>();
-      String resourceGroup = itemList.get(RES_GRP).get(0);
-      map.put(resourceGroup, catIdToResObj.get(resourceGroup));
+      String resource = itemList.get(RES).get(0);
+      map.put(resource, catIdToResObj.get(resource));
       return Future.succeededFuture(map);
     }).when(catalogueClient).checkReqItems(Mockito.any());
 
@@ -842,7 +887,8 @@ public class UpdatePolicyNotificationTest {
 
           List<UpdatePolicyNotification> request = UpdatePolicyNotification.jsonArrayToList(req);
 
-          spiedPolicyService.updatePolicyNotification(request, user, new JsonObject(),
+          // passing provider details in data param
+          spiedPolicyService.updatePolicyNotification(request, user, providerDetails,
               testContext.succeeding(response -> testContext.verify(() -> {
 
                 /* Verifying that create policy was called with updated expiry, cons */
