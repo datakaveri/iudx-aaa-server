@@ -1868,6 +1868,8 @@ public class PolicyServiceImpl implements PolicyService {
 
     boolean isDelegate = !data.isEmpty();
     List<Roles> roles = user.getRoles();
+    UUID ownerId = isDelegate ? UUID.fromString(data.getString("providerId"))
+        : UUID.fromString(user.getUserId());
 
     if (!((isDelegate && roles.contains(Roles.DELEGATE)) || roles.contains(Roles.PROVIDER))) {
       Response r =
@@ -1895,7 +1897,7 @@ public class PolicyServiceImpl implements PolicyService {
     Map<UUID, JsonObject> requestMap = request.stream().collect(
         Collectors.toMap(key -> UUID.fromString(key.getRequestId()), value -> value.toJson()));
 
-    Tuple tup = Tuple.of(requestIds.toArray(UUID[]::new));
+    Tuple tup = Tuple.of(requestIds.toArray(UUID[]::new), ownerId);
     Future<List<JsonObject>> policyRequestData =
         pool.withTransaction(conn -> conn.preparedQuery(SET_INTERVALSTYLE).execute()
             .flatMap(result -> conn.preparedQuery(SEL_NOTIF_REQ_ID).collecting(notifRequestCollect)
@@ -2006,7 +2008,7 @@ public class PolicyServiceImpl implements PolicyService {
           .map(each -> each.getString(USERID)).collect(Collectors.toList());
 
       List<String> ids = new ArrayList<String>();
-      ids.add(user.getUserId());
+      ids.add(ownerId.toString());
       ids.addAll(consumerIds);
 
       Promise<JsonObject> p = Promise.promise();
@@ -2083,7 +2085,7 @@ public class PolicyServiceImpl implements PolicyService {
     updatedRequests.compose(result -> {
       Map<String, JsonObject> userInfo = jsonObjectToMap.apply(userDetails.result());
 
-      JsonObject ownerJson = userInfo.get(user.getUserId()).put(ID, user.getUserId());
+      JsonObject ownerJson = userInfo.get(ownerId.toString()).put(ID, ownerId.toString());
 
       JsonArray results = new JsonArray();
       JsonArray resArr = rejectedRequestArray.future().result();

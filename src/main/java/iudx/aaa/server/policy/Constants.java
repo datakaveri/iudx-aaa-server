@@ -336,7 +336,7 @@ public class Constants {
   public static final String SEL_NOTIF_REQ_ID =
       "SELECT id, user_id as \"userId\", item_id as \"itemId\", item_type as \"itemType\", owner_id as \"ownerId\", "
           + "status, expiry_duration::text as \"expiryDuration\", "
-          + "constraints FROM access_requests where id = ANY($1::UUID[])";
+          + "constraints FROM access_requests where id = ANY($1::UUID[]) AND owner_id = $2::UUID";
 
   public static final String SEL_NOTIF_ITEM_ID =
       "SELECT * FROM (SELECT id, cat_id AS url FROM resource\n"
