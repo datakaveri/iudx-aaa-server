@@ -705,7 +705,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     JsonObject data = Optional.ofNullable((JsonObject)context.get(DATA)).orElse(new JsonObject());
     User user = context.get(USER);
 
-    policyService.updatelistPolicyNotification(request, user, data, handler -> {
+    policyService.updatePolicyNotification(request, user, data, handler -> {
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {

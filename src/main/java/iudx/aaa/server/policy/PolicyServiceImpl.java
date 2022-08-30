@@ -1863,11 +1863,13 @@ public class PolicyServiceImpl implements PolicyService {
 
   /** {@inheritDoc} */
   @Override
-  public PolicyService updatelistPolicyNotification(List<UpdatePolicyNotification> request,
+  public PolicyService updatePolicyNotification(List<UpdatePolicyNotification> request,
       User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler) {
 
     boolean isDelegate = !data.isEmpty();
     List<Roles> roles = user.getRoles();
+    UUID ownerId = isDelegate ? UUID.fromString(data.getString("providerId"))
+        : UUID.fromString(user.getUserId());
 
     if (!((isDelegate && roles.contains(Roles.DELEGATE)) || roles.contains(Roles.PROVIDER))) {
       Response r =
@@ -1895,7 +1897,7 @@ public class PolicyServiceImpl implements PolicyService {
     Map<UUID, JsonObject> requestMap = request.stream().collect(
         Collectors.toMap(key -> UUID.fromString(key.getRequestId()), value -> value.toJson()));
 
-    Tuple tup = Tuple.of(requestIds.toArray(UUID[]::new));
+    Tuple tup = Tuple.of(requestIds.toArray(UUID[]::new), ownerId);
     Future<List<JsonObject>> policyRequestData =
         pool.withTransaction(conn -> conn.preparedQuery(SET_INTERVALSTYLE).execute()
             .flatMap(result -> conn.preparedQuery(SEL_NOTIF_REQ_ID).collecting(notifRequestCollect)
@@ -1939,15 +1941,17 @@ public class PolicyServiceImpl implements PolicyService {
     });
 
     Future<Map<UUID, String>> getItemIdName = createPolicyArray.compose(createPolicyArr -> {
-      List<UUID> itemIds = createPolicyArr.stream().map(JsonObject.class::cast)
-          .map(each -> UUID.fromString(each.getString(ITEMID))).collect(Collectors.toList());
+      Set<UUID> itemIds = createPolicyArr.stream().map(JsonObject.class::cast)
+          .map(each -> UUID.fromString(each.getString(ITEMID))).collect(Collectors.toSet());
 
-      Collector<Row, ?, Map<UUID, String>> collectItemName =
-          Collectors.toMap(row -> row.getUUID(ID), row -> row.getString(URL));
-
-      return pool
-          .withTransaction(conn -> conn.preparedQuery(SEL_NOTIF_ITEM_ID).collecting(collectItemName)
-              .execute(Tuple.of(itemIds.toArray(UUID[]::new))).map(res -> res.value()));
+      return CompositeFuture.all(catalogueClient.getCatIds(itemIds, itemTypes.RESOURCE_GROUP),
+          catalogueClient.getCatIds(itemIds, itemTypes.RESOURCE)).compose(res -> {
+            Map<UUID, String> resGroups = res.resultAt(0);
+            Map<UUID, String> resItems = res.resultAt(1);
+            /* merging the two maps into resGroups */
+            resGroups.putAll(resItems);
+            return Future.succeededFuture(resGroups);
+          });
     });
 
     Promise<JsonArray> approvedRequestArray = Promise.promise();
@@ -2000,12 +2004,12 @@ public class PolicyServiceImpl implements PolicyService {
 
     Future<JsonObject> userDetails = approvedRejectedQueryData.compose(res -> {
 
-      List<String> ownerIds = createPolicyArray.result().stream().map(JsonObject.class::cast)
-          .map(each -> each.getString(OWNERID)).collect(Collectors.toList());
+      List<String> consumerIds = createPolicyArray.result().stream().map(JsonObject.class::cast)
+          .map(each -> each.getString(USERID)).collect(Collectors.toList());
 
       List<String> ids = new ArrayList<String>();
-      ids.add(user.getUserId());
-      ids.addAll(ownerIds);
+      ids.add(ownerId.toString());
+      ids.addAll(consumerIds);
 
       Promise<JsonObject> p = Promise.promise();
       registrationService.getUserDetails(ids, p);
@@ -2081,31 +2085,27 @@ public class PolicyServiceImpl implements PolicyService {
     updatedRequests.compose(result -> {
       Map<String, JsonObject> userInfo = jsonObjectToMap.apply(userDetails.result());
 
-      JsonObject userJson1 = userInfo.get(user.getUserId());
-
-      List<String> ownerIds = createPolicyArray.result().stream().map(JsonObject.class::cast)
-          .map(each -> each.getString(OWNERID)).collect(Collectors.toList());
+      JsonObject ownerJson = userInfo.get(ownerId.toString()).put(ID, ownerId.toString());
 
       JsonArray results = new JsonArray();
       JsonArray resArr = rejectedRequestArray.future().result();
       resArr.addAll(approvedRequestArray.future().result());
       for (int i = 0; i < resArr.size(); i++) {
         JsonObject requestJson = resArr.getJsonObject(i);
-
         LOGGER.info("Updated status of request ID {} to {}", requestJson.getString(ID),
             requestJson.getString(STATUS).toUpperCase());
 
         requestJson.remove(EXPIRYTIME);
-        requestJson.remove(USERID);
+        String consumerId = (String) requestJson.remove(USERID);
         requestJson.remove(OWNERID);
         requestJson.remove(ID);
+
         requestJson.put(STATUS, requestJson.getString(STATUS).toLowerCase());
         requestJson.put(ITEMTYPE, requestJson.getString(ITEMTYPE).toLowerCase());
+        requestJson.put(USER_DETAILS, userInfo.get(consumerId).put(ID, consumerId));
+        requestJson.put(OWNER_DETAILS, ownerJson);
 
-        JsonObject eachJson = requestJson.put(USER_DETAILS, userJson1).put(OWNER_DETAILS,
-            userInfo.get(ownerIds.get(i)));
-
-        results.add(eachJson);
+        results.add(requestJson.copy());
       }
       return Future.succeededFuture(results);
     }).onSuccess(results -> {
