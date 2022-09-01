@@ -686,7 +686,6 @@ public class PolicyServiceImpl implements PolicyService {
 
     allDetails.onSuccess(success -> {
       JsonArray result = new JsonArray();
-
       JsonObject userDetails = (JsonObject) success.result().list().get(0);
       Map<String, JsonObject> userDetailsMap = jsonObjectToMap.apply(userDetails);
 
@@ -710,7 +709,6 @@ public class PolicyServiceImpl implements PolicyService {
         String itemType = obj.getString(ITEMTYPE);
         obj.put("itemType", itemType.toLowerCase());
         String itemId = (String) obj.remove(ITEM_ID);
-
         switch (itemTypes.valueOf(itemType)) {
           case RESOURCE_SERVER:
             obj.put(ITEMID, resSerDetails.get(UUID.fromString(itemId)));
@@ -794,7 +792,6 @@ public class PolicyServiceImpl implements PolicyService {
       resultMap.put(itemTypes.RESOURCE_SERVER, resSerUrls.result());
       resultMap.put(itemTypes.RESOURCE_GROUP, resGrpCatIds.result());
       resultMap.put(itemTypes.RESOURCE, resCatIds.result());
-
       promise.complete(resultMap);
     }).onFailure(err -> {
       LOGGER.error(err.getMessage());
@@ -2551,8 +2548,10 @@ public class PolicyServiceImpl implements PolicyService {
             })
         .onFailure(
             obj -> {
-              Response r = createDelegate.getRespObj(obj.getLocalizedMessage());
-              handler.handle(Future.succeededFuture(r.toJson()));
+              if (obj instanceof ComposeException) {
+                ComposeException e = (ComposeException) obj;
+                handler.handle(Future.succeededFuture(e.getResponse().toJson()));
+              } else handler.handle(Future.failedFuture(INTERNALERROR));
             });
     return this;
   }

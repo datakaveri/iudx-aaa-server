@@ -101,7 +101,7 @@ public class Constants {
   public static final String CAT_SUCCESS_URN = "urn:dx:cat:Success";
   // future failure messages
   public static final String BAD_REQUEST = "bad request";
-  public static final String SERVER_NOT_PRESENT = "servers not present:";
+  public static final String SERVER_NOT_PRESENT = "servers not present";
   public static final String VALIDATE_EXPIRY_FAIL = "expiry cannot be in the past:";
   public static final String INVALID_DATETIME = "invalid date time:";
   public static final String INVALID_USER = "user does not exist";
@@ -113,7 +113,7 @@ public class Constants {
   public static final String UNAUTHORIZED = "Not allowed to create policies for resource";
   public static final String PROVIDER_NOT_REGISTERED = "Provider not a registered user";
   public static final String DUPLICATE_POLICY = "Policy already exists:";
-  public static final String DUPLICATE_DELEGATION = "Delegation already exists:";
+  public static final String DUPLICATE_DELEGATION = "Delegation already exists";
   public static final String NO_USER = "no user";
   public static final String NOT_RES_OWNER = "does not own the resource";
   public static final String NO_ADMIN_POLICY = "No admin policy";

@@ -523,7 +523,6 @@ public class RegistrationServiceImpl implements RegistrationService {
   public RegistrationService getUserDetails(List<String> userIds,
       Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
-
     if (userIds.isEmpty()) {
       handler.handle(Future.succeededFuture(new JsonObject()));
       return this;
