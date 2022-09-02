@@ -375,7 +375,7 @@ public class CreateDelegationsTest {
   }
 
   @Test
-  @DisplayName("success - create delegation as provider for other server ")
+  @DisplayName("success - create delegation as provider for other server and check duplicate fail ")
   void SuccessDel(VertxTestContext testContext) {
     JsonObject userJson = providerUser.result();
     User user =
@@ -403,9 +403,21 @@ public class CreateDelegationsTest {
                       assertEquals(URN_SUCCESS.toString(), response.getString("type"));
                       assertEquals("added delegations", response.getString("title"));
                       Assertions.assertEquals(200, response.getInteger("status"));
-                      testContext.completeNow();
-                    })));
-  }
+                      policyService.createDelegation(
+          req,
+          user,
+          new JsonObject(),
+          testContext.succeeding(
+              resp ->
+                  testContext.verify(
+                      () -> {
+                          System.out.println("resp " + resp);
+                          assertEquals(URN_ALREADY_EXISTS.toString(), resp.getString("type"));
+                          assertEquals(DUPLICATE_DELEGATION, resp.getString("title"));
+                          Assertions.assertEquals(409, resp.getInteger("status"));
+                          testContext.completeNow();
+                      })));
+  })));}
 
   @Test
   @DisplayName("failure - create delegation that already exists")
@@ -490,4 +502,10 @@ public class CreateDelegationsTest {
   void successAsAuthDel(VertxTestContext testContext) {
     testContext.completeNow();
   }
+
+    @Test
+    @DisplayName("Success - multiple request as provider")
+    void successMulAsProvider(VertxTestContext testContext) {
+        testContext.completeNow();
+    }
 }

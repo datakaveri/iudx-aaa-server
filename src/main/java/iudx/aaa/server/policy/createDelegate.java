@@ -174,13 +174,11 @@ public class createDelegate {
 
   public Future<List<Tuple>> checkExistingDelegation(List<Tuple> tuples) {
     Promise<List<Tuple>> p = Promise.promise();
-    Collector<Row, ?, List<UUID>> policyIdCollector =
-        Collectors.mapping(row -> row.getUUID(ID), Collectors.toList());
 
     pool.withTransaction(
         conn ->
             conn.preparedQuery(CHECK_EXISTING_DELEGATIONS)
-                .collecting(policyIdCollector).executeBatch(tuples)
+                .executeBatch(tuples)
                 .onFailure(
                     failureHandler -> {
                       LOGGER.error(
@@ -190,9 +188,20 @@ public class createDelegate {
                     })
                 .onSuccess(
                     ar -> {
-                      if (ar.size() > 0) {
+                        //This check to get response when batch query is executed for select
+                        RowSet<Row> rows = ar;
+                        List<UUID> ids = new ArrayList<>();
+                        while (rows != null) {
+                            rows.iterator()
+                                .forEachRemaining(
+                                    row -> {
+                                        ids.add(row.getUUID(ID));
+                                    });
+                            rows = rows.next();
+                        }
+                        if (ids.size() > 0) {
                           p.fail(new ComposeException
-                            (409,URN_ALREADY_EXISTS,DUPLICATE_DELEGATION,ar.value().toString()));
+                            (409,URN_ALREADY_EXISTS,DUPLICATE_DELEGATION,ids.toString()));
                       } else p.complete(tuples);
                     }));
 
