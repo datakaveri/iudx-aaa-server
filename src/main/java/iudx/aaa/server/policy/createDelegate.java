@@ -153,22 +153,23 @@ public class createDelegate {
   }
 
   public Future<Boolean> insertItems(List<Tuple> tuples) {
-    Promise<Boolean> p = Promise.promise();
-    Future<List<Tuple>> checkDuplicate = checkExistingDelegation(tuples);
+      Promise<Boolean> p = Promise.promise();
+      Future<List<Tuple>> checkDuplicate = checkExistingDelegation(tuples);
 
-    checkDuplicate
-        .onSuccess(
-            success ->
-                pool.withTransaction(
-                    conn -> conn.preparedQuery(INSERT_DELEGATION).executeBatch(success).mapEmpty()))
-        .onFailure(
-            failureHandler -> {
-              LOGGER.error("insertItems fail :: " + failureHandler.getLocalizedMessage());
-              p.fail(failureHandler);
-            })
-        .onSuccess(success -> p.complete(true));
+      checkDuplicate
+          .compose(
+              success ->
+                  pool.withTransaction(
+                      conn -> conn.preparedQuery(INSERT_DELEGATION).executeBatch(success).mapEmpty()))
+          .onFailure(
+              failureHandler -> {
+                  LOGGER.error("insertItems fail :: " + failureHandler.getLocalizedMessage());
+                  p.fail(failureHandler);
+              })
+          .onSuccess(success -> p.complete(true));
 
-    return p.future();
+      return p.future();
+
   }
 
   public Future<List<Tuple>> checkExistingDelegation(List<Tuple> tuples) {
