@@ -19,6 +19,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static iudx.aaa.server.policy.Constants.itemTypes;
 import static iudx.aaa.server.registration.Constants.CLIENT_SECRET_BYTES;
 import static iudx.aaa.server.registration.Constants.DEFAULT_CLIENT;
 import static iudx.aaa.server.registration.Constants.NIL_PHONE;
@@ -65,7 +66,6 @@ public class Utils {
           + "($1::uuid, $2::text, $3::text, $4::uuid, $5::apd_status_enum, NOW(), NOW()) ";
   private static final String SQL_DELETE_USER_BY_ID =
       "DELETE FROM users WHERE id = ANY($1::uuid[])";
-
   private static final String SQL_CREATE_RES_SERVER =
       "INSERT INTO resource_server(id,name,owner_id,url,created_at,updated_at) "
           + "Values ($1::uuid,$2::text,$3::uuid,$4::text,NOW(),NOW())";
@@ -80,13 +80,11 @@ public class Utils {
 
   private static final String SQL_DELETE_RESOURCE_BY_OWNER_ID =
       "DELETE FROM resource WHERE provider_id = ANY($1::uuid[])";
-
   private static final String SQL_DELETE_RESOURCE_GRP_BY_OWNER_ID =
       "DELETE FROM resource_group WHERE provider_id = ANY($1::uuid[])";
-
   private static final String SQL_DELETE_RESOURCE_SERVER_BY_OWNER_ID =
       "DELETE FROM resource_server WHERE owner_id = ANY($1::uuid[])";
-  
+
   public static final String SQL_CREATE_NOTIFICATION =
       "INSERT INTO access_requests (id, user_id, item_id, item_type, owner_id, status,"
       + " expiry_duration, constraints, created_at, updated_at) VALUES"
@@ -100,6 +98,19 @@ public class Utils {
   
   public static final String SQL_DELETE_ANY_POLICIES = "UPDATE policies SET status = 'DELETED' WHERE"
       + " owner_id = ANY($1::uuid[]) OR user_id = ANY($1::uuid[])";
+
+  private static final String SQL_CREATE_POLICY =
+      "INSERT INTO policies (owner_id, item_id,"
+          + " item_type, user_id, status, expiry_time, constraints, created_at, updated_at)"
+          + "VALUES ($1::UUID, $2::UUID,$3::item_enum,$4::UUID,'ACTIVE'::policy_status_enum,"
+          + "NOW() + INTERVAL '5 years','{}',NOW(),NOW())";
+
+  private static final String SQL_CREATE_DELEGATE =
+      "INSERT INTO delegations (owner_id,user_id,resource_server_id,status,created_at, updated_at)"
+          + "VALUES ($1::UUID, $2::UUID,$3::UUID,'ACTIVE'::policy_status_enum,NOW(),NOW())";
+
+  public static final String SQL_DELETE_DELEGATE =
+      "UPDATE delegations SET status ='DELETED' where owner_id = ANY($1::uuid[])";
 
   /**
    * Create a mock user based on the supplied params. The user is created and the information of the
@@ -383,6 +394,45 @@ public class Utils {
     Tuple tuple = Tuple.of(ids.toArray(UUID[]::new));
     pool.withConnection(
             conn -> conn.preparedQuery(SQL_DELETE_RESOURCE_SERVER_BY_OWNER_ID).execute(tuple))
+        .onSuccess(succ -> response.complete())
+        .onFailure(fail -> response.fail("Db failure: " + fail.toString()));
+    return response.future();
+  }
+
+  /**
+   * create policies for users
+   *
+   * @param pool Postgres PgPool connection to make DB calls
+   * @param userId UUID of user for whom policy is to be written
+   * @param item enum itemTypes of type of item
+   * @param ownerId UUID of iser who is writing the policy
+   * @param itemId UUID of the id of the item from the resource/resource_group/resource_server table
+   * @return Void future indicating success or failure
+   */
+  public static Future<Void> createFakePolicy(
+      PgPool pool, UUID userId, itemTypes item, UUID ownerId, UUID itemId) {
+    Promise<Void> response = Promise.promise();
+    Tuple tuple = Tuple.of(ownerId, itemId, item, userId);
+    pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_POLICY).execute(tuple))
+        .onSuccess(succ -> response.complete())
+        .onFailure(fail -> response.fail("Db failure: " + fail.toString()));
+    return response.future();
+  }
+
+  /**
+   * create delegations for users
+   *
+   * @param pool Postgres PgPool connection to make DB calls
+   * @param userId UUID of user for whom delegation is to be written
+   * @param ownerId UUID of user who is creating the delegation
+   * @param itemId UUID of the id of the resource_server on which delegation is to be made
+   * @return Void future indicating success or failure
+   */
+  public static Future<Void> createDelegation(
+      PgPool pool, UUID userId, UUID ownerId, UUID itemId) {
+    Promise<Void> response = Promise.promise();
+    Tuple tuple = Tuple.of(ownerId,userId,itemId);
+    pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_DELEGATE).execute(tuple))
         .onSuccess(succ -> response.complete())
         .onFailure(fail -> response.fail("Db failure: " + fail.toString()));
     return response.future();
