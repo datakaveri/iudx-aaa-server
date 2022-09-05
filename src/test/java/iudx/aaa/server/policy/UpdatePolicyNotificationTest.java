@@ -4,26 +4,8 @@ import static iudx.aaa.server.apiserver.util.Urn.URN_ALREADY_EXISTS;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
 import static iudx.aaa.server.apiserver.util.Urn.URN_SUCCESS;
-import static iudx.aaa.server.policy.Constants.CONSTRAINTS;
-import static iudx.aaa.server.policy.Constants.DUPLICATE;
-import static iudx.aaa.server.policy.Constants.DUPLICATE_POLICY;
-import static iudx.aaa.server.policy.Constants.ERR_DETAIL_LIST_DELEGATE_ROLES;
-import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ROLES;
-import static iudx.aaa.server.policy.Constants.ID;
-import static iudx.aaa.server.policy.Constants.ITEMID;
-import static iudx.aaa.server.policy.Constants.ITEMTYPE;
-import static iudx.aaa.server.policy.Constants.NIL_UUID;
-import static iudx.aaa.server.policy.Constants.OWNER_DETAILS;
-import static iudx.aaa.server.policy.Constants.REQ_ID_ALREADY_NOT_EXISTS;
-import static iudx.aaa.server.policy.Constants.RES;
-import static iudx.aaa.server.policy.Constants.RESULTS;
-import static iudx.aaa.server.policy.Constants.RES_GRP;
-import static iudx.aaa.server.policy.Constants.STATUS;
-import static iudx.aaa.server.policy.Constants.SUCC_NOTIF_REQ;
-import static iudx.aaa.server.policy.Constants.SUCC_UPDATE_NOTIF_REQ;
-import static iudx.aaa.server.policy.Constants.TITLE;
-import static iudx.aaa.server.policy.Constants.TYPE;
-import static iudx.aaa.server.policy.Constants.USER_DETAILS;
+import static iudx.aaa.server.policy.Constants.*;
+import static iudx.aaa.server.policy.TestRequest.constraints;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_ADMIN_SERVER;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_NOTIFICATION;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_ORG;
@@ -38,8 +20,10 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
@@ -384,13 +368,85 @@ public class UpdatePolicyNotificationTest {
   void failDisallowedRoles(VertxTestContext testContext) {
     // creake fake request
     // try with different users with checkpoints
-    testContext.completeNow();
+      Checkpoint checkAdmin = testContext.checkpoint();
+      Checkpoint checkConsumer = testContext.checkpoint();
+      Checkpoint checkTrustee = testContext.checkpoint();
+
+      JsonObject userJson = provider.result();
+      User adminUser = new UserBuilder().keycloakId(userJson.getString("keycloakId")).userId(NIL_UUID)
+              .name(userJson.getString("firstName"), userJson.getString("lastName"))
+              .roles(List.of(Roles.ADMIN))
+              .build();
+
+      JsonArray req =
+              new JsonArray().add(new JsonObject().put("requestId", UUID.randomUUID().toString())
+                      .put(STATUS, NotifRequestStatus.APPROVED.toString().toLowerCase()));
+
+      List<UpdatePolicyNotification> request = UpdatePolicyNotification.jsonArrayToList(req);
+
+      policyService.updatePolicyNotification(request, adminUser, new JsonObject(),
+              testContext.succeeding(response -> testContext.verify(() -> {
+                  assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
+                  assertEquals(ERR_DETAIL_LIST_DELEGATE_ROLES, response.getString("detail"));
+                  assertEquals(ERR_TITLE_INVALID_ROLES, response.getString("title"));
+                  assertEquals(401, response.getInteger("status"));
+                  checkAdmin.flag();
+              })));
+
+      User trusteeUser = new UserBuilder().keycloakId(userJson.getString("keycloakId")).userId(NIL_UUID)
+              .name(userJson.getString("firstName"), userJson.getString("lastName"))
+              .roles(List.of(Roles.TRUSTEE))
+              .build();
+
+      policyService.updatePolicyNotification(request, trusteeUser, new JsonObject(),
+              testContext.succeeding(response -> testContext.verify(() -> {
+                  assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
+                  assertEquals(ERR_DETAIL_LIST_DELEGATE_ROLES, response.getString("detail"));
+                  assertEquals(ERR_TITLE_INVALID_ROLES, response.getString("title"));
+                  assertEquals(401, response.getInteger("status"));
+                  checkTrustee.flag();
+              })));
+
+      User consumerUser = new UserBuilder().keycloakId(userJson.getString("keycloakId")).userId(NIL_UUID)
+              .name(userJson.getString("firstName"), userJson.getString("lastName"))
+              .roles(List.of(Roles.CONSUMER))
+              .build();
+
+      policyService.updatePolicyNotification(request, consumerUser, new JsonObject(),
+              testContext.succeeding(response -> testContext.verify(() -> {
+                  assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
+                  assertEquals(ERR_DETAIL_LIST_DELEGATE_ROLES, response.getString("detail"));
+                  assertEquals(ERR_TITLE_INVALID_ROLES, response.getString("title"));
+                  assertEquals(401, response.getInteger("status"));
+                  checkConsumer.flag();
+              })));
   }
 
+  @Test
   @DisplayName("Test non-existent request")
   void failNonExistentRequest(VertxTestContext testContext) {
     // make request with 'requestId' as UUID.randomUUID().toString()
-    testContext.completeNow();
+      Checkpoint checkProvider = testContext.checkpoint();
+      JsonObject userJson = provider.result();
+      User providerUser = new UserBuilder().keycloakId(userJson.getString("keycloakId")).userId(NIL_UUID)
+              .name(userJson.getString("firstName"), userJson.getString("lastName"))
+              .roles(List.of(Roles.PROVIDER))
+              .build();
+
+      JsonArray req =
+              new JsonArray().add(new JsonObject().put("requestId", UUID.randomUUID().toString())
+                      .put(STATUS, NotifRequestStatus.APPROVED.toString().toLowerCase()));
+
+      List<UpdatePolicyNotification> request = UpdatePolicyNotification.jsonArrayToList(req);
+
+      policyService.updatePolicyNotification(request, providerUser, new JsonObject(),
+              testContext.succeeding(response -> testContext.verify(() -> {
+                  assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                  assertEquals(REQ_ID_ALREADY_NOT_EXISTS, response.getString("detail"));
+                  assertEquals(SUCC_NOTIF_REQ, response.getString("title"));
+                  assertEquals(404, response.getInteger("status"));
+                  checkProvider.flag();
+              })));
   }
 
   @Test
@@ -634,8 +690,65 @@ public class UpdatePolicyNotificationTest {
     // same as the createNotificationTest existing test scenario
     // copy the test rejected request code
     // make a request to set approved after rejecting successfully
-    testContext.completeNow();
-  }
+
+
+      UUID itemId = randResourceGroup.get();
+      PolicyService spiedPolicyService = Mockito.spy(policyService);
+
+      /* Mock catalogue client for UpdateNotification response */
+      Mockito.doAnswer(i -> {
+          Set<UUID> itemIds = i.getArgument(0);
+          Map<UUID, String> map = new HashMap<UUID, String>();
+          itemIds.forEach(id -> map.put(id, itemIdToCatId.get(id)));
+          return Future.succeededFuture(map);
+      }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
+
+      /* Mock registration service user details */
+      Mockito.doAnswer(i -> {
+          List<String> userIds = i.getArgument(0);
+          Promise<JsonObject> promise = i.getArgument(1);
+          promise.complete(fetchUserDetail(userIds));
+          return i.getMock();
+      }).when(registrationService).getUserDetails(Mockito.any(), Mockito.any());
+
+      createNotification(itemId, "RESOURCE_GROUP", NotifRequestStatus.PENDING, "P1Y",
+              new JsonObject()).onSuccess(id -> {
+          String requestId = id.toString();
+
+          JsonObject userJson = provider.result();
+          User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+                  .userId(userJson.getString("userId"))
+                  .name(userJson.getString("firstName"), userJson.getString("lastName"))
+                  .roles(List.of(Roles.PROVIDER)).build();
+
+          JsonArray req = new JsonArray().add(new JsonObject().put("requestId", requestId)
+                  .put(STATUS, NotifRequestStatus.REJECTED.toString().toLowerCase()));
+
+          List<UpdatePolicyNotification> request = UpdatePolicyNotification.jsonArrayToList(req);
+
+          spiedPolicyService.updatePolicyNotification(request, user, new JsonObject(),
+                  testContext.succeeding(response -> {
+                      assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                      assertEquals(SUCC_UPDATE_NOTIF_REQ, response.getString(TITLE));
+                      assertEquals(200, response.getInteger("status"));
+
+
+                      JsonArray req1 = new JsonArray().add(new JsonObject().put("requestId", requestId)
+                              .put(STATUS, NotifRequestStatus.APPROVED.toString().toLowerCase()));
+                      List<UpdatePolicyNotification> request1 = UpdatePolicyNotification.jsonArrayToList(req1);
+
+                      spiedPolicyService.updatePolicyNotification(request1, user, new JsonObject(),
+                              testContext.succeeding(responses -> testContext.verify(() -> {
+
+                                  assertEquals(URN_INVALID_INPUT.toString(), responses.getString(TYPE));
+                                  assertEquals(SUCC_NOTIF_REQ, responses.getString(TITLE));
+                                  assertEquals(400, responses.getInteger("status"));
+
+                                  testContext.completeNow();
+                              })));
+                  }));
+
+      });}
 
   @Test
   @DisplayName("Test rejecting after approving a request")
@@ -643,7 +756,110 @@ public class UpdatePolicyNotificationTest {
     // same as the createNotificationTest existing test scenario
     // copy the test approved request code
     // make a request to set rejected after approving successfully
-    testContext.completeNow();
+      PolicyService spiedPolicyService = Mockito.spy(policyService);
+
+      UUID itemId = randResourceGroup.get();
+      JsonObject constraints = new JsonObject();
+      String expiryDuration = "P1Y";
+
+      JsonObject userJson = provider.result();
+      User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+              .userId(userJson.getString("userId"))
+              .name(userJson.getString("firstName"), userJson.getString("lastName"))
+              .roles(List.of(Roles.PROVIDER)).build();
+
+      /* Mock catalogue client for UpdateNotification response */
+      Mockito.doAnswer(i -> {
+          Set<UUID> itemIds = i.getArgument(0);
+          Map<UUID, String> map = new HashMap<UUID, String>();
+          itemIds.forEach(id -> map.put(id, itemIdToCatId.get(id)));
+          return Future.succeededFuture(map);
+      }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
+
+      /* Mock catalogue client for create policy */
+      Mockito.doAnswer(i -> {
+          Map<String, List<String>> itemList = i.getArgument(0);
+          Map<String, ResourceObj> map = new HashMap<String, ResourceObj>();
+          String resourceGroup = itemList.get(RES_GRP).get(0);
+          map.put(resourceGroup, catIdToResObj.get(resourceGroup));
+          return Future.succeededFuture(map);
+      }).when(catalogueClient).checkReqItems(Mockito.any());
+
+      /* Mock registration service user details */
+      Mockito.doAnswer(i -> {
+          List<String> userIds = i.getArgument(0);
+          Promise<JsonObject> promise = i.getArgument(1);
+          promise.complete(fetchUserDetail(userIds));
+          return i.getMock();
+      }).when(registrationService).getUserDetails(Mockito.any(), Mockito.any());
+
+      createNotification(itemId, "RESOURCE_GROUP", NotifRequestStatus.PENDING, expiryDuration,
+              constraints).onSuccess(id -> {
+
+          String requestId = id.toString();
+
+          JsonArray req = new JsonArray().add(new JsonObject().put("requestId", requestId)
+                  .put(STATUS, NotifRequestStatus.APPROVED.toString().toLowerCase()));
+
+          List<UpdatePolicyNotification> request = UpdatePolicyNotification.jsonArrayToList(req);
+
+          spiedPolicyService.updatePolicyNotification(request, user, new JsonObject(),
+                  testContext.succeeding(response -> testContext.verify(() -> {
+
+                      /* Verifying that create policy was called with expected request */
+                      Mockito.verify(spiedPolicyService).createPolicy(policyRequest.capture(),
+                              Mockito.any(), Mockito.any(), Mockito.any());
+                      CreatePolicyRequest polReq = policyRequest.getValue().get(0);
+
+                      assertTrue(polReq.getItemType().equalsIgnoreCase("RESOURCE_GROUP"));
+                      assertEquals(polReq.getItemId(), itemIdToCatId.get(itemId));
+                      assertEquals(polReq.getUserId(), consumer.result().getString("userId"));
+                      assertEquals(polReq.getConstraints(), constraints);
+
+                      DateTime now = DateTime.now();
+                      DateTime expiry = DateTime.parse(polReq.getExpiryTime());
+                      int noOfHours = Hours.hoursBetween(now, expiry).getHours();
+                      /* subtract 1 since we are already in the first hour */
+                      assertEquals(noOfHours, (365 * 24) - 1);
+                      /* ************************************************************* */
+
+                      assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                      assertEquals(SUCC_UPDATE_NOTIF_REQ, response.getString(TITLE));
+                      assertEquals(200, response.getInteger("status"));
+                      assertTrue(response.containsKey(RESULTS));
+
+                      JsonArray results = response.getJsonArray(RESULTS);
+                      assertTrue(results.size() == 1);
+
+                      JsonObject j = results.getJsonObject(0);
+
+                      assertEquals(j.getString(ITEMID), itemIdToCatId.get(itemId));
+                      assertEquals(j.getString(STATUS),
+                              NotifRequestStatus.APPROVED.toString().toLowerCase());
+                      assertEquals(j.getString(ITEMTYPE), "resource_group");
+                      assertEquals(j.getJsonObject(OWNER_DETAILS).getString(ID),
+                              provider.result().getString("userId"));
+                      assertEquals(j.getJsonObject(USER_DETAILS).getString(ID),
+                              consumer.result().getString("userId"));
+                      assertEquals(j.getString("expiryDuration"), expiryDuration);
+                      assertEquals(j.getJsonObject(CONSTRAINTS), constraints);
+
+                      JsonArray req1 = new JsonArray().add(new JsonObject().put("requestId", requestId)
+                              .put(STATUS, NotifRequestStatus.REJECTED.toString().toLowerCase()));
+
+                      List<UpdatePolicyNotification> request1 = UpdatePolicyNotification.jsonArrayToList(req1);
+
+                      spiedPolicyService.updatePolicyNotification(request1, user, new JsonObject(),
+                              testContext.succeeding(responses -> testContext.verify(() -> {
+
+                                  assertEquals(URN_INVALID_INPUT.toString(), responses.getString(TYPE));
+                                  assertEquals(SUCC_NOTIF_REQ, responses.getString(TITLE));
+                                  assertEquals(400, responses.getInteger("status"));
+
+                                  testContext.completeNow();
+                              })));
+                  })));
+      });
   }
 
   @Test
@@ -761,6 +977,14 @@ public class UpdatePolicyNotificationTest {
         .userId(userJson.getString("userId"))
         .name(userJson.getString("firstName"), userJson.getString("lastName"))
         .roles(List.of(Roles.PROVIDER)).build();
+
+      /* Mock catalogue client for UpdateNotification response */
+      Mockito.doAnswer(i -> {
+          Set<UUID> itemIds = i.getArgument(0);
+          Map<UUID, String> map = new HashMap<UUID, String>();
+          itemIds.forEach(id -> map.put(id, itemIdToCatId.get(id)));
+          return Future.succeededFuture(map);
+      }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
 
     /* Mock policy service to send non-200 OK response */
     Mockito.doAnswer(i -> {
@@ -940,7 +1164,85 @@ public class UpdatePolicyNotificationTest {
   @Test
   @DisplayName("Test auth delegate rejecting request")
   void authDelegateRejecting(VertxTestContext testContext) {
-    testContext.completeNow();
+      UUID itemId = randResource.get();
+      PolicyService spiedPolicyService = Mockito.spy(policyService);
+
+      JsonObject constraints = new JsonObject();
+      String expiryDuration = "P1Y";
+
+      JsonObject userJson = delegate.result();
+      User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+              .userId(userJson.getString("userId"))
+              .name(userJson.getString("firstName"), userJson.getString("lastName"))
+              .roles(List.of(Roles.DELEGATE)).build();
+
+      JsonObject providerDetails =
+              new JsonObject().put("providerId", provider.result().getString("userId"));
+
+      /* Mock catalogue client for UpdateNotification response */
+      Mockito.doAnswer(i -> {
+          Set<UUID> itemIds = i.getArgument(0);
+          Map<UUID, String> map = new HashMap<UUID, String>();
+          itemIds.forEach(id -> map.put(id, itemIdToCatId.get(id)));
+          return Future.succeededFuture(map);
+      }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
+
+      /* Mock catalogue client for create policy */
+      Mockito.doAnswer(i -> {
+          Map<String, List<String>> itemList = i.getArgument(0);
+          Map<String, ResourceObj> map = new HashMap<String, ResourceObj>();
+          String resource = itemList.get(RES).get(0);
+          map.put(resource, catIdToResObj.get(resource));
+          return Future.succeededFuture(map);
+      }).when(catalogueClient).checkReqItems(Mockito.any());
+
+      /* Mock registration service user details */
+      Mockito.doAnswer(i -> {
+          List<String> userIds = i.getArgument(0);
+          Promise<JsonObject> promise = i.getArgument(1);
+          promise.complete(fetchUserDetail(userIds));
+          return i.getMock();
+      }).when(registrationService).getUserDetails(Mockito.any(), Mockito.any());
+
+      createNotification(itemId, "RESOURCE", NotifRequestStatus.PENDING, expiryDuration, constraints)
+              .onSuccess(id -> {
+
+                  String requestId = id.toString();
+
+                  JsonArray req = new JsonArray().add(new JsonObject().put("requestId", requestId)
+                          .put(STATUS, NotifRequestStatus.REJECTED.toString().toLowerCase())
+                          .put("expiryDuration", expiryDuration).put(CONSTRAINTS, constraints));
+
+                  List<UpdatePolicyNotification> request = UpdatePolicyNotification.jsonArrayToList(req);
+
+                  // passing provider details in data param
+                  spiedPolicyService.updatePolicyNotification(request, user, providerDetails,
+                          testContext.succeeding(response -> testContext.verify(() -> {
+
+                              assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                              assertEquals(SUCC_UPDATE_NOTIF_REQ, response.getString(TITLE));
+                              assertEquals(200, response.getInteger("status"));
+                              assertTrue(response.containsKey(RESULTS));
+
+                              JsonArray results = response.getJsonArray(RESULTS);
+                              assertTrue(results.size() == 1);
+
+                              JsonObject j = results.getJsonObject(0);
+
+                              assertEquals(j.getString(ITEMID), itemIdToCatId.get(itemId));
+                              assertEquals(j.getString(STATUS),
+                                      NotifRequestStatus.REJECTED.toString().toLowerCase());
+                              assertEquals(j.getString(ITEMTYPE), "resource");
+                              assertEquals(j.getJsonObject(OWNER_DETAILS).getString(ID),
+                                      provider.result().getString("userId"));
+                              assertEquals(j.getJsonObject(USER_DETAILS).getString(ID),
+                                      consumer.result().getString("userId"));
+                              assertEquals(j.getString("expiryDuration"), expiryDuration);
+                              assertEquals(j.getJsonObject(CONSTRAINTS), constraints);
+
+                              testContext.completeNow();
+                          })));
+              });
   }
 
   @Test
@@ -957,14 +1259,226 @@ public class UpdatePolicyNotificationTest {
         Mockito.any());
         
         */
-    testContext.completeNow();
+
+      UUID itemId = randResource.get();
+      JsonObject constraints = new JsonObject();
+      String expiryDuration = "P1Y";
+      PolicyService spiedPolicyService = Mockito.spy(policyService);
+
+      JsonObject userJson = provider.result();
+      User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+              .userId(userJson.getString("userId"))
+              .name(userJson.getString("firstName"), userJson.getString("lastName"))
+              .roles(List.of(Roles.PROVIDER)).build();
+
+      Mockito.doAnswer(i -> {
+          Set<UUID> itemIds = i.getArgument(0);
+          Map<UUID, String> map = new HashMap<UUID, String>();
+          itemIds.forEach(id -> map.put(id, itemIdToCatId.get(id)));
+          return Future.succeededFuture(map);
+      }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
+
+      /* Mock policy service to send non-200 OK response */
+      Mockito.doAnswer(i -> {
+          Promise<JsonObject> promise = i.getArgument(3);
+          promise.fail("Create policy hard failure");
+          return i.getMock();
+      }).doCallRealMethod().when(spiedPolicyService).createPolicy(Mockito.any(), Mockito.any(), Mockito.any(),
+              Mockito.any());
+
+
+      /* Mock registration service user details */
+      Mockito.doAnswer(i -> {
+          List<String> userIds = i.getArgument(0);
+          Promise<JsonObject> promise = i.getArgument(1);
+          promise.complete(fetchUserDetail(userIds));
+          return i.getMock();
+      }).when(registrationService).getUserDetails(Mockito.any(), Mockito.any());
+
+      createNotification(itemId, "RESOURCE", NotifRequestStatus.PENDING, expiryDuration, constraints)
+              .onSuccess(id -> {
+
+                  String requestId = id.toString();
+
+                  JsonArray req = new JsonArray().add(new JsonObject().put("requestId", requestId)
+                          .put(STATUS, NotifRequestStatus.APPROVED.toString().toLowerCase()));
+
+                  List<UpdatePolicyNotification> request = UpdatePolicyNotification.jsonArrayToList(req);
+
+                  spiedPolicyService.updatePolicyNotification(request, user, new JsonObject(),
+                          testContext.failing(response -> testContext.verify(() -> {
+
+                              assertEquals(INTERNALERROR,response.getMessage());
+
+                              /*
+                               * We should be able to reject the request now, as the request should still be in
+                               * pending state
+                               */
+                              JsonArray updatedReq =
+                                      new JsonArray().add(new JsonObject().put("requestId", requestId).put(STATUS,
+                                              NotifRequestStatus.REJECTED.toString().toLowerCase()));
+
+                              List<UpdatePolicyNotification> updatedRequest =
+                                      UpdatePolicyNotification.jsonArrayToList(updatedReq);
+
+                              spiedPolicyService.updatePolicyNotification(updatedRequest, user, new JsonObject(),
+                                      testContext.succeeding(resp -> testContext.verify(() -> {
+                                          assertEquals(URN_SUCCESS.toString(), resp.getString(TYPE));
+                                          assertEquals(SUCC_UPDATE_NOTIF_REQ, resp.getString(TITLE));
+                                          assertEquals(200, resp.getInteger("status"));
+                                          assertTrue(resp.containsKey(RESULTS));
+
+                                          JsonArray results = resp.getJsonArray(RESULTS);
+
+                                          JsonObject j = results.getJsonObject(0);
+
+                                          assertEquals(j.getString(STATUS),
+                                                  NotifRequestStatus.REJECTED.toString().toLowerCase());
+
+                                          assertEquals(j.getString("expiryDuration"), "P1Y");
+                                          assertEquals(j.getJsonObject(CONSTRAINTS), new JsonObject());
+                                          testContext.completeNow();
+                                      })));
+                          })));
+              });
+
   }
 
   // optional test
   @Test
   @DisplayName("Test registration service failing")
   void registrationServiceFailing(VertxTestContext testContext) {
-    testContext.completeNow();
+
+      PolicyService spiedPolicyService = Mockito.spy(policyService);
+
+      UUID itemId = randResourceGroup.get();
+      JsonObject constraints = new JsonObject();
+      String expiryDuration = "P1Y";
+
+      JsonObject userJson = provider.result();
+      User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+              .userId(userJson.getString("userId"))
+              .name(userJson.getString("firstName"), userJson.getString("lastName"))
+              .roles(List.of(Roles.PROVIDER)).build();
+
+      /* Mock catalogue client for UpdateNotification response */
+      Mockito.doAnswer(i -> {
+          Set<UUID> itemIds = i.getArgument(0);
+          Map<UUID, String> map = new HashMap<UUID, String>();
+          itemIds.forEach(id -> map.put(id, itemIdToCatId.get(id)));
+          return Future.succeededFuture(map);
+      }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
+
+      /* Mock catalogue client for create policy */
+      Mockito.doAnswer(i -> {
+          Map<String, List<String>> itemList = i.getArgument(0);
+          Map<String, ResourceObj> map = new HashMap<String, ResourceObj>();
+          String resourceGroup = itemList.get(RES_GRP).get(0);
+          map.put(resourceGroup, catIdToResObj.get(resourceGroup));
+          return Future.succeededFuture(map);
+      }).when(catalogueClient).checkReqItems(Mockito.any());
+
+      /* Mock registration service user details */
+      Mockito.doAnswer(i -> {
+          List<String> userIds = i.getArgument(0);
+          Promise<JsonObject> promise = i.getArgument(1);
+          promise.fail("Registration Fail");
+          return i.getMock();
+      }).when(registrationService).getUserDetails(Mockito.any(), Mockito.any());
+
+      createNotification(itemId, "RESOURCE_GROUP", NotifRequestStatus.PENDING, expiryDuration,
+              constraints).onSuccess(id->{
+
+                  String requestId= id.toString();
+
+          JsonArray req = new JsonArray().add(new JsonObject().put("requestId", requestId)
+                  .put(STATUS, NotifRequestStatus.APPROVED.toString().toLowerCase()));
+
+          List<UpdatePolicyNotification> request = UpdatePolicyNotification.jsonArrayToList(req);
+
+          spiedPolicyService.updatePolicyNotification(request, user, new JsonObject(),
+                  testContext.failing(response->{
+                      assertEquals(INTERNALERROR, response.getMessage());
+                                  testContext.completeNow();
+
+                  }));
+              });
   }
+
+    @Test
+    @DisplayName("Test rejecting after rejecting a request")
+    void failRejectingAlreadyRejectedRequest(VertxTestContext testContext) {
+
+        PolicyService spiedPolicyService = Mockito.spy(policyService);
+
+        UUID itemId = randResourceGroup.get();
+        JsonObject constraints = new JsonObject();
+        String expiryDuration = "P1Y";
+
+        JsonObject userJson = provider.result();
+        User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
+                .userId(userJson.getString("userId"))
+                .name(userJson.getString("firstName"), userJson.getString("lastName"))
+                .roles(List.of(Roles.PROVIDER)).build();
+
+        /* Mock catalogue client for UpdateNotification response */
+        Mockito.doAnswer(i -> {
+            Set<UUID> itemIds = i.getArgument(0);
+            Map<UUID, String> map = new HashMap<UUID, String>();
+            itemIds.forEach(id -> map.put(id, itemIdToCatId.get(id)));
+            return Future.succeededFuture(map);
+        }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
+
+        /* Mock catalogue client for create policy */
+        Mockito.doAnswer(i -> {
+            Map<String, List<String>> itemList = i.getArgument(0);
+            Map<String, ResourceObj> map = new HashMap<String, ResourceObj>();
+            String resourceGroup = itemList.get(RES_GRP).get(0);
+            map.put(resourceGroup, catIdToResObj.get(resourceGroup));
+            return Future.succeededFuture(map);
+        }).when(catalogueClient).checkReqItems(Mockito.any());
+
+        /* Mock registration service user details */
+        Mockito.doAnswer(i -> {
+            List<String> userIds = i.getArgument(0);
+            Promise<JsonObject> promise = i.getArgument(1);
+            promise.complete(fetchUserDetail(userIds));
+            return i.getMock();
+        }).when(registrationService).getUserDetails(Mockito.any(), Mockito.any());
+
+        createNotification(itemId, "RESOURCE_GROUP", NotifRequestStatus.PENDING, expiryDuration,
+                constraints).onSuccess(id -> {
+
+            String requestId = id.toString();
+
+            JsonArray req = new JsonArray().add(new JsonObject().put("requestId", requestId)
+                    .put(STATUS, NotifRequestStatus.REJECTED.toString().toLowerCase()));
+
+            List<UpdatePolicyNotification> request = UpdatePolicyNotification.jsonArrayToList(req);
+
+            spiedPolicyService.updatePolicyNotification(request, user, new JsonObject(),
+                    testContext.succeeding(response -> {
+
+                        assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                        assertEquals(SUCC_UPDATE_NOTIF_REQ, response.getString(TITLE));
+                        assertEquals(200, response.getInteger("status"));
+
+                        JsonArray req1 = new JsonArray().add(new JsonObject().put("requestId", requestId)
+                                .put(STATUS, NotifRequestStatus.REJECTED.toString().toLowerCase()));
+
+                        List<UpdatePolicyNotification> request1 = UpdatePolicyNotification.jsonArrayToList(req1);
+
+                        spiedPolicyService.updatePolicyNotification(request1, user, new JsonObject(),
+                                testContext.succeeding(responses -> testContext.verify(() -> {
+
+                                    assertEquals(URN_INVALID_INPUT.toString(), responses.getString(TYPE));
+                                    assertEquals(SUCC_NOTIF_REQ, responses.getString(TITLE));
+                                    assertEquals(400, responses.getInteger("status"));
+
+                                    testContext.completeNow();
+                                })));
+                    }));
+        } );
+    }
 
 }
