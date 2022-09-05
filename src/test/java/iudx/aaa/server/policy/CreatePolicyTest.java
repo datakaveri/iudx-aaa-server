@@ -4,6 +4,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -11,6 +12,7 @@ import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import iudx.aaa.server.apd.ApdService;
+import iudx.aaa.server.apiserver.CreatePolicyRequest;
 import iudx.aaa.server.apiserver.ResourceObj;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.util.ComposeException;
@@ -527,4 +529,77 @@ public class CreatePolicyTest {
       );
     }
 
+    @Test
+    @DisplayName("Testing Failure for RES_Grp(Item does not exist))")
+    void itemFailure4Resgp(VertxTestContext testContext) {
+        String itemId =
+                RandomStringUtils.randomAlphabetic(2)
+                        + "/"
+                        + RandomStringUtils.randomAlphabetic(2)
+                        + "/"
+                        + RandomStringUtils.randomAlphabetic(2);
+        UUID userId = UUID.randomUUID();
+        JsonObject invalidReqItem4Resgrp =
+                new JsonObject()
+                        .put("userId", userId)
+                        .put("itemId", itemId)
+                        .put("itemType", "resource_group")
+                        .put("expiryTime", "")
+                        .put("constraints", constraints);
+
+        List<CreatePolicyRequest> ItemfailureResGroup =
+                CreatePolicyRequest.jsonArrayToList(new JsonArray().add(invalidReqItem4Resgrp));
+        policyService.createPolicy(
+                ItemfailureResGroup,
+                validProvider,
+                new JsonObject(),
+                testContext.succeeding(
+                        response ->
+                                testContext.verify(
+                                        () -> {
+                                            JsonObject result = response;
+                                            assertEquals(URN_INVALID_INPUT.toString(), result.getString(TYPE));
+                                            assertEquals(INCORRECT_ITEM_TYPE, result.getString(TITLE));
+                                            assertEquals(INCORRECT_ITEM_TYPE, result.getString("detail"));
+                                            assertEquals(400, result.getInteger(STATUS));
+                                            testContext.completeNow();
+                                        })));
+    }
+
+    @Test
+    @DisplayName("Testing Failure for RES_Id(Item does not exist))")
+    void itemFailure4ResId(VertxTestContext testContext) {
+        String itemId =
+                RandomStringUtils.randomAlphabetic(2)
+                        + "/"
+                        + RandomStringUtils.randomAlphabetic(2)
+                        + "/"
+                        + RandomStringUtils.randomAlphabetic(2);
+        UUID userId = UUID.randomUUID();
+        JsonObject invalidReqItem4Res =
+                new JsonObject()
+                        .put("userId", userId)
+                        .put("itemId", itemId)
+                        .put("itemType", "resource")
+                        .put("expiryTime", "")
+                        .put("constraints", constraints);
+
+        List<CreatePolicyRequest> ItemfailureRes =
+                CreatePolicyRequest.jsonArrayToList(new JsonArray().add(invalidReqItem4Res));
+        policyService.createPolicy(
+                ItemfailureRes,
+                validProvider,
+                new JsonObject(),
+                testContext.succeeding(
+                        response ->
+                                testContext.verify(
+                                        () -> {
+                                            JsonObject result = response;
+                                            assertEquals(URN_INVALID_INPUT.toString(), result.getString(TYPE));
+                                            assertEquals(INCORRECT_ITEM_TYPE, result.getString(TITLE));
+                                           assertEquals(INCORRECT_ITEM_TYPE, result.getString("detail"));
+                                            assertEquals(400, result.getInteger(STATUS));
+                                            testContext.completeNow();
+                                        })));
+    }
 }
