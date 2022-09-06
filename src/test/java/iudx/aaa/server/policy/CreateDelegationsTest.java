@@ -401,6 +401,10 @@ public class CreateDelegationsTest {
             .put("resSerId", otherServerURL);
     List<CreateDelegationRequest> req =
         CreateDelegationRequest.jsonArrayToList(new JsonArray().add(obj));
+      Tuple policyOwners =
+          Tuple.of(
+              List.of(UUID.fromString(providerUser.result().getString("userId")))
+                  .toArray(UUID[]::new));
     policyService.createDelegation(
         req,
         user,
@@ -424,6 +428,8 @@ public class CreateDelegationsTest {
                           assertEquals(URN_ALREADY_EXISTS.toString(), resp.getString("type"));
                           assertEquals(DUPLICATE_DELEGATION, resp.getString("title"));
                           Assertions.assertEquals(409, resp.getInteger("status"));
+                          pgclient.withConnection(
+                              conn -> conn.preparedQuery(SQL_DELETE_DELEGATE).execute(policyOwners));
                           testContext.completeNow();
                       })));
   })));}
