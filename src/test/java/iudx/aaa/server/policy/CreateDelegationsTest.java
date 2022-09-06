@@ -26,6 +26,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -81,6 +82,8 @@ public class CreateDelegationsTest {
   private static String authServerURL;
   private static UUID otherSerId;
   private static String otherServerURL;
+  private static UUID fakeCatSerId;
+  private static String fakeCatSerUrl;
   private static Vertx vertxObj;
   private static PolicyService policyService;
   private static ApdService apdService = Mockito.mock(ApdService.class);
@@ -112,6 +115,7 @@ public class CreateDelegationsTest {
     catOptions = dbConfig.getJsonObject("catOptions");
     authServerURL = "auth" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
     otherServerURL = "other" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
+    fakeCatSerUrl  = "cat" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
     authOptions.put("authServerUrl", authServerURL);
     /* Set Connection Object and schema */
     if (connectOptions == null) {
@@ -199,11 +203,16 @@ public class CreateDelegationsTest {
               // create Auth server and other server
               authSerId = UUID.randomUUID();
               otherSerId = UUID.randomUUID();
+              fakeCatSerId = UUID.randomUUID();
               Utils.createFakeResourceServer(pgclient, adminUser.result(), authSerId, authServerURL)
                   .compose(
                       comp ->
                           Utils.createFakeResourceServer(
                               pgclient, adminUser.result(), otherSerId, otherServerURL))
+                  .compose(
+                      comp ->
+                          Utils.createFakeResourceServer(
+                              pgclient, adminUser.result(),fakeCatSerId, fakeCatSerUrl))
                   .compose(
                       pol ->
                           Utils.createFakePolicy(
@@ -392,6 +401,10 @@ public class CreateDelegationsTest {
             .put("resSerId", otherServerURL);
     List<CreateDelegationRequest> req =
         CreateDelegationRequest.jsonArrayToList(new JsonArray().add(obj));
+      Tuple policyOwners =
+          Tuple.of(
+              List.of(UUID.fromString(providerUser.result().getString("userId")))
+                  .toArray(UUID[]::new));
     policyService.createDelegation(
         req,
         user,
@@ -415,6 +428,8 @@ public class CreateDelegationsTest {
                           assertEquals(URN_ALREADY_EXISTS.toString(), resp.getString("type"));
                           assertEquals(DUPLICATE_DELEGATION, resp.getString("title"));
                           Assertions.assertEquals(409, resp.getInteger("status"));
+                          pgclient.withConnection(
+                              conn -> conn.preparedQuery(SQL_DELETE_DELEGATE).execute(policyOwners));
                           testContext.completeNow();
                       })));
   })));}
@@ -497,10 +512,51 @@ public class CreateDelegationsTest {
     testContext.completeNow();
   }
 
-  @Test
-  @DisplayName("Success - creating a delegate for other server as auth server delegate")
+  //repeated test to check why integ test failed
+  @RepeatedTest(10)
+  @DisplayName("Success - creating a delegate for multiple servers as auth server delegate")
   void successAsAuthDel(VertxTestContext testContext) {
-    testContext.completeNow();
+    JsonObject userJson = authDelUser.result();
+    User user =
+        new User.UserBuilder()
+            .keycloakId(userJson.getString("keycloakId"))
+            .userId(userJson.getString("userId"))
+            .name(userJson.getString("firstName"), userJson.getString("lastName"))
+            .roles(List.of(Roles.DELEGATE))
+            .build();
+
+    JsonObject otherSerReq =
+        new JsonObject()
+            .put("userId", otherDelUser.result().getString("userId"))
+            .put("resSerId", otherServerURL);
+
+      JsonObject catSerReq =
+          new JsonObject()
+              .put("userId", otherDelUser.result().getString("userId"))
+              .put("resSerId", fakeCatSerUrl);
+    List<CreateDelegationRequest> req =
+        CreateDelegationRequest.jsonArrayToList(new JsonArray().add(otherSerReq).add(catSerReq));
+
+    Tuple policyOwners =
+        Tuple.of(
+            List.of(UUID.fromString(providerUser.result().getString("userId")))
+                .toArray(UUID[]::new));
+    policyService.createDelegation(
+        req,
+        user,
+        new JsonObject().put("providerId", providerUser.result().getString("userId")),
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                      assertEquals("added delegations", response.getString("title"));
+                      Assertions.assertEquals(200, response.getInteger("status"));
+                      //repeated test so delegation must be deleted within the test
+                      pgclient.withConnection(
+                          conn -> conn.preparedQuery(SQL_DELETE_DELEGATE).execute(policyOwners));
+                      testContext.completeNow();
+                    })));
   }
 
     @Test

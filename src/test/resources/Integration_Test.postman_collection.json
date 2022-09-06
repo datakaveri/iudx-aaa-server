@@ -14595,7 +14595,7 @@
 							"response": []
 						},
 						{
-							"name": "Postman delegate setting all.roles as rs and auth delegate- [403]",
+							"name": "Postman delegate setting all.roles as rs and cat delegate- [403]",
 							"event": [
 								{
 									"listen": "test",
