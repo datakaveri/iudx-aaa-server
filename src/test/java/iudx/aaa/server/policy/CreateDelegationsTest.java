@@ -313,6 +313,7 @@ public class CreateDelegationsTest {
             });
   }
 
+  @Order(1)
   @Test
   @DisplayName("failure- user calling api does not have provider role/ is not an auth delegate")
   void userNotADelegate(VertxTestContext testContext) {
@@ -341,7 +342,7 @@ public class CreateDelegationsTest {
                       testContext.completeNow();
                     })));
   }
-
+  @Order(2)
   @Test
   @DisplayName("resServer not present failure")
   void InvalidServer(VertxTestContext testContext) {
@@ -375,7 +376,7 @@ public class CreateDelegationsTest {
                       testContext.completeNow();
                     })));
   }
-
+  @Order(3)
   @Test
   @DisplayName("success - create delegation as provider for other server and check duplicate fail ")
   void SuccessDel(VertxTestContext testContext) {
@@ -422,10 +423,9 @@ public class CreateDelegationsTest {
                           Assertions.assertEquals(409, resp.getInteger("status"));
                           pgclient.withConnection(
                               conn -> conn.preparedQuery(SQL_DELETE_DELEGATE).execute(policyOwners));
-                          testContext.completeNow();
-                      })));
+                          testContext.completeNow();})));
   })));}
-
+    @Order(4)
   @Test
   @DisplayName("failure - create delegation that already exists")
   void DuplicateDelegation(VertxTestContext testContext) {
@@ -458,7 +458,7 @@ public class CreateDelegationsTest {
                       testContext.completeNow();
                     })));
   }
-
+  @Order(5)
   @Test
   @DisplayName("AuthDelegate trying to create auth delegate failure")
   void AuthDelFailure(VertxTestContext testContext) {
@@ -491,6 +491,7 @@ public class CreateDelegationsTest {
                       testContext.completeNow();
                     })));
   }
+  @Order(6)
   @Test
   @DisplayName("failure- user for whom does not have delegate role")
   void userRoleFailure(VertxTestContext testContext) {
@@ -547,7 +548,7 @@ public class CreateDelegationsTest {
                                           checkCansumer.flag();
                                       })));
   }
-
+  @Order(7)
   @Test
   @DisplayName("failure- user calling api does not have auth server policy")
   void authPolicyFailure(VertxTestContext testContext) {
@@ -581,9 +582,8 @@ public class CreateDelegationsTest {
                                           testContext.completeNow();
                                       })));
   }
-
-  //repeated test to check why integ test failed
-  @RepeatedTest(10)
+    @Order(8)
+  @Test
   @DisplayName("Success - creating a delegate for multiple servers as auth server delegate")
   void successAsAuthDel(VertxTestContext testContext) {
     JsonObject userJson = authDelUser.result();
@@ -629,6 +629,7 @@ public class CreateDelegationsTest {
                     })));
   }
 
+    @Order(9)
     @Test
     @DisplayName("Success - multiple request as provider")
     void successMulAsProvider(VertxTestContext testContext) {
@@ -668,7 +669,6 @@ public class CreateDelegationsTest {
                                             assertEquals(URN_SUCCESS.toString(), response.getString("type"));
                                             assertEquals("added delegations", response.getString("title"));
                                             Assertions.assertEquals(200, response.getInteger("status"));
-                                            //repeated test so delegation must be deleted within the test
                                             pgclient.withConnection(
                                                     conn -> conn.preparedQuery(SQL_DELETE_DELEGATE).execute(policyOwners));
                                             testContext.completeNow();
