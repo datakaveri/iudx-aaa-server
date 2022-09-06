@@ -73,7 +73,7 @@ public class Constants {
   public static final String RESOURCE_GROUP_ID = "resource_group_id";
   // failed messages
   public static final String POLICY_NOT_FOUND = "policy not found";
-  public static final String NOT_DELEGATE = "user is not a delegate:";
+  public static final String NOT_DELEGATE = "user is not a delegate";
   public static final String ITEMNOTFOUND = "Item does not exist";
   public static final String NO_RES_SERVER = "Res server does not exist";
   public static final String DUPLICATE = "Request must be unique";

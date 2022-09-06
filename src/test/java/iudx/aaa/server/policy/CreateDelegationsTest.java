@@ -23,12 +23,7 @@ import iudx.aaa.server.registration.Utils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.RepeatedTest;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -319,7 +314,7 @@ public class CreateDelegationsTest {
   }
 
   @Test
-  @DisplayName("user not a delegate failure")
+  @DisplayName("failure- user calling api does not have provider role/ is not an auth delegate")
   void userNotADelegate(VertxTestContext testContext) {
 
     JsonObject userJson = consumerUser.result();
@@ -496,21 +491,20 @@ public class CreateDelegationsTest {
                       testContext.completeNow();
                     })));
   }
-
   @Test
-  @DisplayName("failure- user calling api does not have provider role/ is not an auth delegate")
+  @DisplayName("failure- user for whom does not have delegate role")
   void userRoleFailure(VertxTestContext testContext) {
       Checkpoint checkAdmin = testContext.checkpoint();
-      Checkpoint checkCansumer = testContext.checkpoint();
+     Checkpoint checkCansumer = testContext.checkpoint();
 
       // check for admin
-      JsonObject userJson = adminUser.result();
-      User adminuser =
+      JsonObject userJson = providerUser.result();
+      User provideruser =
               new User.UserBuilder()
                       .keycloakId(userJson.getString("keycloakId"))
                       .userId(userJson.getString("userId"))
                       .name(userJson.getString("firstName"), userJson.getString("lastName"))
-                      .roles(List.of(Roles.ADMIN))
+                      .roles(List.of(Roles.PROVIDER))
                       .build();
 
       JsonObject obj =
@@ -521,28 +515,19 @@ public class CreateDelegationsTest {
               CreateDelegationRequest.jsonArrayToList(new JsonArray().add(obj));
       policyService.createDelegation(
               req,
-              adminuser,
-              new JsonObject().put("providerId", providerUser.result().getString("userId")),
+              provideruser,
+              new JsonObject(),
               testContext.succeeding(
                       response ->
                               testContext.verify(
                                       () -> {
-                                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                                          assertEquals(ERR_TITLE_AUTH_DELE_CREATE, response.getString("title"));
-                                          Assertions.assertEquals(403, response.getInteger("status"));
+                                          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                                          assertEquals(NOT_DELEGATE, response.getString("title"));
+                                          Assertions.assertEquals(400, response.getInteger("status"));
                                           checkAdmin.flag();
                                       })));
       // check for consumer
-      JsonObject consumerUserJson = consumerUser.result();
-      User consumeruser =
-              new User.UserBuilder()
-                      .keycloakId(consumerUserJson.getString("keycloakId"))
-                      .userId(consumerUserJson.getString("userId"))
-                      .name(consumerUserJson.getString("firstName"), userJson.getString("lastName"))
-                      .roles(List.of(Roles.CONSUMER))
-                      .build();
-
-      JsonObject conObj =
+     JsonObject conObj =
               new JsonObject()
                       .put("userId", consumerUser.result().getString("userId"))
                       .put("resSerId", authServerURL);
@@ -550,15 +535,15 @@ public class CreateDelegationsTest {
               CreateDelegationRequest.jsonArrayToList(new JsonArray().add(conObj));
       policyService.createDelegation(
               conReq,
-              consumeruser,
-              new JsonObject().put("providerId", providerUser.result().getString("userId")),
+              provideruser,
+              new JsonObject(),
               testContext.succeeding(
                       response ->
                               testContext.verify(
                                       () -> {
-                                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                                          assertEquals(ERR_TITLE_AUTH_DELE_CREATE, response.getString("title"));
-                                          Assertions.assertEquals(403, response.getInteger("status"));
+                                          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                                          assertEquals(NOT_DELEGATE, response.getString("title"));
+                                          Assertions.assertEquals(400, response.getInteger("status"));
                                           checkCansumer.flag();
                                       })));
   }
@@ -578,13 +563,13 @@ public class CreateDelegationsTest {
       JsonObject obj =
               new JsonObject()
                       .put("userId", otherDelUser.result().getString("userId"))
-                      .put("resSerId", fakeCatSerUrl);
+                      .put("resSerId", authServerURL);
       List<CreateDelegationRequest> req =
               CreateDelegationRequest.jsonArrayToList(new JsonArray().add(obj));
       policyService.createDelegation(
               req,
               user,
-              new JsonObject().put("providerId", providerUser.result().getString("userId")),
+              new JsonObject(),
               testContext.succeeding(
                       response ->
                               testContext.verify(
@@ -644,10 +629,10 @@ public class CreateDelegationsTest {
                     })));
   }
 
-    @RepeatedTest(10)
+    @Test
     @DisplayName("Success - multiple request as provider")
     void successMulAsProvider(VertxTestContext testContext) {
-        JsonObject userJson = authDelUser.result();
+        JsonObject userJson = providerUser.result();
         User user =
                 new User.UserBuilder()
                         .keycloakId(userJson.getString("keycloakId"))
@@ -675,7 +660,7 @@ public class CreateDelegationsTest {
         policyService.createDelegation(
                 req,
                 user,
-                new JsonObject().put("providerId", providerUser.result().getString("userId")),
+                new JsonObject(),
                 testContext.succeeding(
                         response ->
                                 testContext.verify(
