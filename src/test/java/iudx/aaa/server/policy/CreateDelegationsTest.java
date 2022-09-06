@@ -5,6 +5,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
@@ -41,10 +42,7 @@ import static iudx.aaa.server.apiserver.util.Urn.URN_ALREADY_EXISTS;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
 import static iudx.aaa.server.apiserver.util.Urn.URN_SUCCESS;
-import static iudx.aaa.server.policy.Constants.DUPLICATE_DELEGATION;
-import static iudx.aaa.server.policy.Constants.ERR_TITLE_AUTH_DELE_CREATE;
-import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ROLES;
-import static iudx.aaa.server.policy.Constants.SERVER_NOT_PRESENT;
+import static iudx.aaa.server.policy.Constants.*;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_ANY_POLICIES;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_DELEGATE;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_ORG;
@@ -424,7 +422,6 @@ public class CreateDelegationsTest {
               resp ->
                   testContext.verify(
                       () -> {
-                          System.out.println("resp " + resp);
                           assertEquals(URN_ALREADY_EXISTS.toString(), resp.getString("type"));
                           assertEquals(DUPLICATE_DELEGATION, resp.getString("title"));
                           Assertions.assertEquals(409, resp.getInteger("status"));
@@ -503,13 +500,101 @@ public class CreateDelegationsTest {
   @Test
   @DisplayName("failure- user calling api does not have provider role/ is not an auth delegate")
   void userRoleFailure(VertxTestContext testContext) {
-    testContext.completeNow();
+      Checkpoint checkAdmin = testContext.checkpoint();
+      Checkpoint checkCansumer = testContext.checkpoint();
+
+      // check for admin
+      JsonObject userJson = adminUser.result();
+      User adminuser =
+              new User.UserBuilder()
+                      .keycloakId(userJson.getString("keycloakId"))
+                      .userId(userJson.getString("userId"))
+                      .name(userJson.getString("firstName"), userJson.getString("lastName"))
+                      .roles(List.of(Roles.ADMIN))
+                      .build();
+
+      JsonObject obj =
+              new JsonObject()
+                      .put("userId", adminUser.result().getString("userId"))
+                      .put("resSerId", authServerURL);
+      List<CreateDelegationRequest> req =
+              CreateDelegationRequest.jsonArrayToList(new JsonArray().add(obj));
+      policyService.createDelegation(
+              req,
+              adminuser,
+              new JsonObject().put("providerId", providerUser.result().getString("userId")),
+              testContext.succeeding(
+                      response ->
+                              testContext.verify(
+                                      () -> {
+                                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                                          assertEquals(ERR_TITLE_AUTH_DELE_CREATE, response.getString("title"));
+                                          Assertions.assertEquals(403, response.getInteger("status"));
+                                          checkAdmin.flag();
+                                      })));
+      // check for consumer
+      JsonObject consumerUserJson = consumerUser.result();
+      User consumeruser =
+              new User.UserBuilder()
+                      .keycloakId(consumerUserJson.getString("keycloakId"))
+                      .userId(consumerUserJson.getString("userId"))
+                      .name(consumerUserJson.getString("firstName"), userJson.getString("lastName"))
+                      .roles(List.of(Roles.CONSUMER))
+                      .build();
+
+      JsonObject conObj =
+              new JsonObject()
+                      .put("userId", consumerUser.result().getString("userId"))
+                      .put("resSerId", authServerURL);
+      List<CreateDelegationRequest> conReq =
+              CreateDelegationRequest.jsonArrayToList(new JsonArray().add(conObj));
+      policyService.createDelegation(
+              conReq,
+              consumeruser,
+              new JsonObject().put("providerId", providerUser.result().getString("userId")),
+              testContext.succeeding(
+                      response ->
+                              testContext.verify(
+                                      () -> {
+                                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                                          assertEquals(ERR_TITLE_AUTH_DELE_CREATE, response.getString("title"));
+                                          Assertions.assertEquals(403, response.getInteger("status"));
+                                          checkCansumer.flag();
+                                      })));
   }
 
   @Test
   @DisplayName("failure- user calling api does not have auth server policy")
   void authPolicyFailure(VertxTestContext testContext) {
-    testContext.completeNow();
+      JsonObject userJson = otherDelUser.result();
+      User user =
+              new User.UserBuilder()
+                      .keycloakId(userJson.getString("keycloakId"))
+                      .userId(userJson.getString("userId"))
+                      .name(userJson.getString("firstName"), userJson.getString("lastName"))
+                      .roles(List.of(Roles.PROVIDER))
+                      .build();
+
+      JsonObject obj =
+              new JsonObject()
+                      .put("userId", otherDelUser.result().getString("userId"))
+                      .put("resSerId", fakeCatSerUrl);
+      List<CreateDelegationRequest> req =
+              CreateDelegationRequest.jsonArrayToList(new JsonArray().add(obj));
+      policyService.createDelegation(
+              req,
+              user,
+              new JsonObject().put("providerId", providerUser.result().getString("userId")),
+              testContext.succeeding(
+                      response ->
+                              testContext.verify(
+                                      () -> {
+                                         assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                                          assertEquals(NO_AUTH_POLICY, response.getString("title"));
+                                          assertEquals(NO_AUTH_POLICY,response.getString("detail"));
+                                          Assertions.assertEquals(403, response.getInteger("status"));
+                                          testContext.completeNow();
+                                      })));
   }
 
   //repeated test to check why integ test failed
@@ -559,9 +644,49 @@ public class CreateDelegationsTest {
                     })));
   }
 
-    @Test
+    @RepeatedTest(10)
     @DisplayName("Success - multiple request as provider")
     void successMulAsProvider(VertxTestContext testContext) {
-        testContext.completeNow();
+        JsonObject userJson = authDelUser.result();
+        User user =
+                new User.UserBuilder()
+                        .keycloakId(userJson.getString("keycloakId"))
+                        .userId(userJson.getString("userId"))
+                        .name(userJson.getString("firstName"), userJson.getString("lastName"))
+                        .roles(List.of(Roles.PROVIDER))
+                        .build();
+
+        JsonObject otherSerReq =
+                new JsonObject()
+                        .put("userId", otherDelUser.result().getString("userId"))
+                        .put("resSerId", otherServerURL);
+
+        JsonObject catSerReq =
+                new JsonObject()
+                        .put("userId", otherDelUser.result().getString("userId"))
+                        .put("resSerId", fakeCatSerUrl);
+        List<CreateDelegationRequest> req =
+                CreateDelegationRequest.jsonArrayToList(new JsonArray().add(otherSerReq).add(catSerReq));
+
+        Tuple policyOwners =
+                Tuple.of(
+                        List.of(UUID.fromString(providerUser.result().getString("userId")))
+                                .toArray(UUID[]::new));
+        policyService.createDelegation(
+                req,
+                user,
+                new JsonObject().put("providerId", providerUser.result().getString("userId")),
+                testContext.succeeding(
+                        response ->
+                                testContext.verify(
+                                        () -> {
+                                            assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                                            assertEquals("added delegations", response.getString("title"));
+                                            Assertions.assertEquals(200, response.getInteger("status"));
+                                            //repeated test so delegation must be deleted within the test
+                                            pgclient.withConnection(
+                                                    conn -> conn.preparedQuery(SQL_DELETE_DELEGATE).execute(policyOwners));
+                                            testContext.completeNow();
+                                        })));
     }
 }
