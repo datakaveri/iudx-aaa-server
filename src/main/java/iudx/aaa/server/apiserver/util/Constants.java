@@ -117,7 +117,8 @@ public class Constants {
           + "\", \"detail\":\"" + ERR_DETAIL_NO_SUCH_API + "\"}";
 
   /* General */
-  public static final String NAME = "name";
+  public static final String KC_GIVEN_NAME = "given_name";
+  public static final String KC_FAMILY_NAME = "family_name";
   public static final String SUB = "sub";
   public static final String ID = "id";
   public static final String ROLES = "roles";
