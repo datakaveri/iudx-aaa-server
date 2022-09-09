@@ -96,12 +96,9 @@ public class OIDCAuthentication implements AuthenticationHandler {
         String kId = mapper.getString(SUB);
         user.keycloakId(kId);
 
-        String[] name = mapper.getString(NAME, " ").split(" ");
-        if (name.length == 2) {
-          user.name(name[0], name[1]);
-        } else {
-          user.name(String.join(" ", name).strip(), null);
-        }
+        String firstName = mapper.getString(KC_GIVEN_NAME, " ");
+        String lastName = mapper.getString(KC_FAMILY_NAME, " ");
+        user.name(firstName, lastName);
 
         return pgSelectUser(SQL_GET_USER_ROLES, kId);
 
