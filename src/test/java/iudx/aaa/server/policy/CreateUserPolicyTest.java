@@ -84,31 +84,6 @@ public class CreateUserPolicyTest {
   private static PgConnectOptions connectOptions;
   private static JsonObject authOptions;
   private static JsonObject catalogueOptions;
-  /*policies needed
-          user 1 is the admin for all servers and is the provider for itemid1/catid1
-           1. user1 creates policy for user 2 for authserver,resserver and catserver as admin
-           2. user1 creates policy for user 2 for item1 as provider
-           3. user1 creates delegation for user 2 on authserver,resserver and catserver as provider
-           4. user2 creates delegation for user3 on any server
-           5. user1 creates a policy for user 3 for authserver as an admin
-           6. user3 must not be any kind of delegate to user1
-           7. user3 must not have any active policies on item1
-           8. user1 creates policy for user3 for resource Serve
-
-           For createPolicyTest
-           userId1 844e251b-574b-46e6-9247-f76f1f70a637 (all roles)
-           userId2 d1262b13-1cbe-4b66-a9b2-96df86437683 (provider/delegate)
-           userId3 a13eb955-c691-4fd3-b200-f18bc78810b5 (all roles - remove admin)
-           item1  iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg
-    catClient = Mockito.mock(CatalogueClient.class);
-                    mockRegistrationFactory = new MockRegistrationFactory();
-                    registrationService = mockRegistrationFactory.getInstance();
-                    policyService = new PolicyServiceImpl(pgclient, registrationService, apdService,
-                        catClient, authOptions, catOptions);
-                    testContext.completeNow();
-
-  */
-
   private static Future<JsonObject> adminUser;
   private static Future<JsonObject> providerUser;
   private static Future<JsonObject> authDelUser;
