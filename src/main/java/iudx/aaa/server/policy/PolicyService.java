@@ -107,9 +107,19 @@ public interface PolicyService {
    * @return PolicyService which is a Service
    */
 
+  /**
+   * The checkAuthPolicy exposes a method to check if a user has a valid policy set
+   * by the auth admin for the auth server
+   * Future<Void> succeeds if policy is present
+   * ComposeExeption is thrown if no policy present
+   * @param userId String (as UUIDs) of user IDs
+   * @param handler which is a Request Handler
+   * @return PolicyService which is a Service
+   */
+
   @Fluent
-  PolicyService setDefaultProviderPolicies(List<String> userIds,
-      Handler<AsyncResult<JsonObject>> handler);
+  PolicyService checkAuthPolicy(String userId,
+      Handler<AsyncResult<Void>> handler);
   
   /**
    * The createPolicyNotification implements the creating request for user policies.

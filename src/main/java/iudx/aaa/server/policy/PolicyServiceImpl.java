@@ -1494,14 +1494,24 @@ public class PolicyServiceImpl implements PolicyService {
     return this;
   }
 
-  /** {@inheritDoc} */
   @Override
-  public PolicyService setDefaultProviderPolicies(
-      List<String> userIds, Handler<AsyncResult<JsonObject>> handler) {
-    // TODO Auto-generated method stub
-    handler.handle(Future.succeededFuture(new JsonObject()));
+  public PolicyService checkAuthPolicy(String userId, Handler<AsyncResult<Void>> handler) {
+    Future<Boolean> policyExists = createPolicy.checkAuthPolicy(userId);
+    policyExists
+        .onSuccess(succ -> handler.handle(Future.succeededFuture()))
+        .onFailure(
+            fail -> {
+              if (fail instanceof ComposeException) {
+                ComposeException e = (ComposeException) fail;
+                Response resp = e.getResponse();
+                resp.setDetail(NO_AUTH_ADMIN_POLICY);
+                handler.handle(Future.failedFuture(new ComposeException(resp)));
+                return;
+              }
+              handler.handle(Future.failedFuture(fail));
+            });
     return this;
-  }
+    }
 
   /** {@inheritDoc} */
   @Override
