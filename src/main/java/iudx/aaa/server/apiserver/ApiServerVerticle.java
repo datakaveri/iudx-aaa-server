@@ -892,8 +892,15 @@ public class ApiServerVerticle extends AbstractVerticle {
     LOGGER.info("response "+response.getStatusMessage());
     int status = msg.getInteger(STATUS, 400);
     msg.remove(STATUS);
+    
+    /* In case of a timeout, the response may already be sent */
+    if(response.ended()) {
+      LOGGER.warn("Trying to send processed API response after timeout");
+      return Future.succeededFuture();
+    }
     response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON);
     response.putHeader(HEADER_X_CONTENT_TYPE_OPTIONS, X_CONTENT_TYPE_OPTIONS_NOSNIFF);
+    
     return response.setStatusCode(status).end(msg.toString());
   }
 

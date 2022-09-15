@@ -33,8 +33,9 @@ public class FailureHandler implements Handler<RoutingContext> {
 
     /* If timeout handler is triggered */
     if (context.failure() == null && context.statusCode() == 503) {
-      LOGGER.error("Fail: Handling unexpected error: Timeout");
+      LOGGER.error("Fail: Handling unexpected error: Timeout for " + context.normalizedPath());
       response.setStatusCode(503).end(JSON_TIMEOUT);
+      return;
     }
 
     LOGGER.error("Fail: Handling unexpected error: " + context.failure().getLocalizedMessage());
@@ -58,7 +59,7 @@ public class FailureHandler implements Handler<RoutingContext> {
       
     } else if (failure instanceof DateTimeParseException) {
       processResponse(response, failure.getLocalizedMessage());
-      
+
     } else {
       processResponse(response, failure);
       return;
