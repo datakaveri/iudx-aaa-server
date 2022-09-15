@@ -93,6 +93,8 @@ public class Constants {
       "User with provider role or is an auth delegate may call the API";
   public static final String ERR_DETAIL_LIST_DELEGATE_ROLES =
       "User with provider/delegate role or is an auth delegate may call the API";
+  public static final String ERR_DETAIL_CONSUMER_ROLES =
+      "User with consumer role may call the API";
   public static final String ERR_TITLE_AUTH_DELE_CREATE =
       "Auth delegate may not create auth delegations";
   // URN
@@ -125,9 +127,11 @@ public class Constants {
   public static final String INVALID_TUPLE = "Unable to map request to db tuple";
   public static final String SUCC_NOTIF_REQ = "Notification access request";
   public static final String SUCC_LIST_NOTIF_REQ = "Access requests";
+  public static final String DELETE_NOTIF_REQ = "deleted requests";
   public static final String ERR_LIST_NOTIF = "Fail: Unable to list notification access requests";
+  public static final String ERR_DELETE_NOTIF = "Fail: Unable to delete notification access requests";
   public static final String SUCC_UPDATE_NOTIF_REQ = "Request updated";
-  public static final String REQ_ID_ALREADY_NOT_EXISTS = "requestId not exists";
+  public static final String REQ_ID_ALREADY_NOT_EXISTS = "requestId does not exists";
   public static final String REQ_ID_ALREADY_PROCESSED = "requestId already processed";
 
   // verify policy queries
@@ -363,6 +367,16 @@ public class Constants {
 
   public static final String SET_INTERVALSTYLE = "SET LOCAL intervalstyle = 'iso_8601'";
 
+  public static final String GET_NOTIFICATIONS_BY_ID_CONSUMER = "SELECT id as \"requestId\", "
+      + "user_id, item_id as \"itemId\", lower(item_type::text) as \"itemType\","
+      + " owner_id, lower(status::text) AS status, expiry_duration::text as \"expiryDuration\","
+      + " constraints FROM access_requests  WHERE user_id = $1::uuid AND id = ANY($2::uuid[]) "
+      + " AND status = 'PENDING'";
+
+  public static final String DELETE_NOTIFICATIONS =
+      "UPDATE access_requests SET status = 'WITHDRAWN', updated_at = NOW()"
+          + " WHERE user_id = $1::uuid AND id = ANY($2::uuid[])";
+
   public static final String INSERT_DELEGATION =
       "insert into delegations (owner_id,user_id,resource_server_id,status,created_at,updated_at) values "
           + " ($1::UUID, $2::UUID, $3::UUID, $4::policy_status_enum, now() ,now())";
@@ -428,7 +442,8 @@ public class Constants {
     PENDING("PENDING"),
     ACTIVE("ACTIVE"),
     DELETED("DELETED"),
-    SUCCESS("SUCCESS");
+    SUCCESS("SUCCESS"),
+    WITHDRAWN("WITHDRAWN");
 
     private final String status;
 
