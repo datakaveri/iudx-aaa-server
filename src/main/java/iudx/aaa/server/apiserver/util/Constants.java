@@ -72,6 +72,7 @@ public class Constants {
   public static final String GET_POLICIES_REQUEST = "get-auth-v1-policies-requests";
   public static final String POST_POLICIES_REQUEST = "post-auth-v1-policies-requests";
   public static final String PUT_POLICIES_REQUEST = "put-auth-v1-policies-requests";
+  public static final String DELETE_POLICIES_REQUEST = "delete-auth-v1-policies-requests";
   public static final String GET_DELEGATIONS = "get-auth-v1-policies-delegations";
   public static final String DELETE_DELEGATIONS = "delete-auth-v1-policies-delegations";
   public static final String CREATE_DELEGATIONS = "post-auth-v1-policies-delegations";

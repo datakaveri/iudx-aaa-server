@@ -13,6 +13,7 @@ import iudx.aaa.server.apiserver.CreateDelegationRequest;
 import iudx.aaa.server.apiserver.CreatePolicyNotification;
 import iudx.aaa.server.apiserver.CreatePolicyRequest;
 import iudx.aaa.server.apiserver.DeleteDelegationRequest;
+import iudx.aaa.server.apiserver.DeletePolicyNotificationRequest;
 import iudx.aaa.server.apiserver.UpdatePolicyNotification;
 import iudx.aaa.server.apiserver.User;
 
@@ -148,6 +149,20 @@ public interface PolicyService {
   PolicyService updatePolicyNotification(List<UpdatePolicyNotification> request, User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler);
 
   /**
+   * deletePolicyNotification implements the ability for a consumer to delete(withdraw)
+   * any notification they have created which have not been approved or rejected by the provider
+   *
+   * @param request which is a list of DeletePolicyNotificationRequest objects
+   * @param user which is a {@link User} DataObject
+   * @param handler which is a Request Handler
+   * @return PolicyService which is a Service
+   */
+  @Fluent
+  PolicyService deletePolicyNotification(List<DeletePolicyNotificationRequest> request, User user,
+      Handler<AsyncResult<JsonObject>> handler);
+
+
+  /**
    * listDelegation implements the ability for a provider to view the delegations they have created.
    * It allows auth delegates to perform the same on behalf of a provider (although an auth delegate
    * may not view auth delegate-related information). Additionally, delegates may view the
@@ -195,4 +210,6 @@ public interface PolicyService {
   @Fluent
   PolicyService  createDelegation(
           List<CreateDelegationRequest> request, User user, JsonObject authDelegateDetails, Handler<AsyncResult<JsonObject>> handler);
+
+
 }

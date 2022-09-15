@@ -20,6 +20,7 @@ import iudx.aaa.server.apiserver.CreateDelegationRequest;
 import iudx.aaa.server.apiserver.CreatePolicyNotification;
 import iudx.aaa.server.apiserver.CreatePolicyRequest;
 import iudx.aaa.server.apiserver.DeleteDelegationRequest;
+import iudx.aaa.server.apiserver.DeletePolicyNotificationRequest;
 import iudx.aaa.server.apiserver.NotifRequestStatus;
 import iudx.aaa.server.apiserver.ResourceObj;
 import iudx.aaa.server.apiserver.Response;
@@ -2122,6 +2123,167 @@ public class PolicyServiceImpl implements PolicyService {
     });
     return this;
   }
+
+  @Override
+  public PolicyService deletePolicyNotification(List<DeletePolicyNotificationRequest> request, User user,
+      Handler<AsyncResult<JsonObject>> handler) {
+
+    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+
+    if (!user.getRoles().contains(Roles.CONSUMER)) {
+      Response r =
+          new Response.ResponseBuilder()
+              .type(URN_INVALID_ROLE)
+              .title(ERR_TITLE_INVALID_ROLES)
+              .detail(ERR_DETAIL_CONSUMER_ROLES)
+              .status(401)
+              .build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+      }
+
+    Tuple queryTup;
+    List<UUID> ids =
+        request.stream().map(obj -> UUID.fromString(obj.getId())).collect(Collectors.toList());
+
+
+    queryTup =
+            Tuple.of(UUID.fromString(user.getUserId())).addArrayOfUUID(ids.toArray(UUID[]::new));
+
+    Collector<Row, ?, List<JsonObject>>collect =
+        Collectors.mapping(row -> row.toJson(), Collectors.toList());
+
+      Future<List<JsonObject>> getIds =
+          pool.withConnection(
+              conn ->
+                  conn.preparedQuery(GET_NOTIFICATIONS_BY_ID_CONSUMER)
+                      .collecting(collect)
+                      .execute(queryTup)
+                      .map(res -> res.value()));
+
+      Future<Void> validate = getIds.compose(objs ->
+      {
+        List<UUID> validIds = objs.stream().map(ar -> UUID.fromString(ar.getString("requestId")))
+            .collect(Collectors.toList());
+
+        if(validIds.size() < ids.size())
+        {
+         ids.removeAll(validIds);
+          Response r =
+              new ResponseBuilder()
+                  .type(URN_INVALID_INPUT)
+                  .title(REQ_ID_ALREADY_NOT_EXISTS)
+                  .detail(ids.toString())
+                  .status(400)
+                  .build();
+          return Future.failedFuture(new ComposeException(r));
+        }
+        return Future.succeededFuture();
+      });
+
+      Future<RowSet<Row>> deleteNotifs = validate.compose(ar ->
+        pool.withConnection(conn -> conn.preparedQuery(DELETE_NOTIFICATIONS).execute(queryTup)));
+
+    Future<JsonArray> itemNames =
+        deleteNotifs.compose(
+            result -> {
+              Promise<JsonArray> promise = Promise.promise();
+              Set<UUID> itemIds = new HashSet<>();
+              getIds.result().forEach(
+                  each ->
+                  {
+                    itemIds.add(UUID.fromString(each.getString(ITEMID)));
+                  }
+              );
+              Future<Map<UUID, String>> getNames =
+                  CompositeFuture.all(catalogueClient.getCatIds(itemIds, itemTypes.RESOURCE_GROUP),
+                      catalogueClient.getCatIds(itemIds, itemTypes.RESOURCE)).compose(res -> {
+                    Map<UUID, String> resGroups = res.resultAt(0);
+                    Map<UUID, String> resItems = res.resultAt(1);
+                    /* merging the two maps into resGroups */
+                    resGroups.putAll(resItems);
+                    return Future.succeededFuture(resGroups);
+                  });
+
+              getNames
+                  .onFailure(
+                      failureHandler -> {
+                        promise.fail(failureHandler.getLocalizedMessage());
+                      })
+                  .onSuccess(
+                      nameMapper -> {
+                        JsonArray resArr = new JsonArray();
+                        getIds.result().forEach(
+                            each -> {
+                              UUID itemId = UUID.fromString(each.getString(ITEMID));
+                              each.put(ITEMID, nameMapper.get(itemId));
+                              resArr.add(each);
+                            });
+                        promise.complete(resArr);
+                      });
+
+              return promise.future();
+            });
+
+    Future<JsonObject> userInfo =
+        itemNames.compose(
+            result -> {
+              Set<String> itemIds = new HashSet<String>();
+              result.forEach(
+                  obj -> {
+                    JsonObject each = (JsonObject) obj;
+                    itemIds.add(each.getString(OWNER_ID));
+                    itemIds.add(each.getString(USER_ID));
+                  });
+
+              Promise<JsonObject> userDetails = Promise.promise();
+              registrationService.getUserDetails(new ArrayList<String>(itemIds), userDetails);
+              return userDetails.future();
+            });
+
+    userInfo
+        .onSuccess(
+            result -> {
+              JsonArray notifRequest = itemNames.result();
+              JsonArray response = new JsonArray();
+              Map<String, JsonObject> details = jsonObjectToMap.apply(result);
+
+              notifRequest.forEach(
+                  obj -> {
+                    JsonObject each = (JsonObject) obj;
+                    String userId = (String) each.remove(USER_ID);
+                    String ownerId = (String) each.remove(OWNER_ID);
+
+                    JsonObject eachDetails =
+                        each.copy()
+                            .put(USER_DETAILS, details.get(userId).put(ID, userId))
+                            .put(OWNER_DETAILS, details.get(ownerId).put(ID, ownerId))
+                            .put(STATUS,status.WITHDRAWN.toString().toLowerCase());
+
+                    response.add(eachDetails);
+                  });
+
+              Response r =
+                  new ResponseBuilder()
+                      .type(URN_SUCCESS)
+                      .title(DELETE_NOTIF_REQ)
+                      .arrayResults(response)
+                      .status(200)
+                      .build();
+              handler.handle(Future.succeededFuture(r.toJson()));
+            })
+        .onFailure(
+            e -> {
+              LOGGER.error(ERR_DELETE_NOTIF + "; {}", e.getMessage());
+              if (e instanceof ComposeException) {
+                ComposeException exp = (ComposeException) e;
+                handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                return;
+              }
+              handler.handle(Future.failedFuture(INTERNALERROR));
+            });
+    return this;
+    }
 
   @Override
   public PolicyService listDelegation(

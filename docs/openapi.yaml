@@ -156,7 +156,7 @@ paths:
         - schema:
             type: string
             minLength: 1
-            maxLength: 4000
+            maxLength: 3000
             example: Bearer <JWT>
           in: header
           name: Authorization
@@ -250,12 +250,12 @@ paths:
                   role: delegate
               identity token for APD as consumer:
                 value:
-                  itemId: url of apd
+                  itemId: apd.iudx.org.in
                   itemType: resource_server
                   role: consumer
               identity token for APD as trustee:
                 value:
-                  itemId: url of apd
+                  itemId: apd.iudx.org.in
                   itemType: resource_server
                   role: trustee
               identity token for resource_server as provider:
@@ -590,7 +590,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 4000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -824,7 +824,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 4000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -1115,7 +1115,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 4000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -1391,7 +1391,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 4000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -1541,7 +1541,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 4000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -1675,7 +1675,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 4000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -1897,7 +1897,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 4000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -2054,7 +2054,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 4000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -2397,7 +2397,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 4000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -2482,7 +2482,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 4000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -2635,7 +2635,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 4000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -3065,7 +3065,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 4000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -3202,7 +3202,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 4000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -3304,7 +3304,7 @@ paths:
       parameters:
         - schema:
             type: string
-            maxLength: 4000
+            maxLength: 3000
             minLength: 1
             example: Bearer <JWT>
           in: header
@@ -3463,7 +3463,7 @@ paths:
             type: string
             example: Bearer <JWT>
             minLength: 1
-            maxLength: 4000
+            maxLength: 3000
           in: header
           name: Authorization
           required: true
@@ -3620,7 +3620,7 @@ paths:
             type: string
             example: Bearer <JWT>
             minLength: 1
-            maxLength: 4000
+            maxLength: 3000
           in: header
           name: Authorization
           required: true
@@ -3767,11 +3767,259 @@ paths:
             type: string
             example: Bearer <JWT>
             minLength: 1
-            maxLength: 4000
+            maxLength: 3000
           in: header
           name: Authorization
           required: true
           description: Keycloak Issued token
+    delete:
+      summary: ''
+      operationId: delete-auth-v1-policies-requests
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  title:
+                    type: string
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        requestId:
+                          type: string
+                        itemId:
+                          type: string
+                        itemType:
+                          type: string
+                        status:
+                          type: string
+                        expiryDuration:
+                          type: string
+                        constraints:
+                          type: object
+                          properties:
+                            access:
+                              type: array
+                              items:
+                                type: string
+                        user:
+                          type: object
+                          properties:
+                            email:
+                              type: string
+                            name:
+                              type: object
+                              properties:
+                                firstName:
+                                  type: string
+                                lastName:
+                                  type: string
+                            id:
+                              type: string
+                        owner:
+                          type: object
+                          properties:
+                            email:
+                              type: string
+                            name:
+                              type: object
+                              properties:
+                                firstName:
+                                  type: string
+                                lastName:
+                                  type: string
+                            id:
+                              type: string
+                x-examples:
+                  example-1:
+                    type: 'urn:dx:as:Success'
+                    title: Access requests
+                    results:
+                      - requestId: 3e3a91ff-1139-4877-966d-e41ef45d5444
+                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/integration-test
+                        itemType: resource_group
+                        status: withdrawn
+                        expiryDuration: '1 year 2 mons 10 days 02:30:00'
+                        constraints:
+                          access:
+                            - api
+                            - sub
+                            - file
+                        user:
+                          email: bryan.robert@datakaveri.org
+                          name:
+                            firstName: Bryan
+                            lastName: Robert
+                          id: fcbecd18-2ecb-4066-8a9e-f073aacbe579
+                        owner:
+                          email: bryanrobert@iisc.ac.in
+                          name:
+                            firstName: B
+                            lastName: Robert A B C D
+                          id: 844e251b-574b-46e6-9247-f76f1f70a637
+                      - requestId: 0a9bbfab-ccac-4ae7-b010-59c1a1bf2b13
+                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/integration-test/test
+                        itemType: resource
+                        status: withdrawn
+                        expiryDuration: '1 year 2 mons 10 days 02:30:00'
+                        constraints:
+                          access:
+                            - api
+                            - sub
+                            - file
+                        user:
+                          email: bryan.robert@datakaveri.org
+                          name:
+                            firstName: Bryan
+                            lastName: Robert
+                          id: fcbecd18-2ecb-4066-8a9e-f073aacbe579
+                        owner:
+                          email: bryanrobert@iisc.ac.in
+                          name:
+                            firstName: B
+                            lastName: Robert A B C D
+                          id: 844e251b-574b-46e6-9247-f76f1f70a637
+              examples:
+                success:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: Access requests
+                    results:
+                      - requestId: 3e3a91ff-1139-4877-966d-e41ef45d5444
+                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/integration-test
+                        itemType: resource_group
+                        status: withdrawn
+                        expiryDuration: '1 year 2 mons 10 days 02:30:00'
+                        constraints:
+                          access:
+                            - api
+                            - sub
+                            - file
+                        user:
+                          email: bryan.robert@datakaveri.org
+                          name:
+                            firstName: Bryan
+                            lastName: Robert
+                          id: fcbecd18-2ecb-4066-8a9e-f073aacbe579
+                        owner:
+                          email: bryanrobert@iisc.ac.in
+                          name:
+                            firstName: B
+                            lastName: Robert A B C D
+                          id: 844e251b-574b-46e6-9247-f76f1f70a637
+                      - requestId: 0a9bbfab-ccac-4ae7-b010-59c1a1bf2b13
+                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/integration-test/test
+                        itemType: resource
+                        status: withdrawn
+                        expiryDuration: '1 year 2 mons 10 days 02:30:00'
+                        constraints:
+                          access:
+                            - api
+                            - sub
+                            - file
+                        user:
+                          email: bryan.robert@datakaveri.org
+                          name:
+                            firstName: Bryan
+                            lastName: Robert
+                          id: fcbecd18-2ecb-4066-8a9e-f073aacbe579
+                        owner:
+                          email: bryanrobert@iisc.ac.in
+                          name:
+                            firstName: B
+                            lastName: Robert A B C D
+                          id: 844e251b-574b-46e6-9247-f76f1f70a637
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  title:
+                    type: string
+                  detail:
+                    type: string
+                x-examples:
+                  example-1:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: requestId not exists
+                    detail: '[3e3a91ff-1139-4877-966d-e41ef45d5444]'
+              examples:
+                example-1:
+                  value: {}
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  title:
+                    type: string
+                  detail:
+                    type: string
+                x-examples:
+                  example-1:
+                    type: 'urn:dx:as:InvalidRole'
+                    title: User does not have roles to use API
+                    detail: User with consumer role may call the API
+              examples:
+                not consumer user calling API:
+                  value:
+                    type: 'urn:dx:as:InvalidRole'
+                    title: User does not have roles to use API
+                    detail: User with consumer role may call the API
+      description: The access request API called by consumers which will allow them to delete notifications in the pending state. Can be called with unique multiple requests in a single API call.
+      security:
+        - authorization: []
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: Authorization
+          description: Keycloak Issued token
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              x-examples:
+                example-1:
+                  request:
+                    - id: 3e3a91ff-1139-4877-966d-e41ef45d5444
+                    - id: 0a9bbfab-ccac-4ae7-b010-59c1a1bf2b13
+              properties:
+                request:
+                  type: array
+                  uniqueItems: true
+                  minItems: 1
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        minLength: 36
+                        maxLength: 36
+                        format: uuid
+                        pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+                    required:
+                      - id
+              required:
+                - request
+        description: Request body is a JsonObject containing a JsonArray having one or multiple ID Objects to delete policies.
   /auth/v1/cert:
     get:
       summary: Get JWT Certificate

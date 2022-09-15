@@ -272,6 +272,11 @@ public class ApiServerVerticle extends AbstractVerticle {
                       .handler(this::updatePolicyNotificationHandler)
                       .failureHandler(failureHandler);
 
+              // deletes the policy request by consumer
+              routerBuilder.operation(DELETE_POLICIES_REQUEST)
+                  .handler(this::deleteNotificationHandler)
+                  .failureHandler(failureHandler);
+
               // Get delegations by provider/delegate/auth delegate
               routerBuilder.operation(GET_DELEGATIONS)
                       .handler(providerAuth)
@@ -707,6 +712,28 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     policyService.updatePolicyNotification(request, user, data, handler -> {
       if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+
+  /**
+   * Delete a notification created by a User.
+   *
+   * @param context
+   */
+  private void deleteNotificationHandler(RoutingContext context) {
+
+    JsonObject arr = context.body().asJsonObject();
+    JsonArray jsonRequest = arr.getJsonArray(REQUEST);
+    List<DeletePolicyNotificationRequest> request = DeletePolicyNotificationRequest.jsonArrayToList(jsonRequest);
+    User user = context.get(USER);
+    policyService.deletePolicyNotification(request, user,handler -> {
+      if (handler.succeeded()) {
+        JsonObject result = handler.result();
+        Future.future(future -> handleAuditLogs(context, result));
         processResponse(context.response(), handler.result());
       } else {
         processResponse(context.response(), handler.cause().getLocalizedMessage());
