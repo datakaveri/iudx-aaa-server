@@ -24,6 +24,7 @@ import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.configuration.Configuration;
+import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.token.TokenService;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -64,6 +65,7 @@ public class GetUserDetailsTest {
 
   private static KcAdmin kc = Mockito.mock(KcAdmin.class);
   private static TokenService tokenService = Mockito.mock(TokenService.class);
+  private static PolicyService policyService = Mockito.mock(PolicyService.class);
   private static JsonObject options = new JsonObject();
 
   static String name = RandomStringUtils.randomAlphabetic(10).toLowerCase();
@@ -139,7 +141,8 @@ public class GetUserDetailsTest {
     userNoOrg = Utils.createFakeUser(pool, Constants.NIL_UUID, "", rolesB, false);
 
     CompositeFuture.all(userWithOrg, userNoOrg).onSuccess(res -> {
-      registrationService = new RegistrationServiceImpl(pool, kc, tokenService, options);
+      registrationService =
+          new RegistrationServiceImpl(pool, kc, tokenService, policyService, options);
       testContext.completeNow();
     }).onFailure(err -> testContext.failNow(err.getMessage()));
   }

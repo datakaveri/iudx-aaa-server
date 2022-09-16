@@ -44,6 +44,7 @@ import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.configuration.Configuration;
+import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.token.TokenService;
 import java.util.List;
 import java.util.Map;
@@ -80,6 +81,7 @@ public class CreateUserTest {
 
   private static KcAdmin kc = Mockito.mock(KcAdmin.class);
   private static TokenService tokenService = Mockito.mock(TokenService.class);
+  private static PolicyService policyService = Mockito.mock(PolicyService.class);
   private static JsonObject options = new JsonObject();
 
   private static final String UUID_REGEX =
@@ -131,7 +133,8 @@ public class CreateUserTest {
     orgIdFut =
         pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_ORG).execute(Tuple.of(name, url))
             .map(row -> row.iterator().next().getUUID("id"))).onSuccess(err -> {
-              registrationService = new RegistrationServiceImpl(pool, kc, tokenService, options);
+              registrationService =
+                  new RegistrationServiceImpl(pool, kc, tokenService, policyService, options);
               testContext.completeNow();
             }).onFailure(err -> testContext.failNow(err.getMessage()));
   }

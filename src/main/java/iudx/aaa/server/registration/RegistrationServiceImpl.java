@@ -79,6 +79,7 @@ import iudx.aaa.server.apiserver.UpdateProfileRequest;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.apiserver.util.ComposeException;
+import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.token.TokenService;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -114,14 +115,16 @@ public class RegistrationServiceImpl implements RegistrationService {
   private PgPool pool;
   private KcAdmin kc;
   private TokenService tokenService;
+  private PolicyService policyService;
   public static String AUTH_SERVER_URL = "";
   public static List<String> SERVERS_OMITTED_FROM_TOKEN_REVOKE = new ArrayList<String>();
 
   public RegistrationServiceImpl(PgPool pool, KcAdmin kc, TokenService tokenService,
-      JsonObject options) {
+      PolicyService policyService, JsonObject options) {
     this.pool = pool;
     this.kc = kc;
     this.tokenService = tokenService;
+    this.policyService = policyService;
     AUTH_SERVER_URL = options.getString(CONFIG_AUTH_URL);
     SERVERS_OMITTED_FROM_TOKEN_REVOKE = options.getJsonArray(CONFIG_OMITTED_SERVERS).stream()
         .map(x -> (String) x).collect(Collectors.toList());
