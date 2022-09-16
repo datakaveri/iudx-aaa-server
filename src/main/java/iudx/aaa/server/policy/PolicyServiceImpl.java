@@ -2156,7 +2156,6 @@ public class PolicyServiceImpl implements PolicyService {
     List<UUID> ids =
         request.stream().map(obj -> UUID.fromString(obj.getId())).collect(Collectors.toList());
 
-
     queryTup =
             Tuple.of(UUID.fromString(user.getUserId())).addArrayOfUUID(ids.toArray(UUID[]::new));
 
@@ -2191,11 +2190,8 @@ public class PolicyServiceImpl implements PolicyService {
         return Future.succeededFuture();
       });
 
-      Future<RowSet<Row>> deleteNotifs = validate.compose(ar ->
-        pool.withConnection(conn -> conn.preparedQuery(DELETE_NOTIFICATIONS).execute(queryTup)));
-
     Future<JsonArray> itemNames =
-        deleteNotifs.compose(
+        validate.compose(
             result -> {
               Promise<JsonArray> promise = Promise.promise();
               Set<UUID> itemIds = new HashSet<>();
@@ -2251,12 +2247,15 @@ public class PolicyServiceImpl implements PolicyService {
               return userDetails.future();
             });
 
-    userInfo
+    Future<RowSet<Row>> deleteNotifs = userInfo.compose(ar ->
+        pool.withConnection(conn -> conn.preparedQuery(DELETE_NOTIFICATIONS).execute(queryTup)));
+
+    deleteNotifs
         .onSuccess(
             result -> {
               JsonArray notifRequest = itemNames.result();
               JsonArray response = new JsonArray();
-              Map<String, JsonObject> details = jsonObjectToMap.apply(result);
+              Map<String, JsonObject> details = jsonObjectToMap.apply(userInfo.result());
 
               notifRequest.forEach(
                   obj -> {
