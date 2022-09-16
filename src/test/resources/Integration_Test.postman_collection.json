@@ -1,8 +1,9 @@
 {
 	"info": {
-		"_postman_id": "d06fe8a7-02ce-4925-ae76-16438c7b84b2",
+		"_postman_id": "94928842-8d7a-4406-8de8-703163d41d7b",
 		"name": "Integration Test",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "14598828"
 	},
 	"item": [
 		{
@@ -7026,7 +7027,67 @@
 					"response": []
 				},
 				{
-					"name": "Delegate (no delegations set) searching",
+					"name": "Trustee (with no auth admin policy) searching",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "email",
+								"value": "consumer@gmail.com",
+								"type": "text"
+							},
+							{
+								"key": "role",
+								"value": "consumer",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delegate searching without providerId header",
 					"event": [
 						{
 							"listen": "test",
@@ -7056,7 +7117,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
+								"value": "Bearer {{POSTMAN_DELEGATE_TOKEN}}",
 								"type": "text"
 							},
 							{
@@ -7191,6 +7252,73 @@
 							{
 								"key": "Authorization",
 								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "email",
+								"value": "consumer@gmail.com",
+								"type": "text"
+							},
+							{
+								"key": "role",
+								"value": "consumer",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Trustee with auth admin policy searching",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    pm.expect(body.title).to.be.eq(\"User found\");",
+									"    const result = body.results;",
+									"    pm.expect(result).to.have.property(\"email\", \"consumer@gmail.com\");",
+									"    pm.expect(result).to.have.property(\"userId\", pm.environment.get(\"CONSUMER_GMAIL_USERID\"));",
+									"    pm.expect(result.name).to.not.be.empty;",
+									"    pm.expect(result.organization).to.not.exist;",
+									"    ",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
 								"type": "text"
 							},
 							{
