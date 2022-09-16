@@ -421,9 +421,12 @@ public class CreateDelegationsTest {
                           assertEquals(URN_ALREADY_EXISTS.toString(), resp.getString("type"));
                           assertEquals(DUPLICATE_DELEGATION, resp.getString("title"));
                           Assertions.assertEquals(409, resp.getInteger("status"));
-                          pgclient.withConnection(
-                              conn -> conn.preparedQuery(SQL_DELETE_DELEGATE).execute(policyOwners));
-                          testContext.completeNow();})));
+                          pgclient
+                          .withConnection(conn -> conn.preparedQuery(SQL_DELETE_DELEGATE)
+                              .execute(policyOwners))
+                          .onSuccess(succ -> testContext.completeNow()).onFailure(
+                              fail -> testContext.failNow("Could not delete data"));
+                          })));
   })));}
     @Order(4)
   @Test
@@ -623,9 +626,11 @@ public class CreateDelegationsTest {
                       assertEquals("added delegations", response.getString("title"));
                       Assertions.assertEquals(200, response.getInteger("status"));
                       //repeated test so delegation must be deleted within the test
-                      pgclient.withConnection(
-                          conn -> conn.preparedQuery(SQL_DELETE_DELEGATE).execute(policyOwners));
-                      testContext.completeNow();
+                      pgclient
+                      .withConnection(conn -> conn.preparedQuery(SQL_DELETE_DELEGATE)
+                          .execute(policyOwners))
+                      .onSuccess(succ -> testContext.completeNow()).onFailure(
+                          fail -> testContext.failNow("Could not delete data"));
                     })));
   }
 
@@ -669,9 +674,11 @@ public class CreateDelegationsTest {
                                             assertEquals(URN_SUCCESS.toString(), response.getString("type"));
                                             assertEquals("added delegations", response.getString("title"));
                                             Assertions.assertEquals(200, response.getInteger("status"));
-                                            pgclient.withConnection(
-                                                    conn -> conn.preparedQuery(SQL_DELETE_DELEGATE).execute(policyOwners));
-                                            testContext.completeNow();
+                                            pgclient
+                                            .withConnection(conn -> conn.preparedQuery(SQL_DELETE_DELEGATE)
+                                                .execute(policyOwners))
+                                            .onSuccess(succ -> testContext.completeNow()).onFailure(
+                                                fail -> testContext.failNow("Could not delete data"));
                                         })));
     }
 }
