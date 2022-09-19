@@ -37,6 +37,7 @@ import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.configuration.Configuration;
+import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.token.TokenService;
 import java.util.HashMap;
 import java.util.List;
@@ -74,6 +75,7 @@ public class ListUserTest {
 
   private static KcAdmin kc = Mockito.mock(KcAdmin.class);
   private static TokenService tokenService = Mockito.mock(TokenService.class);
+  private static PolicyService policyService = Mockito.mock(PolicyService.class);
   private static JsonObject options = new JsonObject();
   
   private static final String UUID_REGEX =
@@ -143,7 +145,8 @@ public class ListUserTest {
     userNoOrg = Utils.createFakeUser(pool, Constants.NIL_UUID, "", rolesB, false);
 
     CompositeFuture.all(userWithOrg, userNoOrg).onSuccess(res -> {
-      registrationService = new RegistrationServiceImpl(pool, kc, tokenService, options);
+      registrationService =
+          new RegistrationServiceImpl(pool, kc, tokenService, policyService, options);
       testContext.completeNow();
     }).onFailure(err -> testContext.failNow(err.getMessage()));
   }

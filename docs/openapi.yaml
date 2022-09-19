@@ -1156,6 +1156,8 @@ paths:
         A user with either 
         - `provider` role
         - `admin` role
+        - `trustee` role **with valid Auth admin policy**
+            - An auth admin policy is automatically created when an APD belonging to a trustee is set to _active_ state by the IUDX AAA admin
         - is an **auth delegate** 
         may search for a user by providing the email address and role of said user. If a user exists, then the user ID `userId`, email, name and organization details (if applicable) is returned.
 

@@ -79,6 +79,7 @@ import iudx.aaa.server.apiserver.UpdateProfileRequest;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.apiserver.util.ComposeException;
+import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.token.TokenService;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -114,14 +115,16 @@ public class RegistrationServiceImpl implements RegistrationService {
   private PgPool pool;
   private KcAdmin kc;
   private TokenService tokenService;
+  private PolicyService policyService;
   public static String AUTH_SERVER_URL = "";
   public static List<String> SERVERS_OMITTED_FROM_TOKEN_REVOKE = new ArrayList<String>();
 
   public RegistrationServiceImpl(PgPool pool, KcAdmin kc, TokenService tokenService,
-      JsonObject options) {
+      PolicyService policyService, JsonObject options) {
     this.pool = pool;
     this.kc = kc;
     this.tokenService = tokenService;
+    this.policyService = policyService;
     AUTH_SERVER_URL = options.getString(CONFIG_AUTH_URL);
     SERVERS_OMITTED_FROM_TOKEN_REVOKE = options.getJsonArray(CONFIG_OMITTED_SERVERS).stream()
         .map(x -> (String) x).collect(Collectors.toList());
@@ -838,9 +841,26 @@ public class RegistrationServiceImpl implements RegistrationService {
     };
 
     List<Roles> roles = user.getRoles();
+    /*
+     * If the user is a trustee, check for auth admin policy. This is to prevent any user registered
+     * as a trustee to perform search. Currently, the auth admin policy is set when an APD owned by
+     * the trustee is set to active for the first time.
+     */
+    Future<Void> trusteeAuthPolicyCheck;
 
-    if (!(roles.contains(Roles.PROVIDER) || roles.contains(Roles.ADMIN)
-        || (roles.contains(Roles.DELEGATE) && isAuthDelegate))) {
+    if (roles.contains(Roles.PROVIDER) || roles.contains(Roles.ADMIN)) {
+      trusteeAuthPolicyCheck = Future.succeededFuture();
+      
+    } else if (roles.contains(Roles.DELEGATE) && isAuthDelegate) {
+      trusteeAuthPolicyCheck = Future.succeededFuture();
+
+    } else if (roles.contains(Roles.TRUSTEE)) {
+      Promise<Void> authPolPromise = Promise.promise();
+      /* checkAuthPolicy sends ComposeException with correct response, can pass the future as is */
+      policyService.checkAuthPolicy(user.getUserId(), authPolPromise);
+      trusteeAuthPolicyCheck = authPolPromise.future();
+
+    } else {
       Response r = new ResponseBuilder().status(401).type(URN_INVALID_ROLE)
           .title(ERR_TITLE_SEARCH_USR_INVALID_ROLE).detail(ERR_DETAIL_SEARCH_USR_INVALID_ROLE)
           .build();
@@ -851,7 +871,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     String email = searchUserDetails.getString("email").toLowerCase();
     Roles role = Roles.valueOf(searchUserDetails.getString("role").toUpperCase());
 
-    Future<JsonObject> foundUser = kc.findUserByEmail(email);
+    Future<JsonObject> foundUser = trusteeAuthPolicyCheck.compose(res -> kc.findUserByEmail(email));
 
     Future<UUID> exists = foundUser.compose(res -> {
       if (res.isEmpty()) {

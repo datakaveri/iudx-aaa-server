@@ -19,6 +19,7 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.configuration.Configuration;
+import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.token.TokenService;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +57,7 @@ public class ListOrganizationTest {
 
   private static KcAdmin kc = Mockito.mock(KcAdmin.class);
   private static TokenService tokenService = Mockito.mock(TokenService.class);
+  private static PolicyService policyService = Mockito.mock(PolicyService.class);
   private static JsonObject options = new JsonObject();
 
   static String name = RandomStringUtils.randomAlphabetic(10).toLowerCase();
@@ -102,7 +104,8 @@ public class ListOrganizationTest {
     orgIdFut =
         pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_ORG).execute(Tuple.of(name, url))
             .map(row -> row.iterator().next().getUUID("id"))).onSuccess(err -> {
-              registrationService = new RegistrationServiceImpl(pool, kc, tokenService, options);
+              registrationService =
+                  new RegistrationServiceImpl(pool, kc, tokenService, policyService, options);
               testContext.completeNow();
             }).onFailure(err -> testContext.failNow(err.getMessage()));
   }

@@ -84,7 +84,7 @@ public class Constants {
   public static final String ERR_TITLE_SEARCH_USR_INVALID_ROLE =
       "User does not have required role to search for user";
   public static final String ERR_DETAIL_SEARCH_USR_INVALID_ROLE =
-      "Must have provider/admin roles or be an auth delegate";
+      "Must have provider/admin/trustee roles or be an auth delegate";
   
   public static final String ERR_TITLE_INVALID_CLI_ID = "Invalid client ID";
   public static final String ERR_DETAIL_INVALID_CLI_ID = "Requested client ID not found";

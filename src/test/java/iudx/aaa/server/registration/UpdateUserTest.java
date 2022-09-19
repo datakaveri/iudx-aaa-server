@@ -55,6 +55,7 @@ import iudx.aaa.server.apiserver.UpdateProfileRequest;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.configuration.Configuration;
+import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.token.TokenService;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -93,6 +94,7 @@ public class UpdateUserTest {
 
   private static KcAdmin kc = Mockito.mock(KcAdmin.class);
   private static TokenService tokenService = Mockito.mock(TokenService.class);
+  private static PolicyService policyService = Mockito.mock(PolicyService.class);
   private static JsonObject options = new JsonObject();
 
   static String name = RandomStringUtils.randomAlphabetic(10).toLowerCase();
@@ -178,7 +180,8 @@ public class UpdateUserTest {
       return pool.withConnection(
           conn -> conn.preparedQuery(SQL_CREATE_ADMIN_SERVER).executeBatch(servers));
     }).onSuccess(res -> {
-      registrationService = new RegistrationServiceImpl(pool, kc, tokenService, options);
+      registrationService =
+          new RegistrationServiceImpl(pool, kc, tokenService, policyService, options);
       testContext.completeNow();
     }).onFailure(err -> testContext.failNow(err.getMessage()));
   }
