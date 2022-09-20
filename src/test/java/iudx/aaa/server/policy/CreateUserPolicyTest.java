@@ -56,8 +56,6 @@ import static iudx.aaa.server.policy.Constants.TITLE;
 import static iudx.aaa.server.policy.Constants.TYPE;
 import static iudx.aaa.server.policy.Constants.UNAUTHORIZED;
 import static iudx.aaa.server.policy.Constants.VALIDATE_EXPIRY_FAIL;
-import static iudx.aaa.server.policy.TestRequest.constraints;
-import static iudx.aaa.server.policy.TestRequest.validProvider;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_ANY_POLICIES;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_DELEGATE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -792,6 +790,16 @@ public class CreateUserPolicyTest {
             + RandomStringUtils.randomAlphabetic(2)
             + "/"
             + RandomStringUtils.randomAlphabetic(2);
+
+      JsonObject userJson = providerUser.result();
+      User user =
+          new User.UserBuilder()
+              .keycloakId(userJson.getString("keycloakId"))
+              .userId(userJson.getString("userId"))
+              .name(userJson.getString("firstName"), userJson.getString("lastName"))
+              .roles(List.of(Roles.PROVIDER))
+              .build();
+
     UUID userId = UUID.randomUUID();
     JsonObject invalidReqItem4Resgrp =
         new JsonObject()
@@ -799,13 +807,13 @@ public class CreateUserPolicyTest {
             .put("itemId", itemId)
             .put("itemType", "resource_group")
             .put("expiryTime", "")
-            .put("constraints", constraints);
+            .put("constraints", new JsonObject());
 
     List<CreatePolicyRequest> ItemfailureResGroup =
         CreatePolicyRequest.jsonArrayToList(new JsonArray().add(invalidReqItem4Resgrp));
     policyService.createPolicy(
         ItemfailureResGroup,
-        validProvider,
+        user,
         new JsonObject(),
         testContext.succeeding(
             response ->
@@ -829,6 +837,16 @@ public class CreateUserPolicyTest {
             + RandomStringUtils.randomAlphabetic(2)
             + "/"
             + RandomStringUtils.randomAlphabetic(2);
+
+      JsonObject userJson = providerUser.result();
+      User user =
+          new User.UserBuilder()
+              .keycloakId(userJson.getString("keycloakId"))
+              .userId(userJson.getString("userId"))
+              .name(userJson.getString("firstName"), userJson.getString("lastName"))
+              .roles(List.of(Roles.PROVIDER))
+              .build();
+
     UUID userId = UUID.randomUUID();
     JsonObject invalidReqItem4Res =
         new JsonObject()
@@ -836,13 +854,13 @@ public class CreateUserPolicyTest {
             .put("itemId", itemId)
             .put("itemType", "resource")
             .put("expiryTime", "")
-            .put("constraints", constraints);
+            .put("constraints", new JsonObject());
 
     List<CreatePolicyRequest> ItemfailureRes =
         CreatePolicyRequest.jsonArrayToList(new JsonArray().add(invalidReqItem4Res));
     policyService.createPolicy(
         ItemfailureRes,
-        validProvider,
+        user,
         new JsonObject(),
         testContext.succeeding(
             response ->
