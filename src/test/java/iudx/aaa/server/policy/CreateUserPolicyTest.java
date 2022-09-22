@@ -213,7 +213,7 @@ public class CreateUserPolicyTest {
                     Map.of(Roles.CONSUMER, RoleStatus.APPROVED),
                     false));
 
-    CompositeFuture.all(adminUser, providerUser, authDelUser, authDelUser, delUser, consumerUser)
+    CompositeFuture.all(adminUser, providerUser, authDelUser, delUser, consumerUser)
         .onSuccess(
             succ -> {
               // create all servers
