@@ -170,7 +170,7 @@ public class AuditingServiceImpl implements AuditingService {
                 } else {
                   responseBuilder =
                       new ResponseBuilder(SUCCESS).setTypeAndTitle(200).setJsonArray(jsonArray);
-                  LOGGER.info("Info: RESPONSE" + responseBuilder.getResponse().getString(RESULTS));
+                  LOGGER.debug("Info: RESPONSE" + responseBuilder.getResponse().getString(RESULTS));
                 }
                 promise.complete(responseBuilder.getResponse());
               }
@@ -190,7 +190,7 @@ public class AuditingServiceImpl implements AuditingService {
                     new ResponseBuilder(SUCCESS)
                         .setTypeAndTitle(200)
                         .setMessage(response.getString(MESSAGE));
-                LOGGER.info("Info: " + responseBuilder.getResponse().toString());
+                LOGGER.debug("Info: " + responseBuilder.getResponse().toString());
                 promise.complete(responseBuilder.getResponse());
               }
               if (rows.failed()) {
@@ -200,7 +200,7 @@ public class AuditingServiceImpl implements AuditingService {
                     new ResponseBuilder(FAILED)
                         .setTypeAndTitle(400)
                         .setMessage(response.getString(MESSAGE));
-                LOGGER.info("Info: " + responseBuilder.getResponse().toString());
+                LOGGER.debug("Info: " + responseBuilder.getResponse().toString());
                 promise.fail(responseBuilder.getResponse().toString());
               }
             });

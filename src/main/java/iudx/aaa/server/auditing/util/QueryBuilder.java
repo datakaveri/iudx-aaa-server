@@ -74,7 +74,7 @@ public class QueryBuilder {
   }
 
   public JsonObject buildReadingQuery(JsonObject request) {
-    LOGGER.info("Trying to build reading query.");
+    LOGGER.debug("Trying to build reading query.");
 
     String userId = request.getString(USER_ID);
     String startTime = request.getString(START_TIME);
@@ -133,7 +133,7 @@ public class QueryBuilder {
     LOGGER.debug("Epoch fromTime: " + fromTime);
     LOGGER.debug("Epoch toTime: " + toTime);
     StringBuilder userIdQuery = new StringBuilder(READ_QUERY.replace("$0",databaseTableName).replace("$1", userId));
-    LOGGER.info("Info: QUERY " + userIdQuery);
+    LOGGER.debug("Info: QUERY " + userIdQuery);
 
     if (request.containsKey(START_TIME) && request.containsKey(END_TIME)) {
       StringBuilder tempQuery = userIdQuery;
@@ -142,13 +142,13 @@ public class QueryBuilder {
               START_TIME_QUERY.replace("$2", Long.toString(fromTime)),
               END_TIME_QUERY.replace("$3", Long.toString(toTime)))) tempQuery.append(s);
       userIdQuery = tempQuery;
-      LOGGER.info("Info: QUERY with start and end time" + userIdQuery);
+      LOGGER.debug("Info: QUERY with start and end time" + userIdQuery);
     }
     if (request.containsKey(METHOD) && request.containsKey(ENDPOINT)) {
       StringBuilder tempQuery = userIdQuery;
       tempQuery.append(ENDPOINT_QUERY.replace("$4", endPoint));
       tempQuery.append(METHOD_QUERY.replace("$5", method));
-      LOGGER.info("Info: QUERY with method and endpoint " + tempQuery);
+      LOGGER.debug("Info: QUERY with method and endpoint " + tempQuery);
       return new JsonObject().put(QUERY_KEY, tempQuery);
     }
     return new JsonObject().put(QUERY_KEY, userIdQuery);
