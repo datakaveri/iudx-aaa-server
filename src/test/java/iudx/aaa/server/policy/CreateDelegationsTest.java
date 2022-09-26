@@ -42,7 +42,7 @@ import static iudx.aaa.server.registration.Utils.SQL_DELETE_ANY_POLICIES;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_DELEGATE;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_ORG;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_SERVERS;
-import static junit.framework.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
 public class CreateDelegationsTest {
