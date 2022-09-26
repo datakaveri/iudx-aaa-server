@@ -23,7 +23,6 @@ import iudx.aaa.server.apiserver.util.Urn;
 import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.registration.RegistrationServiceImpl;
 import iudx.aaa.server.registration.Utils;
-import junit.framework.Assert;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
