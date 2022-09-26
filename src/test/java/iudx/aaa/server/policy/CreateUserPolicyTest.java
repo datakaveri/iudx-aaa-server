@@ -396,9 +396,9 @@ public class CreateUserPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
-                      Assert.assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-                      Assert.assertEquals(INVALID_ROLE, response.getString("title"));
-                      Assertions.assertEquals(403, response.getInteger("status"));
+                      assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                      assertEquals(INVALID_ROLE, response.getString("title"));
+                      assertEquals(403, response.getInteger("status"));
                       testContext.completeNow();
                     })));
   }
@@ -444,9 +444,9 @@ public class CreateUserPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
-                      Assert.assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                      Assert.assertEquals(ITEMNOTFOUND, response.getString(TITLE));
-                      Assertions.assertEquals(400, response.getInteger(STATUS));
+                     assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                     assertEquals(ITEMNOTFOUND, response.getString(TITLE));
+                     assertEquals(400, response.getInteger(STATUS));
                       testContext.completeNow();
                     })));
   }
@@ -482,9 +482,9 @@ public class CreateUserPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
-                      Assert.assertEquals(URN_ALREADY_EXISTS.toString(), response.getString(TYPE));
-                      Assert.assertEquals(DUPLICATE_POLICY, response.getString(TITLE));
-                      Assertions.assertEquals(409, response.getInteger(STATUS));
+                     assertEquals(URN_ALREADY_EXISTS.toString(), response.getString(TYPE));
+                     assertEquals(DUPLICATE_POLICY, response.getString(TITLE));
+                     assertEquals(409, response.getInteger(STATUS));
                       testContext.completeNow();
                     })));
   }
@@ -533,9 +533,9 @@ public class CreateUserPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
-                      Assert.assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                      Assert.assertEquals(INVALID_USER, response.getString(TITLE));
-                      Assertions.assertEquals(400, response.getInteger(STATUS));
+                      assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                      assertEquals(INVALID_USER, response.getString(TITLE));
+                      assertEquals(400, response.getInteger(STATUS));
                       testContext.completeNow();
                     })));
   }
@@ -584,9 +584,9 @@ public class CreateUserPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
-                      Assert.assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                      Assert.assertEquals(VALIDATE_EXPIRY_FAIL, response.getString(TITLE));
-                      Assertions.assertEquals(400, response.getInteger(STATUS));
+                      assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                      assertEquals(VALIDATE_EXPIRY_FAIL, response.getString(TITLE));
+                      assertEquals(400, response.getInteger(STATUS));
                       testContext.completeNow();
                     })));
   }
@@ -634,9 +634,9 @@ public class CreateUserPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
-                      Assert.assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                      Assert.assertEquals(UNAUTHORIZED, response.getString(TITLE));
-                      Assertions.assertEquals(403, response.getInteger(STATUS));
+                      assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                      assertEquals(UNAUTHORIZED, response.getString(TITLE));
+                      assertEquals(403, response.getInteger(STATUS));
                       testContext.completeNow();
                     })));
   }
@@ -684,9 +684,9 @@ public class CreateUserPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
-                      Assert.assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                      Assert.assertEquals(UNAUTHORIZED, response.getString(TITLE));
-                      Assertions.assertEquals(403, response.getInteger(STATUS));
+                      assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                      assertEquals(UNAUTHORIZED, response.getString(TITLE));
+                      assertEquals(403, response.getInteger(STATUS));
                       testContext.completeNow();
                     })));
   }
@@ -722,9 +722,9 @@ public class CreateUserPolicyTest {
               response ->
                   testContext.verify(
                       () -> {
-                        Assert.assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                        Assert.assertEquals(DUPLICATE, response.getString(TITLE));
-                        Assertions.assertEquals(400, response.getInteger(STATUS));
+                        assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                        assertEquals(DUPLICATE, response.getString(TITLE));
+                        assertEquals(400, response.getInteger(STATUS));
                         testContext.completeNow();
                       })));
     }
@@ -775,9 +775,9 @@ public class CreateUserPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
-                      Assert.assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-                      Assert.assertEquals("added policies", response.getString(TITLE));
-                      Assertions.assertEquals(200, response.getInteger(STATUS));
+                     assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                     assertEquals("added policies", response.getString(TITLE));
+                     assertEquals(200, response.getInteger(STATUS));
                       testContext.completeNow();
                     })));
   }
