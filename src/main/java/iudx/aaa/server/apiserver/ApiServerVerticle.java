@@ -407,7 +407,6 @@ public class ApiServerVerticle extends AbstractVerticle {
    * @param context
    */
   private void validateTokenHandler(RoutingContext context) {
-    System.out.println(context.body().available());
     JsonObject tokenRequestJson = context.body().asJsonObject();
     IntrospectToken introspectToken = tokenRequestJson.mapTo(IntrospectToken.class);
 
