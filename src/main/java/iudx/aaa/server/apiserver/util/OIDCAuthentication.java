@@ -73,7 +73,6 @@ public class OIDCAuthentication implements AuthenticationHandler {
         Response rs = new ResponseBuilder().status(401).type(URN_INVALID_AUTH_TOKEN)
             .title(TOKEN_FAILED).detail(authHandler.getLocalizedMessage()).build();
         routingContext.fail(new Throwable(rs.toJsonString()));
-        routingContext.end();
 
       }).compose(mapper -> {
         User cred = User.create(new JsonObject().put("access_token", token));
@@ -85,9 +84,13 @@ public class OIDCAuthentication implements AuthenticationHandler {
       }).onFailure(authHandler -> {
         Response rs = new ResponseBuilder().status(401).type(URN_INVALID_AUTH_TOKEN)
             .title(TOKEN_FAILED).detail(authHandler.getLocalizedMessage()).build();
-        routingContext.fail(new Throwable(rs.toJsonString()));
-        routingContext.end();
-
+        /*
+         * since there are multiple failure blocks in this compose chain, check to see if
+         * routingContext has already failed, to avoid an IllegalStateException
+         */
+        if (!routingContext.failed()) {
+          routingContext.fail(new Throwable(rs.toJsonString()));
+        }
       }).compose(mapper -> {
         LOGGER.debug("Info: JWT authenticated; UserInfo fetched");
         String kId = mapper.getString(SUB);
@@ -114,7 +117,13 @@ public class OIDCAuthentication implements AuthenticationHandler {
           LOGGER.error("Fail: Request validation and authentication; " + kcHandler.cause());
           Response rs = new ResponseBuilder().status(500).title(INTERNAL_SVR_ERR)
               .detail(INTERNAL_SVR_ERR).build();
-          routingContext.fail(new Throwable(rs.toJsonString()));
+          /*
+           * since there are multiple failure blocks in this compose chain, check to see if
+           * routingContext has already failed, to avoid an IllegalStateException
+           */
+          if (!routingContext.failed()) {
+            routingContext.fail(new Throwable(rs.toJsonString()));
+          }
         }
       });
 
