@@ -4,7 +4,6 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
@@ -25,17 +24,14 @@ import iudx.aaa.server.apiserver.util.Urn;
 import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.registration.RegistrationServiceImpl;
 import iudx.aaa.server.registration.Utils;
-import junit.framework.Assert;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -58,6 +54,7 @@ import static iudx.aaa.server.registration.Utils.SQL_CREATE_APD;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_ANY_POLICIES;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_APD;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_DELEGATE;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
@@ -374,9 +371,9 @@ public class CreateApdPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
-                      Assert.assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-                      Assert.assertEquals(INVALID_ROLE, response.getString("title"));
-                      Assertions.assertEquals(403, response.getInteger("status"));
+                     assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                     assertEquals(INVALID_ROLE, response.getString("title"));
+                     assertEquals(403, response.getInteger("status"));
                       testContext.completeNow();
                     })));
   }
@@ -442,9 +439,9 @@ public class CreateApdPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
-                      Assert.assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                      Assert.assertEquals(ERR_TITLE_INVALID_REQUEST_ID, response.getString("title"));
-                      Assertions.assertEquals(400, response.getInteger("status"));
+                     assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                     assertEquals(ERR_TITLE_INVALID_REQUEST_ID, response.getString("title"));
+                     assertEquals(400, response.getInteger("status"));
                       testContext.completeNow();
                     })));
   }
@@ -507,9 +504,9 @@ public class CreateApdPolicyTest {
               response ->
                   testContext.verify(
                       () -> {
-                        Assert.assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                        Assert.assertEquals(ITEMNOTFOUND, response.getString("title"));
-                        Assertions.assertEquals(400, response.getInteger("status"));
+                       assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                       assertEquals(ITEMNOTFOUND, response.getString("title"));
+                       assertEquals(400, response.getInteger("status"));
                         testContext.completeNow();
                       })));
     }
@@ -579,9 +576,9 @@ public class CreateApdPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
-                      Assert.assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                      Assert.assertEquals(NO_AUTH_TRUSTEE_POLICY, response.getString("title"));
-                      Assertions.assertEquals(403, response.getInteger("status"));
+                    assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                    assertEquals(NO_AUTH_TRUSTEE_POLICY, response.getString("title"));
+                    assertEquals(403, response.getInteger("status"));
                       testContext.completeNow();
                     })));
   }
@@ -651,9 +648,9 @@ public class CreateApdPolicyTest {
             response ->
                 testContext.verify(
                     () -> {
-                     Assert.assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                      Assert.assertEquals("added policies", response.getString("title"));
-                      Assertions.assertEquals(200, response.getInteger("status"));
+                    assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                    assertEquals("added policies", response.getString("title"));
+                    assertEquals(200, response.getInteger("status"));
                       testContext.completeNow();
                     })));
   }
