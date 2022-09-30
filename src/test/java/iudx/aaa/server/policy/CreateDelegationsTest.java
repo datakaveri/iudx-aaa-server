@@ -27,6 +27,7 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +43,6 @@ import static iudx.aaa.server.registration.Utils.SQL_DELETE_ANY_POLICIES;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_DELEGATE;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_ORG;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_SERVERS;
-import static junit.framework.Assert.assertEquals;
 
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
 public class CreateDelegationsTest {
@@ -338,7 +338,7 @@ public class CreateDelegationsTest {
                     () -> {
                       assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
                       assertEquals(ERR_TITLE_INVALID_ROLES, response.getString("title"));
-                      Assertions.assertEquals(401, response.getInteger("status"));
+                      assertEquals(401, response.getInteger("status"));
                       testContext.completeNow();
                     })));
   }
@@ -372,7 +372,7 @@ public class CreateDelegationsTest {
                     () -> {
                       assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
                       assertEquals(SERVER_NOT_PRESENT, response.getString("title"));
-                      Assertions.assertEquals(400, response.getInteger("status"));
+                      assertEquals(400, response.getInteger("status"));
                       testContext.completeNow();
                     })));
   }
@@ -409,7 +409,7 @@ public class CreateDelegationsTest {
                     () -> {
                       assertEquals(URN_SUCCESS.toString(), response.getString("type"));
                       assertEquals("added delegations", response.getString("title"));
-                      Assertions.assertEquals(200, response.getInteger("status"));
+                      assertEquals(200, response.getInteger("status"));
                       policyService.createDelegation(
           req,
           user,
@@ -420,7 +420,7 @@ public class CreateDelegationsTest {
                       () -> {
                           assertEquals(URN_ALREADY_EXISTS.toString(), resp.getString("type"));
                           assertEquals(DUPLICATE_DELEGATION, resp.getString("title"));
-                          Assertions.assertEquals(409, resp.getInteger("status"));
+                          assertEquals(409, resp.getInteger("status"));
                           pgclient
                           .withConnection(conn -> conn.preparedQuery(SQL_DELETE_DELEGATE)
                               .execute(policyOwners))
@@ -457,7 +457,7 @@ public class CreateDelegationsTest {
                     () -> {
                       assertEquals(URN_ALREADY_EXISTS.toString(), response.getString("type"));
                       assertEquals(DUPLICATE_DELEGATION, response.getString("title"));
-                      Assertions.assertEquals(409, response.getInteger("status"));
+                      assertEquals(409, response.getInteger("status"));
                       testContext.completeNow();
                     })));
   }
@@ -490,7 +490,7 @@ public class CreateDelegationsTest {
                     () -> {
                       assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
                       assertEquals(ERR_TITLE_AUTH_DELE_CREATE, response.getString("title"));
-                      Assertions.assertEquals(403, response.getInteger("status"));
+                      assertEquals(403, response.getInteger("status"));
                       testContext.completeNow();
                     })));
   }
@@ -527,7 +527,7 @@ public class CreateDelegationsTest {
                                       () -> {
                                           assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
                                           assertEquals(NOT_DELEGATE, response.getString("title"));
-                                          Assertions.assertEquals(400, response.getInteger("status"));
+                                          assertEquals(400, response.getInteger("status"));
                                           checkAdmin.flag();
                                       })));
       // check for consumer
@@ -547,7 +547,7 @@ public class CreateDelegationsTest {
                                       () -> {
                                           assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
                                           assertEquals(NOT_DELEGATE, response.getString("title"));
-                                          Assertions.assertEquals(400, response.getInteger("status"));
+                                          assertEquals(400, response.getInteger("status"));
                                           checkCansumer.flag();
                                       })));
   }
@@ -581,7 +581,7 @@ public class CreateDelegationsTest {
                                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
                                           assertEquals(NO_AUTH_POLICY, response.getString("title"));
                                           assertEquals(NO_AUTH_POLICY,response.getString("detail"));
-                                          Assertions.assertEquals(403, response.getInteger("status"));
+                                          assertEquals(403, response.getInteger("status"));
                                           testContext.completeNow();
                                       })));
   }
@@ -624,7 +624,7 @@ public class CreateDelegationsTest {
                     () -> {
                       assertEquals(URN_SUCCESS.toString(), response.getString("type"));
                       assertEquals("added delegations", response.getString("title"));
-                      Assertions.assertEquals(200, response.getInteger("status"));
+                      assertEquals(200, response.getInteger("status"));
                       //repeated test so delegation must be deleted within the test
                       pgclient
                       .withConnection(conn -> conn.preparedQuery(SQL_DELETE_DELEGATE)
@@ -673,7 +673,7 @@ public class CreateDelegationsTest {
                                         () -> {
                                             assertEquals(URN_SUCCESS.toString(), response.getString("type"));
                                             assertEquals("added delegations", response.getString("title"));
-                                            Assertions.assertEquals(200, response.getInteger("status"));
+                                            assertEquals(200, response.getInteger("status"));
                                             pgclient
                                             .withConnection(conn -> conn.preparedQuery(SQL_DELETE_DELEGATE)
                                                 .execute(policyOwners))
