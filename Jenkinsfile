@@ -95,7 +95,7 @@ pipeline {
         }
         cleanup{
           script{
-            docker logs iudxaaa-serverprpipeline_integTest_1 2&>1 > /tmp/aaa.logs
+            docker logs iudxaaa-serverprpipeline_integTest_1 > /tmp/aaa.logs
             sh 'mvn flyway:clean -Dflyway.configFiles=/home/ubuntu/configs/aaa-flyway.conf'
             sh 'docker-compose -f docker-compose-test.yml down --remove-orphans'
           }
