@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: IUDX-AAA-Server
-  version: 3.5.0
+  version: 4.0.0
   description: 'API specification for IUDX AAA Server. These APIs are used by users manage tokens, policy etc. These APIs requires valid token or client details for authentication.'
   license:
     name: MIT
@@ -274,81 +274,84 @@ paths:
 
         **NOTE : Either the JWT token in the `Authorization` header or `clientId`+`clientSecret` headers are required, not both**
 
-        ## Identity Token
-
-        An Identity token is used by a user to identify themself to a `resource_server` or `APD`.
-          - Item Type - `resource_server`.
-          - Item Id - url of the server or apd.
-          - Users with any role can get an identity token for either a `resource_server` or `apd`.
+        # Identity Token
+        An Identity token is used by a user to identify themself to a resource server or APD.
+          - Valid item types - `resource_server`
+          - Item ID - URL of the server or APD
+          - Users with any role can get an identity token for either a resource server or APD
           
-          **NOTE :If role is `admin` or `trustee`, the user must own the `resource_server` or `apd` respectively.**   
+          **NOTE : If role is `admin` or `trustee`, the user must own the resource server or APD respectively.** 
+           
+          **NOTE : Users can be permitted to obtain identity tokens with the `admin` role if required.**
               
-
-        ## Access Token
-            
+        # Access Token
         An Access token is used to gain access to an Item on the resource server.
 
           ## Tokens for providers
-            - Valid item types - `resource`, `resource_group` 
-            - users with the `provider` role can get tokens for all of the resources that belong to them without having to set any specific policies to access them.
-            - If the provider wishes to get a token to access a particular server, they require a **policy by the server admin**.
-              eg:  A provider can get a token for the IUDX catalogue server by using the `itemId` as
-           `<provider-domain>/<SHA1-of-provider-email>/<catalogue-url>/catalogue/crud`
-        For example, if the provider is *provider.foobar@datakaveri.org*, the `itemId` will be
+           - Valid item types - `resource`, `resource_group` 
+           - users with the `provider` role can get tokens for all of the resources that belong to them without having to set any specific policies to access them.
+           - If the provider wishes to get a token to access a particular server, they require a **policy by the server admin**.
+            
+        e.g.  A provider can get a token for the IUDX catalogue server by using the `itemId` as `<provider-domain>/<SHA1-of-provider-email>/<catalogue-url>/catalogue/crud`
 
+        For example, if the provider is *provider.foobar@datakaveri.org*, the `itemId` will be
         ```
         datakaveri.org/49276e9045a8a4c5c5bcc5b3b6923786896ff02d/catalogue.iudx.org.in/catalogue/crud
         ```
            
           ## Tokens for delegates
-            - Valid item types - `resource`, `resource_group` 
-            - Users with the `delegate` role can get tokens for resources if they:
-               1. Are a delegate to the provider who owns the resource
-               2. Have a policy set by the provider to access the resource 
-               3. Must have a valid policy set by the admin of the server
+          - Valid item types - `resource`, `resource_group` 
+          - Users with the `delegate` role can get tokens for resources if they:
+             1. Are a delegate to the provider who owns the resource
+             2. Have a policy set by the provider to access the resource 
+             3. Must have a valid policy set by the admin of the server
 
         **Note**: The IUDX Catalogue server does not require a policy to be set by the provider (2nd point).
            
           ## Tokens for consumers
-            - Valid item types - `resource`, `resource_group`, `resource_server`
-            - Consumers can access the private resources for which they have a policy set by either the `provider` or by a `delegate`
-
-
+          - Valid item types - `resource`, `resource_group`, `resource_server`
+          - Consumers can access the private resources for which they have a policy set by either the `provider` or by a `delegate`.
+          
           ## Tokens for admins
-            - Valid item types - `resource_server`
-            - An admin may identify themselves with the servers they manage by getting an admin token, by setting `itemType` as `resource_server` and `itemId` as the server URL.
+           **Admins are only permitted to get identity tokens.**
+          
+          ## Tokens for trustees
+           **Trustees are only permitted to get identity tokens.**
 
-          # JWT Access Token Response Structure
-             A valid IUDX AAA access token contains the following fields:
-                - `sub`: `userId` of the user for whom the token is issued
-                - `iss`: this tag contains the url of the server from the where the token was issued(IUDX auth server)
-                - `aud`: the 'audience' tag contains the url of the server for which the token is valid
-                - `exp`: when the token will expire in Unix format
-                - `iat`: indicates when the token was issued in unix format
-                - `iid`: resource type and resource id of the item for which the token is valid
-                - `role`: role of the user 
-                - `cons`: the constraints that the resource server recognizes. It is only returned for policies set for consumer 
+          ## JWT Access Token Response Structure
+           The JWT is signed using the ES256 algorithm (`alg:ES256`).
 
+           A valid IUDX AAA access token contains the following fields:
+           - `sub` : `userId` of the user for whom the token is issued
+           - `iss` : this tag contains the url of the server from the where the token was issued(IUDX auth server)
+           - `aud` : the 'audience' tag contains the url of the server for which the token is valid
+           - `exp` : when the token will expire in Unix format
+           - `iat` : indicates when the token was issued in unix format
+           - `iid` : resource type and resource id of the item for which the token is valid
+           - `role` : role of the user 
+           - `cons` : the constraints that the resource server recognizes. It is only returned for policies set for consumer 
+           - `apd` : *(optional)* contains any data sent by the APD as a result of an **Allow** response (see *Resources restricted by APD Policies*)
+          
           # Resources restricted by APD Policies
          
         In case access to a resource is defined using an APD policy (and there is no valid user policy for the requesting user and resource), the AAA server queries the APD with relevant information to see if the user belongs to the **_user class_** specified in the APD policy. The APD may respond in three ways:
-
         - **Allow** : The user belongs to the user class. The AAA server generates the access token based on the constraints defined in the policy and sends it back.
+            - In case the APD send constraints, these constraints will be put into the `apd` key in the JWT token in a JSON object called `apdConstraints`  
+
         - **Deny** : The user does not belong to the user class. The AAA server returns a `403 Forbidden`.
         - **Deny but the APD needs interaction** : The user does not belong to the user class, but the APD provides a mechanism for the user to interact with it. This interaction **may or may not** result in the user being included in the user class. The AAA server sends a `403 Forbidden` but includes a special **APD JWT token** that the user must use when interacting with the APD. 
 
         ## JWT APD Token Response Structure
-
-        The jwt is created using the ES256 algorithm.
+          The JWT is signed using the ES256 algorithm (`alg:ES256`).
 
          A valid IUDX AAA APD token contains the following fields:
-        - `sub`: `userId` of the user for whom the token is issued
-        - `iss`: this tag contains the url of the server from the where the token was issued(IUDX auth server)
-        - `aud`: the 'audience' tag contains the url of the server for which the token is valid - in this case, will be the APD URL
-        - `exp`: when the token will expire in Unix format
-        - `iat`: indicates when the token was issued in unix format
-        - `sid`: a session ID sent by the APD
-        - `link`: a link to which the user can interact with the APD 
+         - `sub` : `userId` of the user for whom the token is issued
+         - `iss` : this tag contains the url of the server from the where the token was issued(IUDX auth server)
+         - `aud` : the 'audience' tag contains the url of the server for which the token is valid - in this case, will be the APD URL
+         - `exp` : when the token will expire in Unix format
+         - `iat` : indicates when the token was issued in unix format
+         - `sid` : a session ID sent by the APD
+         - `link` : a link to which the user can interact with the APD 
            
       tags:
         - Token APIs
@@ -509,7 +512,6 @@ paths:
         - validates the token structure
         - checks if the token has been issued by the IUDX AAA server
         - checks if the token is expired
-
         If all checks pass, the decoded token is returned
       tags:
         - Token APIs
@@ -843,7 +845,6 @@ paths:
           
         ## Client ID and Client Secret
         On successful creation of the user profile, the user would receive a client ID and a client secret. The client ID and client secret can be used instead of the OIDC flow to request for tokens. **The client secret is ONLY shown to the user here and can never be obtained again.**
-
         ## Provider registration
         **Once a Provider has registered successfully, their registration request is subject to approval by an IUDX admin**. The `provider` role would not be part of the user profile till the user has been approved.
       requestBody:
@@ -1148,10 +1149,8 @@ paths:
           description: 'User ID of the provider, if an auth delegate wishes to search for a user'
       description: |-
         Get user profile or search for a user by email address and role.
-
         ## Get User profile
         The response contains user details such as roles, name, email. It also lists the client ID of the user.
-
         ## Search for a user
         A user with either 
         - `provider` role
@@ -1952,10 +1951,10 @@ paths:
                     results:
                       - status: APPROVED
                         userId: 844e251b-574b-46e6-9247-f76f1f70a637
-                        email: bryanrobert@iisc.ac.in
+                        email: bob_provider@iisc.ac.in
                         name:
-                          firstName: B
-                          lastName: Robert
+                          firstName: Bob
+                          lastName: Provider
                 properties:
                   type:
                     type: string
@@ -2051,7 +2050,6 @@ paths:
                     detail: You are not an admin of the auth server
       description: |-
         Update the status of multiple Provider registrations to `approved` or `rejected`.This operation can be performed by an `admin` of the IUDX AAA server.
-
         The API takes the provider's user ID (obtained from the `GET /auth/v1/admin/provider/registrations` API) and the status to update.
       parameters:
         - schema:
@@ -2143,10 +2141,10 @@ paths:
                             lastName: Person
                           id: a13eb955-c691-4fd3-b200-f18bc78810b5
                         owner:
-                          email: bryanrobert@iisc.ac.in
+                          email: bob_provider@iisc.ac.in
                           name:
-                            firstName: B
-                            lastName: Robert
+                            firstName: Bob
+                            lastName: Provider
                           id: 844e251b-574b-46e6-9247-f76f1f70a637
                 properties:
                   type:
@@ -2280,10 +2278,10 @@ paths:
                             lastName: Person
                           id: a13eb955-c691-4fd3-b200-f18bc78810b5
                         owner:
-                          email: bryanrobert@iisc.ac.in
+                          email: bob_provider@iisc.ac.in
                           name:
-                            firstName: B
-                            lastName: Robert
+                            firstName: Bob
+                            lastName: Provider
                           id: 844e251b-574b-46e6-9247-f76f1f70a637
                 Listing of policies set for a resource group:
                   value:
@@ -2304,10 +2302,10 @@ paths:
                             lastName: Rajaraman
                           id: 15c7506f-c800-48d6-adeb-0542b03947c6
                         owner:
-                          email: bryanrobert@iisc.ac.in
+                          email: bob_provider@iisc.ac.in
                           name:
-                            firstName: B
-                            lastName: Robert
+                            firstName: Bob
+                            lastName: Provider
                           id: 844e251b-574b-46e6-9247-f76f1f70a637
                 Listing of policies set for a resource:
                   value:
@@ -2326,10 +2324,10 @@ paths:
                             lastName: Adhikari
                           id: 2563e6d4-5884-40e8-9d9f-e84ee956298b
                         owner:
-                          email: bryanrobert@iisc.ac.in
+                          email: bob_provider@iisc.ac.in
                           name:
-                            firstName: B
-                            lastName: Robert
+                            firstName: Bob
+                            lastName: Provider
                           id: 844e251b-574b-46e6-9247-f76f1f70a637
                 Listing of policies set by a trustee for a provider:
                   value:
@@ -2388,7 +2386,7 @@ paths:
               description: application/json
       operationId: get-auth-v1-policies
       description: |-
-        Get policies related to a particular user. The response depends on the roles the user ha 
+        Get policies related to a particular user. The response depends on the roles the user has 
         - `provider` : returns all policies created by the provider/auth delegate of the provider and the policies set for the provider. Also returns any **APD policies** set by the provider.
         - `delegate` : returns all policies set for the delegate
         - `consumer` : returns the policies set for the consumer
@@ -2461,7 +2459,6 @@ paths:
         '403':
           description: |-
             Forbidden
-
             -User does not own the policy or is not a auth delegate to the owner of the policy
         '404':
           description: If the requested policies not exists
@@ -2476,9 +2473,7 @@ paths:
               description: application/json
       description: |-
         Delete policies created by a user. User policies and APD policies can be deleted.
-
         The request would contain objects with a key `id`, i.e. the ID of the user policy or APD policy that the user wants to delete. The user can use the List Policy API to get the policy IDs.
-
         ## Auth delegate
          - An auth delegate may use the API to delete policies on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
       parameters:
@@ -2592,10 +2587,8 @@ paths:
                 properties: {}
       description: |
         Allows users to create policies for entities they own. There are mainly 2 kinds of policies that can be set:
-
         - **User Policies** : A policy set for a particular user.
         - **APD Policies** : A policy set for **_user class_** defined by an Access Policy Domain (APD). If the APD claims that a particular user belongs to said user class, access is granted.  
-
         **NOTE : A `consumer` cannot set policies**
              
         ## Policies created by admin
@@ -2610,9 +2603,11 @@ paths:
         - This policy allows providers to be able to use the APD for APD policies on their own resources. 
            
         ## Policies created by provider
+       
         ### User Policies
         - Valid item types - `resource`, `resource_group`
-        - A `provider` can set **user policies** for a `delegate` or `consumer` for the resources owned by the `provider.`
+        - A `provider` can set **user policies** for a `delegate` or `consumer` for the resources owned by the `provider`.
+
         ### APD Policies
         - Valid item types - `resource`, `resource_group`
         - A `provider` can set **APD policies** for the resources owned by the `provider.` Access is granted if the user belongs to a `userClass` defined by the APD. 
@@ -2624,15 +2619,16 @@ paths:
         - **NOTE : Only auth delegates are allowed to create policies**
         - An auth delegate may use the API to create policies on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
         - **A policy must be set by the auth server admin for the `delegate` to be able to set policies.**
+
         ### User Policies
         - Valid item types - `resource`, `resource_group`
         - A `delegate` can set **user policies** for other `delegate` or `consumer` for the resources owned by the `provider`
+
         ### APD Policies
         - Valid item types - `resource`, `resource_group`
         - A `delegate` can set **APD policies** for the resources owned by the `provider`.
         - The `provider` for whom the auth delegate is operating **must have a policy set by the concerned trustee for the particular APD**. The `delegate` need not have any such policy.
         - **The concerned APD must be in `active` state.**
-
              
       parameters:
         - schema:
@@ -2814,7 +2810,6 @@ paths:
               properties: {}
         description: |
           Request body will be an JsonObject containing JsonArray of requests. The requests can be either for user policies or APD policies.
-
           ### User Policy Request :
           - `userId` : UUID of the user for whom policy is to be set.
           - `itemId` : String value of the item for which policy is to be set 
@@ -2986,11 +2981,11 @@ paths:
                         url: foobar.iudx.io
                         server: Foobar
                         owner:
-                          email: someone@example.com
+                          email: bob_provider@iisc.ac.in
                           name:
-                            firstName: Someone
-                            lastName: Person
-                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                            firstName: Bob
+                            lastName: Provider
+                          id: 844e251b-574b-46e6-9247-f76f1f70a637
                         user:
                           email: someone@example.com
                           name:
@@ -3196,7 +3191,6 @@ paths:
                     detail: 8ff57971-10d9-4bc6-ab3b-87dc328c72ce
       description: |
         A provider may delete delegations created by them. 
-
         ## Auth delegate
         An auth delegate may use the API to delete delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
 
@@ -3295,7 +3289,6 @@ paths:
             - Delegation already exists
       description: |
         Create new delegations
-
         - `userId` : UUID of the user who is to be made a delegate.
         - `resourceServerId` : URL of the resource server the user is to be made a delegate for.
 
@@ -3372,7 +3365,7 @@ paths:
         required: true
   /auth/v1/policies/requests:
     get:
-      summary: List Requests
+      summary: List Access Requests
       responses:
         '200':
           description: Successfully listing all the requests of a Consumer or of a providers
@@ -3394,8 +3387,7 @@ paths:
                         constraints:
                           access:
                             - api
-                            - subs
-                            - ingest
+                            - sub
                             - file
                         user:
                           email: someone@example.com
@@ -3404,10 +3396,10 @@ paths:
                             lastName: Person
                           id: a13eb955-c691-4fd3-b200-f18bc78810b5
                         owner:
-                          email: bryanrobert@iisc.ac.in
+                          email: bob_provider@iisc.ac.in
                           name:
-                            firstName: B
-                            lastName: Robert
+                            firstName: Bob
+                            lastName: Provider
                           id: 844e251b-574b-46e6-9247-f76f1f70a637
           headers:
             Content-Type:
@@ -3451,7 +3443,14 @@ paths:
                     title: string
                     detail: string
       operationId: get-auth-v1-policies-requests
-      description: 'Lists all the requests of that user. In case of provider or auth delegate, the requests which pertain to the items which are owned by the provider are returned. In case of consumer, the requests which are created by the consumer are returned.'
+      description: |-
+        Lists all the access requests of the user calling the API. The response depends on the roles the user has 
+
+        - `provider` : The requests that are present for the items owned by a provider are returned.
+        - `consumer` : The requests which are created by the consumer are returned.
+
+        ## Auth delegate
+        An auth delegate may use the API to view access requests on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
       parameters:
         - schema:
             type: string
@@ -3476,7 +3475,7 @@ paths:
         - Notifications APIs
     parameters: []
     post:
-      summary: Create Requests
+      summary: Create Access Requests
       operationId: post-auth-v1-policies-requests
       responses:
         '200':
@@ -3504,7 +3503,7 @@ paths:
                         constraints:
                           access:
                             - api
-                            - subs
+                            - sub
                             - file
                         user:
                           email: someone@example.com
@@ -3513,11 +3512,11 @@ paths:
                             lastName: Person
                           id: a13eb955-c691-4fd3-b200-f18bc78810b5
                         owner:
-                          email: someone@example.com
+                          email: bob_provider@iisc.ac.in
                           name:
-                            firstName: Someone
-                            lastName: Person
-                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                            firstName: Bob
+                            lastName: Provider
+                          id: 844e251b-574b-46e6-9247-f76f1f70a637
         '400':
           description: 'Bad Request- Schema validation, missing or incorrect fields & values'
           headers:
@@ -3552,7 +3551,15 @@ paths:
                     type: string
                     title: string
                     detail: string
-      description: The access request API called by consumers which will show up on the provider/auth delegate dashboards for approval or rejection. Can be called with unique multiple requests in a single API call.
+      description: |-
+        Access requests are made by consumers to request a provider to grant access to the provider's resources. Providers or their associated auth delegates may choose to approve or reject the request. On approval, a policy is written for the consumer for said resource. On rejection, no policy is written.
+
+        Users with the `consumer` role can request access for a resource/resource group:
+        - With the expiry time they desire for the associated policy (in case the provider chooses to approve the request)
+        - With the constraints they desire for the associated policy (in case the provider chooses to approve the request)
+
+        Users may make multiple access requests with a single API call. 
+
       security:
         - authorization: []
       requestBody:
@@ -3611,9 +3618,13 @@ paths:
                       constraints:
                         access:
                           - api
-                          - subs
+                          - sub
                           - file
-        description: ''
+        description: |
+          - `itemId` : The catalogue ID of the item for which the request is to be created.
+          - `itemType` : 'resource' or 'resource_group'.
+          - `expiryDuration` : Duration for the policy expiry in the ISO-8601 format.
+          - `constraints` : The constraints that will be included in the policy that will be created.
         required: true
       tags:
         - Notifications APIs
@@ -3628,7 +3639,7 @@ paths:
           required: true
           description: Keycloak Issued token
     put:
-      summary: Update Requests
+      summary: Update Access Requests
       operationId: put-auth-v1-policies-requests
       responses:
         '200':
@@ -3656,7 +3667,7 @@ paths:
                         constraints:
                           access:
                             - api
-                            - subs
+                            - sub
                             - file
                         user:
                           email: someone@example.com
@@ -3665,11 +3676,11 @@ paths:
                             lastName: Person
                           id: a13eb955-c691-4fd3-b200-f18bc78810b5
                         owner:
-                          email: someone@example.com
+                          email: bob_provider@iisc.ac.in
                           name:
-                            firstName: Someone
-                            lastName: Person
-                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
+                            firstName: Bob
+                            lastName: Provider
+                          id: 844e251b-574b-46e6-9247-f76f1f70a637
         '400':
           description: 'Bad Request- Schema validation, missing or incorrect fields & values'
           headers:
@@ -3692,7 +3703,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Unauthorized'
-      description: This endpoint is used by the provider or an auth delegate to grant access to a consumer for a particular item that they own. This API automatically createed the required policy also.
+      description: |
+        Providers or auth delegates can choose to approve or reject **pending** access requests associated with their resources.
+   
+        If the request is approved
+        - The user can choose to set an alternate expiry duration or constraints from what the consumer requested.
+        - The request is modified to the `approved` state
+        - A policy is created corresponding to the requested resource with the applicable expiry time and constraints.
+
+        If the request is rejected
+        - The request is modified to the `rejected` state
+
+        ## Auth delegate
+        An auth delegate may use the API to update access requests on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
       security:
         - authorization: []
       requestBody:
@@ -3710,7 +3733,7 @@ paths:
                       constraints:
                         access:
                           - api
-                          - subs
+                          - sub
                           - file
               properties:
                 request:
@@ -3753,14 +3776,18 @@ paths:
                       constraints:
                         access:
                           - api
-                          - subs
+                          - sub
                           - file
               Update-Rejected:
                 value:
                   request:
                     - requestId: bca11712-f381-46a5-afa3-a29b00568ace
                       status: rejected
-        description: ''
+        description: |-
+          - `requestId` :  ID of the request. Can get this Id by using the list policy API.
+          - `status` : The `provider` or `Auth delegate` can update the status to `approved` or `rejected`.
+          - `expiryDuration` : duration of the policy that will be created (Only present for the approved requests).
+          - `constraints` :  constraints for the policy if request is approved. 
         required: true
       tags:
         - Notifications APIs
@@ -3774,8 +3801,13 @@ paths:
           name: Authorization
           required: true
           description: Keycloak Issued token
+        - schema:
+            type: string
+          in: header
+          description: 'User ID of the provider, if an auth delegate wishes to create policy on behalf of a provider'
+          name: providerId
     delete:
-      summary: ''
+      summary: Withdraw Access Requests
       operationId: delete-auth-v1-policies-requests
       responses:
         '200':
@@ -3842,9 +3874,9 @@ paths:
                 x-examples:
                   example-1:
                     type: 'urn:dx:as:Success'
-                    title: Access requests
+                    title: deleted requests
                     results:
-                      - requestId: 3e3a91ff-1139-4877-966d-e41ef45d5444
+                      - requestId: 383ea497-0de9-4d6f-94c1-e3dd1328d944
                         itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/integration-test
                         itemType: resource_group
                         status: withdrawn
@@ -3855,46 +3887,24 @@ paths:
                             - sub
                             - file
                         user:
-                          email: bryan.robert@datakaveri.org
+                          email: alice_consumer@iisc.ac.in
                           name:
-                            firstName: Bryan
-                            lastName: Robert
-                          id: fcbecd18-2ecb-4066-8a9e-f073aacbe579
+                            firstName: Alice
+                            lastName: Consumer
+                          id: fdfb2eb0-f11e-43cb-a737-d17ed592e948
                         owner:
-                          email: bryanrobert@iisc.ac.in
+                          email: bob_provider@iisc.ac.in
                           name:
-                            firstName: B
-                            lastName: Robert A B C D
-                          id: 844e251b-574b-46e6-9247-f76f1f70a637
-                      - requestId: 0a9bbfab-ccac-4ae7-b010-59c1a1bf2b13
-                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/integration-test/test
-                        itemType: resource
-                        status: withdrawn
-                        expiryDuration: '1 year 2 mons 10 days 02:30:00'
-                        constraints:
-                          access:
-                            - api
-                            - sub
-                            - file
-                        user:
-                          email: bryan.robert@datakaveri.org
-                          name:
-                            firstName: Bryan
-                            lastName: Robert
-                          id: fcbecd18-2ecb-4066-8a9e-f073aacbe579
-                        owner:
-                          email: bryanrobert@iisc.ac.in
-                          name:
-                            firstName: B
-                            lastName: Robert A B C D
+                            firstName: Bob
+                            lastName: Provider
                           id: 844e251b-574b-46e6-9247-f76f1f70a637
               examples:
-                success:
+                successful deletion:
                   value:
                     type: 'urn:dx:as:Success'
-                    title: Access requests
+                    title: deleted requests
                     results:
-                      - requestId: 3e3a91ff-1139-4877-966d-e41ef45d5444
+                      - requestId: 383ea497-0de9-4d6f-94c1-e3dd1328d944
                         itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/integration-test
                         itemType: resource_group
                         status: withdrawn
@@ -3905,41 +3915,19 @@ paths:
                             - sub
                             - file
                         user:
-                          email: bryan.robert@datakaveri.org
+                          email: alice_consumer@iisc.ac.in
                           name:
-                            firstName: Bryan
-                            lastName: Robert
-                          id: fcbecd18-2ecb-4066-8a9e-f073aacbe579
+                            firstName: Alice
+                            lastName: Consumer
+                          id: fdfb2eb0-f11e-43cb-a737-d17ed592e948
                         owner:
-                          email: bryanrobert@iisc.ac.in
+                          email: bob_provider@iisc.ac.in
                           name:
-                            firstName: B
-                            lastName: Robert A B C D
-                          id: 844e251b-574b-46e6-9247-f76f1f70a637
-                      - requestId: 0a9bbfab-ccac-4ae7-b010-59c1a1bf2b13
-                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/integration-test/test
-                        itemType: resource
-                        status: withdrawn
-                        expiryDuration: '1 year 2 mons 10 days 02:30:00'
-                        constraints:
-                          access:
-                            - api
-                            - sub
-                            - file
-                        user:
-                          email: bryan.robert@datakaveri.org
-                          name:
-                            firstName: Bryan
-                            lastName: Robert
-                          id: fcbecd18-2ecb-4066-8a9e-f073aacbe579
-                        owner:
-                          email: bryanrobert@iisc.ac.in
-                          name:
-                            firstName: B
-                            lastName: Robert A B C D
+                            firstName: Bob
+                            lastName: Provider
                           id: 844e251b-574b-46e6-9247-f76f1f70a637
         '400':
-          description: Bad Request
+          description: The Id does not exist or was not created by the user calling the API or is no longer in the `pending` status
           content:
             application/json:
               schema:
@@ -3954,13 +3942,16 @@ paths:
                 x-examples:
                   example-1:
                     type: 'urn:dx:as:InvalidInput'
-                    title: requestId not exists
-                    detail: '[3e3a91ff-1139-4877-966d-e41ef45d5444]'
+                    title: requestId does not exists
+                    detail: '[6c61b9c7-6cfd-4d2a-bfc1-217fd56bb8e3]'
               examples:
-                example-1:
-                  value: {}
+                item does not es:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: requestId does not exists
+                    detail: '[6c61b9c7-6cfd-4d2a-bfc1-217fd56bb8e3]'
         '401':
-          description: Unauthorized
+          description: User with non consumer role trying to call the API
           content:
             application/json:
               schema:
@@ -3978,14 +3969,16 @@ paths:
                     title: User does not have roles to use API
                     detail: User with consumer role may call the API
               examples:
-                not consumer user calling API:
+                example-1:
                   value:
                     type: 'urn:dx:as:InvalidRole'
                     title: User does not have roles to use API
                     detail: User with consumer role may call the API
-      description: The access request API called by consumers which will allow them to delete notifications in the pending state. Can be called with unique multiple requests in a single API call.
-      security:
-        - authorization: []
+      description: |-
+        A consumer may choose to withdraw access requests they have created, **as long as they are still in the pending state**. A withdrawn request  cannot be approved or rejected by the concerned provider.
+
+        Only users with `consumer` role can call this API.
+         
       parameters:
         - schema:
             type: string
@@ -3994,6 +3987,7 @@ paths:
           description: Keycloak Issued token
           required: true
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -4001,27 +3995,36 @@ paths:
               x-examples:
                 example-1:
                   request:
-                    - id: 3e3a91ff-1139-4877-966d-e41ef45d5444
-                    - id: 0a9bbfab-ccac-4ae7-b010-59c1a1bf2b13
+                    - id: 6c61b9c7-6cfd-4d2a-bfc1-217fd56bb8e3
               properties:
                 request:
                   type: array
-                  uniqueItems: true
                   minItems: 1
+                  uniqueItems: true
                   items:
                     type: object
                     properties:
                       id:
                         type: string
+                        format: uuid
                         minLength: 36
                         maxLength: 36
-                        format: uuid
                         pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
                     required:
                       - id
               required:
                 - request
-        description: Request body is a JsonObject containing a JsonArray having one or multiple ID Objects to delete policies.
+            examples:
+              single delete request:
+                value:
+                  request:
+                    - id: 6c61b9c7-6cfd-4d2a-bfc1-217fd56bb8e3
+        description: |-
+          - `id` : the UUID of the request that are to be deleted. 
+
+          Consumers can get the ids of the requests they want to delete using the list notifications API.
+      tags:
+        - Notifications APIs
   /auth/v1/cert:
     get:
       summary: Get JWT Certificate
@@ -4209,7 +4212,6 @@ paths:
       operationId: get-auth-v1-apd
       description: |-
         Returns registered APDs. 
-
         - If called by the AAA admin, returns all APD registrations
         - If called by a user with `trustee` role, returns all APDs in the **active** state and all the APDs the user has registered
         - If called by a user with any other roles, returns all APDs in the **active** state
@@ -4387,11 +4389,10 @@ paths:
       description: |-
         A registered trustee can register an Access Policy Domain. The AAA admin must approve the registration and set the APD into the **active** state, after which policies can be written using the APD. 
 
-        # APD Requirements during registration
+        ## APD Requirements during registration
         The APD URL must be provided during registration. The URL must be **reachable** as well as:
         - Must be served on HTTPS at port 443
         - Must not redirect
-
         Additionally, The `GET /userclasses` API must be implemented and should 
         - return `200 OK` with content-type `application/json` 
         - send at least an empty JSON object in the response body
@@ -4805,8 +4806,7 @@ components:
               constraints:
                 access:
                   - api
-                  - subs
-                  - ingest
+                  - sub
                   - file
               user:
                 id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
