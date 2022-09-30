@@ -126,7 +126,7 @@ paths:
             - User policy does not exist for the user and resource
             - APD policy does not exist for the resource
             - The user does not belong to the user class specified by the APD policy
-            - The user is required to interact with the APD
+            - The user is required to interact with the APD 
           content:
             application/json:
               schema:
@@ -270,7 +270,7 @@ paths:
           - `role` : the role as which the user wants to get token for
         required: true
       description: |
-        Request for a JWT (token). One can generate token using either by providing token header or providing clientId and clientSecret in the header.
+        Request for a JWT (token). One can generate token using either by providing token header or providing clientId and clientSecret in the header. 
 
         **NOTE : Either the JWT token in the `Authorization` header or `clientId`+`clientSecret` headers are required, not both**
 
@@ -279,42 +279,42 @@ paths:
           - Valid item types - `resource_server`
           - Item ID - URL of the server or APD
           - Users with any role can get an identity token for either a resource server or APD
-
-          **NOTE : If role is `admin` or `trustee`, the user must own the resource server or APD respectively.**
-
+          
+          **NOTE : If role is `admin` or `trustee`, the user must own the resource server or APD respectively.** 
+           
           **NOTE : Users can be permitted to obtain identity tokens with the `admin` role if required.**
-
+              
         # Access Token
         An Access token is used to gain access to an Item on the resource server.
 
           ## Tokens for providers
-           - Valid item types - `resource`, `resource_group`
+           - Valid item types - `resource`, `resource_group` 
            - users with the `provider` role can get tokens for all of the resources that belong to them without having to set any specific policies to access them.
            - If the provider wishes to get a token to access a particular server, they require a **policy by the server admin**.
-
+            
         e.g.  A provider can get a token for the IUDX catalogue server by using the `itemId` as `<provider-domain>/<SHA1-of-provider-email>/<catalogue-url>/catalogue/crud`
 
         For example, if the provider is *provider.foobar@datakaveri.org*, the `itemId` will be
         ```
         datakaveri.org/49276e9045a8a4c5c5bcc5b3b6923786896ff02d/catalogue.iudx.org.in/catalogue/crud
         ```
-
+           
           ## Tokens for delegates
-          - Valid item types - `resource`, `resource_group`
+          - Valid item types - `resource`, `resource_group` 
           - Users with the `delegate` role can get tokens for resources if they:
              1. Are a delegate to the provider who owns the resource
-             2. Have a policy set by the provider to access the resource
+             2. Have a policy set by the provider to access the resource 
              3. Must have a valid policy set by the admin of the server
 
         **Note**: The IUDX Catalogue server does not require a policy to be set by the provider (2nd point).
-
+           
           ## Tokens for consumers
           - Valid item types - `resource`, `resource_group`, `resource_server`
           - Consumers can access the private resources for which they have a policy set by either the `provider` or by a `delegate`.
-
+          
           ## Tokens for admins
            **Admins are only permitted to get identity tokens.**
-
+          
           ## Tokens for trustees
            **Trustees are only permitted to get identity tokens.**
 
@@ -328,18 +328,18 @@ paths:
            - `exp` : when the token will expire in Unix format
            - `iat` : indicates when the token was issued in unix format
            - `iid` : resource type and resource id of the item for which the token is valid
-           - `role` : role of the user
-           - `cons` : the constraints that the resource server recognizes. It is only returned for policies set for consumer
+           - `role` : role of the user 
+           - `cons` : the constraints that the resource server recognizes. It is only returned for policies set for consumer 
            - `apd` : *(optional)* contains any data sent by the APD as a result of an **Allow** response (see *Resources restricted by APD Policies*)
-
+          
           # Resources restricted by APD Policies
-
+         
         In case access to a resource is defined using an APD policy (and there is no valid user policy for the requesting user and resource), the AAA server queries the APD with relevant information to see if the user belongs to the **_user class_** specified in the APD policy. The APD may respond in three ways:
         - **Allow** : The user belongs to the user class. The AAA server generates the access token based on the constraints defined in the policy and sends it back.
-            - In case the APD send constraints, these constraints will be put into the `apd` key in the JWT token in a JSON object called `apdConstraints`
+            - In case the APD send constraints, these constraints will be put into the `apd` key in the JWT token in a JSON object called `apdConstraints`  
 
         - **Deny** : The user does not belong to the user class. The AAA server returns a `403 Forbidden`.
-        - **Deny but the APD needs interaction** : The user does not belong to the user class, but the APD provides a mechanism for the user to interact with it. This interaction **may or may not** result in the user being included in the user class. The AAA server sends a `403 Forbidden` but includes a special **APD JWT token** that the user must use when interacting with the APD.
+        - **Deny but the APD needs interaction** : The user does not belong to the user class, but the APD provides a mechanism for the user to interact with it. This interaction **may or may not** result in the user being included in the user class. The AAA server sends a `403 Forbidden` but includes a special **APD JWT token** that the user must use when interacting with the APD. 
 
         ## JWT APD Token Response Structure
           The JWT is signed using the ES256 algorithm (`alg:ES256`).
@@ -351,8 +351,8 @@ paths:
          - `exp` : when the token will expire in Unix format
          - `iat` : indicates when the token was issued in unix format
          - `sid` : a session ID sent by the APD
-         - `link` : a link to which the user can interact with the APD
-
+         - `link` : a link to which the user can interact with the APD 
+           
       tags:
         - Token APIs
       security:
@@ -842,7 +842,7 @@ paths:
           - manage data on resource servers
           - manage policies
         - **trustee**, which allows a user to manage an Access Policy Domain (APD)
-
+          
         ## Client ID and Client Secret
         On successful creation of the user profile, the user would receive a client ID and a client secret. The client ID and client secret can be used instead of the OIDC flow to request for tokens. **The client secret is ONLY shown to the user here and can never be obtained again.**
         ## Provider registration
@@ -1152,13 +1152,14 @@ paths:
         ## Get User profile
         The response contains user details such as roles, name, email. It also lists the client ID of the user.
         ## Search for a user
-        A user with either
+        A user with either 
         - `provider` role
         - `admin` role
         - `trustee` role **with valid Auth admin policy**
             - An auth admin policy is automatically created when an APD belonging to a trustee is set to _active_ state by the IUDX AAA admin
-        - is an **auth delegate**
+        - is an **auth delegate** 
         may search for a user by providing the email address and role of said user. If a user exists, then the user ID `userId`, email, name and organization details (if applicable) is returned.
+
         To search for the user, 2 headers `email` (email address of user) and `role` (role of the user) need to be included. **Both headers need to be present for the search to be attempted.** If an auth delegate is to call the API, the `providerId` header needs to be included. Users with roles `delegate`, `consumer` and `provider` can be searched for.
       tags:
         - User APIs
@@ -1377,13 +1378,17 @@ paths:
         Update an existing user profile. Currently a user may use this API to:
         - Add roles to their user profile
         - Regenerate a client secret corresponding to a client ID (and as a result, revoking all tokens issued in the user's name)
+
         **NOTE: The operations cannot be done simultaneously.**
+
         ## Add roles
-        A user may add `consumer`, `delegate` and `trustee` roles to their user profile. **The `provider` role cannot be added**.
+        A user may add `consumer`, `delegate` and `trustee` roles to their user profile. **The `provider` role cannot be added**. 
+
         ## Regenerate client secret
-        A user may regenerate a client secret corresponding to a client ID in case they have lost the client secret or it has been compromised. A new client secret will be generated and sent as part of the output **and will not be shown again.**
+        A user may regenerate a client secret corresponding to a client ID in case they have lost the client secret or it has been compromised. A new client secret will be generated and sent as part of the output **and will not be shown again.** 
+
         ### Token revocation before regeneration
-        In addition to regenerating the client secret, **the AAA server notifies all servers recognized by IUDX to revoke all tokens issued in the user's name (with the user's credentials) before the regeneration request was made**. The AAA server is effectively calling the `POST /auth/v1/token/revoke` API for all servers on behalf of the user. This is done to account for the scenario where the client secret has been compromised and tokens have been issued by a malicious user.
+        In addition to regenerating the client secret, **the AAA server notifies all servers recognized by IUDX to revoke all tokens issued in the user's name (with the user's credentials) before the regeneration request was made**. The AAA server is effectively calling the `POST /auth/v1/token/revoke` API for all servers on behalf of the user. This is done to account for the scenario where the client secret has been compromised and tokens have been issued by a malicious user. 
       parameters:
         - schema:
             type: string
@@ -1913,12 +1918,13 @@ paths:
           name: filter
           description: Filter the status of the Registration
       description: |-
-        Get all the provider registration details. This operation can be performed by an `admin` of the IUDX AAA server.
+        Get all the provider registration details. This operation can be performed by an `admin` of the IUDX AAA server. 
         The request can be filtered based on the status of registration using the query param `filter`.
         The various statuses are:
         - `pending`
         - `approved`
         - `rejected`
+
         If no `filter` value is given, registrations with status `pending` is returned.
       security:
         - authorization: []
@@ -2112,7 +2118,7 @@ paths:
         '200':
           description: |-
             Successfully lists the policies
-
+               
           content:
             application/json:
               schema:
@@ -2380,14 +2386,14 @@ paths:
               description: application/json
       operationId: get-auth-v1-policies
       description: |-
-        Get policies related to a particular user. The response depends on the roles the user has
+        Get policies related to a particular user. The response depends on the roles the user has 
         - `provider` : returns all policies created by the provider/auth delegate of the provider and the policies set for the provider. Also returns any **APD policies** set by the provider.
         - `delegate` : returns all policies set for the delegate
         - `consumer` : returns the policies set for the consumer
         - `trustee` or `admin` : returns all policies set by them
 
         ## Auth delegate
-        An auth delegate may use the API to view policies on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
+        An auth delegate may use the API to view policies on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
       parameters:
         - schema:
             type: string
@@ -2582,33 +2588,33 @@ paths:
       description: |
         Allows users to create policies for entities they own. There are mainly 2 kinds of policies that can be set:
         - **User Policies** : A policy set for a particular user.
-        - **APD Policies** : A policy set for **_user class_** defined by an Access Policy Domain (APD). If the APD claims that a particular user belongs to said user class, access is granted.
+        - **APD Policies** : A policy set for **_user class_** defined by an Access Policy Domain (APD). If the APD claims that a particular user belongs to said user class, access is granted.  
         **NOTE : A `consumer` cannot set policies**
-
+             
         ## Policies created by admin
-        - Valid item types - `resource_server`.
+        - Valid item types - `resource_server`. 
         - An `admin` can set **user policies** for a `provider`,`delegate` or `trustee` for their server.
         - **A policy is automatically set by the AAA admin for a provider when they are approved.**
         - **A policy is automatically set by the AAA admin for a trustee when their APD is set to active state.**
-
+           
         ## Policies created by trustee
-        - Valid item types - `apd`.
+        - Valid item types - `apd`. 
         - A `trustee` can write **user policies** for `providers` for APDs they own.
-        - This policy allows providers to be able to use the APD for APD policies on their own resources.
-
+        - This policy allows providers to be able to use the APD for APD policies on their own resources. 
+           
         ## Policies created by provider
-
+       
         ### User Policies
         - Valid item types - `resource`, `resource_group`
-        - A `provider` can set **user policies** for a `delegate` or `consumer` for the resources owned by the `provider.`
+        - A `provider` can set **user policies** for a `delegate` or `consumer` for the resources owned by the `provider`.
 
         ### APD Policies
         - Valid item types - `resource`, `resource_group`
-        - A `provider` can set **APD policies** for the resources owned by the `provider.` Access is granted if the user belongs to a `userClass` defined by the APD.
-        - **Providers must have a policy set by the concerned trustee to be able to set APD policies using a particular APD.**
+        - A `provider` can set **APD policies** for the resources owned by the `provider.` Access is granted if the user belongs to a `userClass` defined by the APD. 
+        - **Providers must have a policy set by the concerned trustee to be able to set APD policies using a particular APD.** 
         - **The trustee policy also allows auth delegates working on behalf of the provider to set APD policies.**
         - **The concerned APD must be in `active` state.**
-
+             
         ## Policies created by delegate
         - **NOTE : Only auth delegates are allowed to create policies**
         - An auth delegate may use the API to create policies on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
@@ -2623,7 +2629,7 @@ paths:
         - A `delegate` can set **APD policies** for the resources owned by the `provider`.
         - The `provider` for whom the auth delegate is operating **must have a policy set by the concerned trustee for the particular APD**. The `delegate` need not have any such policy.
         - **The concerned APD must be in `active` state.**
-
+             
       parameters:
         - schema:
             type: string
@@ -2806,7 +2812,7 @@ paths:
           Request body will be an JsonObject containing JsonArray of requests. The requests can be either for user policies or APD policies.
           ### User Policy Request :
           - `userId` : UUID of the user for whom policy is to be set.
-          - `itemId` : String value of the item for which policy is to be set
+          - `itemId` : String value of the item for which policy is to be set 
           - `itemType` : String value of the item type
           - `expiryTime` : ISO8601 compatible time in UTC(yyyy-MM-dd'T'HH:mm:ss). optional field, if not sent default expiry is set for the policy
           - `constraints` : JsonObject of the constraints that the resource server can recognize.
@@ -2814,7 +2820,7 @@ paths:
           ### APD Policy Request :
           - `userClass` : String value of the userClass for whom the policy is to be set.
           - `apdId` : String value of the url of the APD for which the policy is being written.
-          - `itemId` : String value of the item for which policy is to be set
+          - `itemId` : String value of the item for which policy is to be set 
           - `itemType` : String value of the item type
           - `expiryTime` : ISO8601 compatible time in UTC(yyyy-MM-dd'T'HH:mm:ss). optional field, if not sent default expiry is set for the policy
           - `constraints` : JsonObject of the constraints that the resource server can recognize.
@@ -3050,7 +3056,8 @@ paths:
         - `delegate` : returns all providers who have assigned them as delegates for certain servers
 
         ## Auth delegate
-        An auth delegate may use the API to view delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
+        An auth delegate may use the API to view delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
+
         **NOTE: An auth delegate may not view any delegations related to the auth server.**
       parameters:
         - schema:
@@ -3183,9 +3190,10 @@ paths:
                     title: Auth delegate may not delete auth delegations
                     detail: 8ff57971-10d9-4bc6-ab3b-87dc328c72ce
       description: |
-        A provider may delete delegations created by them.
+        A provider may delete delegations created by them. 
         ## Auth delegate
-        An auth delegate may use the API to delete delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
+        An auth delegate may use the API to delete delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
+
         **NOTE: An auth delegate may not delete any delegations related to the auth server.**
       parameters:
         - schema:
@@ -3285,7 +3293,8 @@ paths:
         - `resourceServerId` : URL of the resource server the user is to be made a delegate for.
 
         ## Auth delegate
-        An auth delegate may use the API to create delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
+        An auth delegate may use the API to create delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
+
         **NOTE: An auth delegate may not create any delegations related to the auth server.**
       parameters:
         - schema:
@@ -3435,13 +3444,13 @@ paths:
                     detail: string
       operationId: get-auth-v1-policies-requests
       description: |-
-        Lists all the access requests of the user calling the API. The response depends on the roles the user has
+        Lists all the access requests of the user calling the API. The response depends on the roles the user has 
 
         - `provider` : The requests that are present for the items owned by a provider are returned.
         - `consumer` : The requests which are created by the consumer are returned.
 
         ## Auth delegate
-        An auth delegate may use the API to view access requests on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
+        An auth delegate may use the API to view access requests on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
       parameters:
         - schema:
             type: string
@@ -3549,7 +3558,7 @@ paths:
         - With the expiry time they desire for the associated policy (in case the provider chooses to approve the request)
         - With the constraints they desire for the associated policy (in case the provider chooses to approve the request)
 
-        Users may make multiple access requests with a single API call.
+        Users may make multiple access requests with a single API call. 
 
       security:
         - authorization: []
@@ -3696,7 +3705,7 @@ paths:
                 $ref: '#/components/schemas/Unauthorized'
       description: |
         Providers or auth delegates can choose to approve or reject **pending** access requests associated with their resources.
-
+   
         If the request is approved
         - The user can choose to set an alternate expiry duration or constraints from what the consumer requested.
         - The request is modified to the `approved` state
@@ -3706,7 +3715,7 @@ paths:
         - The request is modified to the `rejected` state
 
         ## Auth delegate
-        An auth delegate may use the API to update access requests on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`.
+        An auth delegate may use the API to update access requests on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
       security:
         - authorization: []
       requestBody:
@@ -3778,7 +3787,7 @@ paths:
           - `requestId` :  ID of the request. Can get this Id by using the list policy API.
           - `status` : The `provider` or `Auth delegate` can update the status to `approved` or `rejected`.
           - `expiryDuration` : duration of the policy that will be created (Only present for the approved requests).
-          - `constraints` :  constraints for the policy if request is approved.
+          - `constraints` :  constraints for the policy if request is approved. 
         required: true
       tags:
         - Notifications APIs
@@ -3969,7 +3978,7 @@ paths:
         A consumer may choose to withdraw access requests they have created, **as long as they are still in the pending state**. A withdrawn request  cannot be approved or rejected by the concerned provider.
 
         Only users with `consumer` role can call this API.
-
+         
       parameters:
         - schema:
             type: string
@@ -4011,7 +4020,7 @@ paths:
                   request:
                     - id: 6c61b9c7-6cfd-4d2a-bfc1-217fd56bb8e3
         description: |-
-          - `id` : the UUID of the request that are to be deleted.
+          - `id` : the UUID of the request that are to be deleted. 
 
           Consumers can get the ids of the requests they want to delete using the list notifications API.
       tags:
@@ -4202,7 +4211,7 @@ paths:
                     detail: Please register to create user profile
       operationId: get-auth-v1-apd
       description: |-
-        Returns registered APDs.
+        Returns registered APDs. 
         - If called by the AAA admin, returns all APD registrations
         - If called by a user with `trustee` role, returns all APDs in the **active** state and all the APDs the user has registered
         - If called by a user with any other roles, returns all APDs in the **active** state
@@ -4378,13 +4387,14 @@ paths:
                     title: URL already exists
                     detail: An APD with the requested URL already exists
       description: |-
-        A registered trustee can register an Access Policy Domain. The AAA admin must approve the registration and set the APD into the **active** state, after which policies can be written using the APD.
-        # APD Requirements during registration
+        A registered trustee can register an Access Policy Domain. The AAA admin must approve the registration and set the APD into the **active** state, after which policies can be written using the APD. 
+
+        ## APD Requirements during registration
         The APD URL must be provided during registration. The URL must be **reachable** as well as:
         - Must be served on HTTPS at port 443
         - Must not redirect
-        Additionally, The `GET /userclasses` API must be implemented and should
-        - return `200 OK` with content-type `application/json`
+        Additionally, The `GET /userclasses` API must be implemented and should 
+        - return `200 OK` with content-type `application/json` 
         - send at least an empty JSON object in the response body
       security:
         - authorization: []
@@ -4597,12 +4607,14 @@ paths:
                     detail: Please register to create user profile
       description: |-
         Allows the AAA admins and trustees who have registered APDs to update status.
+
         The AAA admin may change status:
         - from **pending** to **active**, to allow policies to be written for the APD.
         - from **active** to **inactive**, in case the APD is not responsive or has been compromised
         - from **inactive** to **active**
+
         The trustee may change status of APDs they have registered:
-        - from **active** to **inactive**, to indicate that no new policies may be written using the APD.
+        - from **active** to **inactive**, to indicate that no new policies may be written using the APD. 
         - from **inactive** to **pending**, to allow the AAA admin to reconsider activating the APD
       requestBody:
         required: true
