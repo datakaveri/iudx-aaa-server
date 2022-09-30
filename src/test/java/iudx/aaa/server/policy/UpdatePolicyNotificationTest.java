@@ -5,7 +5,6 @@ import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
 import static iudx.aaa.server.apiserver.util.Urn.URN_SUCCESS;
 import static iudx.aaa.server.policy.Constants.*;
-import static iudx.aaa.server.policy.TestRequest.constraints;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_ADMIN_SERVER;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_NOTIFICATION;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_ORG;
