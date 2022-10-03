@@ -46,10 +46,7 @@ import java.util.UUID;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
 import static iudx.aaa.server.apiserver.util.Urn.URN_SUCCESS;
-import static iudx.aaa.server.policy.Constants.DELETE_NOTIF_REQ;
-import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ROLES;
-import static iudx.aaa.server.policy.Constants.REQ_ID_ALREADY_NOT_EXISTS;
-import static iudx.aaa.server.policy.Constants.TYPE;
+import static iudx.aaa.server.policy.Constants.*;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_NOTIFICATION;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_ORG;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_SERVERS;
@@ -407,19 +404,154 @@ public class DeletePolicyNotificationTest {
   @Test
   @DisplayName("Failure - Test consumer trying to withdraw notification that is not pending")
   void failNotPendingNotification(VertxTestContext testContext) {
-    testContext.completeNow();
+      UUID itemId = UUID.randomUUID();
+
+      createNotification(
+              itemId, "RESOURCE_GROUP", NotifRequestStatus.APPROVED, "P1Y", new JsonObject())
+              .onSuccess(
+                      id -> {
+                          String requestId = id.toString();
+
+                          JsonObject userJson = consumerUserOne.result();
+
+                          User user =
+                                  new UserBuilder()
+                                          .keycloakId(userJson.getString("keycloakId"))
+                                          .userId(userJson.getString("userId"))
+                                          .name(userJson.getString("firstName"), userJson.getString("lastName"))
+                                          .roles(List.of(Roles.CONSUMER))
+                                          .build();
+
+                          JsonArray req = new JsonArray().add(new JsonObject().put("id", requestId));
+
+                          List<DeletePolicyNotificationRequest> request =
+                                  DeletePolicyNotificationRequest.jsonArrayToList(req);
+
+                          policyService.deletePolicyNotification(
+                                  request,
+                                  user,
+                                  testContext.succeeding(
+                                          response ->
+                                                  testContext.verify(
+                                                          () -> {
+                                                              assertEquals(
+                                                                      URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                                                              assertEquals(
+                                                                      REQ_ID_ALREADY_NOT_EXISTS, response.getString("title"));
+                                                              assertEquals(400, response.getInteger("status"));
+                                                              testContext.completeNow();
+                                                          })));
+                      });
   }
 
   @Test
   @DisplayName("Failure - Test consumer trying to delete notification ID does not exist")
   void failIdNotPresent(VertxTestContext testContext) {
-    testContext.completeNow();
+      UUID itemId = UUID.randomUUID();
+
+      createNotification(
+              itemId, "RESOURCE_GROUP", NotifRequestStatus.PENDING, "P1Y", new JsonObject())
+              .onSuccess(
+                      id -> {
+
+                          JsonObject userJson = consumerUserOne.result();
+
+                          User user =
+                                  new UserBuilder()
+                                          .keycloakId(userJson.getString("keycloakId"))
+                                          .userId(userJson.getString("userId"))
+                                          .name(userJson.getString("firstName"), userJson.getString("lastName"))
+                                          .roles(List.of(Roles.CONSUMER))
+                                          .build();
+
+                          JsonArray req = new JsonArray().add(new JsonObject().put("id", UUID.randomUUID().toString()));
+
+                          List<DeletePolicyNotificationRequest> request =
+                                  DeletePolicyNotificationRequest.jsonArrayToList(req);
+
+                          policyService.deletePolicyNotification(
+                                  request,
+                                  user,
+                                  testContext.succeeding(
+                                          response ->
+                                                  testContext.verify(
+                                                          () -> {
+                                                              assertEquals(
+                                                                      URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                                                              assertEquals(
+                                                                      REQ_ID_ALREADY_NOT_EXISTS, response.getString("title"));
+                                                              assertEquals(400, response.getInteger("status"));
+                                                              testContext.completeNow();
+                                                          })));
+                      });
+
   }
 
   @Test
   @DisplayName("Success- Test Deleting request for consumer")
   void successDeletion(VertxTestContext testContext) {
-    testContext.completeNow();
+      UUID itemId = UUID.randomUUID();
+
+      createNotification(
+              itemId, "RESOURCE_GROUP", NotifRequestStatus.PENDING, "P1Y", new JsonObject())
+              .onSuccess(
+                      id -> {
+                          String requestId = id.toString();
+
+                          JsonObject userJson = consumerUserOne.result();
+
+                          User user =
+                                  new UserBuilder()
+                                          .keycloakId(userJson.getString("keycloakId"))
+                                          .userId(userJson.getString("userId"))
+                                          .name(userJson.getString("firstName"), userJson.getString("lastName"))
+                                          .roles(List.of(Roles.CONSUMER))
+                                          .build();
+
+                          /* Mock catalogue client for itemIds for UUID */
+                          Mockito.doAnswer(
+                                  i -> {
+                                      Set<UUID> itemIds = i.getArgument(0);
+                                      Map<UUID, String> map = new HashMap<UUID, String>();
+                                      itemIds.forEach(
+                                              item -> {
+                                                  map.put(item, RandomStringUtils.randomAlphabetic(5));
+                                              });
+                                      return Future.succeededFuture(map);
+                                  })
+                                  .when(catalogueClient)
+                                  .getCatIds(Mockito.any(), Mockito.any());
+
+                          /* Mock registration service user details */
+                          Mockito.doAnswer(
+                                  i -> {
+                                      List<String> userIds = i.getArgument(0);
+                                      Promise<JsonObject> promise = i.getArgument(1);
+                                      promise.complete(fetchUserDetail(userIds));
+                                      return i.getMock();
+                                  })
+                                  .when(registrationService)
+                                  .getUserDetails(Mockito.any(), Mockito.any());
+
+                          JsonArray req = new JsonArray().add(new JsonObject().put("id", requestId));
+
+                          List<DeletePolicyNotificationRequest> request =
+                                  DeletePolicyNotificationRequest.jsonArrayToList(req);
+
+                          policyService.deletePolicyNotification(
+                                  request,
+                                  user,
+                                  testContext.succeeding(
+                                          response ->
+                                                  testContext.verify(
+                                                          () -> {
+                                                              assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                                                              assertEquals(DELETE_NOTIF_REQ, response.getString("title"));
+                                                              assertEquals(200, response.getInteger("status"));
+                                                              testContext.completeNow();
+                                                          })));
+                      });
+
   }
 
   @Test
@@ -503,4 +635,76 @@ public class DeletePolicyNotificationTest {
                               })));
             });
   }
+
+    @Test
+    @DisplayName("Success- Test Delete multiple Pending Notification requests for a consumer")
+    void multipleIdSuccess(VertxTestContext testContext) {
+        UUID itemId1 = UUID.randomUUID();
+        UUID itemId2 = UUID.randomUUID();
+
+        createNotification(
+                itemId1, "RESOURCE_GROUP", NotifRequestStatus.PENDING, "P1Y", new JsonObject())
+                .onSuccess(
+                        id1 -> {
+                            createNotification(
+                                    itemId2, "RESOURCE_GROUP", NotifRequestStatus.PENDING, "P1Y", new JsonObject())
+                                    .onSuccess(
+                                            id2 -> {
+                                                JsonObject userJson = consumerUserOne.result();
+
+                                                User user =
+                                                        new UserBuilder()
+                                                                .keycloakId(userJson.getString("keycloakId"))
+                                                                .userId(userJson.getString("userId"))
+                                                                .name(userJson.getString("firstName"), userJson.getString("lastName"))
+                                                                .roles(List.of(Roles.CONSUMER))
+                                                                .build();
+
+                                                /* Mock catalogue client for itemIds for UUID */
+                                                Mockito.doAnswer(
+                                                        i -> {
+                                                            Set<UUID> itemIds = i.getArgument(0);
+                                                            Map<UUID, String> map = new HashMap<UUID, String>();
+                                                            itemIds.forEach(
+                                                                    item -> {
+                                                                        map.put(item, RandomStringUtils.randomAlphabetic(5));
+                                                                    });
+                                                            return Future.succeededFuture(map);
+                                                        })
+                                                        .when(catalogueClient)
+                                                        .getCatIds(Mockito.any(), Mockito.any());
+
+                                                /* Mock registration service user details */
+                                                Mockito.doAnswer(
+                                                        i -> {
+                                                            List<String> userIds = i.getArgument(0);
+                                                            Promise<JsonObject> promise = i.getArgument(1);
+                                                            promise.complete(fetchUserDetail(userIds));
+                                                            return i.getMock();
+                                                        })
+                                                        .when(registrationService)
+                                                        .getUserDetails(Mockito.any(), Mockito.any());
+
+                                                JsonArray req = new JsonArray().add(new JsonObject().put("id", id1.toString()))
+                                                        .add(new JsonObject().put("id", id2.toString()));
+
+
+                                                List<DeletePolicyNotificationRequest> request =
+                                                        DeletePolicyNotificationRequest.jsonArrayToList(req);
+
+                                                policyService.deletePolicyNotification(
+                                                        request,
+                                                        user,
+                                                        testContext.succeeding(
+                                                                response ->
+                                                                        testContext.verify(
+                                                                                () -> {
+                                                                                    assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                                                                                    assertEquals(DELETE_NOTIF_REQ, response.getString("title"));
+                                                                                    assertEquals(200, response.getInteger("status"));
+                                                                                    testContext.completeNow();
+                                                                                })));
+                                            });
+                        });
+    }
 }
