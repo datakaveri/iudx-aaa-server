@@ -141,26 +141,26 @@ pipeline {
             }
           }
         }
-        stage('Integration test on swarm deployment') {
-          steps {
-            node('built-in') {
-              script{
-                sh 'newman run /var/lib/jenkins/iudx/aaa/Newman/Integration_Test.postman_collection.json -e /home/ubuntu/configs/cd/aaa-postman-env.json --insecure -r htmlextra --reporter-htmlextra-export /var/lib/jenkins/iudx/aaa/Newman/report/cd-report.html --reporter-htmlextra-skipSensitiveData'
-              }
-            }
-          }
-          post{
-            always{
-              node('built-in') {
-                script{
-                  publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '/var/lib/jenkins/iudx/aaa/Newman/report/', reportFiles: 'cd-report.html', reportTitles: '', reportName: 'Docker-Swarm Integration Test Report'])
-                }
-              }
-            }
-            failure{
-              error "Test failure. Stopping pipeline execution!"
-            }
-          }
+        // stage('Integration test on swarm deployment') {
+        //   steps {
+        //     node('built-in') {
+        //       script{
+        //         sh 'newman run /var/lib/jenkins/iudx/aaa/Newman/Integration_Test.postman_collection.json -e /home/ubuntu/configs/cd/aaa-postman-env.json --insecure -r htmlextra --reporter-htmlextra-export /var/lib/jenkins/iudx/aaa/Newman/report/cd-report.html --reporter-htmlextra-skipSensitiveData'
+        //       }
+        //     }
+        //   }
+        //   post{
+        //     always{
+        //       node('built-in') {
+        //         script{
+        //           publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '/var/lib/jenkins/iudx/aaa/Newman/report/', reportFiles: 'cd-report.html', reportTitles: '', reportName: 'Docker-Swarm Integration Test Report'])
+        //         }
+        //       }
+        //     }
+        //     failure{
+        //       error "Test failure. Stopping pipeline execution!"
+        //     }
+        //   }
         }
       }
     }
