@@ -20,18 +20,15 @@ services:
       - auth-net
 
   integTest:
-    image: ghcr.io/datakaveri/aaa-test:latest
+    image: ghcr.io/datakaveri/aaa-dev:latest
     environment:
       - AUTH_URL=https://authorization.iudx.org.in
       - LOG_LEVEL=INFO
       - AUTH_JAVA_OPTS=-Xmx1024m
     volumes:
-      - /home/ubuntu/configs/aaa-config-integ.json:/usr/share/app/configs/config-dev.json
+      - /home/ubuntu/configs/aaa-config-integ.json:/usr/share/app/configs/config.json
       - /home/ubuntu/configs/aaa-keystore.jks:/usr/share/app/configs/keystore.jks
-      - /home/ubuntu/configs/aaa-flyway.conf:/usr/share/app/flyway.conf
-      - ./docs/:/usr/share/app/docs
-      - ./src/:/usr/share/app/src
-    command: bash -c "mvn clean compile exec:java@aaa-server"
+    command: bash -c "exec java $$AUTH_JAVA_OPTS  -Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.Log4j2LogDelegateFactory -jar ./fatjar.jar  --host $$(hostname) -c configs/config.json"
     ports:
       - "8080:8080"
       - "8443:8443"
