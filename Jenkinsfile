@@ -69,7 +69,7 @@ pipeline {
 
     stage('Integration Test & OWASP ZAP pen test'){
       steps{
-        node('master') {
+        node('built-in') {
           script{
             startZap ([host: 'localhost', port: 8090, zapHome: '/var/lib/jenkins/tools/com.cloudbees.jenkins.plugins.customtools.CustomTool/OWASP_ZAP/ZAP_2.11.0'])
             sh 'curl http://127.0.0.1:8090/JSON/pscan/action/disableScanners/?ids=10096'
@@ -82,7 +82,7 @@ pipeline {
       }
       post{
         always{
-          node('master') {
+          node('built-in') {
             script{
               archiveZap failHighAlerts: 1, failMediumAlerts: 1, failLowAlerts: 2
             }  
