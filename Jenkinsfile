@@ -161,7 +161,7 @@ pipeline {
         //       error "Test failure. Stopping pipeline execution!"
         //     }
         //   }
-        }
+        // }
       }
     }
   }
