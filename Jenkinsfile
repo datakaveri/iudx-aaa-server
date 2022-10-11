@@ -132,7 +132,19 @@ pipeline {
           steps {
             script {
               sh "ssh azureuser@docker-swarm 'docker service update auth_auth --image ghcr.io/datakaveri/aaa-depl:4.5.0-alpha-${env.GIT_HASH}'"
-              sh 'sleep 10'
+              sh 'sleep 15'
+              sh '''#!/bin/bash 
+              response_code=$(curl -s -o /dev/null -w \'%{http_code}\\n\' --connect-timeout 5 --retry 5 --retry-connrefused -XGET https://authorization-docker.iudx.io/apis)
+
+              if [[ "$response_code" -ne "200" ]]
+              then
+                echo "Health check failed"
+                exit 1
+              else
+                echo "Health check complete; Server is up."
+                exit 0
+              fi
+              '''                
             }
           }
           post{
@@ -141,27 +153,6 @@ pipeline {
             }
           }
         }
-        // stage('Integration test on swarm deployment') {
-        //   steps {
-        //     node('built-in') {
-        //       script{
-        //         sh 'newman run /var/lib/jenkins/iudx/aaa/Newman/Integration_Test.postman_collection.json -e /home/ubuntu/configs/cd/aaa-postman-env.json --insecure -r htmlextra --reporter-htmlextra-export /var/lib/jenkins/iudx/aaa/Newman/report/cd-report.html --reporter-htmlextra-skipSensitiveData'
-        //       }
-        //     }
-        //   }
-        //   post{
-        //     always{
-        //       node('built-in') {
-        //         script{
-        //           publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '/var/lib/jenkins/iudx/aaa/Newman/report/', reportFiles: 'cd-report.html', reportTitles: '', reportName: 'Docker-Swarm Integration Test Report'])
-        //         }
-        //       }
-        //     }
-        //     failure{
-        //       error "Test failure. Stopping pipeline execution!"
-        //     }
-        //   }
-        // }
       }
     }
   }
