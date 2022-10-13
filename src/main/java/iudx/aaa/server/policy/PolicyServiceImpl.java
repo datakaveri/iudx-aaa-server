@@ -1749,10 +1749,10 @@ public class PolicyServiceImpl implements PolicyService {
       queryTuple = Tuple.of(providerId);
     } else if (roles.contains(Roles.PROVIDER)) {
       query = SELECT_PROVIDER_NOTIF_REQ;
-      queryTuple = Tuple.of(user.getUserId());
+      queryTuple = Tuple.of(user.getUserId(),status.WITHDRAWN);
     } else {
       query = SELECT_CONSUM_NOTIF_REQ;
-      queryTuple = Tuple.of(user.getUserId());
+      queryTuple = Tuple.of(user.getUserId(),status.WITHDRAWN);
     }
 
     Collector<Row, ?, List<JsonObject>> collect =
