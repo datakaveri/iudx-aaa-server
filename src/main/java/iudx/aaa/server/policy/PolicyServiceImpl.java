@@ -1746,7 +1746,7 @@ public class PolicyServiceImpl implements PolicyService {
     if (isDelegate) {
       UUID providerId = UUID.fromString(data.getString("providerId"));
       query = SELECT_PROVIDER_NOTIF_REQ;
-      queryTuple = Tuple.of(providerId);
+      queryTuple = Tuple.of(providerId,status.WITHDRAWN);
     } else if (roles.contains(Roles.PROVIDER)) {
       query = SELECT_PROVIDER_NOTIF_REQ;
       queryTuple = Tuple.of(user.getUserId(),status.WITHDRAWN);
