@@ -3978,7 +3978,8 @@ paths:
         A consumer may choose to withdraw access requests they have created, **as long as they are still in the pending state**. A withdrawn request  cannot be approved or rejected by the concerned provider.
 
         Only users with `consumer` role can call this API.
-         
+      security:
+              - authorization: []
       parameters:
         - schema:
             type: string
