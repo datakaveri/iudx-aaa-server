@@ -332,12 +332,12 @@ public class Constants {
   public static final String SELECT_PROVIDER_NOTIF_REQ =
       "SELECT id as \"requestId\", user_id, item_id as \"itemId\", lower(item_type::text) as \"itemType\", owner_id, lower(status::text) AS status, "
           + "expiry_duration::text as \"expiryDuration\", constraints FROM "
-          + "access_requests WHERE owner_id = $1::UUID";
+          + "access_requests WHERE  owner_id = $1::UUID and status != $2::acc_reqs_status_enum";
 
   public static final String SELECT_CONSUM_NOTIF_REQ =
       "SELECT id as \"requestId\", user_id, item_id as \"itemId\", lower(item_type::text) as \"itemType\", owner_id, lower(status::text) AS status, "
           + "expiry_duration::text as \"expiryDuration\", constraints FROM "
-          + "access_requests WHERE user_id = $1::UUID";
+          + "access_requests WHERE user_id = $1::UUID and status != $2::acc_reqs_status_enum";
 
   public static final String SEL_NOTIF_REQ_ID =
       "SELECT id, user_id as \"userId\", item_id as \"itemId\", item_type as \"itemType\", owner_id as \"ownerId\", "
