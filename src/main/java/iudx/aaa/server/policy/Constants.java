@@ -14,6 +14,7 @@ public class Constants {
   public static final String ITEMTYPE = "itemType";
   public static final String ROLE = "role";
   public static final String CONSTRAINTS = "constraints";
+  public static final String CONTEXT = "context";
   public static final String EXPIRYTIME = "expiryTime";
   public static final String OWNERID = "ownerId";
   public static final String RESOURCETABLE = "resource";
@@ -55,6 +56,7 @@ public class Constants {
   public static final String CALL_APD_USERCLASS = "userClass";
   public static final String CALL_APD_OWNERID = "ownerId";
   public static final String CALL_APD_CONSTRAINTS = "constraints";
+  public static final String CALL_APD_CONTEXT = "context";
 
   public static final String RESULTS = "results";
   public static final String CAT_ITEM_PATH = "/iudx/cat/v1/item";

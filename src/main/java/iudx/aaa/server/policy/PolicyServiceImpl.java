@@ -803,7 +803,7 @@ public class PolicyServiceImpl implements PolicyService {
   }
 
   Future<JsonObject> verifyConsumerPolicy(UUID userId, String itemId, String itemType,
-      Map<String, ResourceObj> resDetails) {
+      JsonObject context, Map<String, ResourceObj> resDetails) {
 
     Promise<JsonObject> p = Promise.promise();
 
@@ -934,6 +934,7 @@ public class PolicyServiceImpl implements PolicyService {
                 .put(CALL_APD_RES_SER_URL, getUrl.result())
                 .put(CALL_APD_USERCLASS, apdDetails.getString(USER_CLASS))
                 .put(CALL_APD_OWNERID, resDetails.get(itemId).getOwnerId().toString())
+                .put(CALL_APD_CONTEXT, context)
                 .put(CALL_APD_CONSTRAINTS, apdDetails.getJsonObject(CONSTRAINTS));
 
             apdService.callApd(apdContext, p);
@@ -1318,6 +1319,8 @@ public class PolicyServiceImpl implements PolicyService {
     String itemId = request.getString(ITEMID);
     String itemType = request.getString(ITEMTYPE).toUpperCase();
     String role = request.getString(ROLE).toUpperCase();
+    /* context will be empty JSON object if not set by user; see RequestToken */
+    JsonObject context = request.getJsonObject(CONTEXT);
 
     boolean isCatalogue = false;
     // verify policy does not expect the resServer itemType
@@ -1448,7 +1451,7 @@ public class PolicyServiceImpl implements PolicyService {
                       {
                         response =
                             verifyConsumerPolicy(
-                                userId, finalItem, itemType, reqItemDetail.result());
+                                userId, finalItem, itemType, context, reqItemDetail.result());
                         break;
                       }
                     case PROVIDER_ROLE:

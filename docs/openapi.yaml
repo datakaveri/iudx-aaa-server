@@ -208,6 +208,8 @@ paths:
                     - consumer
                     - admin
                     - trustee
+                context:
+                  type: object
               required:
                 - itemId
                 - itemType
@@ -263,11 +265,20 @@ paths:
                   itemId: rs.iudx.org.in
                   itemType: resource_server
                   role: provider
+              Requesting resource with context object in body:
+                value:
+                  itemId: datakaveri.org/04a15c9960ffda227e9546f3f46e629e1fe4132b/rs.iudx.org.in/pune-env-aqm
+                  itemType: resource_group
+                  role: consumer
+                  context:
+                    accessId: 1e5aad64-102c-4688-892f-c6a1f5f4d476
+                    accessType: PERMANENT_ACCESS
         description: |-
           - `itemId` : the string value of the id of the resource
             - e.g. `datakaveri.org/facec5182e3bf44cc3ac42b0b611263676d668a2/rs.iudx.org.in/agartala-env-aqm`
           - `itemType` : the kind of item the desired resource is
           - `role` : the role as which the user wants to get token for
+          - `context` : a JSON object containing any extra information. The user may use this field to convey information to an APD in case the requested resource is backed by an APD policy
         required: true
       description: |
         Request for a JWT (token). One can generate token using either by providing token header or providing clientId and clientSecret in the header. 
@@ -340,6 +351,11 @@ paths:
 
         - **Deny** : The user does not belong to the user class. The AAA server returns a `403 Forbidden`.
         - **Deny but the APD needs interaction** : The user does not belong to the user class, but the APD provides a mechanism for the user to interact with it. This interaction **may or may not** result in the user being included in the user class. The AAA server sends a `403 Forbidden` but includes a special **APD JWT token** that the user must use when interacting with the APD. 
+
+        ## Context object for extra information
+        An APD may require extra information during user class evaluation. Any such information can be included in the `context` JSON object field in the API request body. 
+
+        In case an APD requires particular keys in the `context` object, The APD can send a **Deny** response with the details of the required keys and information.
 
         ## JWT APD Token Response Structure
           The JWT is signed using the ES256 algorithm (`alg:ES256`).
