@@ -115,413 +115,23 @@ public class PolicyServiceImpl implements PolicyService {
       Handler<AsyncResult<JsonObject>> handler) {
 
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
-    List<Roles> roles = user.getRoles();
-    boolean isDelegate = !data.isEmpty();
-    String providerId;
-    if (isDelegate) providerId = data.getString("providerId");
-    else providerId = user.getUserId();
-    // check duplicate
-    // same test works for both userpolicies and apdUserpolicies as there can only be one apd_policy for any given resource
-    //no need to check if the requests have different apdId/userClass
-    List<CreatePolicyRequest> duplicates =
-        request.stream()
-            .collect(
-                Collectors.groupingBy(
-                    p -> p.getUserId() + "-" + p.getItemId() + "-" + p.getItemType(),
-                    Collectors.toList()))
-            .values()
-            .stream()
-            .filter(i -> i.size() > 1)
-            .flatMap(j -> j.stream())
-            .collect(Collectors.toList());
-
-    if (duplicates.size() > 0) {
-      Response r =
-          new Response.ResponseBuilder()
-              .type(URN_INVALID_INPUT)
-              .title(DUPLICATE)
-              .detail(duplicates.get(0).toString())
-              .status(400)
-              .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
-    }
-
-    List<CreatePolicyRequest> userPolicyRequests =
-        request.stream().filter(ar -> ar.getApdId().equals(NIL_UUID)).collect(Collectors.toList());
-    List<CreatePolicyRequest> apdPolicyRequests =
-        request.stream().filter(ar -> ar.getUserId().equals(NIL_UUID)).collect(Collectors.toList());
-
-    if (!roles.contains(Roles.ADMIN)
-        && !roles.contains(Roles.PROVIDER)
-        && !roles.contains(Roles.DELEGATE)
-        && !roles.contains(Roles.TRUSTEE)) {
-
-      Response r =
-          new Response.ResponseBuilder()
-              .type(URN_INVALID_ROLE)
-              .title(INVALID_ROLE)
-              .detail(INVALID_ROLE)
-              .status(403)
-              .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
-    }
-
-    // apd policies will not have userIDs to check
-    Future<Set<UUID>> UserExist;
-    if (!userPolicyRequests.isEmpty()) {
-
-      Set<UUID> users =
-          userPolicyRequests.stream()
-              .map(e -> UUID.fromString(e.getUserId()))
-              .collect(Collectors.toSet());
-      UserExist = createPolicy.checkUserExist(users);
-    } else UserExist = Future.succeededFuture(new HashSet<UUID>());
-
-    // get list of apds from apdPolicyRequests(get apdId) and check with getApdDetails if valid
-    Future<JsonObject> validApd;
-    if (!apdPolicyRequests.isEmpty()) {
-      List<String> urls =
-          apdPolicyRequests.stream().map(e -> e.getApdId()).collect(Collectors.toList());
-      Promise<JsonObject> promise = Promise.promise();
-      apdService.getApdDetails(urls, List.of(), promise);
-
-      validApd = promise.future();
-    } else validApd = Future.succeededFuture(new JsonObject());
-
-    List<String> exp =
-        request.stream()
-            .filter(tagObject -> !tagObject.getExpiryTime().isEmpty())
-            .map(CreatePolicyRequest::getExpiryTime)
-            .collect(Collectors.toList());
-
-    Future<Void> validateExp;
-    if (!exp.isEmpty()) validateExp = createPolicy.validateExpiry(exp);
-    else {
-      validateExp = Future.succeededFuture();
-    }
-
-    List<String> resServerIds =
-        userPolicyRequests.stream()
-            .filter(
-                tagObject ->
-                    tagObject
-                        .getItemType()
-                        .toUpperCase()
-                        .equals(itemTypes.RESOURCE_SERVER.toString()))
-            .map(CreatePolicyRequest::getItemId)
-            .collect(Collectors.toList());
-
-    // getApdInfo for all apdIds
-    // if itemType is apdIds, getApdInfo
-    List<String> apdUrls =
-        userPolicyRequests.stream()
-            .filter(
-                tagObject -> tagObject.getItemType().toUpperCase().equals(itemTypes.APD.toString()))
-            .map(CreatePolicyRequest::getItemId)
-            .collect(Collectors.toList());
-
-    List<String> resGrpIds =
-        request.stream()
-            .filter(
-                tagObject ->
-                    tagObject
-                        .getItemType()
-                        .toUpperCase()
-                        .equals(itemTypes.RESOURCE_GROUP.toString()))
-            .map(CreatePolicyRequest::getItemId)
-            .collect(Collectors.toList());
-
-    // the format for resource group item id when split by '/' should be of exactly length 4
-    if (!resGrpIds.stream().allMatch(itemTypeCheck -> itemTypeCheck.split("/").length == 4)) {
-      Response r =
-          new Response.ResponseBuilder()
-              .type(URN_INVALID_INPUT)
-              .title(INCORRECT_ITEM_TYPE)
-              .detail(INCORRECT_ITEM_TYPE)
-              .status(400)
-              .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
-    }
-
-    List<String> resIds =
-        request.stream()
-            .filter(
-                tagObject ->
-                    tagObject.getItemType().toUpperCase().equals(itemTypes.RESOURCE.toString()))
-            .map(CreatePolicyRequest::getItemId)
-            .collect(Collectors.toList());
-
-    // the format for resource item id when split by '/' should be of greater than len of resource
-    // group(4)
-    if (!resIds.stream().allMatch(itemTypeCheck -> itemTypeCheck.split("/").length > 4)) {
-      Response r =
-          new Response.ResponseBuilder()
-              .type(URN_INVALID_INPUT)
-              .title(INCORRECT_ITEM_TYPE)
-              .detail(INCORRECT_ITEM_TYPE)
-              .status(400)
-              .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
-    }
-    Map<String, List<String>> catItem = new HashMap<>();
-
-    // check if resServer itemtype, All requests must be resServer, role must contain admin
-    // if itemType is Apd, all req must be Apd,role must contatin Trustee
-    // if  item type neither, for request may have both apd and user policies (catalogueFetch)
-    if (resServerIds.size() > 0) {
-      // if request has itemType resourceServer, then all request should be for resource server
-      if (resServerIds.size() != request.size()) {
-        Response r =
-            new Response.ResponseBuilder()
-                .type(URN_INVALID_INPUT)
-                .title(INVALID_INPUT)
-                .detail("All requests must be for resource server")
-                .status(400)
-                .build();
-        handler.handle(Future.succeededFuture(r.toJson()));
-        return this;
-      }
-      if (!roles.contains(Roles.ADMIN)) {
-        Response r =
-            new Response.ResponseBuilder()
-                .type(URN_INVALID_ROLE)
-                .title(INVALID_ROLE)
-                .detail(INVALID_ROLE)
-                .status(403)
-                .build();
-        handler.handle(Future.succeededFuture(r.toJson()));
-        return this;
-      } else catItem.put(RES_SERVER, resServerIds);
-    } else {
-      // check if user policy for apd exists
-      if (apdUrls.size() > 0) {
-        if (apdUrls.size() != request.size()) {
-          Response r =
-              new Response.ResponseBuilder()
-                  .type(URN_INVALID_INPUT)
-                  .title(INVALID_INPUT)
-                  .detail("All requests must be for APD")
-                  .status(400)
-                  .build();
-          handler.handle(Future.succeededFuture(r.toJson()));
-          return this;
-        }
-        if (!roles.contains(Roles.TRUSTEE)) {
-          Response r =
-              new Response.ResponseBuilder()
-                  .type(URN_INVALID_ROLE)
-                  .title(INVALID_ROLE)
-                  .detail(INVALID_ROLE)
-                  .status(403)
-                  .build();
-          handler.handle(Future.succeededFuture(r.toJson()));
-          return this;
-        }
-        catItem.put(APD, apdUrls);
-      } else {
-        if (!roles.contains(Roles.PROVIDER) && !roles.contains(Roles.DELEGATE)) {
-          Response r =
-              new Response.ResponseBuilder()
-                  .type(URN_INVALID_ROLE)
-                  .title(INVALID_ROLE)
-                  .detail(INVALID_ROLE)
-                  .status(403)
-                  .build();
-          handler.handle(Future.succeededFuture(r.toJson()));
-          return this;
-        }
-        if (resGrpIds.size() > 0) catItem.put(RES_GRP, resGrpIds);
-        if (resIds.size() > 0) catItem.put(RES, resIds);
-      }
-    }
-    Future<Map<String, ResourceObj>> reqItemDetail;
-    if (catItem.containsKey(RES_SERVER)) {
-      reqItemDetail = createPolicy.getResSerDetails(catItem.get(RES_SERVER), user.getUserId());
-    } else {
-      if (catItem.containsKey(APD)) {
-        List<String> urls = catItem.get(APD);
-        Promise<JsonObject> promise = Promise.promise();
-        apdService.getApdDetails(urls, List.of(), promise);
-        reqItemDetail =
-            promise
-                .future()
-                .compose(
-                    apdDetail -> {
-                      Map<String, ResourceObj> apdMap = new HashMap<>();
-                      List<String> failedUrl = new ArrayList<>();
-                      urls.forEach(
-                          url -> {
-                            if (!apdDetail.containsKey(url)) failedUrl.add(url);
-                            else {
-                              JsonObject detail = apdDetail.getJsonObject(url);
-                              //status of the apd is not validated for creating policy by the trustee
-                                JsonObject resObj = new JsonObject();
-                                resObj.put(ITEMTYPE, APD);
-                                resObj.put(ID, detail.getString(ID));
-                                resObj.put(CAT_ID, detail.getString(URL));
-                                resObj.put(
-                                    OWNER_ID, detail.getJsonObject(OWNER_DETAILS).getString(ID));
-                                resObj.put("resource_server_id",NIL_UUID);
-                                resObj.put("resource_group_id",NIL_UUID);
-                                apdMap.put(resObj.getString(CAT_ID), new ResourceObj(resObj));
-                            }
-                          });
-
-                      if (failedUrl.size() > 0) {
-                        Response r =
-                            new ResponseBuilder()
-                                .status(400)
-                                .type(URN_INVALID_INPUT)
-                                .title(INVALID_INPUT)
-                                .detail(failedUrl.toString())
-                                .build();
-                        return Future.failedFuture(new ComposeException(r));
-                      }
-                      return Future.succeededFuture(apdMap);
-                    });
-      } else // For both apdPolicy and userPolicy
-      reqItemDetail = catalogueClient.checkReqItems(catItem);
-    }
-
-    Future<Boolean> ItemChecks =
-        CompositeFuture.all(UserExist, validateExp, reqItemDetail, validApd)
-            .compose(
-                obj -> {
-                  if (!UserExist.result().isEmpty()) {
-                    LOGGER.debug("UserExist fail:: " + UserExist.result().toString());
-                    Response r =
-                        new ResponseBuilder()
-                            .status(400)
-                            .type(URN_INVALID_INPUT)
-                            .title(INVALID_USER)
-                            .detail(UserExist.result().iterator().next().toString())
-                            .build();
-                    return Future.failedFuture(new ComposeException(r));
-                  }
-
-                  List<String> urls =
-                          apdPolicyRequests.stream().map(CreatePolicyRequest::getApdId).collect(Collectors.toList());
-
-                  List<String> invalidUrl = new ArrayList<>();
-                  urls.forEach(url ->
-                  {
-                    if(!validApd.result().getJsonObject(url).getString(STATUS).equals(ApdStatus.ACTIVE.toString().toLowerCase()))
-                      invalidUrl.add(url);
-                  });
-
-                  if(!invalidUrl.isEmpty())
-                  {
-                    Response r =
-                            new ResponseBuilder()
-                                    .status(400)
-                                    .type(URN_INVALID_INPUT)
-                                    .title(INVALID_APD_STATUS)
-                                    .detail(invalidUrl.toString())
-                                    .build();
-                    return Future.failedFuture(new ComposeException(r));
-                  }
-                 if (catItem.containsKey(RES_SERVER)) return Future.succeededFuture(false);
-
-                  return Future.succeededFuture(true);
-                });
-
-    Future<Boolean> checkAuthPolicy =
-        ItemChecks.compose(
-            obj -> {
-              if (ItemChecks.result().equals(false)) return Future.succeededFuture(false);
-              return createPolicy.checkAuthPolicy(user.getUserId());
-            });
-
-    // to create a policy in the apd_polcies table, user must have a policy by the dataTrustee for the apdId
-    Future<Boolean> checkTrusteeAuthPolicy =
-            ItemChecks.compose(obj ->
-                    {
-                        if(validApd.result().isEmpty())
-                          return Future.succeededFuture(true);
-                        else
-                        {
-                          Set<UUID> apdIds = new HashSet<UUID>();
-                          List<String> urls =
-                                  apdPolicyRequests.stream().map(CreatePolicyRequest::getApdId).collect(Collectors.toList());
-                          urls.forEach(url ->
-                          {
-                            apdIds.add(UUID.fromString(validApd.result().getJsonObject(url).getString(ID)));
-                          });
-                          return createPolicy.checkAuthTrusteePolicy(providerId, apdIds);
-                        }
-                    }
-            );
-
-
-    Future<List<UUID>> checkDelegate = CompositeFuture.all(checkAuthPolicy,checkTrusteeAuthPolicy).compose(
-            checkAut -> {
-              if (checkAut.equals(false)) return Future.succeededFuture(new ArrayList<>());
-              List<ResourceObj> resourceObj = new ArrayList<>(reqItemDetail.result().values());
-
-              List<UUID> owners =
-                  resourceObj.stream()
-                      .distinct()
-                      .map(ResourceObj::getOwnerId)
-                      .collect(Collectors.toList());
-
-              List<UUID> owned =
-                  owners.stream()
-                      .filter(x -> !x.equals(UUID.fromString(providerId)))
-                      .collect(Collectors.toList());
-
-              if (owned.isEmpty()) {
-                return Future.succeededFuture(new ArrayList<>());
-              } else {
-                Response r =
-                    new Response.ResponseBuilder()
-                        .type(URN_INVALID_INPUT)
-                        .title(UNAUTHORIZED)
-                        .detail(UNAUTHORIZED)
-                        .status(403)
-                        .build();
-                return Future.failedFuture(new ComposeException(r));
-              }
-            });
-
-
-    Future<List<Tuple>>  checkUserPolicyDuplicate;
-    if(userPolicyRequests.isEmpty())
-      checkUserPolicyDuplicate =  checkDelegate.compose(
-              succ ->  Future.succeededFuture(List.of()));
-    else
-      checkUserPolicyDuplicate =  checkDelegate.compose(
-              succ -> createPolicy.userPolicyDuplicate(userPolicyRequests,reqItemDetail.result(),user));
-
-    Future<List<Tuple>>  checkApdPolicyDuplicate;
-    if(apdPolicyRequests.isEmpty())
-      checkApdPolicyDuplicate =  checkDelegate.compose(
-              succ ->  Future.succeededFuture(List.of()));
-    else
-      checkApdPolicyDuplicate =  checkDelegate.compose(
-              succ -> createPolicy.apdPolicyDuplicate(apdPolicyRequests,reqItemDetail.result(),validApd.result()));
-
-    // use only reqItemDetail to insert items
-
-    Future<CompositeFuture> insertPolicy = CompositeFuture.all(checkUserPolicyDuplicate,checkApdPolicyDuplicate).compose(tup ->
-    {
-      Future<Boolean> insertUserPolicy;
-      if(checkUserPolicyDuplicate.result().isEmpty())
-        insertUserPolicy =  Future.succeededFuture(true);
-      else
-        insertUserPolicy =   createPolicy.insertPolicy(INSERT_POLICY,checkUserPolicyDuplicate.result());
-
-      Future<Boolean> insertApdPolicy;
-      if(checkApdPolicyDuplicate.result().isEmpty())
-        insertApdPolicy =  Future.succeededFuture(true);
-      else
-        insertApdPolicy =   createPolicy.insertPolicy(INSERT_APD_POLICY,checkApdPolicyDuplicate.result());
-
-         return CompositeFuture.all(insertUserPolicy,insertApdPolicy);
-    });
+    
+    CreatePolicyBar foobar = new CreatePolicyBar(user, data, request);
+    
+    Future<CreatePolicyBar> prelimValidations =
+        createPolicy.checkDuplicateReqs(foobar).compose(createPolicy::roleItemRelationValidations)
+            .compose(createPolicy::validateExpiry).compose(this::validateItemIds)
+            .compose(createPolicy::checkUsersExist).compose(this::checkResourcesExist)
+            .compose(this::checkApdsExistAndStatus).compose(createPolicy::checkResServersExistAndOwnership);
+    
+    Future<CreatePolicyBar> extraValid =
+        prelimValidations.compose(createPolicy::checkAuthPolicy)
+            .compose(createPolicy::checkAuthTrusteePolicy).compose(this::checkOwnership)
+            .compose(createPolicy::checkExistingUserPolicies)
+            .compose(createPolicy::checkExistingApdPolicies);
+    
+    Future<CreatePolicyBar> insertPolicy = extraValid.compose(createPolicy::insertUserPolicies)
+        .compose(createPolicy::insertApdPolicies);
 
     insertPolicy.onSuccess(succ -> {
       Response r =
@@ -533,14 +143,217 @@ public class PolicyServiceImpl implements PolicyService {
       handler.handle(Future.succeededFuture(r.toJson()));})
             .onFailure(
                     obj -> {
-                      LOGGER.error(obj.getMessage());
                       if (obj instanceof ComposeException) {
                         ComposeException e = (ComposeException) obj;
                         handler.handle(Future.succeededFuture(e.getResponse().toJson()));
-                      } else handler.handle(Future.failedFuture(INTERNALERROR));
+                      } else {
+                        LOGGER.error(obj.getMessage());
+                        handler.handle(Future.failedFuture(INTERNALERROR));}
                     });
     return this;
   }
+
+  /**
+   * Check if APDs in APD policies and <tt>itemType='APD'</tt> exist. <b> Also checks if the status
+   * of APDs given in APD policies are active (APD policies cannot be set for non-active APDs)</b>.
+   * 
+   * @param bar
+   * @return
+   */
+  Future<CreatePolicyBar> checkApdsExistAndStatus(CreatePolicyBar bar) {
+    Promise<CreatePolicyBar> promise = Promise.promise();
+    List<CreatePolicyContext> context = bar.getContext();
+
+    Set<String> apdUrls = new HashSet<String>();
+
+    List<String> apdUrlsFromApdPols =
+        context.stream().filter(req -> req.getUserId().equals(UUID.fromString(NIL_UUID)))
+            .map(i -> i.getRequest().getApdId()).collect(Collectors.toList());
+
+    List<String> apdUrlsfromItemTypeApd = context.stream()
+        .filter(req -> req.getRequest().getItemType().equalsIgnoreCase(itemTypes.APD.toString()))
+        .map(i -> i.getRequest().getItemId()).collect(Collectors.toList());
+
+    apdUrls.addAll(apdUrlsFromApdPols);
+    apdUrls.addAll(apdUrlsfromItemTypeApd);
+
+    if (apdUrls.size() == 0) {
+      promise.complete(bar);
+      return promise.future();
+    }
+
+    Promise<JsonObject> apdPromise = Promise.promise();
+    apdService.getApdDetails(new ArrayList<String>(apdUrls), List.of(), apdPromise);
+
+    apdPromise.future().onSuccess(res -> {
+      for (int i = 0; i < context.size(); i++) {
+        CreatePolicyRequest req = context.get(i).getRequest();
+
+        if (req.getItemType().equalsIgnoreCase(itemTypes.APD.toString())) {
+          JsonObject apdDetails = res.getJsonObject(req.getItemId());
+
+          JsonObject resObj = new JsonObject();
+          resObj.put(ITEMTYPE, APD);
+          resObj.put(ID, apdDetails.getString(ID));
+          resObj.put(CAT_ID, apdDetails.getString(URL));
+          resObj.put(OWNER_ID, apdDetails.getJsonObject(OWNER_DETAILS).getString(ID));
+          resObj.put("resource_server_id", NIL_UUID);
+          resObj.put("resource_group_id", NIL_UUID);
+
+          ResourceObj obj = new ResourceObj(resObj);
+          context.get(i).setItem(obj);
+        }
+
+        else if (context.get(i).getUserId().equals(UUID.fromString(NIL_UUID))) {
+          JsonObject apdDetails = res.getJsonObject(req.getApdId());
+
+          if (!apdDetails.getString(STATUS).equalsIgnoreCase(ApdStatus.ACTIVE.toString())) {
+            Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+                .title(INVALID_APD_STATUS).detail(req.getItemId()).build();
+            promise.fail(new ComposeException(r));
+            break;
+          }
+
+          JsonObject resObj = new JsonObject();
+          resObj.put(ITEMTYPE, APD);
+          resObj.put(ID, apdDetails.getString(ID));
+          resObj.put(CAT_ID, apdDetails.getString(URL));
+          resObj.put(OWNER_ID, apdDetails.getJsonObject(OWNER_DETAILS).getString(ID));
+          resObj.put("resource_server_id", NIL_UUID);
+          resObj.put("resource_group_id", NIL_UUID);
+
+          ResourceObj obj = new ResourceObj(resObj);
+          context.get(i).setApd(obj);
+        }
+      }
+      bar.setContext(context);
+      promise.complete(bar);
+    }).onFailure(fail -> promise.fail(fail));
+
+    return promise.future();
+  }
+  
+  /**
+   * Check if resources and resource groups are of valid format.
+   * 
+   * @param bar
+   * @return
+   */
+  Future<CreatePolicyBar> validateItemIds(CreatePolicyBar bar) {
+    List<CreatePolicyContext> context = bar.getContext();
+    
+    List<String> resGrpIds = context.stream()
+        .filter(tagObject -> tagObject.getRequest().getItemType()
+            .equalsIgnoreCase(itemTypes.RESOURCE_GROUP.toString()))
+        .map(i -> i.getRequest().getItemId()).collect(Collectors.toList());
+
+    List<String> resIds = context.stream()
+        .filter(tagObject -> tagObject.getRequest().getItemType()
+            .equalsIgnoreCase(itemTypes.RESOURCE.toString()))
+        .map(i -> i.getRequest().getItemId()).collect(Collectors.toList());
+
+    if (resGrpIds.isEmpty() && resIds.isEmpty()) {
+      return Future.succeededFuture(bar);
+    }
+
+    // the format for resource group item id when split by '/' should be of exactly length 4
+    if (!resGrpIds.stream().allMatch(itemTypeCheck -> itemTypeCheck.split("/").length == 4)) {
+
+      Response r = new Response.ResponseBuilder().type(URN_INVALID_INPUT).title(INCORRECT_ITEM_TYPE)
+          .detail(INCORRECT_ITEM_TYPE).status(400).build();
+      return Future.failedFuture(new ComposeException(r));
+    }
+
+    // the format for resource item id when split by '/' should be of greater than len of resource
+    // group(4)
+    if (!resIds.stream().allMatch(itemTypeCheck -> itemTypeCheck.split("/").length > 4)) {
+      Response r = new Response.ResponseBuilder().type(URN_INVALID_INPUT).title(INCORRECT_ITEM_TYPE)
+          .detail(INCORRECT_ITEM_TYPE).status(400).build();
+      return Future.failedFuture(new ComposeException(r));
+    }
+    
+    return Future.succeededFuture(bar);
+  }
+
+  /**
+   * Check if given resource and resource groups exist on catalogue.
+   * 
+   * @param bar
+   * @return
+   */
+  Future<CreatePolicyBar> checkResourcesExist(CreatePolicyBar bar) {
+    Promise<CreatePolicyBar> promise = Promise.promise();
+    List<CreatePolicyContext> context = bar.getContext();
+
+    List<String> resGrpIds = context.stream()
+        .filter(tagObject -> tagObject.getRequest().getItemType()
+            .equalsIgnoreCase(itemTypes.RESOURCE_GROUP.toString()))
+        .map(i -> i.getRequest().getItemId()).collect(Collectors.toList());
+
+    List<String> resIds = context.stream()
+        .filter(tagObject -> tagObject.getRequest().getItemType()
+            .equalsIgnoreCase(itemTypes.RESOURCE.toString()))
+        .map(i -> i.getRequest().getItemId()).collect(Collectors.toList());
+
+    if (resGrpIds.isEmpty() && resIds.isEmpty()) {
+      promise.complete(bar);
+      return promise.future();
+    }
+
+    Map<String, List<String>> catItem = new HashMap<>();
+
+    if (resGrpIds.size() > 0) {
+      catItem.put(RES_GRP, resGrpIds);
+    }
+    if (resIds.size() > 0) {
+      catItem.put(RES, resIds);
+    }
+
+    catalogueClient.checkReqItems(catItem).onSuccess(res -> {
+      for (int i = 0; i < context.size(); i++) {
+        String itemType = context.get(i).getRequest().getItemType();
+        String itemId = context.get(i).getRequest().getItemId();
+        if (itemType.equalsIgnoreCase(itemTypes.RESOURCE_GROUP.toString())
+            || itemType.equalsIgnoreCase(itemTypes.RESOURCE.toString())) {
+          context.get(i).setItem(res.get(itemId));
+        }
+      }
+      bar.setContext(context);
+      promise.complete(bar);
+    }).onFailure(fail -> promise.fail(fail));
+
+    return promise.future();
+  }
+  
+  /**
+   * Check if user setting policy/delegator owns the items in the request.
+   * 
+   * @param bar
+   * @return
+   */
+  Future<CreatePolicyBar> checkOwnership(CreatePolicyBar bar) {
+    UUID providerId;
+    List<CreatePolicyContext> context = bar.getContext();
+    if (bar.isDelegated()) {
+      providerId = bar.getDelegatorId();
+    } else {
+      providerId = UUID.fromString(bar.getPolicySetter().getUserId());
+    }
+    List<UUID> owners = context.stream().map(i -> i.getItem()).map(ResourceObj::getOwnerId)
+        .collect(Collectors.toList());
+
+    List<UUID> owned =
+        owners.stream().filter(x -> !x.equals(providerId)).collect(Collectors.toList());
+
+    if (owned.isEmpty()) {
+      return Future.succeededFuture(bar);
+    } else {
+      Response r = new Response.ResponseBuilder().type(URN_INVALID_INPUT).title(UNAUTHORIZED)
+          .detail(UNAUTHORIZED).status(403).build();
+      return Future.failedFuture(new ComposeException(r));
+    }
+  }
+
 
   @Override
   public PolicyService deletePolicy(JsonArray request, User user, JsonObject data,

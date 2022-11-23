@@ -10,7 +10,7 @@ import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.CreatePolicyRequest;
 import iudx.aaa.server.apiserver.ResourceObj;
 import iudx.aaa.server.apiserver.Response;
-import iudx.aaa.server.apiserver.User;
+import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.util.ComposeException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,9 +18,7 @@ import org.apache.logging.log4j.Logger;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,9 +27,9 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static iudx.aaa.server.apiserver.util.Urn.URN_ALREADY_EXISTS;
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
-import static iudx.aaa.server.policy.Constants.BAD_REQUEST;
-import static iudx.aaa.server.policy.Constants.CAT_ID;
+import static iudx.aaa.server.policy.Constants.*;
 import static iudx.aaa.server.policy.Constants.CHECKUSEREXIST;
 import static iudx.aaa.server.policy.Constants.CHECK_AUTH_POLICY;
 import static iudx.aaa.server.policy.Constants.CHECK_EXISTING_APD_POLICY;
@@ -41,12 +39,10 @@ import static iudx.aaa.server.policy.Constants.CHECK_TRUSTEE_POLICY;
 import static iudx.aaa.server.policy.Constants.DUPLICATE_POLICY;
 import static iudx.aaa.server.policy.Constants.ID;
 import static iudx.aaa.server.policy.Constants.INTERNALERROR;
-import static iudx.aaa.server.policy.Constants.INVALID_DATETIME;
 import static iudx.aaa.server.policy.Constants.INVALID_USER;
 import static iudx.aaa.server.policy.Constants.ITEMTYPE;
 import static iudx.aaa.server.policy.Constants.NO_AUTH_POLICY;
 import static iudx.aaa.server.policy.Constants.NO_AUTH_TRUSTEE_POLICY;
-import static iudx.aaa.server.policy.Constants.RESOURCE_SERVER_TABLE;
 import static iudx.aaa.server.policy.Constants.SERVER_NOT_PRESENT;
 import static iudx.aaa.server.policy.Constants.VALIDATE_EXPIRY_FAIL;
 import static iudx.aaa.server.policy.Constants.itemTypes;
@@ -64,98 +60,36 @@ public class createPolicy {
   }
 
   /**
-   * Validate expiry time
+   * checks if there is a policy for user by auth admin
    *
-   * @param req - set of expiryTime
-   * @return
+   * @param userId - userId of user
+   * @return Boolean - active policy exits true , else false
    */
-  public Future<Void> validateExpiry(List<String> req) {
-    Promise<Void> p = Promise.promise();
-    try {
-
-      for (String obj : req) {
-        LocalDateTime expTime = LocalDateTime.parse(obj, DateTimeFormatter.ISO_DATE_TIME);
-        if (expTime.compareTo(LocalDateTime.now(ZoneOffset.UTC)) < 0) {
-          Response r =
-              new Response.ResponseBuilder()
-                  .type(URN_INVALID_INPUT)
-                  .title(VALIDATE_EXPIRY_FAIL)
-                  .detail(expTime.toString())
-                  .status(400)
-                  .build();
-          p.fail(new ComposeException(r));
-          break;
-        }
-      }
-
-    } catch (DateTimeParseException e) {
-      Response r =
-          new Response.ResponseBuilder()
-              .type(URN_INVALID_INPUT)
-              .title(INVALID_DATETIME)
-              .detail(e.getParsedString())
-              .status(400)
-              .build();
-      p.fail(new ComposeException(r));
-    } catch (Exception e) {
-      p.fail(INTERNALERROR);
-    }
-    if (!p.future().failed()) p.complete();
-    return p.future();
-  }
-
-  /**
-   * Check if the users exist in users table
-   *
-   * @param users - set of userId
-   * @return Set<UUID> -> set of uuids not present in the db
-   */
-  public Future<Set<UUID>> checkUserExist(Set<UUID> users) {
-
-    Promise<Set<UUID>> p = Promise.promise();
-
-    if (users.isEmpty()) {
-      Response r =
-          new Response.ResponseBuilder()
-              .type(URN_INVALID_INPUT)
-              .title(BAD_REQUEST)
-              .detail(BAD_REQUEST)
-              .status(400)
-              .build();
-      p.fail(new ComposeException(r));
-      return p.future();
-    }
-
-    Collector<Row, ?, Set<UUID>> userIdCollector =
-        Collectors.mapping(row -> row.getUUID(ID), Collectors.toSet());
-
+  public Future<Boolean> checkAuthPolicy(String userId) {
+    Promise<Boolean> p = Promise.promise();
     pool.withConnection(
         conn ->
-            conn.preparedQuery(CHECKUSEREXIST)
-                .collecting(userIdCollector)
-                .execute(Tuple.of(users.toArray(UUID[]::new)))
-                .onFailure(
-                    obj -> {
-                      LOGGER.error("checkUserExist db fail :: " + obj.getLocalizedMessage());
-                      p.fail(INTERNALERROR);
-                    })
-                .onSuccess(
-                    obj -> {
-                      if (obj.value().isEmpty()) {
-                        Response r =
-                            new Response.ResponseBuilder()
-                                .type(URN_INVALID_INPUT)
-                                .title(INVALID_USER)
-                                .detail(users.toString())
-                                .status(400)
-                                .build();
-                        p.fail(new ComposeException(r));
-                      } else {
-                        Set<UUID> resp = users;
-                        resp.removeAll(obj.value());
-                        p.complete(resp);
-                      }
-                    }));
+        conn.preparedQuery(CHECK_AUTH_POLICY)
+        .execute(Tuple.of(userId, options.getString("authServerUrl"), status.ACTIVE))
+        .onFailure(
+            obj -> {
+              LOGGER.error("checkAuthPolicy db fail :: " + obj.getLocalizedMessage());
+              p.fail(INTERNALERROR);
+            })
+        .onSuccess(
+            obj -> {
+              if (obj.rowCount() > 0) p.complete(true);
+              else {
+                Response r =
+                    new Response.ResponseBuilder()
+                    .type(URN_INVALID_INPUT)
+                    .title(NO_AUTH_POLICY)
+                    .detail(NO_AUTH_POLICY)
+                    .status(403)
+                    .build();
+                p.fail(new ComposeException(r));
+              }
+            }));
     return p.future();
   }
 
@@ -179,334 +113,475 @@ public class createPolicy {
     return p.future();
   }
 
-  public Future<List<Tuple>> createTuple(
-      List<CreatePolicyRequest> req, Map<String, ResourceObj> resourceObj, User user) {
-    Promise<List<Tuple>> p = Promise.promise();
-    try {
-      List<Tuple> tuples = new ArrayList<>();
-      for (CreatePolicyRequest obj : req) {
+  /**
+   * Validate the role of the user setting the policies based on the kind of policies they are
+   * setting (admin policies, APD-trustee policies, res/res_group policies).
+   * 
+   * @param bar
+   * @return
+   */
+  Future<CreatePolicyBar> roleItemRelationValidations(CreatePolicyBar bar) {
+    List<Roles> roles = bar.getPolicySetter().getRoles();
+    List<CreatePolicyContext> context = bar.getContext();
 
-        String catId = obj.getItemId();
-        String userId = obj.getUserId();
-        UUID itemId = resourceObj.get(catId).getId();
-        String itemType = obj.getItemType().toUpperCase();
-        UUID providerId;
-        if (itemType.equals(itemTypes.RESOURCE_SERVER.toString()))
-          providerId = UUID.fromString(user.getUserId());
-        else providerId = resourceObj.get(catId).getOwnerId();
-        String status = "ACTIVE";
-        String expTime = obj.getExpiryTime();
-        LocalDateTime expiryTime;
-        if (!obj.getExpiryTime().isEmpty())
-          expiryTime = LocalDateTime.parse(expTime, DateTimeFormatter.ISO_DATE_TIME);
-        else {
-          if (itemType.equals(itemTypes.RESOURCE_SERVER.toString()))
-            expiryTime =
-                LocalDateTime.now(ZoneOffset.UTC)
-                    .plusMonths(Integer.parseInt(options.getString("adminPolicyExpiry")));
-          else
-            expiryTime =
-                LocalDateTime.now(ZoneOffset.UTC)
-                    .plusMonths(Integer.parseInt(options.getString("policyExpiry")));
+    if (!roles.contains(Roles.ADMIN) && !roles.contains(Roles.PROVIDER)
+        && !roles.contains(Roles.DELEGATE) && !roles.contains(Roles.TRUSTEE)) {
+      Response r = new Response.ResponseBuilder().type(URN_INVALID_ROLE).title(INVALID_ROLE)
+          .detail(INVALID_ROLE).status(403).build();
+      return Future.failedFuture(new ComposeException(r));
+    }
+
+    long adminPolicies = context.stream().map(i -> i.getRequest().getItemType())
+        .filter(type -> type.equalsIgnoreCase(itemTypes.RESOURCE_SERVER.toString())).count();
+
+    if (adminPolicies != 0 && adminPolicies != context.size()) {
+      Response r = new Response.ResponseBuilder().type(URN_INVALID_INPUT).title(INVALID_INPUT)
+          .detail("All requests must be for resource server").status(400).build();
+      return Future.failedFuture(new ComposeException(r));
+    }
+
+    if (adminPolicies == context.size() && !roles.contains(Roles.ADMIN)) {
+      Response r = new Response.ResponseBuilder().type(URN_INVALID_ROLE).title(INVALID_ROLE)
+          .detail(INVALID_ROLE).status(403).build();
+      return Future.failedFuture(new ComposeException(r));
+    }
+
+    long apdPolicies = context.stream().map(i -> i.getRequest().getItemType())
+        .filter(type -> type.equalsIgnoreCase(itemTypes.APD.toString())).count();
+
+    if (apdPolicies != 0 && apdPolicies != context.size()) {
+      Response r = new Response.ResponseBuilder().type(URN_INVALID_INPUT).title(INVALID_INPUT)
+          .detail("All requests must be for APD").status(400).build();
+      return Future.failedFuture(new ComposeException(r));
+    }
+
+    if (apdPolicies == context.size() && !roles.contains(Roles.TRUSTEE)) {
+      Response r = new Response.ResponseBuilder().type(URN_INVALID_ROLE).title(INVALID_ROLE)
+          .detail(INVALID_ROLE).status(403).build();
+      return Future.failedFuture(new ComposeException(r));
+    }
+    
+    /* if setting res/res-group policies, must have provider/delegate role */
+    if (adminPolicies == 0 && apdPolicies == 0 && !roles.contains(Roles.PROVIDER)
+        && !roles.contains(Roles.DELEGATE)) {
+      Response r = new Response.ResponseBuilder().type(URN_INVALID_ROLE).title(INVALID_ROLE)
+          .detail(INVALID_ROLE).status(403).build();
+      return Future.failedFuture(new ComposeException(r));
+    }
+
+    return Future.succeededFuture(bar);
+  }
+  
+  /**
+   * Check for duplicates in the request itself.
+   * @param bar
+   * @return
+   */
+  Future<CreatePolicyBar> checkDuplicateReqs(CreatePolicyBar bar) {
+
+    List<CreatePolicyContext> context = bar.getContext();
+    List<CreatePolicyRequest> duplicates = context.stream().map(val -> val.getRequest())
+        .collect(Collectors.groupingBy(
+            p -> p.getUserId() + "-" + p.getItemId() + "-" + p.getItemType(), Collectors.toList()))
+        .values().stream().filter(i -> i.size() > 1).flatMap(j -> j.stream())
+        .collect(Collectors.toList());
+
+    if (duplicates.size() > 0) {
+      Response r = new Response.ResponseBuilder().type(URN_INVALID_INPUT).title(DUPLICATE)
+          .detail(duplicates.get(0).toString()).status(400).build();
+      return Future.failedFuture(new ComposeException(r));
+    }
+
+    return Future.succeededFuture(bar);
+  }
+ 
+  /**
+   * Validate expiry if set in the request, else set a default expiry based on the kind of policy
+   * being set.
+   * 
+   * @param bar
+   * @return
+   */
+  Future<CreatePolicyBar> validateExpiry(CreatePolicyBar bar) {
+    List<CreatePolicyContext> context = bar.getContext();
+
+    for (int i = 0; i < context.size(); i++) {
+      String expiry = context.get(i).getRequest().getExpiryTime();
+
+      if (!expiry.isEmpty()) {
+        LocalDateTime expTime = LocalDateTime.parse(expiry, DateTimeFormatter.ISO_DATE_TIME);
+
+        if (expTime.compareTo(LocalDateTime.now(ZoneOffset.UTC)) < 0) {
+          Response r = new Response.ResponseBuilder().type(URN_INVALID_INPUT)
+              .title(VALIDATE_EXPIRY_FAIL).detail(expTime.toString()).status(400).build();
+
+          return Future.failedFuture(new ComposeException(r));
         }
-        JsonObject constraints = obj.getConstraints();
-        tuples.add(Tuple.of(userId, itemId, itemType, providerId, status, expiryTime, constraints));
+
+        context.get(i).setExpiryTime(expTime);
+      } else {
+        String itemType = context.get(i).getRequest().getItemType();
+        LocalDateTime defaultExpiry;
+        
+        if (itemType.equals(itemTypes.RESOURCE_SERVER.toString())) {
+          defaultExpiry = LocalDateTime.now(ZoneOffset.UTC)
+              .plusMonths(Integer.parseInt(options.getString("adminPolicyExpiry")));
+        } else {
+          defaultExpiry = LocalDateTime.now(ZoneOffset.UTC)
+              .plusMonths(Integer.parseInt(options.getString("policyExpiry")));
+        }
+        context.get(i).setExpiryTime(defaultExpiry);
       }
-      p.complete(tuples);
-    } catch (Exception e) {
-      LOGGER.error("createTuple fail " + e.toString());
-      p.fail(INTERNALERROR);
+
     }
-    return p.future();
+    
+    bar.setContext(context);
+    return Future.succeededFuture(bar);
   }
+ 
+  /**
+   * Check that the users in the user policy requests exist.
+   * 
+   * @param bar
+   * @return
+   */
+  Future<CreatePolicyBar> checkUsersExist(CreatePolicyBar bar) {
+    Promise<CreatePolicyBar> promise = Promise.promise();
 
-  public Future<List<Tuple>> checkExistingPolicy(List<Tuple> tuples) {
-    Promise<List<Tuple>> p = Promise.promise();
+    List<CreatePolicyContext> context = bar.getContext();
 
-    List<Tuple> selectTuples = new ArrayList<>();
-    for (int i = 0; i < tuples.size(); i++) {
-      UUID userId = tuples.get(i).getUUID(0);
-      UUID itemId = tuples.get(i).getUUID(1);
-      String itemType = tuples.get(i).getString(2);
-      UUID providerId = tuples.get(i).getUUID(3);
-      String status = tuples.get(i).getString(4);
-      selectTuples.add(Tuple.of(userId, itemId, itemType, providerId, status));
+    Set<UUID> userIds = context.stream().map(r -> r.getUserId())
+        .collect(Collectors.toSet());
+    userIds.remove(UUID.fromString(NIL_UUID));
+
+    if (userIds.isEmpty()) {
+      promise.complete(bar);
+      return promise.future();
     }
-    pool.withTransaction(
-        conn ->
-            conn.preparedQuery(CHECK_EXISTING_POLICY)
-                .executeBatch(selectTuples)
-                .onFailure(
-                    failureHandler -> {
-                      LOGGER.error(
-                          "checkExistingPolicy fail :: " + failureHandler.getLocalizedMessage());
-                      p.fail(INTERNALERROR);
-                    })
-                .onSuccess(
-                    ar -> {
-                      RowSet<Row> rows = ar;
-                      List<UUID> ids = new ArrayList<>();
-                      while (rows != null) {
-                        rows.iterator()
-                            .forEachRemaining(
-                                row -> {
-                                  ids.add(row.getUUID(ID));
-                                });
-                        rows = rows.next();
-                      }
 
-                      if (ids.size() > 0) {
-                        Response r =
-                            new Response.ResponseBuilder()
-                                .type(URN_ALREADY_EXISTS)
-                                .title(DUPLICATE_POLICY)
-                                .detail(ids.get(0).toString())
-                                .status(409)
-                                .build();
-                        p.fail(new ComposeException(r));
-                      } else p.complete(tuples);
-                    }));
+    Collector<Row, ?, Set<UUID>> userIdCollector =
+        Collectors.mapping(row -> row.getUUID(ID), Collectors.toSet());
 
-    return p.future();
+    pool.withConnection(conn -> conn.preparedQuery(CHECKUSEREXIST).collecting(userIdCollector)
+        .execute(Tuple.of(userIds.toArray(UUID[]::new))).map(res -> res.value()).onSuccess(obj -> {
+          if (obj.size() != userIds.size()) {
+            
+            userIds.removeAll(obj);
+            String offendingIds = userIds.toString();
+            
+            Response r = new Response.ResponseBuilder().type(URN_INVALID_INPUT).title(INVALID_USER)
+                .detail(offendingIds).status(400).build();
+            promise.fail(new ComposeException(r));
+          } else {
+            promise.complete(bar);
+          }
+        })).onFailure(obj -> {
+          LOGGER.error("checkUserExist db fail :: " + obj.getLocalizedMessage());
+          promise.fail(INTERNALERROR);
+        });
+    return promise.future();
   }
+ 
+  /**
+   * Check that the resource servers in admin policies exist and that the user setting the admin
+   * policies owns them.
+   * 
+   * @param bar
+   * @return
+   */
+  Future<CreatePolicyBar> checkResServersExistAndOwnership(CreatePolicyBar bar) {
+    Promise<CreatePolicyBar> promise = Promise.promise();
 
-  public Future<Map<String, ResourceObj>> getResSerDetails(List<String> servers, String userId) {
+    List<CreatePolicyContext> context = bar.getContext();
+    Set<String> serverUrls = context.stream().filter(
+        i -> i.getRequest().getItemType().equalsIgnoreCase(itemTypes.RESOURCE_SERVER.toString()))
+        .map(j -> j.getRequest().getItemId()).collect(Collectors.toSet());
 
-    Promise<Map<String, ResourceObj>> p = Promise.promise();
-
-    if (servers.isEmpty()) {
-      Response r =
-          new Response.ResponseBuilder()
-              .type(URN_INVALID_INPUT)
-              .title(BAD_REQUEST)
-              .detail(BAD_REQUEST)
-              .status(400)
-              .build();
-      p.fail(new ComposeException(r));
-      return p.future();
+    if (serverUrls.isEmpty()) {
+      promise.complete(bar);
+      return promise.future();
     }
 
-    Collector<Row, ?, List<JsonObject>> resDetailCollector =
-        Collectors.mapping(row -> row.toJson(), Collectors.toList());
+    UUID ownerId = UUID.fromString(bar.getPolicySetter().getUserId());
 
-    pool.withConnection(
-        conn ->
-            conn.preparedQuery(CHECK_RES_SER)
-                .collecting(resDetailCollector)
-                .execute(
-                    Tuple.of(UUID.fromString(userId))
-                        .addArrayOfString(servers.toArray(String[]::new)))
-                .map(res -> res.value())
-                .onFailure(
-                    obj -> {
-                      LOGGER.error("checkResSer db fail :: " + obj.getLocalizedMessage());
-                      p.fail(INTERNALERROR);
-                    })
-                .onSuccess(
-                    success -> {
-                      List<String> validServers =
-                          success.stream()
-                              .map(JsonObject.class::cast)
-                              .filter(tagObject -> !tagObject.getString(CAT_ID).isEmpty())
-                              .map(tagObject -> tagObject.getString(CAT_ID))
-                              .collect(Collectors.toList());
+    Collector<Row, ?, Map<String, ResourceObj>> resDetailCollector =
+        Collectors.toMap(row -> row.getString("cat_id"), row -> {
+          return new ResourceObj(
+              row.toJson().put(ITEMTYPE, itemTypes.RESOURCE_SERVER.toString().toLowerCase()));
+        });
 
-                      servers.removeAll(validServers);
-                      if (!servers.isEmpty()) {
-                        Response r =
-                            new Response.ResponseBuilder()
-                                .status(400)
-                                .type(URN_INVALID_INPUT)
-                                .title(SERVER_NOT_PRESENT)
-                                .detail(servers.toString())
-                                .build();
-                        p.fail(new ComposeException(r));
-                      } else {
-                        Map<String, ResourceObj> respMap = new HashMap<>();
-                        for (JsonObject serverObject : success) {
-                          serverObject.put(ITEMTYPE, RESOURCE_SERVER_TABLE);
-                          respMap.put(
-                              serverObject.getString(CAT_ID), new ResourceObj(serverObject));
-                        }
-                        p.complete(respMap);
-                      }
-                    }));
-    return p.future();
+    pool.withConnection(conn -> conn.preparedQuery(CHECK_RES_SER).collecting(resDetailCollector)
+        .execute(Tuple.of(ownerId).addArrayOfString(serverUrls.toArray(String[]::new)))
+        .map(i -> i.value()).onSuccess(res -> {
+          if (res.size() != serverUrls.size()) {
+            Set<String> urls = res.keySet();
+            serverUrls.removeAll(urls);
+            Response r = new Response.ResponseBuilder().status(400).type(URN_INVALID_INPUT)
+                .title(SERVER_NOT_PRESENT).detail(serverUrls.toString()).build();
+            promise.fail(new ComposeException(r));
+          } else {
+            for (int i = 0; i < context.size(); i++) {
+              CreatePolicyContext val = context.get(i);
+              if (val.getRequest().getItemType()
+                  .equalsIgnoreCase(itemTypes.RESOURCE_SERVER.toString())) {
+                context.get(i).setItem(res.get(val.getRequest().getItemId()));
+              }
+            }
+          }
+
+          bar.setContext(context);
+          promise.complete(bar);
+          
+        })).onFailure(obj -> {
+          LOGGER.error("checkResSer db fail :: " + obj.getLocalizedMessage());
+          promise.fail(INTERNALERROR);
+        });
+
+    return promise.future();
+  }
+ 
+  /**
+   * Check that an auth admin policy exists for the user setting policies.
+   * 
+   * @param bar
+   * @return
+   */
+  Future<CreatePolicyBar> checkAuthPolicy(CreatePolicyBar bar)
+  {
+    Promise<CreatePolicyBar> promise = Promise.promise();
+    /*
+     * if setting policies where the item type is resource server i.e admin policies, skip this
+     * check. If any of the policies have itemType resource_server, we complete the promise, since
+     * all must be admin policies in this case.
+     */
+    Boolean adminPols = bar.getContext().stream().anyMatch(
+        i -> i.getItem().getItemType().equalsIgnoreCase(itemTypes.RESOURCE_SERVER.toString()));
+    if (adminPols) {
+      promise.complete(bar);
+      return promise.future();
+    }
+    
+    checkAuthPolicy(bar.getPolicySetter().getUserId()).onSuccess(res -> promise.complete(bar))
+        .onFailure(fail -> promise.fail(fail));
+
+    return promise.future();
+  }
+ 
+  /**
+   * For users setting APD policies, check that the trustee of the APD has set an
+   * <b><tt>itemType='APD'</tt></b> policy for the user.
+   * 
+   * @param bar
+   * @return
+   */
+  Future<CreatePolicyBar> checkAuthTrusteePolicy(CreatePolicyBar bar) {
+    Promise<CreatePolicyBar> promise = Promise.promise();
+    List<CreatePolicyContext> context = bar.getContext();
+
+    UUID providerId;
+    if (bar.isDelegated()) {
+      providerId = bar.getDelegatorId();
+    } else {
+      providerId = UUID.fromString(bar.getPolicySetter().getUserId());
+    }
+
+    Set<UUID> apdIds = context.stream().filter(i -> i.getUserId().equals(UUID.fromString(NIL_UUID)))
+        .map(j -> j.getApd().getId()).collect(Collectors.toSet());
+
+    if (apdIds.isEmpty()) {
+      promise.complete(bar);
+      return promise.future();
+    }
+
+    pool.withConnection(conn -> conn.preparedQuery(CHECK_TRUSTEE_POLICY)
+        .execute(Tuple.of(providerId, status.ACTIVE, apdIds.toArray(UUID[]::new)))
+        .onFailure(obj -> {
+          LOGGER.error("checkAuthTrusteePolicy db fail :: " + obj.getLocalizedMessage());
+          promise.fail(INTERNALERROR);
+        }).onSuccess(obj -> {
+          if (obj.rowCount() == apdIds.size())
+            promise.complete(bar);
+          else {
+            Response r = new Response.ResponseBuilder().type(URN_INVALID_INPUT)
+                .title(NO_AUTH_TRUSTEE_POLICY).detail(NO_AUTH_TRUSTEE_POLICY).status(403).build();
+            promise.fail(new ComposeException(r));
+          }
+        }));
+    return promise.future();
+  }
+ 
+  /**
+   * Check if the user policies to be set do not already exist. Checks if policies exist and are
+   * active for <b> user + item ID + item type + owner </b>.
+   * 
+   * @param bar
+   * @return
+   */
+  Future<CreatePolicyBar> checkExistingUserPolicies(CreatePolicyBar bar) {
+    Promise<CreatePolicyBar> promise = Promise.promise();
+    List<CreatePolicyContext> context = bar.getContext();
+
+    List<Tuple> tupList =
+        context.stream().filter(x -> !x.getUserId().equals(UUID.fromString(NIL_UUID))).map(i -> {
+
+          UUID userId = i.getUserId();
+          ResourceObj item = i.getItem();
+          UUID itemId = item.getId();
+          UUID ownerId = item.getOwnerId();
+          String itemType = item.getItemType().toUpperCase();
+          return Tuple.of(userId, itemId, itemType, ownerId, "ACTIVE");
+        }).collect(Collectors.toList());
+
+    if (tupList.isEmpty()) {
+      promise.complete(bar);
+      return promise.future();
+    }
+
+    pool.withTransaction(conn -> conn.preparedQuery(CHECK_EXISTING_POLICY).executeBatch(tupList)
+        .onFailure(failureHandler -> {
+          LOGGER.error("checkExistingPolicy fail :: " + failureHandler.getLocalizedMessage());
+          promise.fail(INTERNALERROR);
+        }).onSuccess(ar -> {
+          RowSet<Row> rows = ar;
+          List<UUID> ids = new ArrayList<>();
+          while (rows != null) {
+            rows.iterator().forEachRemaining(row -> {
+              ids.add(row.getUUID(ID));
+            });
+            rows = rows.next();
+          }
+
+          if (ids.size() > 0) {
+            Response r = new Response.ResponseBuilder().type(URN_ALREADY_EXISTS)
+                .title(DUPLICATE_POLICY).detail(ids.get(0).toString()).status(409).build();
+            promise.fail(new ComposeException(r));
+          } else {
+            promise.complete(bar);
+          }
+        }));
+    return promise.future();
+  }
+ 
+  /**
+   * Check if the APD policies to be set do not already exist. Checks if policies exist and are
+   * active for <b>item ID + item type</b> (we only allow 1 APD policy to exist for a given item).
+   * 
+   * @param bar
+   * @return
+   */
+  Future<CreatePolicyBar> checkExistingApdPolicies(CreatePolicyBar bar) {
+    Promise<CreatePolicyBar> promise = Promise.promise();
+    List<CreatePolicyContext> context = bar.getContext();
+
+    List<Tuple> tupList =
+        context.stream().filter(x -> x.getUserId().equals(UUID.fromString(NIL_UUID))).map(i -> {
+
+          ResourceObj item = i.getItem();
+          UUID itemId = item.getId();
+          UUID ownerId = item.getOwnerId();
+          String itemType = item.getItemType().toUpperCase();
+          return Tuple.of(itemId, itemType, ownerId, "ACTIVE");
+        }).collect(Collectors.toList());
+
+    if (tupList.isEmpty()) {
+      promise.complete(bar);
+      return promise.future();
+    }
+
+    pool.withTransaction(conn -> conn.preparedQuery(CHECK_EXISTING_APD_POLICY).executeBatch(tupList)
+        .onFailure(failureHandler -> {
+          LOGGER.error("checkExistingApdPolicy fail :: " + failureHandler.getLocalizedMessage());
+          promise.fail(INTERNALERROR);
+        }).onSuccess(ar -> {
+          RowSet<Row> rows = ar;
+          List<UUID> ids = new ArrayList<>();
+          while (rows != null) {
+            rows.iterator().forEachRemaining(row -> {
+              ids.add(row.getUUID(ID));
+            });
+            rows = rows.next();
+          }
+
+          if (ids.size() > 0) {
+            Response r = new Response.ResponseBuilder().type(URN_ALREADY_EXISTS)
+                .title(DUPLICATE_POLICY).detail(ids.get(0).toString()).status(409).build();
+            promise.fail(new ComposeException(r));
+          } else
+            promise.complete(bar);
+        }));
+    return promise.future();
   }
 
   /**
-   * checks if there is a policy for user by auth admin
-   *
-   * @param userId - userId of user
-   * @return Boolean - active policy exits true , else false
+   * Insert all user policies.
+   * 
+   * @param bar
+   * @return
    */
-  public Future<Boolean> checkAuthPolicy(String userId) {
-    Promise<Boolean> p = Promise.promise();
-    pool.withConnection(
-        conn ->
-            conn.preparedQuery(CHECK_AUTH_POLICY)
-                .execute(Tuple.of(userId, options.getString("authServerUrl"), status.ACTIVE))
-                .onFailure(
-                    obj -> {
-                      LOGGER.error("checkAuthPolicy db fail :: " + obj.getLocalizedMessage());
-                      p.fail(INTERNALERROR);
-                    })
-                .onSuccess(
-                    obj -> {
-                      if (obj.rowCount() > 0) p.complete(true);
-                      else {
-                        Response r =
-                            new Response.ResponseBuilder()
-                                .type(URN_INVALID_INPUT)
-                                .title(NO_AUTH_POLICY)
-                                .detail(NO_AUTH_POLICY)
-                                .status(403)
-                                .build();
-                        p.fail(new ComposeException(r));
-                      }
-                    }));
+  Future<CreatePolicyBar> insertUserPolicies(CreatePolicyBar bar) {
+    Promise<CreatePolicyBar> promise = Promise.promise();
+    List<CreatePolicyContext> context = bar.getContext();
 
-    return p.future();
-  }
+    List<Tuple> tupList =
+        context.stream().filter(x -> !x.getUserId().equals(UUID.fromString(NIL_UUID))).map(i -> {
 
-  public Future<Boolean> checkAuthTrusteePolicy(String providerId, Set<UUID> apdIds) {
-    Promise<Boolean> p = Promise.promise();
-    pool.withConnection(
-        conn ->
-            conn.preparedQuery(CHECK_TRUSTEE_POLICY)
-                .execute(Tuple.of(providerId, status.ACTIVE, apdIds.toArray(UUID[]::new)))
-                .onFailure(
-                    obj -> {
-                      LOGGER.error(
-                          "checkAuthTrusteePolicy db fail :: " + obj.getLocalizedMessage());
-                      p.fail(INTERNALERROR);
-                    })
-                .onSuccess(
-                    obj -> {
-                      if (obj.rowCount() == apdIds.size()) p.complete(true);
-                      else {
-                        Response r =
-                            new Response.ResponseBuilder()
-                                .type(URN_INVALID_INPUT)
-                                .title(NO_AUTH_TRUSTEE_POLICY)
-                                .detail(NO_AUTH_TRUSTEE_POLICY)
-                                .status(403)
-                                .build();
-                        p.fail(new ComposeException(r));
-                      }
-                    }));
+          UUID userId = i.getUserId();
+          ResourceObj item = i.getItem();
+          UUID itemId = item.getId();
+          UUID ownerId = item.getOwnerId();
+          String itemType = item.getItemType().toUpperCase();
+          LocalDateTime expiry = i.getExpiryTime();
+          JsonObject constraints = i.getConstraints();
 
-    return p.future();
-  }
+          return Tuple.of(userId, itemId, itemType, ownerId, "ACTIVE", expiry, constraints);
+        }).collect(Collectors.toList());
 
-  public Future<List<Tuple>> userPolicyDuplicate(
-      List<CreatePolicyRequest> req, Map<String, ResourceObj> resourceObj, User user) {
-    Promise<List<Tuple>> p = Promise.promise();
-    Future<List<Tuple>> tuples = createTuple(req, resourceObj, user);
-    Future<List<Tuple>> checkDuplicate = tuples.compose(this::checkExistingPolicy);
-    checkDuplicate.onSuccess(ar -> p.complete(ar)).onFailure(failure -> p.fail(failure));
-    return p.future();
-  }
-
-  public Future<List<Tuple>> createApdTuple(
-      List<CreatePolicyRequest> req, Map<String, ResourceObj> resourceObj, JsonObject apdDetails) {
-    Promise<List<Tuple>> p = Promise.promise();
-    try {
-      List<Tuple> tuples = new ArrayList<>();
-      for (CreatePolicyRequest obj : req) {
-        String catId = obj.getItemId();
-        String apdUrl = obj.getApdId();
-        JsonObject apd = apdDetails.getJsonObject(apdUrl);
-        UUID apdId = UUID.fromString(apd.getString(ID));
-        String userClass = obj.getUserClass();
-        UUID itemId = resourceObj.get(catId).getId();
-        String itemType = obj.getItemType().toUpperCase();
-        UUID providerId = resourceObj.get(catId).getOwnerId();
-        String status = "ACTIVE";
-        String expTime = obj.getExpiryTime();
-        LocalDateTime expiryTime;
-        if (!obj.getExpiryTime().isEmpty())
-          expiryTime = LocalDateTime.parse(expTime, DateTimeFormatter.ISO_DATE_TIME);
-        else {
-          if (itemType.equals(itemTypes.RESOURCE_SERVER.toString()))
-            expiryTime =
-                LocalDateTime.now(ZoneOffset.UTC)
-                    .plusMonths(Integer.parseInt(options.getString("adminPolicyExpiry")));
-          else
-            expiryTime =
-                LocalDateTime.now(ZoneOffset.UTC)
-                    .plusMonths(Integer.parseInt(options.getString("policyExpiry")));
-        }
-        JsonObject constraints = obj.getConstraints();
-        tuples.add(
-            Tuple.of(
-                apdId, userClass, itemId, itemType, providerId, status, expiryTime, constraints));
-      }
-      p.complete(tuples);
-    } catch (Exception e) {
-      LOGGER.error("createApdTuple fail " + e.toString());
-      p.fail(INTERNALERROR);
+    if (tupList.isEmpty()) {
+      promise.complete(bar);
+      return promise.future();
     }
-    return p.future();
+    
+    insertPolicy(INSERT_POLICY, tupList).onSuccess(x -> promise.complete(bar))
+        .onFailure(fail -> promise.fail(fail));
+
+    return promise.future();
   }
+  
+  /**
+   * Insert all APD policies.
+   * 
+   * @param bar
+   * @return
+   */
+  Future<CreatePolicyBar> insertApdPolicies(CreatePolicyBar bar)
+  {
+    Promise<CreatePolicyBar> promise = Promise.promise();
+    List<CreatePolicyContext> context = bar.getContext();
+    
+    List<Tuple> tupList =
+        context.stream().filter(x -> x.getUserId().equals(UUID.fromString(NIL_UUID))).map(i -> {
 
-  public Future<List<Tuple>> checkExistingApdPolicy(List<Tuple> tuples) {
-    Promise<List<Tuple>> p = Promise.promise();
+          UUID apdId = i.getApd().getId();
+          String userClass = i.getUserClass();
+          ResourceObj item = i.getItem();
+          UUID itemId = item.getId();
+          UUID ownerId = item.getOwnerId();
+          String itemType = item.getItemType().toUpperCase();
+          LocalDateTime expiry = i.getExpiryTime();
+          JsonObject constraints = i.getConstraints();
+          
+          return Tuple.of(apdId, userClass, itemId, itemType, ownerId, "ACTIVE", expiry, constraints);
+        }).collect(Collectors.toList());
 
-    List<Tuple> selectTuples = new ArrayList<>();
-    for (int i = 0; i < tuples.size(); i++) {
-      UUID itemId = tuples.get(i).getUUID(2);
-      String itemType = tuples.get(i).getString(3);
-      UUID providerId = tuples.get(i).getUUID(4);
-      String status = tuples.get(i).getString(5);
-      selectTuples.add(Tuple.of(itemId, itemType, providerId, status));
+    if (tupList.isEmpty()) {
+      promise.complete(bar);
+      return promise.future();
     }
-    pool.withTransaction(
-        conn ->
-            conn.preparedQuery(CHECK_EXISTING_APD_POLICY)
-                .executeBatch(selectTuples)
-                .onFailure(
-                    failureHandler -> {
-                      LOGGER.error(
-                          "checkExistingApdPolicy fail :: " + failureHandler.getLocalizedMessage());
-                      p.fail(INTERNALERROR);
-                    })
-                .onSuccess(
-                    ar -> {
-                      RowSet<Row> rows = ar;
-                      List<UUID> ids = new ArrayList<>();
-                      while (rows != null) {
-                        rows.iterator()
-                            .forEachRemaining(
-                                row -> {
-                                  ids.add(row.getUUID(ID));
-                                });
-                        rows = rows.next();
-                      }
 
-                      if (ids.size() > 0) {
-                        Response r =
-                            new Response.ResponseBuilder()
-                                .type(URN_ALREADY_EXISTS)
-                                .title(DUPLICATE_POLICY)
-                                .detail(ids.get(0).toString())
-                                .status(409)
-                                .build();
-                        p.fail(new ComposeException(r));
-                      } else p.complete(tuples);
-                    }));
+    insertPolicy(INSERT_APD_POLICY, tupList).onSuccess(x -> promise.complete(bar))
+        .onFailure(fail -> promise.fail(fail));
 
-    return p.future();
+    return promise.future();
   }
-
-  public Future<List<Tuple>> apdPolicyDuplicate(
-      List<CreatePolicyRequest> req,
-      Map<String, ResourceObj> resourceObj,
-      JsonObject apdDetails) {
-    Promise<List<Tuple>> p = Promise.promise();
-    Future<List<Tuple>> tuples = createApdTuple(req, resourceObj, apdDetails);
-    Future<List<Tuple>> checkDuplicate = tuples.compose(this::checkExistingApdPolicy);
-    checkDuplicate.onSuccess(ar -> p.complete(ar)).onFailure(failure -> p.fail(failure));
-    return p.future();
-  }
+  
 }
