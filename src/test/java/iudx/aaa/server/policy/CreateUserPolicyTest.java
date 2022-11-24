@@ -502,7 +502,7 @@ public class CreateUserPolicyTest {
 
     JsonObject userFailReq =
         new JsonObject()
-            .put("userId", UUID.randomUUID())
+            .put("userId", UUID.randomUUID().toString())
             .put("itemId", resourceGrp)
             .put("itemType", "resource_group")
             .put("expiryTime", "")
@@ -802,7 +802,7 @@ public class CreateUserPolicyTest {
     UUID userId = UUID.randomUUID();
     JsonObject invalidReqItem4Resgrp =
         new JsonObject()
-            .put("userId", userId)
+            .put("userId", userId.toString())
             .put("itemId", itemId)
             .put("itemType", "resource_group")
             .put("expiryTime", "")
@@ -849,7 +849,7 @@ public class CreateUserPolicyTest {
     UUID userId = UUID.randomUUID();
     JsonObject invalidReqItem4Res =
         new JsonObject()
-            .put("userId", userId)
+            .put("userId", userId.toString())
             .put("itemId", itemId)
             .put("itemType", "resource")
             .put("expiryTime", "")

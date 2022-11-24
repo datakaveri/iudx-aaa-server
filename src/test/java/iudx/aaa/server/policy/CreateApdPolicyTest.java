@@ -49,6 +49,7 @@ import static iudx.aaa.server.policy.Constants.INVALID_ROLE;
 import static iudx.aaa.server.policy.Constants.ITEMNOTFOUND;
 import static iudx.aaa.server.policy.Constants.NO_AUTH_TRUSTEE_POLICY;
 import static iudx.aaa.server.policy.Constants.STATUS;
+import static iudx.aaa.server.policy.Constants.OWNER_DETAILS;
 import static iudx.aaa.server.policy.Constants.URL;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_APD;
 import static iudx.aaa.server.registration.Utils.SQL_DELETE_ANY_POLICIES;
@@ -552,9 +553,8 @@ public class CreateApdPolicyTest {
                     new JsonObject()
                         .put(URL, "<apd-url-placeholder>")
                         .put(STATUS, "active")
-                        .put(STATUS, "active")
-                        .put(STATUS, "active")
                         .put(ID,apdId)
+                        .put(OWNER_DETAILS, new JsonObject().put(ID, UUID.randomUUID().toString()))
                 );
               }
               p.complete(result);
@@ -624,8 +624,7 @@ public class CreateApdPolicyTest {
                 new JsonObject()
                     .put(URL, "<apd-url-placeholder>")
                     .put(STATUS, "active")
-                    .put(STATUS, "active")
-                    .put(STATUS, "active")
+                    .put(OWNER_DETAILS, new JsonObject().put(ID, UUID.randomUUID().toString()))
                     .put(ID,apdId)
             );
           }
