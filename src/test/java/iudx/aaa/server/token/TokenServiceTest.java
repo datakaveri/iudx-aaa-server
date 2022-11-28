@@ -726,174 +726,176 @@ public class TokenServiceTest {
           testContext.completeNow();
         })));
   }
-
-  @Test
-  @DisplayName("validateToken [Success]")
-  void validateTokenSuccess(VertxTestContext testContext) {
-    JsonObject tokenRequest = new JsonObject().put(ITEM_TYPE, "resource_group")
-        .put(ITEM_ID, RESOURCE_GROUP).put(USER_ID, consumer.result().getString("userId"))
-        .put(URL, DUMMY_SERVER).put(ROLE, Roles.CONSUMER.toString().toLowerCase());
-    JsonObject token = tokenServiceImplObj.getJwt(tokenRequest);
-    token.remove("expiry");
-    token.remove("server");
-
-    tokenService.validateToken(mapToInspctToken(token),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-          JsonObject payload = response.getJsonObject("results");
-          assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
-          assertEquals(payload.getString(SUB), consumer.result().getString("userId"));
-          assertEquals(payload.getString(AUD), DUMMY_SERVER);
-          assertEquals(payload.getString(IID), "rg:" + RESOURCE_GROUP);
-          assertEquals(payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
-          assertTrue(payload.getJsonObject(CONS).isEmpty());
-          assertNotNull(payload.getString(EXP));
-          testContext.completeNow();
-        })));
-  }
-
-  @Test
-  @DisplayName("validateToken resource server token [Success]")
-  void validateResourceServerTokenSuccess(VertxTestContext testContext) {
-    JsonObject tokenRequest = new JsonObject().put(ITEM_TYPE, RESOURCE_SVR)
-        .put(ITEM_ID, DUMMY_SERVER).put(USER_ID, consumer.result().getString("userId"))
-        .put(URL, DUMMY_SERVER).put(ROLE, Roles.CONSUMER.toString().toLowerCase());
-    JsonObject token = tokenServiceImplObj.getJwt(tokenRequest);
-    token.remove("expiry");
-    token.remove("server");
-
-    tokenService.validateToken(mapToInspctToken(token),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-          JsonObject payload = response.getJsonObject("results");
-          assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
-          assertEquals(payload.getString(SUB), consumer.result().getString("userId"));
-          assertEquals(payload.getString(AUD), DUMMY_SERVER);
-          assertEquals(payload.getString(IID), "rs:" + DUMMY_SERVER);
-          assertEquals(payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
-          assertTrue(payload.getJsonObject(CONS).isEmpty());
-          assertNotNull(payload.getString(EXP));
-          testContext.completeNow();
-        })));
-  }
-
-  @Test
-  @DisplayName("validateToken [Failed-02 invalidToken]")
-  void validateTokenFailed02(VertxTestContext testContext) {
-
-    JsonObject tokenRequest = new JsonObject().put(ITEM_TYPE, "resourceGroup")
-        .put(ITEM_ID, RESOURCE_GROUP).put(USER_ID, consumer.result().getString("userId"))
-        .put(URL, DUMMY_SERVER).put(ROLE, Roles.CONSUMER.toString().toLowerCase());
-    JsonObject token = tokenServiceImplObj.getJwt(tokenRequest);
-
-    /* add extra data to token */
-    JsonObject invalidToken =
-        new JsonObject().put("accessToken", token.getString("accessToken") + "abc");
-
-    tokenService.validateToken(mapToInspctToken(invalidToken),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_AUTH_TOKEN.toString(), response.getString(TYPE));
-          assertTrue(
-              response.getJsonArray("results").getJsonObject(0).getString(STATUS).equals(DENY));
-          testContext.completeNow();
-        })));
-  }
-
-  @Test
-  @DisplayName("validateToken [Failed-03 expiredToken]")
-  void validateTokenFailed03(VertxTestContext testContext) {
-
-    tokenService.validateToken(mapToInspctToken(expiredTipPayload),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_AUTH_TOKEN.toString(), response.getString(TYPE));
-          assertTrue(
-              response.getJsonArray("results").getJsonObject(0).getString(STATUS).equals(DENY));
-          testContext.completeNow();
-        })));
-  }
-
-  @Test
-  @DisplayName("validateToken [Failed-04 missingToken]")
-  void validateTokenFailed04(VertxTestContext testContext) {
-
-    IntrospectToken introspect = new IntrospectToken();
-
-    tokenService.validateToken(introspect,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_MISSING_INFO.toString(), response.getString("type"));
-          testContext.completeNow();
-        })));
-  }
-
-  @Test
-  @DisplayName("validateToken [Failed-05 randomToken]")
-  void validateTokenFailed05(VertxTestContext testContext) {
-
-    tokenService.validateToken(mapToInspctToken(randomToken),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_AUTH_TOKEN.toString(), response.getString(TYPE));
-          assertTrue(
-              response.getJsonArray("results").getJsonObject(0).getString(STATUS).equals(DENY));
-          testContext.completeNow();
-        })));
-  }
-
-  @Test
-  @DisplayName("validateToken success [APD token]")
-  void validateTokenFailed06(VertxTestContext testContext) {
-
-    String sessId = UUID.randomUUID().toString();
-    JsonObject apdTokenRequest = new JsonObject().put(URL, DUMMY_SERVER)
-        .put(SESSION_ID, sessId).put(USER_ID, consumer.result().getString("userId"))
-        .put(LINK, DUMMY_SERVER + "/apd");
-    JsonObject token = tokenServiceImplObj.getApdJwt(apdTokenRequest);
-    token.remove("expiry");
-    token.remove("server");
-    token.remove("link");
-    
-    /* The JWT response has the key `apdToken`, introspect expects `accessToken`*/
-    token.put(ACCESS_TOKEN, token.remove(APD_TOKEN));
-
-    tokenService.validateToken(mapToInspctToken(token),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-          JsonObject payload = response.getJsonObject("results");
-          assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
-          assertEquals(payload.getString(SUB), consumer.result().getString("userId"));
-          assertEquals(payload.getString(AUD), DUMMY_SERVER);
-          assertEquals(payload.getString(SID), sessId);
-          assertEquals(payload.getString(LINK), DUMMY_SERVER + "/apd");
-          assertNotNull(payload.getString(EXP));
-          
-          assertTrue(!payload.containsKey(CONS));
-          assertTrue(!payload.containsKey(ROLE));
-          assertTrue(!payload.containsKey(IID));
-          
-          testContext.completeNow();
-        })));
-  }
-  @Test
-  @DisplayName("validateToken success [special admin token]")
-  void validateSpecialAdminToken(VertxTestContext testContext) {
-
-        JsonObject adminTokenReq = new JsonObject().put(USER_ID, CLAIM_ISSUER).put(URL, DUMMY_SERVER)
-            .put(ROLE, "").put(ITEM_TYPE, "").put(ITEM_ID, "");
-    JsonObject token = tokenServiceImplObj.getJwt(adminTokenReq);
-    token.remove("expiry");
-    token.remove("server");
-
-    tokenService.validateToken(mapToInspctToken(token),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-          JsonObject payload = response.getJsonObject("results");
-          assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
-          assertEquals(payload.getString(SUB), DUMMY_AUTH_SERVER);
-          assertEquals(payload.getString(AUD), DUMMY_SERVER);
-          assertEquals(payload.getString(IID), "null:");
-          assertEquals(payload.getString(ROLE), "");
-          assertTrue(payload.getJsonObject(CONS).isEmpty());
-          assertNotNull(payload.getString(EXP));
-          testContext.completeNow();
-        })));
-  }
+  
+  
+//TODO : these test cases will be moved to new class, IudxJwtTokenGeneratorTest.class according to refactoring
+//  @Test
+//  @DisplayName("validateToken [Success]")
+//  void validateTokenSuccess(VertxTestContext testContext) {
+//    JsonObject tokenRequest = new JsonObject().put(ITEM_TYPE, "resource_group")
+//        .put(ITEM_ID, RESOURCE_GROUP).put(USER_ID, consumer.result().getString("userId"))
+//        .put(URL, DUMMY_SERVER).put(ROLE, Roles.CONSUMER.toString().toLowerCase());
+//    JsonObject token = tokenServiceImplObj.getJwt(tokenRequest);
+//    token.remove("expiry");
+//    token.remove("server");
+//
+//    tokenService.validateToken(mapToInspctToken(token),
+//        testContext.succeeding(response -> testContext.verify(() -> {
+//          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+//          JsonObject payload = response.getJsonObject("results");
+//          assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
+//          assertEquals(payload.getString(SUB), consumer.result().getString("userId"));
+//          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+//          assertEquals(payload.getString(IID), "rg:" + RESOURCE_GROUP);
+//          assertEquals(payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
+//          assertTrue(payload.getJsonObject(CONS).isEmpty());
+//          assertNotNull(payload.getString(EXP));
+//          testContext.completeNow();
+//        })));
+//  }
+//
+//  @Test
+//  @DisplayName("validateToken resource server token [Success]")
+//  void validateResourceServerTokenSuccess(VertxTestContext testContext) {
+//    JsonObject tokenRequest = new JsonObject().put(ITEM_TYPE, RESOURCE_SVR)
+//        .put(ITEM_ID, DUMMY_SERVER).put(USER_ID, consumer.result().getString("userId"))
+//        .put(URL, DUMMY_SERVER).put(ROLE, Roles.CONSUMER.toString().toLowerCase());
+//    JsonObject token = tokenServiceImplObj.getJwt(tokenRequest);
+//    token.remove("expiry");
+//    token.remove("server");
+//
+//    tokenService.validateToken(mapToInspctToken(token),
+//        testContext.succeeding(response -> testContext.verify(() -> {
+//          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+//          JsonObject payload = response.getJsonObject("results");
+//          assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
+//          assertEquals(payload.getString(SUB), consumer.result().getString("userId"));
+//          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+//          assertEquals(payload.getString(IID), "rs:" + DUMMY_SERVER);
+//          assertEquals(payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
+//          assertTrue(payload.getJsonObject(CONS).isEmpty());
+//          assertNotNull(payload.getString(EXP));
+//          testContext.completeNow();
+//        })));
+//  }
+//
+//  @Test
+//  @DisplayName("validateToken [Failed-02 invalidToken]")
+//  void validateTokenFailed02(VertxTestContext testContext) {
+//
+//    JsonObject tokenRequest = new JsonObject().put(ITEM_TYPE, "resourceGroup")
+//        .put(ITEM_ID, RESOURCE_GROUP).put(USER_ID, consumer.result().getString("userId"))
+//        .put(URL, DUMMY_SERVER).put(ROLE, Roles.CONSUMER.toString().toLowerCase());
+//    JsonObject token = tokenServiceImplObj.getJwt(tokenRequest);
+//
+//    /* add extra data to token */
+//    JsonObject invalidToken =
+//        new JsonObject().put("accessToken", token.getString("accessToken") + "abc");
+//
+//    tokenService.validateToken(mapToInspctToken(invalidToken),
+//        testContext.succeeding(response -> testContext.verify(() -> {
+//          assertEquals(URN_INVALID_AUTH_TOKEN.toString(), response.getString(TYPE));
+//          assertTrue(
+//              response.getJsonArray("results").getJsonObject(0).getString(STATUS).equals(DENY));
+//          testContext.completeNow();
+//        })));
+//  }
+//
+//  @Test
+//  @DisplayName("validateToken [Failed-03 expiredToken]")
+//  void validateTokenFailed03(VertxTestContext testContext) {
+//
+//    tokenService.validateToken(mapToInspctToken(expiredTipPayload),
+//        testContext.succeeding(response -> testContext.verify(() -> {
+//          assertEquals(URN_INVALID_AUTH_TOKEN.toString(), response.getString(TYPE));
+//          assertTrue(
+//              response.getJsonArray("results").getJsonObject(0).getString(STATUS).equals(DENY));
+//          testContext.completeNow();
+//        })));
+//  }
+//
+//  @Test
+//  @DisplayName("validateToken [Failed-04 missingToken]")
+//  void validateTokenFailed04(VertxTestContext testContext) {
+//
+//    IntrospectToken introspect = new IntrospectToken();
+//
+//    tokenService.validateToken(introspect,
+//        testContext.succeeding(response -> testContext.verify(() -> {
+//          assertEquals(URN_MISSING_INFO.toString(), response.getString("type"));
+//          testContext.completeNow();
+//        })));
+//  }
+//
+//  @Test
+//  @DisplayName("validateToken [Failed-05 randomToken]")
+//  void validateTokenFailed05(VertxTestContext testContext) {
+//
+//    tokenService.validateToken(mapToInspctToken(randomToken),
+//        testContext.succeeding(response -> testContext.verify(() -> {
+//          assertEquals(URN_INVALID_AUTH_TOKEN.toString(), response.getString(TYPE));
+//          assertTrue(
+//              response.getJsonArray("results").getJsonObject(0).getString(STATUS).equals(DENY));
+//          testContext.completeNow();
+//        })));
+//  }
+//
+//  @Test
+//  @DisplayName("validateToken success [APD token]")
+//  void validateTokenFailed06(VertxTestContext testContext) {
+//
+//    String sessId = UUID.randomUUID().toString();
+//    JsonObject apdTokenRequest = new JsonObject().put(URL, DUMMY_SERVER)
+//        .put(SESSION_ID, sessId).put(USER_ID, consumer.result().getString("userId"))
+//        .put(LINK, DUMMY_SERVER + "/apd");
+//    JsonObject token = tokenServiceImplObj.getApdJwt(apdTokenRequest);
+//    token.remove("expiry");
+//    token.remove("server");
+//    token.remove("link");
+//    
+//    /* The JWT response has the key `apdToken`, introspect expects `accessToken`*/
+//    token.put(ACCESS_TOKEN, token.remove(APD_TOKEN));
+//
+//    tokenService.validateToken(mapToInspctToken(token),
+//        testContext.succeeding(response -> testContext.verify(() -> {
+//          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+//          JsonObject payload = response.getJsonObject("results");
+//          assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
+//          assertEquals(payload.getString(SUB), consumer.result().getString("userId"));
+//          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+//          assertEquals(payload.getString(SID), sessId);
+//          assertEquals(payload.getString(LINK), DUMMY_SERVER + "/apd");
+//          assertNotNull(payload.getString(EXP));
+//          
+//          assertTrue(!payload.containsKey(CONS));
+//          assertTrue(!payload.containsKey(ROLE));
+//          assertTrue(!payload.containsKey(IID));
+//          
+//          testContext.completeNow();
+//        })));
+//  }
+//  @Test
+//  @DisplayName("validateToken success [special admin token]")
+//  void validateSpecialAdminToken(VertxTestContext testContext) {
+//
+//        JsonObject adminTokenReq = new JsonObject().put(USER_ID, CLAIM_ISSUER).put(URL, DUMMY_SERVER)
+//            .put(ROLE, "").put(ITEM_TYPE, "").put(ITEM_ID, "");
+//    JsonObject token = tokenServiceImplObj.getJwt(adminTokenReq);
+//    token.remove("expiry");
+//    token.remove("server");
+//
+//    tokenService.validateToken(mapToInspctToken(token),
+//        testContext.succeeding(response -> testContext.verify(() -> {
+//          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+//          JsonObject payload = response.getJsonObject("results");
+//          assertEquals(payload.getString(ISS), DUMMY_AUTH_SERVER);
+//          assertEquals(payload.getString(SUB), DUMMY_AUTH_SERVER);
+//          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+//          assertEquals(payload.getString(IID), "null:");
+//          assertEquals(payload.getString(ROLE), "");
+//          assertTrue(payload.getJsonObject(CONS).isEmpty());
+//          assertNotNull(payload.getString(EXP));
+//          testContext.completeNow();
+//        })));
+//  }
 }
