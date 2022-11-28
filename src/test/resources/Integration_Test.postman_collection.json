@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "94928842-8d7a-4406-8de8-703163d41d7b",
+		"_postman_id": "24e9bf0c-7446-4951-bad4-ae2d4ad84424",
 		"name": "Integration Test",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "14598828"
@@ -8964,6 +8964,62 @@
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\":\"resource_group\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Invalid context - [400]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\":\"resource_group\",\n    \"role\": \"consumer\",\n    \"context\": \"hello\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -27011,6 +27067,68 @@
 								"auth",
 								"v1",
 								"introspect"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consumer get token for integration-test-rsg-one with context object (APD policy for it)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    const moment = require('moment');",
+									"",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"    const result = body.results;",
+									"    pm.expect(result).to.have.property(\"accessToken\");",
+									"    pm.expect(result.expiry).to.be.greaterThan(moment().unix());",
+									"    pm.expect(result.server).to.be.eq(\"rs.iudx.io\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{CONSUMER_GMAIL_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\",\n    \"context\": {\n        \"accessType\": \"SOME_ACCESS_TYPE\",\n        \"accessId\": 1234,\n        \"accessList\": [\n            123,\n            \"2\",\n            {\n                \"list\": \"four\"\n            }\n        ],\n        \"accessObject\": {\n            \"access\": \"Y\"\n        }\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"token"
 							]
 						}
 					},

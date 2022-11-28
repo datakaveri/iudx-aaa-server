@@ -29,6 +29,9 @@ public class RequestToken {
   @JsonAlias("itemId")
   private String itemId;
 
+  @JsonAlias("context")
+  private JsonObject context = new JsonObject();
+
   public JsonObject toJson() {
     JsonObject request = new JsonObject();
     RequestTokenConverter.toJson(this, request);
@@ -72,4 +75,13 @@ public class RequestToken {
   public void setItemId(String itemId) {
     this.itemId = itemId;
   }
+
+  public JsonObject getContext() {
+    return context;
+  }
+
+  public void setContext(JsonObject context) {
+    this.context = context;
+  }
+
 }

@@ -114,6 +114,7 @@ public class Constants {
   public static final String APD_REQ_OWNER = "owner";
   public static final String APD_REQ_ITEM =  "item";
   public static final String APD_REQ_USERCLASS = "userClass";
+  public static final String APD_REQ_CONTEXT = "context";
   
   /* APD JSON response keys */
   public static final String APD_RESP_TYPE = "type";

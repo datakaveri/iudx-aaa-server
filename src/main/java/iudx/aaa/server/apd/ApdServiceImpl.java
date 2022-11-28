@@ -2,6 +2,7 @@ package iudx.aaa.server.apd;
 
 import static iudx.aaa.server.apd.Constants.APD_CONSTRAINTS;
 import static iudx.aaa.server.apd.Constants.APD_NOT_ACTIVE;
+import static iudx.aaa.server.apd.Constants.APD_REQ_CONTEXT;
 import static iudx.aaa.server.apd.Constants.APD_REQ_ITEM;
 import static iudx.aaa.server.apd.Constants.APD_REQ_OWNER;
 import static iudx.aaa.server.apd.Constants.APD_REQ_USER;
@@ -778,6 +779,7 @@ public class ApdServiceImpl implements ApdService {
     String rsUrl = apdContext.getString("resSerUrl");
     String userClass = apdContext.getString("userClass");
     JsonObject constraints = apdContext.getJsonObject("constraints");
+    JsonObject context = apdContext.getJsonObject("context");
 
     Collector<Row, ?, List<JsonObject>> collector =
         Collectors.mapping(row -> row.toJson(), Collectors.toList());
@@ -814,8 +816,8 @@ public class ApdServiceImpl implements ApdService {
           String token = authAccessToken.result().getString("accessToken");
           String apdUrl = apdDetails.result().get(0).getString("url");
 
-          apdRequest.put(APD_REQ_USER, user).put(APD_REQ_OWNER, owner)
-              .put(APD_REQ_ITEM, item).put(APD_REQ_USERCLASS, userClass);
+          apdRequest.put(APD_REQ_USER, user).put(APD_REQ_OWNER, owner).put(APD_REQ_ITEM, item)
+              .put(APD_REQ_USERCLASS, userClass).put(APD_REQ_CONTEXT, context);
 
           return apdWebClient.callVerifyApdEndpoint(apdUrl, token, apdRequest);
         });

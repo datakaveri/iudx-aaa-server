@@ -387,7 +387,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     /* Mapping request body to Object */
     JsonObject tokenRequestJson = context.body().asJsonObject();
     tokenRequestJson.put(CLIENT_ID, context.get(CLIENT_ID));
-    RequestToken requestTokenDTO = tokenRequestJson.mapTo(RequestToken.class);
+    RequestToken requestTokenDTO = new RequestToken(tokenRequestJson);
     User user = context.get(USER);
 
     tokenService.createToken(requestTokenDTO, user, handler -> {
