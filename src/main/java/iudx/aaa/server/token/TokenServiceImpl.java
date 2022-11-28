@@ -57,6 +57,7 @@ public class TokenServiceImpl implements TokenService {
   private JWTAuth provider;
   private PolicyService policyService;
   private TokenRevokeService revokeService;
+  private IudxJwtTokenGenerator jwtTokenProvider;
 
   public TokenServiceImpl(PgPool pgPool, PolicyService policyService, JWTAuth provider,
       TokenRevokeService revokeService) {
@@ -64,6 +65,7 @@ public class TokenServiceImpl implements TokenService {
     this.policyService = policyService;
     this.provider = provider;
     this.revokeService = revokeService;
+    this.jwtTokenProvider=new IudxJwtTokenGenerator(this.provider);
   }
 
   /**
@@ -80,86 +82,104 @@ public class TokenServiceImpl implements TokenService {
     JsonObject request = JsonObject.mapFrom(requestToken);
     request.put(USER_ID, user.getUserId());
 
-    /* Checking if the userId is valid */
-    if (user.getUserId().equals(NIL_UUID)) {
-      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
-          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
+    isValidUserId(user, handler);
+    
+    verifyUserRole(role, roles, handler);
+
+    //update check to not include role check
+    if (RESOURCE_SVR.equals(itemType)) {
+      issueResourceServerToken(requestToken, user, role, request, handler);
+    } else {
+      issueTokenForServer(request, handler);
     }
     
+    return this;
+  }
+
+  private void issueTokenForServer(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+    Promise<JsonObject> policyHandler = Promise.promise();
+    policyService.verifyPolicy(request, policyHandler);
+    policyHandler.future().onSuccess(result -> {
+
+      request.mergeIn(result, true);
+
+      if (request.getString(STATUS).equals(SUCCESS)) {
+       
+        JsonObject jwt = jwtTokenProvider.getJwt(request);
+      Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
+          .objectResults(jwt).build();
+      
+      handler.handle(Future.succeededFuture(resp.toJson()));
+      } else if (request.getString(STATUS).equals(APD_INTERACTION)) {
+        
+        JsonObject apdJwt = jwtTokenProvider.getApdJwt(request);
+        /* Add context to the error response containing the APD token */
+        Response resp = new ResponseBuilder().status(403).type(URN_MISSING_INFO)
+            .title(ERR_TITLE_APD_INTERACT_REQUIRED).detail(ERR_DETAIL_APD_INTERACT_REQUIRED)
+            .errorContext(apdJwt).build();
+        
+      handler.handle(Future.succeededFuture(resp.toJson()));
+      }
+
+      LOGGER.info(LOG_TOKEN_SUCC);
+
+    }).onFailure(fail -> {
+      if (fail instanceof ComposeException) {
+        ComposeException exp = (ComposeException) fail;
+        handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+        return;
+      }
+      LOGGER.error(fail.getMessage());
+      handler.handle(Future.failedFuture("Internal error"));
+    });
+  }
+
+  private void issueResourceServerToken(RequestToken requestToken, User user, String role,
+      JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+    Future<Void> checkIdenToken = validateForIdentityToken(requestToken.getItemId(), role, user);
+
+    checkIdenToken.onSuccess(owner -> {
+      request.put(URL, requestToken.getItemId());
+      JsonObject jwt = jwtTokenProvider.getJwt(request);
+      
+      LOGGER.info(LOG_TOKEN_SUCC);
+      
+      Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
+          .objectResults(jwt).build();
+      handler.handle(Future.succeededFuture(resp.toJson()));
+      return;
+    }).onFailure(fail -> {
+      if (fail instanceof ComposeException) {
+        ComposeException exp = (ComposeException) fail;
+        handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+        return;
+      }
+      LOGGER.error(fail.getMessage());
+      handler.handle(Future.failedFuture("Internal error"));
+    });
+  }
+
+  private void verifyUserRole(String role, List<String> roles,
+      Handler<AsyncResult<JsonObject>> handler) {
     /* Verify the user role */
     if (!roles.contains(role)) {
       LOGGER.error(LOG_UNAUTHORIZED + INVALID_ROLE);
       Response resp = new ResponseBuilder().status(400).type(URN_INVALID_ROLE).title(INVALID_ROLE)
           .detail(INVALID_ROLE).build();
       handler.handle(Future.succeededFuture(resp.toJson()));
-      return this;
     }
+    return;
+  }
 
-    //update check to not include role check
-    if (RESOURCE_SVR.equals(itemType)) {
-      Future<Void> checkIdenToken = validateForIdentityToken(requestToken.getItemId(), role, user);
-
-      checkIdenToken.onSuccess(owner -> {
-        request.put(URL, requestToken.getItemId());
-        JsonObject jwt = getJwt(request);
-        
-        LOGGER.info(LOG_TOKEN_SUCC);
-        
-        Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
-            .objectResults(jwt).build();
-        handler.handle(Future.succeededFuture(resp.toJson()));
-        return;
-      }).onFailure(fail -> {
-        if (fail instanceof ComposeException) {
-          ComposeException exp = (ComposeException) fail;
-          handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
-          return;
-        }
-        LOGGER.error(fail.getMessage());
-        handler.handle(Future.failedFuture("Internal error"));
-      });
+  private void isValidUserId(User user, Handler<AsyncResult<JsonObject>> handler) {
+    /* Checking if the userId is valid */
+    if (user.getUserId().equals(NIL_UUID)) {
+      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
+          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      
     }
-    else {
-      Promise<JsonObject> policyHandler = Promise.promise();
-      policyService.verifyPolicy(request, policyHandler);
-      policyHandler.future().onSuccess(result -> {
-
-        request.mergeIn(result, true);
-
-        if (request.getString(STATUS).equals(SUCCESS)) {
-         
-          JsonObject jwt = getJwt(request);
-        Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
-            .objectResults(jwt).build();
-        
-        handler.handle(Future.succeededFuture(resp.toJson()));
-        } else if (request.getString(STATUS).equals(APD_INTERACTION)) {
-          
-          JsonObject apdJwt = getApdJwt(request);
-          /* Add context to the error response containing the APD token */
-          Response resp = new ResponseBuilder().status(403).type(URN_MISSING_INFO)
-              .title(ERR_TITLE_APD_INTERACT_REQUIRED).detail(ERR_DETAIL_APD_INTERACT_REQUIRED)
-              .errorContext(apdJwt).build();
-          
-        handler.handle(Future.succeededFuture(resp.toJson()));
-        }
-
-        LOGGER.info(LOG_TOKEN_SUCC);
-
-      }).onFailure(fail -> {
-        if (fail instanceof ComposeException) {
-          ComposeException exp = (ComposeException) fail;
-          handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
-          return;
-        }
-        LOGGER.error(fail.getMessage());
-        handler.handle(Future.failedFuture("Internal error"));
-      });
-    }
-    
-    return this;
+    return;
   }
 
   /**
@@ -171,21 +191,9 @@ public class TokenServiceImpl implements TokenService {
 
     LOGGER.debug(REQ_RECEIVED);
     
-    /* Checking if the userId is valid */
-    if (user.getUserId().equals(NIL_UUID)) {
-      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
-          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
-    }
+    isValidUserId(user, handler);
 
-    /* Verify the user has some roles */
-    if (user.getRoles().isEmpty()) {
-      Response resp = new ResponseBuilder().status(400).type(URN_INVALID_ROLE).title(INVALID_ROLE)
-          .detail(INVALID_ROLE).build();
-      handler.handle(Future.succeededFuture(resp.toJson()));
-      return this;
-    }
+    checkForRole(user, handler);
 
     String rsUrl = revokeToken.getRsUrl().toLowerCase();
 
@@ -231,7 +239,7 @@ public class TokenServiceImpl implements TokenService {
         
         JsonObject adminTokenReq = new JsonObject().put(USER_ID, CLAIM_ISSUER).put(URL, rsUrl)
             .put(ROLE, "").put(ITEM_TYPE, "").put(ITEM_ID, "");
-        String adminToken = getJwt(adminTokenReq).getString(ACCESS_TOKEN);
+        String adminToken = jwtTokenProvider.getJwt(adminTokenReq).getString(ACCESS_TOKEN);
         
         revokeService.httpRevokeRequest(revokePayload, adminToken, result -> {
           if (result.succeeded()) {
@@ -252,6 +260,16 @@ public class TokenServiceImpl implements TokenService {
     });
 
     return this;
+  }
+
+  private void checkForRole(User user, Handler<AsyncResult<JsonObject>> handler) {
+    /* Verify the user has some roles */
+    if (user.getRoles().isEmpty()) {
+      Response resp = new ResponseBuilder().status(400).type(URN_INVALID_ROLE).title(INVALID_ROLE)
+          .detail(INVALID_ROLE).build();
+      handler.handle(Future.succeededFuture(resp.toJson()));
+    }
+    return;
   }
 
   /**
@@ -292,83 +310,6 @@ public class TokenServiceImpl implements TokenService {
     return this;
   }
     
-  /**
-   * Generates the JWT token using the request data.
-   * 
-   * @param request
-   * @return jwtToken
-   */
-  public JsonObject getJwt(JsonObject request) {
-    
-    JWTOptions options = new JWTOptions().setAlgorithm(JWT_ALGORITHM);
-    long timestamp = System.currentTimeMillis() / 1000;
-    long expiry = timestamp + CLAIM_EXPIRY;
-    String itemType = request.getString(ITEM_TYPE);
-    String iid = ITEM_TYPE_MAP.inverse().get(itemType)+":"+request.getString(ITEM_ID);
-    String audience = request.getString(URL);
-    
-    /* Populate the token claims */
-    JsonObject claims = new JsonObject();
-    //add apd cons
-    claims.put(SUB, request.getString(USER_ID))
-          .put(ISS, CLAIM_ISSUER)
-          .put(AUD, audience)
-          .put(EXP, expiry)
-          .put(IAT, timestamp)
-          .put(IID, iid)
-          .put(ROLE, request.getString(ROLE))
-          .put(CONS, request.getJsonObject(CONSTRAINTS, new JsonObject()));
-
-    if(request.containsKey(APD_CONSTRAINTS))
-      claims.put(APD,request.getJsonObject(APD_CONSTRAINTS, new JsonObject()));
-
-    String token = provider.generateToken(claims, options);
-
-    JsonObject tokenResp = new JsonObject();
-    tokenResp.put(ACCESS_TOKEN, token).put("expiry", expiry).put("server",
-        audience);
-    return tokenResp;
-  }
-
-  /**
-   * Generates the JWT token used for APD interaction using the request data.
-   * 
-   * @param request a JSON object containing
-   *        <ul>
-   *        <li><em>url</em> : The URL of the APD to be called. This is placed in the <em>aud</em>
-   *        field</li>
-   *        <li><em>userId</em> : The user ID of the user requesting access</li>
-   *        <li><em>sessionId</em> : The sessionId sent by the APD</li>
-   *        <li><em>link</em> : The link to visit sent by the APD</li>
-   *        </ul>
-   * @return jwtToken a JSON object containing the <i>accessToken</i>, expiry and server (audience)
-   */
-  public JsonObject getApdJwt(JsonObject request) {
-    
-    JWTOptions options = new JWTOptions().setAlgorithm(JWT_ALGORITHM);
-    long timestamp = System.currentTimeMillis() / 1000;
-    long expiry = timestamp + CLAIM_EXPIRY;
-    String sessionId = request.getString(SESSION_ID);
-    String link = request.getString(LINK);
-    String audience = request.getString(URL);
-    
-    /* Populate the token claims */
-    JsonObject claims = new JsonObject();
-    claims.put(SUB, request.getString(USER_ID))
-          .put(ISS, CLAIM_ISSUER)
-          .put(AUD, audience)
-          .put(EXP, expiry)
-          .put(IAT, timestamp)
-          .put(SID, sessionId)
-          .put(LINK, link);
-    
-    String token = provider.generateToken(claims, options);
-
-    JsonObject tokenResp = new JsonObject();
-    tokenResp.put(APD_TOKEN, token).put("expiry", expiry).put("server",
-        audience).put(LINK, link);
-    return tokenResp;
-  }
   
   /**
    * {@inheritDoc}
@@ -378,7 +319,7 @@ public class TokenServiceImpl implements TokenService {
       Handler<AsyncResult<JsonObject>> handler) {
     JsonObject adminTokenReq = new JsonObject().put(USER_ID, CLAIM_ISSUER).put(URL, audienceUrl)
         .put(ROLE, "").put(ITEM_TYPE, "").put(ITEM_ID, "");
-    handler.handle(Future.succeededFuture(getJwt(adminTokenReq)));
+    handler.handle(Future.succeededFuture(jwtTokenProvider.getJwt(adminTokenReq)));
     return this;
   }
   
