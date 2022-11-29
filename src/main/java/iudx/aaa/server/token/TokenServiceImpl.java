@@ -210,9 +210,8 @@ public class TokenServiceImpl implements TokenService {
       return this;
     }
     
-    if(!checkForRole(user)) {
-      Response response =
-          getResponse(400, URN_INVALID_ROLE, INVALID_ROLE, INVALID_ROLE);
+    if(checkForRole(user)) {
+      Response response =getResponse(400, URN_INVALID_ROLE, INVALID_ROLE, INVALID_ROLE);
       handler.handle(Future.succeededFuture(response.toJson()));
       return this;
     }
