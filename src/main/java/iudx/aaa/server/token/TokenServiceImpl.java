@@ -23,6 +23,7 @@ import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.RevokeToken;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.util.ComposeException;
+import iudx.aaa.server.apiserver.util.Urn;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.policy.PolicyService;
 import java.util.ArrayList;
@@ -65,34 +66,44 @@ public class TokenServiceImpl implements TokenService {
     this.policyService = policyService;
     this.provider = provider;
     this.revokeService = revokeService;
-    this.jwtTokenProvider=new IudxJwtTokenGenerator(this.provider);
+    this.jwtTokenProvider = new IudxJwtTokenGenerator(this.provider);
   }
 
   /**
    * {@inheritDoc}
    */
   @Override
-  public TokenService createToken(RequestToken requestToken, User user, Handler<AsyncResult<JsonObject>> handler) {
+  public TokenService createToken(RequestToken requestToken, User user,
+      Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug(REQ_RECEIVED);
 
     String role = StringUtils.upperCase(requestToken.getRole());
     List<String> roles = user.getRoles().stream().map(r -> r.name()).collect(Collectors.toList());
-    
+
     String itemType = requestToken.getItemType();
     JsonObject request = JsonObject.mapFrom(requestToken);
     request.put(USER_ID, user.getUserId());
 
-    isValidUserId(user, handler);
-    
-    verifyUserRole(role, roles, handler);
+    if (!isValidUserId(user)) {
+      Response response =
+          getResponse(404, URN_MISSING_INFO, ERR_TITLE_NO_USER_PROFILE, ERR_DETAIL_NO_USER_PROFILE);
+      handler.handle(Future.succeededFuture(response.toJson()));
+      return this;
+    }
 
-    //update check to not include role check
+    if (!verifyUserRole(role, roles)) {
+      Response response = getResponse(400, URN_INVALID_ROLE, INVALID_ROLE, INVALID_ROLE);
+      handler.handle(Future.succeededFuture(response.toJson()));
+      return this;
+    }
+
+    // update check to not include role check
     if (RESOURCE_SVR.equals(itemType)) {
       issueResourceServerToken(requestToken, user, role, request, handler);
     } else {
       issueTokenForServer(request, handler);
     }
-    
+
     return this;
   }
 
@@ -104,21 +115,29 @@ public class TokenServiceImpl implements TokenService {
       request.mergeIn(result, true);
 
       if (request.getString(STATUS).equals(SUCCESS)) {
-       
+
         JsonObject jwt = jwtTokenProvider.getJwt(request);
-      Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
-          .objectResults(jwt).build();
-      
-      handler.handle(Future.succeededFuture(resp.toJson()));
+        Response resp = new ResponseBuilder()
+            .status(200)
+              .type(URN_SUCCESS)
+              .title(TOKEN_SUCCESS)
+              .objectResults(jwt)
+              .build();
+
+        handler.handle(Future.succeededFuture(resp.toJson()));
       } else if (request.getString(STATUS).equals(APD_INTERACTION)) {
-        
+
         JsonObject apdJwt = jwtTokenProvider.getApdJwt(request);
         /* Add context to the error response containing the APD token */
-        Response resp = new ResponseBuilder().status(403).type(URN_MISSING_INFO)
-            .title(ERR_TITLE_APD_INTERACT_REQUIRED).detail(ERR_DETAIL_APD_INTERACT_REQUIRED)
-            .errorContext(apdJwt).build();
-        
-      handler.handle(Future.succeededFuture(resp.toJson()));
+        Response resp = new ResponseBuilder()
+            .status(403)
+              .type(URN_MISSING_INFO)
+              .title(ERR_TITLE_APD_INTERACT_REQUIRED)
+              .detail(ERR_DETAIL_APD_INTERACT_REQUIRED)
+              .errorContext(apdJwt)
+              .build();
+
+        handler.handle(Future.succeededFuture(resp.toJson()));
       }
 
       LOGGER.info(LOG_TOKEN_SUCC);
@@ -141,11 +160,15 @@ public class TokenServiceImpl implements TokenService {
     checkIdenToken.onSuccess(owner -> {
       request.put(URL, requestToken.getItemId());
       JsonObject jwt = jwtTokenProvider.getJwt(request);
-      
+
       LOGGER.info(LOG_TOKEN_SUCC);
-      
-      Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
-          .objectResults(jwt).build();
+
+      Response resp = new ResponseBuilder()
+          .status(200)
+            .type(URN_SUCCESS)
+            .title(TOKEN_SUCCESS)
+            .objectResults(jwt)
+            .build();
       handler.handle(Future.succeededFuture(resp.toJson()));
       return;
     }).onFailure(fail -> {
@@ -159,27 +182,16 @@ public class TokenServiceImpl implements TokenService {
     });
   }
 
-  private void verifyUserRole(String role, List<String> roles,
-      Handler<AsyncResult<JsonObject>> handler) {
-    /* Verify the user role */
-    if (!roles.contains(role)) {
-      LOGGER.error(LOG_UNAUTHORIZED + INVALID_ROLE);
-      Response resp = new ResponseBuilder().status(400).type(URN_INVALID_ROLE).title(INVALID_ROLE)
-          .detail(INVALID_ROLE).build();
-      handler.handle(Future.succeededFuture(resp.toJson()));
-    }
-    return;
+  private boolean verifyUserRole(String role, List<String> roles) {
+    return roles.contains(role);
   }
 
-  private void isValidUserId(User user, Handler<AsyncResult<JsonObject>> handler) {
-    /* Checking if the userId is valid */
-    if (user.getUserId().equals(NIL_UUID)) {
-      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
-          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      
-    }
-    return;
+  private boolean isValidUserId(User user) {
+    return !user.getUserId().equals(NIL_UUID);
+  }
+
+  public Response getResponse(int status, Urn type, String title, String detail) {
+    return new ResponseBuilder().status(status).type(type).title(title).detail(detail).build();
   }
 
   /**
@@ -190,18 +202,27 @@ public class TokenServiceImpl implements TokenService {
       Handler<AsyncResult<JsonObject>> handler) {
 
     LOGGER.debug(REQ_RECEIVED);
-    
-    isValidUserId(user, handler);
 
-    checkForRole(user, handler);
+    if (!isValidUserId(user)) {
+      Response response =
+          getResponse(404, URN_MISSING_INFO, ERR_TITLE_NO_USER_PROFILE, ERR_DETAIL_NO_USER_PROFILE);
+      handler.handle(Future.succeededFuture(response.toJson()));
+      return this;
+    }
+    
+    if(!checkForRole(user)) {
+      Response response =
+          getResponse(400, URN_INVALID_ROLE, INVALID_ROLE, INVALID_ROLE);
+      handler.handle(Future.succeededFuture(response.toJson()));
+      return this;
+    }
 
     String rsUrl = revokeToken.getRsUrl().toLowerCase();
 
     /* Check if the user is trying to revoke tokens on auth */
     if (rsUrl.equals(CLAIM_ISSUER)) {
-      Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-          .title(CANNOT_REVOKE_ON_AUTH).detail(CANNOT_REVOKE_ON_AUTH).build();
-      handler.handle(Future.succeededFuture(resp.toJson()));
+      Response response=getResponse(400, URN_INVALID_INPUT, CANNOT_REVOKE_ON_AUTH, CANNOT_REVOKE_ON_AUTH);
+      handler.handle(Future.succeededFuture(response.toJson()));
       return this;
     }
 
@@ -220,39 +241,45 @@ public class TokenServiceImpl implements TokenService {
 
         if (flag == Boolean.FALSE) {
           LOGGER.error("Fail: " + INVALID_RS_URL);
-          Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-              .title(INVALID_RS_URL).detail(INVALID_RS_URL).build();
-          handler.handle(Future.succeededFuture(resp.toJson()));
+          Response response=getResponse(400,URN_INVALID_INPUT,INVALID_RS_URL,INVALID_RS_URL);
+          handler.handle(Future.succeededFuture(response.toJson()));
           return;
         }
         LOGGER.debug("Info: ResourceServer URL validated");
-        
+
         JsonObject revokePayload =
             new JsonObject().put(USER_ID, user.getUserId()).put(RS_URL, revokeToken.getRsUrl());
 
-        /* Here, we get the special admin token that is presented to other servers for token
-         * revocation. The 'sub' field is the auth server domain instead of a UUID user ID.
-         * The 'iss' field is the auth server domain as usual and 'aud' is the requested 
-         * resource server domain. The rest of the field are not important, so they are
-         * either null or blank. 
-         */ 
-        
-        JsonObject adminTokenReq = new JsonObject().put(USER_ID, CLAIM_ISSUER).put(URL, rsUrl)
-            .put(ROLE, "").put(ITEM_TYPE, "").put(ITEM_ID, "");
+        /*
+         * Here, we get the special admin token that is presented to other servers for token
+         * revocation. The 'sub' field is the auth server domain instead of a UUID user ID. The
+         * 'iss' field is the auth server domain as usual and 'aud' is the requested resource server
+         * domain. The rest of the field are not important, so they are either null or blank.
+         */
+
+        JsonObject adminTokenReq = new JsonObject()
+            .put(USER_ID, CLAIM_ISSUER)
+              .put(URL, rsUrl)
+              .put(ROLE, "")
+              .put(ITEM_TYPE, "")
+              .put(ITEM_ID, "");
         String adminToken = jwtTokenProvider.getJwt(adminTokenReq).getString(ACCESS_TOKEN);
-        
+
         revokeService.httpRevokeRequest(revokePayload, adminToken, result -> {
           if (result.succeeded()) {
             LOGGER.info(LOG_REVOKE_REQ);
-            Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_REVOKED)
-                .arrayResults(new JsonArray()).build();
+            Response resp = new ResponseBuilder()
+                .status(200)
+                  .type(URN_SUCCESS)
+                  .title(TOKEN_REVOKED)
+                  .arrayResults(new JsonArray())
+                  .build();
             handler.handle(Future.succeededFuture(resp.toJson()));
             return;
           } else {
             LOGGER.error("Fail: {}; {}", FAILED_REVOKE, result.cause());
-            Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-                .title(FAILED_REVOKE).detail(FAILED_REVOKE).build();
-            handler.handle(Future.succeededFuture(resp.toJson()));
+            Response response=getResponse(400, URN_INVALID_INPUT, FAILED_REVOKE, FAILED_REVOKE);
+            handler.handle(Future.succeededFuture(response.toJson()));
             return;
           }
         });
@@ -262,14 +289,8 @@ public class TokenServiceImpl implements TokenService {
     return this;
   }
 
-  private void checkForRole(User user, Handler<AsyncResult<JsonObject>> handler) {
-    /* Verify the user has some roles */
-    if (user.getRoles().isEmpty()) {
-      Response resp = new ResponseBuilder().status(400).type(URN_INVALID_ROLE).title(INVALID_ROLE)
-          .detail(INVALID_ROLE).build();
-      handler.handle(Future.succeededFuture(resp.toJson()));
-    }
-    return;
+  private boolean checkForRole(User user) {
+    return user.getRoles().isEmpty();
   }
 
   /**
@@ -284,45 +305,55 @@ public class TokenServiceImpl implements TokenService {
     String accessToken = introspectToken.getAccessToken();
     if (accessToken == null || accessToken.isBlank()) {
       LOGGER.error(LOG_PARSE_TOKEN);
-      Response resp = new ResponseBuilder().status(400).type(URN_MISSING_INFO).title(MISSING_TOKEN)
-          .detail(MISSING_TOKEN).build();
-      handler.handle(Future.succeededFuture(resp.toJson()));
+      Response response=getResponse(400, URN_MISSING_INFO, MISSING_TOKEN, MISSING_TOKEN);
+      handler.handle(Future.succeededFuture(response.toJson()));
       return this;
     }
 
     TokenCredentials authInfo = new TokenCredentials(accessToken);
     provider.authenticate(authInfo).onFailure(jwtError -> {
       LOGGER.error("Fail: {}; {}", TOKEN_FAILED, jwtError.getLocalizedMessage());
-      Response resp =
-          new ResponseBuilder().status(401).type(URN_INVALID_AUTH_TOKEN).title(TOKEN_FAILED)
-              .arrayResults(new JsonArray().add(new JsonObject().put(STATUS, DENY))).build();
+      Response resp = new ResponseBuilder()
+          .status(401)
+            .type(URN_INVALID_AUTH_TOKEN)
+            .title(TOKEN_FAILED)
+            .arrayResults(new JsonArray().add(new JsonObject().put(STATUS, DENY)))
+            .build();
       handler.handle(Future.succeededFuture(resp.toJson()));
     }).onSuccess(jwtDetails -> {
 
       JsonObject accessTokenJwt = jwtDetails.attributes().getJsonObject(ACCESS_TOKEN);
 
-      Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_AUTHENTICATED)
-          .objectResults(accessTokenJwt).build();
+      Response resp = new ResponseBuilder()
+          .status(200)
+            .type(URN_SUCCESS)
+            .title(TOKEN_AUTHENTICATED)
+            .objectResults(accessTokenJwt)
+            .build();
       handler.handle(Future.succeededFuture(resp.toJson()));
       return;
 
     });
     return this;
   }
-    
-  
+
+
   /**
    * {@inheritDoc}
    */
   @Override
   public TokenService getAuthServerToken(String audienceUrl,
       Handler<AsyncResult<JsonObject>> handler) {
-    JsonObject adminTokenReq = new JsonObject().put(USER_ID, CLAIM_ISSUER).put(URL, audienceUrl)
-        .put(ROLE, "").put(ITEM_TYPE, "").put(ITEM_ID, "");
+    JsonObject adminTokenReq = new JsonObject()
+        .put(USER_ID, CLAIM_ISSUER)
+          .put(URL, audienceUrl)
+          .put(ROLE, "")
+          .put(ITEM_TYPE, "")
+          .put(ITEM_ID, "");
     handler.handle(Future.succeededFuture(jwtTokenProvider.getJwt(adminTokenReq)));
     return this;
   }
-  
+
   /**
    * Handles the PostgreSQL query.
    * 
@@ -333,23 +364,24 @@ public class TokenServiceImpl implements TokenService {
   Future<JsonArray> pgSelelctQuery(String query, Tuple tuple) {
 
     Promise<JsonArray> promise = Promise.promise();
-    pgPool.withConnection(
-        connection -> connection.preparedQuery(query).execute(tuple)).onComplete(handler -> {
-          if (handler.succeeded()) {
-            JsonArray jsonResult = new JsonArray();
-            for (Row each : handler.result()) {
-              jsonResult.add(each.toJson());
+    pgPool
+        .withConnection(connection -> connection.preparedQuery(query).execute(tuple))
+          .onComplete(handler -> {
+            if (handler.succeeded()) {
+              JsonArray jsonResult = new JsonArray();
+              for (Row each : handler.result()) {
+                jsonResult.add(each.toJson());
+              }
+              promise.complete(jsonResult);
+            } else if (handler.failed()) {
+              promise.fail(handler.cause());
             }
-            promise.complete(jsonResult);
-          } else if (handler.failed()) {
-            promise.fail(handler.cause());
-          }
-        });
+          });
     return promise.future();
   }
 
   /**
-   * Perform checks for identity token-based flow. 
+   * Perform checks for identity token-based flow.
    * 
    * @param url the server URL passed as the itemId in the request
    * @param role the role requested by the user
@@ -365,8 +397,9 @@ public class TokenServiceImpl implements TokenService {
 
     Future<Void> checkUrlExists = CompositeFuture.all(resServer, apd).compose(res -> {
       if (resServer.result().isEmpty() && apd.result().isEmpty()) {
-        return Future.failedFuture(
-            new ComposeException(400, URN_INVALID_INPUT, INVALID_RS_URL, INVALID_RS_URL));
+        return Future
+            .failedFuture(
+                new ComposeException(400, URN_INVALID_INPUT, INVALID_RS_URL, INVALID_RS_URL));
       }
       return Future.succeededFuture();
     });
