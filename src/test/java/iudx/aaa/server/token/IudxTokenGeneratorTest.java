@@ -17,6 +17,8 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -25,6 +27,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.KeyStoreOptions;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
+import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
@@ -38,6 +41,7 @@ import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.Utils;
 
+@ExtendWith({VertxExtension.class, MockitoExtension.class})
 public class IudxTokenGeneratorTest {
   
   private static Logger LOGGER = LogManager.getLogger(TokenServiceTest.class);
