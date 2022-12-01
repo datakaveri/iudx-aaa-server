@@ -7,6 +7,7 @@ public class Constants {
   
   public static final String TOKEN_SERVICE_ADDRESS = "iudx.aaa.token.service";
   public static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
+  public static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
   
   public static final int BCRYPT_SALT_LEN = 16;
   public static final int BCRYPT_LOG_COST = 12;
@@ -86,6 +87,7 @@ public class Constants {
   public static final String IID = "iid";
   public static final String CONS = "cons";
   public static final String APD = "apd";
+  public static final String INTROSPECT_USERINFO = "userInfo";
   
   /* JWT Constants for APD token */
   public static final String LINK = "link";

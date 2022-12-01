@@ -13,6 +13,7 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.serviceproxy.ServiceBinder;
 import io.vertx.sqlclient.PoolOptions;
 import iudx.aaa.server.policy.PolicyService;
+import iudx.aaa.server.registration.RegistrationService;
 import static iudx.aaa.server.token.Constants.*;
 import java.util.Map;
 
@@ -44,6 +45,7 @@ public class TokenVerticle extends AbstractVerticle {
   private TokenService tokenService;  
   private JWTAuth provider;
   private PolicyService policyService;
+  private RegistrationService registrationService;
   private ServiceBinder binder;
   private MessageConsumer<JsonObject> consumer;
   private TokenRevokeService revokeService;
@@ -100,7 +102,9 @@ public class TokenVerticle extends AbstractVerticle {
     revokeService = new TokenRevokeService(vertx);
     pgPool = PgPool.pool(vertx, connectOptions, poolOptions);
     policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
-    tokenService = new TokenServiceImpl(pgPool, policyService, provider, revokeService);
+    registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
+    tokenService =
+        new TokenServiceImpl(pgPool, policyService, registrationService, provider, revokeService);
     binder = new ServiceBinder(vertx);
     consumer = binder.setAddress(TOKEN_SERVICE_ADDRESS).register(TokenService.class,
         tokenService);

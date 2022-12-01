@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "24e9bf0c-7446-4951-bad4-ae2d4ad84424",
+		"_postman_id": "ab5b6ce1-92fa-490f-b259-900e95ef1c55",
 		"name": "Integration Test",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "14598828"
@@ -7637,6 +7637,11 @@
 											"    pm.expect(result.role).to.be.eq(\"admin\");",
 											"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
 											"    pm.expect(result.cons).to.be.empty;",
+											"",
+											"    pm.expect(result.userInfo).to.exist;",
+											"    const userInfo = result.userInfo;",
+											"    pm.expect(userInfo.email).to.be.eq(\"auth.admin@datakaveri.org\");",
+											"    pm.expect(userInfo).to.have.property(\"name\");    ",
 											"});"
 										],
 										"type": "text/javascript"
@@ -7848,6 +7853,135 @@
 				{
 					"name": "Provider",
 					"item": [
+						{
+							"name": "Provider role get rs.iudx.io token - [200]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    const moment = require('moment');",
+											"",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+											"    const result = body.results;",
+											"    pm.expect(result).to.have.property(\"accessToken\");",
+											"    pm.expect(result.expiry).to.be.greaterThan(moment().unix());",
+											"    pm.expect(result.server).to.be.eq(\"rs.iudx.io\");",
+											"",
+											"    pm.environment.set(\"INTROSPECT_TOKEN\", result.accessToken);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"itemId\": \"rs.iudx.io\",\n    \"itemType\": \"resource_server\",\n    \"role\": \"provider\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"token"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Introspect Provider resource_server token - [200]",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response status\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Check response header\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Check response body\", function () {    ",
+											"    const body = pm.response.json();",
+											"    const moment = require('moment');",
+											"",
+											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+											"    const result = body.results;",
+											"    pm.expect(result).to.have.property(\"sub\");",
+											"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
+											"    pm.expect(result.aud).to.be.eq(\"rs.iudx.io\");",
+											"    pm.expect(result.iid).to.be.eq(\"rs:rs.iudx.io\");",
+											"    pm.expect(result.role).to.be.eq(\"provider\");",
+											"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
+											"    pm.expect(result.cons).to.be.empty;",
+											"    ",
+											"    pm.expect(result.userInfo).to.exist;",
+											"    const userInfo = result.userInfo;",
+											"    pm.expect(userInfo.email).to.be.eq(\"postman.provider-admin@datakaveri.org\");",
+											"    pm.expect(userInfo).to.have.property(\"name\");    ",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"accessToken\" : \"{{INTROSPECT_TOKEN}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_ENDPOINT}}/auth/v1/introspect",
+									"host": [
+										"{{AUTH_ENDPOINT}}"
+									],
+									"path": [
+										"auth",
+										"v1",
+										"introspect"
+									]
+								}
+							},
+							"response": []
+						},
 						{
 							"name": "Provider role - Cannot get catalogue token - [403] (no cat admin policy)",
 							"event": [
@@ -8338,6 +8472,11 @@
 											"    pm.expect(result.role).to.be.eq(\"consumer\");",
 											"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
 											"    pm.expect(result.cons).to.be.empty;",
+											"    ",
+											"    pm.expect(result.userInfo).to.exist;",
+											"    const userInfo = result.userInfo;",
+											"    pm.expect(userInfo.email).to.be.eq(\"consumer@gmail.com\");",
+											"    pm.expect(userInfo).to.have.property(\"name\");    ",
 											"});"
 										],
 										"type": "text/javascript"
@@ -13086,6 +13225,9 @@
 											"    pm.expect(result.role).to.be.eq(\"provider\");",
 											"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
 											"    pm.expect(result.cons).to.be.empty;",
+											"",
+											"    pm.expect(result.userInfo).to.not.exist;",
+											"",
 											"});"
 										],
 										"type": "text/javascript"
@@ -13415,6 +13557,8 @@
 											"    pm.expect(result.role).to.be.eq(\"consumer\");",
 											"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
 											"    pm.expect(result.cons).to.not.be.empty;",
+											"",
+											"    pm.expect(result.userInfo).to.not.exist;",
 											"});"
 										],
 										"type": "text/javascript"
@@ -16644,6 +16788,8 @@
 											"    pm.expect(result.role).to.be.eq(\"delegate\");",
 											"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
 											"    pm.expect(result.cons).to.be.empty;",
+											"",
+											"    pm.expect(result.userInfo).to.not.exist;",
 											"});"
 										],
 										"type": "text/javascript"

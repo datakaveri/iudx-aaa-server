@@ -25,6 +25,7 @@ import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.policy.PolicyService;
+import iudx.aaa.server.registration.RegistrationService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -56,12 +57,14 @@ public class TokenServiceImpl implements TokenService {
   private PgPool pgPool;
   private JWTAuth provider;
   private PolicyService policyService;
+  private RegistrationService registrationService;
   private TokenRevokeService revokeService;
 
-  public TokenServiceImpl(PgPool pgPool, PolicyService policyService, JWTAuth provider,
-      TokenRevokeService revokeService) {
+  public TokenServiceImpl(PgPool pgPool, PolicyService policyService,
+      RegistrationService registrationService, JWTAuth provider, TokenRevokeService revokeService) {
     this.pgPool = pgPool;
     this.policyService = policyService;
+    this.registrationService = registrationService;
     this.provider = provider;
     this.revokeService = revokeService;
   }
@@ -273,23 +276,73 @@ public class TokenServiceImpl implements TokenService {
     }
 
     TokenCredentials authInfo = new TokenCredentials(accessToken);
-    provider.authenticate(authInfo).onFailure(jwtError -> {
+   
+    /**
+     * The `.authenticate` method returns a succeeded future if the JWT is valid and a failed future
+     * if not. Here, if it returns a failed future, we catch it using `recover` and create a
+     * ComposeException so that the normal compose chain can work.
+     */
+    Future<JsonObject> decodedToken = provider.authenticate(authInfo).recover(jwtError -> {
       LOGGER.error("Fail: {}; {}", TOKEN_FAILED, jwtError.getLocalizedMessage());
       Response resp =
           new ResponseBuilder().status(401).type(URN_INVALID_AUTH_TOKEN).title(TOKEN_FAILED)
               .arrayResults(new JsonArray().add(new JsonObject().put(STATUS, DENY))).build();
-      handler.handle(Future.succeededFuture(resp.toJson()));
-    }).onSuccess(jwtDetails -> {
-
+      return Future.failedFuture(new ComposeException(resp));
+      
+    }).compose(jwtDetails -> {
       JsonObject accessTokenJwt = jwtDetails.attributes().getJsonObject(ACCESS_TOKEN);
-
-      Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_AUTHENTICATED)
-          .objectResults(accessTokenJwt).build();
-      handler.handle(Future.succeededFuture(resp.toJson()));
-      return;
-
+      return Future.succeededFuture(accessTokenJwt);
     });
+
+    decodedToken.compose(tokenJson -> addUserInfoToIntrospect(tokenJson)).onSuccess(res -> {
+      Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_AUTHENTICATED)
+          .objectResults(res).build();
+      handler.handle(Future.succeededFuture(resp.toJson()));
+      
+    }).onFailure(fail -> {
+      if (fail instanceof ComposeException) {
+        ComposeException exp = (ComposeException) fail;
+        handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+        return;
+      }
+      LOGGER.error(fail.getMessage());
+      handler.handle(Future.failedFuture("Internal error"));
+    });
+
     return this;
+  }
+  
+  /**
+   * <b>Optionally</b> adds user details of the user who issued a token (<tt>sub</tt> field in the
+   * JWT) to the introspection result. The details are added as a JSON object with the
+   * <tt>userInfo</tt> key. If user details is not applicable for the token, then the same decoded
+   * token is returned as is.
+   * 
+   * @param decodedToken the decoded JWT token
+   * @return a Future of JsonObject. The response is the same decoded JWT token with or without the
+   *         <tt>userInfo</tt> key
+   */
+  private Future<JsonObject> addUserInfoToIntrospect(JsonObject decodedToken) {
+    Promise<JsonObject> promise = Promise.promise();
+    String tokenIid = decodedToken.getString(IID, "");
+    String[] iidParts = tokenIid.split(":");
+
+    /* We only send userinfo for identity tokens now. Checking if `iid` is like 'rs:server.url' */
+    if (iidParts.length != 2 || !iidParts[0].equals(ITEM_TYPE_MAP.inverse().get(RESOURCE_SVR))) {
+      promise.complete(decodedToken);
+      return promise.future();
+    }
+
+    String userId = decodedToken.getString(SUB);
+    Promise<JsonObject> regPromise = Promise.promise();
+
+    registrationService.getUserDetails(List.of(userId), regPromise);
+    regPromise.future().onSuccess(userInfo -> {
+      decodedToken.put(INTROSPECT_USERINFO, userInfo.getJsonObject(userId));
+      promise.complete(decodedToken);
+    }).onFailure(fail -> promise.fail(fail));
+
+    return promise.future();
   }
     
   /**
