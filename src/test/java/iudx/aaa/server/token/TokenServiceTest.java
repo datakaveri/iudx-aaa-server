@@ -15,6 +15,7 @@ import static iudx.aaa.server.token.Constants.ERR_DETAIL_APD_INTERACT_REQUIRED;
 import static iudx.aaa.server.token.Constants.ERR_TITLE_APD_INTERACT_REQUIRED;
 import static iudx.aaa.server.token.Constants.EXP;
 import static iudx.aaa.server.token.Constants.IID;
+import static iudx.aaa.server.token.Constants.INTROSPECT_USERINFO;
 import static iudx.aaa.server.token.Constants.ISS;
 import static iudx.aaa.server.token.Constants.ITEM_ID;
 import static iudx.aaa.server.token.Constants.ITEM_TYPE;
@@ -76,7 +77,9 @@ import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.configuration.Configuration;
+import iudx.aaa.server.policy.MockRegistrationFactory;
 import iudx.aaa.server.policy.PolicyService;
+import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.registration.Utils;
 
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
@@ -103,6 +106,8 @@ public class TokenServiceTest {
   private static String keystorePassword;
   private static JWTAuth provider;
   private static PolicyService policyService;
+  private static RegistrationService registrationService;
+  private static MockRegistrationFactory mockRegistrationFactory;
   private static MockPolicyFactory mockPolicy;
   private static TokenRevokeService httpWebClient;
   private static MockHttpWebClient mockHttpWebClient;
@@ -227,7 +232,10 @@ public class TokenServiceTest {
       httpWebClient = mockHttpWebClient.getMockHttpWebClient();
 
       policyService = mockPolicy.getInstance();
-      tokenServiceImplObj = new TokenServiceImpl(pgPool, policyService, provider, httpWebClient);
+      mockRegistrationFactory = new MockRegistrationFactory();
+      registrationService = mockRegistrationFactory.getInstance();
+      tokenServiceImplObj =
+          new TokenServiceImpl(pgPool, policyService, registrationService, provider, httpWebClient);
       tokenService = tokenServiceImplObj;
 
       testContext.completeNow();
@@ -748,20 +756,31 @@ public class TokenServiceTest {
           assertEquals(payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
           assertTrue(payload.getJsonObject(CONS).isEmpty());
           assertNotNull(payload.getString(EXP));
+
+          assertTrue(!payload.containsKey(INTROSPECT_USERINFO));
           testContext.completeNow();
         })));
   }
 
   @Test
-  @DisplayName("validateToken resource server token [Success]")
+  @DisplayName("validateToken resource server token and user info present [Success]")
   void validateResourceServerTokenSuccess(VertxTestContext testContext) {
+    JsonObject consumerJson = consumer.result();
+    String consumerId = consumerJson.getString("userId");
+
+    JsonObject consumerDetails = new JsonObject().put("email", consumerJson.getString("email"))
+        .put("name", new JsonObject().put("firstName", consumerJson.getString("firstName"))
+            .put("lastName", consumerJson.getString("lastName")));
+    JsonObject userDetailsResp = new JsonObject().put(consumerId, consumerDetails);
+    mockRegistrationFactory.setResponse(userDetailsResp);
+
     JsonObject tokenRequest = new JsonObject().put(ITEM_TYPE, RESOURCE_SVR)
-        .put(ITEM_ID, DUMMY_SERVER).put(USER_ID, consumer.result().getString("userId"))
+        .put(ITEM_ID, DUMMY_SERVER).put(USER_ID, consumerId)
         .put(URL, DUMMY_SERVER).put(ROLE, Roles.CONSUMER.toString().toLowerCase());
     JsonObject token = tokenServiceImplObj.getJwt(tokenRequest);
     token.remove("expiry");
     token.remove("server");
-
+    
     tokenService.validateToken(mapToInspctToken(token),
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
@@ -773,6 +792,30 @@ public class TokenServiceTest {
           assertEquals(payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
           assertTrue(payload.getJsonObject(CONS).isEmpty());
           assertNotNull(payload.getString(EXP));
+          
+          assertTrue(payload.getJsonObject(INTROSPECT_USERINFO).containsKey("email"));
+          assertTrue(payload.getJsonObject(INTROSPECT_USERINFO).containsKey("name"));
+          testContext.completeNow();
+        })));
+  }
+
+  @DisplayName("validateToken resource server token - registration service fails [Fail]")
+  void validateResourceServerTokenRegServiceFails(VertxTestContext testContext) {
+    JsonObject consumerJson = consumer.result();
+    String consumerId = consumerJson.getString("userId");
+
+    mockRegistrationFactory.setResponse("invalid");
+
+    JsonObject tokenRequest = new JsonObject().put(ITEM_TYPE, RESOURCE_SVR)
+        .put(ITEM_ID, DUMMY_SERVER).put(USER_ID, consumerId).put(URL, DUMMY_SERVER)
+        .put(ROLE, Roles.CONSUMER.toString().toLowerCase());
+    JsonObject token = tokenServiceImplObj.getJwt(tokenRequest);
+    token.remove("expiry");
+    token.remove("server");
+
+    tokenService.validateToken(mapToInspctToken(token),
+        testContext.failing(response -> testContext.verify(() -> {
+          assertEquals("Internal error", response.getMessage());
           testContext.completeNow();
         })));
   }
@@ -868,6 +911,7 @@ public class TokenServiceTest {
           assertTrue(!payload.containsKey(CONS));
           assertTrue(!payload.containsKey(ROLE));
           assertTrue(!payload.containsKey(IID));
+          assertTrue(!payload.containsKey(INTROSPECT_USERINFO));
           
           testContext.completeNow();
         })));
@@ -893,6 +937,7 @@ public class TokenServiceTest {
           assertEquals(payload.getString(ROLE), "");
           assertTrue(payload.getJsonObject(CONS).isEmpty());
           assertNotNull(payload.getString(EXP));
+          assertTrue(!payload.containsKey(INTROSPECT_USERINFO));
           testContext.completeNow();
         })));
   }
