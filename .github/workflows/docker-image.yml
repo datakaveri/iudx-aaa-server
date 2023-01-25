@@ -18,7 +18,7 @@ jobs:
        fetch-depth: 0
     - name: Update AAA docker image tags
       env: 
-        GH_TOKEN: ${{ secrets.ENKINS_UPDATE}}
+        GH_TOKEN: ${{ secrets.JENKINS_UPDATE}}
       run: | 
         export newtag4_5_0=`(head -n1 <(curl -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/orgs/datakaveri/packages/container/aaa-depl/versions | jq ' .[].metadata.container.tags[0]'  | grep 4.5.0-alpha | sed -e 's/^"//' -e 's/"$//'))`
         export oldtag4_5_0=`yq -r .services.auth.image Docker-Swarm-deployment/single-node/auth/auth-stack.yaml | cut -d : -f 2`
