@@ -30,7 +30,7 @@ We recommend creating different branches for different (logical) changes, and cr
 
 ### How we handle proposals
 
-We use GitHub to track proposed changes via its [issue tracker](https://github.com/coreinfrastructure/best-practices-badge/issues) and [pull requests](https://github.com/coreinfrastructure/best-practices-badge/pulls).
+We use GitHub to track proposed changes via its [issue tracker](https://github.com/datakaveri/iudx-aaa-server/issues) and [pull requests](https://github.com/datakaveri/iudx-aaa-server/pulls).
 Specific changes are proposed using those mechanisms.
 
 If there are questions or objections, the conversation area of that issue or pull request is used to resolve it.
