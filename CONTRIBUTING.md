@@ -8,7 +8,7 @@ Feedback and contributions are very welcome!
 Here's help on how to make contributions, divided into the following sections:
 
 -   general information,
--   [vulnerability reporting](https://github.com/coreinfrastructure/best-practices-badge/blob/main/CONTRIBUTING.md#how_to_report_vulnerabilities),
+-   [vulnerability reporting](https://github.com/datakaveri/iudx-aaa-server/blob/main/CONTRIBUTING.md#how_to_report_vulnerabilities),
 -   documentation changes,
 -   code changes,
 -   keeping up the main branch.
