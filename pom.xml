@@ -25,6 +25,7 @@
 		<maven-pmd-plugin.version>3.17.0</maven-pmd-plugin.version>
 		<maven-checkstyle-plugin-google.version>3.1.2</maven-checkstyle-plugin-google.version>
 		<maven-surefire-report-plugin.version>3.0.0-M7</maven-surefire-report-plugin.version>
+        <spotless.version>2.31.0</spotless.version>
 		<openjdk.version>11</openjdk.version>
 		<keycloak.version>18.0.1</keycloak.version>
 		<resteasy.version>3.13.2.Final</resteasy.version>
@@ -292,6 +293,30 @@
 					</excludes>
 				</configuration>
 			</plugin>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>${spotless.version}</version>
+                <configuration>
+                    <ratchetFrom>origin/main</ratchetFrom>
+                    <java>
+                        <googleJavaFormat>
+                            <version>1.8</version>
+                            <style>GOOGLE</style>
+                            <reflowLongStrings>true</reflowLongStrings>
+                        </googleJavaFormat>
+                    </java>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>validate</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
