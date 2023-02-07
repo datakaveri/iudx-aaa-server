@@ -44,7 +44,8 @@
       "domain" : "iudx.io",
       "catalogueOptions": {
         "catServerHost": "api.catalogue.iudx.io",
-        "catServerPort": "443"
+        "catServerPort": "443",
+        "catServerItemPath": "/iudx/cat/v1/item"
       },
       "authOptions": {
         "policyExpiry" : "12",

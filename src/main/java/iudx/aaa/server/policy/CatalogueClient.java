@@ -84,7 +84,7 @@ public class CatalogueClient {
     this.client = WebClient.create(vertx, clientOptions);
     this.catHost = options.getString("catServerHost");
     this.catPort = Integer.parseInt(options.getString("catServerPort"));
-    this.catItemPath = Constants.CAT_ITEM_PATH;
+    this.catItemPath = options.getString("catServerItemPath");
     this.authUrl = options.getString("authServerUrl");
     this.resUrl = options.getString("resURL");
     this.domain = options.getString("domain");
