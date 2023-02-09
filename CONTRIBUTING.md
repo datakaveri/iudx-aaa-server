@@ -18,7 +18,7 @@ Here's help on how to make contributions, divided into the following sections:
 For specific proposals, please provide them as [pull requests](https://github.com/datakaveri/iudx-aaa-server/pulls) or [issues](https://github.com/datakaveri/iudx-aaa-server/issues) via our [GitHub site](https://github.com/datakaveri/iudx-aaa-server).
 
 
-The [READMEmd](https://github.com/datakaveri/iudx-aaa-server/blob/main/README.md) file explains how to install the program locally (highly recommended if you're going to make code changes). It also provides a quick start guide.
+The [README.md](https://github.com/datakaveri/iudx-aaa-server/blob/main/README.md) file explains how to install the program locally (highly recommended if you're going to make code changes). It also provides a quick start guide.
 
 
 ### Pull requests and different branches recommended
@@ -104,6 +104,13 @@ Here are some other tools we sometimes use for checking quality or security.
 * OWASP ZAP web application security scanner.
   You are encouraged to use this and other web application scanners to find and
   fix problems.
+
+
+### Testing during continuous integration
+
+Note that we also use [Jenkins](https://jenkins.iudx.io/) for continuous integration tools to check changes after they are checked into GitHub.
+if they find problems, please fix them.
+These run essentially the Junit tests, JaCoCo code coverage tests, security tests using OWASP ZAP and integration tests using postman and newman
 
 ## Git commit messages
 
