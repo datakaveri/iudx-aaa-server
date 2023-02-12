@@ -8,7 +8,7 @@ Feedback and contributions are very welcome!
 Here's help on how to make contributions, divided into the following sections:
 
 -   general information,
--   [vulnerability reporting](https://github.com/datakaveri/iudx-aaa-server/blob/main/CONTRIBUTING.md#how_to_report_vulnerabilities),
+-   [vulnerability reporting](#vulnerability-reporting-security-issues),
 -   documentation changes,
 -   code changes,
 -   keeping up the main branch.
@@ -23,10 +23,12 @@ The [README.md](https://github.com/datakaveri/iudx-aaa-server/blob/main/README.m
 
 ### Pull requests and different branches recommended
 
-Pull requests are preferred, since they are specific. For more about how to create a pull request, see
+We follow Git Merge based workflow 
+1. Fork this repo
+2. Create a new feature branch in your fork. Multiple features must have a hyphen separated name 
+3. Commit to your fork and raise a Pull Request with upstream. Pull requests are preferred, since they are specific. For more about how to create a pull request, see
 <https://help.github.com/articles/using-pull-requests/>.
-
-We recommend creating different branches for different (logical) changes, and creating a pull request when you're done into the main branch. See the GitHub documentation on [creating branches](https://help.github.com/articles/creating-and-deleting-branches-within-your-repository/) and [using pull requests](https://help.github.com/articles/using-pull-requests/).
+4. See the GitHub documentation on [creating branches](https://help.github.com/articles/creating-and-deleting-branches-within-your-repository/) and [using pull requests](https://help.github.com/articles/using-pull-requests/)
 
 ### How we handle proposals
 
@@ -57,7 +59,7 @@ We also release the software as open source software so others can review it.
 
 Since early detection and impact reduction can never be perfect, we also try to detect and repair problems during deployment as quickly as possible.
 
-## <span id="how_to_report_vulnerabilities">Vulnerability reporting (security issues)</a>
+## Vulnerability reporting (security issues)
 
 If you find a significant vulnerability, or evidence of one, please send an email to the security contacts that you have such information, and we'll tell you the next steps.
 For now, the security contacts are:
@@ -79,11 +81,11 @@ Most of the documentation is in "markdown" format. All markdown files use the .m
 
 ## Code changes
 
-To make changes to the "aaa-server" ,you may find the following helpful; [README.md](https://github.com/datakaveri/iudx-aaa-server/blob/main/README.md)
+To make changes to the "aaa-server" ,you may find the following helpful; [README.md](./README.md)
 installation and implementation information.
 
 The code should strive to be DRY (don't repeat yourself), clear, and obviously correct.
-Some technical debt is inevitable, just don't bankrupt us with it. Improved refactorizations are welcome.
+Some technical debt is inevitable, just don't bankrupt us with it. Improved refactorizations are welcome. 
 
 ### Automated tests
 
@@ -101,15 +103,14 @@ We encourage tests to be created first, run to ensure they fail, and then add co
 
 Here are some other tools we sometimes use for checking quality or security.
 
-* OWASP ZAP web application security scanner.
-  You are encouraged to use this and other web application scanners to find and
-  fix problems.
+* OWASP ZAP web application security scanner.You are encouraged to use this and other web application scanners to find andfix problems.
+* JaCoCo plugin: Code coverage for Java code
+* [Codeql](https://codeql.github.com/)
 
 
 ### Testing during continuous integration
 
-Note that we also use [Jenkins](https://jenkins.iudx.io/) for continuous integration tools to check changes after they are checked into GitHub.
-if they find problems, please fix them.
+Note that we also use [Jenkins](https://jenkins.iudx.io/) for continuous integration tools to check changes after they are checked into GitHub; if they find problems, please fix them.
 These run essentially the Junit tests, JaCoCo code coverage tests, security tests using OWASP ZAP and integration tests using postman and newman
 
 ## Git commit messages
@@ -135,10 +136,10 @@ upstream, enabling you to sync with upstream.
 
 You can reset this, if something has happened to it, using:
 
-~~~~sh
+```sh
 git remote add upstream \
-  https://github.com/datakaveri/iudx-aaa-server.git
-~~~~
+  git@github.com:datakaveri/iudx-aaa-server.git
+```
 
 
 ## Keeping dependencies up-to-date
