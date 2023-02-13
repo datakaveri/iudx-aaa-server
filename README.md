@@ -174,11 +174,8 @@ $ java $AUTH_JAVA_OPTS -jar target/iudx.aaa.server-dev-0.0.1-SNAPSHOT-fat.jar ..
 
 Postman collection and enviroment files can be found at [src/main/resources/postman](src/main/resources/postman).
 
-## Contributing
-We follow Git Merge based workflow 
-1. Fork this repo
-2. Create a new feature branch in your fork. Multiple features must have a hyphen separated name, or refer to a milestone name as mentioned in Github -> Projects 
-3. Commit to your fork and raise a Pull Request with upstream
+## Contribute
+For contribution guidelines, see [CONTRIBUTING](./CONTRIBUTING.md).
 
 ## License
 [MIT](./LICENSE)
