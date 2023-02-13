@@ -12,6 +12,7 @@ services:
     volumes:
       - /home/ubuntu/configs/aaa-config-test.json:/usr/share/app/configs/config-test.json
       - /home/ubuntu/configs/aaa-keystore.jks:/usr/share/app/configs/keystore.jks
+      - ./spotbugs-exclude.xml:/usr/share/app/spotbugs-exclude.xml
       - ./docker/runTests.sh:/usr/share/app/docker/runTests.sh
       - ./src/:/usr/share/app/src
       - ${WORKSPACE}:/tmp/test
