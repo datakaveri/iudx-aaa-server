@@ -312,17 +312,9 @@
                             <version>1.12.0</version>
                         </plugin>
                     </plugins>
-                    <maxAllowedViolations>129</maxAllowedViolations>
+                    <maxAllowedViolations>117</maxAllowedViolations>
+                    <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>validate</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -337,7 +329,6 @@
 				</dependencies>
 				<configuration>
                     <encoding>UTF-8</encoding>
-                    <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
                     <configLocation>google_checks.xml</configLocation>
                     <violationSeverity>warning</violationSeverity>
@@ -347,15 +338,6 @@
                         <!-- <sourceDirectory>${project.build.testSourceDirectory}</sourceDirectory> -->
                     </sourceDirectories>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>validate</id>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
 			</plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -370,17 +352,11 @@
                         <ruleset>/category/java/errorprone.xml</ruleset>
                     </rulesets>
                     <printFailingErrors>true</printFailingErrors>
-                    <maxAllowedViolations>639</maxAllowedViolations>
+                    <maxAllowedViolations>622</maxAllowedViolations>
+                    <excludeRoots>
+                        <excludeRoot>target/generated-sources</excludeRoot>
+                    </excludeRoots>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>validate</id>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
 			<plugin>
 				<groupId>org.flywaydb</groupId>
