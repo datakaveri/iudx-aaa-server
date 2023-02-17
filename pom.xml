@@ -16,15 +16,16 @@
 		<apache-log4j2.version>2.17.1</apache-log4j2.version>
 		<lmax-disruptor.version>3.4.4</lmax-disruptor.version>
 		<jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
-		<guava.version>30.1.1-jre</guava.version>
-		<checkstyle.version>10.3.1</checkstyle.version>
+		<guava.version>31.1-jre</guava.version>
+		<checkstyle.version>10.7.0</checkstyle.version>
 		<maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
 		<maven-shade-plugin.version>3.3.0</maven-shade-plugin.version>
 		<maven-javadoc-plugin.version>3.4.0</maven-javadoc-plugin.version>
 		<exec-maven-plugin.version>3.1.0</exec-maven-plugin.version>
-		<maven-pmd-plugin.version>3.17.0</maven-pmd-plugin.version>
+		<maven-pmd-plugin.version>3.20.0</maven-pmd-plugin.version>
 		<maven-checkstyle-plugin-google.version>3.1.2</maven-checkstyle-plugin-google.version>
 		<maven-surefire-report-plugin.version>3.0.0-M7</maven-surefire-report-plugin.version>
+        <spotless.version>2.31.0</spotless.version>
 		<openjdk.version>11</openjdk.version>
 		<keycloak.version>18.0.1</keycloak.version>
 		<resteasy.version>3.13.2.Final</resteasy.version>
@@ -292,6 +293,29 @@
 					</excludes>
 				</configuration>
 			</plugin>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>4.7.2.1</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs</artifactId>
+                        <version>4.7.3</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <plugins>
+                        <plugin>
+                            <groupId>com.h3xstream.findsecbugs</groupId>
+                            <artifactId>findsecbugs-plugin</artifactId>
+                            <version>1.12.0</version>
+                        </plugin>
+                    </plugins>
+                    <maxAllowedViolations>117</maxAllowedViolations>
+                    <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
+                </configuration>
+            </plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
@@ -304,15 +328,36 @@
 					</dependency>
 				</dependencies>
 				<configuration>
-					<!-- <violationSeverity>warning</violationSeverity> -->
-					<consoleOutput>true</consoleOutput>
-					<encoding>UTF-8</encoding>
-					<configLocation>google_checks.xml</configLocation>
-					<module name="LineLength">
-						<property name="max" value="120" />
-					</module>
-				</configuration>
+                    <encoding>UTF-8</encoding>
+                    <failsOnError>true</failsOnError>
+                    <configLocation>google_checks.xml</configLocation>
+                    <violationSeverity>warning</violationSeverity>
+                    <maxAllowedViolations>1384</maxAllowedViolations>
+                    <sourceDirectories>
+                        <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
+                        <!-- <sourceDirectory>${project.build.testSourceDirectory}</sourceDirectory> -->
+                    </sourceDirectories>
+                </configuration>
 			</plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>${maven-pmd-plugin.version}</version>
+                <configuration>
+                    <targetJdk>${openjdk.version}</targetJdk>
+                    <rulesets>
+                        <ruleset>/category/java/security.xml</ruleset>
+                        <ruleset>/category/java/performance.xml</ruleset>
+                        <ruleset>/category/java/bestpractices.xml</ruleset>
+                        <ruleset>/category/java/errorprone.xml</ruleset>
+                    </rulesets>
+                    <printFailingErrors>true</printFailingErrors>
+                    <maxAllowedViolations>622</maxAllowedViolations>
+                    <excludeRoots>
+                        <excludeRoot>target/generated-sources</excludeRoot>
+                    </excludeRoots>
+                </configuration>
+            </plugin>
 			<plugin>
 				<groupId>org.flywaydb</groupId>
 				<artifactId>flyway-maven-plugin</artifactId>
@@ -463,40 +508,6 @@
 
 	<reporting>
 		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-pmd-plugin</artifactId>
-				<version>${maven-pmd-plugin.version}</version>
-				<configuration>
-					<targetJdk>${openjdk.version}</targetJdk>
-					<rulesets>
-						<ruleset>/rulesets/java/braces.xml</ruleset>
-						<ruleset>/rulesets/java/naming.xml</ruleset>
-						<ruleset>/rulesets/java/imports.xml</ruleset>
-						<ruleset>/rulesets/java/unnecessary.xml</ruleset>
-						<ruleset>/rulesets/java/unusedcode.xml</ruleset>
-					</rulesets>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-checkstyle-plugin</artifactId>
-				<version>${maven-checkstyle-plugin-google.version}</version>
-				<configuration>
-					<consoleOutput>true</consoleOutput>
-					<encoding>UTF-8</encoding>
-					<configLocation>google_checks.xml</configLocation>
-					<failOnViolation>false</failOnViolation>
-				</configuration>
-
-				<reportSets>
-					<reportSet>
-						<reports>
-							<report>checkstyle</report>
-						</reports>
-					</reportSet>
-				</reportSets>
-			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-report-plugin</artifactId>

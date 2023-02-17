@@ -2,5 +2,5 @@
 
 # nohup mvn clean compile exec:java@aaa-server & 
 # sleep 20
-mvn clean test
+mvn clean test checkstyle:check pmd:check spotbugs:check
 cp -r target /tmp/test/
