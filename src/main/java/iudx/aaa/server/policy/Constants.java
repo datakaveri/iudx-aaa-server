@@ -59,7 +59,6 @@ public class Constants {
   public static final String CALL_APD_CONTEXT = "context";
 
   public static final String RESULTS = "results";
-  public static final String CAT_ITEM_PATH = "/iudx/cat/v1/item";
   public static final String PROVIDER_ID = "provider_id";
   public static final String NIL_UUID = "00000000-0000-0000-0000-000000000000";
 
