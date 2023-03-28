@@ -650,11 +650,11 @@ public class UpdatePolicyNotificationTest {
                 assertEquals(polReq.getUserId(), consumer.result().getString("userId"));
                 assertEquals(polReq.getConstraints(), constraints);
 
-                DateTime now = DateTime.now();
-                DateTime expiry = DateTime.parse(polReq.getExpiryTime());
-                int noOfHours = Hours.hoursBetween(now, expiry).getHours();
-                /* subtract 1 since we are already in the first hour */
-                assertEquals(noOfHours, (365 * 24) - 1);
+                DateTime calculatedExpiry = DateTime.now().plusYears(1);
+                DateTime polReqExpiry = DateTime.parse(polReq.getExpiryTime());
+                /* there should be 0 hours difference between the calculated expiry and the expiry in request */
+                int noOfHours = Hours.hoursBetween(calculatedExpiry, polReqExpiry).getHours();
+                assertEquals(noOfHours, 0);
                 /* ************************************************************* */
 
                 assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
@@ -815,11 +815,11 @@ public class UpdatePolicyNotificationTest {
                       assertEquals(polReq.getUserId(), consumer.result().getString("userId"));
                       assertEquals(polReq.getConstraints(), constraints);
 
-                      DateTime now = DateTime.now();
-                      DateTime expiry = DateTime.parse(polReq.getExpiryTime());
-                      int noOfHours = Hours.hoursBetween(now, expiry).getHours();
-                      /* subtract 1 since we are already in the first hour */
-                      assertEquals(noOfHours, (365 * 24) - 1);
+                      DateTime calculatedExpiry = DateTime.now().plusYears(1);
+                      DateTime polReqExpiry = DateTime.parse(polReq.getExpiryTime());
+                      /* there should be 0 hours difference between the calculated expiry and the expiry in request */
+                      int noOfHours = Hours.hoursBetween(calculatedExpiry, polReqExpiry).getHours();
+                      assertEquals(noOfHours, 0);
                       /* ************************************************************* */
 
                       assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
@@ -930,11 +930,11 @@ public class UpdatePolicyNotificationTest {
 
                 assertEquals(polReq.getConstraints(), updatedConstraints);
 
-                DateTime now = DateTime.now();
-                DateTime expiry = DateTime.parse(polReq.getExpiryTime());
-                int noOfHours = Hours.hoursBetween(now, expiry).getHours();
-                /* subtract 1 since we are already in the first hour */
-                assertEquals(noOfHours, ((365 + 20) * 24) - 1);
+                DateTime calculatedExpiry = DateTime.now().plusYears(1).plusDays(20);
+                DateTime polReqExpiry = DateTime.parse(polReq.getExpiryTime());
+                /* there should be 0 hours difference between the calculated expiry and the expiry in request */
+                int noOfHours = Hours.hoursBetween(calculatedExpiry, polReqExpiry).getHours();
+                assertEquals(noOfHours, 0);
                 /* ************************************************************* */
 
                 assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
@@ -1125,11 +1125,11 @@ public class UpdatePolicyNotificationTest {
 
                 assertEquals(polReq.getConstraints(), constraints);
 
-                DateTime now = DateTime.now();
-                DateTime expiry = DateTime.parse(polReq.getExpiryTime());
-                int noOfHours = Hours.hoursBetween(now, expiry).getHours();
-                /* subtract 1 since we are already in the first hour */
-                assertEquals(noOfHours, (365 * 24) - 1);
+                DateTime calculatedExpiry = DateTime.now().plusYears(1);
+                DateTime polReqExpiry = DateTime.parse(polReq.getExpiryTime());
+                /* there should be 0 hours difference between the calculated expiry and the expiry in request */
+                int noOfHours = Hours.hoursBetween(calculatedExpiry, polReqExpiry).getHours();
+                assertEquals(noOfHours, 0);
 
                 assertEquals(authDelegateJson.getValue(), providerDetails);
                 /* ************************************************************* */
