@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: IUDX-AAA-Server
-  version: 4.0.0
+  version: 4.5.0
   description: 'API specification for IUDX AAA Server. These APIs are used by users manage tokens, policy etc. These APIs requires valid token or client details for authentication.'
   license:
     name: MIT
@@ -458,6 +458,24 @@ paths:
                       cons:
                         access:
                           - api
+                Introspecting an identity token:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: Token authenticated
+                    results:
+                      sub: 72a08b8b-518f-4bff-b263-0693bc7f2e98
+                      iss: authorization.iudx.org.in
+                      aud: rs.iudx.org.in
+                      exp: 1679935348
+                      iat: 1679892148
+                      iid: 'rs:rs.iudx.org.in'
+                      role: consumer
+                      cons: {}
+                      userInfo:
+                        email: user@datakaveri.org
+                        name:
+                          firstName: User
+                          lastName: DataKaveri
         '400':
           description: |-
             - Missing/malformed token
@@ -529,6 +547,8 @@ paths:
         - checks if the token has been issued by the IUDX AAA server
         - checks if the token is expired
         If all checks pass, the decoded token is returned
+
+        If an identity token is introspected, the user information of the user ID represented in the `sub` field is also included in the introspection response.
       tags:
         - Token APIs
     parameters: []
