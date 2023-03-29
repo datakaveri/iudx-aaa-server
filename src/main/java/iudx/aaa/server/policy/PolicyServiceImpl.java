@@ -1074,8 +1074,9 @@ public class PolicyServiceImpl implements PolicyService {
       String itemType,
       Map<String, ResourceObj> resDetails,
       boolean isCatalogue) {
+    System.out.println("verifyDelegatePolicy ");
     Promise<JsonObject> p = Promise.promise();
-
+    System.out.println("resDetail " + resDetails.get(itemId).getOwnerId());
     Future<UUID> getOwner;
     if (isCatalogue)
       getOwner =
@@ -1114,6 +1115,7 @@ public class PolicyServiceImpl implements PolicyService {
       getResSerOwner =
           getOwner.compose(
               ar -> {
+                System.out.println("getOwner " + ar);
                 if (ar == null) {
                   Response r =
                       new ResponseBuilder()
@@ -1137,6 +1139,7 @@ public class PolicyServiceImpl implements PolicyService {
     Future<UUID> checkDelegation =
         getResSerOwner.compose(
             ar -> {
+              System.out.println("getResSerOwner " + ar);
               if (ar == null) {
                 Response r =
                     new ResponseBuilder()
@@ -1168,6 +1171,7 @@ public class PolicyServiceImpl implements PolicyService {
       checkPolicy =
           checkDelegation.compose(
               obj -> {
+                System.out.println("checkDelegation " + obj);
                 if (obj == null) {
                   Response r =
                       new ResponseBuilder()
@@ -1185,6 +1189,7 @@ public class PolicyServiceImpl implements PolicyService {
       checkResGrpPolicy =
           checkDelegation.compose(
               ar -> {
+                System.out.println("checkDelegation + checkResGrpPolicy" + ar);
                 if (ar == null) {
                   Response r =
                       new ResponseBuilder()
@@ -1212,6 +1217,7 @@ public class PolicyServiceImpl implements PolicyService {
       checkResPolicy =
           checkDelegation.compose(
               ar -> {
+                System.out.println("checkDelegation + checkResPolicy " + ar);
                 if (ar == null) {
                   Response r =
                       new ResponseBuilder()
@@ -1276,6 +1282,7 @@ public class PolicyServiceImpl implements PolicyService {
                     .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().getUUID(ID) : null)
                     .compose(
                         obj -> {
+                          System.out.println("checkAdminPolicy  " + obj);
                           if (obj == null) {
                             Response r =
                                 new ResponseBuilder()
@@ -1292,6 +1299,7 @@ public class PolicyServiceImpl implements PolicyService {
     checkAdminPolicy
         .onSuccess(
             success -> {
+              System.out.println("checkAdminPolicy onSuccess  " + success);
               if (!success.toString().isEmpty()) {
                 JsonObject details = new JsonObject();
                 details.put(STATUS, SUCCESS);
@@ -1302,6 +1310,8 @@ public class PolicyServiceImpl implements PolicyService {
             })
         .onFailure(
             failureHandler -> {
+              System.out.println("checkAdminPolicy onFailure  " );
+              failureHandler.printStackTrace();
               LOGGER.error("failed verifyDelegatePolicy ");
               if (failureHandler instanceof ComposeException) {
                 ComposeException exp = (ComposeException) failureHandler;
@@ -1319,6 +1329,7 @@ public class PolicyServiceImpl implements PolicyService {
     String itemId = request.getString(ITEMID);
     String itemType = request.getString(ITEMTYPE).toUpperCase();
     String role = request.getString(ROLE).toUpperCase();
+    System.out.println("request "  + request);
     /* context will be empty JSON object if not set by user; see RequestToken */
     JsonObject context = request.getJsonObject(CONTEXT);
 

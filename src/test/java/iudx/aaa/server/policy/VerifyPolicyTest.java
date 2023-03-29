@@ -294,6 +294,7 @@ public class VerifyPolicyTest {
                       response ->
                               testContext.verify(
                                       () -> {
+                                          System.out.println("response + " + response);
                                           assertEquals(SUCCESS, response.getString(STATUS));
                                           testContext.completeNow();
                                       })));
