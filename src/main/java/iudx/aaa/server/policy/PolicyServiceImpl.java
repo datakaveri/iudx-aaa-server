@@ -1076,7 +1076,7 @@ public class PolicyServiceImpl implements PolicyService {
       boolean isCatalogue) {
     System.out.println("verifyDelegatePolicy ");
     Promise<JsonObject> p = Promise.promise();
-    System.out.println("resDetail " + resDetails.get(itemId).getOwnerId());
+    System.out.println("resDetail " + resDetails.get(itemId).toString());
     Future<UUID> getOwner;
     if (isCatalogue)
       getOwner =
