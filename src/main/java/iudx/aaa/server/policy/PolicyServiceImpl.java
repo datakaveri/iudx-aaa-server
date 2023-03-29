@@ -1246,6 +1246,8 @@ public class PolicyServiceImpl implements PolicyService {
           CompositeFuture.all(checkResGrpPolicy, checkResPolicy)
               .compose(
                   ar -> {
+                    System.out.println("checkResGrpPolicy" + checkResGrpPolicy.result());
+                    System.out.println("checkRes" + checkResPolicy.result());
                     if (itemType.equals(itemTypes.RESOURCE_GROUP.toString()))
                       return checkResGrpPolicy;
                     else {
