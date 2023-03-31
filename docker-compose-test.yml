@@ -10,8 +10,8 @@ services:
       - LOG_LEVEL=INFO
       - AUTH_JAVA_OPTS=-Xmx1024m
     volumes:
-      - /home/ubuntu/configs/aaa-config-test.json:/usr/share/app/configs/config-test.json
-      - /home/ubuntu/configs/aaa-keystore.jks:/usr/share/app/configs/keystore.jks
+      - /home/ubuntu/configs/4.5.0/aaa-config-test.json:/usr/share/app/configs/config-test.json
+      - /home/ubuntu/configs/4.5.0/aaa-keystore.jks:/usr/share/app/configs/keystore.jks
       - ./spotbugs-exclude.xml:/usr/share/app/spotbugs-exclude.xml
       - ./docker/runTests.sh:/usr/share/app/docker/runTests.sh
       - ./src/:/usr/share/app/src
@@ -27,8 +27,8 @@ services:
       - LOG_LEVEL=INFO
       - AUTH_JAVA_OPTS=-Xmx1024m
     volumes:
-      - /home/ubuntu/configs/aaa-config-integ.json:/usr/share/app/configs/config.json
-      - /home/ubuntu/configs/aaa-keystore.jks:/usr/share/app/configs/keystore.jks
+      - /home/ubuntu/configs/4.5.0/aaa-config-integ.json:/usr/share/app/configs/config.json
+      - /home/ubuntu/configs/4.5.0/aaa-keystore.jks:/usr/share/app/configs/keystore.jks
     depends_on:
       - "zookeeper"
     command: bash -c "exec java $$AUTH_JAVA_OPTS  -Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.Log4j2LogDelegateFactory -jar ./fatjar.jar  --host $$(hostname) -c configs/config.json"
