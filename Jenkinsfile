@@ -79,7 +79,7 @@ pipeline {
             startZap ([host: 'localhost', port: 8090, zapHome: '/var/lib/jenkins/tools/com.cloudbees.jenkins.plugins.customtools.CustomTool/OWASP_ZAP/ZAP_2.11.0'])
             sh 'curl http://127.0.0.1:8090/JSON/pscan/action/disableScanners/?ids=10096'
             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-              sh 'HTTP_PROXY=\'127.0.0.1:8090\' newman run /var/lib/jenkins/iudx/aaa/Newman/Integration_Test.postman_collection.json -e /home/ubuntu/configs/aaa-postman-env.json --insecure -r htmlextra --reporter-htmlextra-export /var/lib/jenkins/iudx/aaa/Newman/report/report.html --reporter-htmlextra-skipSensitiveData'
+              sh 'HTTP_PROXY=\'127.0.0.1:8090\' newman run /var/lib/jenkins/iudx/aaa/Newman/Integration_Test.postman_collection.json -e /home/ubuntu/configs/4.5.0/aaa-postman-env.json --insecure -r htmlextra --reporter-htmlextra-export /var/lib/jenkins/iudx/aaa/Newman/report/report.html --reporter-htmlextra-skipSensitiveData'
             }
             runZapAttack()
           }
@@ -107,55 +107,17 @@ pipeline {
       }
     }
 
-    stage('Continuous Deployment') {
-      when {
-        allOf {
-          anyOf {
-            changeset "docker/**"
-            changeset "docs/**"
-            changeset "pom.xml"
-            changeset "src/main/**"
-            triggeredBy cause: 'UserIdCause'
-          }
-          expression {
-            return env.GIT_BRANCH == 'origin/main';
-          }
+    stage('Push Image') {
+      when{
+        expression {
+          return env.GIT_BRANCH == 'origin/4.5.0';
         }
       }
-      stages {
-        stage('Push Images') {
-          steps {
-            script {
-              docker.withRegistry( registryUri, registryCredential ) {
-                devImage.push("4.5.0-alpha-${env.GIT_HASH}")
-                deplImage.push("4.5.0-alpha-${env.GIT_HASH}")
-              }
-            }
-          }
-        }
-        stage('Docker Swarm deployment') {
-          steps {
-            script {
-              sh "ssh azureuser@docker-swarm 'docker service update auth_auth --image ghcr.io/datakaveri/aaa-depl:4.5.0-alpha-${env.GIT_HASH}'"
-              sh 'sleep 15'
-              sh '''#!/bin/bash 
-              response_code=$(curl -s -o /dev/null -w \'%{http_code}\\n\' --connect-timeout 5 --retry 5 --retry-connrefused -XGET https://authvertx.iudx.io/apis)
-
-              if [[ "$response_code" -ne "200" ]]
-              then
-                echo "Health check failed"
-                exit 1
-              else
-                echo "Health check complete; Server is up."
-                exit 0
-              fi
-              '''                
-            }
-          }
-          post{
-            failure{
-              error "Failed to deploy image in Docker Swarm"
-            }
+      steps{
+        script {
+          docker.withRegistry( registryUri, registryCredential ) {
+            devImage.push("4.5.0-${env.GIT_HASH}")
+            deplImage.push("4.5.0-${env.GIT_HASH}")
           }
         }
       }
