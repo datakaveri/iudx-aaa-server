@@ -127,8 +127,8 @@ pipeline {
           steps {
             script {
               docker.withRegistry( registryUri, registryCredential ) {
-                devImage.push("4.5.0-alpha-${env.GIT_HASH}")
-                deplImage.push("4.5.0-alpha-${env.GIT_HASH}")
+                devImage.push("5.0.0-alpha-${env.GIT_HASH}")
+                deplImage.push("5.0.0-alpha-${env.GIT_HASH}")
               }
             }
           }
@@ -136,7 +136,7 @@ pipeline {
         stage('Docker Swarm deployment') {
           steps {
             script {
-              sh "ssh azureuser@docker-swarm 'docker service update auth_auth --image ghcr.io/datakaveri/aaa-depl:4.5.0-alpha-${env.GIT_HASH}'"
+              sh "ssh azureuser@docker-swarm 'docker service update auth_auth --image ghcr.io/datakaveri/aaa-depl:5.0.0-alpha-${env.GIT_HASH}'"
               sh 'sleep 15'
               sh '''#!/bin/bash 
               response_code=$(curl -s -o /dev/null -w \'%{http_code}\\n\' --connect-timeout 5 --retry 5 --retry-connrefused -XGET https://authvertx.iudx.io/apis)
