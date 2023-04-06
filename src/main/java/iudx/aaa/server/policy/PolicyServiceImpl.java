@@ -1,6 +1,7 @@
 package iudx.aaa.server.policy;
 
 import com.google.common.base.Functions;
+import com.google.common.collect.Lists;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
@@ -31,6 +32,8 @@ import iudx.aaa.server.apiserver.UpdatePolicyNotification;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.registration.RegistrationService;
+import java.util.Arrays;
+import java.util.Collections;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -80,8 +83,7 @@ public class PolicyServiceImpl implements PolicyService {
   private final CatalogueClient catalogueClient;
   private final JsonObject authOptions;
   private final JsonObject catServerOptions;
-  private final EmailClient emailClient;
-  private final EmailInfo emailInfo;
+  private final EmailInfo emailInfo = new EmailInfo();
 
   // Create the pooled client
   /* for converting getUserDetails's JsonObject to map */
@@ -1633,7 +1635,7 @@ public class PolicyServiceImpl implements PolicyService {
           if (dbHandler.succeeded()) {
             emailInfo.setItemDetails(reqCatItem.result());
 
-            Future<Map<String,List<UUID>>> providerToAuthDelegate = providerToAuthDelegate(reqCatItem.result());
+            Future<Map<UUID,List<UUID>>> providerToAuthDelegate = providerToAuthDelegate(reqCatItem.result());
             Future<List<Tuple>> tuples = mapTupleCreate(request, reqCatItem.result(), user);
             Future<List<Tuple>> checkDuplicate = checkDuplication(tuples.result());
 
@@ -1727,8 +1729,7 @@ public class PolicyServiceImpl implements PolicyService {
                               Response res = new Response.ResponseBuilder().type(URN_SUCCESS)
                                   .title(SUCC_TITLE_POLICY_READ).status(200).arrayResults(created)
                                   .build();
-                              //method call to sendEmail
-                              emailClient.sendEmail(emailInfo);
+                              //emailService(emailInfo)
                               handler.handle(Future.succeededFuture(res.toJson()));
                             }).onFailure(fail -> {
                               LOGGER.error(LOG_DB_ERROR + fail.getLocalizedMessage());
@@ -2747,15 +2748,15 @@ public class PolicyServiceImpl implements PolicyService {
             });
     return this;
   }
-  private Future<Map<String, List<UUID>>> providerToAuthDelegate(Map<String, ResourceObj> resourceObjMap) {
-    Promise<Map<String, List<UUID>>> promise = Promise.promise();
+  private Future<Map<UUID, List<UUID>>> providerToAuthDelegate(Map<String, ResourceObj> resourceObjMap) {
+    Promise<Map<UUID, List<UUID>>> promise = Promise.promise();
 
     Set<UUID> ownerIds = resourceObjMap.values().stream().map(ResourceObj::getOwnerId).collect(Collectors.toSet());
     String url = authOptions.getString("authServerUrl");
 
-    Map<String,List<UUID>> providerToAuthDelegate = new HashMap<>();
+    Map<UUID,List<UUID>> providerToAuthDelegate = new HashMap<>();
     for(UUID uuid : ownerIds){
-      providerToAuthDelegate.put(uuid.toString(),new ArrayList<>());
+      providerToAuthDelegate.put(uuid,new ArrayList<>());
     }
 
     pool.withConnection(
@@ -2765,13 +2766,13 @@ public class PolicyServiceImpl implements PolicyService {
                     Tuple.of(url,
                         (Object) ownerIds.toArray(UUID[]::new))).onSuccess(successHandler->{
                   for(Row row: successHandler){
-                    providerToAuthDelegate.put(row.getUUID("provider_id").toString(),
+                    providerToAuthDelegate.put(row.getUUID("provider_id"),
                         List.of(row.getArrayOfUUIDs("user_id_array")));
                   }
                   promise.complete(providerToAuthDelegate);
                 }).onFailure(failureHandler->{
                   promise.fail(failureHandler.getLocalizedMessage());
-                  LOGGER.error("Fail to get providerToAuthDelegateIds : "+failureHandler.getLocalizedMessage());
+                  LOGGER.debug("Fail to get providerToAuthDelegateIds : "+failureHandler.getLocalizedMessage());
                 }));
 
   return promise.future();

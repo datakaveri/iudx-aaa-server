@@ -7,26 +7,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * The Email Info.
- * <h1>Email Info</h1>
- * <p>
- * The Email Info object encompasses all the essential information needed to compose and send an email.
- * </p>
- *
- * @version 1.0
- * @since 2023-04-17
- */
 public class EmailInfo {
 
   UUID consumerId;
   List<CreatePolicyNotification> request;
   Map<String, ResourceObj> itemDetails;
-  Map<String, List<UUID>> providerIdToAuthDelegateId;
+  Map<UUID, List<UUID>> providerIdToAuthDelegateId;
   Map<String, JsonObject> userInfo;
-  public EmailInfo(){
 
-  }
   public UUID getConsumerId() {
     return consumerId;
   }
@@ -52,20 +40,21 @@ public class EmailInfo {
     this.itemDetails = itemDetails;
   }
 
-  public Map<String, List<UUID>> getProviderIdToAuthDelegateId() {
+  public Map<UUID, List<UUID>> getProviderIdToAuthDelegateId() {
     return providerIdToAuthDelegateId;
   }
 
   public void setProviderIdToAuthDelegateId(
-      Map<String, List<UUID>> providerIdToAuthDelegateId) {
+      Map<UUID, List<UUID>> providerIdToAuthDelegateId) {
     this.providerIdToAuthDelegateId = providerIdToAuthDelegateId;
   }
 
-  public JsonObject getUserInfo(String uuid) {
-    return userInfo.get(uuid);
+  public Map<String, JsonObject> getUserInfo() {
+    return userInfo;
   }
 
   public void setUserInfo(Map<String, JsonObject> userInfo) {
     this.userInfo = userInfo;
   }
+
 }
