@@ -24,7 +24,7 @@ import java.util.Map;
  * The Policy Verticle.
  * <h1>Policy Verticle</h1>
  * <p>
- * The Policy Verticle implementation in the the IUDX AAA Server exposes the
+ * The Policy Verticle implementation in the IUDX AAA Server exposes the
  * {@link iudx.aaa.server.policy.PolicyService} over the Vert.x Event Bus.
  * </p>
  *
@@ -42,16 +42,17 @@ public class PolicyVerticle extends AbstractVerticle {
   private String databaseUserName;
   private String databasePassword;
   private int poolSize;
-  private PgPool pgclient;
   private PoolOptions poolOptions;
   private PgConnectOptions connectOptions;
   private JsonObject catalogueOptions;
   private JsonObject authOptions;
   private JsonObject catOptions;
+  private JsonObject emailOptions;
   private PolicyService policyService;
   private RegistrationService registrationService;
   private ApdService apdService;
   private CatalogueClient catalogueClient;
+  private EmailClient emailClient;
   private ServiceBinder binder;
   private MessageConsumer<JsonObject> consumer;
   private static final Logger LOGGER = LogManager.getLogger(PolicyVerticle.class);
@@ -80,6 +81,7 @@ public class PolicyVerticle extends AbstractVerticle {
     catalogueOptions.put("resURL",config().getJsonObject("resOptions").getString("resURL"));
     authOptions = config().getJsonObject("authOptions");
     catOptions = config().getJsonObject("catOptions");
+    emailOptions = config().getJsonObject("emailOptions");
 
     /*
      * Injecting authServerUrl into 'authOptions' and 'catalogueOptions' from config().'authServerDomain'
@@ -107,13 +109,13 @@ public class PolicyVerticle extends AbstractVerticle {
     }
 
     /* Create the client pool */
-
     PgPool pool = PgPool.pool(vertx, connectOptions, poolOptions);
     registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
     apdService = ApdService.createProxy(vertx, APD_SERVICE_ADDRESS);
     catalogueClient = new CatalogueClient(vertx, pool, catalogueOptions);
+    emailClient = new EmailClient(vertx,emailOptions);
     policyService = new PolicyServiceImpl(pool, registrationService, apdService, catalogueClient,
-        authOptions, catOptions);
+        authOptions, catOptions,emailClient);
 
     binder = new ServiceBinder(vertx);
     consumer =

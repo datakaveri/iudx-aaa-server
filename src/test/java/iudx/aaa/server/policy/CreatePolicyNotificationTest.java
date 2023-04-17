@@ -74,6 +74,7 @@ public class CreatePolicyNotificationTest {
   private static Vertx vertxObj;
   private static MockRegistrationFactory mockRegistrationFactory;
   private static CatalogueClient catalogueClient = Mockito.mock(CatalogueClient.class);
+  private static EmailClient emailClient = Mockito.mock(EmailClient.class);
 
   /* SQL queries for creating and deleting required data */
   static String name = RandomStringUtils.randomAlphabetic(10).toLowerCase();
@@ -143,7 +144,7 @@ public class CreatePolicyNotificationTest {
     CompositeFuture.all(orgIdFut, provider, consumer).onSuccess(res -> {
       registrationService = mockRegistrationFactory.getInstance();
       policyService = new PolicyServiceImpl(pool, registrationService, apdService, catalogueClient,
-          authOptions, catOptions);
+          authOptions, catOptions,emailClient);
       testContext.completeNow();
     });
   }

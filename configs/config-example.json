@@ -57,6 +57,15 @@
       },
       "resOptions" : {
         "resURL" : "rs.iudx.io"
+      },
+      "emailOptions": {
+        "emailHostName": "",
+        "emailPort" : 2587,
+        "emailUserName":"",
+        "emailPassword": "",
+        "emailSender" : "",
+        "emailSupport" : "",
+        "publisherPanelUrl": ""
       }
     },
     {
