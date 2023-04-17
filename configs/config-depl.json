@@ -65,8 +65,7 @@
         "emailPassword": "",
         "emailSender" : "",
         "emailSupport" : "",
-        "publisherPanelUrl": "",
-        "notifyByEmail" : true
+        "publisherPanelUrl": ""
       }
     },
     {

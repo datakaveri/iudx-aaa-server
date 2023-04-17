@@ -14,8 +14,7 @@ import io.vertx.ext.mail.StartTLSOptions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.log4j.Logger;
 
 /**
  * The Email Client.
@@ -38,8 +37,8 @@ public class EmailClient {
   private final String supportEmail;
   private final String publisherPanelURL;
   private final MailClient mailClient;
-  private final boolean notifyByEmail;
-  private static final Logger LOGGER = LogManager.getLogger(EmailClient.class);
+
+  private final Logger LOGGER = Logger.getLogger(EmailClient.class);
   public EmailClient(Vertx vertx, JsonObject config){
     this.emailHostname = config.getString("emailHostName");
     this.emailPort = config.getInteger("emailPort");
@@ -48,7 +47,6 @@ public class EmailClient {
     this.senderEmail = config.getString("emailSender");
     this.supportEmail = config.getString("emailSupport");
     this.publisherPanelURL = config.getString("publisherPanelUrl");
-    this.notifyByEmail = config.getBoolean("notifyByEmail");
 
     MailConfig mailConfig = new MailConfig();
     mailConfig.setStarttls(StartTLSOptions.REQUIRED);
@@ -74,9 +72,6 @@ public class EmailClient {
   public Future<Void> sendEmail(EmailInfo emailInfo) {
     Promise<Void> promise = Promise.promise();
 
-    if(!notifyByEmail){
-      return promise.future();
-    }
     UUID consumerId = emailInfo.getConsumerId();
     JsonObject consumer = emailInfo.getUserInfo(consumerId.toString());
     String consumerName = consumer.getJsonObject("name").getString("firstName")+" "
@@ -98,6 +93,7 @@ public class EmailClient {
         JsonObject delegate = emailInfo.getUserInfo(authDelegatesuuid.toString());
         ccEmailIds.add(delegate.getString("email"));
       } );
+
       String emailBody = EMAIL_BODY.replace("${CONSUMER_NAME}",consumerName)
           .replace("${CONSUMER_EMAIL}",consumerEmailId)
           .replace("${REQUESTED_CAT_ID}",catId)
@@ -113,11 +109,11 @@ public class EmailClient {
 
       mailClient.sendMail(providerMail,providerMailSuccessHandler->{
         if(providerMailSuccessHandler.succeeded()){
-          LOGGER.debug("email sent successfully : {} ",providerMailSuccessHandler.result());
+          LOGGER.info("email sent successfully "+providerMailSuccessHandler.result());
         }
         else{
           promise.fail(providerMailSuccessHandler.cause().getLocalizedMessage());
-          LOGGER.error("Failed to send email because : {} ",providerMailSuccessHandler.cause().getLocalizedMessage());
+          LOGGER.info("Failed to send email "+providerMailSuccessHandler.cause().getLocalizedMessage());
         }
         });
     });
