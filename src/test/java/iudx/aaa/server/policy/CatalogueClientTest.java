@@ -70,7 +70,6 @@ public class CatalogueClientTest {
   private static String resourceGrp;
   private static String resourceOne;
   private static Vertx vertxObj;
-
   @BeforeAll
   @DisplayName("Deploying Verticle")
   static void startVertx(Vertx vertx, VertxTestContext testContext) {
