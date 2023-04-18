@@ -105,6 +105,8 @@ public class ListPolicyNotificationTest {
   private static PgConnectOptions connectOptions;
   private static PolicyService policyService;
   private static ApdService apdService = Mockito.mock(ApdService.class);
+  private static EmailClient emailClient = Mockito.mock(EmailClient.class);
+
   private static RegistrationService registrationService = Mockito.mock(RegistrationService.class);
   private static JsonObject authOptions;
   private static JsonObject catOptions;
@@ -235,7 +237,7 @@ public class ListPolicyNotificationTest {
     }).onSuccess(r -> {
 
       policyService = new PolicyServiceImpl(pool, registrationService, apdService, catalogueClient,
-          authOptions, catOptions);
+          authOptions, catOptions,emailClient);
       testContext.completeNow();
     }).onFailure(handler -> handler.printStackTrace());
   }

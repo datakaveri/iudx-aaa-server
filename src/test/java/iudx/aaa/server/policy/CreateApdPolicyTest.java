@@ -98,6 +98,8 @@ public class CreateApdPolicyTest {
   private static RegistrationServiceImpl registrationService =
       Mockito.mock(RegistrationServiceImpl.class);
   private static CatalogueClient catalogueClient = Mockito.mock(CatalogueClient.class);
+  private static EmailClient emailClient = Mockito.mock(EmailClient.class);
+
 
   @BeforeAll
   @DisplayName("Deploying Verticle")
@@ -298,7 +300,7 @@ public class CreateApdPolicyTest {
                                 apdService,
                                 catalogueClient,
                                 authOptions,
-                                catOptions);
+                                catOptions,emailClient);
                         testContext.completeNow();
                       })
                   .onFailure(

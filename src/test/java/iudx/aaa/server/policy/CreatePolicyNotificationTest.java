@@ -13,6 +13,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.mail.MailClient;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -415,6 +416,7 @@ public class CreatePolicyNotificationTest {
       return Future.succeededFuture(resp);
     }).when(catalogueClient).checkReqItems(catClientRequest);
 
+    Mockito.doAnswer(i -> Future.succeededFuture()).when(emailClient).sendEmail(Mockito.any());
     /* Mocking RegistrationService.getUserDetails */
     JsonObject ownerDetails = new JsonObject().put("email", ownerJson.getString("email"))
         .put("name", new JsonObject().put("firstName", ownerJson.getString("firstName"))

@@ -80,6 +80,7 @@ public class CreateDelegationsTest {
   private static Vertx vertxObj;
   private static PolicyService policyService;
   private static ApdService apdService = Mockito.mock(ApdService.class);
+  private static EmailClient emailClient = Mockito.mock(EmailClient.class);
   private static RegistrationServiceImpl registrationService =
       Mockito.mock(RegistrationServiceImpl.class);
   private static CatalogueClient catalogueClient = Mockito.mock(CatalogueClient.class);
@@ -261,7 +262,7 @@ public class CreateDelegationsTest {
                                 apdService,
                                 catalogueClient,
                                 authOptions,
-                                catOptions);
+                                catOptions,emailClient);
                         testContext.completeNow();
                       })
                   .onFailure(
