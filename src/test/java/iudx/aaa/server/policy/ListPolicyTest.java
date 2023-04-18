@@ -57,6 +57,8 @@ public class ListPolicyTest {
   private static ApdService apdService = Mockito.mock(ApdService.class);
   private static RegistrationService registrationService;
   private static CatalogueClient catalogueClient = Mockito.mock(CatalogueClient.class);
+  private static EmailClient emailClient = Mockito.mock(EmailClient.class);
+
   private static JsonObject authOptions;
   private static JsonObject catOptions;
 
@@ -115,7 +117,7 @@ public class ListPolicyTest {
     mockRegistrationFactory = new MockRegistrationFactory();
     registrationService = mockRegistrationFactory.getInstance();
     policyService = new PolicyServiceImpl(pgclient, registrationService, apdService,
-        catalogueClient, authOptions, catOptions);
+        catalogueClient, authOptions, catOptions,emailClient);
     testContext.completeNow();
   }
 

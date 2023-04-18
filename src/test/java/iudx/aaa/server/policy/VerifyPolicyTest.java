@@ -69,6 +69,7 @@ public class VerifyPolicyTest {
   private static PgConnectOptions connectOptions;
   private static PolicyService policyService;
   private static ApdService apdService = Mockito.mock(ApdService.class);
+  private static EmailClient emailClient = Mockito.mock(EmailClient.class);
   private static RegistrationService registrationService;
   private static CatalogueClient catalogueClient;
   private static JsonObject catalogueOptions;
@@ -134,7 +135,7 @@ public class VerifyPolicyTest {
     registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
     catalogueClient = new CatalogueClient(vertx, pool, catalogueOptions);
     policyService = new PolicyServiceImpl(pool, registrationService, apdService, catalogueClient,
-        authOptions, catOptions);
+        authOptions, catOptions,emailClient);
     testContext.completeNow();
   }
 
