@@ -1727,13 +1727,8 @@ public class PolicyServiceImpl implements PolicyService {
                               Response res = new Response.ResponseBuilder().type(URN_SUCCESS)
                                   .title(SUCC_TITLE_POLICY_READ).status(200).arrayResults(created)
                                   .build();
-
-                              Future<Void> sendEmail = emailClient.sendEmail(emailInfo);
-                              sendEmail.onSuccess(emailHandler->{
-                                LOGGER.debug("PASS "+emailHandler);
-                              }).onFailure(emailFailureHandler->{
-                                LOGGER.debug("email fail "+emailFailureHandler.getLocalizedMessage());
-                              });
+                              //method call to sendEmail
+                              emailClient.sendEmail(emailInfo);
                               handler.handle(Future.succeededFuture(res.toJson()));
                             }).onFailure(fail -> {
                               LOGGER.error(LOG_DB_ERROR + fail.getLocalizedMessage());
@@ -2776,7 +2771,7 @@ public class PolicyServiceImpl implements PolicyService {
                   promise.complete(providerToAuthDelegate);
                 }).onFailure(failureHandler->{
                   promise.fail(failureHandler.getLocalizedMessage());
-                  LOGGER.debug("Fail to get providerToAuthDelegateIds : "+failureHandler.getLocalizedMessage());
+                  LOGGER.error("Fail to get providerToAuthDelegateIds : "+failureHandler.getLocalizedMessage());
                 }));
 
   return promise.future();
