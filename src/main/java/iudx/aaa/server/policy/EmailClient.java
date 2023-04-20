@@ -35,10 +35,7 @@ public class EmailClient {
   private final String emailUserName;
   private final String emailPassword;
   private final String senderEmail;
-<<<<<<< HEAD
   private final String senderName;
-=======
->>>>>>> 215b1aedb14767bb9688c951b46f5c36bb3be348
   private final String supportEmail;
   private final String publisherPanelURL;
   private final MailClient mailClient;
