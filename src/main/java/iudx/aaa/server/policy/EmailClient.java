@@ -35,6 +35,7 @@ public class EmailClient {
   private final String emailUserName;
   private final String emailPassword;
   private final String senderEmail;
+  private final String senderName;
   private final String supportEmail;
   private final String publisherPanelURL;
   private final MailClient mailClient;
@@ -49,17 +50,16 @@ public class EmailClient {
     this.supportEmail = config.getString("emailSupport");
     this.publisherPanelURL = config.getString("publisherPanelUrl");
     this.notifyByEmail = config.getBoolean("notifyByEmail");
+    this.senderName = config.getString("senderName");
 
     MailConfig mailConfig = new MailConfig();
     mailConfig.setStarttls(StartTLSOptions.REQUIRED);
     mailConfig.setLogin(LoginOption.REQUIRED);
-    mailConfig.setConnectTimeout(5000);
-    mailConfig.setIdleTimeout(10);
+    mailConfig.setKeepAliveTimeout(5);
     mailConfig.setHostname(emailHostname);
     mailConfig.setPort(emailPort);
     mailConfig.setUsername(emailUserName);
     mailConfig.setPassword(emailPassword);
-    mailConfig.setMaxMailsPerConnection(10000);
     mailConfig.setAllowRcptErrors(true);
 
     this.mailClient = MailClient.create(vertx, mailConfig);
@@ -101,7 +101,8 @@ public class EmailClient {
       String emailBody = EMAIL_BODY.replace("${CONSUMER_NAME}",consumerName)
           .replace("${CONSUMER_EMAIL}",consumerEmailId)
           .replace("${REQUESTED_CAT_ID}",catId)
-          .replace("${PUBLISHER_PANEL_URL}",publisherPanelURL);
+          .replace("${PUBLISHER_PANEL_URL}",publisherPanelURL)
+          .replace("${SENDER'S_NAME}",senderName);
 
       //creating mail object
       MailMessage providerMail = new MailMessage();
