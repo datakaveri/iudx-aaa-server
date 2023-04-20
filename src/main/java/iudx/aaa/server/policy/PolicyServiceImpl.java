@@ -2747,6 +2747,13 @@ public class PolicyServiceImpl implements PolicyService {
             });
     return this;
   }
+
+  /**
+   * The method returns a map that associates each provider ID with a list of delegate IDs.
+   * The map contains key-value pairs, where the keys are provider IDs and the values are lists of delegate IDs.
+   * @param resourceObjMap
+   * @return Map of string as key and list of UUIDs as value of map
+   */
   private Future<Map<String, List<UUID>>> providerToAuthDelegate(Map<String, ResourceObj> resourceObjMap) {
     Promise<Map<String, List<UUID>>> promise = Promise.promise();
 
