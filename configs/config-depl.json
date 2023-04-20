@@ -68,7 +68,6 @@
         "publisherPanelUrl": "",
         "notifyByEmail" : true,
         "senderName" : ""
-      }
     },
     {
       "id": "iudx.aaa.server.registration.RegistrationVerticle",
