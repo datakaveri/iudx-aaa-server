@@ -28,7 +28,7 @@ pipeline {
     stage('Unit Tests and CodeCoverage Test'){
       steps{
         script{
-          sh 'docker-compose -f docker-compose-test.yml up test'
+          sh 'docker compose -f docker-compose-test.yml up test'
         }
         xunit (
           thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
@@ -43,6 +43,9 @@ pipeline {
           recordIssues enabledForFailure: true, tool: pmdParser(pattern: 'target/pmd.xml')
         }
         failure{
+          script{
+            sh 'docker compose f docker-compose-test.yml down --remove-orphans'
+          }
           error "Test failure. Stopping pipeline execution!"
         } 
         cleanup{
@@ -58,7 +61,7 @@ pipeline {
         script{
             sh 'docker/runIntegTests.sh'
             sh 'scp src/test/resources/Integration_Test.postman_collection.json jenkins@jenkins-master:/var/lib/jenkins/iudx/aaa/Newman/'
-            sh 'docker-compose -f docker-compose-test.yml up -d integTest'
+            sh 'docker compose -f docker-compose-test.yml up -d integTest'
             sh 'sleep 45'
         }
       }
@@ -66,6 +69,7 @@ pipeline {
         failure{
           script{
             sh 'mvn flyway:clean -Dflyway.configFiles=/home/ubuntu/configs/aaa-flyway.conf'
+            sh 'docker compose f docker-compose-test.yml down --remove-orphans'
           }
           cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: 'src/main/resources/db/migration/V?__Add_Integration_Test_data.sql', type: 'INCLUDE']]
         }
@@ -100,7 +104,7 @@ pipeline {
         cleanup{
           script{
             sh 'mvn flyway:clean -Dflyway.configFiles=/home/ubuntu/configs/aaa-flyway.conf'
-            sh 'docker-compose -f docker-compose-test.yml down --remove-orphans'
+            sh 'docker compose -f docker-compose-test.yml down --remove-orphans'
           }
           cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: 'src/main/resources/db/migration/V?__Add_Integration_Test_data.sql', type: 'INCLUDE']]
         }
