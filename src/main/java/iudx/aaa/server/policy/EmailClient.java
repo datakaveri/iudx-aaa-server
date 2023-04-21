@@ -13,6 +13,7 @@ import io.vertx.ext.mail.MailMessage;
 import io.vertx.ext.mail.StartTLSOptions;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -82,6 +83,7 @@ public class EmailClient {
     String consumerName = consumer.getJsonObject("name").getString("firstName")+" "
         +consumer.getJsonObject("name").getString("lastName");
     String consumerEmailId = consumer.getString("email");
+    Map<String,String> expiryDurationMap = emailInfo.getExpiryDurationMap();
 
     emailInfo.getItemDetails().values().forEach(resourceObj -> {
       UUID providerId = resourceObj.getOwnerId();
@@ -92,7 +94,6 @@ public class EmailClient {
           .get(providerId.toString());
       List<String> ccEmailIds = new ArrayList<>();
       ccEmailIds.add(supportEmail);
-
       // adding delegate email ids in ccEmailIds array list
        authDelegates.forEach(authDelegatesuuid ->{
         JsonObject delegate = emailInfo.getUserInfo(authDelegatesuuid.toString());
@@ -102,6 +103,7 @@ public class EmailClient {
           .replace("${CONSUMER_EMAIL}",consumerEmailId)
           .replace("${REQUESTED_CAT_ID}",catId)
           .replace("${PUBLISHER_PANEL_URL}",publisherPanelURL)
+          .replace("${TIME_DURATION}",expiryDurationMap.get(catId))
           .replace("${SENDER'S_NAME}",senderName);
 
       //creating mail object

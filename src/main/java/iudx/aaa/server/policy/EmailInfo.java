@@ -3,6 +3,11 @@ package iudx.aaa.server.policy;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.apiserver.CreatePolicyNotification;
 import iudx.aaa.server.apiserver.ResourceObj;
+
+import java.util.HashMap;
+import java.util.Locale;
+import org.threeten.extra.AmountFormats;
+import org.threeten.extra.PeriodDuration;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -24,13 +29,22 @@ public class EmailInfo {
   Map<String, ResourceObj> itemDetails;
   Map<String, List<UUID>> providerIdToAuthDelegateId;
   Map<String, JsonObject> userInfo;
-  public EmailInfo(){
+  Map<String,String> expiryDurationMap;
 
+  public EmailInfo(){
+    this.expiryDurationMap = new HashMap<>();
   }
   public UUID getConsumerId() {
     return consumerId;
   }
-
+  public Map<String, String> getExpiryDurationMap() {
+    return expiryDurationMap;
+  }
+  public void setExpiryDurationMap(String itemId,String duration) {
+    PeriodDuration expiryDuration = PeriodDuration.parse(duration);
+    expiryDurationMap.put(itemId,AmountFormats.wordBased(
+        expiryDuration.getPeriod(),expiryDuration.getDuration(), Locale.ENGLISH));
+  }
   public void setConsumerId(UUID consumerId) {
     this.consumerId = consumerId;
   }
