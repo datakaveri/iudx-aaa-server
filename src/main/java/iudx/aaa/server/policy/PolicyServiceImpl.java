@@ -1528,6 +1528,9 @@ public class PolicyServiceImpl implements PolicyService {
 
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
+    for (CreatePolicyNotification createPolicyNotification : request ) {
+        emailInfo.setExpiryDurationMap(createPolicyNotification.getItemId(),createPolicyNotification.getExpiryDuration());
+    }
     emailInfo.setConsumerId(UUID.fromString(user.getUserId()));
     emailInfo.setRequest(request);
 
