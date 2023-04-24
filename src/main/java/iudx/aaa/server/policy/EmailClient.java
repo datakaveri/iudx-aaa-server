@@ -20,17 +20,17 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * The Email Client.
+ *
  * <h1>Email Client</h1>
- * <p>
- * The Email Client assists the AAA server in managing email-related requests.
- * </p>
+ *
+ * <p>The Email Client assists the AAA server in managing email-related requests.
  *
  * @version 1.0
  * @since 2023-04-17
  */
-
 public class EmailClient {
 
+  private static final Logger LOGGER = LogManager.getLogger(EmailClient.class);
   private final String emailHostname;
   private final int emailPort;
   private final String emailUserName;
@@ -41,8 +41,13 @@ public class EmailClient {
   private final String publisherPanelURL;
   private final MailClient mailClient;
   private final boolean notifyByEmail;
-  private static final Logger LOGGER = LogManager.getLogger(EmailClient.class);
-  public EmailClient(Vertx vertx, JsonObject config){
+  /**
+   * Constructs a new instance of the class.
+   *
+   * @param vertx
+   * @param config
+   */
+  public EmailClient(Vertx vertx, JsonObject config) {
     this.emailHostname = config.getString("emailHostName");
     this.emailPort = config.getInteger("emailPort");
     this.emailUserName = config.getString("emailUserName");
@@ -67,64 +72,77 @@ public class EmailClient {
   }
 
   /**
-   *  This method is utilized to initiate the email sending process to
-   *  the provider and delegate after the notification has been created.
+   * This method is utilized to initiate the email sending process to the provider and delegate
+   * after the notification has been created.
+   *
    * @param emailInfo
    * @return
    */
   public Future<Void> sendEmail(EmailInfo emailInfo) {
     Promise<Void> promise = Promise.promise();
 
-    if(!notifyByEmail){
+    if (!notifyByEmail) {
       return promise.future();
     }
     UUID consumerId = emailInfo.getConsumerId();
     JsonObject consumer = emailInfo.getUserInfo(consumerId.toString());
-    String consumerName = consumer.getJsonObject("name").getString("firstName")+" "
-        +consumer.getJsonObject("name").getString("lastName");
+    String consumerName =
+        consumer.getJsonObject("name").getString("firstName")
+            + " "
+            + consumer.getJsonObject("name").getString("lastName");
     String consumerEmailId = consumer.getString("email");
-    Map<String,String> expiryDurationMap = emailInfo.getExpiryDurationMap();
+    //Below is the Map<CatId,ExpiryTime> of a given request.
+    Map<String, String> expiryDurationMap = emailInfo.getExpiryDurationMap();
+    emailInfo
+        .getItemDetails()
+        .values()
+        .forEach(
+            resourceObj -> {
+              UUID providerId = resourceObj.getOwnerId();
+              JsonObject provider = emailInfo.getUserInfo(providerId.toString());
+              String catId = resourceObj.getCatId();
+              List<UUID> authDelegates =
+                  emailInfo.getProviderIdToAuthDelegateId().get(providerId.toString());
+              List<String> ccEmailIds = new ArrayList<>();
+              ccEmailIds.add(supportEmail);
+              // adding delegate email ids in ccEmailIds array list
+              authDelegates.forEach(
+                  authDelegatesuuid -> {
+                    JsonObject delegate = emailInfo.getUserInfo(authDelegatesuuid.toString());
+                    ccEmailIds.add(delegate.getString("email"));
+                  });
+              String emailBody =
+                  EMAIL_BODY
+                      .replace("${CONSUMER_NAME}", consumerName)
+                      .replace("${CONSUMER_EMAIL}", consumerEmailId)
+                      .replace("${REQUESTED_CAT_ID}", catId)
+                      .replace("${PUBLISHER_PANEL_URL}", publisherPanelURL)
+                      .replace("${TIME_DURATION}", expiryDurationMap.get(catId))
+                      .replace("${SENDER'S_NAME}", senderName);
 
-    emailInfo.getItemDetails().values().forEach(resourceObj -> {
-      UUID providerId = resourceObj.getOwnerId();
-      JsonObject provider = emailInfo.getUserInfo(providerId.toString());
-      String catId = resourceObj.getCatId();
-      String providerEmailId = provider.getString("email");
-      List<UUID> authDelegates = emailInfo.getProviderIdToAuthDelegateId()
-          .get(providerId.toString());
-      List<String> ccEmailIds = new ArrayList<>();
-      ccEmailIds.add(supportEmail);
-      // adding delegate email ids in ccEmailIds array list
-       authDelegates.forEach(authDelegatesuuid ->{
-        JsonObject delegate = emailInfo.getUserInfo(authDelegatesuuid.toString());
-        ccEmailIds.add(delegate.getString("email"));
-      } );
-      String emailBody = EMAIL_BODY.replace("${CONSUMER_NAME}",consumerName)
-          .replace("${CONSUMER_EMAIL}",consumerEmailId)
-          .replace("${REQUESTED_CAT_ID}",catId)
-          .replace("${PUBLISHER_PANEL_URL}",publisherPanelURL)
-          .replace("${TIME_DURATION}",expiryDurationMap.get(catId))
-          .replace("${SENDER'S_NAME}",senderName);
+              final String providerEmailId = provider.getString("email");
+              // creating mail object
+              MailMessage providerMail = new MailMessage();
+              providerMail.setFrom(senderEmail);
+              providerMail.setTo(providerEmailId);
+              providerMail.setCc(ccEmailIds);
+              providerMail.setText(emailBody);
+              providerMail.setSubject("Request for policy for " + catId);
 
-      //creating mail object
-      MailMessage providerMail = new MailMessage();
-      providerMail.setFrom(senderEmail);
-      providerMail.setTo(providerEmailId);
-      providerMail.setCc(ccEmailIds);
-      providerMail.setText(emailBody);
-      providerMail.setSubject("Request for policy for "+catId);
-
-      mailClient.sendMail(providerMail,providerMailSuccessHandler->{
-        if(providerMailSuccessHandler.succeeded()){
-          LOGGER.debug("email sent successfully : {} ",providerMailSuccessHandler.result());
-        }
-        else{
-          promise.fail(providerMailSuccessHandler.cause().getLocalizedMessage());
-          LOGGER.error("Failed to send email because : {} ",providerMailSuccessHandler.cause().getLocalizedMessage());
-        }
-        });
-    });
+              mailClient.sendMail(
+                  providerMail,
+                  providerMailSuccessHandler -> {
+                    if (providerMailSuccessHandler.succeeded()) {
+                      LOGGER.debug(
+                          "email sent successfully : {} ", providerMailSuccessHandler.result());
+                    } else {
+                      promise.fail(providerMailSuccessHandler.cause().getLocalizedMessage());
+                      LOGGER.error(
+                          "Failed to send email because : {} ",
+                          providerMailSuccessHandler.cause().getLocalizedMessage());
+                    }
+                  });
+            });
     return promise.future();
   }
-
 }

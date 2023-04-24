@@ -3,21 +3,21 @@ package iudx.aaa.server.policy;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.apiserver.CreatePolicyNotification;
 import iudx.aaa.server.apiserver.ResourceObj;
-
 import java.util.HashMap;
-import java.util.Locale;
-import org.threeten.extra.AmountFormats;
-import org.threeten.extra.PeriodDuration;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import org.threeten.extra.AmountFormats;
+import org.threeten.extra.PeriodDuration;
 
 /**
  * The Email Info.
+ *
  * <h1>Email Info</h1>
- * <p>
- * The Email Info object encompasses all the essential information needed to compose and send an email.
- * </p>
+ *
+ * <p>The Email Info object encompasses all the essential information needed to compose and send an
+ * email.
  *
  * @version 1.0
  * @since 2023-04-17
@@ -29,24 +29,30 @@ public class EmailInfo {
   Map<String, ResourceObj> itemDetails;
   Map<String, List<UUID>> providerIdToAuthDelegateId;
   Map<String, JsonObject> userInfo;
-  Map<String,String> expiryDurationMap;
+  Map<String, String> expiryDurationMap;
 
-  public EmailInfo(){
+  public EmailInfo() {
     this.expiryDurationMap = new HashMap<>();
   }
+
   public UUID getConsumerId() {
     return consumerId;
   }
-  public Map<String, String> getExpiryDurationMap() {
-    return expiryDurationMap;
-  }
-  public void setExpiryDurationMap(String itemId,String duration) {
-    PeriodDuration expiryDuration = PeriodDuration.parse(duration);
-    expiryDurationMap.put(itemId,AmountFormats.wordBased(
-        expiryDuration.getPeriod(),expiryDuration.getDuration(), Locale.ENGLISH));
-  }
+
   public void setConsumerId(UUID consumerId) {
     this.consumerId = consumerId;
+  }
+
+  public Map<String, String> getExpiryDurationMap() {
+    return new HashMap<>(expiryDurationMap);
+  }
+
+  public void setExpiryDurationMap(String itemId, String duration) {
+    PeriodDuration expiryDuration = PeriodDuration.parse(duration);
+    expiryDurationMap.put(
+        itemId,
+        AmountFormats.wordBased(
+            expiryDuration.getPeriod(), expiryDuration.getDuration(), Locale.ENGLISH));
   }
 
   public List<CreatePolicyNotification> getRequest() {
@@ -61,8 +67,7 @@ public class EmailInfo {
     return itemDetails;
   }
 
-  public void setItemDetails(
-      Map<String, ResourceObj> itemDetails) {
+  public void setItemDetails(Map<String, ResourceObj> itemDetails) {
     this.itemDetails = itemDetails;
   }
 
@@ -70,8 +75,7 @@ public class EmailInfo {
     return providerIdToAuthDelegateId;
   }
 
-  public void setProviderIdToAuthDelegateId(
-      Map<String, List<UUID>> providerIdToAuthDelegateId) {
+  public void setProviderIdToAuthDelegateId(Map<String, List<UUID>> providerIdToAuthDelegateId) {
     this.providerIdToAuthDelegateId = providerIdToAuthDelegateId;
   }
 
