@@ -127,7 +127,7 @@ public class EmailClient {
               providerMail.setTo(providerEmailId);
               providerMail.setCc(ccEmailIds);
               providerMail.setText(emailBody);
-              providerMail.setSubject("Request for policy for " + catId);
+              providerMail.setSubject("Request for policy " + catId);
 
               mailClient.sendMail(
                   providerMail,
