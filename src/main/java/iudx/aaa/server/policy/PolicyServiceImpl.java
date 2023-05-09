@@ -1,5 +1,6 @@
 package iudx.aaa.server.policy;
 
+import com.google.common.base.Functions;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
@@ -29,7 +30,6 @@ import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.UpdatePolicyNotification;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.util.ComposeException;
-import iudx.aaa.server.policy.Constants.*;
 import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -80,6 +80,9 @@ public class PolicyServiceImpl implements PolicyService {
   private final CatalogueClient catalogueClient;
   private final JsonObject authOptions;
   private final JsonObject catServerOptions;
+  private final EmailClient emailClient;
+  private final EmailInfo emailInfo;
+
   // Create the pooled client
   /* for converting getUserDetails's JsonObject to map */
   Function<JsonObject, Map<String, JsonObject>> jsonObjectToMap =
@@ -95,16 +98,18 @@ public class PolicyServiceImpl implements PolicyService {
       ApdService apdService,
       CatalogueClient catalogueClient,
       JsonObject authOptions,
-      JsonObject catServerOptions) {
+      JsonObject catServerOptions,EmailClient emailClient) {
     this.pool = pool;
     this.registrationService = registrationService;
     this.apdService = apdService;
     this.catalogueClient = catalogueClient;
     this.authOptions = authOptions;
     this.catServerOptions = catServerOptions;
+    this.emailClient = emailClient;
     this.deletePolicy = new deletePolicy(pool, authOptions);
     this.createPolicy = new createPolicy(pool, authOptions);
     this.createDelegate = new createDelegate(pool, authOptions);
+    this.emailInfo = new EmailInfo();
   }
 
   @Override
@@ -269,8 +274,8 @@ public class PolicyServiceImpl implements PolicyService {
     }
     Map<String, List<String>> catItem = new HashMap<>();
 
-    // check if resServer itemtype, All requests must be resServer, role must contain admin
-    // if itemType is Apd, all req must be Apd,role must contatin Trustee
+    // check if resServer itemType, All requests must be resServer, role must contain admin
+    // if itemType is Apd, all req must be Apd,role must contain Trustee
     // if  item type neither, for request may have both apd and user policies (catalogueFetch)
     if (resServerIds.size() > 0) {
       // if request has itemType resourceServer, then all request should be for resource server
@@ -1523,6 +1528,12 @@ public class PolicyServiceImpl implements PolicyService {
 
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
+    for (CreatePolicyNotification createPolicyNotification : request ) {
+        emailInfo.setExpiryDurationMap(createPolicyNotification.getItemId(),createPolicyNotification.getExpiryDuration());
+    }
+    emailInfo.setConsumerId(UUID.fromString(user.getUserId()));
+    emailInfo.setRequest(request);
+
     List<Roles> roles = user.getRoles();
     JsonObject userJson = user.toJson();
     userJson.remove("keycloakId");
@@ -1623,10 +1634,13 @@ public class PolicyServiceImpl implements PolicyService {
           }
 
           if (dbHandler.succeeded()) {
+            emailInfo.setItemDetails(reqCatItem.result());
+
+            Future<Map<String,List<UUID>>> providerToAuthDelegate = providerToAuthDelegate(reqCatItem.result());
             Future<List<Tuple>> tuples = mapTupleCreate(request, reqCatItem.result(), user);
             Future<List<Tuple>> checkDuplicate = checkDuplication(tuples.result());
 
-            CompositeFuture.all(tuples, checkDuplicate)
+            CompositeFuture.all(tuples, checkDuplicate,providerToAuthDelegate)
                 .onComplete(
                     resHandler -> {
                       if (resHandler.failed()) {
@@ -1650,7 +1664,7 @@ public class PolicyServiceImpl implements PolicyService {
                       }
 
                       if (resHandler.succeeded()) {
-
+                        emailInfo.setProviderIdToAuthDelegateId(providerToAuthDelegate.result());
                         pool.withTransaction(
                             conn -> conn.preparedQuery(CREATE_NOTIFI_POLICY_REQUEST)
                                 .executeBatch(tuples.result()).compose(rows -> {
@@ -1665,14 +1679,20 @@ public class PolicyServiceImpl implements PolicyService {
                                   List<String> ids = new ArrayList<>();
                                   ids.add(user.getUserId());
 
+                                  Set<String> providerToAuthDelegateIds = new HashSet<>();
+                                  for(List<UUID> uuids : providerToAuthDelegate.result().values()){
+                                    providerToAuthDelegateIds.addAll(
+                                        uuids.stream().map(Functions.toStringFunction())
+                                            .collect(Collectors.toList()));
+                                  }
                                   List<String> ownerIds = dbHandler.result().values().stream()
                                       .map(resObj -> resObj.getOwnerId().toString())
                                       .collect(Collectors.toList());
                                   ids.addAll(ownerIds);
+                                  ids.addAll(providerToAuthDelegateIds);
 
                                   Promise<JsonArray> response = Promise.promise();
                                   registrationService.getUserDetails(ids, userHandler -> {
-                                    
                                     if (userHandler.failed()) {
                                       response.fail(
                                           "Fail: Registration failure; " + userHandler.cause());
@@ -1681,7 +1701,7 @@ public class PolicyServiceImpl implements PolicyService {
                                     if (userHandler.succeeded()) {
                                       Map<String, JsonObject> userInfo =
                                           jsonObjectToMap.apply(userHandler.result());
-
+                                      emailInfo.setUserInfo(userInfo);
                                       JsonObject userJson1 = userInfo.get(user.getUserId());
                                       userJson1.put(ID, user.getUserId());
 
@@ -1710,11 +1730,12 @@ public class PolicyServiceImpl implements PolicyService {
                               Response res = new Response.ResponseBuilder().type(URN_SUCCESS)
                                   .title(SUCC_TITLE_POLICY_READ).status(200).arrayResults(created)
                                   .build();
+                              //method call to sendEmail
+                              emailClient.sendEmail(emailInfo);
                               handler.handle(Future.succeededFuture(res.toJson()));
                             }).onFailure(fail -> {
                               LOGGER.error(LOG_DB_ERROR + fail.getLocalizedMessage());
                               handler.handle(Future.failedFuture("Internal error"));
-                              return;
                             });
                       }
                     });
@@ -2728,5 +2749,41 @@ public class PolicyServiceImpl implements PolicyService {
               } else handler.handle(Future.failedFuture(INTERNALERROR));
             });
     return this;
+  }
+
+  /**
+   * The method returns a map that associates each provider ID with a list of delegate IDs.
+   * The map contains key-value pairs, where the keys are provider IDs and the values are lists of delegate IDs.
+   * @param resourceObjMap
+   * @return Map of string as key and list of UUIDs as value of map
+   */
+  private Future<Map<String, List<UUID>>> providerToAuthDelegate(Map<String, ResourceObj> resourceObjMap) {
+    Promise<Map<String, List<UUID>>> promise = Promise.promise();
+
+    Set<UUID> ownerIds = resourceObjMap.values().stream().map(ResourceObj::getOwnerId).collect(Collectors.toSet());
+    String url = authOptions.getString("authServerUrl");
+
+    Map<String,List<UUID>> providerToAuthDelegate = new HashMap<>();
+    for(UUID uuid : ownerIds){
+      providerToAuthDelegate.put(uuid.toString(),new ArrayList<>());
+    }
+
+    pool.withConnection(
+        conn ->
+            conn.preparedQuery(GET_PROVIDER_AUTH_DELEGATE)
+                .execute(
+                    Tuple.of(url,
+                        (Object) ownerIds.toArray(UUID[]::new))).onSuccess(successHandler->{
+                  for(Row row: successHandler){
+                    providerToAuthDelegate.put(row.getUUID("provider_id").toString(),
+                        List.of(row.getArrayOfUUIDs("user_id_array")));
+                  }
+                  promise.complete(providerToAuthDelegate);
+                }).onFailure(failureHandler->{
+                  promise.fail(failureHandler.getLocalizedMessage());
+                  LOGGER.error("Fail to get providerToAuthDelegateIds : "+failureHandler.getLocalizedMessage());
+                }));
+
+  return promise.future();
   }
 }

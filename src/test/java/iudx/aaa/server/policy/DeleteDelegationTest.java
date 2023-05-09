@@ -92,6 +92,7 @@ public class DeleteDelegationTest {
   private static Vertx vertxObj;
   private static MockRegistrationFactory mockRegistrationFactory;
   private static CatalogueClient catalogueClient = Mockito.mock(CatalogueClient.class);
+  private static EmailClient emailClient = Mockito.mock(EmailClient.class);
 
   // not used, using constant
   private static final String DUMMY_AUTH_SERVER =
@@ -206,7 +207,7 @@ public class DeleteDelegationTest {
             delegationId.complete(s);
             registrationService = mockRegistrationFactory.getInstance();
             policyService = new PolicyServiceImpl(pool, registrationService, apdService,
-                catalogueClient, authOptions, catOptions);
+                catalogueClient, authOptions, catOptions,emailClient);
             testContext.completeNow();
           }));
     });

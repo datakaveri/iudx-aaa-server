@@ -57,7 +57,17 @@
       },
       "resOptions" : {
         "resURL" : "rs.iudx.io.test"
-      }
+      },
+      "emailOptions": {
+        "emailHostName": "",
+        "emailPort" : 2587,
+        "emailUserName":"",
+        "emailPassword": "",
+        "emailSender" : "",
+        "emailSupport" : "",
+        "publisherPanelUrl": "",
+        "notifyByEmail" : true,
+        "senderName" : ""
     },
     {
       "id": "iudx.aaa.server.registration.RegistrationVerticle",
