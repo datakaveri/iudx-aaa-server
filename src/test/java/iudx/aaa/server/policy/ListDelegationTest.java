@@ -77,6 +77,9 @@ public class ListDelegationTest {
   private static PgConnectOptions connectOptions;
   private static PolicyService policyService;
   private static ApdService apdService = Mockito.mock(ApdService.class);
+  private static EmailClient emailClient = Mockito.mock(EmailClient.class);
+
+
   private static RegistrationService registrationService;
   private static JsonObject authOptions;
   private static JsonObject catOptions;
@@ -194,7 +197,7 @@ public class ListDelegationTest {
       registrationService = mockRegistrationFactory.getInstance();
       policyService =
           new PolicyServiceImpl(
-              pool, registrationService,apdService, catalogueClient, authOptions, catOptions);
+              pool, registrationService,apdService, catalogueClient, authOptions, catOptions,emailClient);
       testContext.completeNow();
     });
   }

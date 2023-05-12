@@ -90,6 +90,7 @@ public class UpdatePolicyNotificationTest {
   private static PgConnectOptions connectOptions;
   private static ApdService apdService = Mockito.mock(ApdService.class);
   private static RegistrationService registrationService = Mockito.mock(RegistrationService.class);
+  private static EmailClient emailClient = Mockito.mock(EmailClient.class);
   private static JsonObject authOptions;
   private static JsonObject catOptions;
 
@@ -206,7 +207,7 @@ public class UpdatePolicyNotificationTest {
     }).onSuccess(res -> {
 
       policyService = new PolicyServiceImpl(pool, registrationService, apdService, catalogueClient,
-          authOptions, catOptions);
+          authOptions, catOptions,emailClient);
 
       testContext.completeNow();
     }).onFailure(handler -> handler.printStackTrace());

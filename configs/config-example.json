@@ -57,6 +57,17 @@
       },
       "resOptions" : {
         "resURL" : "rs.iudx.io"
+      },
+      "emailOptions": {
+        "emailHostName": "localhost",
+        "emailPort" : 2587,
+        "emailUserName":"UserName",
+        "emailPassword": "Password",
+        "emailSender" : "example@xyz.org",
+        "emailSupport" : "support@xyz.org",
+        "publisherPanelUrl": "www.abc.com",
+        "notifyByEmail" : true,
+        "senderName" : "ABCD"
       }
     },
     {

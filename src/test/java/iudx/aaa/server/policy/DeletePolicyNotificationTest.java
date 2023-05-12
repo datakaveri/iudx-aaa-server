@@ -90,6 +90,8 @@ public class DeletePolicyNotificationTest {
   private static JsonObject catOptions;
   private static Vertx vertxObj;
   private static CatalogueClient catalogueClient = Mockito.mock(CatalogueClient.class);
+  private static EmailClient emailClient = Mockito.mock(EmailClient.class);
+
 
   @BeforeAll
   @DisplayName("Deploying Verticle")
@@ -197,7 +199,7 @@ public class DeletePolicyNotificationTest {
                                 apdService,
                                 catalogueClient,
                                 authOptions,
-                                catOptions);
+                                catOptions,emailClient);
                         testContext.completeNow();
                       });
             });

@@ -13,6 +13,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.mail.MailClient;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -74,6 +75,7 @@ public class CreatePolicyNotificationTest {
   private static Vertx vertxObj;
   private static MockRegistrationFactory mockRegistrationFactory;
   private static CatalogueClient catalogueClient = Mockito.mock(CatalogueClient.class);
+  private static EmailClient emailClient = Mockito.mock(EmailClient.class);
 
   /* SQL queries for creating and deleting required data */
   static String name = RandomStringUtils.randomAlphabetic(10).toLowerCase();
@@ -143,7 +145,7 @@ public class CreatePolicyNotificationTest {
     CompositeFuture.all(orgIdFut, provider, consumer).onSuccess(res -> {
       registrationService = mockRegistrationFactory.getInstance();
       policyService = new PolicyServiceImpl(pool, registrationService, apdService, catalogueClient,
-          authOptions, catOptions);
+          authOptions, catOptions,emailClient);
       testContext.completeNow();
     });
   }
@@ -414,6 +416,7 @@ public class CreatePolicyNotificationTest {
       return Future.succeededFuture(resp);
     }).when(catalogueClient).checkReqItems(catClientRequest);
 
+    Mockito.doAnswer(i -> Future.succeededFuture()).when(emailClient).sendEmail(Mockito.any());
     /* Mocking RegistrationService.getUserDetails */
     JsonObject ownerDetails = new JsonObject().put("email", ownerJson.getString("email"))
         .put("name", new JsonObject().put("firstName", ownerJson.getString("firstName"))

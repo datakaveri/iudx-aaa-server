@@ -71,6 +71,8 @@ public class DeletePolicyTest {
   private static PgConnectOptions connectOptions;
   private static PolicyService policyService;
   private static ApdService apdService = Mockito.mock(ApdService.class);
+  private static EmailClient emailClient = Mockito.mock(EmailClient.class);
+
   private static RegistrationService registrationService;
   private static CatalogueClient catalogueClient;
   private static Vertx vertxObj;
@@ -136,7 +138,7 @@ public class DeletePolicyTest {
             .compose(x -> conn.preparedQuery(INSERT_EXPIRED_USER_POL).execute(Tuple.of(expiredUserPolicyId))))
         .onSuccess(obj -> {
           policyService = new PolicyServiceImpl(pgclient, registrationService, apdService,
-              catalogueClient, authOptions, catOptions);
+              catalogueClient, authOptions, catOptions,emailClient);
           testContext.completeNow();
         }).onFailure(err -> testContext.failNow(err.getMessage()));
   }
