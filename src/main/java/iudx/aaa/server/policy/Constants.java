@@ -405,7 +405,16 @@ public class Constants {
       "Hello, \n${CONSUMER_NAME} email ${CONSUMER_EMAIL} has requested access to your dataset ${REQUESTED_CAT_ID} for a time period of ${TIME_DURATION}. Please visit ${PUBLISHER_PANEL_URL} to approve/reject this request. \n \nRegards, \n${SENDER'S_NAME}";
 
   // query to get all delegate Ids for a provider
-  public static final String GET_PROVIDER_AUTH_DELEGATE = "WITH auth AS (SELECT owner_id, id FROM test.resource_server WHERE url = $1::text ), delegate AS (SELECT resource_server_id, user_id,owner_id as provider_id FROM test.delegations WHERE owner_id = any($2::uuid[]) AND status = 'ACTIVE' AND resource_server_id = (SELECT id FROM auth)), policy AS (SELECT user_id FROM test.policies WHERE item_id = (SELECT id FROM auth) AND owner_id = (SELECT owner_id FROM auth) AND user_id = ANY((SELECT user_id FROM delegate)) AND status = 'ACTIVE' AND expiry_time > now()) SELECT array_agg(policy.user_id) as user_id_array,provider_id FROM policy join delegate on policy.user_id=delegate.user_id group by provider_id";
+  public static final String GET_PROVIDER_AUTH_DELEGATE =
+      "WITH auth AS (SELECT owner_id, id FROM resource_server WHERE url = $1::text )"
+      + ", delegate AS (SELECT resource_server_id, user_id, owner_id as provider_id FROM delegations"
+      + " WHERE owner_id = ANY($2::uuid[]) AND status = 'ACTIVE' AND resource_server_id = (SELECT id FROM auth))"
+      + ", policy AS (SELECT user_id FROM policies WHERE item_id = (SELECT id FROM auth)"
+      + " AND owner_id = (SELECT owner_id FROM auth) AND user_id = ANY((SELECT user_id FROM delegate))"
+      + " AND status = 'ACTIVE' AND expiry_time > NOW())"
+      + " SELECT ARRAY_AGG(policy.user_id) AS user_id_array, provider_id FROM policy"
+      + " JOIN delegate ON policy.user_id = delegate.user_id GROUP BY provider_id";
+
   // item types
   public enum itemTypes {
     RESOURCE_SERVER("RESOURCE_SERVER"),
