@@ -23,7 +23,7 @@ public class TestRequest {
               "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg")
           .put("itemType", "resource_group")
           .put("role", "consumer")
-          .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+          .put("userId", "c5a34d2d-9553-4925-81fe-09aa08f29dea");
 
   public static JsonObject roleFailure2 =
           new JsonObject()
@@ -32,7 +32,7 @@ public class TestRequest {
                           "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg")
                   .put("itemType", "RESOURCE_SERVER")
                   .put("role", "consumer")
-                  .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+                  .put("userId", "c5a34d2d-9553-4925-81fe-09aa08f29dea");
   public static JsonObject roleFailure3 =
           new JsonObject()
                   .put(
@@ -40,28 +40,28 @@ public class TestRequest {
                           "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg")
                   .put("itemType", "ADMIN")
                   .put("role", "ADMIN")
-                  .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+                  .put("userId", "c5a34d2d-9553-4925-81fe-09aa08f29dea");
 
   public static JsonObject invalidItemId =
       new JsonObject()
           .put("itemId", "rs.iudx.io")
           .put("itemType", "resource_group")
           .put("role", "consumer")
-          .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+          .put("userId", "c5a34d2d-9553-4925-81fe-09aa08f29dea");
 
   public static JsonObject invalidItemId2 =
           new JsonObject()
                   .put("itemId", "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg/rs.iudx.io/testing-insert-rsg/rs.iudx.io")
                   .put("itemType", "RESOURCE_GROUP")
                   .put("role", "consumer")
-                  .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+                  .put("userId", "c5a34d2d-9553-4925-81fe-09aa08f29dea");
 
   public static JsonObject invalidItemId3 =
           new JsonObject()
                   .put("itemId", "iisc.ac.in/89a36273d7/rs.iudx.io/testing-insert-rsg")
                   .put("itemType", "RESOURCE")
                   .put("role", "consumer")
-                  .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+                  .put("userId", "c5a34d2d-9553-4925-81fe-09aa08f29dea");
 
   public static JsonObject consumerVerification =
       new JsonObject()
@@ -70,7 +70,7 @@ public class TestRequest {
               "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/surat-itms-realtime-information")
           .put("itemType", "resource_group")
           .put("role", "consumer")
-          .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5");
+          .put("userId", "e69debbb-4c49-4727-a779-e355414915c2");
 
   public static JsonObject apdResourceGrpPolicy =
       new JsonObject()
@@ -79,7 +79,7 @@ public class TestRequest {
               "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/sub-sample")
           .put("itemType", "resource_group")
           .put("role", "consumer")
-          .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5");
+          .put("userId", "e69debbb-4c49-4727-a779-e355414915c2");
 
   public static JsonObject NoCataloguePolicy =
       new JsonObject()
@@ -88,7 +88,7 @@ public class TestRequest {
               "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/cat-test.iudx.io/catalogue/crud")
           .put("itemType", "catalogue")
           .put("role", "provider")
-          .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5");
+          .put("userId", "e69debbb-4c49-4727-a779-e355414915c2");
 
   public static JsonObject validProviderCat =
       new JsonObject()
@@ -97,7 +97,7 @@ public class TestRequest {
               "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/cat-test.iudx.io/catalogue/crud")
           .put("itemType", "catalogue")
           .put("role", "provider")
-          .put("userId", "844e251b-574b-46e6-9247-f76f1f70a637");
+          .put("userId", "b2c27f3f-2524-4a84-816e-91f9ab23f837");
 
   public static JsonObject validProviderVerification =
       new JsonObject()
@@ -106,7 +106,7 @@ public class TestRequest {
               "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/surat-itms-realtime-information")
           .put("itemType", "resource_group")
           .put("role", "provider")
-          .put("userId", "844e251b-574b-46e6-9247-f76f1f70a637");
+          .put("userId", "b2c27f3f-2524-4a84-816e-91f9ab23f837");
 
   public static JsonObject invalidDelegate =
       new JsonObject()
@@ -115,7 +115,7 @@ public class TestRequest {
               "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg")
           .put("itemType", "resource_group")
           .put("role", "delegate")
-          .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5");
+          .put("userId", "e69debbb-4c49-4727-a779-e355414915c2");
 
   public static JsonObject NoCatalogueProviderPolicy =
       new JsonObject()
@@ -124,7 +124,7 @@ public class TestRequest {
               "datakaveri.org/f8dc5bbb151968101ad4596819a248d3e0ea20c0/cat-test.iudx.io/catalogue/crud")
           .put("itemType", "catalogue")
           .put("role", "delegate")
-          .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+          .put("userId", "c5a34d2d-9553-4925-81fe-09aa08f29dea");
 
   public static JsonObject validDelegateVerification =
       new JsonObject()
@@ -133,11 +133,11 @@ public class TestRequest {
               "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg")
           .put("itemType", "resource_group")
           .put("role", "delegate")
-          .put("userId", "d1262b13-1cbe-4b66-a9b2-96df86437683");
+          .put("userId", "c5a34d2d-9553-4925-81fe-09aa08f29dea");
 
   // Requests for List Policy
   public static User validListPolicyProvider =
-      new User(new JsonObject().put("userId", "844e251b-574b-46e6-9247-f76f1f70a637"));
+      new User(new JsonObject().put("userId", "b2c27f3f-2524-4a84-816e-91f9ab23f837"));
 
   // List as a consumer
   public static User validListPolicyConsumer =
@@ -153,7 +153,7 @@ public class TestRequest {
   public static User allRolesUser =
       new User(
           new JsonObject()
-              .put("userId", "844e251b-574b-46e6-9247-f76f1f70a637")
+              .put("userId", "b2c27f3f-2524-4a84-816e-91f9ab23f837")
               .put("roles", new JsonArray().add(Roles.ADMIN)));
   public static User allRolesUser2 =
           new User(
@@ -174,7 +174,7 @@ public class TestRequest {
   public static User ProviderUser =
     new User(
               new JsonObject()
-                      .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5")
+                      .put("userId", "e69debbb-4c49-4727-a779-e355414915c2")
                       .put("roles", new JsonArray().add(Roles.PROVIDER))
                       .put("keycloakId", "04617f23-7e5d-4118-8773-1b6c85da14ed"));
 
@@ -186,7 +186,7 @@ public class TestRequest {
   public static User DelegateUser =
       new User(
           new JsonObject()
-                  .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5")
+                  .put("userId", "e69debbb-4c49-4727-a779-e355414915c2")
                   .put("roles", new JsonArray().add(Roles.DELEGATE))
                   .put("keycloakId", "04617f23-7e5d-4118-8773-1b6c85da14ed"));
   public static JsonArray DelPolFail = new JsonArray().add(ResOwnFailID);
@@ -195,7 +195,7 @@ public class TestRequest {
   public static User DelegateUserFail =
       new User(
           new JsonObject()
-              .put("userId", "a13eb955-c691-4fd3-b200-f18bc78810b5")
+              .put("userId", "e69debbb-4c49-4727-a779-e355414915c2")
               .put("roles", new JsonArray().add(Roles.DELEGATE))
               .put("keycloakId", "04617f23-7e5d-4118-8773-1b6c85da14ed"));
   public static JsonArray DelFail = new JsonArray().add(ResOwnFailID);
@@ -204,7 +204,7 @@ public class TestRequest {
   public static User successProvider =
       new User(
               new JsonObject()
-                      .put("userId", "844e251b-574b-46e6-9247-f76f1f70a637")
+                      .put("userId", "b2c27f3f-2524-4a84-816e-91f9ab23f837")
                       .put("roles", new JsonArray().add(Roles.PROVIDER))
                       .put("keycloakId", "b2c27f3f-2524-4a84-816e-91f9ab23f837"));
 
@@ -212,18 +212,18 @@ public class TestRequest {
   public static String INSERT_USER_POL =
       "insert into policies "
           + "(id, user_id,item_id,item_type,owner_id,status,expiry_time,constraints,created_at,updated_at) "
-          + "values($1::uuid, 'd1262b13-1cbe-4b66-a9b2-96df86437683','66ff82fb-1720-415d-a2f3-18ff65c0e050','RESOURCE', "
-          + " '844e251b-574b-46e6-9247-f76f1f70a637','ACTIVE','2023-06-15 09:07:16.034289','{}', NOW(), NOW())";
+          + "values($1::uuid, 'c5a34d2d-9553-4925-81fe-09aa08f29dea','66ff82fb-1720-415d-a2f3-18ff65c0e050','RESOURCE', "
+          + " 'b2c27f3f-2524-4a84-816e-91f9ab23f837','ACTIVE','2023-06-15 09:07:16.034289','{}', NOW(), NOW())";
 
   public static String INSERT_EXPIRED_USER_POL =
       "insert into policies "
           + "(id, user_id,item_id,item_type,owner_id,status,expiry_time,constraints,created_at,updated_at) "
-          + "values($1::uuid, 'd1262b13-1cbe-4b66-a9b2-96df86437683','66ff82fb-1720-415d-a2f3-18ff65c0e050','RESOURCE', "
-          + " '844e251b-574b-46e6-9247-f76f1f70a637','ACTIVE','1998-06-15 09:07:16.034289','{}', NOW(), NOW())";
+          + "values($1::uuid, 'c5a34d2d-9553-4925-81fe-09aa08f29dea','66ff82fb-1720-415d-a2f3-18ff65c0e050','RESOURCE', "
+          + " 'b2c27f3f-2524-4a84-816e-91f9ab23f837','ACTIVE','1998-06-15 09:07:16.034289','{}', NOW(), NOW())";
 
   public static String INSERT_APD_POL =
       "insert into apd_policies "
           + "(id, apd_id, user_class,item_id,item_type,owner_id,status,expiry_time,constraints,created_at,updated_at) "
           + "values($1::uuid, '88b7bdbc-936c-4478-8059-f95f4c8a6352','unitTest','66ff82fb-1720-415d-a2f3-18ff65c0e050','RESOURCE', "
-          + " '844e251b-574b-46e6-9247-f76f1f70a637','ACTIVE','2023-06-15 09:07:16.034289','{}', NOW(), NOW())";
+          + " 'b2c27f3f-2524-4a84-816e-91f9ab23f837','ACTIVE','2023-06-15 09:07:16.034289','{}', NOW(), NOW())";
 }

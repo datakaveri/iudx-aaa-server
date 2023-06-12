@@ -96,9 +96,9 @@ public class Constants {
       "SELECT * FROM organizations WHERE id = $1::uuid";
 
   public static final String SQL_CREATE_USER =
-      "INSERT INTO users (phone, organization_id, email_hash, keycloak_id, "
-          + "created_at, updated_at) VALUES ($1::text, $2::uuid, $3::text, $4::uuid, "
-          + "NOW(), NOW()) " + " RETURNING id";
+      "INSERT INTO users (id, phone, organization_id, email_hash, keycloak_id, "
+          + "created_at, updated_at) VALUES ($1::uuid, $2::text, $3::uuid, $4::text, $5::uuid, "
+          + "NOW(), NOW())";
 
   public static final String SQL_CREATE_ROLE = "INSERT INTO "
       + "roles (user_id, role, status, created_at, updated_at)" + " VALUES ($1::uuid, $2::"
