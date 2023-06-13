@@ -134,8 +134,7 @@ public class UpdatePolicyNotificationTest {
       "auth" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + "iudx.io";
 
   /* item details data structures */
-  static Map<UUID, String> itemIdToCatId = new HashMap<UUID, String>();
-  static Map<String, ResourceObj> catIdToResObj = new HashMap<String, ResourceObj>();
+  static Map<String, ResourceObj> itemIdToResObj = new HashMap<String, ResourceObj>();
 
   @BeforeAll
   @DisplayName("Deploying Verticle")
@@ -307,14 +306,11 @@ public class UpdatePolicyNotificationTest {
    */
   Supplier<UUID> randResourceGroup = () -> {
     UUID itemId = UUID.randomUUID();
-    String emailId = provider.result().getString("email");
-    String catId = String.format("%s/%s/rs.%s/%s", url, DigestUtils.sha1Hex(emailId.getBytes()),
-        url, RandomStringUtils.randomAlphabetic(10).toLowerCase());
+    String catId = "";
 
     ResourceObj obj = new ResourceObj("resource_group", itemId, catId,
         UUID.fromString(provider.result().getString("userId")), UUID.randomUUID(), null);
-    itemIdToCatId.put(itemId, catId);
-    catIdToResObj.put(catId, obj);
+    itemIdToResObj.put(itemId.toString(), obj);
     return itemId;
   };
 
@@ -324,16 +320,12 @@ public class UpdatePolicyNotificationTest {
    */
   Supplier<UUID> randResource = () -> {
     UUID itemId = UUID.randomUUID();
-    String emailId = provider.result().getString("email");
-    String catId = String.format("%s/%s/rs.%s/%s/%s", url, DigestUtils.sha1Hex(emailId.getBytes()),
-        url, RandomStringUtils.randomAlphabetic(10).toLowerCase(),
-        RandomStringUtils.randomAlphabetic(10).toLowerCase());
+    String catId = "";
 
     ResourceObj obj = new ResourceObj("resource", itemId, catId,
         UUID.fromString(provider.result().getString("userId")), UUID.randomUUID(),
         UUID.randomUUID());
-    itemIdToCatId.put(itemId, catId);
-    catIdToResObj.put(catId, obj);
+    itemIdToResObj.put(itemId.toString(), obj);
     return itemId;
   };
 
@@ -528,14 +520,6 @@ public class UpdatePolicyNotificationTest {
     UUID itemId = randResourceGroup.get();
     PolicyService spiedPolicyService = Mockito.spy(policyService);
 
-    /* Mock catalogue client for UpdateNotification response */
-    Mockito.doAnswer(i -> {
-      Set<UUID> itemIds = i.getArgument(0);
-      Map<UUID, String> map = new HashMap<UUID, String>();
-      itemIds.forEach(id -> map.put(id, itemIdToCatId.get(id)));
-      return Future.succeededFuture(map);
-    }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
-
     /* Mock registration service user details */
     Mockito.doAnswer(i -> {
       List<String> userIds = i.getArgument(0);
@@ -571,7 +555,7 @@ public class UpdatePolicyNotificationTest {
 
                 JsonObject j = results.getJsonObject(0);
 
-                assertEquals(j.getString(ITEMID), itemIdToCatId.get(itemId));
+                assertEquals(j.getString(ITEMID), itemId.toString());
                 assertEquals(j.getString(STATUS),
                     NotifRequestStatus.REJECTED.toString().toLowerCase());
                 assertEquals(j.getString(ITEMTYPE), "resource_group");
@@ -603,20 +587,12 @@ public class UpdatePolicyNotificationTest {
         .name(userJson.getString("firstName"), userJson.getString("lastName"))
         .roles(List.of(Roles.PROVIDER)).build();
 
-    /* Mock catalogue client for UpdateNotification response */
-    Mockito.doAnswer(i -> {
-      Set<UUID> itemIds = i.getArgument(0);
-      Map<UUID, String> map = new HashMap<UUID, String>();
-      itemIds.forEach(id -> map.put(id, itemIdToCatId.get(id)));
-      return Future.succeededFuture(map);
-    }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
-
     /* Mock catalogue client for create policy */
     Mockito.doAnswer(i -> {
       Map<String, List<String>> itemList = i.getArgument(0);
       Map<String, ResourceObj> map = new HashMap<String, ResourceObj>();
       String resourceGroup = itemList.get(RES_GRP).get(0);
-      map.put(resourceGroup, catIdToResObj.get(resourceGroup));
+      map.put(resourceGroup, itemIdToResObj.get(resourceGroup));
       return Future.succeededFuture(map);
     }).when(catalogueClient).checkReqItems(Mockito.any());
 
@@ -647,7 +623,7 @@ public class UpdatePolicyNotificationTest {
                 CreatePolicyRequest polReq = policyRequest.getValue().get(0);
 
                 assertTrue(polReq.getItemType().equalsIgnoreCase("RESOURCE_GROUP"));
-                assertEquals(polReq.getItemId(), itemIdToCatId.get(itemId));
+                assertEquals(polReq.getItemId(), itemId.toString());
                 assertEquals(polReq.getUserId(), consumer.result().getString("userId"));
                 assertEquals(polReq.getConstraints(), constraints);
 
@@ -668,7 +644,7 @@ public class UpdatePolicyNotificationTest {
 
                 JsonObject j = results.getJsonObject(0);
 
-                assertEquals(j.getString(ITEMID), itemIdToCatId.get(itemId));
+                assertEquals(j.getString(ITEMID), itemId.toString());
                 assertEquals(j.getString(STATUS),
                     NotifRequestStatus.APPROVED.toString().toLowerCase());
                 assertEquals(j.getString(ITEMTYPE), "resource_group");
@@ -694,14 +670,6 @@ public class UpdatePolicyNotificationTest {
 
       UUID itemId = randResourceGroup.get();
       PolicyService spiedPolicyService = Mockito.spy(policyService);
-
-      /* Mock catalogue client for UpdateNotification response */
-      Mockito.doAnswer(i -> {
-          Set<UUID> itemIds = i.getArgument(0);
-          Map<UUID, String> map = new HashMap<UUID, String>();
-          itemIds.forEach(id -> map.put(id, itemIdToCatId.get(id)));
-          return Future.succeededFuture(map);
-      }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
 
       /* Mock registration service user details */
       Mockito.doAnswer(i -> {
@@ -768,20 +736,12 @@ public class UpdatePolicyNotificationTest {
               .name(userJson.getString("firstName"), userJson.getString("lastName"))
               .roles(List.of(Roles.PROVIDER)).build();
 
-      /* Mock catalogue client for UpdateNotification response */
-      Mockito.doAnswer(i -> {
-          Set<UUID> itemIds = i.getArgument(0);
-          Map<UUID, String> map = new HashMap<UUID, String>();
-          itemIds.forEach(id -> map.put(id, itemIdToCatId.get(id)));
-          return Future.succeededFuture(map);
-      }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
-
       /* Mock catalogue client for create policy */
       Mockito.doAnswer(i -> {
           Map<String, List<String>> itemList = i.getArgument(0);
           Map<String, ResourceObj> map = new HashMap<String, ResourceObj>();
           String resourceGroup = itemList.get(RES_GRP).get(0);
-          map.put(resourceGroup, catIdToResObj.get(resourceGroup));
+          map.put(resourceGroup, itemIdToResObj.get(resourceGroup));
           return Future.succeededFuture(map);
       }).when(catalogueClient).checkReqItems(Mockito.any());
 
@@ -812,7 +772,7 @@ public class UpdatePolicyNotificationTest {
                       CreatePolicyRequest polReq = policyRequest.getValue().get(0);
 
                       assertTrue(polReq.getItemType().equalsIgnoreCase("RESOURCE_GROUP"));
-                      assertEquals(polReq.getItemId(), itemIdToCatId.get(itemId));
+                      assertEquals(polReq.getItemId(), itemId.toString());
                       assertEquals(polReq.getUserId(), consumer.result().getString("userId"));
                       assertEquals(polReq.getConstraints(), constraints);
 
@@ -833,7 +793,7 @@ public class UpdatePolicyNotificationTest {
 
                       JsonObject j = results.getJsonObject(0);
 
-                      assertEquals(j.getString(ITEMID), itemIdToCatId.get(itemId));
+                      assertEquals(j.getString(ITEMID), itemId.toString());
                       assertEquals(j.getString(STATUS),
                               NotifRequestStatus.APPROVED.toString().toLowerCase());
                       assertEquals(j.getString(ITEMTYPE), "resource_group");
@@ -881,20 +841,12 @@ public class UpdatePolicyNotificationTest {
         .name(userJson.getString("firstName"), userJson.getString("lastName"))
         .roles(List.of(Roles.PROVIDER)).build();
 
-    /* Mock catalogue client for UpdateNotification response */
-    Mockito.doAnswer(i -> {
-      Set<UUID> itemIds = i.getArgument(0);
-      Map<UUID, String> map = new HashMap<UUID, String>();
-      itemIds.forEach(id -> map.put(id, itemIdToCatId.get(id)));
-      return Future.succeededFuture(map);
-    }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
-
     /* Mock catalogue client for create policy */
     Mockito.doAnswer(i -> {
       Map<String, List<String>> itemList = i.getArgument(0);
       Map<String, ResourceObj> map = new HashMap<String, ResourceObj>();
       String resource = itemList.get(RES).get(0);
-      map.put(resource, catIdToResObj.get(resource));
+      map.put(resource, itemIdToResObj.get(resource));
       return Future.succeededFuture(map);
     }).when(catalogueClient).checkReqItems(Mockito.any());
 
@@ -926,7 +878,7 @@ public class UpdatePolicyNotificationTest {
                 CreatePolicyRequest polReq = policyRequest.getValue().get(0);
 
                 assertTrue(polReq.getItemType().equalsIgnoreCase("RESOURCE"));
-                assertEquals(polReq.getItemId(), itemIdToCatId.get(itemId));
+                assertEquals(polReq.getItemId(), itemId.toString());
                 assertEquals(polReq.getUserId(), consumer.result().getString("userId"));
 
                 assertEquals(polReq.getConstraints(), updatedConstraints);
@@ -948,7 +900,7 @@ public class UpdatePolicyNotificationTest {
 
                 JsonObject j = results.getJsonObject(0);
 
-                assertEquals(j.getString(ITEMID), itemIdToCatId.get(itemId));
+                assertEquals(j.getString(ITEMID), itemId.toString());
                 assertEquals(j.getString(STATUS),
                     NotifRequestStatus.APPROVED.toString().toLowerCase());
                 assertEquals(j.getString(ITEMTYPE), "resource");
@@ -977,14 +929,6 @@ public class UpdatePolicyNotificationTest {
         .userId(userJson.getString("userId"))
         .name(userJson.getString("firstName"), userJson.getString("lastName"))
         .roles(List.of(Roles.PROVIDER)).build();
-
-      /* Mock catalogue client for UpdateNotification response */
-      Mockito.doAnswer(i -> {
-          Set<UUID> itemIds = i.getArgument(0);
-          Map<UUID, String> map = new HashMap<UUID, String>();
-          itemIds.forEach(id -> map.put(id, itemIdToCatId.get(id)));
-          return Future.succeededFuture(map);
-      }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
 
     /* Mock policy service to send non-200 OK response */
     Mockito.doAnswer(i -> {
@@ -1075,20 +1019,12 @@ public class UpdatePolicyNotificationTest {
     JsonObject providerDetails =
         new JsonObject().put("providerId", provider.result().getString("userId"));
 
-    /* Mock catalogue client for UpdateNotification response */
-    Mockito.doAnswer(i -> {
-      Set<UUID> itemIds = i.getArgument(0);
-      Map<UUID, String> map = new HashMap<UUID, String>();
-      itemIds.forEach(id -> map.put(id, itemIdToCatId.get(id)));
-      return Future.succeededFuture(map);
-    }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
-
     /* Mock catalogue client for create policy */
     Mockito.doAnswer(i -> {
       Map<String, List<String>> itemList = i.getArgument(0);
       Map<String, ResourceObj> map = new HashMap<String, ResourceObj>();
       String resource = itemList.get(RES).get(0);
-      map.put(resource, catIdToResObj.get(resource));
+      map.put(resource, itemIdToResObj.get(resource));
       return Future.succeededFuture(map);
     }).when(catalogueClient).checkReqItems(Mockito.any());
 
@@ -1121,7 +1057,7 @@ public class UpdatePolicyNotificationTest {
                 CreatePolicyRequest polReq = policyRequest.getValue().get(0);
 
                 assertTrue(polReq.getItemType().equalsIgnoreCase("RESOURCE"));
-                assertEquals(polReq.getItemId(), itemIdToCatId.get(itemId));
+                assertEquals(polReq.getItemId(), itemId.toString());
                 assertEquals(polReq.getUserId(), consumer.result().getString("userId"));
 
                 assertEquals(polReq.getConstraints(), constraints);
@@ -1145,7 +1081,7 @@ public class UpdatePolicyNotificationTest {
 
                 JsonObject j = results.getJsonObject(0);
 
-                assertEquals(j.getString(ITEMID), itemIdToCatId.get(itemId));
+                assertEquals(j.getString(ITEMID), itemId.toString());
                 assertEquals(j.getString(STATUS),
                     NotifRequestStatus.APPROVED.toString().toLowerCase());
                 assertEquals(j.getString(ITEMTYPE), "resource");
@@ -1179,20 +1115,12 @@ public class UpdatePolicyNotificationTest {
       JsonObject providerDetails =
               new JsonObject().put("providerId", provider.result().getString("userId"));
 
-      /* Mock catalogue client for UpdateNotification response */
-      Mockito.doAnswer(i -> {
-          Set<UUID> itemIds = i.getArgument(0);
-          Map<UUID, String> map = new HashMap<UUID, String>();
-          itemIds.forEach(id -> map.put(id, itemIdToCatId.get(id)));
-          return Future.succeededFuture(map);
-      }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
-
       /* Mock catalogue client for create policy */
       Mockito.doAnswer(i -> {
           Map<String, List<String>> itemList = i.getArgument(0);
           Map<String, ResourceObj> map = new HashMap<String, ResourceObj>();
           String resource = itemList.get(RES).get(0);
-          map.put(resource, catIdToResObj.get(resource));
+          map.put(resource, itemIdToResObj.get(resource));
           return Future.succeededFuture(map);
       }).when(catalogueClient).checkReqItems(Mockito.any());
 
@@ -1229,7 +1157,7 @@ public class UpdatePolicyNotificationTest {
 
                               JsonObject j = results.getJsonObject(0);
 
-                              assertEquals(j.getString(ITEMID), itemIdToCatId.get(itemId));
+                              assertEquals(j.getString(ITEMID), itemId.toString());
                               assertEquals(j.getString(STATUS),
                                       NotifRequestStatus.REJECTED.toString().toLowerCase());
                               assertEquals(j.getString(ITEMTYPE), "resource");
@@ -1270,13 +1198,6 @@ public class UpdatePolicyNotificationTest {
               .userId(userJson.getString("userId"))
               .name(userJson.getString("firstName"), userJson.getString("lastName"))
               .roles(List.of(Roles.PROVIDER)).build();
-
-      Mockito.doAnswer(i -> {
-          Set<UUID> itemIds = i.getArgument(0);
-          Map<UUID, String> map = new HashMap<UUID, String>();
-          itemIds.forEach(id -> map.put(id, itemIdToCatId.get(id)));
-          return Future.succeededFuture(map);
-      }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
 
       /* Mock policy service to send non-200 OK response */
       Mockito.doAnswer(i -> {
@@ -1361,20 +1282,12 @@ public class UpdatePolicyNotificationTest {
               .name(userJson.getString("firstName"), userJson.getString("lastName"))
               .roles(List.of(Roles.PROVIDER)).build();
 
-      /* Mock catalogue client for UpdateNotification response */
-      Mockito.doAnswer(i -> {
-          Set<UUID> itemIds = i.getArgument(0);
-          Map<UUID, String> map = new HashMap<UUID, String>();
-          itemIds.forEach(id -> map.put(id, itemIdToCatId.get(id)));
-          return Future.succeededFuture(map);
-      }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
-
       /* Mock catalogue client for create policy */
       Mockito.doAnswer(i -> {
           Map<String, List<String>> itemList = i.getArgument(0);
           Map<String, ResourceObj> map = new HashMap<String, ResourceObj>();
           String resourceGroup = itemList.get(RES_GRP).get(0);
-          map.put(resourceGroup, catIdToResObj.get(resourceGroup));
+          map.put(resourceGroup, itemIdToResObj.get(resourceGroup));
           return Future.succeededFuture(map);
       }).when(catalogueClient).checkReqItems(Mockito.any());
 
@@ -1421,20 +1334,12 @@ public class UpdatePolicyNotificationTest {
                 .name(userJson.getString("firstName"), userJson.getString("lastName"))
                 .roles(List.of(Roles.PROVIDER)).build();
 
-        /* Mock catalogue client for UpdateNotification response */
-        Mockito.doAnswer(i -> {
-            Set<UUID> itemIds = i.getArgument(0);
-            Map<UUID, String> map = new HashMap<UUID, String>();
-            itemIds.forEach(id -> map.put(id, itemIdToCatId.get(id)));
-            return Future.succeededFuture(map);
-        }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
-
         /* Mock catalogue client for create policy */
         Mockito.doAnswer(i -> {
             Map<String, List<String>> itemList = i.getArgument(0);
             Map<String, ResourceObj> map = new HashMap<String, ResourceObj>();
             String resourceGroup = itemList.get(RES_GRP).get(0);
-            map.put(resourceGroup, catIdToResObj.get(resourceGroup));
+            map.put(resourceGroup, itemIdToResObj.get(resourceGroup));
             return Future.succeededFuture(map);
         }).when(catalogueClient).checkReqItems(Mockito.any());
 

@@ -20,7 +20,7 @@ public class TestRequest {
       new JsonObject()
           .put(
               "itemId",
-              "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg")
+              "a57cdc77-44a3-44b9-ba39-f339e40d3d21")
           .put("itemType", "resource_group")
           .put("role", "consumer")
           .put("userId", "c5a34d2d-9553-4925-81fe-09aa08f29dea");
@@ -29,7 +29,7 @@ public class TestRequest {
           new JsonObject()
                   .put(
                           "itemId",
-                          "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg")
+                          "a57cdc77-44a3-44b9-ba39-f339e40d3d21")
                   .put("itemType", "RESOURCE_SERVER")
                   .put("role", "consumer")
                   .put("userId", "c5a34d2d-9553-4925-81fe-09aa08f29dea");
@@ -37,7 +37,7 @@ public class TestRequest {
           new JsonObject()
                   .put(
                           "itemId",
-                          "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg")
+                          "a57cdc77-44a3-44b9-ba39-f339e40d3d21")
                   .put("itemType", "ADMIN")
                   .put("role", "ADMIN")
                   .put("userId", "c5a34d2d-9553-4925-81fe-09aa08f29dea");
@@ -47,27 +47,27 @@ public class TestRequest {
           .put("itemId", "rs.iudx.io")
           .put("itemType", "resource_group")
           .put("role", "consumer")
-          .put("userId", "c5a34d2d-9553-4925-81fe-09aa08f29dea");
+          .put("userId", "e69debbb-4c49-4727-a779-e355414915c2");
 
   public static JsonObject invalidItemId2 =
           new JsonObject()
                   .put("itemId", "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg/rs.iudx.io/testing-insert-rsg/rs.iudx.io")
                   .put("itemType", "RESOURCE_GROUP")
                   .put("role", "consumer")
-                  .put("userId", "c5a34d2d-9553-4925-81fe-09aa08f29dea");
+                  .put("userId", "e69debbb-4c49-4727-a779-e355414915c2");
 
   public static JsonObject invalidItemId3 =
           new JsonObject()
                   .put("itemId", "iisc.ac.in/89a36273d7/rs.iudx.io/testing-insert-rsg")
                   .put("itemType", "RESOURCE")
                   .put("role", "consumer")
-                  .put("userId", "c5a34d2d-9553-4925-81fe-09aa08f29dea");
+                  .put("userId", "e69debbb-4c49-4727-a779-e355414915c2");
 
   public static JsonObject consumerVerification =
       new JsonObject()
           .put(
               "itemId",
-              "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/surat-itms-realtime-information")
+              "8b95ab80-2aaf-4636-a65e-7f2563d0d371")
           .put("itemType", "resource_group")
           .put("role", "consumer")
           .put("userId", "e69debbb-4c49-4727-a779-e355414915c2");
@@ -76,7 +76,7 @@ public class TestRequest {
       new JsonObject()
           .put(
               "itemId",
-              "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/sub-sample")
+              "f8947fec-191d-4f54-836f-fccca9ff9dbd")
           .put("itemType", "resource_group")
           .put("role", "consumer")
           .put("userId", "e69debbb-4c49-4727-a779-e355414915c2");
@@ -103,7 +103,7 @@ public class TestRequest {
       new JsonObject()
           .put(
               "itemId",
-              "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/surat-itms-realtime-information")
+              "8b95ab80-2aaf-4636-a65e-7f2563d0d371")
           .put("itemType", "resource_group")
           .put("role", "provider")
           .put("userId", "b2c27f3f-2524-4a84-816e-91f9ab23f837");
@@ -112,7 +112,7 @@ public class TestRequest {
       new JsonObject()
           .put(
               "itemId",
-              "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg")
+              "a57cdc77-44a3-44b9-ba39-f339e40d3d21")
           .put("itemType", "resource_group")
           .put("role", "delegate")
           .put("userId", "e69debbb-4c49-4727-a779-e355414915c2");
@@ -130,7 +130,7 @@ public class TestRequest {
       new JsonObject()
           .put(
               "itemId",
-              "iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/testing-insert-rsg")
+              "a57cdc77-44a3-44b9-ba39-f339e40d3d21")
           .put("itemType", "resource_group")
           .put("role", "delegate")
           .put("userId", "c5a34d2d-9553-4925-81fe-09aa08f29dea");

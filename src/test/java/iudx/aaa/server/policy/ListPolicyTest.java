@@ -132,15 +132,6 @@ public class ListPolicyTest {
   void listPolicySuccessProvider(VertxTestContext testContext) {
 
     Mockito.doAnswer(i -> {
-      Map<UUID, String> result = new HashMap<UUID, String>();
-      Set<UUID> ids = i.getArgument(0);
-      for (UUID x : ids) {
-        result.put(x, "<cat-id-placeholder>");
-      }
-      return Future.succeededFuture(result);
-    }).when(catalogueClient).getCatIds(any(), any());
-
-    Mockito.doAnswer(i -> {
       Promise<JsonObject> p = i.getArgument(2);
       JsonObject result = new JsonObject();
       List<String> ids = i.getArgument(1);
@@ -173,15 +164,6 @@ public class ListPolicyTest {
   @Test
   @DisplayName("ListPolicy Success consumer")
   void listPolicySuccessConsumer(VertxTestContext testContext) {
-
-    Mockito.doAnswer(i -> {
-      Map<UUID, String> result = new HashMap<UUID, String>();
-      Set<UUID> ids = i.getArgument(0);
-      for (UUID x : ids) {
-        result.put(x, "<cat-id-placeholder>");
-      }
-      return Future.succeededFuture(result);
-    }).when(catalogueClient).getCatIds(any(), any());
 
     Mockito.doAnswer(i -> {
       Promise<JsonObject> p = i.getArgument(2);

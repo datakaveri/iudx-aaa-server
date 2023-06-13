@@ -7771,7 +7771,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"admin\"\n}",
+									"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"admin\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -7827,7 +7827,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n    \"itemType\": \"resource\",\n    \"role\": \"admin\"\n}",
+									"raw": "{\n    \"itemId\": \"8eed51c0-bc79-4cdd-af72-521e8dd37020\",\n    \"itemType\": \"resource\",\n    \"role\": \"admin\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -7983,62 +7983,6 @@
 							"response": []
 						},
 						{
-							"name": "Provider role - Cannot get catalogue token - [403] (no cat admin policy)",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(403);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/cat-test.iudx.io/catalogue/crud\",\n    \"itemType\": \"resource\",\n    \"role\": \"provider\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"token"
-									]
-								}
-							},
-							"response": []
-						},
-						{
 							"name": "Provider role - Cannot get token for resource_group owned by postman.provider-admin - [403] (no rs admin policy)",
 							"event": [
 								{
@@ -8073,7 +8017,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"provider\"\n}",
+									"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"provider\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -8129,7 +8073,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n    \"itemType\": \"resource\",\n    \"role\": \"provider\"\n}",
+									"raw": "{\n    \"itemId\": \"8eed51c0-bc79-4cdd-af72-521e8dd37020\",\n    \"itemType\": \"resource\",\n    \"role\": \"provider\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -8185,7 +8129,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"provider\"\n}",
+									"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"provider\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -8241,7 +8185,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n    \"itemType\": \"resource\",\n    \"role\": \"provider\"\n}",
+									"raw": "{\n    \"itemId\": \"8eed51c0-bc79-4cdd-af72-521e8dd37020\",\n    \"itemType\": \"resource\",\n    \"role\": \"provider\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -8302,7 +8246,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
+									"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -8358,7 +8302,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n    \"itemType\": \"resource\",\n    \"role\": \"consumer\"\n}",
+									"raw": "{\n    \"itemId\": \"8eed51c0-bc79-4cdd-af72-521e8dd37020\",\n    \"itemType\": \"resource\",\n    \"role\": \"consumer\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -8555,7 +8499,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"delegate\"\n}",
+									"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"delegate\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -8611,63 +8555,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n    \"itemType\": \"resource\",\n    \"role\": \"delegate\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"token"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Delegate cannot get catalogue token - [400] (no admin policy + no delegation)",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(403);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/cat-test.iudx.io/catalogue/crud\",\n    \"itemType\": \"resource\",\n    \"role\": \"delegate\"\n}",
+									"raw": "{\n    \"itemId\": \"8eed51c0-bc79-4cdd-af72-521e8dd37020\",\n    \"itemType\": \"resource\",\n    \"role\": \"delegate\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -8719,7 +8607,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource\",\n    \"role\": \"delegate\"\n}",
+							"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource\",\n    \"role\": \"delegate\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -8822,7 +8710,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-onedatakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-onedatakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-onedatakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-onedatakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-oneddatakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-onedatakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-oneatakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-onedatakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
+							"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b84b367af2-ad55-4017-9e19-35a5fa37e9b84b367af2-ad55-4017-9e19-35a5fa37e9b84b367af2-ad55-4017-9e19-35a5fa37e9b84b367af2-ad55-4017-9e19-35a5fa37e9b8d4b367af2-ad55-4017-9e19-35a5fa37e9b84b367af2-ad55-4017-9e19-35a5fa37e9b8atakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -8934,7 +8822,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resourcklsa\",\n    \"role\": \"consumer\"\n}",
+							"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resourcklsa\",\n    \"role\": \"consumer\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -8990,7 +8878,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"role\": \"consumer\"\n}",
+							"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"role\": \"consumer\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -9046,7 +8934,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\":\"resource_group\",\n    \"role\": \"consum\"\n}",
+							"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\":\"resource_group\",\n    \"role\": \"consum\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -9102,7 +8990,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\":\"resource_group\"\n}",
+							"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\":\"resource_group\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -9158,7 +9046,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\":\"resource_group\",\n    \"role\": \"consumer\",\n    \"context\": \"hello\"\n}",
+							"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\":\"resource_group\",\n    \"role\": \"consumer\",\n    \"context\": \"hello\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -9214,7 +9102,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource\",\n    \"role\": \"delegate\"\n}",
+							"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource\",\n    \"role\": \"delegate\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -9270,7 +9158,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource\",\n    \"role\": \"delegate\"\n}",
+							"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource\",\n    \"role\": \"delegate\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -9326,7 +9214,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource\",\n    \"role\": \"provider\"\n}",
+							"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource\",\n    \"role\": \"provider\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -9451,7 +9339,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{$randomUUID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        },\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{$randomUUID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        },\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -9509,7 +9397,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -9567,7 +9455,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n                {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n                {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -9625,7 +9513,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\", \"sub\"\n                ]\n            }\n        },\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\", \"sub\"\n                ]\n            }\n        },\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -9683,7 +9571,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\": \"3000-12-12T12:12:12\"\n        },\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\": \"3000-12-12T12:12:12\"\n        },\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -9741,7 +9629,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n                {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/fake-item/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n        {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n         {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n                {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/fake-item/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n        {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"8eed51c0-bc79-4cdd-af72-521e8dd37020\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n         {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"8eed51c0-bc79-4cdd-af72-521e8dd37020\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -9799,7 +9687,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n                        {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"datakaveri.org/9c13a2308bb0919bf146be8681eb886922d29282/rs.iudx.io/invalid-resource-for-ownership-test\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n                {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n        {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n         {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n                        {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"decffa8a-a1ec-3a60-e571-cafedead5351\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n                {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n        {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"8eed51c0-bc79-4cdd-af72-521e8dd37020\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        },\n         {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"8eed51c0-bc79-4cdd-af72-521e8dd37020\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\":\"2030-12-12T00:00:00\"\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -9857,7 +9745,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\": \"2030-12-12T00:00:00\"\n        },\n        {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"file\"\n                ]\n            }\n        },\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\": \"2030-12-12T00:00:00\"\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\": \"2030-12-12T00:00:00\"\n        },\n        {\n            \"userId\": \"{{REJPROVIDER_DELEGATE_USERID}}\",\n            \"itemId\": \"7f333829-6ed7-4e9e-93d8-e12958f7a535\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"file\"\n                ]\n            }\n        },\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"7f333829-6ed7-4e9e-93d8-e12958f7a535\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\": \"2030-12-12T00:00:00\"\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -9915,7 +9803,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":{}\n    }]\n}",
+									"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":{}\n    }]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -9973,65 +9861,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":{},\n        \"expiryTime\":\"2020-09-09T15:00:00\"\n    }]\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"policies"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "INCORRECT!! Test catalogue fetch - [400]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(400);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-											"});",
-											"",
-											""
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":{},\n        \"expiryTime\":\"2020-09-09T15:00:00\"\n    }]\n}",
+									"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":{},\n        \"expiryTime\":\"2020-09-09T15:00:00\"\n    }]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -10210,7 +10040,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"746442f5-18a7-44fd-8c8f-3e39e5026fae\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"746442f5-18a7-44fd-8c8f-3e39e5026fae\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -10268,7 +10098,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"746442f5-18a7-44fd-8c8f-3e39e5026fae\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"746442f5-18a7-44fd-8c8f-3e39e5026fae\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -10620,7 +10450,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"delegate\"\n}",
+									"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"delegate\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -10676,63 +10506,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n    \"itemType\": \"resource\",\n    \"role\": \"delegate\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"token"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Delegate cannot get catalogue token - [403] (No delegation)",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(403);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/cat-test.iudx.io/catalogue/crud\",\n    \"itemType\": \"resource\",\n    \"role\": \"delegate\"\n}",
+									"raw": "{\n    \"itemId\": \"8eed51c0-bc79-4cdd-af72-521e8dd37020\",\n    \"itemType\": \"resource\",\n    \"role\": \"delegate\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -10800,7 +10574,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":{}\n    }]\n}",
+									"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":{}\n    }]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -10863,7 +10637,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":{}\n    }]\n}",
+									"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":{}\n    }]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -10926,7 +10700,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":{}\n    }]\n}",
+									"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":{}\n    }]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -10984,7 +10758,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        },\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {}\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        },\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"8eed51c0-bc79-4cdd-af72-521e8dd37020\",\n            \"itemType\": \"resource\",\n            \"constraints\": {}\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -11047,7 +10821,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        },\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {}\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        },\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"8eed51c0-bc79-4cdd-af72-521e8dd37020\",\n            \"itemType\": \"resource\",\n            \"constraints\": {}\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -11110,7 +10884,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        },\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"datakaveri.org/9c13a2308bb0919bf146be8681eb886922d29282/rs.iudx.io/invalid-resource-for-ownership-test\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        },\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"decffa8a-a1ec-3a60-e571-cafedead5351\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -11173,7 +10947,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        },\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"datakaveri.org/9c13a2308bb0919bf146be8681eb886922d29282/rs.iudx.io/invalid-resource-for-ownership-test\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        },\n        {\n            \"userId\": \"{{ALL_ROLES_USERID}}\",\n            \"itemId\": \"decffa8a-a1ec-3a60-e571-cafedead5351\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -11495,7 +11269,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [{\n        \"userId\":\"124443423242342433489327470283947028347284702847823842\",\n        \"itemId\":\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":{}\n    }]\n}",
+							"raw": "{\n    \"request\": [{\n        \"userId\":\"124443423242342433489327470283947028347284702847823842\",\n        \"itemId\":\"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":{}\n    }]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -11553,7 +11327,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [{\n\n        \"itemId\":\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":{}\n    }]\n}",
+							"raw": "{\n    \"request\": [{\n\n        \"itemId\":\"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":{}\n    }]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -11611,7 +11385,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8integration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-oneintegration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -11727,7 +11501,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n        \"itemType\":\"roureabcd\",\n        \"constraints\":{}\n    }]\n}",
+							"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n        \"itemType\":\"roureabcd\",\n        \"constraints\":{}\n    }]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -11785,7 +11559,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n        \"constraints\":{}\n    }]\n}",
+							"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n        \"constraints\":{}\n    }]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -11843,7 +11617,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":\"90193023\"\n    }]\n}",
+							"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":\"90193023\"\n    }]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -11901,7 +11675,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n        \"itemType\":\"resource_group\"\n    }]\n}",
+							"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n        \"itemType\":\"resource_group\"\n    }]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -11959,7 +11733,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {},\n            \"expiryTime\": \"2133231-23-232T90320\"\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {},\n            \"expiryTime\": \"2133231-23-232T90320\"\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -12017,7 +11791,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {},\n            \"userClass\":\"something\"\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {},\n            \"userClass\":\"something\"\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -12075,7 +11849,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {},\n            \"apdId\":\"example.com\"\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {},\n            \"apdId\":\"example.com\"\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -12133,7 +11907,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {},\n            \"apdId\":\"example.com\",\n            \"userClass\":\"something\"\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {},\n            \"apdId\":\"example.com\",\n            \"userClass\":\"something\"\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -12191,7 +11965,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {},\n            \"apdId\":\"example.com\"\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {},\n            \"apdId\":\"example.com\"\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -12249,7 +12023,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        },\n                {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        },\n                {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"constraints\": {}\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -12307,7 +12081,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":{}\n    }]\n}",
+							"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":{}\n    }]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -12365,7 +12139,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":{}\n    }]\n}",
+							"raw": "{\n    \"request\": [{\n        \"userId\":\"{{CONSUMER_GMAIL_USERID}}\",\n        \"itemId\":\"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n        \"itemType\":\"resource_group\",\n        \"constraints\":{}\n    }]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -12423,7 +12197,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -12608,7 +12382,7 @@
 									"        if(r.owner.id == \"746442f5-18a7-44fd-8c8f-3e39e5026fae\")",
 									"        {",
 									"            pm.expect(r.user.id).to.be.oneOf([pm.environment.get(\"CONSUMER_GMAIL_USERID\"),pm.environment.get(\"ALL_ROLES_USERID\"),pm.environment.get(\"REJPROVIDER_DELEGATE_USERID\")]);",
-									"            pm.expect(r.itemId.startsWith(\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/\")).to.be.true;",
+									"            pm.expect(r.itemId).to.exist;",
 									"            pm.expect(r.constraints).to.exist;",
 									"            pm.expect(r.policyId).to.exist;",
 									"            pm.expect(r.expiryTime).to.exist;",
@@ -12675,7 +12449,7 @@
 									"            pm.expect(r.owner.id == \"746442f5-18a7-44fd-8c8f-3e39e5026fae\").to.be.true;",
 									"            pm.expect(r.user.id).to.be.eq(pm.environment.get(\"CONSUMER_GMAIL_USERID\"));",
 									"            pm.expect(r.user.email).to.be.eq(\"consumer@gmail.com\");",
-									"            pm.expect(r.itemId.startsWith(\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/\")).to.be.true;",
+									"            pm.expect(r.itemId).to.exist;",
 									"            pm.expect(r.constraints).to.exist;",
 									"            pm.expect(r.policyId).to.exist;",
 									"            pm.expect(r.expiryTime).to.exist;",
@@ -12737,7 +12511,7 @@
 									"            pm.expect(r.user.id).to.be.eq(pm.environment.get(\"REJPROVIDER_DELEGATE_USERID\"));",
 									"            pm.expect(r.user.email).to.be.eq(\"rejprovider.delegate@datakaveri.org\");",
 									"            if([\"resource_group\", \"resource\"].includes(r.itemType))",
-									"                pm.expect(r.itemId.startsWith(\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/\")).to.be.true;",
+									"                pm.expect(r.itemId).to.exist;",
 									"            if(r.itemType == 'resource_server')",
 									"                pm.expect(r.expiryTime.startsWith(\"3000\")).to.be.true;",
 									"            pm.expect(r.constraints).to.exist;",
@@ -12955,7 +12729,7 @@
 									"    body.results.forEach((r) =>{",
 									"        pm.expect(r.owner.id == \"746442f5-18a7-44fd-8c8f-3e39e5026fae\").to.be.true;",
 									"            pm.expect(r.user.id).to.be.oneOf([pm.environment.get(\"CONSUMER_GMAIL_USERID\"),pm.environment.get(\"ALL_ROLES_USERID\"),pm.environment.get(\"REJPROVIDER_DELEGATE_USERID\")]);",
-									"            pm.expect(r.itemId.startsWith(\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/\")).to.be.true;",
+									"            pm.expect(r.itemId).to.be.exist;",
 									"            pm.expect(r.constraints).to.exist;",
 									"            pm.expect(r.itemType).to.exist;",
 									"            pm.expect(r.policyId).to.exist;",
@@ -13046,7 +12820,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"provider\"\n}",
+									"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"provider\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -13091,7 +12865,7 @@
 											"    pm.expect(result).to.have.property(\"sub\");",
 											"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
 											"    pm.expect(result.aud).to.be.eq(\"rs.iudx.io\");",
-											"    pm.expect(result.iid).to.be.eq(\"rg:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\");",
+											"    pm.expect(result.iid).to.be.eq(\"rg:4b367af2-ad55-4017-9e19-35a5fa37e9b8\");",
 											"    pm.expect(result.role).to.be.eq(\"provider\");",
 											"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
 											"    pm.expect(result.cons).to.be.empty;",
@@ -13176,7 +12950,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n    \"itemType\": \"resource\",\n    \"role\": \"provider\"\n}",
+									"raw": "{\n    \"itemId\": \"8eed51c0-bc79-4cdd-af72-521e8dd37020\",\n    \"itemType\": \"resource\",\n    \"role\": \"provider\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -13221,7 +12995,7 @@
 											"    pm.expect(result).to.have.property(\"sub\");",
 											"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
 											"    pm.expect(result.aud).to.be.eq(\"rs.iudx.io\");",
-											"    pm.expect(result.iid).to.be.eq(\"ri:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\");",
+											"    pm.expect(result.iid).to.be.eq(\"ri:8eed51c0-bc79-4cdd-af72-521e8dd37020\");",
 											"    pm.expect(result.role).to.be.eq(\"provider\");",
 											"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
 											"    pm.expect(result.cons).to.be.empty;",
@@ -13261,200 +13035,6 @@
 										"auth",
 										"v1",
 										"introspect"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Provider role - get catalogue token - [200]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    const moment = require('moment');",
-											"",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
-											"    const result = body.results;",
-											"    pm.expect(result).to.have.property(\"accessToken\");",
-											"    pm.expect(result.expiry).to.be.greaterThan(moment().unix());",
-											"    pm.expect(result.server).to.be.eq(\"cat-test.iudx.io\");",
-											"",
-											"    pm.environment.set(\"INTROSPECT_TOKEN\", result.accessToken);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/cat-test.iudx.io/catalogue/crud\",\n    \"itemType\": \"resource\",\n    \"role\": \"provider\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"token"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Introspect Provider-catalogue token - [200]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    const moment = require('moment');",
-											"",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
-											"    const result = body.results;",
-											"    pm.expect(result).to.have.property(\"sub\");",
-											"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
-											"    pm.expect(result.aud).to.be.eq(\"cat-test.iudx.io\");",
-											"    pm.expect(result.iid).to.be.eq(\"ri:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/cat-test.iudx.io/catalogue/crud\");",
-											"    pm.expect(result.role).to.be.eq(\"provider\");",
-											"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
-											"    pm.expect(result.cons).to.be.empty;",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"accessToken\" : \"{{INTROSPECT_TOKEN}}\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/introspect",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"introspect"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "TEST CATALOGUE FLOW FOR NEW PROVIDER - [200]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    const moment = require('moment');",
-											"",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
-											"    const result = body.results;",
-											"    pm.expect(result).to.have.property(\"accessToken\");",
-											"    pm.expect(result.expiry).to.be.greaterThan(moment().unix());",
-											"    pm.expect(result.server).to.be.eq(\"cat-test.iudx.io\");",
-											"",
-											"    pm.environment.set(\"INTROSPECT_TOKEN\", result.accessToken);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/cat-test.iudx.io/catalogue/crud\",\n    \"itemType\": \"resource\",\n    \"role\": \"provider\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"token"
 									]
 								}
 							},
@@ -13508,7 +13088,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
+									"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -13553,7 +13133,7 @@
 											"    pm.expect(result).to.have.property(\"sub\");",
 											"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
 											"    pm.expect(result.aud).to.be.eq(\"rs.iudx.io\");",
-											"    pm.expect(result.iid).to.be.eq(\"rg:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\");",
+											"    pm.expect(result.iid).to.be.eq(\"rg:4b367af2-ad55-4017-9e19-35a5fa37e9b8\");",
 											"    pm.expect(result.role).to.be.eq(\"consumer\");",
 											"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
 											"    pm.expect(result.cons).to.not.be.empty;",
@@ -13640,7 +13220,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n    \"itemType\": \"resource\",\n    \"role\": \"consumer\"\n}",
+									"raw": "{\n    \"itemId\": \"8eed51c0-bc79-4cdd-af72-521e8dd37020\",\n    \"itemType\": \"resource\",\n    \"role\": \"consumer\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -13685,7 +13265,7 @@
 											"    pm.expect(result).to.have.property(\"sub\");",
 											"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
 											"    pm.expect(result.aud).to.be.eq(\"rs.iudx.io\");",
-											"    pm.expect(result.iid).to.be.eq(\"ri:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\");",
+											"    pm.expect(result.iid).to.be.eq(\"ri:8eed51c0-bc79-4cdd-af72-521e8dd37020\");",
 											"    pm.expect(result.role).to.be.eq(\"consumer\");",
 											"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
 											"    pm.expect(result.cons).to.not.be.empty;",
@@ -13770,7 +13350,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
+									"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -13815,7 +13395,7 @@
 											"    pm.expect(result).to.have.property(\"sub\");",
 											"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
 											"    pm.expect(result.aud).to.be.eq(\"rs.iudx.io\");",
-											"    pm.expect(result.iid).to.be.eq(\"rg:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\");",
+											"    pm.expect(result.iid).to.be.eq(\"rg:4b367af2-ad55-4017-9e19-35a5fa37e9b8\");",
 											"    pm.expect(result.role).to.be.eq(\"consumer\");",
 											"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
 											"    pm.expect(result.cons).to.be.empty;",
@@ -13900,7 +13480,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-one\",\n    \"itemType\": \"resource\",\n    \"role\": \"consumer\"\n}",
+									"raw": "{\n    \"itemId\": \"7f333829-6ed7-4e9e-93d8-e12958f7a535\",\n    \"itemType\": \"resource\",\n    \"role\": \"consumer\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -13945,7 +13525,7 @@
 											"    pm.expect(result).to.have.property(\"sub\");",
 											"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
 											"    pm.expect(result.aud).to.be.eq(\"rs.iudx.io\");",
-											"    pm.expect(result.iid).to.be.eq(\"ri:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-one\");",
+											"    pm.expect(result.iid).to.be.eq(\"ri:7f333829-6ed7-4e9e-93d8-e12958f7a535\");",
 											"    pm.expect(result.role).to.be.eq(\"consumer\");",
 											"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
 											"    pm.expect(result.cons).to.not.be.empty;",
@@ -14023,7 +13603,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"delegate\"\n}",
+									"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"delegate\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -14089,7 +13669,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
+									"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -14150,7 +13730,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
+									"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -14219,7 +13799,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
+									"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -14264,7 +13844,7 @@
 											"    pm.expect(result).to.have.property(\"sub\");",
 											"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
 											"    pm.expect(result.aud).to.be.eq(\"rs.iudx.io\");",
-											"    pm.expect(result.iid).to.be.eq(\"rg:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\");",
+											"    pm.expect(result.iid).to.be.eq(\"rg:4b367af2-ad55-4017-9e19-35a5fa37e9b8\");",
 											"    pm.expect(result.role).to.be.eq(\"consumer\");",
 											"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
 											"    pm.expect(result.cons).to.not.be.empty;",
@@ -14346,7 +13926,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
+									"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -14407,7 +13987,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
+									"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -14463,7 +14043,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
+									"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -14519,7 +14099,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
+									"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -14580,7 +14160,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"delegate\"\n}",
+									"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"delegate\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -14636,63 +14216,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n    \"itemType\": \"resource\",\n    \"role\": \"delegate\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"token"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Delegate cannot get catalogue token - [403]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(403);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/cat-test.iudx.io/catalogue/crud\",\n    \"itemType\": \"resource\",\n    \"role\": \"delegate\"\n}",
+									"raw": "{\n    \"itemId\": \"8eed51c0-bc79-4cdd-af72-521e8dd37020\",\n    \"itemType\": \"resource\",\n    \"role\": \"delegate\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -16739,7 +16263,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"delegate\"\n}",
+									"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"delegate\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -16784,7 +16308,7 @@
 											"    pm.expect(result).to.have.property(\"sub\");",
 											"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
 											"    pm.expect(result.aud).to.be.eq(\"rs.iudx.io\");",
-											"    pm.expect(result.iid).to.be.eq(\"rg:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\");",
+											"    pm.expect(result.iid).to.be.eq(\"rg:4b367af2-ad55-4017-9e19-35a5fa37e9b8\");",
 											"    pm.expect(result.role).to.be.eq(\"delegate\");",
 											"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
 											"    pm.expect(result.cons).to.be.empty;",
@@ -16865,7 +16389,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-one\",\n    \"itemType\": \"resource\",\n    \"role\": \"delegate\"\n}",
+									"raw": "{\n    \"itemId\": \"7f333829-6ed7-4e9e-93d8-e12958f7a535\",\n    \"itemType\": \"resource\",\n    \"role\": \"delegate\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -16910,7 +16434,7 @@
 											"    pm.expect(result).to.have.property(\"sub\");",
 											"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
 											"    pm.expect(result.aud).to.be.eq(\"rs.iudx.io\");",
-											"    pm.expect(result.iid).to.be.eq(\"ri:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-one\");",
+											"    pm.expect(result.iid).to.be.eq(\"ri:7f333829-6ed7-4e9e-93d8-e12958f7a535\");",
 											"    pm.expect(result.role).to.be.eq(\"delegate\");",
 											"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
 											"    pm.expect(result.cons).to.be.empty;",
@@ -16995,7 +16519,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n    \"itemType\": \"resource\",\n    \"role\": \"delegate\"\n}",
+									"raw": "{\n    \"itemId\": \"2923c77f-741b-4c3a-b010-183efbd43dee\",\n    \"itemType\": \"resource\",\n    \"role\": \"delegate\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -17040,7 +16564,7 @@
 											"    pm.expect(result).to.have.property(\"sub\");",
 											"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
 											"    pm.expect(result.aud).to.be.eq(\"rs.iudx.io\");",
-											"    pm.expect(result.iid).to.be.eq(\"ri:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\");",
+											"    pm.expect(result.iid).to.be.eq(\"ri:2923c77f-741b-4c3a-b010-183efbd43dee\");",
 											"    pm.expect(result.role).to.be.eq(\"delegate\");",
 											"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
 											"    pm.expect(result.cons).to.be.empty;",
@@ -17062,130 +16586,6 @@
 								"body": {
 									"mode": "raw",
 									"raw": "{\n    \"accessToken\" : \"{{INTROSPECT_TOKEN}}\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/introspect",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"introspect"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Delegate can get catalogue token - [200]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    const moment = require('moment');",
-											"",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
-											"    const result = body.results;",
-											"    pm.expect(result).to.have.property(\"accessToken\");",
-											"    pm.expect(result.expiry).to.be.greaterThan(moment().unix());",
-											"    pm.expect(result.server).to.be.eq(\"cat-test.iudx.io\");",
-											"",
-											"    pm.environment.set(\"CAT_TOKEN\", result.accessToken);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/cat-test.iudx.io/catalogue/crud\",\n    \"itemType\": \"resource\",\n    \"role\": \"delegate\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/token",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"token"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Introspect delegate-cat token - [200]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    const moment = require('moment');",
-											"",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
-											"    const result = body.results;",
-											"    pm.expect(result).to.have.property(\"sub\");",
-											"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
-											"    pm.expect(result.aud).to.be.eq(\"cat-test.iudx.io\");",
-											"    pm.expect(result.iid).to.be.eq(\"ri:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/cat-test.iudx.io/catalogue/crud\");",
-											"    pm.expect(result.role).to.be.eq(\"delegate\");",
-											"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
-											"    pm.expect(result.cons).to.be.empty;",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"accessToken\" : \"{{CAT_TOKEN}}\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -17242,7 +16642,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"delegate\"\n}",
+									"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"delegate\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -18250,7 +17650,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
+							"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -19288,7 +18688,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two-fake\",\n            \"itemType\": \"resource_group\",\n            \"expiryDuration\": \"P1Y2M10DT2H30M\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\",\n                    \"sub\"\n                ]\n            }\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"aec83a80-61ec-4ae0-8671-80194f2ce73e-fake\",\n            \"itemType\": \"resource_group\",\n            \"expiryDuration\": \"P1Y2M10DT2H30M\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\",\n                    \"sub\"\n                ]\n            }\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -19347,7 +18747,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n                {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n            \"itemType\": \"resource\",\n            \"expiryDuration\": \"P1Y2M10DT2H30M\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\",\n                    \"sub\"\n                ]\n            }\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n                {\n            \"itemId\": \"aec83a80-61ec-4ae0-8671-80194f2ce73e\",\n            \"itemType\": \"resource\",\n            \"expiryDuration\": \"P1Y2M10DT2H30M\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\",\n                    \"sub\"\n                ]\n            }\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -19389,7 +18789,7 @@
 									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
 									"    pm.expect(body.results).to.not.be.empty;",
 									"    pm.expect(body.results[0]).to.have.property(\"requestId\");",
-									"    pm.expect(body.results[0]).to.have.property(\"itemId\",\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\" );",
+									"    pm.expect(body.results[0]).to.have.property(\"itemId\",\"aec83a80-61ec-4ae0-8671-80194f2ce73e\" );",
 									"    pm.expect(body.results[0]).to.have.property(\"itemType\",\"resource_group\" );",
 									"        pm.expect(body.results[0].user).to.not.be.empty;",
 									"        pm.expect(body.results[0].owner).to.not.be.empty;",
@@ -19415,7 +18815,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n            \"itemType\": \"resource_group\",\n            \"expiryDuration\": \"P1Y2M10DT2H30M\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\",\n                    \"sub\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"expiryDuration\": \"P20Y\",\n            \"constraints\": {}\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"aec83a80-61ec-4ae0-8671-80194f2ce73e\",\n            \"itemType\": \"resource_group\",\n            \"expiryDuration\": \"P1Y2M10DT2H30M\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\",\n                    \"sub\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"expiryDuration\": \"P20Y\",\n            \"constraints\": {}\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -19474,7 +18874,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"expiryDuration\": \"P5Y\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"expiryDuration\": \"P5Y\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n            \"itemType\": \"resource_group\",\n            \"expiryDuration\": \"P1Y4M10DT2H30M\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"220c1911-3cdb-4012-bbcc-c5a223a12626\",\n            \"itemType\": \"resource\",\n            \"expiryDuration\": \"P5Y\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"7f333829-6ed7-4e9e-93d8-e12958f7a535\",\n            \"itemType\": \"resource\",\n            \"expiryDuration\": \"P5Y\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"aec83a80-61ec-4ae0-8671-80194f2ce73e\",\n            \"itemType\": \"resource_group\",\n            \"expiryDuration\": \"P1Y4M10DT2H30M\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -19516,7 +18916,7 @@
 									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
 									"    pm.expect(body.results).to.not.be.empty;",
 									"    pm.expect(body.results[0]).to.have.property(\"requestId\");",
-									"    pm.expect(body.results[0]).to.have.property(\"itemId\",\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-one\" );",
+									"    pm.expect(body.results[0]).to.have.property(\"itemId\",\"7f333829-6ed7-4e9e-93d8-e12958f7a535\" );",
 									"    pm.expect(body.results[0]).to.have.property(\"itemType\",\"resource\" );",
 									"        pm.expect(body.results[0].user).to.not.be.empty;",
 									"        pm.expect(body.results[0].owner).to.not.be.empty;",
@@ -19542,7 +18942,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"expiryDuration\": \"P1Y\",\n            \"constraints\": {\n            }\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"7f333829-6ed7-4e9e-93d8-e12958f7a535\",\n            \"itemType\": \"resource\",\n            \"expiryDuration\": \"P1Y\",\n            \"constraints\": {\n            }\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -24378,7 +23778,7 @@
 											"            pm.expect(r.owner.id == \"746442f5-18a7-44fd-8c8f-3e39e5026fae\").to.be.true;",
 											"            pm.expect(r.user.id).to.be.eq(pm.environment.get(\"CONSUMER_GMAIL_USERID\"));",
 											"            pm.expect(r.user.email).to.be.eq(\"consumer@gmail.com\");",
-											"            pm.expect(r.itemId.startsWith(\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/\")).to.be.true;",
+                                            "            pm.expect(r.itemId).to.exist;",
 											"            pm.expect(r.constraints).to.exist;",
 											"            pm.expect(r.policyId).to.exist;",
 											"            pm.expect(r.expiryTime).to.exist;",
@@ -24510,7 +23910,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"userClass\":\"userClass\",\n            \"apdId\": 123,\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"2923c77f-741b-4c3a-b010-183efbd43dee\",\n            \"itemType\": \"resource\",\n            \"userClass\":\"userClass\",\n            \"apdId\": 123,\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -24566,7 +23966,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"userClass\":\"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"2923c77f-741b-4c3a-b010-183efbd43dee\",\n            \"itemType\": \"resource\",\n            \"userClass\":\"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -24622,7 +24022,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"userId\": \"this should not be here\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"2923c77f-741b-4c3a-b010-183efbd43dee\",\n            \"itemType\": \"resource\",\n            \"userId\": \"this should not be here\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -24678,7 +24078,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"userId\": \"this should not be here\",\n            \"apdId\":\"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"2923c77f-741b-4c3a-b010-183efbd43dee\",\n            \"itemType\": \"resource\",\n            \"userId\": \"this should not be here\",\n            \"apdId\":\"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -24734,7 +24134,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/????\",\n            \"itemType\": \"resource\",\n            \"apdId\":\"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8/????\",\n            \"itemType\": \"resource\",\n            \"apdId\":\"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -25014,7 +24414,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"example.com\",\n            \"userClass\": \"userClass\"\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"2923c77f-741b-4c3a-b010-183efbd43dee\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"example.com\",\n            \"userClass\": \"userClass\"\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -25070,7 +24470,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"apdId\":\"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": []\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"2923c77f-741b-4c3a-b010-183efbd43dee\",\n            \"itemType\": \"resource\",\n            \"apdId\":\"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": []\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -25126,7 +24526,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"example.com\",\n            \"userClass\": \"?\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"2923c77f-741b-4c3a-b010-183efbd43dee\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"example.com\",\n            \"userClass\": \"?\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -25182,7 +24582,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"example.com\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"2923c77f-741b-4c3a-b010-183efbd43dee\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"example.com\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"2923c77f-741b-4c3a-b010-183efbd43dee\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -25238,7 +24638,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {},\n            \"expiryTime\": \"2133231-23-232T90320\"\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"2923c77f-741b-4c3a-b010-183efbd43dee\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {},\n            \"expiryTime\": \"2133231-23-232T90320\"\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -25294,7 +24694,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"2923c77f-741b-4c3a-b010-183efbd43dee\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"2923c77f-741b-4c3a-b010-183efbd43dee\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"example.com\",\n            \"userClass\": \"userClass\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -25929,7 +25329,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"activeapd.integration-iudx.io\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"activeapd.integration-iudx.io\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"aec83a80-61ec-4ae0-8671-80194f2ce73e\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -26042,7 +25442,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"pendingapd.integration-iudx.io\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"pendingapd.integration-iudx.io\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"aec83a80-61ec-4ae0-8671-80194f2ce73e\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -26098,7 +25498,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"inactiveapd.integration-iudx.io\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"inactiveapd.integration-iudx.io\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"aec83a80-61ec-4ae0-8671-80194f2ce73e\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -26154,7 +25554,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"nonexistentapd.integration-iudx.io\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"aec83a80-61ec-4ae0-8671-80194f2ce73e\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"nonexistentapd.integration-iudx.io\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -26193,7 +25593,7 @@
 											"pm.test(\"Check response body\", function () {    ",
 											"    const body = pm.response.json();",
 											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-											"    pm.expect(body).to.have.property(\"title\",\"Item does not exist\");",
+											"    pm.expect(body).to.have.property(\"title\",\"Invalid Item ID format\");",
 											"});"
 										],
 										"type": "text/javascript"
@@ -26211,7 +25611,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a5dandjns05/rs.iudx.io/iasd\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a5dandjns05/rs.iudx.io/iasd\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"aec83a80-61ec-4ae0-8671-80194f2ce73e\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -26267,7 +25667,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a5dandjns05/rs.iudx.io/iasd\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a5dandjns05/rs.iudx.io/iasd\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"aec83a80-61ec-4ae0-8671-80194f2ce73e\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -26324,7 +25724,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/9c13a2308bb0919bf146be8681eb886922d29282/rs.iudx.io/invalid-resource-for-ownership-test\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"decffa8a-a1ec-3a60-e571-cafedead5351\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"aec83a80-61ec-4ae0-8671-80194f2ce73e\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -26381,7 +25781,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestDeny\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestDeny\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -26438,7 +25838,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"activeapd.integration-iudx.io\",\n            \"userClass\": \"TestDeny\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"activeapd.integration-iudx.io\",\n            \"userClass\": \"TestDeny\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -26495,7 +25895,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\": \"2030-01-01T01:01:01\"\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\": \"2030-12-01T01:01:01\"\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\": \"2030-01-01T01:01:01\"\n        },\n        {\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            },\n            \"expiryTime\": \"2030-12-01T01:01:01\"\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -26551,7 +25951,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"constraints\": {\n                \"access\": [\n                    \"sub\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"8eed51c0-bc79-4cdd-af72-521e8dd37020\",\n            \"itemType\": \"resource\",\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"constraints\": {\n                \"access\": [\n                    \"sub\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -26618,7 +26018,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/9c13a2308bb0919bf146be8681eb886922d29282/rs.iudx.io/invalid-resource-for-ownership-test\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"decffa8a-a1ec-3a60-e571-cafedead5351\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -26679,7 +26079,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-one\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestDeny\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n         {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-two\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestDenyNInteraction\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"7f333829-6ed7-4e9e-93d8-e12958f7a535\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestDeny\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n         {\n            \"itemId\": \"220c1911-3cdb-4012-bbcc-c5a223a12626\",\n            \"itemType\": \"resource\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestDenyNInteraction\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -26750,7 +26150,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n\n}",
+							"raw": "{\n\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -26795,7 +26195,7 @@
 									"    pm.expect(result).to.have.property(\"sub\");",
 									"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
 									"    pm.expect(result.aud).to.be.eq(\"rs.iudx.io\");",
-									"    pm.expect(result.iid).to.be.eq(\"rg:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\");",
+									"    pm.expect(result.iid).to.be.eq(\"rg:4b367af2-ad55-4017-9e19-35a5fa37e9b8\");",
 									"    pm.expect(result.role).to.be.eq(\"consumer\");",
 									"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
 									"    pm.expect(result.cons).to.not.be.empty;",
@@ -26882,7 +26282,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\",\n    \"itemType\": \"resource\",\n    \"role\": \"consumer\"\n\n}",
+							"raw": "{\n\n    \"itemId\": \"8eed51c0-bc79-4cdd-af72-521e8dd37020\",\n    \"itemType\": \"resource\",\n    \"role\": \"consumer\"\n\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -26927,7 +26327,7 @@
 									"    pm.expect(result).to.have.property(\"sub\");",
 									"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
 									"    pm.expect(result.aud).to.be.eq(\"rs.iudx.io\");",
-									"    pm.expect(result.iid).to.be.eq(\"ri:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one/test-resource-one\");",
+									"    pm.expect(result.iid).to.be.eq(\"ri:8eed51c0-bc79-4cdd-af72-521e8dd37020\");",
 									"    pm.expect(result.role).to.be.eq(\"consumer\");",
 									"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
 									"    pm.expect(result.cons).to.not.be.empty;",
@@ -27006,7 +26406,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n\n}",
+							"raw": "{\n\n    \"itemId\": \"aec83a80-61ec-4ae0-8671-80194f2ce73e\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -27065,7 +26465,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-one\",\n    \"itemType\": \"resource\",\n    \"role\": \"consumer\"\n\n}",
+							"raw": "{\n\n    \"itemId\": \"7f333829-6ed7-4e9e-93d8-e12958f7a535\",\n    \"itemType\": \"resource\",\n    \"role\": \"consumer\"\n\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -27132,7 +26532,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-two\",\n    \"itemType\": \"resource\",\n    \"role\": \"consumer\"\n\n}",
+							"raw": "{\n\n    \"itemId\": \"220c1911-3cdb-4012-bbcc-c5a223a12626\",\n    \"itemType\": \"resource\",\n    \"role\": \"consumer\"\n\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -27259,7 +26659,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-one\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\",\n    \"context\": {\n        \"accessType\": \"SOME_ACCESS_TYPE\",\n        \"accessId\": 1234,\n        \"accessList\": [\n            123,\n            \"2\",\n            {\n                \"list\": \"four\"\n            }\n        ],\n        \"accessObject\": {\n            \"access\": \"Y\"\n        }\n    }\n}",
+							"raw": "{\n    \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\",\n    \"context\": {\n        \"accessType\": \"SOME_ACCESS_TYPE\",\n        \"accessId\": 1234,\n        \"accessList\": [\n            123,\n            \"2\",\n            {\n                \"list\": \"four\"\n            }\n        ],\n        \"accessObject\": {\n            \"access\": \"Y\"\n        }\n    }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -27320,7 +26720,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"aec83a80-61ec-4ae0-8671-80194f2ce73e\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -27384,7 +26784,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n\n}",
+							"raw": "{\n\n    \"itemId\": \"aec83a80-61ec-4ae0-8671-80194f2ce73e\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -27429,7 +26829,7 @@
 									"    pm.expect(result).to.have.property(\"sub\");",
 									"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
 									"    pm.expect(result.aud).to.be.eq(\"rs.iudx.io\");",
-									"    pm.expect(result.iid).to.be.eq(\"rg:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\");",
+									"    pm.expect(result.iid).to.be.eq(\"rg:aec83a80-61ec-4ae0-8671-80194f2ce73e\");",
 									"    pm.expect(result.role).to.be.eq(\"consumer\");",
 									"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
 									"    pm.expect(result.cons).to.not.be.empty;",
@@ -27508,7 +26908,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n            \"itemType\": \"resource_group\",\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"constraints\": {\n                \"access\": [\n                    \"sub\"\n                ]\n            }\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"aec83a80-61ec-4ae0-8671-80194f2ce73e\",\n            \"itemType\": \"resource_group\",\n            \"userId\": \"{{CONSUMER_GMAIL_USERID}}\",\n            \"constraints\": {\n                \"access\": [\n                    \"sub\"\n                ]\n            }\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -27572,7 +26972,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n\n}",
+							"raw": "{\n\n    \"itemId\": \"aec83a80-61ec-4ae0-8671-80194f2ce73e\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -27617,7 +27017,7 @@
 									"    pm.expect(result).to.have.property(\"sub\");",
 									"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
 									"    pm.expect(result.aud).to.be.eq(\"rs.iudx.io\");",
-									"    pm.expect(result.iid).to.be.eq(\"rg:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two\");",
+									"    pm.expect(result.iid).to.be.eq(\"rg:aec83a80-61ec-4ae0-8671-80194f2ce73e\");",
 									"    pm.expect(result.role).to.be.eq(\"consumer\");",
 									"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
 									"    pm.expect(result.cons).to.not.be.empty;",
@@ -27704,7 +27104,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\n    \"itemId\": \"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-one\",\n    \"itemType\": \"resource\",\n    \"role\": \"consumer\"\n\n}",
+							"raw": "{\n\n    \"itemId\": \"7f333829-6ed7-4e9e-93d8-e12958f7a535\",\n    \"itemType\": \"resource\",\n    \"role\": \"consumer\"\n\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -27749,7 +27149,7 @@
 									"    pm.expect(result).to.have.property(\"sub\");",
 									"    pm.expect(result.iss).to.be.eq(\"authorization.iudx.io\");",
 									"    pm.expect(result.aud).to.be.eq(\"rs.iudx.io\");",
-									"    pm.expect(result.iid).to.be.eq(\"ri:datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/rs.iudx.io/integration-test-rsg-two/test-resource-one\");",
+									"    pm.expect(result.iid).to.be.eq(\"ri:7f333829-6ed7-4e9e-93d8-e12958f7a535\");",
 									"    pm.expect(result.role).to.be.eq(\"consumer\");",
 									"    pm.expect(result.exp).to.be.greaterThan(moment().unix());",
 									"    pm.expect(result.cons).to.not.be.empty;",
@@ -27886,7 +27286,7 @@
 									"            pm.expect(r.owner.id == \"746442f5-18a7-44fd-8c8f-3e39e5026fae\").to.be.true;",
 									"            pm.expect(r.user.id).to.be.eq(pm.environment.get(\"CONSUMER_GMAIL_USERID\"));",
 									"            pm.expect(r.user.email).to.be.eq(\"consumer@gmail.com\");",
-									"            pm.expect(r.itemId.startsWith(\"datakaveri.org/0808eb81ea0e5773187ae06110f55915a55f5c05/\")).to.be.true;",
+									"            pm.expect(r.itemId).to.exist;",
 									"            pm.expect(r.constraints).to.exist;",
 									"            pm.expect(r.policyId).to.exist;",
 									"            pm.expect(r.expiryTime).to.exist;",
