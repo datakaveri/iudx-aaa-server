@@ -57,7 +57,7 @@ public class Constants {
 
   /* API Server Operations/Routes */
   public static final String CREATE_TOKEN = "post-auth-v1-token";
-  public static final String TIP_TOKEN = "post-auth-v1-introspect"; 
+  public static final String TIP_TOKEN = "post-auth-v1-introspect";
   public static final String REVOKE_TOKEN = "post-auth-v1-revoke";
   public static final String CREATE_USER_PROFILE = "post-auth-v1-user-profile";
   public static final String GET_USER_PROFILE = "get-auth-v1-user-profile";
@@ -80,7 +80,8 @@ public class Constants {
   public static final String LIST_APD = "get-auth-v1-apd";
   public static final String UPDATE_APD = "put-auth-v1-apd";
   public static final String GET_CERT = "get-auth-v1-cert";
-  
+  public static final String GET_JWKS = "get-auth-v1-jwks";
+
   public static final String TOKEN_ROUTE = "/auth/v1/token";
 
   /* Query Params */
@@ -145,14 +146,14 @@ public class Constants {
 
   /* Compose failure due to invalid token */
   public static final String INVALID_TOKEN_FAILED_COMPOSE = "INVALID_TOKEN";
-  
+
   /* HashSet to Match success status */
   public static final Set<Integer> successStatus =
       new HashSet<Integer>(Arrays.asList(200, 201, 202));
 
 
   /* SQL Queries */
-  public static final String SQL_GET_USER_ROLES = 
+  public static final String SQL_GET_USER_ROLES =
       "select roles.user_id AS id, coalesce(array_agg(roles.role) filter (where status = 'APPROVED'), '{}') AS roles"
       + ", client_id FROM roles JOIN user_clients"
       + " ON roles.user_id = user_clients.user_id"
@@ -163,10 +164,10 @@ public class Constants {
       "SELECT u.id, q.keycloak_id as kid, client_secret, array_agg(r.role) as roles\n"
           + "FROM (select user_id as id, client_secret from "
           + "user_clients where client_id = $1) u\n" + "LEFT JOIN "
-          + "roles r ON u.id = r.user_id\n" + "LEFT JOIN " 
+          + "roles r ON u.id = r.user_id\n" + "LEFT JOIN "
           + "users q ON u.id = q.id\n"
           + "where r.status='APPROVED' GROUP BY u.id, client_secret, keycloak_id";
-  
+
   public static final String CHECK_DELEGATE =
       "SELECT * FROM policies pol "
       + "INNER JOIN delegations del ON "
@@ -176,22 +177,22 @@ public class Constants {
       + "del.resource_server_id = pol.item_id AND "
       + "pol.status = 'ACTIVE' AND "
       + "pol.expiry_time > now()";
-  
-  public static final String GET_DELEGATE = 
-      "WITH auth AS (\n" + 
-      "    SELECT owner_id, id FROM resource_server WHERE url = $1::text\n" + 
-      "), delegate AS (\n" + 
-      "    SELECT resource_server_id, user_id,owner_id FROM delegations \n" + 
-      "    WHERE user_id = $2::uuid \n" + 
-      "    AND owner_id = $3::uuid \n" + 
-      "    AND status = 'ACTIVE' \n" + 
-      "    AND resource_server_id = (SELECT id FROM auth)\n" + 
-      "), policy AS (\n" + 
-      "    SELECT * FROM policies WHERE item_id = (SELECT id FROM auth) \n" + 
-      "    AND owner_id = (SELECT owner_id FROM auth) \n" + 
-      "    AND user_id = (SELECT user_id FROM delegate)\n" + 
-      "    AND status = 'ACTIVE' \n" + 
-      "    AND expiry_time > now()\n" + 
+
+  public static final String GET_DELEGATE =
+      "WITH auth AS (\n" +
+      "    SELECT owner_id, id FROM resource_server WHERE url = $1::text\n" +
+      "), delegate AS (\n" +
+      "    SELECT resource_server_id, user_id,owner_id FROM delegations \n" +
+      "    WHERE user_id = $2::uuid \n" +
+      "    AND owner_id = $3::uuid \n" +
+      "    AND status = 'ACTIVE' \n" +
+      "    AND resource_server_id = (SELECT id FROM auth)\n" +
+      "), policy AS (\n" +
+      "    SELECT * FROM policies WHERE item_id = (SELECT id FROM auth) \n" +
+      "    AND owner_id = (SELECT owner_id FROM auth) \n" +
+      "    AND user_id = (SELECT user_id FROM delegate)\n" +
+      "    AND status = 'ACTIVE' \n" +
+      "    AND expiry_time > now()\n" +
       ") SELECT * FROM policy";
 
 }
