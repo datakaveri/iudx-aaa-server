@@ -2,6 +2,7 @@ package iudx.aaa.server.apiserver;
 
 import static iudx.aaa.server.apiserver.util.Constants.*;
 
+import com.nimbusds.jose.jwk.ECKey;
 import iudx.aaa.server.auditing.AuditingService;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
@@ -313,6 +314,8 @@ public class ApiServerVerticle extends AbstractVerticle {
               // Get PublicKey
               routerBuilder.operation(GET_CERT)
                       .handler(this::pubCertHandler);
+              // Get PublicKey in JWKS format
+              routerBuilder.operation(GET_JWKS).handler(this::retrievePublicKey);
 
               /* TimeoutHandler needs to be added as rootHandler */
               routerBuilder.rootHandler(TimeoutHandler.create(serverTimeout));
@@ -902,6 +905,29 @@ public class ApiServerVerticle extends AbstractVerticle {
 
       } else {
         processResponse(context.response(), KS_PARSE_ERROR);
+      }
+    } catch (Exception e) {
+      processResponse(context.response(), KS_PARSE_ERROR);
+    }
+  }
+  /**
+   * Loads the keystore using the provided path and password, and retrieves the public key
+   * information.
+   *
+   * @param context The routing context
+   */
+  private void retrievePublicKey(RoutingContext context) {
+
+    JksOptions options = new JksOptions().setPath(jwtKeystorePath).setPassword(jwtKeystorePassword);
+    try {
+      KeyStore ks = options.loadKeyStore(vertx);
+      {
+        ECKey ecKey = ECKey.load(ks, "ES256", jwtKeystorePassword.toCharArray());
+        JsonArray result = new JsonArray().add(ecKey.toPublicJWK().toJSONObject());
+        context
+          .response()
+          .putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+          .end(new JsonObject().put("keys", result).encode());
       }
     } catch (Exception e) {
       processResponse(context.response(), KS_PARSE_ERROR);

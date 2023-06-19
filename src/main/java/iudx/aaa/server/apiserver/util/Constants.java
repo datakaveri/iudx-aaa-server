@@ -80,7 +80,7 @@ public class Constants {
   public static final String LIST_APD = "get-auth-v1-apd";
   public static final String UPDATE_APD = "put-auth-v1-apd";
   public static final String GET_CERT = "get-auth-v1-cert";
-  
+  public static final String GET_JWKS = "get-auth-v1-jwks";
   public static final String TOKEN_ROUTE = "/auth/v1/token";
 
   /* Query Params */
