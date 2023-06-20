@@ -4101,6 +4101,89 @@ paths:
                       -----END CERTIFICATE-----
       operationId: get-auth-v1-cert
       description: Get the JsonObject having certificate to authenticate/validate the generated JWT using `/auth/v1/token`
+  /auth/v1/jwks:
+      get:
+        summary: Get public key in JWKS format.
+        tags:
+          - Certificate API
+        responses:
+          '200':
+            description: Successfully generated the public key in JWKS format.
+            headers:
+              Content-Type:
+                schema:
+                  type: string
+                description: application/json
+            content:
+              application/json:
+                schema:
+                  description: ''
+                  type: object
+                  properties:
+                    keys:
+                      type: array
+                      uniqueItems: true
+                      minItems: 1
+                      items:
+                        required:
+                          - kty
+                          - x5t#S256
+                          - crv
+                          - kid
+                          - x5c
+                          - x
+                          - y
+                        properties:
+                          kty:
+                            type: string
+                            minLength: 1
+                          x5t#S256:
+                            type: array
+                            minLength: 1
+                          crv:
+                            type: string
+                            minLength: 1
+                          kid:
+                            type: string
+                            minLength: 1
+                          x5c:
+                            type: string
+                            minLength: 1
+                          x:
+                            type: string
+                            minLength: 1
+                          y:
+                            type: string
+                            minLength: 1
+                  required:
+                    - keys
+                  x-examples:
+                    example-1:
+                    keys:
+                      - kty: EC
+                        x5t#S256: tCrGI3X7KS4WhHwGqR89Z6lWwPidOAb_CFYCzQpQN3M
+                        crv: P-256
+                        kid: ES256
+                        x5c:
+                          - MIIBnDCCAT+gAwIBAgIEEC1BXTAMBggqhkjOPQQDAgUAMEIxCTAHBgNVBAYTADEJMAcGA1UECBMAMQkwBwYDVQQHEwAxCTAHBgNVBAoTADEJMAcGA1UECxMAMQkwBwYDVQQDEwAwHhcNMjMwNjA1MDUwODQ4WhcNMjQwNjA0MDUwODQ4WjBCMQkwBwYDVQQGEwAxCTAHBgNVBAgTADEJMAcGA1UEBxMAMQkwBwYDVQQKEwAxCTAHBgNVBAsTADEJMAcGA1UEAxMAMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAErVwOLOln7NhUdfZOQFfTOtJ62AgdKUeYZm8DgWCWJHaaXT95dipr94zJM+inSuqohVFCTxjajdTH8/O9JO43rKMhMB8wHQYDVR0OBBYEFNH2u8eeqj3509HAFJQS4F5NF4TQMAwGCCqGSM49BAMCBQADSQAwRgIhAL7zHYdN6PFTccFm1y07X0t2mJxNfgOaxihTi2tA9D8AAiEAomGmBvXA72X1gfhK3dhaDSd52BN1fUP/ALYNiyuXHg0=
+                        x: rVwOLOln7NhUdfZOQFfTOtJ62AgdKUeYZm8DgWCWJHY
+                        y: ml0_eXYqa_eMyTPop0rqqIVRQk8Y2o3Ux_PzvSTuN6w
+
+                examples:
+                  Certificate:
+                    value:
+                      keys:
+                        - kty: EC
+                          x5t#S256: tCrGI3X7KS4WhHwGqR89Z6lWwPidOAb_CFYCzQpQN3M
+                          crv: P-256
+                          kid: ES256
+                          x5c:
+                            - MIIBnDCCAT+gAwIBAgIEEC1BXTAMBggqhkjOPQQDAgUAMEIxCTAHBgNVBAYTADEJMAcGA1UECBMAMQkwBwYDVQQHEwAxCTAHBgNVBAoTADEJMAcGA1UECxMAMQkwBwYDVQQDEwAwHhcNMjMwNjA1MDUwODQ4WhcNMjQwNjA0MDUwODQ4WjBCMQkwBwYDVQQGEwAxCTAHBgNVBAgTADEJMAcGA1UEBxMAMQkwBwYDVQQKEwAxCTAHBgNVBAsTADEJMAcGA1UEAxMAMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAErVwOLOln7NhUdfZOQFfTOtJ62AgdKUeYZm8DgWCWJHaaXT95dipr94zJM+inSuqohVFCTxjajdTH8/O9JO43rKMhMB8wHQYDVR0OBBYEFNH2u8eeqj3509HAFJQS4F5NF4TQMAwGCCqGSM49BAMCBQADSQAwRgIhAL7zHYdN6PFTccFm1y07X0t2mJxNfgOaxihTi2tA9D8AAiEAomGmBvXA72X1gfhK3dhaDSd52BN1fUP/ALYNiyuXHg0=
+                          x: rVwOLOln7NhUdfZOQFfTOtJ62AgdKUeYZm8DgWCWJHY
+                          y: ml0_eXYqa_eMyTPop0rqqIVRQk8Y2o3Ux_PzvSTuN6w
+
+        operationId: get-auth-v1-jwks
+        description: Get the public key in JWKS format to authenticate/validate the generated JWT using `/auth/v1/token`
   /auth/v1/apd:
     get:
       summary: Get registered Access Policy Domains
