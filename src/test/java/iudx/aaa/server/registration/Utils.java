@@ -173,57 +173,39 @@ public class Utils {
     String clientSecret = Hex.encodeHexString(randBytes);
 
     UUID keycloakId = UUID.randomUUID();
+    UUID userId = keycloakId;
 
     resp.put("clientId", clientId.toString());
     resp.put("clientSecret", clientSecret.toString());
     resp.put("keycloakId", keycloakId.toString());
-
-    Promise<UUID> genUserId = Promise.promise();
+    resp.put("userId", userId);
 
     Function<String, Tuple> createUserTup =
         (emailId) -> {
           String hash = DigestUtils.sha1Hex(emailId.getBytes());
           String emailHash = emailId.split("@")[1] + '/' + hash;
-          return Tuple.of(phone, orgIdToSet, emailHash, keycloakId);
+          return Tuple.of(userId, phone, orgIdToSet, emailHash, keycloakId);
         };
 
-    /*
-     * Function to complete generated User ID promise and to create list of tuples for role creation
-     * batch query
-     */
-    Function<UUID, List<Tuple>> createRoleTup =
-        (id) -> {
-          genUserId.complete(id);
-          return roleMap.entrySet().stream()
-              .map(p -> Tuple.of(id, p.getKey().name(), p.getValue().name()))
-              .collect(Collectors.toList());
-        };
+    List<Tuple> roleTuple = roleMap.entrySet().stream()
+          .map(p -> Tuple.of(userId, p.getKey().name(), p.getValue().name()))
+          .collect(Collectors.toList());
 
-    /* Function to hash client secret, and create tuple for client creation query */
-    Supplier<Tuple> createClientTup =
-        () -> {
-          String hashedClientSecret = DigestUtils.sha512Hex(clientSecret);
-
-          return Tuple.of(
-              genUserId.future().result(), clientId, hashedClientSecret, DEFAULT_CLIENT);
-        };
+    String hashedClientSecret = DigestUtils.sha512Hex(clientSecret);
+    Tuple clientTuple = Tuple.of(userId, clientId, hashedClientSecret, DEFAULT_CLIENT);
 
     pool.withTransaction(
             conn ->
                 conn.preparedQuery(SQL_CREATE_USER)
                     .execute(createUserTup.apply(email))
-                    .map(rows -> rows.iterator().next().getUUID("id"))
-                    .map(uid -> createRoleTup.apply(uid))
                     .compose(
                         roleDetails ->
-                            conn.preparedQuery(SQL_CREATE_ROLE).executeBatch(roleDetails))
-                    .map(success -> createClientTup.get())
+                            conn.preparedQuery(SQL_CREATE_ROLE).executeBatch(roleTuple))
                     .compose(
                         clientDetails ->
-                            conn.preparedQuery(SQL_CREATE_CLIENT).execute(clientDetails)))
+                            conn.preparedQuery(SQL_CREATE_CLIENT).execute(clientTuple)))
         .onSuccess(
             row -> {
-              resp.put("userId", genUserId.future().result());
               response.complete(resp);
             })
         .onFailure(res -> response.fail("Failed to create fake user" + res.getMessage()));

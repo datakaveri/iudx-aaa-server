@@ -227,8 +227,8 @@ public class RegistrationServiceImpl implements RegistrationService {
     List<Roles> rolesForKc =
         requestedRoles.stream().filter(x -> x != Roles.PROVIDER).collect(Collectors.toList());
 
-    Promise<UUID> genUserId = Promise.promise();
-    Future<UUID> userId = genUserId.future();
+    /* user Id is same as Keycloak ID */
+    UUID userId = UUID.fromString(user.getKeycloakId());
 
     /*
      * Function to form tuple for create user query. The email ID of the user is taken as input
@@ -236,39 +236,27 @@ public class RegistrationServiceImpl implements RegistrationService {
     Function<String, Tuple> createUserTup = (emailId) -> {
       String hash = DigestUtils.sha1Hex(emailId.getBytes());
       String emailHash = emailId.split("@")[1] + '/' + hash;
-      return Tuple.of(phone, orgIdToSet, emailHash, user.getKeycloakId());
+      return Tuple.of(userId, phone, orgIdToSet, emailHash, user.getKeycloakId());
     };
 
-    /*
-     * Function to complete generated User ID promise and to create list of tuples for role creation
-     * batch query
-     */
-    Function<UUID, List<Tuple>> createRoleTup = (id) -> {
-      genUserId.complete(id);
-      return roles.entrySet().stream()
-          .map(p -> Tuple.of(id, p.getKey().name(), p.getValue().name()))
+    List<Tuple> roleTuple = roles.entrySet().stream()
+          .map(p -> Tuple.of(userId, p.getKey().name(), p.getValue().name()))
           .collect(Collectors.toList());
-    };
 
-    /* Function to hash client secret, and create tuple for client creation query */
-    Supplier<Tuple> createClientTup = () -> {
-      String hashedClientSecret = DigestUtils.sha512Hex(clientSecret);
-      return Tuple.of(userId.result(), clientId, hashedClientSecret, DEFAULT_CLIENT);
-    };
+    String hashedClientSecret = DigestUtils.sha512Hex(clientSecret);
+    Tuple clientTuple = Tuple.of(userId, clientId, hashedClientSecret, DEFAULT_CLIENT);
 
     /* Insertion into users, roles, clients tables and add roles to Keycloak */
     Future<Void> query = validation.compose(emailId -> pool.withTransaction(
         conn -> conn.preparedQuery(SQL_CREATE_USER).execute(createUserTup.apply(emailId))
-            .map(rows -> rows.iterator().next().getUUID("id")).map(uid -> createRoleTup.apply(uid))
-            .compose(roleDetails -> conn.preparedQuery(SQL_CREATE_ROLE).executeBatch(roleDetails))
-            .map(success -> createClientTup.get())
-            .compose(clientDetails -> conn.preparedQuery(SQL_CREATE_CLIENT).execute(clientDetails))
-            .compose(success -> kc.modifyRoles(user.getKeycloakId(), rolesForKc))));
+            .compose(userCreated -> conn.preparedQuery(SQL_CREATE_ROLE).executeBatch(roleTuple))
+            .compose(rolesCreated -> conn.preparedQuery(SQL_CREATE_CLIENT).execute(clientTuple))
+            .compose(success -> kc.modifyRoles(userId.toString(), rolesForKc))));
 
     query.onSuccess(success -> {
       User u =
           new UserBuilder().name(user.getName().get("firstName"), user.getName().get("lastName"))
-              .roles(rolesForKc).keycloakId(user.getKeycloakId()).userId(userId.result()).build();
+              .roles(rolesForKc).keycloakId(user.getKeycloakId()).userId(userId.toString()).build();
 
       JsonObject clientDetails = new JsonObject().put(RESP_CLIENT_NAME, DEFAULT_CLIENT)
           .put(RESP_CLIENT_ID, clientId.toString()).put(RESP_CLIENT_SC, clientSecret);
@@ -294,8 +282,8 @@ public class RegistrationServiceImpl implements RegistrationService {
           .objectResults(payload).build();
       handler.handle(Future.succeededFuture(r.toJson()));
 
-      LOGGER.info("Created user profile for " + userId.result() + " with roles "
-          + request.getRoles().toString());
+      LOGGER.info("Created user profile for {}  with roles {}", userId,
+          request.getRoles().toString());
     }).onFailure(e -> {
       if (e instanceof ComposeException) {
         ComposeException exp = (ComposeException) e;
