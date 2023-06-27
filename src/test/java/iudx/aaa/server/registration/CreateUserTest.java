@@ -158,7 +158,6 @@ public class CreateUserTest {
     String email = RandomStringUtils.randomAlphabetic(5).toLowerCase() + "@" + url;
     String keycloakId = UUID.randomUUID().toString();
 
-    Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.succeededFuture());
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(email));
 
     JsonObject jsonReq =
@@ -201,7 +200,6 @@ public class CreateUserTest {
     String email = RandomStringUtils.randomAlphabetic(5).toLowerCase() + "@" + url;
     String keycloakId = UUID.randomUUID().toString();
 
-    Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.succeededFuture());
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(email));
 
     JsonObject jsonReq = new JsonObject().put("roles", new JsonArray().add("provider"))
@@ -244,7 +242,6 @@ public class CreateUserTest {
     String email = RandomStringUtils.randomAlphabetic(5).toLowerCase() + "@" + url;
     String keycloakId = UUID.randomUUID().toString();
 
-    Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.succeededFuture());
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(email));
 
     JsonObject jsonReq =
@@ -287,7 +284,6 @@ public class CreateUserTest {
     String email = RandomStringUtils.randomAlphabetic(5).toLowerCase() + "@" + url;
     String keycloakId = UUID.randomUUID().toString();
 
-    Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.succeededFuture());
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(email));
 
     JsonObject jsonReq =
@@ -330,7 +326,6 @@ public class CreateUserTest {
     String email = RandomStringUtils.randomAlphabetic(5).toLowerCase() + "@" + url;
     String keycloakId = UUID.randomUUID().toString();
 
-    Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.succeededFuture());
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(email));
 
     JsonObject jsonReq = new JsonObject()
@@ -379,7 +374,6 @@ public class CreateUserTest {
     String email = RandomStringUtils.randomAlphabetic(5).toLowerCase() + "@" + url;
     String keycloakId = UUID.randomUUID().toString();
 
-    Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.succeededFuture());
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(email));
 
     JsonObject jsonReq =
@@ -405,7 +399,6 @@ public class CreateUserTest {
     String email = RandomStringUtils.randomAlphabetic(5).toLowerCase() + "@" + url;
     String keycloakId = UUID.randomUUID().toString();
 
-    Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.succeededFuture());
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(email));
 
     JsonObject jsonReq =
@@ -431,7 +424,6 @@ public class CreateUserTest {
     String email = RandomStringUtils.randomAlphabetic(5).toLowerCase() + "@" + url;
     String keycloakId = UUID.randomUUID().toString();
 
-    Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.succeededFuture());
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(email));
 
     JsonObject jsonReq =
@@ -458,7 +450,6 @@ public class CreateUserTest {
     String orgId = orgIdFut.result().toString();
     String keycloakId = UUID.randomUUID().toString();
 
-    Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.succeededFuture());
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture("random@email.com"));
 
     JsonObject jsonReq =
@@ -485,7 +476,6 @@ public class CreateUserTest {
     String email = RandomStringUtils.randomAlphabetic(5).toLowerCase() + "@" + url;
     String keycloakId = UUID.randomUUID().toString();
 
-    Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.succeededFuture());
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(email));
 
     JsonObject jsonReq =
@@ -522,7 +512,6 @@ public class CreateUserTest {
     String orgId = orgIdFut.result().toString();
     String keycloakId = UUID.randomUUID().toString();
 
-    Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.succeededFuture());
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(""));
 
     JsonObject jsonReq =
@@ -539,38 +528,5 @@ public class CreateUserTest {
           assertEquals(ERR_TITLE_USER_NOT_KC, response.getString("title"));
           testContext.completeNow();
         })));
-  }
-
-  @Test
-  @DisplayName("Test transaction rollback if Keycloak fails")
-  void modifyRolesFail(VertxTestContext testContext) {
-
-    String email = RandomStringUtils.randomAlphabetic(5).toLowerCase() + "@" + url;
-    String keycloakId = UUID.randomUUID().toString();
-
-    Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(email));
-    Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.failedFuture("fail"));
-
-    JsonObject jsonReq = new JsonObject().put("roles", new JsonArray().add("consumer"));
-    RegistrationRequest request = new RegistrationRequest(jsonReq);
-
-    User user = new UserBuilder().keycloakId(keycloakId).name("Foo", "Bar").build();
-
-    Promise<Void> failed = Promise.promise();
-    registrationService.createUser(request, user,
-        testContext.failing(response -> testContext.verify(() -> {
-          failed.complete();
-        })));
-
-    failed.future().onSuccess(i -> {
-      Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.succeededFuture());
-
-      registrationService.createUser(request, user,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-            assertEquals(201, response.getInteger("status"));
-            testContext.completeNow();
-          })));
-    });
   }
 }

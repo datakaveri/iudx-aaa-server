@@ -1,15 +1,11 @@
 package iudx.aaa.server.registration;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
-import iudx.aaa.server.apiserver.Roles;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.ProcessingException;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
@@ -17,10 +13,8 @@ import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.RealmResource;
-import org.keycloak.admin.client.resource.RolesResource;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
-import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
 /**
@@ -51,83 +45,6 @@ public class KcAdmin {
     keycloak = KeycloakBuilder.builder().serverUrl(serverUrl).realm(realm)
         .grantType(OAuth2Constants.CLIENT_CREDENTIALS).clientId(clientId).clientSecret(clientSecret)
         .resteasyClient(new ResteasyClientBuilder().connectionPoolSize(poolSize).build()).build();
-  }
-
-  /**
-   * Add roles to a user based on the keycloak ID.
-   * 
-   * @param id the keycloak ID of the user. Must be in UUID format
-   * @param roles list of roles(Roles enum) to be added. If the list is empty the promise is
-   *        completed and future return successfully
-   * @return void future
-   */
-
-  Future<Void> modifyRoles(String id, List<Roles> roles) {
-    Promise<Void> p = Promise.promise();
-    if (roles.size() == 0) {
-      p.complete();
-      return p.future();
-    }
-
-    RealmResource realmResource = null;
-    UsersResource usersResource = null;
-    List<RoleRepresentation> rolesToAssign = new ArrayList<RoleRepresentation>();
-
-    try {
-      realmResource = keycloak.realm(realm);
-      RolesResource roleResource = realmResource.roles();
-      usersResource = realmResource.users();
-      rolesToAssign =
-          roles.stream().map(role -> roleResource.get(role.name().toLowerCase()).toRepresentation())
-              .collect(Collectors.toList());
-    } catch (ProcessingException e) {
-      p.fail("Error in Keycloak connection : " + e.getMessage());
-      return p.future();
-    } catch (NotFoundException e) {
-      p.fail("Realm/roles may not exist");
-      return p.future();
-    } catch (Exception e) {
-      p.fail(e.getMessage());
-      return p.future();
-    }
-
-    try {
-      UserResource u = usersResource.get(id);
-      u.roles().realmLevel().add(rolesToAssign);
-      p.complete();
-    } catch (NotFoundException e) {
-      // TODO log that the user did not exist on KC
-      p.fail("User not found");
-    } catch (Exception e) {
-      p.fail(e.getMessage());
-    }
-
-    return p.future();
-  }
-
-  /**
-   * Add provider role for users. Reuses the modifyRoles method.
-   * 
-   * @param ids list of keycloak IDs of the users. Must be in UUID format
-   * @return void future
-   */
-  public Future<Void> approveProvider(List<String> ids) {
-
-    Promise<Void> p = Promise.promise();
-
-    /*
-     * call modifyRoles for all IDs, return list of futures. CompositeFuture cannot accept a list of
-     * parameterized futures, so use raw type and suppress warning
-     */
-    @SuppressWarnings("rawtypes")
-    List<Future> futures = ids.stream().map(id -> modifyRoles(id, List.of(Roles.PROVIDER)))
-        .collect(Collectors.toList());
-
-    CompositeFuture.all(futures).onSuccess(success -> {
-      p.complete();
-    }).onFailure(err -> p.fail(err.getMessage()));
-
-    return p.future();
   }
 
   /**

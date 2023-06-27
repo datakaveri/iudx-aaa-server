@@ -72,7 +72,7 @@ The AAA server uses [Keycloak](https://www.keycloak.org/about.html) to manage us
 
 1. The AAA server required clients to be configured that would allow the server to interact with Keycloak. The main clients are:
 
-- The **admin client** to be configured for the `RegistrationVerticle` and `AdminVerticle`. This client performs admin-related tasks on Keycloak. This client must have the capability to view and update users and realms (In Service account roles -> client roles -> realm-management -> _add manage-users_, _view-realm_, _view-users_ to Assigned roles) 
+- The **admin client** to be configured for the `RegistrationVerticle` and `AdminVerticle`. This client performs admin-related tasks on Keycloak. This client must have the capability to view and update users and realms (In Service account roles -> client roles -> realm-management -> add _view-users_ to Assigned roles) 
 - The **normal client** to be configured for the `TokenVerticle` and `ApiServerVerticle`. This client would allow the server to validate Keycloak JWT tokens.
 
 2. The roles `provider`, `consumer`, `delegate` and `admin` need to be added to the realm.
