@@ -44,7 +44,7 @@ pipeline {
         }
         failure{
           script{
-            sh 'docker compose f docker-compose-test.yml down --remove-orphans'
+            sh 'docker compose -f docker-compose-test.yml down --remove-orphans'
           }
           error "Test failure. Stopping pipeline execution!"
         } 
@@ -69,7 +69,7 @@ pipeline {
         failure{
           script{
             sh 'mvn flyway:clean -Dflyway.configFiles=/home/ubuntu/configs/aaa-flyway.conf'
-            sh 'docker compose f docker-compose-test.yml down --remove-orphans'
+            sh 'docker compose -f docker-compose-test.yml down --remove-orphans'
           }
           cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: 'src/main/resources/db/migration/V?__Add_Integration_Test_data.sql', type: 'INCLUDE']]
         }
