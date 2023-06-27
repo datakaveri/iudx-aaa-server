@@ -26,11 +26,9 @@ import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -45,7 +43,6 @@ import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.configuration.Configuration;
-import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.registration.Utils;
 import iudx.aaa.server.token.TokenService;
@@ -83,22 +80,20 @@ public class CallApdTest {
   private static PgConnectOptions connectOptions;
   private static ApdWebClient apdWebClient = Mockito.mock(ApdWebClient.class);
   private static RegistrationService registrationService = Mockito.mock(RegistrationService.class);
-  private static PolicyService policyService = Mockito.mock(PolicyService.class);
   private static TokenService tokenService = Mockito.mock(TokenService.class);
 
   private static final String DUMMY_AUTH_SERVER =
       "auth" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + "iudx.io";
-  private static Future<JsonObject> trusteeUser;
   private static Future<JsonObject> otherUser;
 
   static String name = RandomStringUtils.randomAlphabetic(10).toLowerCase();
   static String url = name + ".com";
   static Future<UUID> orgIdFut;
 
-  private static final UUID PENDING_APD_ID = UUID.randomUUID();
+  private static final UUID INACTIVE_APD_ID = UUID.randomUUID();
   private static final UUID ACTIVE_APD_ID = UUID.randomUUID();
 
-  private static final String PENDING_APD = RandomStringUtils.randomAlphabetic(5).toLowerCase();
+  private static final String INACTIVE_APD = RandomStringUtils.randomAlphabetic(5).toLowerCase();
   private static final String ACTIVE_APD = RandomStringUtils.randomAlphabetic(5).toLowerCase();
 
   @BeforeAll
@@ -140,22 +135,19 @@ public class CallApdTest {
 
     orgIdFut = pool.withConnection(conn -> conn.preparedQuery(Utils.SQL_CREATE_ORG)
         .execute(Tuple.of(name, url)).map(row -> row.iterator().next().getUUID("id")));
-    trusteeUser = orgIdFut.compose(orgId -> Utils.createFakeUser(pool, orgId.toString(), "",
-        Map.of(Roles.TRUSTEE, RoleStatus.APPROVED), false));
     otherUser = orgIdFut.compose(orgId -> Utils.createFakeUser(pool, orgId.toString(), "",
         Map.of(Roles.CONSUMER, RoleStatus.APPROVED), false));
 
-    CompositeFuture.all(trusteeUser, otherUser).compose(s -> {
-      UUID trusteeId = UUID.fromString(trusteeUser.result().getString("userId"));
+    otherUser.compose(s -> {
       List<Tuple> apdTup = List.of(
-          Tuple.of(PENDING_APD_ID, PENDING_APD, PENDING_APD + ".com", trusteeId, ApdStatus.PENDING),
-          Tuple.of(ACTIVE_APD_ID, ACTIVE_APD, ACTIVE_APD + ".com", trusteeId, ApdStatus.ACTIVE));
+          Tuple.of(INACTIVE_APD_ID, INACTIVE_APD, INACTIVE_APD + ".com", ApdStatus.INACTIVE),
+          Tuple.of(ACTIVE_APD_ID, ACTIVE_APD, ACTIVE_APD + ".com", ApdStatus.ACTIVE));
 
       return pool
           .withConnection(conn -> conn.preparedQuery(Utils.SQL_CREATE_APD).executeBatch(apdTup));
     }).onSuccess(res -> {
-      apdService = new ApdServiceImpl(pool, apdWebClient, registrationService, policyService,
-          tokenService, options);
+      apdService =
+          new ApdServiceImpl(pool, apdWebClient, registrationService, tokenService, options);
       testContext.completeNow();
     });
   }
@@ -163,7 +155,7 @@ public class CallApdTest {
   @AfterAll
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing....");
-    List<JsonObject> users = List.of(trusteeUser.result(), otherUser.result());
+    List<JsonObject> users = List.of(otherUser.result());
 
     Utils.deleteFakeUser(pool, users)
         .compose(succ -> pool.withConnection(
@@ -280,7 +272,7 @@ public class CallApdTest {
     UUID ownerId = UUID.randomUUID();
 
     JsonObject apdContext = new JsonObject().put("userId", userId.toString())
-        .put("ownerId", ownerId.toString()).put("apdId", PENDING_APD_ID.toString())
+        .put("ownerId", ownerId.toString()).put("apdId", INACTIVE_APD_ID.toString())
         .put("resource", RandomStringUtils.randomAlphabetic(20).toLowerCase())
         .put("itemType", RandomStringUtils.randomAlphabetic(10).toLowerCase())
         .put("resSerUrl", RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com")

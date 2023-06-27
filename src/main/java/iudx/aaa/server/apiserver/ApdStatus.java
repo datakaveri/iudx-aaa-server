@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
  * Enum that defines valid status an Access Policy Domain (APD) can be in.
  */
 public enum ApdStatus {
-  PENDING, ACTIVE, INACTIVE;
+  ACTIVE, INACTIVE;
 
   static List<String> apdStatusAsStrings =
       Arrays.stream(ApdStatus.values()).map(r -> r.name()).collect(Collectors.toList());

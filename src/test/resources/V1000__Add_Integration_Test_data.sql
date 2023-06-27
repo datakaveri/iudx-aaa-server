@@ -49,10 +49,9 @@ COPY ${flyway:defaultSchema}.access_requests (id, user_id, item_id, item_type, o
 -- Data for Name: apds; Type: TABLE DATA; Schema: ${flyway:defaultSchema}; Owner: integadmin
 --
 
-COPY ${flyway:defaultSchema}.apds (id, name, url, owner_id, status, created_at, updated_at) FROM stdin;
-8e2741ad-34a3-4de2-a9e5-b97631f2fd8f	Pending Integration APD	pendingapd.integration-iudx.io	1d086d89-db81-4959-ae5b-a760ef5c15fb	PENDING	2022-03-21 07:49:07.4212	2022-03-21 07:49:07.4212
-4f51cee5-e6ce-4e31-8c30-66d298c7d4a6	Active Integration APD	activeapd.integration-iudx.io	1d086d89-db81-4959-ae5b-a760ef5c15fb	ACTIVE	2022-03-21 07:47:25.098821	2022-03-21 08:29:34.802582
-1b988be6-cc13-422b-bca0-9ccb98a5b30f	Inactive Integration APD	inactiveapd.integration-iudx.io	1d086d89-db81-4959-ae5b-a760ef5c15fb	INACTIVE	2022-03-21 07:49:24.904527	2022-03-21 08:30:12.182393
+COPY ${flyway:defaultSchema}.apds (id, name, url, status, created_at, updated_at) FROM stdin;
+4f51cee5-e6ce-4e31-8c30-66d298c7d4a6	Active Integration APD	activeapd.integration-iudx.io	ACTIVE	2022-03-21 07:47:25.098821	2022-03-21 08:29:34.802582
+1b988be6-cc13-422b-bca0-9ccb98a5b30f	Inactive Integration APD	inactiveapd.integration-iudx.io	INACTIVE	2022-03-21 07:49:24.904527	2022-03-21 08:30:12.182393
 \.
 
 
@@ -135,7 +134,6 @@ abe00721-1871-4268-a70a-3a670d843fea	b2a705bd-9543-4dce-bbce-f3828e2de1d2	ADMIN	
 cc831cdd-c894-41cf-a48b-d72760ca4f77	7b6fb9c0-8524-459e-afc3-df665a83cd16	ADMIN	APPROVED	2021-09-21 07:44:14.694661	2021-09-21 07:44:14.694661
 b856f9d9-5071-46d8-b6f7-467193f28759	746442f5-18a7-44fd-8c8f-3e39e5026fae	PROVIDER	APPROVED	2021-09-21 08:43:22.021489	2021-09-22 08:09:27.588546
 25ccc6f6-fe1a-487f-b7c5-c323a7f8b83f	da00dc18-9f0e-40ea-808b-bd8eac11bccc	DELEGATE	APPROVED	2021-09-27 12:09:31.269865	2021-09-27 12:09:31.269865
-8301a903-a7af-4109-9516-40e942f381ae	1d086d89-db81-4959-ae5b-a760ef5c15fb	TRUSTEE	APPROVED	2022-03-21 06:25:10.36597	2022-03-21 06:25:10.36597
 \.
 
 

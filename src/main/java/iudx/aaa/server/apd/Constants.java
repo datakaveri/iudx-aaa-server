@@ -3,7 +3,6 @@ package iudx.aaa.server.apd;
 public class Constants {
 
   public static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
-  public static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
   public static final String TOKEN_SERVICE_ADDRESS = "iudx.aaa.token.service";
 
   public static final String NIL_UUID = "00000000-0000-0000-0000-000000000000";
@@ -29,8 +28,6 @@ public class Constants {
   public static final String RESP_APD_NAME = "name";
   public static final String RESP_APD_URL = "url";
   public static final String RESP_APD_STATUS = "status";
-  public static final String RESP_APD_OWNER = "owner";
-  public static final String RESP_OWNER_USER_ID = "id";
   public static final String INTERNALERROR = "internal server error";
 
   /* Response title and details */
@@ -44,9 +41,6 @@ public class Constants {
 
   public static final String ERR_TITLE_NO_USER_PROFILE = "User profile does not exist";
   public static final String ERR_DETAIL_NO_USER_PROFILE = "Please register to create user profile";
-
-  public static final String ERR_TITLE_NOT_TRUSTEE = "Not a trustee";
-  public static final String ERR_DETAIL_NOT_TRUSTEE = "Use does not have the trustee role";
 
   public static final String ERR_TITLE_APD_NOT_RESPOND = "Invalid APD response";
   public static final String ERR_DETAIL_APD_NOT_RESPOND =
@@ -68,7 +62,7 @@ public class Constants {
 
   public static final String ERR_TITLE_NO_ROLES_PUT = "Invalid roles to call API";
   public static final String ERR_DETAIL_NO_ROLES_PUT =
-      "Trustees and Auth Server Admin may call the API";
+      "Auth Server Admin may call the API";
 
   public static final String ERR_TITLE_INVALID_REQUEST =  "Invalid request";
   public static final String ERR_TITLE_INVALID_REQUEST_ID  =  "APD not present";
@@ -77,18 +71,15 @@ public class Constants {
 
   /* SQL */
   public static final String SQL_INSERT_APD_IF_NOT_EXISTS =
-      "INSERT INTO apds (name, url, owner_id, status, created_at, updated_at) VALUES "
-          + "($1::text, $2::text, $3::uuid, 'PENDING', NOW(), NOW()) "
+      "INSERT INTO apds (name, url, status, created_at, updated_at) VALUES "
+          + "($1::text, $2::text, 'ACTIVE', NOW(), NOW()) "
           + "ON CONFLICT (url) DO NOTHING RETURNING id";
 
   public static final String SQL_CHECK_ADMIN_OF_SERVER =
       "SELECT id FROM " + "resource_server WHERE owner_id = $1::uuid AND url = $2::text";
 
   public static final String SQL_GET_APDS_BY_ID_ADMIN =
-      "SELECT id AS \"apdId\", name, url, owner_id, status FROM apds WHERE id = ANY($1::uuid[])";
-
-  public static final String SQL_GET_APDS_BY_ID_TRUSTEE =
-      "SELECT id AS \"apdId\", name, url, owner_id, status FROM apds WHERE id = ANY($1::uuid[]) AND owner_id = $2::uuid";
+      "SELECT id AS \"apdId\", name, url, status FROM apds WHERE id = ANY($1::uuid[])";
 
   public static final String SQL_UPDATE_APD_STATUS =
       "UPDATE apds SET status = $1::apd_status_enum, updated_at = NOW() WHERE id = $2::uuid";
@@ -138,9 +129,8 @@ public class Constants {
   public static final String APD_NOT_ACTIVE = " (NOTE: The APD is currently not in an active state.)";
   public static final String ERR_TITLE_POLICY_EVAL_FAILED = "Policy evaluation failed";
 
-  public static final String GET_APDINFO_ID = "SELECT id,name,url,status,owner_id as \"ownerId\" FROM apds where id = ANY($1::uuid[])";
-  public static final String GET_APDINFO_URL = "SELECT id,name,url,status,owner_id as \"ownerId\" FROM apds where url = ANY($1::text[])";
-  public static final String LIST_AUTH_QUERY = "SELECT id FROM apds where status = $1::apd_status_enum or status = $2::apd_status_enum or status = $3::apd_status_enum";
-  public static final String LIST_TRUSTEE_QUERY = "SELECT id FROM apds WHERE (owner_id = $1::UUID OR status = $2::apd_status_enum) ";
+  public static final String GET_APDINFO_ID = "SELECT id,name,url,status FROM apds where id = ANY($1::uuid[])";
+  public static final String GET_APDINFO_URL = "SELECT id,name,url,status FROM apds where url = ANY($1::text[])";
+  public static final String LIST_AUTH_QUERY = "SELECT id FROM apds where status = $1::apd_status_enum or status = $2::apd_status_enum";
   public static final String LIST_USER_QUERY = "SELECT id FROM apds WHERE status = $1::apd_status_enum  ";
 }
