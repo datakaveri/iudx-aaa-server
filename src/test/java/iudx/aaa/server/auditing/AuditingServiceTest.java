@@ -163,7 +163,7 @@ public class AuditingServiceTest {
     jsonObject.put("userId", "/userId");
     jsonObject.put("method", "POST");
     jsonObject.put("endPoint", "/post");
-    jsonObject.put("startTime", "1970-01-01T05:30:00+05:30[Asia/Kolkata]");
+    jsonObject.put("startTime", ZonedDateTime.now().minusSeconds(5).toString());
     jsonObject.put("endTime", ZonedDateTime.now().toString());
     return jsonObject;
   }
@@ -176,12 +176,14 @@ public class AuditingServiceTest {
      * any point of time)
      */
     JsonObject dataToWrite = writeRequest();
-    JsonObject jsonObject = readRequest();
 
     Promise<JsonObject> promise = Promise.promise();
     auditingService.executeWriteQuery(dataToWrite, promise);
 
     promise.future().onComplete(written -> {
+      // create readRequest here so that query endTime is 
+      // only after the write is done 
+      JsonObject jsonObject = readRequest();
       auditingService.executeReadQuery(jsonObject,
           vertxTestContext.succeeding(response -> vertxTestContext.verify(() -> {
             
