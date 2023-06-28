@@ -71,7 +71,7 @@ pipeline {
             sh 'mvn flyway:clean -Dflyway.configFiles=/home/ubuntu/configs/aaa-flyway.conf'
             sh 'docker compose -f docker-compose-test.yml down --remove-orphans'
           }
-          cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: 'src/main/resources/db/migration/V[0-9]*__Add_Integration_Test_data.sql', type: 'INCLUDE']]
+          cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: 'src/main/resources/db/migration/V*__Add_Integration_Test_data.sql', type: 'INCLUDE']]
         }
       }
     }
@@ -106,7 +106,7 @@ pipeline {
             sh 'mvn flyway:clean -Dflyway.configFiles=/home/ubuntu/configs/aaa-flyway.conf'
             sh 'docker compose -f docker-compose-test.yml down --remove-orphans'
           }
-          cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: 'src/main/resources/db/migration/V[0-9]*__Add_Integration_Test_data.sql', type: 'INCLUDE']]
+          cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: 'src/main/resources/db/migration/V*__Add_Integration_Test_data.sql', type: 'INCLUDE']]
         }
       }
     }
