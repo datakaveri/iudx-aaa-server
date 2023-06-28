@@ -256,14 +256,13 @@ public class RegistrationServiceImpl implements RegistrationService {
       return Tuple.of(userId.result(), clientId, hashedClientSecret, DEFAULT_CLIENT);
     };
 
-    /* Insertion into users, roles, clients tables and add roles to Keycloak */
+    /* Insertion into users, roles, clients tables */
     Future<Void> query = validation.compose(emailId -> pool.withTransaction(
         conn -> conn.preparedQuery(SQL_CREATE_USER).execute(createUserTup.apply(emailId))
             .map(rows -> rows.iterator().next().getUUID("id")).map(uid -> createRoleTup.apply(uid))
             .compose(roleDetails -> conn.preparedQuery(SQL_CREATE_ROLE).executeBatch(roleDetails))
-            .map(success -> createClientTup.get())
-            .compose(clientDetails -> conn.preparedQuery(SQL_CREATE_CLIENT).execute(clientDetails))
-            .compose(success -> kc.modifyRoles(user.getKeycloakId(), rolesForKc))));
+            .map(success -> createClientTup.get()).compose(clientDetails -> conn
+                .preparedQuery(SQL_CREATE_CLIENT).execute(clientDetails).mapEmpty())));
 
     query.onSuccess(success -> {
       User u =
@@ -683,10 +682,9 @@ public class RegistrationServiceImpl implements RegistrationService {
       return Tuple.of(request.getOrgId(), user.getUserId());
     };
 
-    Future<Void> performUpdate = validateOrg.compose(res -> pool
-        .withTransaction(conn -> conn.preparedQuery(SQL_CREATE_ROLE).executeBatch(roleDetails)
-            .compose(success -> conn.preparedQuery(SQL_UPDATE_ORG_ID).execute(updateOrgIdTup.get()))
-            .compose(success -> kc.modifyRoles(user.getKeycloakId(), rolesForKc))));
+    Future<Void> performUpdate = validateOrg.compose(res -> pool.withTransaction(conn -> conn
+        .preparedQuery(SQL_CREATE_ROLE).executeBatch(roleDetails).compose(success -> conn
+            .preparedQuery(SQL_UPDATE_ORG_ID).execute(updateOrgIdTup.get()).mapEmpty())));
 
     performUpdate.onSuccess(success -> {
       /*

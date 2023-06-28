@@ -247,11 +247,6 @@ public class AdminServiceImpl implements AdminService {
         request.stream().filter(obj -> obj.getStatus().equals(RoleStatus.APPROVED))
             .map(obj -> UUID.fromString(obj.getUserId())).collect(Collectors.toList());
 
-    /* Function to get Keycloak IDs of approved providers */
-    Function<Map<UUID, UUID>, List<String>> getKcIdToApprove = (map) -> {
-      return toBeApproved.stream().map(uid -> map.get(uid).toString()).collect(Collectors.toList());
-    };
-
     /* Function to get Keycloak IDs of all providers in request */
     Function<Map<UUID, UUID>, List<String>> getKcIds = (map) -> {
       return ids.stream().map(uid -> map.get(uid).toString()).collect(Collectors.toList());
@@ -263,8 +258,7 @@ public class AdminServiceImpl implements AdminService {
 
     Future<Map<String, JsonObject>> result = checkRes
         .compose(uidToKc -> pool.withTransaction(conn -> conn.preparedQuery(SQL_UPDATE_ROLE_STATUS)
-            .executeBatch(tuple).compose(cc -> kc.approveProvider(getKcIdToApprove.apply(uidToKc)))
-            .compose(success -> setAuthAdminPolicy(user, toBeApproved))
+            .executeBatch(tuple).compose(success -> setAuthAdminPolicy(user, toBeApproved))
             .compose(r -> kc.getDetails(getKcIds.apply(uidToKc)))));
 
     result.onSuccess(details -> {

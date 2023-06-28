@@ -336,7 +336,7 @@ public class UpdateProviderRegistrationStatusTest {
         new JsonObject().put("userId", providerJson.getString("userId")).put("status", "approved"));
     List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-    /** MOCKS -> mock PolicyService, kc.getDetails and kc.approveProvider **/
+    /** MOCKS -> mock PolicyService, kc.getDetails **/
     Mockito.doAnswer(i -> {
       Promise<JsonObject> p = i.getArgument(3);
       p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
@@ -348,8 +348,6 @@ public class UpdateProviderRegistrationStatusTest {
     Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
     Mockito.when(resp.get(anyString())).thenReturn(new JsonObject());
     Mockito.when(resp.get(providerJson.getString("keycloakId"))).thenReturn(details);
-
-    Mockito.when(kc.approveProvider(any())).thenReturn(Future.succeededFuture());
     /***********************************************************************/
 
     adminService.updateProviderRegistrationStatus(request, user,
@@ -390,7 +388,7 @@ public class UpdateProviderRegistrationStatusTest {
         new JsonObject().put("userId", providerJson.getString("userId")).put("status", "approved"));
     List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-    /** MOCKS -> mock PolicyService, kc.getDetails and kc.approveProvider **/
+    /** MOCKS -> mock PolicyService, kc.getDetails **/
     Mockito.doAnswer(i -> {
       Promise<JsonObject> p = i.getArgument(3);
       p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
@@ -402,8 +400,6 @@ public class UpdateProviderRegistrationStatusTest {
     Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
     Mockito.when(resp.get(anyString())).thenReturn(new JsonObject());
     Mockito.when(resp.get(providerJson.getString("keycloakId"))).thenReturn(details);
-
-    Mockito.when(kc.approveProvider(any())).thenReturn(Future.succeededFuture());
     /***********************************************************************/
 
     adminService.updateProviderRegistrationStatus(request, user,
@@ -432,7 +428,7 @@ public class UpdateProviderRegistrationStatusTest {
         new JsonObject().put("userId", providerJson.getString("userId")).put("status", "rejected"));
     List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-    /** MOCKS -> mock PolicyService, kc.getDetails and kc.approveProvider **/
+    /** MOCKS -> mock PolicyService, kc.getDetails **/
     Mockito.doAnswer(i -> {
       Promise<JsonObject> p = i.getArgument(3);
       p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
@@ -444,8 +440,6 @@ public class UpdateProviderRegistrationStatusTest {
     Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
     Mockito.when(resp.get(anyString())).thenReturn(new JsonObject());
     Mockito.when(resp.get(providerJson.getString("keycloakId"))).thenReturn(details);
-
-    Mockito.when(kc.approveProvider(any())).thenReturn(Future.succeededFuture());
     /***********************************************************************/
 
     Checkpoint rejected = testContext.checkpoint();
@@ -501,7 +495,7 @@ public class UpdateProviderRegistrationStatusTest {
         new JsonObject().put("userId", providerJson.getString("userId")).put("status", "approved"));
     List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-    /** MOCKS -> mock PolicyService, kc.getDetails and kc.approveProvider **/
+    /** MOCKS -> mock PolicyService, kc.getDetails **/
     Mockito.doAnswer(i -> {
       Promise<JsonObject> p = i.getArgument(3);
       p.fail("Failed to set admin ");
@@ -513,8 +507,6 @@ public class UpdateProviderRegistrationStatusTest {
     Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
     Mockito.when(resp.get(anyString())).thenReturn(new JsonObject());
     Mockito.when(resp.get(providerJson.getString("keycloakId"))).thenReturn(details);
-
-    Mockito.when(kc.approveProvider(any())).thenReturn(Future.succeededFuture());
     /***********************************************************************/
 
     Checkpoint failed = testContext.checkpoint();
