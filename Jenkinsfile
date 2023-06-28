@@ -71,7 +71,7 @@ pipeline {
             sh 'mvn flyway:clean -Dflyway.configFiles=/home/ubuntu/configs/aaa-flyway.conf'
             sh 'docker compose -f docker-compose-test.yml down --remove-orphans'
           }
-          cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: 'src/main/resources/db/migration/V?__Add_Integration_Test_data.sql', type: 'INCLUDE']]
+          cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: 'src/main/resources/db/migration/V*__Add_Integration_Test_data.sql', type: 'INCLUDE']]
         }
       }
     }
@@ -93,9 +93,9 @@ pipeline {
         always{
           node('built-in') {
             script{
+              publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '/var/lib/jenkins/iudx/aaa/Newman/report/', reportFiles: 'report.html', reportName: 'HTML Report', reportTitles: '', reportName: 'Integration Test Report'])
               archiveZap failHighAlerts: 1, failMediumAlerts: 1, failLowAlerts: 2
             }  
-            publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '/var/lib/jenkins/iudx/aaa/Newman/report/', reportFiles: 'report.html', reportName: 'HTML Report', reportTitles: '', reportName: 'Integration Test Report'])
           }
         }
         failure{
@@ -106,7 +106,7 @@ pipeline {
             sh 'mvn flyway:clean -Dflyway.configFiles=/home/ubuntu/configs/aaa-flyway.conf'
             sh 'docker compose -f docker-compose-test.yml down --remove-orphans'
           }
-          cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: 'src/main/resources/db/migration/V?__Add_Integration_Test_data.sql', type: 'INCLUDE']]
+          cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: 'src/main/resources/db/migration/V*__Add_Integration_Test_data.sql', type: 'INCLUDE']]
         }
       }
     }
