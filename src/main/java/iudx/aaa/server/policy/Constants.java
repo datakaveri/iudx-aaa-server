@@ -166,7 +166,7 @@ public class Constants {
       "select a.id,a.url,a.owner_id from resource_server a inner join ";
 
   public static final String GET_RES_SER_OWNER_JOIN =
-      " b on a.id = b.resource_server_id where b.cat_id = $1::text";
+      " b on a.id = b.resource_server_id where b.id = $1::UUID";
 
   public static final String CHECK_ADMIN_POLICY =
       "select id from policies where "
@@ -226,8 +226,8 @@ public class Constants {
           + "where owner_id = $1::UUID and url = ANY($2::text[])";
 
 
-  public static final String CHECK_RESOURCE_EXIST = "select cat_id from ";
-  public static final String CHECK_RESOURCE_EXIST_JOIN = " where cat_id = ANY($1::text[]) ";
+  public static final String CHECK_RESOURCE_EXIST = "select id from ";
+  public static final String CHECK_RESOURCE_EXIST_JOIN = " where id = ANY($1::uuid[]) ";
   public static final String CHECK_AUTH_POLICY =
       "select a.id from policies a inner join resource_server b "
           + " on a.item_id = b.id where a.user_id = $1::UUID and "
@@ -239,10 +239,10 @@ public class Constants {
                   "and expiry_time > now() and  item_id = ANY($3::UUID[])";
 
   public static final String GET_RES_GRP_DETAILS =
-      "select id,cat_id ,provider_id as owner_id, resource_server_id from resource_group where cat_id = ANY($1::text[]) ";
+      "select id,cat_id ,provider_id as owner_id, resource_server_id from resource_group where id = ANY($1::UUID[])";
 
   public static final String GET_RES_DETAILS =
-      "select id,cat_id ,provider_id as owner_id,resource_group_id, resource_server_id from resource where cat_id = ANY($1::text[]) ";
+      "select id,cat_id ,provider_id as owner_id,resource_group_id, resource_server_id from resource where id = ANY($1::UUID[])";
 
   public static final String GET_RES_SER_ID =
       "select url,id from resource_server where url = any($1::text[])";

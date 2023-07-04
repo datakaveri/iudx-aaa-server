@@ -21,6 +21,7 @@ import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -98,6 +99,32 @@ public class CatalogueClient {
    */
   public Future<Map<String, ResourceObj>> checkReqItems(Map<String, List<String>> request) {
     Promise<Map<String, ResourceObj>> p = Promise.promise();
+    
+    /* Check if the item is not a UUID */
+    List<String> items = request.entrySet().stream().flatMap(i -> i.getValue().stream())
+        .collect(Collectors.toList());
+    Iterator<String> itr = items.iterator();
+    
+    while(itr.hasNext()) {
+      String strItemId = itr.next();  
+    
+      try {
+        UUID.fromString(strItemId);
+      }
+      catch(IllegalArgumentException e) {
+        Response r =
+            new Response.ResponseBuilder()
+            .type(Urn.URN_INVALID_INPUT.toString())
+            .title("Invalid Item ID format")
+            .detail(strItemId)
+            .status(400)
+            .build();
+        p.fail(new ComposeException(r));
+        
+        return p.future();
+      }
+    }
+    
     Future<Map<String, List<String>>> resources = checkResExist(request);
 
     Future<List<JsonObject>> fetchItem =
@@ -191,7 +218,7 @@ public class CatalogueClient {
     Promise<List<String>> p = Promise.promise();
 
     Collector<Row, ?, List<String>> catIdCollector =
-        Collectors.mapping(row -> row.getString(CAT_ID), Collectors.toList());
+        Collectors.mapping(row -> row.getUUID(ID).toString(), Collectors.toList());
 
     try {
 
@@ -204,7 +231,7 @@ public class CatalogueClient {
           conn ->
               conn.preparedQuery(CHECK_RESOURCE_EXIST + itemType + CHECK_RESOURCE_EXIST_JOIN)
                   .collecting(catIdCollector)
-                  .execute(Tuple.of(resources.toArray(String[]::new)))
+                  .execute(Tuple.of(resources.stream().map(x -> UUID.fromString(x)).toArray(UUID[]::new))))
                   .onFailure(
                       obj -> {
                         LOGGER.error("checkRes db fail :: " + obj.getLocalizedMessage());
@@ -218,7 +245,7 @@ public class CatalogueClient {
                                 .filter(item -> !validItems.contains(item))
                                 .collect(Collectors.toList());
                         p.complete(invalid);
-                      }));
+                      });
     } catch (Exception e) {
       LOGGER.error("Fail checkRes : " + e.toString());
       p.fail(INTERNALERROR);
@@ -234,6 +261,17 @@ public class CatalogueClient {
    */
   private Future<List<JsonObject>> fetch(Map<String, List<String>> request) {
     Promise<List<JsonObject>> p = Promise.promise();
+    Response r =
+        new Response.ResponseBuilder()
+        .type(Urn.URN_INVALID_INPUT.toString())
+        .title(ITEMNOTFOUND)
+        .detail("Getting items from cat is disabled")
+        .status(400)
+        .build();
+    p.fail(new ComposeException(r));
+    
+    return p.future();
+    /*
     List<String> resIds = new ArrayList<>();
     if (request.containsKey(RES)) {
       resIds.addAll(request.get(RES));
@@ -266,6 +304,7 @@ public class CatalogueClient {
               p.fail(failureHandler);
             });
     return p.future();
+    */
   }
 
   /**
@@ -499,7 +538,7 @@ public class CatalogueClient {
           conn ->
               conn.preparedQuery(finalQuery)
                   .collecting(ResDetailCollector)
-                  .execute(Tuple.of(resList.toArray(String[]::new)))
+                  .execute(Tuple.of(resList.stream().map(x -> UUID.fromString(x)).toArray(UUID[]::new)))
                   .onFailure(
                       obj -> {
                         LOGGER.error("getResGrpDetails db fail :: " + obj.getLocalizedMessage());
@@ -514,7 +553,7 @@ public class CatalogueClient {
                         resDetailsList.forEach(
                             resource ->
                                 resDetailMap.put(
-                                    resource.getString(CAT_ID), new ResourceObj(resource)));
+                                    resource.getString(ID), new ResourceObj(resource)));
                         p.complete(resDetailMap);
                       }));
 

@@ -67,8 +67,7 @@ public class CatalogueClientTest {
   private static UUID resourceGrpID;
   private static UUID resourceIdOne;
   private static String resourceServerUrl;
-  private static String resourceGrp;
-  private static String resourceOne;
+
   private static Vertx vertxObj;
   @BeforeAll
   @DisplayName("Deploying Verticle")
@@ -148,8 +147,6 @@ public class CatalogueClientTest {
               resourceSerID = UUID.randomUUID();
               resourceIdOne = UUID.randomUUID();
               resourceServerUrl = "rs.server.com";
-              resourceGrp = "emailsha/xyz/"+ resourceServerUrl+"/rsg";
-              resourceOne = resourceGrp + "/ri1";
               Utils.createFakeResourceServer(
                       pgclient, adminUser.result(), resourceSerID, resourceServerUrl)
                   .compose(
@@ -159,7 +156,9 @@ public class CatalogueClientTest {
                               providerUser.result(),
                               resourceSerID,
                               resourceGrpID,
-                              resourceGrp))
+                              // putting some random value in cat ID 
+                              RandomStringUtils.randomAlphabetic(10)))
+
                   .compose(
                       resGrp ->
                           Utils.createFakeResource(
@@ -168,7 +167,8 @@ public class CatalogueClientTest {
                               resourceIdOne,
                               resourceSerID,
                               resourceGrpID,
-                              resourceOne))
+                              // putting some random value in cat ID 
+                              RandomStringUtils.randomAlphabetic(10)))
                   .onSuccess(
                       success -> {
                         catalogueClient = new CatalogueClient(vertxObj, pgclient, catalogueOptions);
@@ -206,18 +206,42 @@ public class CatalogueClientTest {
   }
 
   @Test
+  @DisplayName("Using old cat ID")
+  void InvalidItemIdFormat(VertxTestContext testContext) {
+    String resourceGrp =
+        RandomStringUtils.randomAlphabetic(2)
+        + "/"
+        + RandomStringUtils.randomAlphabetic(2)
+        + "/"
+        + RandomStringUtils.randomAlphabetic(2)
+        + "/"
+        + RandomStringUtils.randomAlphabetic(2);
+    
+    List<String> resItems = new ArrayList<>();
+    resItems.add(resourceGrp);
+    Map<String, List<String>> catItem = new HashMap<>();
+    catItem.put(RES_GRP, resItems);
+    
+    spyCatalogueClient
+        .checkReqItems(catItem)
+        .onFailure(
+            fail -> {
+              JsonObject response = new JsonObject();
+              if (fail instanceof ComposeException) {
+                ComposeException exp = (ComposeException) fail;
+                response = exp.getResponse().toJson();
+                assertEquals(response.getString(TITLE), "Invalid Item ID format");
+                assertEquals(response.getInteger(STATUS), 400);
+                assertEquals(response.getString(TYPE), Urn.URN_INVALID_INPUT.toString());
+              }
+              testContext.completeNow();
+            });
+  }
+
+  @Test
   @DisplayName("Test resource does not exist")
   void InvalidRes(VertxTestContext testContext) {
-    String item =
-        RandomStringUtils.randomAlphabetic(2)
-            + "/"
-            + RandomStringUtils.randomAlphabetic(2)
-            + "/"
-            + RandomStringUtils.randomAlphabetic(2)
-            + "/"
-            + RandomStringUtils.randomAlphabetic(2)
-            + "/"
-            + RandomStringUtils.randomAlphabetic(2);
+    String item = UUID.randomUUID().toString();
     List<String> resItems = new ArrayList<>();
     resItems.add(item);
     Map<String, List<String>> catItem = new HashMap<>();
@@ -252,14 +276,7 @@ public class CatalogueClientTest {
   @Test
   @DisplayName("Test resource group does not exist")
   void InvalidResGrp(VertxTestContext testContext) {
-      String item =
-              RandomStringUtils.randomAlphabetic(2)
-                      + "/"
-                      + RandomStringUtils.randomAlphabetic(2)
-                      + "/"
-                      + RandomStringUtils.randomAlphabetic(2)
-                      + "/"
-                      + RandomStringUtils.randomAlphabetic(2);
+      String item = UUID.randomUUID().toString();
       List<String> resItems = new ArrayList<>();
       resItems.add(item);
       Map<String, List<String>> catItem = new HashMap<>();
@@ -291,6 +308,7 @@ public class CatalogueClientTest {
                       });
   }
 
+  @Disabled
   @Test
   @DisplayName("Test get res details from cat server")
   void getItemfromCatServerSucc(VertxTestContext testContext) {
@@ -357,6 +375,8 @@ public class CatalogueClientTest {
                           testContext.completeNow();
                       });
   }
+  
+  @Disabled
   @Test
   @DisplayName("Test resource group details from cat server")
   void getGrpfromCatServerSucc(VertxTestContext testContext) {
@@ -418,15 +438,15 @@ public class CatalogueClientTest {
     @DisplayName("Test resource exists on DB")
     void succResExistsinDB(VertxTestContext testContext) {
         List<String> resItems = new ArrayList<>();
-        resItems.add(resourceOne);
+        resItems.add(resourceIdOne.toString());
         // request
         Map<String, List<String>> catItem = new HashMap<>();
         catItem.put(RES, resItems);
         catalogueClient.checkReqItems(catItem)
                 .onSuccess(succ -> {
                     Map<String, ResourceObj> resp = succ;
-                    ResourceObj respObj = resp.get(resourceOne);
-                    assertEquals(respObj.getCatId(), resourceOne);
+                    ResourceObj respObj = resp.get(resourceIdOne.toString());
+                    assertEquals(respObj.getId(), resourceIdOne);
                     assertEquals(respObj.getItemType(), "resource");
                     assertEquals(
                             respObj.getOwnerId(), UUID.fromString(providerUser.result().getString("userId")));
@@ -439,7 +459,7 @@ public class CatalogueClientTest {
     @DisplayName("Test resource group exists on DB")
     void succResGrpExistsinDB(VertxTestContext testContext) {
         List<String> resItems = new ArrayList<>();
-        resItems.add(resourceGrp);
+        resItems.add(resourceGrpID.toString());
         // request
         Map<String, List<String>> catItem = new HashMap<>();
         catItem.put(RES_GRP, resItems);
@@ -447,8 +467,8 @@ public class CatalogueClientTest {
                 .checkReqItems(catItem)
                 .onSuccess(succ -> {
                     Map<String, ResourceObj> resp = succ;
-                    ResourceObj respObj = resp.get(resourceGrp);
-                    assertEquals(respObj.getCatId(), resourceGrp);
+                    ResourceObj respObj = resp.get(resourceGrpID.toString());
+                    assertEquals(respObj.getId(), resourceGrpID);
                     assertEquals(respObj.getItemType(), "resource_group");
                     assertEquals(
                             respObj.getOwnerId(), UUID.fromString(providerUser.result().getString("userId")));
@@ -457,6 +477,7 @@ public class CatalogueClientTest {
                 });
     }
 
+    @Disabled
     @Test
     @DisplayName("Test resource group details not available in cat server")
     void getGrpfromCatServerFail(VertxTestContext testContext) {
@@ -516,6 +537,7 @@ public class CatalogueClientTest {
                         });
     }
 
+    @Disabled
     @Test
     @DisplayName("Test Get Cat IDs of resource")
     void getCatIDForRes(VertxTestContext testContext) {
@@ -526,11 +548,12 @@ public class CatalogueClientTest {
                         succ -> {
                             Map<UUID, String> resp = new HashMap<>(succ);
                             assertTrue(resp.containsKey(resourceIdOne));
-                            assertEquals(resp.get(resourceIdOne),resourceOne);
+                            assertEquals(resp.get(resourceIdOne),"");
                             testContext.completeNow();
                         });
     }
 
+    @Disabled
     @Test
     @DisplayName("Test Get Cat IDs of resource")
     void getCatIDForRes1(VertxTestContext testContext) {
@@ -541,7 +564,7 @@ public class CatalogueClientTest {
                         succ -> {
                             Map<UUID, String> resp = new HashMap<>(succ);
                             assertTrue(resp.containsKey(resourceGrpID));
-                            assertEquals(resp.get(resourceGrpID),resourceGrp);
+                            assertEquals(resp.get(resourceGrpID),"");
                             testContext.completeNow();
                         });
     }

@@ -100,7 +100,7 @@ public class EmailClient {
             resourceObj -> {
               UUID providerId = resourceObj.getOwnerId();
               JsonObject provider = emailInfo.getUserInfo(providerId.toString());
-              String catId = resourceObj.getCatId();
+              String catId = resourceObj.getId().toString();
               List<UUID> authDelegates =
                   emailInfo.getProviderIdToAuthDelegateId().get(providerId.toString());
               List<String> ccEmailIds = new ArrayList<>();

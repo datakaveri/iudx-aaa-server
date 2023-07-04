@@ -217,7 +217,7 @@ paths:
             examples:
               Consumer requesting resource group:
                 value:
-                  itemId: datakaveri.org/04a15c9960ffda227e9546f3f46e629e1fe4132b/rs.iudx.org.in/pune-env-aqm
+                  itemId: a007f760-8580-4401-81c1-b123da3de06f
                   itemType: resource_group
                   role: consumer
               Consumer requesting resource server (for access to public resources):
@@ -227,17 +227,17 @@ paths:
                   role: consumer
               Consumer requesting resource:
                 value:
-                  itemId: datakaveri.org/04a15c9960ffda227e9546f3f46e629e1fe4132b/rs.iudx.org.in/pune-env-aqm/184ba502-22a8-ad15-a8f1-c966cd3aa7a7
+                  itemId: 31b3da3a-84da-4923-b425-a9c5469c169f
                   itemType: resource
                   role: consumer
               Provider requesting resource group:
                 value:
-                  itemId: datakaveri.org/04a15c9960ffda227e9546f3f46e629e1fe4132b/rs.iudx.org.in/pune-env-aqm
+                  itemId: a007f760-8580-4401-81c1-b123da3de06f
                   itemType: resource_group
                   role: provider
               Delegate requesting for resource:
                 value:
-                  itemId: datakaveri.org/04a15c9960ffda227e9546f3f46e629e1fe4132b/rs.iudx.org.in/pune-env-aqm/184ba502-22a8-ad15-a8f1-c966cd3aa7a7
+                  itemId: 31b3da3a-84da-4923-b425-a9c5469c169f
                   itemType: resource
                   role: delegate
               Admin of RS requesting resource server:
@@ -245,11 +245,6 @@ paths:
                   itemId: rs.iudx.org.in
                   itemType: resource_server
                   role: admin
-              Delegate requesting catalogue token:
-                value:
-                  itemId: datakaveri.org/04a15c9960ffda227e9546f3f46e629e1fe4132b/catalogue.iudx.org.in/catalogue/crud
-                  itemType: resource
-                  role: delegate
               identity token for APD as consumer:
                 value:
                   itemId: apd.iudx.org.in
@@ -267,7 +262,7 @@ paths:
                   role: provider
               Requesting resource with context object in body:
                 value:
-                  itemId: datakaveri.org/04a15c9960ffda227e9546f3f46e629e1fe4132b/rs.iudx.org.in/pune-env-aqm
+                  itemId: a007f760-8580-4401-81c1-b123da3de06f
                   itemType: resource_group
                   role: consumer
                   context:
@@ -275,7 +270,7 @@ paths:
                     accessType: PERMANENT_ACCESS
         description: |-
           - `itemId` : the string value of the id of the resource
-            - e.g. `datakaveri.org/facec5182e3bf44cc3ac42b0b611263676d668a2/rs.iudx.org.in/agartala-env-aqm`
+            - e.g. `31b3da3a-84da-4923-b425-a9c5469c169f`
           - `itemType` : the kind of item the desired resource is
           - `role` : the role as which the user wants to get token for
           - `context` : a JSON object containing any extra information. The user may use this field to convey information to an APD in case the requested resource is backed by an APD policy
@@ -303,13 +298,6 @@ paths:
            - users with the `provider` role can get tokens for all of the resources that belong to them without having to set any specific policies to access them.
            - If the provider wishes to get a token to access a particular server, they require a **policy by the server admin**.
             
-        e.g.  A provider can get a token for the IUDX catalogue server by using the `itemId` as `<provider-domain>/<SHA1-of-provider-email>/<catalogue-url>/catalogue/crud`
-
-        For example, if the provider is *provider.foobar@datakaveri.org*, the `itemId` will be
-        ```
-        datakaveri.org/49276e9045a8a4c5c5bcc5b3b6923786896ff02d/catalogue.iudx.org.in/catalogue/crud
-        ```
-           
           ## Tokens for delegates
           - Valid item types - `resource`, `resource_group` 
           - Users with the `delegate` role can get tokens for resources if they:
@@ -317,8 +305,6 @@ paths:
              2. Have a policy set by the provider to access the resource 
              3. Must have a valid policy set by the admin of the server
 
-        **Note**: The IUDX Catalogue server does not require a policy to be set by the provider (2nd point).
-           
           ## Tokens for consumers
           - Valid item types - `resource`, `resource_group`, `resource_server`
           - Consumers can access the private resources for which they have a policy set by either the `provider` or by a `delegate`.
@@ -395,7 +381,7 @@ paths:
                       aud: foobar.iudx.io
                       exp: 1626837909
                       iat: 1626794709
-                      iid: 'rg:example.com/79e7bfa62fad6c765bac69154c2f24c94c95210v/resource-group'
+                      iid: 'rg:ae7f7313-61d9-46ab-9c33-7adc457ff0ed'
                       role: consumer
                       cons: {}
                 properties:
@@ -453,7 +439,7 @@ paths:
                       aud: rs.iudx.org.in
                       exp: 1634233203
                       iat: 1634190003
-                      iid: 'rg:datakaveri.org/04a15c9960ffda227e9546f3f46e629e1fe4132b/rs.iudx.org.in/pune-env-aqm'
+                      iid: 'rg:a007f760-8580-4401-81c1-b123da3de06f'
                       role: consumer
                       cons:
                         access:
@@ -2330,7 +2316,7 @@ paths:
                         constraints:
                           access:
                             - sub
-                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood
+                        itemId: 5b7556b5-0779-4c47-9cf2-3f209779aa22
                         user:
                           email: vasanth.rajaraman@datakaveri.org
                           name:
@@ -2352,7 +2338,7 @@ paths:
                         itemType: resource
                         expiryTime: '2022-09-09T04:22:36'
                         constraints: {}
-                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/surat-itms-realtime-information/surat-itms-live-eta
+                        itemId: 83c2e5c2-3574-4e11-9530-2b1fbdfce832
                         user:
                           email: kailash.adhikari@india.nec.com
                           name:
@@ -2397,7 +2383,7 @@ paths:
                         itemType: resource_group
                         expiryTime: '2027-03-22T00:00'
                         constraints: {}
-                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/sub-sample
+                        itemId: f8947fec-191d-4f54-836f-fccca9ff9dbd
                         owner:
                           email: provider@datakaveri.org
                           name:
@@ -2695,12 +2681,12 @@ paths:
                 example-1:
                   request:
                     - userId: 89bbe934-5f18-4f57-b68e-fb821ba77291
-                      itemId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group
+                      itemId: ae7f7313-61d9-46ab-9c33-7adc457ff0ed
                       itemType: resource_group
                       expiryTime: '2023-08-30T21:10:06.834292'
                       constraints: {}
                     - userId: 89bbe934-5f18-4f57-b68e-fb821ba77292
-                      itemId: example.com/79e7bfa62fad6c765bac69154c2f24c94c95220a/resource-group
+                      itemId: ae7f7313-61d9-46ab-9c33-7adc457ff0ed
                       itemType: resource_group
                       expiryTime: '2023-08-30T21:10:06.834292'
                       constraints: {}
@@ -2781,7 +2767,7 @@ paths:
                 value:
                   request:
                     - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                      itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood
+                      itemId: 5b7556b5-0779-4c47-9cf2-3f209779aa22
                       itemType: resource_group
                       expiryTime: '2022-08-04T20:00:19'
                       constraints:
@@ -2791,7 +2777,7 @@ paths:
                 value:
                   request:
                     - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                      itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood/FWR056
+                      itemId: 7bca861b-d27a-4eff-b6b8-1f1173478e23
                       itemType: resource
                       expiryTime: '2022-10-10T04:00:19'
                       constraints:
@@ -2810,12 +2796,12 @@ paths:
                 value:
                   request:
                     - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                      itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood
+                      itemId: 5b7556b5-0779-4c47-9cf2-3f209779aa22
                       itemType: resource_group
                       expiryTime: '2022-08-04T20:00:19'
                       constraints: {}
                     - userId: b34eb955-c691-4fd3-b200-f18bc78810a2
-                      itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood/FWR056
+                      itemId: 7bca861b-d27a-4eff-b6b8-1f1173478e23
                       itemType: resource
                       expiryTime: '2022-10-10T04:00:19'
                       constraints:
@@ -2835,7 +2821,7 @@ paths:
                   request:
                     - apdId: apd-testing.datakaveri.org
                       userClass: TestUserClass
-                      itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/surat-itms-realtime-info
+                      itemId: 8b95ab80-2aaf-4636-a65e-7f2563d0d371
                       itemType: resource_group
                       constraints:
                         access:
@@ -3416,7 +3402,7 @@ paths:
                     title: Access requests
                     results:
                       - requestId: ea48d233-5d3b-4bdb-9545-691680c99cee
-                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood/FWR056
+                        itemId: 7bca861b-d27a-4eff-b6b8-1f1173478e23
                         itemType: resource
                         status: pending
                         expiryDuration: P1Y2M10DT2H30M
@@ -3532,7 +3518,7 @@ paths:
                     title: Access requests
                     results:
                       - requestId: bd5f0bb3-c02c-4e3d-b75c-a6eb8144bddc
-                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood/FWR056
+                        itemId: 7bca861b-d27a-4eff-b6b8-1f1173478e23
                         itemType: resource
                         status: pending
                         expiryDuration: P1Y2M10DT2H30M
@@ -3607,7 +3593,7 @@ paths:
               x-examples:
                 example-1:
                   request:
-                    - itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood/FWR03
+                    - itemId: d271d832-bf3a-4f33-99e1-91bd4a1ee0dd
                       itemType: resource
                       expiryDuration: P1Y2M10DT2H30M
                       constraints: {}
@@ -3648,7 +3634,7 @@ paths:
               Create:
                 value:
                   request:
-                    - itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood/FWR035
+                    - itemId: d271d832-bf3a-4f33-99e1-91bd4a1ee0dd
                       itemType: resource
                       expiryDuration: P1Y2M10DT2H30M
                       constraints:
@@ -3696,7 +3682,7 @@ paths:
                     title: Access requests
                     results:
                       - requestId: bd5f0bb3-c02c-4e3d-b75c-a6eb8144bddc
-                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/pune-env-flood/FWR056
+                        itemId: 7bca861b-d27a-4eff-b6b8-1f1173478e23
                         itemType: resource
                         status: approved
                         expiryDuration: P1Y2M10DT2H30M
@@ -3913,7 +3899,7 @@ paths:
                     title: deleted requests
                     results:
                       - requestId: 383ea497-0de9-4d6f-94c1-e3dd1328d944
-                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/integration-test
+                        itemId: e63e8e70-02e9-4c1a-8378-b0ea9f435789
                         itemType: resource_group
                         status: withdrawn
                         expiryDuration: '1 year 2 mons 10 days 02:30:00'
@@ -3941,7 +3927,7 @@ paths:
                     title: deleted requests
                     results:
                       - requestId: 383ea497-0de9-4d6f-94c1-e3dd1328d944
-                        itemId: iisc.ac.in/89a36273d77dac4cf38114fca1bbe64392547f86/rs.iudx.io/integration-test
+                        itemId: e63e8e70-02e9-4c1a-8378-b0ea9f435789
                         itemType: resource_group
                         status: withdrawn
                         expiryDuration: '1 year 2 mons 10 days 02:30:00'

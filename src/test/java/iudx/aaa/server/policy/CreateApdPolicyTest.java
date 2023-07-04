@@ -90,7 +90,6 @@ public class CreateApdPolicyTest {
   private static String otherServerURL;
   private static UUID apdId;
   private static UUID resourceGrpID;
-  private static String resourceGrp;
   private static String apdURL;
   private static Vertx vertxObj;
   private static PolicyService policyService;
@@ -126,12 +125,6 @@ public class CreateApdPolicyTest {
     authServerURL = "auth" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
     otherServerURL = "other" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
     apdURL = "apd."+ RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
-    resourceGrp = RandomStringUtils.randomAlphabetic(2)
-        + "/"
-        + RandomStringUtils.randomAlphabetic(2)
-        + "/"
-        + RandomStringUtils.randomAlphabetic(2)+ "/"
-        + RandomStringUtils.randomAlphabetic(2);;
     authOptions.put("authServerUrl", authServerURL);
     /* Set Connection Object and schema */
     if (connectOptions == null) {
@@ -239,7 +232,8 @@ public class CreateApdPolicyTest {
                               providerUser.result(),
                               otherSerId,
                               resourceGrpID,
-                              resourceGrp))
+                              // putting some random value in cat ID 
+                              RandomStringUtils.randomAlphabetic(10)))
                   .compose(
                       pol ->
                           // policy for provider user by admin user for all servers
@@ -393,26 +387,21 @@ public class CreateApdPolicyTest {
             .name(userJson.getString("firstName"), userJson.getString("lastName"))
             .roles(List.of(Roles.PROVIDER))
             .build();
-    String itemId =
-        RandomStringUtils.randomAlphabetic(2)
-            + "/"
-            + RandomStringUtils.randomAlphabetic(2)
-            + "/"
-            + RandomStringUtils.randomAlphabetic(2)+ "/"
-            + RandomStringUtils.randomAlphabetic(2);
+    
+    UUID randomItemId =UUID.randomUUID();
 
     JsonObject validCatItem =
         new JsonObject()
-            .put("cat_id", itemId)
+            .put("cat_id", "")
             .put("itemType", "resource_group")
             .put("owner_id", providerUser.result().getString("userId"))
-            .put("id", UUID.randomUUID())
+            .put("id", randomItemId)
             .put("resource_group_id", UUID.randomUUID())
             .put("resource_server_id", otherSerId.toString());
 
     ResourceObj resourceObj = new ResourceObj(validCatItem);
     Map<String, ResourceObj> resp = new HashMap<>();
-    resp.put(resourceObj.getCatId(), resourceObj);
+    resp.put(resourceObj.getId().toString(), resourceObj);
     Mockito.when(catalogueClient.checkReqItems(any())).thenReturn(Future.succeededFuture(resp));
 
     String randomAPD = RandomStringUtils.randomAlphabetic(5);
@@ -429,7 +418,7 @@ public class CreateApdPolicyTest {
 
 
     JsonObject obj = new JsonObject();
-    obj.put("itemId",itemId).put("itemType","RESOURCE_GROUP").put("apdId",randomAPD)
+    obj.put("itemId",randomItemId.toString()).put("itemType","RESOURCE_GROUP").put("apdId",randomAPD)
         .put("userClass","").put("constraints",new JsonObject());
     List<CreatePolicyRequest> req =
         CreatePolicyRequest.jsonArrayToList(new JsonArray().add(obj));
@@ -462,19 +451,13 @@ public class CreateApdPolicyTest {
               .name(userJson.getString("firstName"), userJson.getString("lastName"))
               .roles(List.of(Roles.PROVIDER))
               .build();
-      String itemId =
-          RandomStringUtils.randomAlphabetic(2)
-              + "/"
-              + RandomStringUtils.randomAlphabetic(2)
-              + "/"
-              + RandomStringUtils.randomAlphabetic(2)+ "/"
-              + RandomStringUtils.randomAlphabetic(2);
+      UUID randomItemId = UUID.randomUUID();
 
       Response r =
           new Response.ResponseBuilder()
               .type(Urn.URN_INVALID_INPUT.toString())
               .title(ITEMNOTFOUND)
-              .detail(itemId)
+              .detail(randomItemId.toString())
               .status(400)
               .build();
       ComposeException exception = new ComposeException(r);
@@ -494,7 +477,7 @@ public class CreateApdPolicyTest {
 
 
       JsonObject obj = new JsonObject();
-      obj.put("itemId",itemId).put("itemType","RESOURCE_GROUP").put("apdId",randomAPD)
+      obj.put("itemId",randomItemId.toString()).put("itemType","RESOURCE_GROUP").put("apdId",randomAPD)
           .put("userClass","").put("constraints",new JsonObject());
       List<CreatePolicyRequest> req =
           CreatePolicyRequest.jsonArrayToList(new JsonArray().add(obj));
@@ -530,7 +513,7 @@ public class CreateApdPolicyTest {
 
     JsonObject validCatItem =
         new JsonObject()
-            .put("cat_id", resourceGrp)
+            .put("cat_id", "")
             .put("itemType", "resource_group")
             .put("owner_id", providerUser.result().getString("userId"))
             .put("id",resourceGrpID)
@@ -539,7 +522,7 @@ public class CreateApdPolicyTest {
 
     ResourceObj resourceObj = new ResourceObj(validCatItem);
     Map<String, ResourceObj> resp = new HashMap<>();
-    resp.put(resourceObj.getCatId(), resourceObj);
+    resp.put(resourceObj.getId().toString(), resourceObj);
     Mockito.when(catalogueClient.checkReqItems(any())).thenReturn(Future.succeededFuture(resp));
 
     String randomAPD = RandomStringUtils.randomAlphabetic(5);
@@ -566,7 +549,7 @@ public class CreateApdPolicyTest {
         .getApdDetails(any(), any(), any());
 
     JsonObject obj = new JsonObject();
-    obj.put("itemId",resourceGrp).put("itemType","RESOURCE_GROUP").put("apdId",randomAPD)
+    obj.put("itemId",resourceGrpID.toString()).put("itemType","RESOURCE_GROUP").put("apdId",randomAPD)
         .put("userClass","").put("constraints",new JsonObject());
     List<CreatePolicyRequest> req =
         CreatePolicyRequest.jsonArrayToList(new JsonArray().add(obj));
@@ -602,7 +585,7 @@ public class CreateApdPolicyTest {
 
     JsonObject validCatItem =
         new JsonObject()
-            .put("cat_id", resourceGrp)
+            .put("cat_id", "")
             .put("itemType", "resource_group")
             .put("owner_id", providerUser.result().getString("userId"))
             .put("id",resourceGrpID)
@@ -611,7 +594,7 @@ public class CreateApdPolicyTest {
 
     ResourceObj resourceObj = new ResourceObj(validCatItem);
     Map<String, ResourceObj> resp = new HashMap<>();
-    resp.put(resourceObj.getCatId(), resourceObj);
+    resp.put(resourceObj.getId().toString(), resourceObj);
     Mockito.when(catalogueClient.checkReqItems(any())).thenReturn(Future.succeededFuture(resp));
 
     String randomAPD = RandomStringUtils.randomAlphabetic(5);
@@ -638,7 +621,7 @@ public class CreateApdPolicyTest {
         .getApdDetails(any(), any(), any());
 
     JsonObject obj = new JsonObject();
-    obj.put("itemId",resourceGrp).put("itemType","RESOURCE_GROUP").put("apdId",randomAPD)
+    obj.put("itemId",resourceGrpID.toString()).put("itemType","RESOURCE_GROUP").put("apdId",randomAPD)
         .put("userClass","").put("constraints",new JsonObject());
     List<CreatePolicyRequest> req =
         CreatePolicyRequest.jsonArrayToList(new JsonArray().add(obj));

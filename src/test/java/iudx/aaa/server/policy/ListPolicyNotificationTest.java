@@ -133,15 +133,6 @@ public class ListPolicyNotificationTest {
   static UUID providerAResItemId = UUID.randomUUID();
   static UUID providerBResItemId = UUID.randomUUID();
 
-  static String providerARsgCatId = RandomStringUtils.randomAlphabetic(10).toLowerCase();
-  static String providerBRsgCatId = RandomStringUtils.randomAlphabetic(10).toLowerCase();
-  static String providerAResCatId = RandomStringUtils.randomAlphabetic(10).toLowerCase();
-  static String providerBResCatId = RandomStringUtils.randomAlphabetic(10).toLowerCase();
-
-  Map<UUID, String> itemIdToCatId =
-      Map.of(providerARsgItemId, providerARsgCatId, providerBRsgItemId, providerBRsgCatId,
-          providerAResItemId, providerAResCatId, providerBResItemId, providerBResCatId);
-
   Map<String, JsonObject> userDetails = new HashMap<String, JsonObject>();
 
   static Future<UUID> orgIdFut;
@@ -381,14 +372,6 @@ public class ListPolicyNotificationTest {
         .name(userJson.getString("firstName"), userJson.getString("lastName"))
         .roles(List.of(Roles.CONSUMER)).build();
 
-    /* Mock catalogue client to get correct list of cat IDs */
-    Mockito.doAnswer(i -> {
-      Set<UUID> itemIds = i.getArgument(0);
-      Map<UUID, String> resMap =
-          itemIds.stream().collect(Collectors.toMap(id -> id, id -> itemIdToCatId.get(id)));
-      return Future.succeededFuture(resMap);
-    }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
-
     /* Mock registration service details */
     Mockito.doAnswer(i -> {
       List<String> userIds = i.getArgument(0);
@@ -415,7 +398,7 @@ public class ListPolicyNotificationTest {
             JsonObject j = (JsonObject) object;
 
             if (j.getString("requestId").equals(request1.toString())) {
-              assertEquals(j.getString(ITEMID), providerARsgCatId);
+              assertEquals(j.getString(ITEMID), providerARsgItemId.toString());
               assertEquals(j.getString(STATUS),
                   NotifRequestStatus.PENDING.toString().toLowerCase());
               assertEquals(j.getString(ITEMTYPE), "resource_group");
@@ -429,7 +412,7 @@ public class ListPolicyNotificationTest {
             }
 
             if (j.getString("requestId").equals(request2.toString())) {
-              assertEquals(j.getString(ITEMID), providerBResCatId);
+              assertEquals(j.getString(ITEMID), providerBResItemId.toString());
               assertEquals(j.getString(STATUS),
                   NotifRequestStatus.APPROVED.toString().toLowerCase());
               assertEquals(j.getString(ITEMTYPE), "resource");
@@ -457,14 +440,6 @@ public class ListPolicyNotificationTest {
     // add mocks
     // must get requests 1 and 3
 
-    /* Mock catalogue client to get correct list of cat IDs */
-    Mockito.doAnswer(i -> {
-      Set<UUID> itemIds = i.getArgument(0);
-      Map<UUID, String> resMap =
-              itemIds.stream().collect(Collectors.toMap(id -> id, id -> itemIdToCatId.get(id)));
-      return Future.succeededFuture(resMap);
-    }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
-
     /* Mock registration service details */
     Mockito.doAnswer(i -> {
       List<String> userIds = i.getArgument(0);
@@ -491,7 +466,7 @@ public class ListPolicyNotificationTest {
                 JsonObject j = (JsonObject) object;
 
                 if (j.getString("requestId").equals(request1.toString())) {
-                  assertEquals(j.getString(ITEMID), providerARsgCatId);
+                  assertEquals(j.getString(ITEMID), providerARsgItemId.toString());
                   assertEquals(j.getString(STATUS),
                           NotifRequestStatus.PENDING.toString().toLowerCase());
                   assertEquals(j.getString(ITEMTYPE), "resource_group");
@@ -505,7 +480,7 @@ public class ListPolicyNotificationTest {
                 }
 
                 if (j.getString("requestId").equals(request3.toString())) {
-                  assertEquals(j.getString(ITEMID), providerAResCatId);
+                  assertEquals(j.getString(ITEMID), providerAResItemId.toString());
                   assertEquals(j.getString(STATUS),
                           NotifRequestStatus.REJECTED.toString().toLowerCase());
                   assertEquals(j.getString(ITEMTYPE), "resource");
@@ -534,14 +509,6 @@ public class ListPolicyNotificationTest {
     // add mocks
     // must get requests 2 and 4
 
-    /* Mock catalogue client to get correct list of cat IDs */
-    Mockito.doAnswer(i -> {
-      Set<UUID> itemIds = i.getArgument(0);
-      Map<UUID, String> resMap =
-              itemIds.stream().collect(Collectors.toMap(id -> id, id -> itemIdToCatId.get(id)));
-      return Future.succeededFuture(resMap);
-    }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
-
     /* Mock registration service details */
     Mockito.doAnswer(i -> {
       List<String> userIds = i.getArgument(0);
@@ -568,7 +535,7 @@ public class ListPolicyNotificationTest {
                 JsonObject j = (JsonObject) object;
 
                 if (j.getString("requestId").equals(request4.toString())) {
-                  assertEquals(j.getString(ITEMID), providerBRsgCatId);
+                  assertEquals(j.getString(ITEMID), providerBRsgItemId.toString());
                   assertEquals(j.getString(STATUS),
                           NotifRequestStatus.PENDING.toString().toLowerCase());
                   assertEquals(j.getString(ITEMTYPE), "resource_group");
@@ -582,7 +549,7 @@ public class ListPolicyNotificationTest {
                 }
 
                 if (j.getString("requestId").equals(request2.toString())) {
-                  assertEquals(j.getString(ITEMID), providerBResCatId);
+                  assertEquals(j.getString(ITEMID), providerBResItemId.toString());
                   assertEquals(j.getString(STATUS),
                           NotifRequestStatus.APPROVED.toString().toLowerCase());
                   assertEquals(j.getString(ITEMTYPE), "resource");
@@ -610,14 +577,6 @@ public class ListPolicyNotificationTest {
     // add mocks
     // must get requests 3 and 4
 
-    /* Mock catalogue client to get correct list of cat IDs */
-    Mockito.doAnswer(i -> {
-      Set<UUID> itemIds = i.getArgument(0);
-      Map<UUID, String> resMap =
-              itemIds.stream().collect(Collectors.toMap(id -> id, id -> itemIdToCatId.get(id)));
-      return Future.succeededFuture(resMap);
-    }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
-
     /* Mock registration service details */
     Mockito.doAnswer(i -> {
       List<String> userIds = i.getArgument(0);
@@ -644,7 +603,7 @@ public class ListPolicyNotificationTest {
                 JsonObject j = (JsonObject) object;
 
                 if (j.getString("requestId").equals(request4.toString())) {
-                  assertEquals(j.getString(ITEMID), providerBRsgCatId);
+                  assertEquals(j.getString(ITEMID), providerBRsgItemId.toString());
                   assertEquals(j.getString(STATUS),
                           NotifRequestStatus.PENDING.toString().toLowerCase());
                   assertEquals(j.getString(ITEMTYPE), "resource_group");
@@ -658,7 +617,7 @@ public class ListPolicyNotificationTest {
                 }
 
                 if (j.getString("requestId").equals(request3.toString())) {
-                  assertEquals(j.getString(ITEMID), providerAResCatId);
+                  assertEquals(j.getString(ITEMID), providerAResItemId.toString());
                   assertEquals(j.getString(STATUS),
                           NotifRequestStatus.REJECTED.toString().toLowerCase());
                   assertEquals(j.getString(ITEMTYPE), "resource");
@@ -691,14 +650,6 @@ public class ListPolicyNotificationTest {
     // add mocks
     // must get requests 1 and 3
 
-    /* Mock catalogue client to get correct list of cat IDs */
-    Mockito.doAnswer(i -> {
-      Set<UUID> itemIds = i.getArgument(0);
-      Map<UUID, String> resMap =
-              itemIds.stream().collect(Collectors.toMap(id -> id, id -> itemIdToCatId.get(id)));
-      return Future.succeededFuture(resMap);
-    }).when(catalogueClient).getCatIds(Mockito.any(), Mockito.any());
-
     /* Mock registration service details */
     Mockito.doAnswer(i -> {
       List<String> userIds = i.getArgument(0);
@@ -725,7 +676,7 @@ public class ListPolicyNotificationTest {
                 JsonObject j = (JsonObject) object;
 
                 if (j.getString("requestId").equals(request1.toString())) {
-                  assertEquals(j.getString(ITEMID), providerARsgCatId);
+                  assertEquals(j.getString(ITEMID), providerARsgItemId.toString());
                   assertEquals(j.getString(STATUS),
                           NotifRequestStatus.PENDING.toString().toLowerCase());
                   assertEquals(j.getString(ITEMTYPE), "resource_group");
@@ -739,7 +690,7 @@ public class ListPolicyNotificationTest {
                 }
 
                 if (j.getString("requestId").equals(request3.toString())) {
-                  assertEquals(j.getString(ITEMID), providerAResCatId);
+                  assertEquals(j.getString(ITEMID), providerAResItemId.toString());
                   assertEquals(j.getString(STATUS),
                           NotifRequestStatus.REJECTED.toString().toLowerCase());
                   assertEquals(j.getString(ITEMTYPE), "resource");

@@ -510,20 +510,6 @@ public class DeletePolicyNotificationTest {
                                           .roles(List.of(Roles.CONSUMER))
                                           .build();
 
-                          /* Mock catalogue client for itemIds for UUID */
-                          Mockito.doAnswer(
-                                  i -> {
-                                      Set<UUID> itemIds = i.getArgument(0);
-                                      Map<UUID, String> map = new HashMap<UUID, String>();
-                                      itemIds.forEach(
-                                              item -> {
-                                                  map.put(item, RandomStringUtils.randomAlphabetic(5));
-                                              });
-                                      return Future.succeededFuture(map);
-                                  })
-                                  .when(catalogueClient)
-                                  .getCatIds(Mockito.any(), Mockito.any());
-
                           /* Mock registration service user details */
                           Mockito.doAnswer(
                                   i -> {
@@ -577,20 +563,6 @@ public class DeletePolicyNotificationTest {
                       .name(userJson.getString("firstName"), userJson.getString("lastName"))
                       .roles(List.of(Roles.CONSUMER))
                       .build();
-
-              /* Mock catalogue client for itemIds for UUID */
-              Mockito.doAnswer(
-                      i -> {
-                        Set<UUID> itemIds = i.getArgument(0);
-                        Map<UUID, String> map = new HashMap<UUID, String>();
-                        itemIds.forEach(
-                            item -> {
-                              map.put(item, RandomStringUtils.randomAlphabetic(5));
-                            });
-                        return Future.succeededFuture(map);
-                      })
-                  .when(catalogueClient)
-                  .getCatIds(Mockito.any(), Mockito.any());
 
               /* Mock registration service user details */
               Mockito.doAnswer(
@@ -661,20 +633,6 @@ public class DeletePolicyNotificationTest {
                                                                 .name(userJson.getString("firstName"), userJson.getString("lastName"))
                                                                 .roles(List.of(Roles.CONSUMER))
                                                                 .build();
-
-                                                /* Mock catalogue client for itemIds for UUID */
-                                                Mockito.doAnswer(
-                                                        i -> {
-                                                            Set<UUID> itemIds = i.getArgument(0);
-                                                            Map<UUID, String> map = new HashMap<UUID, String>();
-                                                            itemIds.forEach(
-                                                                    item -> {
-                                                                        map.put(item, RandomStringUtils.randomAlphabetic(5));
-                                                                    });
-                                                            return Future.succeededFuture(map);
-                                                        })
-                                                        .when(catalogueClient)
-                                                        .getCatIds(Mockito.any(), Mockito.any());
 
                                                 /* Mock registration service user details */
                                                 Mockito.doAnswer(
