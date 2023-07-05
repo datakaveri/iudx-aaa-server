@@ -460,7 +460,6 @@ public class UpdateUserTest {
 
       Mockito.when(kc.getEmailId(any()))
           .thenReturn(Future.succeededFuture(userJson.getString("email")));
-      Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.succeededFuture());
 
       registrationService.updateUser(request, user,
           testContext.succeeding(response -> testContext.verify(() -> {
@@ -523,7 +522,6 @@ public class UpdateUserTest {
 
       Mockito.when(kc.getEmailId(any()))
           .thenReturn(Future.succeededFuture(userJson.getString("email")));
-      Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.succeededFuture());
 
       registrationService.updateUser(request, user,
           testContext.succeeding(response -> testContext.verify(() -> {
@@ -585,7 +583,6 @@ public class UpdateUserTest {
 
       Mockito.when(kc.getEmailId(any()))
           .thenReturn(Future.succeededFuture(userJson.getString("email")));
-      Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.succeededFuture());
 
       registrationService.updateUser(request, user,
           testContext.succeeding(response -> testContext.verify(() -> {
@@ -649,7 +646,6 @@ public class UpdateUserTest {
 
       Mockito.when(kc.getEmailId(any()))
           .thenReturn(Future.succeededFuture(userJson.getString("email")));
-      Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.succeededFuture());
 
       registrationService.updateUser(request, user,
           testContext.succeeding(response -> testContext.verify(() -> {
@@ -697,7 +693,6 @@ public class UpdateUserTest {
 
       Mockito.when(kc.getEmailId(any()))
           .thenReturn(Future.succeededFuture(userJson.getString("email")));
-      Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.succeededFuture());
 
       registrationService.updateUser(badRequest, user,
           testContext.succeeding(resp -> testContext.verify(() -> {
@@ -744,79 +739,6 @@ public class UpdateUserTest {
                   withOrgIdSuccess.flag();
                 })));
           })));
-    });
-  }
-
-  @Test
-  @DisplayName("[Update roles] Test provider getting consumer with keycloak transaction failure ")
-  void keycloakFailure(VertxTestContext testContext) {
-
-    JsonObject req = new JsonObject().put("roles", new JsonArray().add("consumer"));
-
-    UpdateProfileRequest request = new UpdateProfileRequest(req);
-
-    List<Roles> roles = List.of(Roles.PROVIDER);
-    Map<Roles, RoleStatus> prov = new HashMap<Roles, RoleStatus>();
-    prov.put(Roles.PROVIDER, RoleStatus.APPROVED);
-
-    Future<JsonObject> consumer =
-        Utils.createFakeUser(pool, orgIdFut.result().toString(), url, prov, true);
-
-    consumer.onSuccess(userJson -> {
-      createdUsers.add(userJson);
-
-      User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-          .userId(userJson.getString("userId")).roles(roles)
-          .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
-
-      Mockito.when(kc.getEmailId(any()))
-          .thenReturn(Future.succeededFuture(userJson.getString("email")));
-      Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.failedFuture("fail"));
-
-      Promise<Void> failed = Promise.promise();
-      registrationService.updateUser(request, user,
-          testContext.failing(response -> testContext.verify(() -> {
-            failed.complete();
-          })));
-
-      failed.future().onSuccess(res -> {
-        Mockito.when(kc.modifyRoles(any(), any())).thenReturn(Future.succeededFuture());
-
-        registrationService.updateUser(request, user,
-            testContext.succeeding(response -> testContext.verify(() -> {
-              assertEquals(200, response.getInteger("status"));
-              assertEquals(SUCC_TITLE_UPDATED_USER_ROLES, response.getString("title"));
-              assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-
-              JsonObject result = response.getJsonObject("results");
-
-              JsonObject name = result.getJsonObject("name");
-              assertEquals(name.getString("firstName"), userJson.getString("firstName"));
-              assertEquals(name.getString("lastName"), userJson.getString("lastName"));
-
-              @SuppressWarnings("unchecked")
-              List<String> returnedRoles = result.getJsonArray("roles").getList();
-              List<String> rolesString =
-                  List.of(Roles.CONSUMER.name().toLowerCase(), Roles.PROVIDER.name().toLowerCase());
-              assertTrue(
-                  returnedRoles.containsAll(rolesString) && rolesString.containsAll(returnedRoles));
-
-              JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
-              JsonObject defaultClient = clients.getJsonObject(0);
-              assertTrue(clients.size() > 0);
-              assertEquals(defaultClient.getString(RESP_CLIENT_ID), userJson.getString("clientId"));
-
-              JsonObject org = result.getJsonObject(RESP_ORG);
-              assertEquals(org.getString("url"), userJson.getString("url"));
-
-              assertEquals(result.getString(RESP_EMAIL), userJson.getString("email"));
-              assertEquals(result.getString(RESP_PHONE), userJson.getString("phone"));
-              assertEquals(result.getString("userId"), userJson.getString("userId"));
-              assertEquals(result.getString("keycloakId"), userJson.getString("keycloakId"));
-
-              testContext.completeNow();
-            })));
-      });
     });
   }
 
