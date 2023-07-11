@@ -47,7 +47,6 @@ import static iudx.aaa.server.apiserver.util.Urn.URN_SUCCESS;
 import static iudx.aaa.server.policy.Constants.ID;
 import static iudx.aaa.server.policy.Constants.INVALID_ROLE;
 import static iudx.aaa.server.policy.Constants.ITEMNOTFOUND;
-import static iudx.aaa.server.policy.Constants.NO_AUTH_TRUSTEE_POLICY;
 import static iudx.aaa.server.policy.Constants.STATUS;
 import static iudx.aaa.server.policy.Constants.URL;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_APD;
@@ -82,7 +81,6 @@ public class CreateApdPolicyTest {
   private static Future<JsonObject> providerUser;
   private static Future<JsonObject> authDelUser;
   private static Future<JsonObject> consumerUser;
-  private static Future<JsonObject> trusteeUser;
   private static JsonObject catOptions;
   private static UUID authSerId;
   private static String authServerURL;
@@ -178,16 +176,6 @@ public class CreateApdPolicyTest {
                     Map.of(Roles.ADMIN, RoleStatus.APPROVED),
                     false));
 
-    trusteeUser =
-        orgIdFut.compose(
-            orgId ->
-                Utils.createFakeUser(
-                    pgclient,
-                    orgId.toString(),
-                    "",
-                    Map.of(Roles.TRUSTEE, RoleStatus.APPROVED),
-                    false));
-
     authDelUser =
         orgIdFut.compose(
             orgId ->
@@ -207,7 +195,7 @@ public class CreateApdPolicyTest {
                     Map.of(Roles.CONSUMER, RoleStatus.APPROVED),
                     false));
 
-    CompositeFuture.all(adminUser, providerUser, authDelUser, consumerUser,trusteeUser)
+    CompositeFuture.all(adminUser, providerUser, authDelUser, consumerUser)
         .onSuccess(
             succ -> {
               // create all servers
@@ -216,8 +204,7 @@ public class CreateApdPolicyTest {
               resourceGrpID = UUID.randomUUID();
               apdId = UUID.randomUUID();
               //create APD with  id,name,url,owner_id(admin user),status,created_at,updated_at
-              Tuple apdTuple = Tuple.of(apdId,RandomStringUtils.randomAlphabetic(5),apdURL,
-              UUID.fromString(trusteeUser.result().getString("userId")), Constants.status.ACTIVE);
+              Tuple apdTuple = Tuple.of(apdId,RandomStringUtils.randomAlphabetic(5),apdURL, Constants.status.ACTIVE);
               pgclient.withConnection(conn -> conn.preparedQuery(SQL_CREATE_APD).execute(apdTuple))
               .compose(ar->
                   Utils.createFakeResourceServer(pgclient, adminUser.result(), authSerId, authServerURL))
@@ -276,15 +263,6 @@ public class CreateApdPolicyTest {
                               UUID.fromString(authDelUser.result().getString("userId")),
                               UUID.fromString(providerUser.result().getString("userId")),
                               authSerId))
-                  .compose(
-                      proPol ->
-                          Utils.createFakePolicy(
-                              pgclient,
-                              UUID.fromString(providerUser.result().getString("userId")),
-                              Constants.itemTypes.RESOURCE_SERVER,
-                              UUID.fromString(trusteeUser.result().getString("userId")),
-                              apdId))
-
                   .onSuccess(
                       success -> {
                         policyService =
@@ -311,13 +289,11 @@ public class CreateApdPolicyTest {
     UUID adminId = UUID.fromString(adminUser.result().getString("userId"));
     UUID providerId = UUID.fromString(providerUser.result().getString("userId"));
     UUID delegateId = UUID.fromString(authDelUser.result().getString("userId"));
-    UUID trusteeId = UUID.fromString(authDelUser.result().getString("userId"));
-    Tuple policyOwners = Tuple.of(List.of(adminId, providerId, delegateId,trusteeId).toArray(UUID[]::new));
+    Tuple policyOwners = Tuple.of(List.of(adminId, providerId, delegateId).toArray(UUID[]::new));
 
     List<JsonObject> users =
         List.of(
-            providerUser.result(), authDelUser.result(), consumerUser.result(), adminUser.result(),
-            trusteeUser.result());
+            providerUser.result(), authDelUser.result(), consumerUser.result(), adminUser.result());
         pgclient.withConnection(
         conn -> conn.preparedQuery(SQL_DELETE_APD).execute(policyOwners))
         .compose(resGrp -> Utils.deleteFakeResourceServer(pgclient, users))
@@ -497,79 +473,7 @@ public class CreateApdPolicyTest {
     }
 
   @Test
-  @DisplayName("Testing apd Policy table - user does not have policy by trustee ")
-  void noTrusteePolicy(VertxTestContext testContext)
-  {
-
-    JsonObject userJson = authDelUser.result();
-    User user =
-        new User.UserBuilder()
-            .keycloakId(userJson.getString("keycloakId"))
-            .userId(userJson.getString("userId"))
-            .name(userJson.getString("firstName"), userJson.getString("lastName"))
-            .roles(List.of(Roles.PROVIDER))
-            .build();
-
-
-    JsonObject validCatItem =
-        new JsonObject()
-            .put("cat_id", "")
-            .put("itemType", "resource_group")
-            .put("owner_id", providerUser.result().getString("userId"))
-            .put("id",resourceGrpID)
-            .put("resource_group_id", resourceGrpID)
-            .put("resource_server_id", otherSerId.toString());
-
-    ResourceObj resourceObj = new ResourceObj(validCatItem);
-    Map<String, ResourceObj> resp = new HashMap<>();
-    resp.put(resourceObj.getId().toString(), resourceObj);
-    Mockito.when(catalogueClient.checkReqItems(any())).thenReturn(Future.succeededFuture(resp));
-
-    String randomAPD = RandomStringUtils.randomAlphabetic(5);
-    Mockito.doAnswer(
-            i -> {
-              Promise<JsonObject> p = i.getArgument(2);
-              JsonObject result = new JsonObject();
-              List<String> ids = i.getArgument(0);
-              for (String x : ids) {
-                result.put(
-                    x,
-                    new JsonObject()
-                        .put(URL, "<apd-url-placeholder>")
-                        .put(STATUS, "active")
-                        .put(STATUS, "active")
-                        .put(STATUS, "active")
-                        .put(ID,apdId)
-                );
-              }
-              p.complete(result);
-              return i.getMock();
-            })
-        .when(apdService)
-        .getApdDetails(any(), any(), any());
-
-    JsonObject obj = new JsonObject();
-    obj.put("itemId",resourceGrpID.toString()).put("itemType","RESOURCE_GROUP").put("apdId",randomAPD)
-        .put("userClass","").put("constraints",new JsonObject());
-    List<CreatePolicyRequest> req =
-        CreatePolicyRequest.jsonArrayToList(new JsonArray().add(obj));
-    policyService.createPolicy(
-        req,
-        user,
-        new JsonObject(),
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                    assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                    assertEquals(NO_AUTH_TRUSTEE_POLICY, response.getString("title"));
-                    assertEquals(403, response.getInteger("status"));
-                      testContext.completeNow();
-                    })));
-  }
-
-  @Test
-  @DisplayName("Testing apd Policy table - user does not have policy by trustee ")
+  @DisplayName("Testing apd Policy table - successful creation")
   void successApdPolicyCreation(VertxTestContext testContext)
   {
 

@@ -356,13 +356,12 @@ public class UpdatePolicyNotificationTest {
   }
 
   @Test
-  @DisplayName("Test admin/trustee/consumer calling API")
+  @DisplayName("Test admin/consumer calling API")
   void failDisallowedRoles(VertxTestContext testContext) {
     // creake fake request
     // try with different users with checkpoints
       Checkpoint checkAdmin = testContext.checkpoint();
       Checkpoint checkConsumer = testContext.checkpoint();
-      Checkpoint checkTrustee = testContext.checkpoint();
 
       JsonObject userJson = provider.result();
       User adminUser = new UserBuilder().keycloakId(userJson.getString("keycloakId")).userId(NIL_UUID)
@@ -383,20 +382,6 @@ public class UpdatePolicyNotificationTest {
                   assertEquals(ERR_TITLE_INVALID_ROLES, response.getString("title"));
                   assertEquals(401, response.getInteger("status"));
                   checkAdmin.flag();
-              })));
-
-      User trusteeUser = new UserBuilder().keycloakId(userJson.getString("keycloakId")).userId(NIL_UUID)
-              .name(userJson.getString("firstName"), userJson.getString("lastName"))
-              .roles(List.of(Roles.TRUSTEE))
-              .build();
-
-      policyService.updatePolicyNotification(request, trusteeUser, new JsonObject(),
-              testContext.succeeding(response -> testContext.verify(() -> {
-                  assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
-                  assertEquals(ERR_DETAIL_LIST_DELEGATE_ROLES, response.getString("detail"));
-                  assertEquals(ERR_TITLE_INVALID_ROLES, response.getString("title"));
-                  assertEquals(401, response.getInteger("status"));
-                  checkTrustee.flag();
               })));
 
       User consumerUser = new UserBuilder().keycloakId(userJson.getString("keycloakId")).userId(NIL_UUID)

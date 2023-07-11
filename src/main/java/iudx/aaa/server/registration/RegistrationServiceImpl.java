@@ -140,8 +140,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     UUID orgId = UUID.fromString(request.getOrgId());
     final String phone = request.getPhone();
 
-    if (requestedRoles.contains(Roles.PROVIDER) || requestedRoles.contains(Roles.DELEGATE)
-        || requestedRoles.contains(Roles.TRUSTEE)) {
+    if (requestedRoles.contains(Roles.PROVIDER) || requestedRoles.contains(Roles.DELEGATE)) {
       if (orgId.toString().equals(NIL_UUID)) {
         Response r = new ResponseBuilder().status(400).type(URN_MISSING_INFO)
             .title(ERR_TITLE_ORG_ID_REQUIRED).detail(ERR_DETAIL_ORG_ID_REQUIRED).build();
@@ -169,8 +168,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     Future<String> checkOrgExist;
     String orgIdToSet;
 
-    if (roles.containsKey(Roles.PROVIDER) || roles.containsKey(Roles.DELEGATE)
-        || roles.containsKey(Roles.TRUSTEE)) {
+    if (roles.containsKey(Roles.PROVIDER) || roles.containsKey(Roles.DELEGATE)) {
       orgIdToSet = request.getOrgId();
       checkOrgExist = pool.withConnection(
           conn -> conn.preparedQuery(SQL_GET_ORG_DETAILS).execute(Tuple.of(orgId.toString())).map(
@@ -615,7 +613,7 @@ public class RegistrationServiceImpl implements RegistrationService {
      * orgId is needed always for delegate or trustee reg, even if the user has registered for
      * provider role
      */
-    if (requestedRoles.contains(Roles.DELEGATE) || requestedRoles.contains(Roles.TRUSTEE)) {
+    if (requestedRoles.contains(Roles.DELEGATE)) {
       if (orgId.toString().equals(NIL_UUID)) {
         Response r = new ResponseBuilder().status(400).type(URN_MISSING_INFO)
             .title(ERR_TITLE_ORG_ID_REQUIRED).detail(ERR_DETAIL_ORG_ID_REQUIRED).build();
@@ -827,24 +825,10 @@ public class RegistrationServiceImpl implements RegistrationService {
     };
 
     List<Roles> roles = user.getRoles();
-    /*
-     * If the user is a trustee, check for auth admin policy. This is to prevent any user registered
-     * as a trustee to perform search. Currently, the auth admin policy is set when an APD owned by
-     * the trustee is set to active for the first time.
-     */
-    Future<Void> trusteeAuthPolicyCheck;
 
     if (roles.contains(Roles.PROVIDER) || roles.contains(Roles.ADMIN)) {
-      trusteeAuthPolicyCheck = Future.succeededFuture();
       
     } else if (roles.contains(Roles.DELEGATE) && isAuthDelegate) {
-      trusteeAuthPolicyCheck = Future.succeededFuture();
-
-    } else if (roles.contains(Roles.TRUSTEE)) {
-      Promise<Void> authPolPromise = Promise.promise();
-      /* checkAuthPolicy sends ComposeException with correct response, can pass the future as is */
-      policyService.checkAuthPolicy(user.getUserId(), authPolPromise);
-      trusteeAuthPolicyCheck = authPolPromise.future();
 
     } else {
       Response r = new ResponseBuilder().status(401).type(URN_INVALID_ROLE)
@@ -857,7 +841,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     String email = searchUserDetails.getString("email").toLowerCase();
     Roles role = Roles.valueOf(searchUserDetails.getString("role").toUpperCase());
 
-    Future<JsonObject> foundUser = trusteeAuthPolicyCheck.compose(res -> kc.findUserByEmail(email));
+    Future<JsonObject> foundUser = kc.findUserByEmail(email);
 
     Future<UUID> exists = foundUser.compose(res -> {
       if (res.isEmpty()) {

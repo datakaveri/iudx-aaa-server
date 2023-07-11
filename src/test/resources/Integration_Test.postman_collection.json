@@ -262,69 +262,6 @@
 					"response": []
 				},
 				{
-					"name": "Token for postman.trustee@datakaveri.org",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"let access_token = pm.response.json().access_token",
-									"pm.environment.set(\"POSTMAN_TRUSTEE_TOKEN\",access_token);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "noauth"
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "urlencoded",
-							"urlencoded": [
-								{
-									"key": "grant_type",
-									"value": "password",
-									"type": "text"
-								},
-								{
-									"key": "username",
-									"value": "postman.trustee@datakaveri.org",
-									"type": "text"
-								},
-								{
-									"key": "password",
-									"value": "password",
-									"type": "text"
-								},
-								{
-									"key": "client_id",
-									"value": "account",
-									"type": "text"
-								}
-							]
-						},
-						"url": {
-							"raw": "https://{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
-							"protocol": "https",
-							"host": [
-								"{{KEYCLOAK_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"realms",
-								"{{KEYCLOAK_REALM}}",
-								"protocol",
-								"openid-connect",
-								"token"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Token for no.profile@datakaveri.org",
 					"event": [
 						{
@@ -1052,65 +989,6 @@
 					"response": []
 				},
 				{
-					"name": "orgId needed for trustee role - [400]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(400);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:MissingInformation\");",
-									"});",
-									"",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"roles\": [\n        \"trustee\"\n    ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"user",
-								"profile"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "orgId needed for provider role - [400] Copy",
 					"event": [
 						{
@@ -1383,7 +1261,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"roles\":[\"provider\", \"trustee\"],\n    \"orgId\":\"{{$randomUUID}}\"\n}",
+							"raw": "{\n    \"roles\":[\"provider\"],\n    \"orgId\":\"{{$randomUUID}}\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1487,7 +1365,7 @@
 					"response": []
 				},
 				{
-					"name": "Successful delegate, trustee and provider registration registration - [201] (All roles)",
+					"name": "Successful delegate and provider registration registration - [201] (All roles)",
 					"event": [
 						{
 							"listen": "test",
@@ -1513,7 +1391,7 @@
 									"    pm.expect(result).to.have.property(\"name\");",
 									"    pm.expect(result).to.have.property(\"keycloakId\");",
 									"    pm.expect(result).to.have.property(\"clients\");",
-									"    pm.expect(result.roles).to.have.members([\"delegate\", \"trustee\"]);",
+									"    pm.expect(result.roles).to.have.members([\"delegate\"]);",
 									"",
 									"    const clients = result.clients;",
 									"    pm.expect(clients).length.greaterThan(0);",
@@ -1542,7 +1420,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"roles\": [\n        \"delegate\",\n        \"provider\",\n        \"trustee\"\n    ],\n    \"orgId\": \"3a054e6a-220d-4d49-8cbd-25447dfaa8ed\",\n    \"phone\": \"9989989981\"\n}",
+							"raw": "{\n    \"roles\": [\n        \"delegate\",\n        \"provider\"\n    ],\n    \"orgId\": \"3a054e6a-220d-4d49-8cbd-25447dfaa8ed\",\n    \"phone\": \"9989989981\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -4976,7 +4854,7 @@
 									"    pm.expect(result).to.have.property(\"name\");",
 									"    pm.expect(result).to.have.property(\"keycloakId\");",
 									"    pm.expect(result).to.have.property(\"clients\");",
-									"    pm.expect(result.roles).to.have.members([\"delegate\", \"consumer\", \"provider\", \"trustee\"]);",
+									"    pm.expect(result.roles).to.have.members([\"delegate\", \"consumer\", \"provider\"]);",
 									"",
 									"    const clients = result.clients;",
 									"    pm.expect(clients).length.greaterThan(0);",
@@ -5144,63 +5022,6 @@
 					"response": []
 				},
 				{
-					"name": "orgId required for trustee role  - [400]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(400);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:MissingInformation\");",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"roles\": [\n        \"trustee\"\n    ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"user",
-								"profile"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "OrgId does not match domain - [400]",
 					"event": [
 						{
@@ -5313,79 +5134,6 @@
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"roles\": [\n        \"delegate\"\n    ],\n    \"orgId\": \"3a054e6a-220d-4d49-8cbd-25447dfaa8ed\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"user",
-								"profile"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Add trustee role for rejected provider  - [200]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
-									"    const result = body.results;",
-									"",
-									"    pm.expect(result).to.have.property(\"userId\");",
-									"    pm.expect(result).to.have.property(\"email\");",
-									"    pm.expect(result).to.have.property(\"name\");",
-									"    pm.expect(result).to.have.property(\"keycloakId\");",
-									"    pm.expect(result).to.have.property(\"clients\");",
-									"    pm.expect(result.roles).to.have.members([\"delegate\", \"trustee\"]);",
-									"",
-									"    const clients = result.clients;",
-									"    pm.expect(clients).length.greaterThan(0);",
-									"    pm.expect(clients[0]).to.have.property(\"clientId\");",
-									"    pm.expect(clients[0]).to.not.have.property(\"clientSecret\");",
-									"    pm.expect(clients[0]).to.have.property(\"clientName\");",
-									"",
-									"    pm.expect(result).to.have.property(\"organization\");",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"roles\": [\n        \"trustee\"\n    ],\n    \"orgId\": \"3a054e6a-220d-4d49-8cbd-25447dfaa8ed\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -6207,7 +5955,7 @@
 									"    pm.expect(result).to.have.property(\"name\");",
 									"    pm.expect(result).to.have.property(\"keycloakId\");",
 									"    pm.expect(result).to.have.property(\"clients\");",
-									"    pm.expect(result.roles).to.have.members([\"consumer\",\"delegate\",\"provider\", \"trustee\"]);",
+									"    pm.expect(result.roles).to.have.members([\"consumer\",\"delegate\",\"provider\"]);",
 									"",
 									"    const clients = result.clients;",
 									"    pm.expect(clients).length.greaterThan(0);",
@@ -6315,7 +6063,7 @@
 					"response": []
 				},
 				{
-					"name": "List User rejected provider, delegate, trustee",
+					"name": "List User rejected provider, delegate",
 					"event": [
 						{
 							"listen": "test",
@@ -6341,7 +6089,7 @@
 									"    pm.expect(result).to.have.property(\"name\");",
 									"    pm.expect(result).to.have.property(\"keycloakId\");",
 									"    pm.expect(result).to.have.property(\"clients\");",
-									"    pm.expect(result.roles).to.have.members([\"delegate\", \"trustee\"]);",
+									"    pm.expect(result.roles).to.have.members([\"delegate\"]);",
 									"",
 									"    const clients = result.clients;",
 									"    pm.expect(clients).length.greaterThan(0);",
@@ -7027,66 +6775,6 @@
 					"response": []
 				},
 				{
-					"name": "Trustee (with no auth admin policy) searching",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(403);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-									"});",
-									"",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
-								"type": "text"
-							},
-							{
-								"key": "email",
-								"value": "consumer@gmail.com",
-								"type": "text"
-							},
-							{
-								"key": "role",
-								"value": "consumer",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"user",
-								"profile"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Delegate searching without providerId header",
 					"event": [
 						{
@@ -7252,73 +6940,6 @@
 							{
 								"key": "Authorization",
 								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
-								"type": "text"
-							},
-							{
-								"key": "email",
-								"value": "consumer@gmail.com",
-								"type": "text"
-							},
-							{
-								"key": "role",
-								"value": "consumer",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"user",
-								"profile"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Trustee with auth admin policy searching",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
-									"    pm.expect(body.title).to.be.eq(\"User found\");",
-									"    const result = body.results;",
-									"    pm.expect(result).to.have.property(\"email\", \"consumer@gmail.com\");",
-									"    pm.expect(result).to.have.property(\"userId\", pm.environment.get(\"CONSUMER_GMAIL_USERID\"));",
-									"    pm.expect(result.name).to.not.be.empty;",
-									"    pm.expect(result.organization).to.not.exist;",
-									"    ",
-									"});",
-									"",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
 								"type": "text"
 							},
 							{
@@ -21138,7 +20759,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
 								"type": "text"
 							}
 						],
@@ -21185,7 +20806,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
 								"type": "text"
 							}
 						],
@@ -21241,7 +20862,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
 								"type": "text"
 							}
 						],
@@ -21297,7 +20918,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
 								"type": "text"
 							}
 						],
@@ -21549,62 +21170,6 @@
 					"response": []
 				},
 				{
-					"name": "Calling API as admin - [403]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(403);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidRole\");",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\":\"Example\",\n    \"url\":\"example.com\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/apd",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"apd"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Invalid URL (http) - [400]",
 					"event": [
 						{
@@ -21633,7 +21198,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
+								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
 								"type": "text"
 							}
 						],
@@ -21689,7 +21254,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
+								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
 								"type": "text"
 							}
 						],
@@ -21773,14 +21338,14 @@
 					"response": []
 				},
 				{
-					"name": "Invalid URL (invalid TLD) - [400]",
+					"name": "Invalid URL (invalid TLD) - [200] - invalid TLD ignored for now",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
 									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(400);",
+									"    pm.response.to.have.status(200);",
 									"});",
 									"",
 									"pm.test(\"Check response header\", function () {",
@@ -21789,7 +21354,7 @@
 									"",
 									"pm.test(\"Check response body\", function () {    ",
 									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
 									"});"
 								],
 								"type": "text/javascript"
@@ -21801,7 +21366,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
+								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
 								"type": "text"
 							}
 						],
@@ -21850,10 +21415,8 @@
 									"    pm.environment.set(\"TEST_APD_ID\", res.apdId);",
 									"    pm.expect(res.name).to.be.eq(\"Integration APD\");",
 									"    let url = pm.environment.get(\"TEST_APD_URL\");",
-									"    let id = pm.environment.get(\"REJPROVIDER_DELEGATE_USERID\");",
 									"    pm.expect(res.url).to.be.eq(url);",
-									"    pm.expect(res.status).to.be.eq(\"pending\");",
-									"    pm.expect(res.owner.id).to.be.eq(id);",
+									"    pm.expect(res.status).to.be.eq(\"active\");",
 									"});"
 								],
 								"type": "text/javascript"
@@ -21865,7 +21428,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
+								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
 								"type": "text"
 							}
 						],
@@ -21921,7 +21484,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
+								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
 								"type": "text"
 							}
 						],
@@ -22095,116 +21658,6 @@
 					"response": []
 				},
 				{
-					"name": "Listing as postman.trustee - [200]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
-									"    pm.expect(body.results).to.not.be.empty;",
-									"    pm.expect(body.results.length).to.be.eq(3);",
-									"    body.results.forEach((r) => {",
-									"        pm.expect(r.status).to.be.oneOf([\"active\", \"inactive\",\"pending\"]);",
-									"        pm.expect(r.owner.id).to.be.eq(\"1d086d89-db81-4959-ae5b-a760ef5c15fb\");",
-									"    })",
-									"",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/apd",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"apd"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Listing as other trustee (rejprovider.delegate user) - [200]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
-									"    pm.expect(body.results).to.not.be.empty;",
-									"    pm.expect(body.results.length).to.be.eq(2);",
-									"    body.results.forEach((r) => {",
-									"        pm.expect(r.status).to.be.oneOf([\"active\", \"pending\"]);",
-									"        if(r.status == 'pending')",
-									"            pm.expect(r.owner.id).to.be.eq(pm.environment.get(\"REJPROVIDER_DELEGATE_USERID\"));",
-									"        if(r.status == 'active')",
-									"            pm.expect(r.owner.id).to.be.eq(\"1d086d89-db81-4959-ae5b-a760ef5c15fb\");        ",
-									"    })",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/apd",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"apd"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Listing as consumer - [200]",
 					"event": [
 						{
@@ -22223,7 +21676,7 @@
 									"    const body = pm.response.json();",
 									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
 									"    pm.expect(body.results).to.not.be.empty;",
-									"    pm.expect(body.results.length).to.be.eq(1);",
+									"    pm.expect(body.results.length).to.be.eq(3);",
 									"    body.results.forEach((r) => {",
 									"        pm.expect(r.status).to.be.oneOf([\"active\"]);",
 									"    })",
@@ -22275,7 +21728,7 @@
 									"    const body = pm.response.json();",
 									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
 									"    pm.expect(body.results).to.not.be.empty;",
-									"    pm.expect(body.results.length).to.be.eq(1);",
+									"    pm.expect(body.results.length).to.be.eq(3);",
 									"    body.results.forEach((r) => {",
 									"        pm.expect(r.status).to.be.oneOf([\"active\"]);",
 									"    })",
@@ -22327,7 +21780,7 @@
 									"    const body = pm.response.json();",
 									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
 									"    pm.expect(body.results).to.not.be.empty;",
-									"    pm.expect(body.results.length).to.be.eq(1);",
+									"    pm.expect(body.results.length).to.be.eq(3);",
 									"    body.results.forEach((r) => {",
 									"        pm.expect(r.status).to.be.oneOf([\"active\"]);",
 									"    })",
@@ -22500,7 +21953,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
 								"type": "text"
 							}
 						],
@@ -22547,7 +22000,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
 								"type": "text"
 							}
 						],
@@ -22603,7 +22056,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
 								"type": "text"
 							}
 						],
@@ -22659,7 +22112,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
 								"type": "text"
 							}
 						],
@@ -22715,7 +22168,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
 								"type": "text"
 							}
 						],
@@ -22771,7 +22224,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
 								"type": "text"
 							}
 						],
@@ -22827,7 +22280,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
 								"type": "text"
 							}
 						],
@@ -22883,7 +22336,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
+								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
 								"type": "text"
 							}
 						],
@@ -23079,64 +22532,7 @@
 					"response": []
 				},
 				{
-					"name": "Other trustee (rejprovider.delegate) calling API on APD ID they do not own - [403]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(400);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-									"    pm.expect(body.detail).to.be.eq(\"8e2741ad-34a3-4de2-a9e5-b97631f2fd8f\")",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"apdId\": \"8e2741ad-34a3-4de2-a9e5-b97631f2fd8f\",\n            \"status\": \"active\"\n        }\n    ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/apd",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"apd"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Auth admin change pending -> active, active -> inactive, inactive -> active, for postman.trustee APDs - [200]",
+					"name": "Auth admin change active -> inactive, inactive -> active - [200]",
 					"event": [
 						{
 							"listen": "test",
@@ -23156,10 +22552,6 @@
 									"    let res = body.results;",
 									"    count = 0;",
 									"    res.forEach(obj => {",
-									"        if(obj.apdId === '8e2741ad-34a3-4de2-a9e5-b97631f2fd8f'){",
-									"        pm.expect(obj.status).to.be.eq(\"active\");",
-									"        count++;",
-									"        }",
 									"        if(obj.apdId === '4f51cee5-e6ce-4e31-8c30-66d298c7d4a6'){",
 									"        pm.expect(obj.status).to.be.eq(\"inactive\");",
 									"        count++;",
@@ -23169,7 +22561,7 @@
 									"        count++;",
 									"        }",
 									"    })",
-									"    pm.expect(count).to.be.eq(3);",
+									"    pm.expect(count).to.be.eq(2);",
 									"",
 									"});"
 								],
@@ -23188,7 +22580,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"apdId\": \"8e2741ad-34a3-4de2-a9e5-b97631f2fd8f\",\n            \"status\": \"active\"\n        },\n        {\n            \"apdId\": \"4f51cee5-e6ce-4e31-8c30-66d298c7d4a6\",\n            \"status\": \"inactive\"\n        },\n        {\n            \"apdId\": \"1b988be6-cc13-422b-bca0-9ccb98a5b30f\",\n            \"status\": \"active\"\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n        {\n            \"apdId\": \"4f51cee5-e6ce-4e31-8c30-66d298c7d4a6\",\n            \"status\": \"inactive\"\n        },\n        {\n            \"apdId\": \"1b988be6-cc13-422b-bca0-9ccb98a5b30f\",\n            \"status\": \"active\"\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -23244,7 +22636,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"apdId\": \"8e2741ad-34a3-4de2-a9e5-b97631f2fd8f\",\n            \"status\": \"active\"\n        },\n        {\n            \"apdId\": \"4f51cee5-e6ce-4e31-8c30-66d298c7d4a6\",\n            \"status\": \"inactive\"\n        },\n        {\n            \"apdId\": \"1b988be6-cc13-422b-bca0-9ccb98a5b30f\",\n            \"status\": \"active\"\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n       {\n            \"apdId\": \"4f51cee5-e6ce-4e31-8c30-66d298c7d4a6\",\n            \"status\": \"inactive\"\n        },\n        {\n            \"apdId\": \"1b988be6-cc13-422b-bca0-9ccb98a5b30f\",\n            \"status\": \"active\"\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -23266,137 +22658,7 @@
 					"response": []
 				},
 				{
-					"name": "postman.trustee changing 2 actives -> inactive and inactive -> active (not allowed) - [403]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(403);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"apdId\": \"8e2741ad-34a3-4de2-a9e5-b97631f2fd8f\",\n            \"status\": \"inactive\"\n        },\n        {\n            \"apdId\": \"4f51cee5-e6ce-4e31-8c30-66d298c7d4a6\",\n            \"status\": \"active\"\n        },\n        {\n            \"apdId\": \"1b988be6-cc13-422b-bca0-9ccb98a5b30f\",\n            \"status\": \"inactive\"\n        }\n    ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/apd",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"apd"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "postman.trustee changing 2 actives -> inactive and inactive -> pending - [200]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
-									"    let res = body.results;",
-									"    count = 0;",
-									"    res.forEach(obj => {",
-									"        if(obj.apdId === '8e2741ad-34a3-4de2-a9e5-b97631f2fd8f'){",
-									"        pm.expect(obj.status).to.be.eq(\"inactive\");",
-									"        count++;",
-									"        }",
-									"        if(obj.apdId === '4f51cee5-e6ce-4e31-8c30-66d298c7d4a6'){",
-									"        pm.expect(obj.status).to.be.eq(\"pending\");",
-									"        count++;",
-									"        }",
-									"        if(obj.apdId === '1b988be6-cc13-422b-bca0-9ccb98a5b30f'){",
-									"        pm.expect(obj.status).to.be.eq(\"inactive\");",
-									"        count++;",
-									"        }",
-									"    })",
-									"    pm.expect(count).to.be.eq(3);",
-									"",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"apdId\": \"8e2741ad-34a3-4de2-a9e5-b97631f2fd8f\",\n            \"status\": \"inactive\"\n        },\n        {\n            \"apdId\": \"4f51cee5-e6ce-4e31-8c30-66d298c7d4a6\",\n            \"status\": \"pending\"\n        },\n        {\n            \"apdId\": \"1b988be6-cc13-422b-bca0-9ccb98a5b30f\",\n            \"status\": \"inactive\"\n        }\n    ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/apd",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"apd"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Auth admin setting inactive -> pending (not allowed) and test APD pending -> active - [403]",
+					"name": "Auth admin setting inactive -> inactive (not allowed) and test APD active -> inactive - [403]",
 					"event": [
 						{
 							"listen": "test",
@@ -23430,7 +22692,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"apdId\": \"8e2741ad-34a3-4de2-a9e5-b97631f2fd8f\",\n            \"status\": \"pending\"\n        },\n        {\n            \"apdId\": \"{{TEST_APD_ID}}\",\n            \"status\": \"active\"\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n        {\n            \"apdId\": \"4f51cee5-e6ce-4e31-8c30-66d298c7d4a6\",\n            \"status\": \"inactive\"\n        },\n        {\n            \"apdId\": \"{{TEST_APD_ID}}\",\n            \"status\": \"active\"\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -23452,7 +22714,7 @@
 					"response": []
 				},
 				{
-					"name": "Auth admin setting inactive -> active and test APD pending -> inactive (not allowed) - [403]",
+					"name": "Auth admin setting inactive -> active and test APD active -> active (not allowed) - [403]",
 					"event": [
 						{
 							"listen": "test",
@@ -23486,190 +22748,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"apdId\": \"8e2741ad-34a3-4de2-a9e5-b97631f2fd8f\",\n            \"status\": \"active\"\n        },\n        {\n            \"apdId\": \"{{TEST_APD_ID}}\",\n            \"status\": \"inactive\"\n        }\n    ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/apd",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"apd"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Auth admin setting inactive -> active and test APD pending -> active - [200]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
-									"    let apdId = pm.environment.get(\"TEST_APD_ID\");",
-									"    let res = body.results;",
-									"    count = 0;",
-									"    res.forEach(obj => {",
-									"        if(obj.apdId === '8e2741ad-34a3-4de2-a9e5-b97631f2fd8f'){",
-									"        pm.expect(obj.status).to.be.eq(\"active\");",
-									"        count++;",
-									"        }",
-									"        if(obj.apdId === apdId){",
-									"        pm.expect(obj.status).to.be.eq(\"active\");",
-									"        count++;",
-									"        }",
-									"    })",
-									"    pm.expect(count).to.be.eq(2);",
-									"",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"apdId\": \"8e2741ad-34a3-4de2-a9e5-b97631f2fd8f\",\n            \"status\": \"active\"\n        },\n        {\n            \"apdId\": \"{{TEST_APD_ID}}\",\n            \"status\": \"active\"\n        }\n    ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/apd",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"apd"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Cleanup - postman.trustee setting pendingapd.integration-iudx.io to inactive - [200]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"apdId\": \"8e2741ad-34a3-4de2-a9e5-b97631f2fd8f\",\n            \"status\": \"inactive\"\n        }\n    ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/apd",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"apd"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Cleanup - postman.trustee setting pendingapd.integration-iudx.io to pending - [200]",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"apdId\": \"8e2741ad-34a3-4de2-a9e5-b97631f2fd8f\",\n            \"status\": \"pending\"\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n        {\n            \"apdId\": \"1b988be6-cc13-422b-bca0-9ccb98a5b30f\",\n            \"status\": \"active\"\n        },\n        {\n            \"apdId\": \"{{TEST_APD_ID}}\",\n            \"status\": \"active\"\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -23726,6 +22805,62 @@
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"request\": [\n        {\n            \"apdId\": \"4f51cee5-e6ce-4e31-8c30-66d298c7d4a6\",\n            \"status\": \"active\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/apd",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"apd"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cleanup - auth.admin setting inactiveapd.integration-iudx.io to inactive - [200]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check response header\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Check response body\", function () {    ",
+									"    const body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"request\": [\n        {\n            \"apdId\": \"1b988be6-cc13-422b-bca0-9ccb98a5b30f\",\n            \"status\": \"inactive\"\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -24718,751 +23853,8 @@
 					]
 				},
 				{
-					"name": "Trustee APD item Type policies",
-					"item": [
-						{
-							"name": "Admin setting 'apd' policy - [400]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(403);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidRole\");",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{AUTH_ADMIN_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"{{TEST_APD_URL}}\",\n            \"itemType\": \"apd\",\n            \"userId\":\"746442f5-18a7-44fd-8c8f-3e39e5026fae\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"policies"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Provider setting 'apd' policy - [400]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(403);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidRole\");",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"{{TEST_APD_URL}}\",\n            \"itemType\": \"apd\",\n            \"userId\":\"746442f5-18a7-44fd-8c8f-3e39e5026fae\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"policies"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Duplicate requests - [400]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(400);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-											"    pm.expect(body).to.have.property(\"title\", \"Request must be unique\");",
-											"",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"inactiveapd.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"746442f5-18a7-44fd-8c8f-3e39e5026fae\",\n            \"constraints\": {}\n        },\n        {\n            \"itemId\": \"inactiveapd.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"746442f5-18a7-44fd-8c8f-3e39e5026fae\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"policies"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Setting many policies w/ different item types - [400]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(400);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"inactiveapd.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"746442f5-18a7-44fd-8c8f-3e39e5026fae\",\n            \"constraints\": {}\n        },\n        {\n            \"itemId\": \"inactiveapd.integration-iudx.io\",\n            \"itemType\": \"resource_server\",\n            \"userId\": \"746442f5-18a7-44fd-8c8f-3e39e5026fae\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"policies"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Postman trustee setting policy for non existent APD - [400]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(400);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-											"",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"thisdoesnotexist.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"746442f5-18a7-44fd-8c8f-3e39e5026fae\",\n            \"constraints\": {}\n        },\n                {\n            \"itemId\": \"inactiveapd.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"746442f5-18a7-44fd-8c8f-3e39e5026fae\",\n            \"constraints\": {}\n        }\n    ]\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"policies"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Postman trustee setting policy for provider for inactive APD - [200]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
-											"",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"inactiveapd.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"746442f5-18a7-44fd-8c8f-3e39e5026fae\",\n            \"constraints\": {}\n        }\n    ]\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"policies"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Existing policy - [409]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(409);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:AlreadyExists\");",
-											"",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"inactiveapd.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"746442f5-18a7-44fd-8c8f-3e39e5026fae\",\n            \"constraints\": {}\n        },\n        {\n            \"itemId\": \"activeapd.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"746442f5-18a7-44fd-8c8f-3e39e5026fae\",\n            \"constraints\": {}\n        },\n        {\n            \"itemId\": \"pendingapd.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"746442f5-18a7-44fd-8c8f-3e39e5026fae\",\n            \"constraints\": {}\n        }\n    ]\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"policies"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Postman trustee setting policy for provider for pending APD - [200]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
-											"",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"pendingapd.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"746442f5-18a7-44fd-8c8f-3e39e5026fae\",\n            \"constraints\": {}\n        }\n    ]\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"policies"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Postman trustee setting policy for provider for TEST_APD_URL does not own - [400]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(403);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-											"    pm.expect(body).to.have.property(\"title\", \"Not allowed to create policies for resource\");",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"{{TEST_APD_URL}}\",\n            \"itemType\": \"apd\",\n            \"userId\": \"746442f5-18a7-44fd-8c8f-3e39e5026fae\",\n            \"constraints\": {}\n        }\n    ]\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"policies"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Other trustee setting policy for provider for TEST_APD_URL - [200]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
-											"",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{REJPROVIDER_DELEGATE_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"{{TEST_APD_URL}}\",\n            \"itemType\": \"apd\",\n            \"userId\": \"746442f5-18a7-44fd-8c8f-3e39e5026fae\",\n            \"constraints\": {}\n        }\n    ]\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"policies"
-									]
-								}
-							},
-							"response": []
-						}
-					]
-				},
-				{
 					"name": "Provider setting APD policies",
 					"item": [
-						{
-							"name": "Provider cannot set APD policy for activeapd.integration-iudx.io - no trustee policy - [400]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(403);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-											"    pm.expect(body).to.have.property(\"title\", \"No auth policy for user by trustee\");",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"activeapd.integration-iudx.io\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"aec83a80-61ec-4ae0-8671-80194f2ce73e\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"policies"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Postman trustee setting policy for provider for active APD - [200]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
-											"",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"activeapd.integration-iudx.io\",\n            \"itemType\": \"apd\",\n            \"userId\": \"746442f5-18a7-44fd-8c8f-3e39e5026fae\",\n            \"constraints\": {}\n        }\n    ]\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"policies"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Provider cannot set APD policy for pendingapd.integration-iudx.io - [400]",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Response status\", function () {",
-											"    pm.response.to.have.status(400);",
-											"});",
-											"",
-											"pm.test(\"Check response header\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Check response body\", function () {    ",
-											"    const body = pm.response.json();",
-											"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"4b367af2-ad55-4017-9e19-35a5fa37e9b8\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"pendingapd.integration-iudx.io\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        },\n        {\n            \"itemId\": \"aec83a80-61ec-4ae0-8671-80194f2ce73e\",\n            \"itemType\": \"resource_group\",\n            \"apdId\": \"{{TEST_APD_URL}}\",\n            \"userClass\": \"TestAllow\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\"\n                ]\n            }\n        }\n    ]\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
-									"host": [
-										"{{AUTH_ENDPOINT}}"
-									],
-									"path": [
-										"auth",
-										"v1",
-										"policies"
-									]
-								}
-							},
-							"response": []
-						},
 						{
 							"name": "Provider cannot set APD policy for inactiveapd.integration-iudx.io - [400]",
 							"event": [
@@ -27199,69 +25591,6 @@
 			"name": "List APD policies",
 			"item": [
 				{
-					"name": "Postman.trustee viewing policies",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
-									"    let apdcount = 0;",
-									"    let id_array = [];",
-									"    pm.expect(body.results).to.not.be.empty;",
-									"    body.results.forEach((r) => {",
-									"        if(r.itemType === 'apd'){",
-									"            pm.expect(r.user.id).to.be.eq(\"746442f5-18a7-44fd-8c8f-3e39e5026fae\");",
-									"            pm.expect(r.user.email).to.be.eq(\"postman.provider-admin@datakaveri.org\");",
-									"            pm.expect(r.constraints).to.exist;",
-									"            pm.expect(r.policyId).to.exist;",
-									"            pm.expect(r.expiryTime).to.exist;",
-									"            apdcount++;",
-									"            id_array.push({id:r.policyId});",
-									"    }",
-									"    })",
-									"    pm.environment.set(\"TRUSTEE_POLICY_IDS\", JSON.stringify(id_array));",
-									"    pm.expect(apdcount).to.be.eq(3);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Consumer cannot see any apd policies",
 					"event": [
 						{
@@ -27692,122 +26021,6 @@
 					"response": []
 				},
 				{
-					"name": "Postman.trustee deleting trustee policies",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
-									"});",
-									"",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": {{TRUSTEE_POLICY_IDS}}\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Postman.trustee deleting same again",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(400);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:InvalidInput\");",
-									"});",
-									"",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": {{TRUSTEE_POLICY_IDS}}\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Postman.provider viewing policies after delete",
 					"event": [
 						{
@@ -27842,57 +26055,6 @@
 							{
 								"key": "Authorization",
 								"value": "Bearer {{POSTMAN_PROVIDER_TOKEN}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Postman.trustee viewing policies after delete",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Response status\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Check response header\", function () {",
-									"    pm.response.to.have.header(\"Content-Type\",\"application/json\");",
-									"});",
-									"",
-									"pm.test(\"Check response body\", function () {    ",
-									"    const body = pm.response.json();",
-									"    pm.expect(body).to.have.property(\"type\", \"urn:dx:as:Success\");",
-									"    pm.expect(body.results).to.not.be.empty;",
-									"    body.results.forEach((r) => {",
-									"    pm.expect(r.itemType).to.not.be.eq(\"apd\");",
-									"    })",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{POSTMAN_TRUSTEE_TOKEN}}",
 								"type": "text"
 							}
 						],

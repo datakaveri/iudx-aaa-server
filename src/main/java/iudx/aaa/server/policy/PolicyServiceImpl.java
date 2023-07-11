@@ -159,8 +159,7 @@ public class PolicyServiceImpl implements PolicyService {
 
     if (!roles.contains(Roles.ADMIN)
         && !roles.contains(Roles.PROVIDER)
-        && !roles.contains(Roles.DELEGATE)
-        && !roles.contains(Roles.TRUSTEE)) {
+        && !roles.contains(Roles.DELEGATE)) {
 
       Response r =
           new Response.ResponseBuilder()
@@ -218,15 +217,6 @@ public class PolicyServiceImpl implements PolicyService {
             .map(CreatePolicyRequest::getItemId)
             .collect(Collectors.toList());
 
-    // getApdInfo for all apdIds
-    // if itemType is apdIds, getApdInfo
-    List<String> apdUrls =
-        userPolicyRequests.stream()
-            .filter(
-                tagObject -> tagObject.getItemType().toUpperCase().equals(itemTypes.APD.toString()))
-            .map(CreatePolicyRequest::getItemId)
-            .collect(Collectors.toList());
-
     List<String> resGrpIds =
         request.stream()
             .filter(
@@ -249,7 +239,6 @@ public class PolicyServiceImpl implements PolicyService {
     Map<String, List<String>> catItem = new HashMap<>();
 
     // check if resServer itemType, All requests must be resServer, role must contain admin
-    // if itemType is Apd, all req must be Apd,role must contain Trustee
     // if  item type neither, for request may have both apd and user policies (catalogueFetch)
     if (resServerIds.size() > 0) {
       // if request has itemType resourceServer, then all request should be for resource server
@@ -276,32 +265,6 @@ public class PolicyServiceImpl implements PolicyService {
         return this;
       } else catItem.put(RES_SERVER, resServerIds);
     } else {
-      // check if user policy for apd exists
-      if (apdUrls.size() > 0) {
-        if (apdUrls.size() != request.size()) {
-          Response r =
-              new Response.ResponseBuilder()
-                  .type(URN_INVALID_INPUT)
-                  .title(INVALID_INPUT)
-                  .detail("All requests must be for APD")
-                  .status(400)
-                  .build();
-          handler.handle(Future.succeededFuture(r.toJson()));
-          return this;
-        }
-        if (!roles.contains(Roles.TRUSTEE)) {
-          Response r =
-              new Response.ResponseBuilder()
-                  .type(URN_INVALID_ROLE)
-                  .title(INVALID_ROLE)
-                  .detail(INVALID_ROLE)
-                  .status(403)
-                  .build();
-          handler.handle(Future.succeededFuture(r.toJson()));
-          return this;
-        }
-        catItem.put(APD, apdUrls);
-      } else {
         if (!roles.contains(Roles.PROVIDER) && !roles.contains(Roles.DELEGATE)) {
           Response r =
               new Response.ResponseBuilder()
@@ -316,53 +279,11 @@ public class PolicyServiceImpl implements PolicyService {
         if (resGrpIds.size() > 0) catItem.put(RES_GRP, resGrpIds);
         if (resIds.size() > 0) catItem.put(RES, resIds);
       }
-    }
+    
     Future<Map<String, ResourceObj>> reqItemDetail;
     if (catItem.containsKey(RES_SERVER)) {
       reqItemDetail = createPolicy.getResSerDetails(catItem.get(RES_SERVER), user.getUserId());
     } else {
-      if (catItem.containsKey(APD)) {
-        List<String> urls = catItem.get(APD);
-        Promise<JsonObject> promise = Promise.promise();
-        apdService.getApdDetails(urls, List.of(), promise);
-        reqItemDetail =
-            promise
-                .future()
-                .compose(
-                    apdDetail -> {
-                      Map<String, ResourceObj> apdMap = new HashMap<>();
-                      List<String> failedUrl = new ArrayList<>();
-                      urls.forEach(
-                          url -> {
-                            if (!apdDetail.containsKey(url)) failedUrl.add(url);
-                            else {
-                              JsonObject detail = apdDetail.getJsonObject(url);
-                              //status of the apd is not validated for creating policy by the trustee
-                                JsonObject resObj = new JsonObject();
-                                resObj.put(ITEMTYPE, APD);
-                                resObj.put(ID, detail.getString(ID));
-                                resObj.put(CAT_ID, detail.getString(URL));
-                                resObj.put(
-                                    OWNER_ID, detail.getJsonObject(OWNER_DETAILS).getString(ID));
-                                resObj.put("resource_server_id",NIL_UUID);
-                                resObj.put("resource_group_id",NIL_UUID);
-                                apdMap.put(resObj.getString(CAT_ID), new ResourceObj(resObj));
-                            }
-                          });
-
-                      if (failedUrl.size() > 0) {
-                        Response r =
-                            new ResponseBuilder()
-                                .status(400)
-                                .type(URN_INVALID_INPUT)
-                                .title(INVALID_INPUT)
-                                .detail(failedUrl.toString())
-                                .build();
-                        return Future.failedFuture(new ComposeException(r));
-                      }
-                      return Future.succeededFuture(apdMap);
-                    });
-      } else // For both apdPolicy and userPolicy
       reqItemDetail = catalogueClient.checkReqItems(catItem);
     }
 
@@ -415,28 +336,7 @@ public class PolicyServiceImpl implements PolicyService {
               return createPolicy.checkAuthPolicy(user.getUserId());
             });
 
-    // to create a policy in the apd_polcies table, user must have a policy by the dataTrustee for the apdId
-    Future<Boolean> checkTrusteeAuthPolicy =
-            ItemChecks.compose(obj ->
-                    {
-                        if(validApd.result().isEmpty())
-                          return Future.succeededFuture(true);
-                        else
-                        {
-                          Set<UUID> apdIds = new HashSet<UUID>();
-                          List<String> urls =
-                                  apdPolicyRequests.stream().map(CreatePolicyRequest::getApdId).collect(Collectors.toList());
-                          urls.forEach(url ->
-                          {
-                            apdIds.add(UUID.fromString(validApd.result().getJsonObject(url).getString(ID)));
-                          });
-                          return createPolicy.checkAuthTrusteePolicy(providerId, apdIds);
-                        }
-                    }
-            );
-
-
-    Future<List<UUID>> checkDelegate = CompositeFuture.all(checkAuthPolicy,checkTrusteeAuthPolicy).compose(
+    Future<List<UUID>> checkDelegate = checkAuthPolicy.compose(
             checkAut -> {
               if (checkAut.equals(false)) return Future.succeededFuture(new ArrayList<>());
               List<ResourceObj> resourceObj = new ArrayList<>(reqItemDetail.result().values());
@@ -537,7 +437,7 @@ public class PolicyServiceImpl implements PolicyService {
     List<Roles> roles = user.getRoles();
 
     if (!roles.contains(Roles.ADMIN) && !roles.contains(Roles.PROVIDER)
-        && !roles.contains(Roles.DELEGATE) && ! roles.contains(Roles.TRUSTEE)) {
+        && !roles.contains(Roles.DELEGATE)) {
       // cannot create policy
       Response r = new Response.ResponseBuilder().type(URN_INVALID_ROLE).title(INVALID_ROLE)
           .detail(INVALID_ROLE).status(401).build();
@@ -637,14 +537,8 @@ public class PolicyServiceImpl implements PolicyService {
 
           List<String> userIds = new ArrayList<String>(userIdSet);
 
-          /*
-           * For APD IDs get IDs from policies where the item type is APD and from the APD IDs in
-           * APD policies
-           */
-          Set<String> apdIdSet = itemTypeToIds.get(itemTypes.APD).stream().map(id -> id.toString())
+          Set<String> apdIdSet = apdPolicies.result().stream().map(j -> j.getString(APD_ID))
               .collect(Collectors.toSet());
-          apdIdSet.addAll(apdPolicies.result().stream().map(j -> j.getString(APD_ID))
-              .collect(Collectors.toSet()));
 
           List<String> apdIds = new ArrayList<String>(apdIdSet);
 

@@ -207,7 +207,6 @@ paths:
                     - delegate
                     - consumer
                     - admin
-                    - trustee
                 context:
                   type: object
               required:
@@ -250,11 +249,6 @@ paths:
                   itemId: apd.iudx.org.in
                   itemType: resource_server
                   role: consumer
-              identity token for APD as trustee:
-                value:
-                  itemId: apd.iudx.org.in
-                  itemType: resource_server
-                  role: trustee
               identity token for resource_server as provider:
                 value:
                   itemId: rs.iudx.org.in
@@ -286,7 +280,7 @@ paths:
           - Item ID - URL of the server or APD
           - Users with any role can get an identity token for either a resource server or APD
           
-          **NOTE : If role is `admin` or `trustee`, the user must own the resource server or APD respectively.** 
+          **NOTE : If role is `admin`, the user must own the resource server.** 
            
           **NOTE : Users can be permitted to obtain identity tokens with the `admin` role if required.**
               
@@ -312,9 +306,6 @@ paths:
           ## Tokens for admins
            **Admins are only permitted to get identity tokens.**
           
-          ## Tokens for trustees
-           **Trustees are only permitted to get identity tokens.**
-
           ## JWT Access Token Response Structure
            The JWT is signed using the ES256 algorithm (`alg:ES256`).
 
@@ -863,7 +854,6 @@ paths:
           - manage catalogue items
           - manage data on resource servers
           - manage policies
-        - **trustee**, which allows a user to manage an Access Policy Domain (APD)
           
         ## Client ID and Client Secret
         On successful creation of the user profile, the user would receive a client ID and a client secret. The client ID and client secret can be used instead of the OIDC flow to request for tokens. **The client secret is ONLY shown to the user here and can never be obtained again.**
@@ -887,7 +877,6 @@ paths:
                       - provider
                       - consumer
                       - delegate
-                      - trustee
                     minLength: 5
                     maxLength: 10
                 orgId:
@@ -914,7 +903,7 @@ paths:
                   orgId: 123e4567-e89b-12d3-a456-426614174000
         description: |-
           - `orgId` is a valid organization ID obtain from the `GET /auth/v1/organizations` API
-          - **`orgId` is required for `provider`, `delegate` and `trustee` roles**
+          - **`orgId` is required for `provider` and `delegate` roles**
           - **The domain of the email address of the registering user must match the organization domain**
         required: true
       tags:
@@ -1177,8 +1166,6 @@ paths:
         A user with either 
         - `provider` role
         - `admin` role
-        - `trustee` role **with valid Auth admin policy**
-            - An auth admin policy is automatically created when an APD belonging to a trustee is set to _active_ state by the IUDX AAA admin
         - is an **auth delegate** 
         may search for a user by providing the email address and role of said user. If a user exists, then the user ID `userId`, email, name and organization details (if applicable) is returned.
 
@@ -1311,7 +1298,6 @@ paths:
                       roles:
                         - consumer
                         - delegate
-                        - trustee
                       userId: 67194fc9-495e-40f7-b016-4470c1d4397f
                       clients:
                         - clientName: default
@@ -1404,7 +1390,7 @@ paths:
         **NOTE: The operations cannot be done simultaneously.**
 
         ## Add roles
-        A user may add `consumer`, `delegate` and `trustee` roles to their user profile. **The `provider` role cannot be added**. 
+        A user may add `consumer` and `delegate` roles to their user profile. **The `provider` role cannot be added**. 
 
         ## Regenerate client secret
         A user may regenerate a client secret corresponding to a client ID in case they have lost the client secret or it has been compromised. A new client secret will be generated and sent as part of the output **and will not be shown again.** 
@@ -1446,7 +1432,6 @@ paths:
                         enum:
                           - consumer
                           - delegate
-                          - trustee
                         minLength: 5
                         maxLength: 10
                     orgId:
@@ -1475,14 +1460,13 @@ paths:
                   roles:
                     - consumer
                     - delegate
-                    - trustee
                   orgId: 123e4567-e89b-12d3-a456-426614174000
               Regenerate client secret:
                 value:
                   clientId: 25b2c2d5-a7fc-47d0-89e4-8709a1560bfa
         description: |-
           - `orgId` is a valid organization ID obtain from the `GET /auth/v1/organizations` API
-          - **`orgId` is required for `delegate` or `trustee` roles**
+          - **`orgId` is required for `delegate` role**
           - `clientId` is a valid client ID (belonging to the user) whose corresponding client secret needs to be generate
         required: true
       tags:
@@ -2351,28 +2335,6 @@ paths:
                             firstName: Bob
                             lastName: Provider
                           id: 844e251b-574b-46e6-9247-f76f1f70a637
-                Listing of policies set by a trustee for a provider:
-                  value:
-                    type: 'urn:dx:as:Success'
-                    title: policy read
-                    results:
-                      - policyId: 21abcc77-8917-4a12-8a48-42016552ed30
-                        itemType: apd
-                        expiryTime: '2027-03-22T00:00'
-                        constraints: {}
-                        itemId: apd-test.datakaveri.org
-                        user:
-                          email: provider@datakaveri.org
-                          name:
-                            firstName: Provider
-                            lastName: DK
-                          id: 1d4e251b-514b-46e6-9547-f7661f70ae37
-                        owner:
-                          email: trustee@datakaveri.org
-                          name:
-                            firstName: Trustee
-                            lastName: DK
-                          id: a3be2d18-24cb-40d6-8a5e-f073aacbe519
                 Listing of APD policies:
                   value:
                     type: 'urn:dx:as:Success'
@@ -2391,12 +2353,6 @@ paths:
                             lastName: DK
                           id: 1d4e251b-514b-46e6-9547-f7661f70ae37
                         apd:
-                          owner:
-                            email: trustee@datakaveri.org
-                            name:
-                              firstName: Trustee
-                              lastName: DK
-                            id: a3be2d18-24cb-40d6-8a5e-f073aacbe519
                           url: apd-testing.datakaveri.org
                           status: active
                           name: Test APD
@@ -2412,7 +2368,7 @@ paths:
         - `provider` : returns all policies created by the provider/auth delegate of the provider and the policies set for the provider. Also returns any **APD policies** set by the provider.
         - `delegate` : returns all policies set for the delegate
         - `consumer` : returns the policies set for the consumer
-        - `trustee` or `admin` : returns all policies set by them
+        - `admin` : returns all policies set by them
 
         ## Auth delegate
         An auth delegate may use the API to view policies on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
@@ -2598,8 +2554,8 @@ paths:
               description: application/json
         '403':
           description: |-
-            - If the user trying to set a policy does not have an `admin`, `provider`, `trustee` or `delegate` role
-            - If the user trying to set a policy does not have a policy by the AAA admin or trustee (in case of APD policies)
+            - If the user trying to set a policy does not have an `admin`, `provider` or `delegate` role
+            - If the user trying to set a policy does not have a policy by the AAA admin
             - If the user is neither the owner of the resource item/group or a delegate to the owner of the resource
             - If a valid policy already exists
           content:
@@ -2615,14 +2571,8 @@ paths:
              
         ## Policies created by admin
         - Valid item types - `resource_server`. 
-        - An `admin` can set **user policies** for a `provider`,`delegate` or `trustee` for their server.
+        - An `admin` can set **user policies** for a `provider` or `delegate` for their server.
         - **A policy is automatically set by the AAA admin for a provider when they are approved.**
-        - **A policy is automatically set by the AAA admin for a trustee when their APD is set to active state.**
-           
-        ## Policies created by trustee
-        - Valid item types - `apd`. 
-        - A `trustee` can write **user policies** for `providers` for APDs they own.
-        - This policy allows providers to be able to use the APD for APD policies on their own resources. 
            
         ## Policies created by provider
        
@@ -2633,8 +2583,6 @@ paths:
         ### APD Policies
         - Valid item types - `resource`, `resource_group`
         - A `provider` can set **APD policies** for the resources owned by the `provider.` Access is granted if the user belongs to a `userClass` defined by the APD. 
-        - **Providers must have a policy set by the concerned trustee to be able to set APD policies using a particular APD.** 
-        - **The trustee policy also allows auth delegates working on behalf of the provider to set APD policies.**
         - **The concerned APD must be in `active` state.**
              
         ## Policies created by delegate
@@ -2649,7 +2597,6 @@ paths:
         ### APD Policies
         - Valid item types - `resource`, `resource_group`
         - A `delegate` can set **APD policies** for the resources owned by the `provider`.
-        - The `provider` for whom the auth delegate is operating **must have a policy set by the concerned trustee for the particular APD**. The `delegate` need not have any such policy.
         - **The concerned APD must be in `active` state.**
              
       parameters:
@@ -2717,7 +2664,6 @@ paths:
                               - resource
                               - resource_group
                               - resource_server
-                              - apd
                           expiryTime:
                             type: string
                             minLength: 1
@@ -2808,14 +2754,6 @@ paths:
                         access:
                           - api
                           - sub
-              Single request for trustee 'apd' itemType policy:
-                value:
-                  request:
-                    - userId: 2c4a230c-5085-4924-a3e1-25fb4fc5965b
-                      itemId: apd-testing.datakaveri.org
-                      itemType: apd
-                      expiryTime: '2022-10-10T04:00:19'
-                      constraints: {}
               Single request for APD policy:
                 value:
                   request:
@@ -4211,31 +4149,6 @@ paths:
                         status:
                           type: string
                           minLength: 1
-                        owner:
-                          type: object
-                          properties:
-                            email:
-                              type: string
-                              minLength: 1
-                            name:
-                              type: object
-                              properties:
-                                firstName:
-                                  type: string
-                                  minLength: 1
-                                lastName:
-                                  type: string
-                                  minLength: 1
-                              required:
-                                - firstName
-                                - lastName
-                            id:
-                              type: string
-                              minLength: 1
-                          required:
-                            - email
-                            - name
-                            - id
                 required:
                   - type
                   - title
@@ -4249,22 +4162,10 @@ paths:
                         name: DataKaveri APD
                         url: apd.datakaveri.org
                         status: pending
-                        owner:
-                          email: trustee@datakaveri.org
-                          name:
-                            firstName: Trustee
-                            lastName: DataKaveri
-                          id: 28c387e8-5807-44f7-830f-998e595d1bbe
                       - apdId: 540972fd-43df-43c1-9627-df2402a6b731
                         name: IISc APD
                         url: apd.iisc.ac.in
                         status: active
-                        owner:
-                          email: trustee@datakaveri.org
-                          name:
-                            firstName: Trustee
-                            lastName: IISc
-                          id: 7d379bda-c204-4a97-918f-c24590b0cd6f
               examples:
                 Example:
                   value:
@@ -4275,22 +4176,10 @@ paths:
                         name: DataKaveri APD
                         url: apd.datakaveri.org
                         status: pending
-                        owner:
-                          email: trustee@datakaveri.org
-                          name:
-                            firstName: Trustee
-                            lastName: DataKaveri
-                          id: 28c387e8-5807-44f7-830f-998e595d1bbe
                       - apdId: 540972fd-43df-43c1-9627-df2402a6b731
                         name: IISc APD
                         url: apd.iisc.ac.in
                         status: active
-                        owner:
-                          email: trustee@datakaveri.org
-                          name:
-                            firstName: Trustee
-                            lastName: IISc
-                          id: 7d379bda-c204-4a97-918f-c24590b0cd6f
         '401':
           description: '- Unauthorized - `token` invalid/expired'
           content:
@@ -4319,7 +4208,6 @@ paths:
       description: |-
         Returns registered APDs. 
         - If called by the AAA admin, returns all APD registrations
-        - If called by a user with `trustee` role, returns all APDs in the **active** state and all the APDs the user has registered
         - If called by a user with any other roles, returns all APDs in the **active** state
       security:
         - authorization: []
@@ -4330,7 +4218,7 @@ paths:
       operationId: post-auth-v1-apd
       responses:
         '200':
-          description: The APD has been successfully registered and is pending AAA Admin approval
+          description: The APD has been successfully registered
           content:
             application/json:
               schema:
@@ -4358,37 +4246,11 @@ paths:
                       status:
                         type: string
                         minLength: 1
-                      owner:
-                        type: object
-                        properties:
-                          email:
-                            type: string
-                            minLength: 1
-                          name:
-                            type: object
-                            properties:
-                              firstName:
-                                type: string
-                                minLength: 1
-                              lastName:
-                                type: string
-                                minLength: 1
-                            required:
-                              - firstName
-                              - lastName
-                          id:
-                            type: string
-                            minLength: 1
-                        required:
-                          - email
-                          - name
-                          - id
                     required:
                       - apdId
                       - name
                       - url
                       - status
-                      - owner
                 required:
                   - type
                   - title
@@ -4401,13 +4263,7 @@ paths:
                       apdId: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
                       name: zppcw
                       url: zppcw.com
-                      status: pending
-                      owner:
-                        email: vgmwddiczi@gmail.com
-                        name:
-                          firstName: uirsxfqyuj
-                          lastName: lgbbcwgcax
-                        id: 28c387e8-5807-44f7-830f-998e595d1bbe
+                      status: active
               examples:
                 Example:
                   value:
@@ -4417,13 +4273,7 @@ paths:
                       apdId: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
                       name: DataKaveri APD
                       url: apd.datakaveri.org
-                      status: pending
-                      owner:
-                        email: trustee@datakaveri.org
-                        name:
-                          firstName: Trustee
-                          lastName: DataKaveri
-                        id: 28c387e8-5807-44f7-830f-998e595d1bbe
+                      status: active
         '400':
           description: |-
             - Malformed or missing data
@@ -4457,7 +4307,7 @@ paths:
                     title: Token authentication failed
                     detail: Inactive Token
         '403':
-          description: '- User does not have the `trustee` role'
+          description: '- User is not admin of AAA server'
           content:
             application/json:
               schema:
@@ -4466,8 +4316,8 @@ paths:
                 Example:
                   value:
                     type: 'urn:dx:as:InvalidRole'
-                    title: Not a trustee
-                    detail: Use does not have the trustee role
+                    title: Not admin 
+                    detail: Use does not have the admin
         '404':
           description: '- A user profile for the user does not exist'
           content:
@@ -4493,7 +4343,7 @@ paths:
                     title: URL already exists
                     detail: An APD with the requested URL already exists
       description: |-
-        A registered trustee can register an Access Policy Domain. The AAA admin must approve the registration and set the APD into the **active** state, after which policies can be written using the APD. 
+        The AAA admin can add new APDs to the server. These APDs will be in the **active** state by default and once added, polcieis can be written for the APDs. 
 
         ## APD Requirements during registration
         The APD URL must be provided during registration. The URL must be **reachable** as well as:
@@ -4530,7 +4380,7 @@ paths:
                   url: apd.datakaveri.org
         required: true
         description: |-
-          - Registered users with the `trustee` role are permitted to call the API
+          - AAA admin permitted to call the API.
           - `url` must be a **valid reachable domain/hostname**. Examples of invalid `url`s are:
             - `https://example.com`
             - `example.com:8080`
@@ -4578,27 +4428,6 @@ paths:
                         status:
                           type: string
                           minLength: 1
-                        owner:
-                          type: object
-                          properties:
-                            email:
-                              type: string
-                              minLength: 1
-                            name:
-                              type: object
-                              properties:
-                                firstName:
-                                  type: string
-                                  minLength: 1
-                                lastName:
-                                  type: string
-                                  minLength: 1
-                              required:
-                                - firstName
-                                - lastName
-                            id:
-                              type: string
-                              minLength: 1
                           required:
                             - email
                             - name
@@ -4616,12 +4445,6 @@ paths:
                         name: zwcev
                         url: zwcev.com
                         status: inactive
-                        owner:
-                          email: iisjnaawjw@gmail.com
-                          name:
-                            firstName: dxzptlevqi
-                            lastName: yfuwqntzmg
-                          id: 55530f92-7d84-428c-8c0d-f8b37818ac13
               examples:
                 Example:
                   value:
@@ -4632,22 +4455,10 @@ paths:
                         name: DataKaveri APD
                         url: apd.datakaveri.org
                         status: active
-                        owner:
-                          email: trustee@datakaveri.org
-                          name:
-                            firstName: Trustee
-                            lastName: DataKaveri
-                          id: 28c387e8-5807-44f7-830f-998e595d1bbe
                       - apdId: 540972fd-43df-43c1-9627-df2402a6b731
                         name: IISc APD
                         url: apd.iisc.ac.in
                         status: inactive
-                        owner:
-                          email: trustee@datakaveri.org
-                          name:
-                            firstName: Trustee
-                            lastName: IISc
-                          id: 7d379bda-c204-4a97-918f-c24590b0cd6f
         '400':
           description: |-
             - Malformed or missing data
@@ -4682,7 +4493,7 @@ paths:
                     detail: Inactive Token
         '403':
           description: |-
-            - User is not AAA admin or does not have `trustee` role
+            - User is not AAA admin
             - Cannot change status of a particular APD
           content:
             application/json:
@@ -4693,7 +4504,7 @@ paths:
                   value:
                     type: 'urn:dx:as:InvalidRole'
                     title: Invalid roles to call API
-                    detail: Trustees and Auth Server Admin may call the API
+                    detail: Auth Server Admin may call the API
                 Cannot change status of an APD:
                   value:
                     type: 'urn:dx:as:InvalidInput'
@@ -4712,16 +4523,12 @@ paths:
                     title: User profile does not exist
                     detail: Please register to create user profile
       description: |-
-        Allows the AAA admins and trustees who have registered APDs to update status.
+        Allows the AAA admins to update status of APDs.
 
-        The AAA admin may change status:
-        - from **pending** to **active**, to allow policies to be written for the APD.
+        The AAA admin may change status :
         - from **active** to **inactive**, in case the APD is not responsive or has been compromised
         - from **inactive** to **active**
 
-        The trustee may change status of APDs they have registered:
-        - from **active** to **inactive**, to indicate that no new policies may be written using the APD. 
-        - from **inactive** to **pending**, to allow the AAA admin to reconsider activating the APD
       requestBody:
         required: true
         content:
@@ -4757,7 +4564,6 @@ paths:
                         enum:
                           - active
                           - inactive
-                          - pending
                         description: The status to be changed to
                     required:
                       - apdId
