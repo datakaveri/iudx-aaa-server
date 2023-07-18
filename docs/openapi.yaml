@@ -1473,14 +1473,14 @@ paths:
         - User APIs
       security:
         - authorization: []
-  /auth/v1/organizations:
+  /auth/v1/resourceservers:
     get:
-      summary: Get Organization Details
+      summary: Get Resource Server Details
       tags:
-        - Organization APIs
+        - Resource Server APIs
       responses:
         '200':
-          description: Successfully retrieving the registered Organization details
+          description: Successfully retrieving the registered Resource Server details
           headers:
             Content-Type:
               schema:
@@ -1494,7 +1494,7 @@ paths:
                 x-examples:
                   example-1:
                     type: 'urn:dx:as:Success'
-                    title: Organizations
+                    title: Resource Servers
                     results: []
                 properties:
                   type:
@@ -1522,7 +1522,7 @@ paths:
                 Get Organization Details:
                   value:
                     type: 'urn:dx:as:Success'
-                    title: Organizations
+                    title: Resource Servers
                     results:
                       - id: bc51dfff-ee8b-4438-8c0c-5881a482e124
                         name: example
@@ -1544,7 +1544,7 @@ paths:
                     type: 'urn:dx:as:InvalidAuthenticationToken'
                     title: Token authentication failed
                     detail: Inactive Token
-      operationId: get-auth-v1-organizations
+      operationId: get-auth-v1-resourceservers
       parameters:
         - schema:
             type: string

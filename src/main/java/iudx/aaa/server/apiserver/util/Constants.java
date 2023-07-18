@@ -62,7 +62,7 @@ public class Constants {
   public static final String CREATE_USER_PROFILE = "post-auth-v1-user-profile";
   public static final String GET_USER_PROFILE = "get-auth-v1-user-profile";
   public static final String UPDATE_USER_PROFILE = "put-auth-v1-user-profile";
-  public static final String GET_ORGANIZATIONS = "get-auth-v1-organizations";
+  public static final String GET_RESOURCE_SERVERS = "get-auth-v1-resourceservers";
   public static final String CREATE_RESOURCE_SERVER = "post-auth-v1-admin-resourceservers";
   public static final String GET_PVDR_REGISTRATION = "get-auth-v1-admin-provider-registrations";
   public static final String UPDATE_PVDR_REGISTRATION = "put-auth-v1-admin-provider-registrations";

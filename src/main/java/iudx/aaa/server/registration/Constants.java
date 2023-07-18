@@ -49,7 +49,7 @@ public class Constants {
   public static final String PROVIDER_PENDING_MESG = ", Provider registration is pending approval";
   public static final String SUCC_TITLE_USER_READ = "User details";
   public static final String SUCC_TITLE_USER_FOUND = "User found";
-  public static final String SUCC_TITLE_ORG_READ = "Organizations";
+  public static final String SUCC_TITLE_RS_READ = "Resource Servers";
   public static final String SUCC_TITLE_UPDATED_USER_ROLES = "Registered for requested roles";
   public static final String SUCC_TITLE_REGEN_CLIENT_SECRET = "Regenerated client secret for requested client ID";
 
@@ -111,8 +111,8 @@ public class Constants {
   public static final String SQL_GET_ORG_DETAILS =
       "SELECT name, url FROM organizations WHERE id = $1::uuid";
 
-  public static final String SQL_GET_ALL_ORGS =
-      "SELECT id, name, url FROM organizations";
+  public static final String SQL_GET_ALL_RS =
+      "SELECT id, name, url, owner_id FROM resource_server";
 
   public static final String SQL_GET_REG_ROLES =
       "SELECT role FROM roles WHERE user_id = $1::uuid";

@@ -218,9 +218,9 @@ public class ApiServerVerticle extends AbstractVerticle {
                       .handler(this::updateUserProfileHandler)
                       .failureHandler(failureHandler);
 
-              // Get Organization Details
-              routerBuilder.operation(GET_ORGANIZATIONS)
-                      .handler(this::listOrganizationHandler)
+              // Get Resource Server Details
+              routerBuilder.operation(GET_RESOURCE_SERVERS)
+                      .handler(this::listResourceServersHandler)
                       .failureHandler(failureHandler);
 
               // Post Create Organization
@@ -511,12 +511,12 @@ public class ApiServerVerticle extends AbstractVerticle {
   }
 
   /**
-   * Handles organization listing.
+   * Handles resource server listing.
    *
    * @param context
    */
-  private void listOrganizationHandler(RoutingContext context) {
-    registrationService.listOrganization(handler -> {
+  private void listResourceServersHandler(RoutingContext context) {
+    registrationService.listResourceServer(handler -> {
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {

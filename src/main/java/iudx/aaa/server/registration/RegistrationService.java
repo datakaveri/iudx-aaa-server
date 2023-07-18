@@ -89,14 +89,14 @@ public interface RegistrationService {
       Handler<AsyncResult<JsonObject>> handler);
 
   /**
-   * The listOrganization implements listing organzations.
+   * The listResourceServer implements listing resource servers.
    * 
    * @param handler the request handler which returns a JsonObject
    * @return RegistrationService which is a Service
    */
 
   @Fluent
-  RegistrationService listOrganization(Handler<AsyncResult<JsonObject>> handler);
+  RegistrationService listResourceServer(Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * The getUserDetails implements getting user details. Other services may call this service to get

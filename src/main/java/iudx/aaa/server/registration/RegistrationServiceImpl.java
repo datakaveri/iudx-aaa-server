@@ -43,7 +43,7 @@ import static iudx.aaa.server.registration.Constants.SQL_CREATE_USER;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_USER_IF_NOT_EXISTS;
 import static iudx.aaa.server.registration.Constants.SQL_FIND_ORG_BY_ID;
 import static iudx.aaa.server.registration.Constants.SQL_FIND_USER_BY_KC_ID;
-import static iudx.aaa.server.registration.Constants.SQL_GET_ALL_ORGS;
+import static iudx.aaa.server.registration.Constants.SQL_GET_ALL_RS;
 import static iudx.aaa.server.registration.Constants.SQL_GET_CLIENTS_FORMATTED;
 import static iudx.aaa.server.registration.Constants.SQL_GET_KC_ID_FROM_ARR;
 import static iudx.aaa.server.registration.Constants.SQL_GET_ORG_DETAILS;
@@ -53,7 +53,7 @@ import static iudx.aaa.server.registration.Constants.SQL_GET_UID_ORG_ID_CHECK_RO
 import static iudx.aaa.server.registration.Constants.SQL_UPDATE_CLIENT_SECRET;
 import static iudx.aaa.server.registration.Constants.SQL_UPDATE_ORG_ID;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_CREATED_USER;
-import static iudx.aaa.server.registration.Constants.SUCC_TITLE_ORG_READ;
+import static iudx.aaa.server.registration.Constants.SUCC_TITLE_RS_READ;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_REGEN_CLIENT_SECRET;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_UPDATED_USER_ROLES;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_USER_FOUND;
@@ -488,23 +488,46 @@ public class RegistrationServiceImpl implements RegistrationService {
   }
 
   @Override
-  public RegistrationService listOrganization(Handler<AsyncResult<JsonObject>> handler) {
+  public RegistrationService listResourceServer(Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
     Collector<Row, ?, List<JsonObject>> orgCollect =
         Collectors.mapping(row -> row.toJson(), Collectors.toList());
 
-    pool.withConnection(conn -> conn.preparedQuery(SQL_GET_ALL_ORGS).collecting(orgCollect)
-        .execute().map(rows -> rows.value()).onSuccess(obj -> {
-          JsonArray resp = new JsonArray(obj);
+    Future<List<JsonObject>> rsFuture = pool.withConnection(conn -> conn
+        .preparedQuery(SQL_GET_ALL_RS).collecting(orgCollect).execute().map(rows -> rows.value()));
 
-          Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_ORG_READ)
-              .status(200).arrayResults(resp).build();
-          handler.handle(Future.succeededFuture(r.toJson()));
-        }).onFailure(e -> {
-          LOGGER.error(e.getMessage());
-          handler.handle(Future.failedFuture("Internal error"));
-        }));
+    Future<JsonObject> ownerFuture = rsFuture.compose(res -> {
+      Promise<JsonObject> promise = Promise.promise();
+      List<String> ownerIds =
+          res.stream().map(obj -> obj.getString("owner_id")).collect(Collectors.toList());
+
+      getUserDetails(ownerIds, promise);
+      return promise.future();
+    });
+
+    Future<JsonArray> result = ownerFuture.compose(ownerDetails -> {
+      List<JsonObject> rsDetails = rsFuture.result();
+      JsonArray arr = new JsonArray();
+
+      rsDetails.forEach(rs -> {
+        JsonObject ownerBlock = ownerDetails.getJsonObject(rs.getString("owner_id"));
+        ownerBlock.put("id", rs.remove("owner_id"));
+        rs.put("owner", ownerBlock);
+        arr.add(rs);
+      });
+      return Future.succeededFuture(arr);
+    });
+
+    result.onSuccess(res -> {
+      Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_RS_READ).status(200)
+          .arrayResults(res).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+    }).onFailure(e -> {
+      LOGGER.error(e.getMessage());
+      e.printStackTrace();
+      handler.handle(Future.failedFuture("Internal error"));
+    });
 
     return this;
   }
