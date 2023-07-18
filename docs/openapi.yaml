@@ -1558,13 +1558,13 @@ paths:
       description: Listing the details of registered Organization
       security:
         - authorization: []
-  /auth/v1/admin/organizations:
+  /auth/v1/admin/resourceservers:
     post:
-      summary: Create Organization
-      operationId: post-auth-v1-admin-organizations
+      summary: Create Resource Server
+      operationId: post-auth-v1-admin-resourceservers
       responses:
         '201':
-          description: An organization has been created successfully.
+          description: A resource server has been created successfully.
           content:
             application/json:
               schema:
@@ -1677,8 +1677,8 @@ paths:
                   value:
                     type: 'urn:dx:as:AlreadyExists'
                     title: Domains exists
-                    detail: An organization exists with the given domain
-      description: 'Register an Organization. This operation can be performed by an `admin` of the IUDX AAA server. '
+                    detail: A resource server exists with the given domain
+      description: 'Register a Resource Server. This operation can be performed by an `admin` of the IUDX AAA server. '
       parameters:
         - schema:
             type: string
@@ -1699,6 +1699,7 @@ paths:
                 example-1:
                   name: Example
                   url: example.com
+                  owner: admin@admin.com
               properties:
                 name:
                   type: string
@@ -1709,17 +1710,24 @@ paths:
                   type: string
                   minLength: 1
                   maxLength: 100
+                owner:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                  pattern: '^(?=.{1,254}$)(?=.{1,64}@)[-!#$%&''*+/0-9=?A-Z^_`a-z{|}~]+(\.[-!#$%&''*+/0-9=?A-Z^_`a-z{|}~]+)*@[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$'
               required:
                 - name
                 - url
+                - owner
             examples:
               Create Organization:
                 value:
                   name: Data Kaveri
                   url: datakaveri.org
+                  email: datakaveri-admin@iudx.org.in  
         description: |-
           - The payload must have `name` and `url` to create a Organization.
-          - `url` must be a **valid domain/hostname**. This domain must match the domain used in the email addresses of the particular organization.
+          - `url` must be a **valid domain/hostname**.
           - The authentication details must be `admin` oriented. It must be the owner of the server.
         required: true
       tags:

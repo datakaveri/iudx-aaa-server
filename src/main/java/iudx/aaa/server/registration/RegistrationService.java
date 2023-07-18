@@ -2,6 +2,7 @@ package iudx.aaa.server.registration;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.ProxyGen;
@@ -108,5 +109,18 @@ public interface RegistrationService {
 
   @Fluent
   RegistrationService getUserDetails(List<String> userIds,
+      Handler<AsyncResult<JsonObject>> handler);
+
+  /**
+   * The findUsersByEmail implements finding users by their email ID from Keycloak. Users who are
+   * found are then inserted into the database if they were not already there (specifically into the
+   * users table).
+   * 
+   * @param emailIds set of email IDs
+   * @param handler the request handler which returns a JsonObject
+   * @return RegistrationService which is a Service
+   */
+  @Fluent
+  RegistrationService findUserByEmail(Set<String> emailIds,
       Handler<AsyncResult<JsonObject>> handler);
 }

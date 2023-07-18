@@ -40,6 +40,7 @@ import static iudx.aaa.server.registration.Constants.SQL_CHECK_CLIENT_ID_EXISTS;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_CLIENT;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_ROLE;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_USER;
+import static iudx.aaa.server.registration.Constants.SQL_CREATE_USER_IF_NOT_EXISTS;
 import static iudx.aaa.server.registration.Constants.SQL_FIND_ORG_BY_ID;
 import static iudx.aaa.server.registration.Constants.SQL_FIND_USER_BY_KC_ID;
 import static iudx.aaa.server.registration.Constants.SQL_GET_ALL_ORGS;
@@ -79,6 +80,7 @@ import iudx.aaa.server.apiserver.UpdateProfileRequest;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.apiserver.util.ComposeException;
+import iudx.aaa.server.apiserver.util.Urn;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.token.TokenService;
 import java.security.SecureRandom;
@@ -900,5 +902,60 @@ public class RegistrationServiceImpl implements RegistrationService {
     });
 
     return;
+  }
+
+  @Override
+  public RegistrationService findUserByEmail(Set<String> emailIds,
+      Handler<AsyncResult<JsonObject>> handler) {
+
+    Map<String, Future<JsonObject>> kcInfoMap =
+        emailIds.stream().collect(Collectors.toMap(id -> id, id -> kc.findUserByEmail(id)));
+
+    @SuppressWarnings("rawtypes")
+    List<Future> kcFutures = new ArrayList<Future>(kcInfoMap.values());
+
+    Future<Void> checkAllEmailsExist = CompositeFuture.all(kcFutures).compose(res -> {
+      List<String> missingEmails =
+          kcInfoMap.entrySet().stream().filter(i -> i.getValue().result().isEmpty())
+              .map(i -> i.getKey()).collect(Collectors.toList());
+      
+      if (!missingEmails.isEmpty()) {
+        return Future.failedFuture(new ComposeException(400, Urn.URN_MISSING_INFO,
+            "Some email IDs do not exist", missingEmails.toString()));
+      }
+
+      return Future.succeededFuture();
+    });
+
+    Future<Void> insertIfNotExists = checkAllEmailsExist.compose(res -> {
+      List<Tuple> tups = new ArrayList<Tuple>();
+
+      kcInfoMap.forEach((emailId, fut) -> {
+        // TODO remove email hash
+        // add logging for added users
+        String hash = DigestUtils.sha1Hex(emailId.getBytes());
+        String emailHash = emailId.split("@")[1] + '/' + hash;
+        UUID userId = UUID.fromString(fut.result().getString("keycloakId"));
+        Tuple tup = Tuple.of(userId, NIL_PHONE, null, emailHash, userId);
+        tups.add(tup);
+      });
+
+      return pool.withTransaction(
+          conn -> conn.preparedQuery(SQL_CREATE_USER_IF_NOT_EXISTS).executeBatch(tups).mapEmpty());
+    });
+
+    insertIfNotExists.onSuccess(res -> {
+      JsonObject result = new JsonObject();
+      
+      kcInfoMap.forEach((emailId, fut) -> {
+        result.put(emailId, fut.result());
+      });
+      handler.handle(Future.succeededFuture(result));
+      
+    }).onFailure(err -> {
+      handler.handle(Future.failedFuture(err));
+    });
+
+    return this;
   }
 }

@@ -17,11 +17,12 @@ import static iudx.aaa.server.admin.Constants.RESP_STATUS;
 import static iudx.aaa.server.admin.Constants.RESP_USERID;
 import static iudx.aaa.server.admin.Constants.SQL_CHECK_ADMIN_OF_SERVER;
 import static iudx.aaa.server.admin.Constants.SQL_CREATE_ORG_IF_NOT_EXIST;
+import static iudx.aaa.server.admin.Constants.SQL_CREATE_RS_IF_NOT_EXIST;
 import static iudx.aaa.server.admin.Constants.SQL_GET_ORG_DETAILS;
 import static iudx.aaa.server.admin.Constants.SQL_GET_PROVIDERS_BY_STATUS;
 import static iudx.aaa.server.admin.Constants.SQL_GET_PENDING_PROVIDERS;
 import static iudx.aaa.server.admin.Constants.SQL_UPDATE_ROLE_STATUS;
-import static iudx.aaa.server.admin.Constants.SUCC_TITLE_CREATED_ORG;
+import static iudx.aaa.server.admin.Constants.SUCC_TITLE_CREATED_RS;
 import static iudx.aaa.server.admin.Constants.SUCC_TITLE_PROVIDER_REGS;
 import static iudx.aaa.server.admin.Constants.SUCC_TITLE_PROV_STATUS_UPDATE;
 import static iudx.aaa.server.apiserver.util.Urn.*;
@@ -38,7 +39,7 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
-import iudx.aaa.server.apiserver.CreateOrgRequest;
+import iudx.aaa.server.apiserver.CreateRsRequest;
 import iudx.aaa.server.apiserver.CreatePolicyRequest;
 import iudx.aaa.server.apiserver.ProviderUpdateRequest;
 import iudx.aaa.server.apiserver.Response;
@@ -49,6 +50,7 @@ import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.KcAdmin;
+import iudx.aaa.server.registration.RegistrationService;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -76,12 +78,14 @@ public class AdminServiceImpl implements AdminService {
   private PgPool pool;
   private KcAdmin kc;
   private PolicyService policyService;
+  private RegistrationService registrationService;
 
   public AdminServiceImpl(PgPool pool, KcAdmin kc, PolicyService policyService,
-      JsonObject options) {
+      RegistrationService registrationService, JsonObject options) {
     this.pool = pool;
     this.kc = kc;
     this.policyService = policyService;
+    this.registrationService = registrationService;
     AUTH_SERVER_URL = options.getString(CONFIG_AUTH_URL);
   }
 
@@ -332,7 +336,7 @@ public class AdminServiceImpl implements AdminService {
   }
 
   @Override
-  public AdminService createOrganization(CreateOrgRequest request, User user,
+  public AdminService createResourceServer(CreateRsRequest request, User user,
       Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
@@ -345,6 +349,7 @@ public class AdminServiceImpl implements AdminService {
 
     String name = request.getName();
     String url = request.getUrl().toLowerCase();
+    String ownerEmail = request.getOwner();
     String domain;
 
     Future<Boolean> checkAdmin = checkAdminServer(user, AUTH_SERVER_URL).compose(res -> {
@@ -357,7 +362,7 @@ public class AdminServiceImpl implements AdminService {
 
     try {
       /* Validate and get proper domain */
-      InternetDomainName parsedDomain = InternetDomainName.from(url).topDomainUnderRegistrySuffix();
+      InternetDomainName parsedDomain = InternetDomainName.from(url);
       domain = parsedDomain.toString();
     } catch (IllegalArgumentException | IllegalStateException e) {
       Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
@@ -365,9 +370,20 @@ public class AdminServiceImpl implements AdminService {
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
+    
+    Future<JsonObject> adminInfo = checkAdmin.compose(res -> {
+      Promise<JsonObject> promise = Promise.promise();
+      registrationService.findUserByEmail(Set.of(ownerEmail), promise);
+      return promise.future();
+      });
 
-    Future<RowSet<Row>> fut = checkAdmin.compose(success -> pool.withConnection(
-        conn -> conn.preparedQuery(SQL_CREATE_ORG_IF_NOT_EXIST).execute(Tuple.of(name, domain))));
+    Future<RowSet<Row>> fut = adminInfo.compose(adminDetails -> {
+      UUID ownerId =
+          UUID.fromString(adminDetails.getJsonObject(ownerEmail).getString("keycloakId"));
+
+      return pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_RS_IF_NOT_EXIST)
+          .execute(Tuple.of(name, domain, ownerId)));
+    });
 
     fut.onSuccess(rows -> {
       if (rows.rowCount() == 0) {
@@ -380,9 +396,15 @@ public class AdminServiceImpl implements AdminService {
       String id = rows.iterator().next().getUUID("id").toString();
       JsonObject resp = new JsonObject();
       resp.put("id", id).put("name", name).put("url", domain);
+      
+      JsonObject ownerBlock = adminInfo.result().getJsonObject(ownerEmail);
+      ownerBlock.put("id", ownerBlock.remove("keycloakId"));
+      resp.put("owner", ownerBlock);
 
-      Response r = new ResponseBuilder().status(201).type(URN_SUCCESS).title(SUCC_TITLE_CREATED_ORG)
+      Response r = new ResponseBuilder().status(201).type(URN_SUCCESS).title(SUCC_TITLE_CREATED_RS)
           .objectResults(resp).build();
+      
+      LOGGER.info("Admin added new resource server {}", url);
       handler.handle(Future.succeededFuture(r.toJson()));
     }).onFailure(e -> {
       if (e instanceof ComposeException) {
@@ -390,6 +412,7 @@ public class AdminServiceImpl implements AdminService {
         handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
         return;
       }
+
       LOGGER.error(e.getMessage());
       handler.handle(Future.failedFuture("Internal error"));
     });

@@ -8,7 +8,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import iudx.aaa.server.apiserver.CreateOrgRequest;
+import iudx.aaa.server.apiserver.CreateRsRequest;
 import iudx.aaa.server.apiserver.ProviderUpdateRequest;
 import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.User;
@@ -71,14 +71,14 @@ public interface AdminService {
       Handler<AsyncResult<JsonObject>> handler);
 
   /**
-   * The createOrganization implements the Organization creation operation.
+   * The createResourceServer implements the ResourceServer creation operation.
    * 
-   * @param request CreateOrgRequest data object
+   * @param request CreateRsRequest data object
    * @param user the User object
    * @param handler which is a request handler
    * @return AdminService which is a Service
    */
   @Fluent
-  AdminService createOrganization(CreateOrgRequest request, User user,
+  AdminService createResourceServer(CreateRsRequest request, User user,
       Handler<AsyncResult<JsonObject>> handler);
 }

@@ -150,4 +150,9 @@ public class Constants {
   public static final String SQL_UPDATE_CLIENT_SECRET =
       "UPDATE user_clients SET client_secret = $1::text, updated_at = NOW() "
           + "WHERE client_id = $2::uuid AND user_id = $3::uuid";
+
+  public static final String SQL_CREATE_USER_IF_NOT_EXISTS =
+      "INSERT INTO users (id, phone, organization_id, email_hash, keycloak_id, "
+          + "created_at, updated_at) VALUES ($1::uuid, $2::text, $3::uuid, $4::text, $5::uuid, "
+          + "NOW(), NOW()) ON CONFLICT (id) DO NOTHING";
 }

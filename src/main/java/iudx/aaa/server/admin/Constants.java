@@ -4,6 +4,7 @@ public class Constants {
 
   public static final String NIL_UUID = "00000000-0000-0000-0000-000000000000";
   public static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
+  public static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
 
   /* Config related */
   public static final String CONFIG_AUTH_URL = "authServerDomain";
@@ -30,7 +31,7 @@ public class Constants {
   public static final String RESP_ORG = "organization";
 
   /* Response title and details */
-  public static final String SUCC_TITLE_CREATED_ORG = "Organization has been created";
+  public static final String SUCC_TITLE_CREATED_RS = "Resource Server has been created";
   public static final String SUCC_TITLE_PROVIDER_REGS = "Provider registrations";
   public static final String SUCC_TITLE_PROV_STATUS_UPDATE = "Provider status updated";
 
@@ -50,7 +51,7 @@ public class Constants {
 
   public static final String ERR_TITLE_DOMAIN_EXISTS = "Domains exists";
   public static final String ERR_DETAIL_DOMAIN_EXISTS =
-      "An organization exists with the given domain";
+      "A resource server exists with the given domain";
 
   /* SQL */
   public static final String SQL_CREATE_ORG_IF_NOT_EXIST =
@@ -74,4 +75,8 @@ public class Constants {
   public static final String SQL_GET_PENDING_PROVIDERS = "SELECT users.id, keycloak_id FROM "
       + "users JOIN roles ON users.id = roles.user_id "
       + "WHERE role = 'PROVIDER' AND status = 'PENDING' AND user_id = ANY ($1::uuid[])";
+
+  public static final String SQL_CREATE_RS_IF_NOT_EXIST =
+      "INSERT INTO resource_server (name, url, owner_id, created_at, updated_at) "
+          + "VALUES ($1::text, $2::text, $3::UUID, NOW(), NOW()) ON CONFLICT (url) DO NOTHING RETURNING id";
 }

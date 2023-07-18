@@ -224,8 +224,8 @@ public class ApiServerVerticle extends AbstractVerticle {
                       .failureHandler(failureHandler);
 
               // Post Create Organization
-              routerBuilder.operation(CREATE_ORGANIZATIONS)
-                      .handler(this::adminCreateOrganizationHandler)
+              routerBuilder.operation(CREATE_RESOURCE_SERVER)
+                      .handler(this::adminCreateResourceServerHandler)
                       .failureHandler(failureHandler);
 
               // Get Provider registrations
@@ -530,12 +530,12 @@ public class ApiServerVerticle extends AbstractVerticle {
    *
    * @param context
    */
-  private void adminCreateOrganizationHandler(RoutingContext context) {
+  private void adminCreateResourceServerHandler(RoutingContext context) {
     JsonObject jsonRequest = context.body().asJsonObject();
-    CreateOrgRequest request = new CreateOrgRequest(jsonRequest);
+    CreateRsRequest request = new CreateRsRequest(jsonRequest);
     User user = context.get(USER);
 
-    adminService.createOrganization(request, user, handler -> {
+    adminService.createResourceServer(request, user, handler -> {
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {
