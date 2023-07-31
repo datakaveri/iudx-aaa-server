@@ -214,8 +214,8 @@ public class ApiServerVerticle extends AbstractVerticle {
                       .handler(this::listUserProfileHandler)
                       .failureHandler(failureHandler);
 
-              routerBuilder.operation(UPDATE_USER_PROFILE)
-                      .handler(this::updateUserProfileHandler)
+              routerBuilder.operation(RESET_CLIENT_CRED)
+                      .handler(this::resetClientCredHandler)
                       .failureHandler(failureHandler);
 
               // Get Resource Server Details
@@ -495,16 +495,16 @@ public class ApiServerVerticle extends AbstractVerticle {
   }
 
   /**
-   * Handles user profile update.
+   * Handles client credential reset.
    *
    * @param context
    */
-  private void updateUserProfileHandler(RoutingContext context) {
+  private void resetClientCredHandler(RoutingContext context) {
     JsonObject jsonRequest = context.body().asJsonObject();
-    UpdateProfileRequest request = new UpdateProfileRequest(jsonRequest);
+    ResetClientSecretRequest request = new ResetClientSecretRequest(jsonRequest);
     User user = context.get(USER);
 
-    registrationService.updateUser(request, user, handler -> {
+    registrationService.resetClientSecret(request, user, handler -> {
       if (handler.succeeded()) {
         JsonObject result = handler.result();
         Future.future(future -> handleAuditLogs(context, result));

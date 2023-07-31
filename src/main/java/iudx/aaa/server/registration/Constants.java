@@ -153,8 +153,8 @@ public class Constants {
   public static final String SQL_CHECK_DEFAULT_CLIENT_EXISTS =
       "SELECT client_id FROM user_clients WHERE user_id = $1::uuid AND client_name = '" + DEFAULT_CLIENT + "'";
   
-  public static final String SQL_GET_SERVERS_FOR_REVOKE =
-      "SELECT url FROM resource_server WHERE url != ALL($1::text[])";
+  public static final String SQL_GET_RS_AND_APDS_FOR_REVOKE =
+      "SELECT url FROM resource_server WHERE url != ALL($1::text[]) UNION SELECT url FROM apds WHERE url != ALL($1::text[])";
   
   public static final String SQL_UPDATE_CLIENT_SECRET =
       "UPDATE user_clients SET client_secret = $1::text, updated_at = NOW() "

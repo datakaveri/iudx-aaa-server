@@ -61,7 +61,7 @@ public class Constants {
   public static final String REVOKE_TOKEN = "post-auth-v1-revoke";
   public static final String CREATE_USER_PROFILE = "post-auth-v1-user-profile";
   public static final String GET_USER_PROFILE = "get-auth-v1-user-profile";
-  public static final String UPDATE_USER_PROFILE = "put-auth-v1-user-profile";
+  public static final String RESET_CLIENT_CRED = "put-auth-v1-user-clientcredentials";
   public static final String GET_RESOURCE_SERVERS = "get-auth-v1-resourceservers";
   public static final String CREATE_RESOURCE_SERVER = "post-auth-v1-admin-resourceservers";
   public static final String GET_PVDR_REGISTRATION = "get-auth-v1-admin-provider-registrations";

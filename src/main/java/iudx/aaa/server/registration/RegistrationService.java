@@ -12,7 +12,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.apiserver.RegistrationRequest;
-import iudx.aaa.server.apiserver.UpdateProfileRequest;
+import iudx.aaa.server.apiserver.ResetClientSecretRequest;
 import iudx.aaa.server.apiserver.User;
 
 /**
@@ -76,8 +76,7 @@ public interface RegistrationService {
       JsonObject authDelegateDetails, Handler<AsyncResult<JsonObject>> handler);
 
   /**
-   * The updateUser implements the user update operation. Currently role addition and client secret
-   * regeneration is allowed.
+   * The resetClientSecret implements client secret regeneration.
    * 
    * @param request the request body in the form of UpdateProfileRequest data object
    * @param handler the request handler which returns a JsonObject
@@ -85,7 +84,7 @@ public interface RegistrationService {
    */
 
   @Fluent
-  RegistrationService updateUser(UpdateProfileRequest request, User user,
+  RegistrationService resetClientSecret(ResetClientSecretRequest request, User user,
       Handler<AsyncResult<JsonObject>> handler);
 
   /**
