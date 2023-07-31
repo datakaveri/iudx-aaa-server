@@ -321,13 +321,8 @@ public class RegistrationServiceImpl implements RegistrationService {
   public RegistrationService listUser(User user, JsonObject searchUserDetails,
       JsonObject authDelegateDetails, Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
-
-    if (user.getUserId().equals(NIL_UUID)) {
-      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
-          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
-    }
+    
+    /* TODO: if roles list is empty, check user table to see if they have registered */
 
     /* If it's a search user flow */
     if (!searchUserDetails.isEmpty()) {
@@ -338,11 +333,11 @@ public class RegistrationServiceImpl implements RegistrationService {
       return this;
     }
 
-    Future<JsonObject> phoneOrgDetails =
-        pool.withConnection(conn -> conn.preparedQuery(SQL_GET_PHONE_JOIN_ORG)
+    Future<JsonObject> phoneDetails =
+        pool.withConnection(conn -> conn.preparedQuery(SQL_GET_PHONE)
             .execute(Tuple.of(user.getUserId())).map(rows -> rows.iterator().next().toJson()));
 
-    Future<String> email = kc.getEmailId(user.getKeycloakId());
+    Future<String> email = kc.getEmailId(user.getUserId());
 
     Collector<Row, ?, List<JsonObject>> clientDetails =
         Collectors.mapping(row -> row.toJson(), Collectors.toList());
@@ -351,7 +346,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         pool.withConnection(conn -> conn.preparedQuery(SQL_GET_CLIENTS_FORMATTED)
             .collecting(clientDetails).execute(Tuple.of(user.getUserId())).map(res -> res.value()));
 
-    CompositeFuture.all(phoneOrgDetails, clientQuery, email).onSuccess(obj -> {
+    CompositeFuture.all(phoneDetails, clientQuery, email).onSuccess(obj -> {
 
       JsonObject details = (JsonObject) obj.list().get(0);
       @SuppressWarnings("unchecked")
@@ -372,11 +367,6 @@ public class RegistrationServiceImpl implements RegistrationService {
       String phone = (String) details.remove("phone");
       if (!phone.equals(NIL_PHONE)) {
         response.put(RESP_PHONE, phone);
-      }
-
-      /* details will have only org details or or only null */
-      if (details.getString("url") != null) {
-        response.put(RESP_ORG, details);
       }
 
       Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_USER_READ).status(200)

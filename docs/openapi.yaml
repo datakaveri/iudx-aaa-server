@@ -863,11 +863,11 @@ paths:
       security:
         - authorization: []
     get:
-      summary: Get User Profile or Search for User
+      summary: List User Roles
       operationId: get-auth-v1-user-profile
       responses:
         '200':
-          description: Successfully list user profile or successfully found user
+          description: Successfully list user and their roles
           content:
             application/json:
               schema:
@@ -878,22 +878,18 @@ paths:
                     type: 'urn:dx:as:Success'
                     title: User details
                     results:
-                      keycloakId: c46e7a5d-7c2d-471e-8222-6a59a5095e7a
                       name:
                         firstName: B
                         lastName: c
                       roles:
-                        - PROVIDER
-                        - CONSUMER
+                        - consumer
+                        - provider
                       userId: a13eb955-c691-4fd3-b200-f18bc78810b5
                       email: bye@example.com
                       clients:
                         - clientName: default
                           clientId: a3e7e34c-44bf-41ff-ad86-2ee04a954418
                       phone: '9984567899'
-                      organization:
-                        name: example
-                        url: example.com
                 properties:
                   type:
                     type: string
@@ -908,9 +904,6 @@ paths:
                       - userId
                       - email
                     properties:
-                      keycloakId:
-                        type: string
-                        minLength: 1
                       name:
                         type: object
                         required:
@@ -969,7 +962,7 @@ paths:
                   - title
                   - results
               examples:
-                Get User Profile:
+                Get User Roles:
                   value:
                     type: 'urn:dx:as:Success'
                     title: User details
@@ -987,9 +980,6 @@ paths:
                         - clientName: default
                           clientId: a3e7e34c-44bf-41ff-ad86-2ee04a954418
                       phone: '9984567899'
-                      organization:
-                        name: example
-                        url: example.com
                 Found user:
                   value:
                     type: 'urn:dx:as:Success'
@@ -1111,7 +1101,7 @@ paths:
           name: providerId
           description: 'User ID of the provider, if an auth delegate wishes to search for a user'
       description: |-
-        Get user profile or search for a user by email address and role.
+        List roles of a user or search for a user by email address and role.
         ## Get User profile
         The response contains user details such as roles, name, email. It also lists the client ID of the user.
         ## Search for a user
