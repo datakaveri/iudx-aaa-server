@@ -5,6 +5,7 @@ import static iudx.aaa.server.registration.Constants.CLIENT_SECRET_BYTES;
 import static iudx.aaa.server.registration.Constants.CONFIG_AUTH_URL;
 import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
 import static iudx.aaa.server.registration.Constants.DEFAULT_CLIENT;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_DEFAULT_CLIENT_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_INVALID_CLI_ID;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_USER_PROFILE;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_ID_REQUIRED;
@@ -15,6 +16,7 @@ import static iudx.aaa.server.registration.Constants.ERR_DETAIL_SEARCH_USR_INVAL
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_FOUND;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_KC;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_DEFAULT_CLIENT_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_INVALID_CLI_ID;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_USER_PROFILE;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_ORG_ID_REQUIRED;
@@ -37,6 +39,7 @@ import static iudx.aaa.server.registration.Constants.RESP_EMAIL;
 import static iudx.aaa.server.registration.Constants.RESP_ORG;
 import static iudx.aaa.server.registration.Constants.RESP_PHONE;
 import static iudx.aaa.server.registration.Constants.SQL_CHECK_CLIENT_ID_EXISTS;
+import static iudx.aaa.server.registration.Constants.SQL_CHECK_DEFAULT_CLIENT_EXISTS;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_CLIENT;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_ROLE;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_USER;
@@ -52,6 +55,7 @@ import static iudx.aaa.server.registration.Constants.SQL_GET_SERVERS_FOR_REVOKE;
 import static iudx.aaa.server.registration.Constants.SQL_GET_UID_ORG_ID_CHECK_ROLE;
 import static iudx.aaa.server.registration.Constants.SQL_UPDATE_CLIENT_SECRET;
 import static iudx.aaa.server.registration.Constants.SQL_UPDATE_ORG_ID;
+import static iudx.aaa.server.registration.Constants.SUCC_TITLE_CREATED_DEFAULT_CLIENT;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_CREATED_USER;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_RS_READ;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_REGEN_CLIENT_SECRET;
@@ -979,6 +983,75 @@ public class RegistrationServiceImpl implements RegistrationService {
       handler.handle(Future.failedFuture(err));
     });
 
+    return this;
+  }
+
+  @Override
+  public RegistrationService getDefaultClientCredentials(User user,
+      Handler<AsyncResult<JsonObject>> handler) {
+    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+    
+    if (user.getUserId().equals(NIL_UUID)) {
+      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
+          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
+
+    UUID userId = UUID.fromString(user.getUserId());
+    Tuple tuple = Tuple.of(userId);
+
+    Collector<Row, ?, List<UUID>> clientIdCollector=
+        Collectors.mapping(row -> row.getUUID("client_id"), Collectors.toList());
+
+    Future<Void> checkDefaultClientId = pool
+        .withConnection(conn -> conn.preparedQuery(SQL_CHECK_DEFAULT_CLIENT_EXISTS)
+            .collecting(clientIdCollector).execute(tuple).map(res -> res.value()))
+        .compose(cidList -> {
+          if (!cidList.isEmpty()) {
+            Response r = new ResponseBuilder().status(403).type(URN_ALREADY_EXISTS)
+                .title(ERR_TITLE_DEFAULT_CLIENT_EXISTS).detail(ERR_DETAIL_DEFAULT_CLIENT_EXISTS)
+                .errorContext(new JsonObject().put("clientId", cidList.get(0).toString())).build();
+            return Future.failedFuture(new ComposeException(r));
+          }
+          return Future.succeededFuture();
+        });
+    
+    Future<JsonObject> createClientCreds = checkDefaultClientId.compose(res -> {
+      UUID clientId = UUID.randomUUID();
+      // TODO make this a class field, DO NOT INSTANTIATE EVERY TIME
+      SecureRandom random = new SecureRandom();
+      byte[] randBytes = new byte[CLIENT_SECRET_BYTES];
+      random.nextBytes(randBytes);
+      String clientSecret = Hex.encodeHexString(randBytes);
+      String hashedClientSecret = DigestUtils.sha512Hex(clientSecret);
+
+      Tuple clientTuple = Tuple.of(userId, clientId, hashedClientSecret, DEFAULT_CLIENT);
+
+      JsonObject clientDetails = new JsonObject().put(RESP_CLIENT_NAME, DEFAULT_CLIENT)
+          .put(RESP_CLIENT_ID, clientId.toString()).put(RESP_CLIENT_SC, clientSecret);
+      
+      return pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_CLIENT).execute(clientTuple))
+          .compose(succ -> Future.succeededFuture(clientDetails));
+    });
+    
+    createClientCreds.onSuccess(creds -> {
+      Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_CREATED_DEFAULT_CLIENT)
+          .status(201).objectResults(creds).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+
+      LOGGER.info("Created default client credentials for {}", userId);
+    }).onFailure(e -> {
+      if (e instanceof ComposeException) {
+        ComposeException exp = (ComposeException) e;
+        handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+        return;
+      }
+
+      LOGGER.error(e.getMessage());
+      handler.handle(Future.failedFuture("Internal error"));
+    });
+    
     return this;
   }
 }

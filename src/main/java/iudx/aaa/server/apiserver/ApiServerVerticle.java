@@ -311,6 +311,11 @@ public class ApiServerVerticle extends AbstractVerticle {
                       .handler(this::listApdHandler)
                       .failureHandler(failureHandler);
 
+              // Get default client credentials
+              routerBuilder.operation(GET_DEFAULT_CLIENT_CREDS)
+                      .handler(this::getDefaultClientCredsHandler)
+                      .failureHandler(failureHandler);
+
               // Get PublicKey
               routerBuilder.operation(GET_CERT)
                       .handler(this::pubCertHandler);
@@ -875,6 +880,25 @@ public class ApiServerVerticle extends AbstractVerticle {
       if (handler.succeeded()) {
         JsonObject result = handler.result();
         Future.future(future -> handleAuditLogs(context, result));
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+
+  /**
+   * Get default client credentials.
+   * 
+   * @param context
+   */
+  private void getDefaultClientCredsHandler(RoutingContext context) {
+
+    User user = context.get(USER);
+
+    registrationService.getDefaultClientCredentials(user, handler -> {
+
+      if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {
         processResponse(context.response(), handler.cause().getLocalizedMessage());

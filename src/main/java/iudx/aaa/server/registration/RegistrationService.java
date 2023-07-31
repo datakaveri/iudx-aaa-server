@@ -123,4 +123,18 @@ public interface RegistrationService {
   @Fluent
   RegistrationService findUserByEmail(Set<String> emailIds,
       Handler<AsyncResult<JsonObject>> handler);
+
+  /**
+   * Get default client credentials. A user can fetch their automatically created client ID and
+   * client secret with the client name<em>default</em> <b>once</b>. Once the user has requested
+   * them, the client secret cannot be obtained again using this API.
+   * 
+   * @param user the User object
+   * @param handler the request handler which returns a JsonObject
+   * @return RegistrationService which is a Service
+   */
+  @Fluent
+  RegistrationService getDefaultClientCredentials(User user,
+      Handler<AsyncResult<JsonObject>> handler);
+
 }

@@ -52,6 +52,7 @@ public class Constants {
   public static final String SUCC_TITLE_RS_READ = "Resource Servers";
   public static final String SUCC_TITLE_UPDATED_USER_ROLES = "Registered for requested roles";
   public static final String SUCC_TITLE_REGEN_CLIENT_SECRET = "Regenerated client secret for requested client ID";
+  public static final String SUCC_TITLE_CREATED_DEFAULT_CLIENT = "Created default client credentials";
 
   public static final String ERR_TITLE_ROLE_EXISTS = "Already registered for requested role";
   public static final String ERR_DETAIL_ROLE_EXISTS = "You have already registered as ";
@@ -88,6 +89,11 @@ public class Constants {
   
   public static final String ERR_TITLE_INVALID_CLI_ID = "Invalid client ID";
   public static final String ERR_DETAIL_INVALID_CLI_ID = "Requested client ID not found";
+
+  public static final String ERR_TITLE_DEFAULT_CLIENT_EXISTS = "Default client credentials exists";
+  public static final String ERR_DETAIL_DEFAULT_CLIENT_EXISTS =
+      "The default client credentials have already been created. "
+      + "If you have forgotten your client secret, please use the regenerate client secret API";
 
   /* SQL queries */
   public static final String SQL_FIND_USER_BY_KC_ID =
@@ -143,6 +149,9 @@ public class Constants {
   
   public static final String SQL_CHECK_CLIENT_ID_EXISTS =
       "SELECT EXISTS (SELECT 1 FROM user_clients WHERE client_id = $1::uuid AND user_id = $2::uuid)";
+  
+  public static final String SQL_CHECK_DEFAULT_CLIENT_EXISTS =
+      "SELECT client_id FROM user_clients WHERE user_id = $1::uuid AND client_name = '" + DEFAULT_CLIENT + "'";
   
   public static final String SQL_GET_SERVERS_FOR_REVOKE =
       "SELECT url FROM resource_server WHERE url != ALL($1::text[])";

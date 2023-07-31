@@ -81,6 +81,7 @@ public class Constants {
   public static final String UPDATE_APD = "put-auth-v1-apd";
   public static final String GET_CERT = "get-auth-v1-cert";
   public static final String GET_JWKS = "get-auth-v1-jwks";
+  public static final String GET_DEFAULT_CLIENT_CREDS = "get-auth-v1-user-clientcredentials";
   public static final String TOKEN_ROUTE = "/auth/v1/token";
 
   /* Query Params */
