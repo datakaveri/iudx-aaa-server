@@ -5,26 +5,25 @@ import static iudx.aaa.server.registration.Constants.CLIENT_SECRET_BYTES;
 import static iudx.aaa.server.registration.Constants.CONFIG_AUTH_URL;
 import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
 import static iudx.aaa.server.registration.Constants.DEFAULT_CLIENT;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_CONSUMER_FOR_RS_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_DEFAULT_CLIENT_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_INVALID_CLI_ID;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_USER_PROFILE;
-import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_ID_REQUIRED;
-import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_NO_EXIST;
-import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_NO_MATCH;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_PENDING_PROVIDER_RS_REG_EXISTS;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_PROVIDER_FOR_RS_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ROLE_EXISTS;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_RS_NO_EXIST;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_SEARCH_USR_INVALID_ROLE;
-import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_FOUND;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_KC;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_DEFAULT_CLIENT_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_INVALID_CLI_ID;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_USER_PROFILE;
-import static iudx.aaa.server.registration.Constants.ERR_TITLE_ORG_ID_REQUIRED;
-import static iudx.aaa.server.registration.Constants.ERR_TITLE_ORG_NO_EXIST;
-import static iudx.aaa.server.registration.Constants.ERR_TITLE_ORG_NO_MATCH;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_PENDING_PROVIDER_RS_REG_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_ROLE_EXISTS;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_ROLE_FOR_RS_EXISTS;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_RS_NO_EXIST;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_SEARCH_USR_INVALID_ROLE;
-import static iudx.aaa.server.registration.Constants.ERR_TITLE_USER_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_USER_NOT_FOUND;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_USER_NOT_KC;
 import static iudx.aaa.server.registration.Constants.NIL_PHONE;
@@ -40,25 +39,24 @@ import static iudx.aaa.server.registration.Constants.RESP_ORG;
 import static iudx.aaa.server.registration.Constants.RESP_PHONE;
 import static iudx.aaa.server.registration.Constants.SQL_CHECK_CLIENT_ID_EXISTS;
 import static iudx.aaa.server.registration.Constants.SQL_CHECK_DEFAULT_CLIENT_EXISTS;
+import static iudx.aaa.server.registration.Constants.SQL_CHECK_PENDING_PROVIDER_ROLES;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_CLIENT;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_ROLE;
-import static iudx.aaa.server.registration.Constants.SQL_CREATE_USER;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_USER_IF_NOT_EXISTS;
 import static iudx.aaa.server.registration.Constants.SQL_FIND_ORG_BY_ID;
-import static iudx.aaa.server.registration.Constants.SQL_FIND_USER_BY_KC_ID;
 import static iudx.aaa.server.registration.Constants.SQL_GET_ALL_RS;
 import static iudx.aaa.server.registration.Constants.SQL_GET_CLIENTS_FORMATTED;
 import static iudx.aaa.server.registration.Constants.SQL_GET_KC_ID_FROM_ARR;
-import static iudx.aaa.server.registration.Constants.SQL_GET_ORG_DETAILS;
-import static iudx.aaa.server.registration.Constants.SQL_GET_PHONE_JOIN_ORG;
+import static iudx.aaa.server.registration.Constants.SQL_GET_PHONE;
+import static iudx.aaa.server.registration.Constants.SQL_GET_RS_IDS_BY_URL;
 import static iudx.aaa.server.registration.Constants.SQL_GET_SERVERS_FOR_REVOKE;
 import static iudx.aaa.server.registration.Constants.SQL_GET_UID_ORG_ID_CHECK_ROLE;
 import static iudx.aaa.server.registration.Constants.SQL_UPDATE_CLIENT_SECRET;
 import static iudx.aaa.server.registration.Constants.SQL_UPDATE_ORG_ID;
+import static iudx.aaa.server.registration.Constants.SUCC_TITLE_ADDED_ROLES;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_CREATED_DEFAULT_CLIENT;
-import static iudx.aaa.server.registration.Constants.SUCC_TITLE_CREATED_USER;
-import static iudx.aaa.server.registration.Constants.SUCC_TITLE_RS_READ;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_REGEN_CLIENT_SECRET;
+import static iudx.aaa.server.registration.Constants.SUCC_TITLE_RS_READ;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_UPDATED_USER_ROLES;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_USER_FOUND;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_USER_READ;
@@ -99,6 +97,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
@@ -142,151 +141,168 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
-    List<Roles> requestedRoles = request.getRoles();
-    UUID orgId = UUID.fromString(request.getOrgId());
+    List<Roles> requestedRoles = request.getRolesToRegister();
     final String phone = request.getPhone();
 
-    if (requestedRoles.contains(Roles.PROVIDER) || requestedRoles.contains(Roles.DELEGATE)) {
-      if (orgId.toString().equals(NIL_UUID)) {
-        Response r = new ResponseBuilder().status(400).type(URN_MISSING_INFO)
-            .title(ERR_TITLE_ORG_ID_REQUIRED).detail(ERR_DETAIL_ORG_ID_REQUIRED).build();
+    List<String> ownedRsForProviderRole = user.getResServersForRole(Roles.PROVIDER);
+    List<String> requestedRsForProviderRole = request.getProvider();
+
+    List<String> ownedRsForConsumerRole = user.getResServersForRole(Roles.CONSUMER);
+    List<String> requestedRsForConsumerRole = request.getConsumer();
+
+    Set<String> allRequestedRs =
+        Stream.concat(requestedRsForConsumerRole.stream(), requestedRsForProviderRole.stream())
+            .collect(Collectors.toSet());
+
+    if (requestedRoles.contains(Roles.PROVIDER)) {
+      List<String> duplicateProviderRs = ownedRsForProviderRole.stream()
+          .filter(rs -> requestedRsForProviderRole.contains(rs)).collect(Collectors.toList());
+
+      if (!duplicateProviderRs.isEmpty()) {
+        Response r = new ResponseBuilder().status(409).type(URN_ALREADY_EXISTS)
+            .title(ERR_TITLE_ROLE_FOR_RS_EXISTS)
+            .detail(ERR_DETAIL_PROVIDER_FOR_RS_EXISTS + duplicateProviderRs.toString()).build();
         handler.handle(Future.succeededFuture(r.toJson()));
         return this;
       }
     }
 
-    Map<Roles, RoleStatus> roles = new HashMap<Roles, RoleStatus>();
+    if (requestedRoles.contains(Roles.CONSUMER)) {
+      List<String> duplicateConsumerRs = ownedRsForConsumerRole.stream()
+          .filter(rs -> requestedRsForConsumerRole.contains(rs)).collect(Collectors.toList());
 
-    for (Roles r : requestedRoles) {
-      if (r == Roles.PROVIDER) {
-        roles.put(r, RoleStatus.PENDING);
-      } else {
-        roles.put(r, RoleStatus.APPROVED);
+      if (!duplicateConsumerRs.isEmpty()) {
+        Response r = new ResponseBuilder().status(409).type(URN_ALREADY_EXISTS)
+            .title(ERR_TITLE_ROLE_FOR_RS_EXISTS)
+            .detail(ERR_DETAIL_CONSUMER_FOR_RS_EXISTS + duplicateConsumerRs.toString()).build();
+        handler.handle(Future.succeededFuture(r.toJson()));
+        return this;
       }
     }
-    /* TODO later on, can check if user ID is not NIL_UUID */
-    Future<Integer> checkUserExist =
-        pool.withConnection(conn -> conn.preparedQuery(SQL_FIND_USER_BY_KC_ID)
-            .execute(Tuple.of(user.getKeycloakId())).map(rows -> rows.size()));
 
-    Future<String> email = kc.getEmailId(user.getKeycloakId());
+    Future<String> email = kc.getEmailId(user.getUserId());
+    Collector<Row, ?, Map<String, UUID>> rsCollector =
+        Collectors.toMap(row -> row.getString("url"), row -> row.getUUID("id"));
 
-    Future<String> checkOrgExist;
-    String orgIdToSet;
+    Future<Map<String, UUID>> getRequestedRs = pool
+        .withConnection(conn -> conn.preparedQuery(SQL_GET_RS_IDS_BY_URL).collecting(rsCollector)
+            .execute(Tuple.of(allRequestedRs.toArray(String[]::new))).map(res -> res.value()));
 
-    if (roles.containsKey(Roles.PROVIDER) || roles.containsKey(Roles.DELEGATE)) {
-      orgIdToSet = request.getOrgId();
-      checkOrgExist = pool.withConnection(
-          conn -> conn.preparedQuery(SQL_GET_ORG_DETAILS).execute(Tuple.of(orgId.toString())).map(
-              rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson().toString() : null));
-    } else {
-      checkOrgExist = Future.succeededFuture(NO_ORG_CHECK);
-      orgIdToSet = null;
-    }
+    Future<Void> checkEmailAndResourceServerUrls =
+        CompositeFuture.all(email, getRequestedRs).compose(arr -> {
 
-    /* Compose the previous futures to validate. Returns email ID of the user if successful */
-    Future<String> validation =
-        CompositeFuture.all(checkUserExist, email, checkOrgExist).compose(arr -> {
-
-          int userRow = (int) arr.list().get(0);
-          String emailId = (String) arr.list().get(1);
-          String orgDetails = (String) arr.list().get(2);
-
-          if (userRow != 0) {
-            return Future.failedFuture(new ComposeException(409, URN_ALREADY_EXISTS,
-                ERR_TITLE_USER_EXISTS, ERR_DETAIL_USER_EXISTS));
-          }
+          String emailId = arr.resultAt(0);
+          Map<String, UUID> rsDetails = arr.resultAt(1);
 
           if (emailId.length() == 0) {
             return Future.failedFuture(new ComposeException(400, URN_INVALID_INPUT,
                 ERR_TITLE_USER_NOT_KC, ERR_DETAIL_USER_NOT_KC));
           }
 
-          String emailDomain = emailId.split("@")[1];
+          List<String> missingRs = allRequestedRs.stream().filter(rs -> !rsDetails.containsKey(rs))
+              .collect(Collectors.toList());
 
-          if (orgDetails == null) {
+          if (!missingRs.isEmpty()) {
             return Future.failedFuture(new ComposeException(400, URN_INVALID_INPUT,
-                ERR_TITLE_ORG_NO_EXIST, ERR_DETAIL_ORG_NO_EXIST));
-          } else if (orgDetails == NO_ORG_CHECK) {
-            return Future.succeededFuture(emailId);
+                ERR_TITLE_RS_NO_EXIST, ERR_DETAIL_RS_NO_EXIST + missingRs.toString()));
           }
 
-          String url = new JsonObject(orgDetails).getString("url");
-
-          if (!url.equals(emailDomain)) {
-            return Future.failedFuture(new ComposeException(400, URN_INVALID_INPUT,
-                ERR_TITLE_ORG_NO_MATCH, ERR_DETAIL_ORG_NO_MATCH));
-          }
-
-          return Future.succeededFuture(emailId);
+          return Future.succeededFuture();
         });
 
-    /* create client ID and random client secret */
-    UUID clientId = UUID.randomUUID();
-    SecureRandom random = new SecureRandom();
-    byte[] randBytes = new byte[CLIENT_SECRET_BYTES];
-    random.nextBytes(randBytes);
-    String clientSecret = Hex.encodeHexString(randBytes);
+    Future<Void> checkForProviderPendingRegs =
+        checkEmailAndResourceServerUrls.compose(roleListTup -> {
+          if (!requestedRoles.contains(Roles.PROVIDER)) {
+            return Future.succeededFuture(roleListTup);
+          }
 
-    List<Roles> rolesForKc =
-        requestedRoles.stream().filter(x -> x != Roles.PROVIDER).collect(Collectors.toList());
+          Collector<Row, ?, List<UUID>> uuidCollector =
+              Collectors.mapping(row -> row.getUUID("resource_server_id"), Collectors.toList());
+          
+          Map<UUID, String> requestedRsIdsToUrl = requestedRsForProviderRole.stream()
+              .collect(Collectors.toMap(url -> getRequestedRs.result().get(url), url -> url));
+          
+          UUID[] requestedRsIds = requestedRsIdsToUrl.keySet().toArray(UUID[]::new);
 
-    /* user Id is same as Keycloak ID */
-    UUID userId = UUID.fromString(user.getKeycloakId());
+          return pool.withConnection(conn -> conn.preparedQuery(SQL_CHECK_PENDING_PROVIDER_ROLES)
+              .collecting(uuidCollector).execute(Tuple.of(requestedRsIds, user.getUserId()))
+              .map(succ -> succ.value()).compose(res -> {
+                if (res.isEmpty()) {
+                  return Future.succeededFuture();
+                } else {
+                  List<String> existing = res.stream().map(rsId -> requestedRsIdsToUrl.get(rsId)).collect(Collectors.toList());
+                  
+                  return Future.failedFuture(new ComposeException(403, URN_INVALID_INPUT,
+                      ERR_TITLE_PENDING_PROVIDER_RS_REG_EXISTS,
+                      ERR_DETAIL_PENDING_PROVIDER_RS_REG_EXISTS + existing.toString()));
+                }
+              }));
+        });
 
-    /*
-     * Function to form tuple for create user query. The email ID of the user is taken as input
-     */
-    Function<String, Tuple> createUserTup = (emailId) -> {
-      String hash = DigestUtils.sha1Hex(emailId.getBytes());
-      String emailHash = emailId.split("@")[1] + '/' + hash;
-      return Tuple.of(userId, phone, orgIdToSet, emailHash, user.getKeycloakId());
-    };
+    Future<List<Tuple>> createRoleTuple = checkForProviderPendingRegs.compose(res -> {
+      List<Tuple> roleTupList = new ArrayList<Tuple>();
+      Map<String, UUID> rsDetails = getRequestedRs.result();
 
-    List<Tuple> roleTuple = roles.entrySet().stream()
-          .map(p -> Tuple.of(userId, p.getKey().name(), p.getValue().name()))
+      List<Tuple> consumerTup =
+          requestedRsForConsumerRole.stream().map(url -> Tuple.of(user.getUserId(), Roles.CONSUMER,
+              rsDetails.get(url), RoleStatus.APPROVED)).collect(Collectors.toList());
+      roleTupList.addAll(consumerTup);
+
+      List<Tuple> providerTup = requestedRsForProviderRole.stream().map(
+          url -> Tuple.of(user.getUserId(), Roles.PROVIDER, rsDetails.get(url), RoleStatus.PENDING))
           .collect(Collectors.toList());
+      roleTupList.addAll(providerTup);
 
-    String hashedClientSecret = DigestUtils.sha512Hex(clientSecret);
-    Tuple clientTuple = Tuple.of(userId, clientId, hashedClientSecret, DEFAULT_CLIENT);
+      return Future.succeededFuture(roleTupList);
 
-    /* Insertion into users, roles, clients tables */
-    Future<Void> query = validation.compose(emailId -> pool.withTransaction(
-        conn -> conn.preparedQuery(SQL_CREATE_USER).execute(createUserTup.apply(emailId))
-            .compose(userCreated -> conn.preparedQuery(SQL_CREATE_ROLE).executeBatch(roleTuple))
-            .compose(rolesCreated -> conn.preparedQuery(SQL_CREATE_CLIENT).execute(clientTuple).mapEmpty())));
+    });
 
-    query.onSuccess(success -> {
+    Collector<Row, ?, List<JsonObject>> clientDetails =
+        Collectors.mapping(row -> row.toJson(), Collectors.toList());
+
+    /* Insertion into users, roles tables, and get client details if present */
+    Future<List<JsonObject>> insertUserAndRoles =
+        createRoleTuple.compose(rolesListTuple -> pool.withTransaction(conn -> conn
+            .preparedQuery(SQL_CREATE_USER_IF_NOT_EXISTS).execute(Tuple.of(user.getUserId(), phone))
+            .compose(
+                userCreated -> conn.preparedQuery(SQL_CREATE_ROLE).executeBatch(rolesListTuple))
+            .compose(succ -> conn.preparedQuery(SQL_GET_CLIENTS_FORMATTED).collecting(clientDetails)
+                .execute(Tuple.of(user.getUserId())).map(res -> res.value()))));
+
+    /* TODO: Add delegate and admin role info once delegate tables ready */
+    insertUserAndRoles.onSuccess(clientInfo -> {
+      List<Roles> existingRoles = user.getRoles();
+      Map<String, JsonArray> existingRolesToRsMap = user.getRolesToRsMapping();
+
+      if (requestedRoles.contains(Roles.CONSUMER)) {
+        existingRoles.add(Roles.CONSUMER);
+        existingRolesToRsMap.put(Roles.CONSUMER.toString(),
+            new JsonArray(requestedRsForConsumerRole));
+      }
+
       User u =
           new UserBuilder().name(user.getName().get("firstName"), user.getName().get("lastName"))
-              .roles(rolesForKc).keycloakId(user.getKeycloakId()).userId(userId.toString()).build();
+              .roles(existingRoles).rolesToRsMapping(existingRolesToRsMap).userId(user.getUserId())
+              .build();
 
-      JsonObject clientDetails = new JsonObject().put(RESP_CLIENT_NAME, DEFAULT_CLIENT)
-          .put(RESP_CLIENT_ID, clientId.toString()).put(RESP_CLIENT_SC, clientSecret);
-
-      JsonArray clients = new JsonArray().add(clientDetails);
+      JsonArray clients = new JsonArray(clientInfo);
       JsonObject payload =
-          u.toJsonResponse().put(RESP_CLIENT_ARR, clients).put(RESP_EMAIL, validation.result());
+          u.toJsonResponse().put(RESP_CLIENT_ARR, clients).put(RESP_EMAIL, email.result());
 
       if (phone != NIL_PHONE) {
         payload.put(RESP_PHONE, phone);
       }
 
-      if (checkOrgExist.result() != NO_ORG_CHECK) {
-        payload.put(RESP_ORG, new JsonObject(checkOrgExist.result()));
-      }
-
-      String title = SUCC_TITLE_CREATED_USER;
+      String title = SUCC_TITLE_ADDED_ROLES;
       if (requestedRoles.contains(Roles.PROVIDER)) {
         title = title + PROVIDER_PENDING_MESG;
       }
 
-      Response r = new ResponseBuilder().type(URN_SUCCESS).title(title).status(201)
+      Response r = new ResponseBuilder().type(URN_SUCCESS).title(title).status(200)
           .objectResults(payload).build();
       handler.handle(Future.succeededFuture(r.toJson()));
 
-      LOGGER.info("Created user profile for {}  with roles {}", userId,
-          request.getRoles().toString());
+      LOGGER.info("Added roles {} for {}", requestedRoles, user.getUserId());
     }).onFailure(e -> {
       if (e instanceof ComposeException) {
         ComposeException exp = (ComposeException) e;

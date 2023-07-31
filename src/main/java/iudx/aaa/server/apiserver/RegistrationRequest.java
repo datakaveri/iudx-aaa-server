@@ -17,19 +17,11 @@ import java.util.stream.Collectors;
 public class RegistrationRequest {
 
   String phone = Constants.NIL_PHONE;
-  UUID orgId = UUID.fromString(Constants.NIL_UUID);
-  List<Roles> roles = new ArrayList<Roles>();
-
-  public List<Roles> getRoles() {
-    return roles;
-  }
-
-  public void setRoles(List<Roles> roles) {
-    this.roles = roles;
-  }
+  List<String> consumer = new ArrayList<String>();
+  List<String> provider = new ArrayList<String>();
 
   public RegistrationRequest(JsonObject json) {
-    RegistrationRequestConverter.fromJson(rolesToUpperCase(json), this);
+    RegistrationRequestConverter.fromJson(json, this);
   }
 
   public JsonObject toJson() {
@@ -45,21 +37,34 @@ public class RegistrationRequest {
   public void setPhone(String phone) {
     this.phone = phone;
   }
-
-  public String getOrgId() {
-    return this.orgId.toString();
+  
+  public List<String> getConsumer() {
+    return new ArrayList<String>(this.consumer);
   }
 
-  public void setOrgId(String orgId) {
-    this.orgId = UUID.fromString(orgId);
+  public void setConsumer(List<String> consumer) {
+    this.consumer = new ArrayList<String>(consumer);
   }
 
-  private static JsonObject rolesToUpperCase(JsonObject json) {
-    JsonArray roles = json.getJsonArray("roles");
-    json.remove("roles");
-    json.put("roles",
-        roles.stream().map(i -> ((String) i).toUpperCase()).collect(Collectors.toList()));
-
-    return json;
+  public List<String> getProvider() {
+    return new ArrayList<String>(this.provider);
   }
+
+  public void setProvider(List<String> provider) {
+    this.provider = new ArrayList<String>(provider);
+  }
+  
+  public List<Roles> getRolesToRegister()
+  {
+    List<Roles> roles = new ArrayList<Roles>();
+    if(!consumer.isEmpty()) {
+      roles.add(Roles.CONSUMER);
+    }
+    if(!provider.isEmpty()) {
+      roles.add(Roles.PROVIDER);
+    }
+      
+     return roles;
+  }
+
 }

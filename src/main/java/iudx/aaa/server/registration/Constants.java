@@ -45,8 +45,8 @@ public class Constants {
   public static final String RESP_ORG = "organization";
 
   /* Response title and details */
-  public static final String SUCC_TITLE_CREATED_USER = "User profile has been created";
-  public static final String PROVIDER_PENDING_MESG = ", Provider registration is pending approval";
+  public static final String SUCC_TITLE_ADDED_ROLES = "Requested roles have been added";
+  public static final String PROVIDER_PENDING_MESG = ", Provider registrations are pending approval by resource server admin";
   public static final String SUCC_TITLE_USER_READ = "User details";
   public static final String SUCC_TITLE_USER_FOUND = "User found";
   public static final String SUCC_TITLE_RS_READ = "Resource Servers";
@@ -60,9 +60,11 @@ public class Constants {
   public static final String ERR_TITLE_NO_USER_PROFILE = "User profile does not exist";
   public static final String ERR_DETAIL_NO_USER_PROFILE = "Please register to create user profile";
 
-  public static final String ERR_TITLE_ORG_ID_REQUIRED = "Missing Organization ID";
-  public static final String ERR_DETAIL_ORG_ID_REQUIRED =
-      "Organization ID is required for Provider/Delegate registration";
+  public static final String ERR_TITLE_ROLE_FOR_RS_EXISTS = "Role for resource server already exists";
+  public static final String ERR_DETAIL_PROVIDER_FOR_RS_EXISTS =
+      "Provider role exists for the requested resource servers ";
+  public static final String ERR_DETAIL_CONSUMER_FOR_RS_EXISTS =
+      "Consumer role exists for the requested resource servers ";
 
   public static final String ERR_TITLE_USER_EXISTS = "User exists";
   public static final String ERR_DETAIL_USER_EXISTS = "User has an existing user profile";
@@ -70,13 +72,13 @@ public class Constants {
   public static final String ERR_TITLE_USER_NOT_KC = "User not on identity server";
   public static final String ERR_DETAIL_USER_NOT_KC = "User has not registered on identity server";
 
-  public static final String ERR_TITLE_ORG_NO_EXIST = "Organization does not exist";
-  public static final String ERR_DETAIL_ORG_NO_EXIST =
-      "Organization ID does not correspond to an organization";
+  public static final String ERR_TITLE_RS_NO_EXIST = "Resource server does not exist";
+  public static final String ERR_DETAIL_RS_NO_EXIST =
+      "Resource server URL does not correspond to a registered resource server ";
 
-  public static final String ERR_TITLE_ORG_NO_MATCH = "User does not belong to organization";
-  public static final String ERR_DETAIL_ORG_NO_MATCH =
-      "User's email domain does not match the organization domain";
+  public static final String ERR_TITLE_PENDING_PROVIDER_RS_REG_EXISTS = "User does not belong to organization";
+  public static final String ERR_DETAIL_PENDING_PROVIDER_RS_REG_EXISTS =
+      "User has a pending provider registration for the requested resource server ";
 
   public static final String ERR_TITLE_USER_NOT_FOUND = "User not found";
   public static final String ERR_DETAIL_USER_NOT_FOUND =
@@ -102,20 +104,19 @@ public class Constants {
       "SELECT * FROM organizations WHERE id = $1::uuid";
 
   public static final String SQL_CREATE_USER =
-      "INSERT INTO users (id, phone, organization_id, email_hash, keycloak_id, "
-          + "created_at, updated_at) VALUES ($1::uuid, $2::text, $3::uuid, $4::text, $5::uuid, "
-          + "NOW(), NOW())";
+      "INSERT INTO users (id, phone, created_at, updated_at) VALUES ($1::uuid, $2::text, NOW(), NOW())";
 
-  public static final String SQL_CREATE_ROLE = "INSERT INTO "
-      + "roles (user_id, role, status, created_at, updated_at)" + " VALUES ($1::uuid, $2::"
-      + "role_enum, $3::role_status_enum, NOW(), NOW())";
+  public static final String SQL_CREATE_ROLE =
+      "INSERT INTO roles (user_id, role, resource_server_id, status"
+          + ", created_at, updated_at) VALUES ($1::uuid, $2::role_enum, $3::uuid, $4::role_status_enum"
+          + ", NOW(), NOW())";
 
   public static final String SQL_CREATE_CLIENT = "INSERT INTO user_clients"
       + " (user_id, client_id, client_secret, client_name, created_at, updated_at)"
       + " VALUES ($1::uuid, $2::uuid, $3::text, $4::text, NOW(), NOW())";
 
-  public static final String SQL_GET_ORG_DETAILS =
-      "SELECT name, url FROM organizations WHERE id = $1::uuid";
+  public static final String SQL_GET_RS_IDS_BY_URL =
+      "SELECT id, url FROM resource_server WHERE url = ANY($1::text[])";
 
   public static final String SQL_GET_ALL_RS =
       "SELECT id, name, url, owner_id FROM resource_server";
@@ -130,9 +131,8 @@ public class Constants {
   public static final String SQL_UPDATE_ORG_ID = "UPDATE " 
       + "users SET organization_id = $1::uuid WHERE organization_id IS NULL AND id = $2::uuid";
 
-  public static final String SQL_GET_PHONE_JOIN_ORG =
-      "SELECT users.phone, name, url FROM organizations RIGHT JOIN "
-          + "users ON users.organization_id = organizations.id WHERE users.id = $1::uuid";
+  public static final String SQL_GET_PHONE =
+      "SELECT phone FROM users WHERE id = $1::uuid";
 
   public static final String SQL_GET_KC_ID_FROM_ARR =
       "SELECT id, keycloak_id FROM users WHERE id = ANY($1::uuid[])";
@@ -161,7 +161,10 @@ public class Constants {
           + "WHERE client_id = $2::uuid AND user_id = $3::uuid";
 
   public static final String SQL_CREATE_USER_IF_NOT_EXISTS =
-      "INSERT INTO users (id, phone, organization_id, email_hash, keycloak_id, "
-          + "created_at, updated_at) VALUES ($1::uuid, $2::text, $3::uuid, $4::text, $5::uuid, "
-          + "NOW(), NOW()) ON CONFLICT (id) DO NOTHING";
+      "INSERT INTO users (id, phone, created_at, updated_at) VALUES ($1::uuid, $2::text"
+          + ", NOW(), NOW()) ON CONFLICT (id) DO NOTHING";
+  
+  public static final String SQL_CHECK_PENDING_PROVIDER_ROLES =
+      "SELECT resource_server_id FROM roles WHERE role = 'PROVIDER' AND status = 'PENDING' AND resource_server_id = ANY($1::UUID[])"
+          + " AND user_id = $2::UUID";
 }
