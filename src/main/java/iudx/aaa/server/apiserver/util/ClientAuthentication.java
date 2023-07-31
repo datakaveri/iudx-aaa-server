@@ -111,7 +111,7 @@ public class ClientAuthentication implements Handler<RoutingContext>{
           }
 
           LOGGER.info("Info: client authenticated");
-          user.keycloakId(result.getString(KID)).userId(result.getString(ID))
+          user.userId(result.getString(ID))
               .roles(processRoles(result.getJsonArray(ROLES)));
 
           routingContext.put(CLIENT_ID, clientId);

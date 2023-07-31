@@ -154,11 +154,10 @@ public class Constants {
 
   /* SQL Queries */
   public static final String SQL_GET_USER_ROLES = 
-      "select roles.user_id AS id, coalesce(array_agg(roles.role) filter (where status = 'APPROVED'), '{}') AS roles"
-      + ", client_id FROM roles JOIN user_clients"
-      + " ON roles.user_id = user_clients.user_id"
-      + " WHERE roles.user_id = (SELECT id FROM users WHERE keycloak_id = $1)"
-      + " GROUP BY client_id, roles.user_id";
+      "select roles.role, array_agg(url) AS rs_urls FROM roles JOIN resource_server "
+      + " ON roles.resource_server_id = resource_server.id"
+      + " WHERE roles.user_id = $1::uuid AND roles.status = 'APPROVED'"
+      + " GROUP BY roles.role";
 
   public static final String SQL_GET_KID_ROLES =
       "SELECT u.id, q.keycloak_id as kid, client_secret, array_agg(r.role) as roles\n"

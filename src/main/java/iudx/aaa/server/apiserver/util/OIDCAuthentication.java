@@ -2,17 +2,19 @@ package iudx.aaa.server.apiserver.util;
 
 import static iudx.aaa.server.apiserver.util.Constants.*;
 import static iudx.aaa.server.apiserver.util.Urn.*;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.json.JsonArray;
 import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.authentication.TokenCredentials;
@@ -22,6 +24,7 @@ import io.vertx.ext.auth.oauth2.providers.KeycloakAuth;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.AuthenticationHandler;
 import io.vertx.pgclient.PgPool;
+import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
@@ -42,6 +45,10 @@ public class OIDCAuthentication implements AuthenticationHandler {
     this.keycloakOptions = keycloakOptions;
     keyCloackAuth();
   }
+  
+  private static Collector<Row, ?, Map<String, JsonArray>> roleToRsCollector =
+      Collectors.toMap(row -> row.getString("role"),
+          row -> new JsonArray(Arrays.asList(row.getArrayOfStrings("rs_urls"))));
 
   @Override
   public void handle(RoutingContext routingContext) {
@@ -94,24 +101,25 @@ public class OIDCAuthentication implements AuthenticationHandler {
       }).compose(mapper -> {
         LOGGER.debug("Info: JWT authenticated; UserInfo fetched");
         String kId = mapper.getString(SUB);
-        user.keycloakId(kId);
+        user.userId(kId);
 
         String firstName = mapper.getString(KC_GIVEN_NAME, " ");
         String lastName = mapper.getString(KC_FAMILY_NAME, " ");
         user.name(firstName, lastName);
 
-        return pgSelectUser(SQL_GET_USER_ROLES, kId);
+        return pgPool.withConnection(conn -> conn.preparedQuery(SQL_GET_USER_ROLES)
+            .collecting(roleToRsCollector).execute(Tuple.of(kId))).map(res -> res.value());
 
       }).onComplete(kcHandler -> {
         if (kcHandler.succeeded()) {
-          JsonObject result = kcHandler.result();
+          Map<String, JsonArray> result = kcHandler.result();
+          
+          user.rolesToRsMapping(result);
+          user.roles(processRoles(result.keySet()));
 
-          if (!result.isEmpty()) {
-            user.userId(result.getString(ID));
-            user.roles(processRoles(result.getJsonArray(ROLES)));
-          }
+          // not fetching client ID in this flow
+          routingContext.put(CLIENT_ID, NIL_UUID);
 
-          routingContext.put(CLIENT_ID, result.getString("client_id",NIL_UUID));
           routingContext.put(USER, user.build()).next();
         } else if (kcHandler.failed()) {
           LOGGER.error("Fail: Request validation and authentication; " + kcHandler.cause());
@@ -170,35 +178,12 @@ public class OIDCAuthentication implements AuthenticationHandler {
   }
 
   /**
-   * Handles database queries.
-   * 
-   * @param sql query
-   * @param if of the element
-   * @return Future promise which is JsonObject
-   */
-  public Future<JsonObject> pgSelectUser(String query, String id) {
-
-    Promise<JsonObject> promise = Promise.promise();
-    pgPool.withConnection(connection -> connection.preparedQuery(query).execute(Tuple.of(id))
-        .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson() : new JsonObject()))
-        .onComplete(handler -> {
-          if (handler.succeeded()) {
-            JsonObject details = handler.result();
-            promise.complete(details);
-          } else if (handler.failed()) {
-            promise.fail(handler.cause());
-          }
-        });
-    return promise.future();
-  }
-
-  /**
    * Creates Roles enum.
    * 
    * @param role
    * @return List having Roles
    */
-  public List<Roles> processRoles(JsonArray role) {
+  public List<Roles> processRoles(Set<String> role) {
     List<Roles> roles = role.stream().filter(a -> Roles.exists(a.toString()))
         .map(a -> Roles.valueOf(a.toString())).collect(Collectors.toList());
 
