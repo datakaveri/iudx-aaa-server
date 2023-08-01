@@ -82,10 +82,14 @@ public class Constants {
   public static final String GET_CERT = "get-auth-v1-cert";
   public static final String GET_JWKS = "get-auth-v1-jwks";
   public static final String GET_DEFAULT_CLIENT_CREDS = "get-auth-v1-user-clientcredentials";
+  public static final String SEARCH_USER = "get-auth-v1-user-search";
   public static final String TOKEN_ROUTE = "/auth/v1/token";
 
   /* Query Params */
   public static final String QUERY_FILTER = "filter";
+  public static final String QUERY_EMAIL = "email";
+  public static final String QUERY_ROLE = "role";
+  public static final String QUERY_RESOURCE_SERVER = "resourceServer";
 
   public static final String TOKEN_FAILED = "Token authentication failed";
   public static final String MISSING_TOKEN = "Missing accessToken";

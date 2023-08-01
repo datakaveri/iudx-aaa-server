@@ -980,19 +980,6 @@ paths:
                         - clientName: default
                           clientId: a3e7e34c-44bf-41ff-ad86-2ee04a954418
                       phone: '9984567899'
-                Found user:
-                  value:
-                    type: 'urn:dx:as:Success'
-                    title: User found
-                    results:
-                      email: someone@example.com
-                      userId: a13eb955-c691-4fd3-b200-f18bc78810b5
-                      name:
-                        firstName: Someone
-                        lastName: Person
-                      organization:
-                        name: example
-                        url: example.com
           headers:
             Content-Type:
               schema:
@@ -1076,46 +1063,123 @@ paths:
           name: Authorization
           description: Keycloak Issued token
           required: true
+      description: |-
+        List roles of a user.
+        ## Get User profile
+        The response contains user details such as roles, name, email. It also lists the client ID of the user.
+      tags:
+        - User APIs
+      security:
+        - authorization: []
+  /auth/v1/user/search:
+    get:
+      summary: Search for User
+      operationId: get-auth-v1-user-search
+      responses:
+        '200':
+          description: Found user.
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+                properties:
+                  type:
+                    type: string
+                    minLength: 1
+                  title:
+                    type: string
+                    minLength: 1
+                  results:
+                    type: object
+                    required:
+                      - name
+                      - userId
+                      - email
+                    properties:
+                      name:
+                        type: object
+                        required:
+                          - firstName
+                          - lastName
+                        properties:
+                          firstName:
+                            type: string
+                            minLength: 1
+                          lastName:
+                            type: string
+                            minLength: 1
+                      userId:
+                        type: string
+                        minLength: 1
+                      email:
+                        type: string
+                        minLength: 1
+                required:
+                  - type
+                  - title
+                  - results
+              examples:
+                Found user:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: User found
+                    results:
+                      email: someone@example.com
+                      userId: a13eb955-c691-4fd3-b200-f18bc78810b5
+                      name:
+                        firstName: Someone
+                        lastName: Person
+        '400':
+          description: |-
+            - Malformed or missing data
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+              examples:
+                Invalid email:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Missing or malformed parameters
+                    detail: Invalid
+      parameters:
         - schema:
             type: string
             pattern: '^(?=.{1,254}$)(?=.{1,64}@)[-!#$%&''*+/0-9=?A-Z^_`a-z{|}~]+(\.[-!#$%&''*+/0-9=?A-Z^_`a-z{|}~]+)*@[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$'
             format: email
-          in: header
+          in: query
           name: email
-          description: Email of User to be found
+          required: true
         - schema:
             type: string
             enum:
               - provider
               - consumer
-              - delegate
-          in: header
+          in: query
           name: role
-          description: Role of user to be found
+          required: true
         - schema:
             type: string
-            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-            minLength: 36
-            maxLength: 36
-          in: header
-          name: providerId
-          description: 'User ID of the provider, if an auth delegate wishes to search for a user'
+            maxLength: 100
+            minLength: 1
+          in: query
+          name: resourceServer
+          required: true
       description: |-
-        List roles of a user or search for a user by email address and role.
-        ## Get User profile
-        The response contains user details such as roles, name, email. It also lists the client ID of the user.
-        ## Search for a user
-        A user with either 
-        - `provider` role
-        - `admin` role
-        - is an **auth delegate** 
-        may search for a user by providing the email address and role of said user. If a user exists, then the user ID `userId`, email, name and organization details (if applicable) is returned.
-
-        To search for the user, 2 headers `email` (email address of user) and `role` (role of the user) need to be included. **Both headers need to be present for the search to be attempted.** If an auth delegate is to call the API, the `providerId` header needs to be included. Users with roles `delegate`, `consumer` and `provider` can be searched for.
+        Anyone may search for a user by providing the email address, role and resource server for which the role is applicable. If a user exists, then the user ID `userId`, email and name is returned.
       tags:
         - User APIs
-      security:
-        - authorization: []
   /auth/v1/user/clientcredentials:
     get:
       summary: Create Default Client Credentials

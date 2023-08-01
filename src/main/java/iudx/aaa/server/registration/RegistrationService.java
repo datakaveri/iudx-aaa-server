@@ -1,7 +1,6 @@
 package iudx.aaa.server.registration;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
@@ -13,6 +12,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.apiserver.RegistrationRequest;
 import iudx.aaa.server.apiserver.ResetClientSecretRequest;
+import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 
 /**
@@ -59,21 +59,15 @@ public interface RegistrationService {
       Handler<AsyncResult<JsonObject>> handler);
 
   /**
-   * The listUser implements the user list operation. It additionally implements a search function
-   * for providers, admins and auth delegates to search for a user's details from their email
-   * address and role.
+   * The listUser implements the user list operation.
    * 
    * @param user the User object i.e. the user calling the API
-   * @param searchUserDetails a JSON object with the email and role
-   * @param authDelegateDetails a JSON object with the auth delegate details if an auth delegate
-   *        calls the API
    * @param handler the request handler which returns a JsonObject
    * @return RegistrationService which is a Service
    */
 
   @Fluent
-  RegistrationService listUser(User user, JsonObject searchUserDetails,
-      JsonObject authDelegateDetails, Handler<AsyncResult<JsonObject>> handler);
+  RegistrationService listUser(User user, Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * The resetClientSecret implements client secret regeneration.
@@ -135,5 +129,18 @@ public interface RegistrationService {
   @Fluent
   RegistrationService getDefaultClientCredentials(User user,
       Handler<AsyncResult<JsonObject>> handler);
-
+  
+  /**
+   * Search for a user who has given email, role and resource server associated with the role on the
+   * COP.
+   * 
+   * @param email the email address
+   * @param role the role
+   * @param resourceServerUrl the resource server associated with the rol
+   * @param handler the request handler which returns a JsonObject
+   * @return RegistrationService which is a Service
+   */
+  @Fluent
+  RegistrationService searchUser(String email, Roles role, String resourceServerUrl,
+      Handler<AsyncResult<JsonObject>> handler);
 }

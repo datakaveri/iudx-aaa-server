@@ -40,6 +40,7 @@ import static iudx.aaa.server.registration.Constants.RESP_PHONE;
 import static iudx.aaa.server.registration.Constants.SQL_CHECK_CLIENT_ID_EXISTS;
 import static iudx.aaa.server.registration.Constants.SQL_CHECK_DEFAULT_CLIENT_EXISTS;
 import static iudx.aaa.server.registration.Constants.SQL_CHECK_PENDING_PROVIDER_ROLES;
+import static iudx.aaa.server.registration.Constants.SQL_CHECK_USER_HAS_PROV_CONS_ROLE_FOR_RS;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_CLIENT;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_ROLE;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_USER_IF_NOT_EXISTS;
@@ -50,7 +51,6 @@ import static iudx.aaa.server.registration.Constants.SQL_GET_KC_ID_FROM_ARR;
 import static iudx.aaa.server.registration.Constants.SQL_GET_PHONE;
 import static iudx.aaa.server.registration.Constants.SQL_GET_RS_IDS_BY_URL;
 import static iudx.aaa.server.registration.Constants.SQL_GET_RS_AND_APDS_FOR_REVOKE;
-import static iudx.aaa.server.registration.Constants.SQL_GET_UID_ORG_ID_CHECK_ROLE;
 import static iudx.aaa.server.registration.Constants.SQL_UPDATE_CLIENT_SECRET;
 import static iudx.aaa.server.registration.Constants.SQL_UPDATE_ORG_ID;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_ADDED_ROLES;
@@ -322,20 +322,10 @@ public class RegistrationServiceImpl implements RegistrationService {
   }
 
   @Override
-  public RegistrationService listUser(User user, JsonObject searchUserDetails,
-      JsonObject authDelegateDetails, Handler<AsyncResult<JsonObject>> handler) {
+  public RegistrationService listUser(User user, Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
     
     /* TODO: if roles list is empty, check user table to see if they have registered */
-
-    /* If it's a search user flow */
-    if (!searchUserDetails.isEmpty()) {
-      Promise<JsonObject> promise = Promise.promise();
-      Boolean isAuthDelegate = !authDelegateDetails.isEmpty();
-      searchUser(user, searchUserDetails, isAuthDelegate, promise);
-      promise.future().onComplete(result -> handler.handle(result));
-      return this;
-    }
 
     Future<JsonObject> phoneDetails =
         pool.withConnection(conn -> conn.preparedQuery(SQL_GET_PHONE)
@@ -706,93 +696,6 @@ public class RegistrationServiceImpl implements RegistrationService {
     return response.future();
   }
 
-  public void searchUser(User user, JsonObject searchUserDetails, Boolean isAuthDelegate,
-      Promise<JsonObject> promise) {
-
-    /* Create error denoting email+role does not exist */
-    Supplier<Response> getSearchErr = () -> {
-      return new ResponseBuilder().type(URN_INVALID_INPUT).title(ERR_TITLE_USER_NOT_FOUND)
-          .status(404).detail(ERR_DETAIL_USER_NOT_FOUND).build();
-    };
-
-    List<Roles> roles = user.getRoles();
-
-    if (roles.contains(Roles.PROVIDER) || roles.contains(Roles.ADMIN)) {
-      
-    } else if (roles.contains(Roles.DELEGATE) && isAuthDelegate) {
-
-    } else {
-      Response r = new ResponseBuilder().status(401).type(URN_INVALID_ROLE)
-          .title(ERR_TITLE_SEARCH_USR_INVALID_ROLE).detail(ERR_DETAIL_SEARCH_USR_INVALID_ROLE)
-          .build();
-      promise.complete(r.toJson());
-      return;
-    }
-
-    String email = searchUserDetails.getString("email").toLowerCase();
-    Roles role = Roles.valueOf(searchUserDetails.getString("role").toUpperCase());
-
-    Future<JsonObject> foundUser = kc.findUserByEmail(email);
-
-    Future<UUID> exists = foundUser.compose(res -> {
-      if (res.isEmpty()) {
-        return Future.failedFuture(new ComposeException(getSearchErr.get()));
-      }
-
-      UUID keycloakId = UUID.fromString(res.getString("keycloakId"));
-      return Future.succeededFuture(keycloakId);
-    });
-
-    /*
-     * Get user ID and org ID (if applicable) if the user + role exists (user profile is there and
-     * user has the requested role)
-     */
-    Future<JsonObject> getUserId = exists.compose(res -> pool.withConnection(
-        conn -> conn.preparedQuery(SQL_GET_UID_ORG_ID_CHECK_ROLE).execute(Tuple.of(res, role)).map(
-            row -> row.iterator().hasNext() ? row.iterator().next().toJson() : new JsonObject())));
-
-    Future<JsonObject> getOrgIfNeeded = getUserId.compose(res -> {
-      if (res.isEmpty()) {
-        return Future.failedFuture(new ComposeException(getSearchErr.get()));
-      }
-
-      if (res.getString("organization_id") != null) {
-        return pool.withConnection(conn -> conn.preparedQuery(SQL_GET_ORG_DETAILS)
-            .execute(Tuple.of(UUID.fromString(res.getString("organization_id"))))
-            .map(row -> row.iterator().next().toJson()));
-      }
-
-      return Future.succeededFuture(new JsonObject());
-    });
-
-    getOrgIfNeeded.onSuccess(res -> {
-      JsonObject response = new JsonObject();
-
-      JsonObject userDetails = foundUser.result();
-      String userId = getUserId.result().getString("id");
-      response.put(RESP_EMAIL, userDetails.getString("email"));
-      response.put("userId", userId);
-      response.put("name", userDetails.getJsonObject("name"));
-
-      if (!res.isEmpty()) {
-        response.put(RESP_ORG, res);
-      }
-
-      Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_USER_FOUND).status(200)
-          .objectResults(response).build();
-      promise.complete(r.toJson());
-    }).onFailure(e -> {
-      if (e instanceof ComposeException) {
-        promise.complete(((ComposeException) e).getResponse().toJson());
-        return;
-      }
-      LOGGER.error(e.getMessage());
-      promise.fail("Internal error");
-    });
-
-    return;
-  }
-
   @Override
   public RegistrationService findUserByEmail(Set<String> emailIds,
       Handler<AsyncResult<JsonObject>> handler) {
@@ -914,6 +817,72 @@ public class RegistrationServiceImpl implements RegistrationService {
       handler.handle(Future.failedFuture("Internal error"));
     });
     
+    return this;
+  }
+
+  @Override
+  public RegistrationService searchUser(String email, Roles role, String resourceServerUrl,
+      Handler<AsyncResult<JsonObject>> handler) {
+    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+
+    /* Create error denoting email+role does not exist */
+    Supplier<Response> getSearchErr = () -> {
+      return new ResponseBuilder().type(URN_INVALID_INPUT).title(ERR_TITLE_USER_NOT_FOUND)
+          .status(404).detail(ERR_DETAIL_USER_NOT_FOUND).build();
+    };
+
+    Future<JsonObject> foundUser = kc.findUserByEmail(email);
+
+    Future<UUID> exists = foundUser.compose(res -> {
+      if (res.isEmpty()) {
+        return Future.failedFuture(new ComposeException(getSearchErr.get()));
+      }
+
+      // userId same as keycloakId
+      UUID keycloakId = UUID.fromString(res.getString("keycloakId"));
+      return Future.succeededFuture(keycloakId);
+    });
+
+    /* 
+     * Since you can only search by CONSUMER and PROVIDER roles, we don't
+     * need to check the users table for existence and only check if roles.user_id
+     * is present */
+    Future<Boolean> checkHasRole = exists.compose(keycloakId -> pool.withConnection(conn -> conn
+        .preparedQuery(SQL_CHECK_USER_HAS_PROV_CONS_ROLE_FOR_RS)
+        .execute(Tuple.of(keycloakId, role, resourceServerUrl))
+        .map(row -> row.iterator().next().getBoolean("exists"))));
+
+    checkHasRole.compose(hasRole -> {
+      if(!hasRole) {
+        return Future.failedFuture(new ComposeException(getSearchErr.get()));
+      }
+      
+      JsonObject response = new JsonObject();
+      
+      JsonObject userDetails = foundUser.result();
+      
+      response.put(RESP_EMAIL, userDetails.getString("email"));
+      // userId same as keycloakId
+      response.put("userId", userDetails.getString("keycloakId"));
+      response.put("name", userDetails.getJsonObject("name"));
+      
+      return Future.succeededFuture(response);
+    }).onSuccess(res -> {
+
+      Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_USER_FOUND).status(200)
+          .objectResults(res).build();
+
+      handler.handle(Future.succeededFuture(r.toJson()));
+    }).onFailure(e -> {
+      if (e instanceof ComposeException) {
+        ComposeException exp = (ComposeException) e;
+        handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+        return;
+      }
+      LOGGER.error(e.getMessage());
+      handler.handle(Future.failedFuture("Internal error"));
+    });
+
     return this;
   }
 }

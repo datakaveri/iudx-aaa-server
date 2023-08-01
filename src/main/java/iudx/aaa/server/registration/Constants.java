@@ -82,7 +82,7 @@ public class Constants {
 
   public static final String ERR_TITLE_USER_NOT_FOUND = "User not found";
   public static final String ERR_DETAIL_USER_NOT_FOUND =
-      "A user with given email and role not found";
+      "A user with given email and role + resource server not found";
 
   public static final String ERR_TITLE_SEARCH_USR_INVALID_ROLE =
       "User does not have required role to search for user";
@@ -141,11 +141,11 @@ public class Constants {
       + "users JOIN "
       + "organizations ON users.organization_id = organizations.id WHERE keycloak_id = $1::uuid";
 
-  public static final String SQL_GET_UID_ORG_ID_CHECK_ROLE =
-      "SELECT users.id, users.organization_id FROM users JOIN " 
-          + "roles ON users.id = roles.user_id "
-          + "WHERE users.keycloak_id = $1::uuid AND roles.role = $2::"
-          + "role_enum AND roles.status = 'APPROVED'";
+  public static final String SQL_CHECK_USER_HAS_PROV_CONS_ROLE_FOR_RS =
+      "SELECT EXISTS (SELECT 1 FROM roles JOIN" 
+          + " resource_server ON roles.resource_server_id = resource_server.id"
+          + " WHERE roles.user_id = $1::uuid AND roles.role = $2::role_enum"
+          + " AND roles.status = 'APPROVED' AND resource_server.url = $3::text)";
   
   public static final String SQL_CHECK_CLIENT_ID_EXISTS =
       "SELECT EXISTS (SELECT 1 FROM user_clients WHERE client_id = $1::uuid AND user_id = $2::uuid)";
