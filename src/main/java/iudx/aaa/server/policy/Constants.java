@@ -91,9 +91,11 @@ public class Constants {
   public static final String ERR_TITLE_AUTH_DELE_DELETE =
       "Auth delegate may not delete auth delegations";
   public static final String ERR_DETAIL_DEL_DELEGATE_ROLES =
-      "User with provider role or is an auth delegate may call the API";
+      "User with provider or consumer role may call the API";
   public static final String ERR_DETAIL_LIST_DELEGATE_ROLES =
-      "User with provider/delegate role or is an auth delegate may call the API";
+      "User with provider, consumer, delegate role may call the API";
+  public static final String ERR_DETAIL_CREATE_DELEGATE_ROLES =
+      "User with provider/consumer role may call the API";
   public static final String ERR_DETAIL_CONSUMER_ROLES =
       "User with consumer role may call the API";
   public static final String ERR_TITLE_AUTH_DELE_CREATE =
@@ -298,25 +300,23 @@ public class Constants {
           "select id from apd_policies where item_id =$1::UUID and item_type = $2::item_enum and owner_id = $3::UUID "
                   + " and status = $4::policy_status_enum and expiry_time > now()";
 
-  public static final String LIST_DELEGATE_AUTH_DELEGATE =
-      "SELECT d.id, d.owner_id, d.user_id, url, name AS server "
-          + "FROM delegations AS d JOIN resource_server ON"
-          + " d.resource_server_id = resource_server.id WHERE d.owner_id = $1::uuid AND url != $2::text AND d.status = 'ACTIVE'";
-
-  public static final String LIST_DELEGATE_AS_PROVIDER_DELEGATE =
-      "SELECT d.id, d.owner_id, d.user_id, url, name AS server "
-          + "FROM delegations AS d JOIN resource_server ON"
-          + " d.resource_server_id = resource_server.id"
-          + " WHERE d.status = 'ACTIVE' AND (d.owner_id = $1::uuid OR d.user_id = $1::uuid)";
+  public static final String LIST_DELEGATION_AS_DELEGATOR_OR_DELEGATE =
+      "SELECT d.id, d.user_id, url, roles.user_id AS delegator_id, lower(roles.role::text) AS role, name AS server "
+          + "FROM delegations AS d JOIN roles ON roles.id = d.role_id"
+          + " JOIN resource_server ON"
+          + " roles.resource_server_id = resource_server.id"
+          + " WHERE d.status = 'ACTIVE' AND (roles.user_id = $1::uuid OR d.user_id = $1::uuid)";
 
   public static final String GET_DELEGATIONS_BY_ID =
-      "SELECT d.id, url FROM delegations AS d JOIN resource_server ON"
-          + " d.resource_server_id = resource_server.id"
-          + " WHERE d.owner_id = $1::uuid AND d.id = ANY($2::uuid[]) AND d.status = 'ACTIVE'";
+      "SELECT d.id FROM delegations AS d"
+          + " JOIN roles ON roles.id = d.role_id"
+          + " JOIN resource_server ON"
+          + " roles.resource_server_id = resource_server.id"
+          + " WHERE roles.user_id = $1::uuid AND d.id = ANY($2::uuid[]) AND d.status = 'ACTIVE'";
 
   public static final String DELETE_DELEGATIONS =
       "UPDATE delegations SET status = 'DELETED', updated_at = NOW()"
-          + " WHERE owner_id = $1::uuid AND id = ANY($2::uuid[])";
+          + " WHERE id = ANY($1::uuid[])";
 
   public static final String CREATE_NOTIFI_POLICY_REQUEST =
       "INSERT INTO access_requests (user_id, item_id,item_type, owner_id, status, "
@@ -379,27 +379,17 @@ public class Constants {
           + " WHERE user_id = $1::uuid AND id = ANY($2::uuid[])";
 
   public static final String INSERT_DELEGATION =
-      "insert into delegations (owner_id,user_id,resource_server_id,status,created_at,updated_at) values "
-          + " ($1::UUID, $2::UUID, $3::UUID, $4::policy_status_enum, now() ,now())";
+      "insert into delegations (user_id, role_id, status, created_at, updated_at) values "
+          + " ($1::UUID, $2::UUID, $3::policy_status_enum, now() ,now())";
 
+  public static final String GET_ROLE_IDS_BY_ROLE_AND_RS = "SELECT roles.id, url, role FROM roles"
+      + " JOIN resource_server ON roles.resource_server_id = resource_server.id"
+      + " WHERE roles.user_id = $1::UUID AND role = ANY($2::role_enum[]) AND url = ANY($3::text[])";
   // create delegation
 
-  public static final String CHECK_ROLES =
-      "select user_id from roles where role = $1::role_enum"
-          + " and status = $2::role_status_enum and user_id = ANY($3::UUID[]) ";
-
-  public static final String GET_SERVER_DETAILS =
-      "select url,id from resource_server where url =  ANY($1::text[])";
-
-  public static final String CHECK_AUTH_POLICY_DELEGATION =
-      "select * from policies a inner join resource_server b on a.item_id = b.id "
-          + " where a.user_id = $1::UUID and a.item_type = $2::item_enum and"
-          + " b.url = $3::text and a.status =$4::policy_status_enum and a.expiry_time > now() ";
-
   public static final String CHECK_EXISTING_DELEGATIONS =
-      "select id from delegations where owner_id = $1::UUID "
-          + " and user_id =$2::UUID and resource_server_id = $3::UUID and  "
-          + " status = $4::policy_status_enum ";
+      "select id from delegations where user_id = $1::UUID "
+          + " and role_id = $2::UUID and status = $3::policy_status_enum ";
 
   public static final String EMAIL_BODY =
       "Hello, \n${CONSUMER_NAME} email ${CONSUMER_EMAIL} has requested access to your dataset ${REQUESTED_CAT_ID} for a time period of ${TIME_DURATION}. Please visit ${PUBLISHER_PANEL_URL} to approve/reject this request. \n \nRegards, \n${SENDER'S_NAME}";

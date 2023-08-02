@@ -276,19 +276,16 @@ public class ApiServerVerticle extends AbstractVerticle {
 
               // Get delegations by provider/delegate/auth delegate
               routerBuilder.operation(GET_DELEGATIONS)
-                      .handler(providerAuth)
                       .handler(this::listDelegationsHandler)
                       .failureHandler(failureHandler);
 
               // Delete delegations by provider/delegate/auth delegate
               routerBuilder.operation(DELETE_DELEGATIONS)
-                      .handler(providerAuth)
                       .handler(this::deleteDelegationsHandler)
                       .failureHandler(failureHandler);
 
               // Create delegations
               routerBuilder.operation(CREATE_DELEGATIONS)
-                      .handler(providerAuth)
                       .handler(this::createDelegationsHandler)
                       .failureHandler(failureHandler);
 
@@ -751,10 +748,8 @@ public class ApiServerVerticle extends AbstractVerticle {
   private void listDelegationsHandler(RoutingContext context) {
 
     User user = context.get(USER);
-    JsonObject authDelegateDetails =
-            Optional.ofNullable((JsonObject) context.get(DATA)).orElse(new JsonObject());
 
-    policyService.listDelegation(user, authDelegateDetails, handler -> {
+    policyService.listDelegation(user, handler -> {
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {
@@ -775,10 +770,8 @@ public class ApiServerVerticle extends AbstractVerticle {
     List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(arr);
 
     User user = context.get(USER);
-    JsonObject authDelegateDetails =
-            Optional.ofNullable((JsonObject) context.get(DATA)).orElse(new JsonObject());
 
-    policyService.deleteDelegation(request, user, authDelegateDetails, handler -> {
+    policyService.deleteDelegation(request, user, handler -> {
       if (handler.succeeded()) {
         JsonObject result = handler.result();
         Future.future(future -> handleAuditLogs(context, result));
@@ -801,10 +794,8 @@ public class ApiServerVerticle extends AbstractVerticle {
     JsonArray jsonRequest = arr.getJsonArray(REQUEST);
     List<CreateDelegationRequest> request = CreateDelegationRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
-    JsonObject authDelegateDetails =
-            Optional.ofNullable((JsonObject) context.get(DATA)).orElse(new JsonObject());
 
-    policyService.createDelegation(request,user,authDelegateDetails, handler -> {
+    policyService.createDelegation(request, user, handler -> {
 
       if (handler.succeeded()) {
         JsonObject result = handler.result();

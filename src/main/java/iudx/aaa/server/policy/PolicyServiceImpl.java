@@ -31,6 +31,7 @@ import iudx.aaa.server.apiserver.UpdatePolicyNotification;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.registration.RegistrationService;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -1897,14 +1898,11 @@ public class PolicyServiceImpl implements PolicyService {
     }
 
   @Override
-  public PolicyService listDelegation(
-      User user, JsonObject authDelegateDetails, Handler<AsyncResult<JsonObject>> handler) {
+  public PolicyService listDelegation(User user, Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
-    boolean isAuthDelegate = !authDelegateDetails.isEmpty();
-
-    if (!(isAuthDelegate
-        || user.getRoles().contains(Roles.PROVIDER)
+    if (!(user.getRoles().contains(Roles.PROVIDER)
+        || user.getRoles().contains(Roles.CONSUMER)
         || user.getRoles().contains(Roles.DELEGATE))) {
       Response r =
           new Response.ResponseBuilder()
@@ -1917,28 +1915,15 @@ public class PolicyServiceImpl implements PolicyService {
       return this;
     }
 
-    String query;
-    Tuple queryTup;
-
-    /* get all delegations EXCEPT auth server delegations */
-    if (isAuthDelegate) {
-      UUID providerUserId = UUID.fromString(authDelegateDetails.getString("providerId"));
-      query = LIST_DELEGATE_AUTH_DELEGATE;
-      queryTup = Tuple.of(providerUserId, authOptions.getString("authServerUrl"));
-    } else {
-      query = LIST_DELEGATE_AS_PROVIDER_DELEGATE;
-      queryTup = Tuple.of(UUID.fromString(user.getUserId()));
-    }
-
     Collector<Row, ?, List<JsonObject>> collect =
         Collectors.mapping(row -> row.toJson(), Collectors.toList());
 
     Future<List<JsonObject>> data =
         pool.withConnection(
             conn ->
-                conn.preparedQuery(query)
+                conn.preparedQuery(LIST_DELEGATION_AS_DELEGATOR_OR_DELEGATE)
                     .collecting(collect)
-                    .execute(queryTup)
+                    .execute(Tuple.of(UUID.fromString(user.getUserId())))
                     .map(res -> res.value()));
 
     Future<JsonObject> userInfo =
@@ -1947,7 +1932,7 @@ public class PolicyServiceImpl implements PolicyService {
               Set<String> ss = new HashSet<String>();
               result.forEach(
                   obj -> {
-                    ss.add(obj.getString("owner_id"));
+                    ss.add(obj.getString("delegator_id"));
                     ss.add(obj.getString("user_id"));
                   });
 
@@ -1964,8 +1949,8 @@ public class PolicyServiceImpl implements PolicyService {
 
               deleRes.forEach(
                   obj -> {
-                    JsonObject ownerDet = details.get(obj.getString("owner_id"));
-                    ownerDet.put("id", obj.remove("owner_id"));
+                    JsonObject ownerDet = details.get(obj.getString("delegator_id"));
+                    ownerDet.put("id", obj.remove("delegator_id"));
 
                     JsonObject userDet = details.get(obj.getString("user_id"));
                     userDet.put("id", obj.remove("user_id"));
@@ -1994,13 +1979,10 @@ public class PolicyServiceImpl implements PolicyService {
   public PolicyService deleteDelegation(
       List<DeleteDelegationRequest> request,
       User user,
-      JsonObject authDelegateDetails,
       Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
-    boolean isAuthDelegate = !authDelegateDetails.isEmpty();
-
-    if (!(isAuthDelegate || user.getRoles().contains(Roles.PROVIDER))) {
+    if (!user.getRoles().contains(Roles.PROVIDER) && !user.getRoles().contains(Roles.CONSUMER)) {
       Response r =
           new Response.ResponseBuilder()
               .type(URN_INVALID_ROLE)
@@ -2012,22 +1994,17 @@ public class PolicyServiceImpl implements PolicyService {
       return this;
     }
 
-    Tuple queryTup;
+    // ids will be unique - OpenAPI takes care of duplicates
     List<UUID> ids =
         request.stream().map(obj -> UUID.fromString(obj.getId())).collect(Collectors.toList());
 
-    if (isAuthDelegate) {
-      UUID providerUserId = UUID.fromString(authDelegateDetails.getString("providerId"));
-      queryTup = Tuple.of(providerUserId).addArrayOfUUID(ids.toArray(UUID[]::new));
-    } else {
-      queryTup =
+     Tuple queryTup =
           Tuple.of(UUID.fromString(user.getUserId())).addArrayOfUUID(ids.toArray(UUID[]::new));
-    }
 
-    Collector<Row, ?, Map<UUID, String>> collect =
-        Collectors.toMap(row -> row.getUUID("id"), row -> row.getString("url"));
+    Collector<Row, ?, Set<UUID>> collect =
+        Collectors.mapping(row -> row.getUUID("id"), Collectors.toSet());
 
-    Future<Map<UUID, String>> idServerMap =
+    Future<Set<UUID>> idServerMap =
         pool.withConnection(
             conn ->
                 conn.preparedQuery(GET_DELEGATIONS_BY_ID)
@@ -2040,25 +2017,10 @@ public class PolicyServiceImpl implements PolicyService {
             data -> {
               if (data.size() != ids.size()) {
                 List<UUID> badIds =
-                    ids.stream().filter(id -> !data.containsKey(id)).collect(Collectors.toList());
+                    ids.stream().filter(id -> !data.contains(id)).collect(Collectors.toList());
 
                 return Future.failedFuture(new ComposeException(400, URN_INVALID_INPUT,
                     ERR_TITLE_INVALID_ID, badIds.get(0).toString()));
-              }
-
-              if (!isAuthDelegate) {
-                return Future.succeededFuture();
-              }
-
-              List<UUID> authDelegs =
-                  data.entrySet().stream()
-                      .filter(obj -> obj.getValue().equals(authOptions.getString("authServerUrl")))
-                      .map(obj -> obj.getKey())
-                      .collect(Collectors.toList());
-
-              if (!authDelegs.isEmpty()) {
-                return Future.failedFuture(new ComposeException(403, URN_INVALID_INPUT,
-                    ERR_TITLE_AUTH_DELE_DELETE, authDelegs.get(0).toString()));
               }
               return Future.succeededFuture();
             });
@@ -2067,7 +2029,7 @@ public class PolicyServiceImpl implements PolicyService {
         .compose(
             i ->
                 pool.withTransaction(
-                    conn -> conn.preparedQuery(DELETE_DELEGATIONS).execute(queryTup)))
+                    conn -> conn.preparedQuery(DELETE_DELEGATIONS).execute(Tuple.of(ids.toArray(UUID[]::new)))))
         .onSuccess(
             res -> {
               Response r =
@@ -2078,6 +2040,7 @@ public class PolicyServiceImpl implements PolicyService {
                       .status(200)
                       .build();
               handler.handle(Future.succeededFuture(r.toJson()));
+              LOGGER.info("Deleted delegations {}", ids.toString());
             })
         .onFailure(e -> {
           if (e instanceof ComposeException) {
@@ -2238,77 +2201,75 @@ public class PolicyServiceImpl implements PolicyService {
   public PolicyService createDelegation(
       List<CreateDelegationRequest> request,
       User user,
-      JsonObject authDelegateDetails,
       Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
-    boolean isAuthDelegate = !authDelegateDetails.isEmpty();
-    String userId = user.getUserId();
-    // check if resources and userIds in request exist in db and have roles as delegate
 
-    if (!(isAuthDelegate || user.getRoles().contains(Roles.PROVIDER))) {
+    if (!user.getRoles().contains(Roles.PROVIDER) && user.getRoles().contains(Roles.CONSUMER)) {
       Response r =
           new Response.ResponseBuilder()
               .type(URN_INVALID_ROLE)
               .title(ERR_TITLE_INVALID_ROLES)
-              .detail(ERR_DETAIL_LIST_DELEGATE_ROLES)
+              .detail(ERR_DETAIL_CREATE_DELEGATE_ROLES)
+              .status(401)
+              .build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
+    
+    // check if the (role + resource server) for a delegation is owned by the user
+    List<String> rsRoleNotOwnedByUser = request.stream()
+        .filter(obj -> !user.getResServersForRole(obj.getRole()).contains(obj.getResSerUrl()))
+        .map(obj -> obj.getResSerUrl()).collect(Collectors.toList());
+    
+    if(!rsRoleNotOwnedByUser.isEmpty())
+    {
+      Response r =
+          new Response.ResponseBuilder()
+              .type(URN_INVALID_ROLE)
+              .title(ERR_TITLE_INVALID_ROLES)
+              .detail(ERR_DETAIL_CREATE_DELEGATE_ROLES)
               .status(401)
               .build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
 
-    List<UUID> users =
-        request.stream().map(obj -> UUID.fromString(obj.getUserId())).collect(Collectors.toList());
+    Set<String> userEmails =
+        request.stream().map(obj -> obj.getUserEmail()).collect(Collectors.toSet());
 
-    Future<Void> checkUserRole = createDelegate.checkUserRoles(users);
+    List<String> requestedResServers =
+        request.stream().map(obj -> obj.getResSerUrl()).collect(Collectors.toList());
 
-    List<String> resServers =
-        request.stream().map(CreateDelegationRequest::getResSerId).collect(Collectors.toList());
+    Promise<JsonObject> usersExistProm = Promise.promise();
+    registrationService.findUserByEmail(userEmails, usersExistProm);
+    Future<JsonObject> checkUsersExist = usersExistProm.future();
 
-    Future<Map<String, UUID>> resSerDetail = createDelegate.getResourceServerDetails(resServers);
+    Collector<Row, ?, Map<Pair<Roles, String>, UUID>> roleRsToRoleIdCollector =
+        Collectors.toMap(row -> Pair.of(row.get(Roles.class, "role"), row.getString("url")),
+            row -> row.getUUID("id"));
 
-    // check if user has policy by auth admin
-    String finalUserId = userId;
-    Future<Boolean> checkAuthPolicy =
-        CompositeFuture.all(checkUserRole, resSerDetail)
-            .compose(obj -> createDelegate.checkAuthPolicy(finalUserId));
+    String[] rolesArr = user.getRoles().stream().map(i -> i.toString()).toArray(String[]::new);
+    Tuple tup = Tuple.of(user.getUserId()).addArrayOfString(rolesArr)
+        .addArrayOfString(requestedResServers.toArray(String[]::new));
 
-    if (isAuthDelegate) {
-      // auth delegate cannot create other auth delegates
-      if (resServers.contains(authOptions.getString("authServerUrl"))) {
-        Response r =
-            new ResponseBuilder()
-                .type(URN_INVALID_INPUT)
-                .title(ERR_TITLE_AUTH_DELE_CREATE)
-                .detail(ERR_TITLE_AUTH_DELE_CREATE)
-                .status(403)
-                .build();
-        handler.handle(Future.succeededFuture(r.toJson()));
-        return this;
-      }
-      // if delegate then the delegation should be created by using the providers userId
-      userId = authDelegateDetails.getString("providerId");
-    }
+    Future<Map<Pair<Roles, String>, UUID>> getRoleIds = checkUsersExist
+        .compose(res -> pool.withConnection(conn -> conn.preparedQuery(GET_ROLE_IDS_BY_ROLE_AND_RS)
+            .collecting(roleRsToRoleIdCollector).execute(tup).map(succ -> succ.value())));
 
-    String OwnerId = userId;
-    Future<List<Tuple>> item =
-        checkAuthPolicy.compose(
-            ar -> {
-              List<Tuple> tuples = new ArrayList<>();
-              for (CreateDelegationRequest createDelegationRequest : request) {
-                UUID user_id = UUID.fromString(createDelegationRequest.getUserId());
-                UUID resource_server_id =
-                    resSerDetail.result().get(createDelegationRequest.getResSerId());
-                String status = "ACTIVE";
-                tuples.add(Tuple.of(OwnerId, user_id, resource_server_id, status));
-              }
+    Future<Boolean> createTuplesAndInsert = getRoleIds.compose(roleMap -> {
+      Map<String, JsonObject> userMap = jsonObjectToMap.apply(checkUsersExist.result());
+      List<Tuple> tups = new ArrayList<Tuple>();
 
-              return Future.succeededFuture(tuples);
-            });
+      request.forEach(obj -> {
+        UUID delegateId = UUID.fromString(userMap.get(obj.getUserEmail()).getString("keycloakId"));
+        UUID roleId = roleMap.get(Pair.of(obj.getRole(), obj.getResSerUrl()));
+        tups.add(Tuple.of(delegateId, roleId, status.ACTIVE));
+      });
 
-    Future<Boolean> insertDelegations = item.compose(createDelegate::insertItems);
+      return createDelegate.insertItems(tups);
+    });
 
-    insertDelegations
+    createTuplesAndInsert
         .onSuccess(
             succ -> {
               Response r =
@@ -2326,6 +2287,7 @@ public class PolicyServiceImpl implements PolicyService {
                 handler.handle(Future.succeededFuture(e.getResponse().toJson()));
               } else handler.handle(Future.failedFuture(INTERNALERROR));
             });
+
     return this;
   }
 

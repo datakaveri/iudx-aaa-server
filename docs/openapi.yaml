@@ -2848,7 +2848,7 @@ paths:
         - Policies APIs
       security:
         - authorization: []
-  /auth/v1/policies/delegations:
+  /auth/v1/delegations:
     get:
       summary: Get Delegations
       responses:
@@ -2866,7 +2866,8 @@ paths:
                     results:
                       - id: 0bb3cd2b-331a-474c-8107-becdcbdb0b41
                         url: foobar.iudx.io
-                        resource_server: Foobar
+                        role: consumer  
+                        server: Foobar
                         owner:
                           email: someone@example.com
                           name:
@@ -2881,7 +2882,8 @@ paths:
                           id: d34b1547-7281-4f66-b550-ed79f9bb0c36
                       - id: 8f79dec9-a327-439c-b00b-731fea264af4
                         url: foobar.iudx.io
-                        resource_server: Foobar
+                        role: provider
+                        server: Foobar
                         owner:
                           email: someone@example.com
                           name:
@@ -2917,6 +2919,9 @@ paths:
                         server:
                           type: string
                           minLength: 1
+                        role:
+                          type: string
+                          minLength: 1  
                         owner:
                           type: object
                           properties:
@@ -2983,6 +2988,7 @@ paths:
                     results:
                       - id: 0bb3cd2b-331a-474c-8107-becdcbdb0b41
                         url: foobar.iudx.io
+                        role: consumer  
                         server: Foobar
                         owner:
                           email: someone@example.com
@@ -2998,6 +3004,7 @@ paths:
                           id: d34b1547-7281-4f66-b550-ed79f9bb0c36
                       - id: 8f79dec9-a327-439c-b00b-731fea264af4
                         url: foobar.iudx.io
+                        role: provider  
                         server: Foobar
                         owner:
                           email: bob_provider@iisc.ac.in
@@ -3021,28 +3028,10 @@ paths:
               schema:
                 type: string
               description: application/json
-        '400':
-          description: '- Invalid `providerId` header'
-          headers:
-            Content-Type:
-              schema:
-                type: string
-              description: application/json
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                Example:
-                  value:
-                    type: 'urn:dx:as:InvalidInput'
-                    title: Malformed request/missing or malformed request parameters
-                    detail: '[Bad Request] Validation error for parameter providerId in location HEADER: provided string should have size >= 36'
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
-            - `providerId` does not match a provider who has assigned the user as a Auth delegate OR is blank
-            - User does have the `provider` or `delegate` roles
+            - User does have the `provider` or `consumer` roles
           headers:
             Content-Type:
               schema:
@@ -3067,17 +3056,13 @@ paths:
                   value:
                     type: 'urn:dx:as:InvalidRole'
                     title: User does not have roles to use API
-                    detail: User with provider/delegate role or is an auth delegate may call the API
-      operationId: get-auth-v1-policies-delegations
+                    detail: User with provider/consumer role or delegate role may call the API
+      operationId: get-auth-v1-delegations
       description: |-
         Get delegations related to a particular user. The response depends upon the roles that the user has:
-        - `provider` : returns all delegations created by the provider/auth delegate of the provider
-        - `delegate` : returns all providers who have assigned them as delegates for certain servers
+        - `provider`/`consumer` : returns all delegations created by the provider/consumer
+        - `delegate` : returns all providers/consumer who have assigned them as delegates for certain servers
 
-        ## Auth delegate
-        An auth delegate may use the API to view delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
-
-        **NOTE: An auth delegate may not view any delegations related to the auth server.**
       parameters:
         - schema:
             type: string
@@ -3088,15 +3073,6 @@ paths:
           name: Authorization
           description: Keycloak Issued token
           required: true
-        - schema:
-            type: string
-            format: uuid
-            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-            minLength: 36
-            maxLength: 36
-          in: header
-          name: providerId
-          description: 'User ID of the provider, if an auth delegate wishes to view delegations of their provider'
       security:
         - authorization: []
       tags:
@@ -3104,7 +3080,7 @@ paths:
     parameters: []
     delete:
       summary: Delete Delegations
-      operationId: delete-auth-v1-policies-delegations
+      operationId: delete-auth-v1-delegations
       responses:
         '200':
           description: Successfully deleted the requested delegations
@@ -3143,7 +3119,6 @@ paths:
                     results: {}
         '400':
           description: |-
-            - Invalid `providerId` header
             - Invalid or malformed request
             - An invalid/deleted delegation ID is sent
           content:
@@ -3169,8 +3144,7 @@ paths:
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
-            - `providerId` does not match a provider who has assigned the user as a Auth delegate OR is blank
-            - User does have the `provider` role or is not an auth delegate
+            - User does have the `provider` or `consumer` role
           content:
             application/json:
               schema:
@@ -3181,11 +3155,6 @@ paths:
                     type: 'urn:dx:as:InvalidAuthenticationToken'
                     title: Token authentication failed
                     detail: Inactive Token
-                Invalid providerId - no delegation exists:
-                  value:
-                    type: 'urn:dx:as:MissingAuthenticationToken'
-                    title: Invalid delegate request
-                    detail: Invalid delegate request
                 User does not have valid roles:
                   value:
                     type: 'urn:dx:as:InvalidRole'
@@ -3196,24 +3165,8 @@ paths:
               schema:
                 type: string
               description: application/json
-        '403':
-          description: '- If an auth delegate attempts to delete an auth delegation'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                Example:
-                  value:
-                    type: 'urn:dx:as:InvalidInput'
-                    title: Auth delegate may not delete auth delegations
-                    detail: 8ff57971-10d9-4bc6-ab3b-87dc328c72ce
       description: |
-        A provider may delete delegations created by them. 
-        ## Auth delegate
-        An auth delegate may use the API to delete delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
-
-        **NOTE: An auth delegate may not delete any delegations related to the auth server.**
+        A provider or consumer may delete delegations created by them. 
       parameters:
         - schema:
             type: string
@@ -3224,12 +3177,6 @@ paths:
           name: Authorization
           description: Keycloak Issued token
           required: true
-        - schema:
-            type: string
-            format: uuid
-          in: header
-          name: providerId
-          description: 'User ID of the provider, if an auth delegate wishes to view delegations of their provider'
       requestBody:
         content:
           application/json:
@@ -3263,7 +3210,7 @@ paths:
                 value:
                   request:
                     - id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
-        description: The body is a JSON object with a JSON array containing the delegation IDs. The IDs can be obtained from the `GET /auth/v1/policies/delegations` API
+        description: The body is a JSON object with a JSON array containing the delegation IDs. The IDs can be obtained from the `GET /auth/v1/delegations` API
         required: true
       security:
         - authorization: []
@@ -3271,14 +3218,13 @@ paths:
         - Delegation APIs
     post:
       summary: Create Delegations
-      operationId: post-auth-v1-policies-delegations
+      operationId: post-auth-v1-delegations
       responses:
         '200':
           description: OK
         '400':
           description: |-
             Bad Request
-            -the user trying to be made a delegate is not registered as a delegate
             -the server url is not present in the db
           content:
             application/json:
@@ -3300,21 +3246,15 @@ paths:
               schema:
                 type: string
               description: application/json
-        '403':
+        '409':
           description: |-
-            Forbidden
-            - No auth policy for the user trying to create a delegate
-            - Auth delegate trying to create another auth delegate
             - Delegation already exists
       description: |
         Create new delegations
-        - `userId` : UUID of the user who is to be made a delegate.
+        - `userEmail` : Email address of the user to be made delegate
         - `resourceServerId` : URL of the resource server the user is to be made a delegate for.
+        - `role` : Role for which the user can operate on the resource server
 
-        ## Auth delegate
-        An auth delegate may use the API to create delegations on behalf of their provider. This is done by passing the user ID of the provider as a header called `providerId`. 
-
-        **NOTE: An auth delegate may not create any delegations related to the auth server.**
       parameters:
         - schema:
             type: string
@@ -3325,11 +3265,6 @@ paths:
           name: Authorization
           description: Keycloak Issued token
           required: true
-        - schema:
-            type: string
-          in: header
-          name: providerId
-          description: 'User ID of the provider, if an auth delegate wishes to view delegations of their provider'
       security:
         - authorization: []
       tags:
@@ -3343,8 +3278,9 @@ paths:
               x-examples:
                 example-1:
                   request:
-                    - resSerId: rs.iudx.io
-                      userId: d34b1547-7281-4f66-b550-ed79f9bb0c36
+                    - resSerUrl: rs.iudx.io
+                      userEmail: email@email.com
+                      role: consumer  
               properties:
                 request:
                   type: array
@@ -3353,33 +3289,39 @@ paths:
                   items:
                     type: object
                     properties:
-                      resSerId:
+                      resSerUrl:
                         type: string
                         minLength: 1
-                      userId:
+                      userEmail:
                         type: string
-                        minLength: 36
-                        pattern: '^[a-zA-Z0-9_*\-*\.\/]+$'
-                        maxLength: 36
-                        format: uuid
+                        format: email
+                      role:
+                        type: string
+                        enum:
+                          - consumer
+                          - provider
                     required:
-                      - resSerId
-                      - userId
+                      - resSerUrl
+                      - userEmail
+                      - role  
               required:
                 - request
             examples:
               single request:
                 value:
                   request:
-                    - resSerId: rs.iudx.io
-                      userId: d34b1547-7281-4f66-b550-ed79f9bb0c36
+                    - resSerUrl: rs.iudx.io
+                      userEmail: email@email.com
+                      role: consumer
               multiple request:
                 value:
                   request:
-                    - resSerId: rs.iudx.io
-                      userId: d34b1547-7281-4f66-b550-ed79f9bb0c36
-                    - resSerId: auth.iudx.io
-                      userId: d34b1547-7281-4f66-b550-ed79f9bb0c37
+                    - resSerUrl: rs.iudx.io
+                      userEmail: email@email.com
+                      role: consumer
+                    - resSerUrl: auth.iudx.io
+                      userEmail: email@email.com
+                      role: provider
         description: The body is a JSON object with a JSON array containing the objects that need to be created.
         required: true
   /auth/v1/policies/requests:

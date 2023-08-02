@@ -10,27 +10,36 @@ import io.vertx.core.json.JsonObject;
 
 @DataObject(generateConverter = true)
 public class CreateDelegationRequest {
-    private UUID userId;
-    private String resSerId;
+    private String userEmail;
+    private String resSerUrl;
+    private Roles role;
 
-    public String getUserId() {
-        return userId.toString();
+    public String getUserEmail() {
+        return userEmail.toString();
     }
 
-    public void setUserId(String userId) {
-        this.userId = UUID.fromString(userId);
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
     }
 
-
-    public String getResSerId() {
-        return resSerId;
+    public String getResSerUrl() {
+        return resSerUrl;
     }
 
-    public void setResSerId(String resSerId) {
-        this.resSerId = resSerId;
+    public void setResSerUrl(String resSerUrl) {
+        this.resSerUrl = resSerUrl;
+    }
+
+    public Roles getRole() {
+      return role;
+    }
+
+    public void setRole(Roles role) {
+      this.role = role;
     }
 
     public CreateDelegationRequest(JsonObject json) {
+      json.put("role", json.getString("role").toUpperCase());
         CreateDelegationRequestConverter.fromJson(json, this);
     }
 
@@ -51,8 +60,8 @@ public class CreateDelegationRequest {
     @Override
     public String toString() {
         return "CreateDelegationRequest{" +
-                "userId=" + userId +
-                ", resSerId='" + resSerId + '\'' +
+                "userEmail=" + userEmail +
+                ", resSerUrl='" + resSerUrl + '\'' +
                 '}';
     }
 }
