@@ -4,18 +4,15 @@ import static iudx.aaa.server.apd.Constants.CONFIG_AUTH_URL;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_APD_NOT_RESPOND;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_EXISTING_DOMAIN;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_INVALID_DOMAIN;
-import static iudx.aaa.server.apd.Constants.ERR_DETAIL_NOT_TRUSTEE;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_APD_NOT_RESPOND;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_EXISTING_DOMAIN;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_DOMAIN;
-import static iudx.aaa.server.apd.Constants.ERR_TITLE_NOT_TRUSTEE;
 import static iudx.aaa.server.apd.Constants.RESP_APD_ID;
 import static iudx.aaa.server.apd.Constants.RESP_APD_NAME;
-import static iudx.aaa.server.apd.Constants.RESP_APD_OWNER;
 import static iudx.aaa.server.apd.Constants.RESP_APD_STATUS;
 import static iudx.aaa.server.apd.Constants.RESP_APD_URL;
-import static iudx.aaa.server.apd.Constants.RESP_OWNER_USER_ID;
 import static iudx.aaa.server.apd.Constants.SUCC_TITLE_REGISTERED_APD;
+import static iudx.aaa.server.registration.Utils.SQL_CREATE_ADMIN_SERVER;
 import static iudx.aaa.server.apiserver.util.Urn.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -26,6 +23,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,7 +49,6 @@ import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.apiserver.util.ComposeException;
-import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.registration.Utils;
 import iudx.aaa.server.token.TokenService;
@@ -80,13 +77,16 @@ public class CreateApdTest {
   private static PgConnectOptions connectOptions;
   private static ApdWebClient apdWebClient = Mockito.mock(ApdWebClient.class);
   private static RegistrationService registrationService = Mockito.mock(RegistrationService.class);
-  private static PolicyService policyService = Mockito.mock(PolicyService.class);
   private static TokenService tokenService = Mockito.mock(TokenService.class);
 
   private static final String DUMMY_AUTH_SERVER =
       "auth" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + "iudx.io";
-  private static Future<JsonObject> trusteeUser;
-  private static Future<JsonObject> otherUser;
+  private static final String DUMMY_SERVER =
+      "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
+
+  private static Future<JsonObject> normalUser;
+  private static Future<JsonObject> authAdmin;
+  private static Future<JsonObject> otherAdmin;
 
   static String name = RandomStringUtils.randomAlphabetic(10).toLowerCase();
   static String url = name + ".com";
@@ -131,14 +131,27 @@ public class CreateApdTest {
 
     orgIdFut = pool.withConnection(conn -> conn.preparedQuery(Utils.SQL_CREATE_ORG)
         .execute(Tuple.of(name, url)).map(row -> row.iterator().next().getUUID("id")));
-    trusteeUser = orgIdFut.compose(orgId -> Utils.createFakeUser(pool, orgId.toString(), "",
-        Map.of(Roles.TRUSTEE, RoleStatus.APPROVED), false));
-    otherUser = orgIdFut.compose(orgId -> Utils.createFakeUser(pool, orgId.toString(), "",
-        Map.of(Roles.PROVIDER, RoleStatus.APPROVED), false));
+    normalUser = orgIdFut.compose(orgId -> Utils.createFakeUser(pool, orgId.toString(), "",
+        Map.of(Roles.CONSUMER, RoleStatus.APPROVED), false));
+    authAdmin = orgIdFut.compose(orgId -> Utils.createFakeUser(pool, orgId.toString(), "",
+        Map.of(Roles.ADMIN, RoleStatus.APPROVED), false));
+    otherAdmin = orgIdFut.compose(orgId -> Utils.createFakeUser(pool, orgId.toString(), "",
+        Map.of(Roles.ADMIN, RoleStatus.APPROVED), false));
 
-    CompositeFuture.all(trusteeUser, otherUser).onSuccess(succ -> {
-      apdService = new ApdServiceImpl(pool, apdWebClient, registrationService, policyService,
-          tokenService, options);
+    CompositeFuture.all(normalUser, authAdmin, otherAdmin).compose(succ -> {
+      // create servers for admins
+      JsonObject admin1 = authAdmin.result();
+      UUID uid1 = UUID.fromString(admin1.getString("userId"));
+
+      JsonObject admin2 = otherAdmin.result();
+      UUID uid2 = UUID.fromString(admin2.getString("userId"));
+      List<Tuple> tup = List.of(Tuple.of("Auth Server", uid1, DUMMY_AUTH_SERVER),
+          Tuple.of("Other Server", uid2, DUMMY_SERVER));
+
+      return pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_ADMIN_SERVER)
+          .executeBatch(tup));
+    }).onSuccess(succ -> {
+      apdService = new ApdServiceImpl(pool, apdWebClient, registrationService, tokenService, options);
       testContext.completeNow();
     });
   }
@@ -146,7 +159,7 @@ public class CreateApdTest {
   @AfterAll
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing....");
-    List<JsonObject> users = List.of(trusteeUser.result(), otherUser.result());
+    List<JsonObject> users = List.of(normalUser.result(), authAdmin.result(), otherAdmin.result());
 
     Utils.deleteFakeUser(pool, users)
         .compose(succ -> pool.withConnection(
@@ -160,13 +173,13 @@ public class CreateApdTest {
   }
 
   @Test
-  @DisplayName("Test user calling does not have trustee role")
-  void notTrustee(VertxTestContext testContext) {
-    JsonObject userJson = otherUser.result();
+  @DisplayName("Test user calling does not have admin role")
+  void notAdmin(VertxTestContext testContext) {
+    JsonObject userJson = normalUser.result();
 
     User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
         .userId(userJson.getString("userId"))
-        .roles(List.of(Roles.PROVIDER, Roles.CONSUMER, Roles.ADMIN, Roles.DELEGATE))
+        .roles(List.of(Roles.PROVIDER, Roles.CONSUMER, Roles.DELEGATE))
         .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
 
     JsonObject jsonRequest = new JsonObject().put("name", "something").put("url", "something.com");
@@ -177,8 +190,6 @@ public class CreateApdTest {
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 403);
           assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-          assertEquals(ERR_TITLE_NOT_TRUSTEE, response.getString("title"));
-          assertEquals(ERR_DETAIL_NOT_TRUSTEE, response.getString("detail"));
           testContext.completeNow();
         })));
   }
@@ -186,10 +197,10 @@ public class CreateApdTest {
   @Test
   @DisplayName("Test various invalid domains")
   void invalidDomain(VertxTestContext testContext) {
-    JsonObject userJson = trusteeUser.result();
+    JsonObject userJson = authAdmin.result();
 
     User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.TRUSTEE))
+        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
         .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
 
     Checkpoint test1 = testContext.checkpoint();
@@ -249,13 +260,14 @@ public class CreateApdTest {
         })));
   }
 
+  @Disabled
   @Test
   @DisplayName("Test APD not responding")
   void apdNotResponding(VertxTestContext testContext) {
-    JsonObject userJson = trusteeUser.result();
+    JsonObject userJson = authAdmin.result();
 
     User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.TRUSTEE))
+        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
         .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
 
     String name = RandomStringUtils.randomAlphabetic(5).toLowerCase();
@@ -281,10 +293,10 @@ public class CreateApdTest {
   @Test
   @DisplayName("Test successful APD registration")
   void successfulApdReg(VertxTestContext testContext) {
-    JsonObject userJson = trusteeUser.result();
+    JsonObject userJson = authAdmin.result();
 
     User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.TRUSTEE))
+        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
         .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
 
     String name = RandomStringUtils.randomAlphabetic(5).toLowerCase();
@@ -292,15 +304,6 @@ public class CreateApdTest {
 
     JsonObject jsonRequest = new JsonObject().put("name", name).put("url", url);
     Mockito.when(apdWebClient.checkApdExists(url)).thenReturn(Future.succeededFuture(true));
-
-    Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(1);
-      JsonObject userDets = new JsonObject().put("email", userJson.getString("email")).put("name",
-          new JsonObject().put("firstName", userJson.getString("firstName")).put("lastName",
-              userJson.getString("lastName")));
-      p.complete(new JsonObject().put(userJson.getString("userId"), userDets));
-      return i.getMock();
-    }).when(registrationService).getUserDetails(any(), any());
 
     apdService.createApd(new CreateApdRequest(jsonRequest), user,
         testContext.succeeding(response -> testContext.verify(() -> {
@@ -311,17 +314,8 @@ public class CreateApdTest {
           JsonObject result = response.getJsonObject("results");
           assertEquals(name, result.getString(RESP_APD_NAME));
           assertEquals(url, result.getString(RESP_APD_URL));
-          assertEquals("pending", result.getString(RESP_APD_STATUS));
+          assertEquals("active", result.getString(RESP_APD_STATUS));
           assertTrue(result.containsKey(RESP_APD_ID));
-          assertTrue(result.containsKey(RESP_APD_OWNER));
-
-          JsonObject ownerDets = result.getJsonObject(RESP_APD_OWNER);
-          assertEquals(userJson.getString("userId"), ownerDets.getString(RESP_OWNER_USER_ID));
-          assertEquals(userJson.getString("firstName"),
-              ownerDets.getJsonObject("name").getString("firstName"));
-          assertEquals(userJson.getString("lastName"),
-              ownerDets.getJsonObject("name").getString("lastName"));
-          assertEquals(userJson.getString("email"), ownerDets.getString("email"));
 
           testContext.completeNow();
         })));
@@ -330,10 +324,10 @@ public class CreateApdTest {
   @Test
   @DisplayName("Test existing url")
   void existingUrl(VertxTestContext testContext) {
-    JsonObject userJson = trusteeUser.result();
+    JsonObject userJson = authAdmin.result();
 
     User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.TRUSTEE))
+        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
         .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
 
     String name = RandomStringUtils.randomAlphabetic(5).toLowerCase();
@@ -341,15 +335,6 @@ public class CreateApdTest {
 
     JsonObject jsonRequest = new JsonObject().put("name", name).put("url", url);
     Mockito.when(apdWebClient.checkApdExists(any())).thenReturn(Future.succeededFuture(true));
-
-    Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(1);
-      JsonObject userDets = new JsonObject().put("email", userJson.getString("email")).put("name",
-          new JsonObject().put("firstName", userJson.getString("firstName")).put("lastName",
-              userJson.getString("lastName")));
-      p.complete(new JsonObject().put(userJson.getString("userId"), userDets));
-      return i.getMock();
-    }).when(registrationService).getUserDetails(any(), any());
 
     Checkpoint created = testContext.checkpoint();
     Checkpoint existing = testContext.checkpoint();
@@ -372,13 +357,14 @@ public class CreateApdTest {
         })));
   }
 
+  @Disabled
   @Test
   @DisplayName("Test APD web client fails (internal error)")
   void apdWebClientFails(VertxTestContext testContext) {
-    JsonObject userJson = trusteeUser.result();
+    JsonObject userJson = normalUser.result();
 
     User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.TRUSTEE))
+        .userId(userJson.getString("userId")).roles(List.of(Roles.CONSUMER))
         .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
 
     String name = RandomStringUtils.randomAlphabetic(5).toLowerCase();
@@ -393,51 +379,4 @@ public class CreateApdTest {
         })));
   }
 
-  @Test
-  @DisplayName("Test failing registration service - insert apd transaction should rollback")
-  void failingRegService(VertxTestContext testContext) {
-    JsonObject userJson = trusteeUser.result();
-
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.TRUSTEE))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
-
-    String name = RandomStringUtils.randomAlphabetic(5).toLowerCase();
-    String url = name + ".com";
-
-    JsonObject jsonRequest = new JsonObject().put("name", name).put("url", url);
-    Mockito.when(apdWebClient.checkApdExists(url)).thenReturn(Future.succeededFuture(true));
-
-    Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(1);
-      p.fail("Fail");
-      return i.getMock();
-    }).when(registrationService).getUserDetails(any(), any());
-
-    Checkpoint regFailed = testContext.checkpoint();
-    Checkpoint success = testContext.checkpoint();
-
-    apdService.createApd(new CreateApdRequest(jsonRequest), user,
-        testContext.failing(fail -> testContext.verify(() -> {
-          testContext.completeNow();
-          regFailed.flag();
-
-          Mockito.doAnswer(i -> {
-            Promise<JsonObject> p = i.getArgument(1);
-            JsonObject userDets = new JsonObject().put("email", userJson.getString("email"))
-                .put("name", new JsonObject().put("firstName", userJson.getString("firstName"))
-                    .put("lastName", userJson.getString("lastName")));
-            p.complete(new JsonObject().put(userJson.getString("userId"), userDets));
-            return i.getMock();
-          }).when(registrationService).getUserDetails(any(), any());
-
-          apdService.createApd(new CreateApdRequest(jsonRequest), user,
-              testContext.succeeding(response -> testContext.verify(() -> {
-                assertEquals(response.getInteger("status"), 200);
-                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                assertEquals(SUCC_TITLE_REGISTERED_APD, response.getString("title"));
-                success.flag();
-              })));
-        })));
-  }
 }

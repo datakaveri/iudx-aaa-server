@@ -62,8 +62,8 @@ public class Utils {
           + "resource_server ON d.resource_server_id = resource_server.id"
           + " WHERE url = ANY($1::text[]) AND d.owner_id = $2::uuid";
   public static final String SQL_CREATE_APD =
-      "INSERT INTO apds (id, name, url, owner_id, status, created_at, updated_at) VALUES "
-          + "($1::uuid, $2::text, $3::text, $4::uuid, $5::apd_status_enum, NOW(), NOW()) ";
+      "INSERT INTO apds (id, name, url, status, created_at, updated_at) VALUES "
+          + "($1::uuid, $2::text, $3::text, $4::apd_status_enum, NOW(), NOW()) ";
   public static final String SQL_DELETE_APD =
       "UPDATE apds SET status ='INACTIVE' where owner_id = ANY($1::uuid[])";
   private static final String SQL_DELETE_USER_BY_ID =

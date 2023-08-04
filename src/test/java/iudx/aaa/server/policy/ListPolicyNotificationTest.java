@@ -298,11 +298,10 @@ public class ListPolicyNotificationTest {
   }
 
   @Test
-  @DisplayName("Test admin/trustee calling API")
+  @DisplayName("Test admin calling API")
   void failDisallowedRoles(VertxTestContext testContext) {
     // same as the create notification tests here
     Checkpoint checkAdmin = testContext.checkpoint();
-    Checkpoint checkTrustee = testContext.checkpoint();
     JsonObject admin = consumer.result();
     String randomUserId = UUID.randomUUID().toString();
     User userAdmin = new UserBuilder().keycloakId(admin.getString("keycloakId")).userId(randomUserId)
@@ -317,21 +316,6 @@ public class ListPolicyNotificationTest {
               assertEquals(401, response.getInteger("status"));
               checkAdmin.flag();
             })));
-
-    JsonObject trustee = consumer.result();
-    User trusteeUser = new UserBuilder().keycloakId(trustee.getString("keycloakId")).userId(randomUserId)
-            .name(trustee.getString("firstName"), trustee.getString("lastName"))
-            .roles(List.of(Roles.TRUSTEE)).build();
-
-    policyService.listPolicyNotification(trusteeUser, new JsonObject(),
-            testContext.succeeding(response -> testContext.verify(() -> {
-              assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
-              assertEquals(ERR_DETAIL_LIST_DELEGATE_ROLES, response.getString("detail"));
-              assertEquals(ERR_TITLE_INVALID_ROLES, response.getString("title"));
-              assertEquals(401, response.getInteger("status"));
-              checkTrustee.flag();
-            })));
-
   }
 
   @Test

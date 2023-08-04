@@ -194,11 +194,10 @@ public class CreatePolicyNotificationTest {
   }
 
   @Test
-  @DisplayName("User with admin/provider/trustee/delegate role cannot create notification")
+  @DisplayName("User with admin/provider/delegate role cannot create notification")
   void failOtherRolesCreateNotif(VertxTestContext testContext) {
     Checkpoint checkAdmin = testContext.checkpoint();
     Checkpoint checkProvider = testContext.checkpoint();
-    Checkpoint checkTrustee = testContext.checkpoint();
     Checkpoint checkDelegate = testContext.checkpoint();
 
     JsonObject userJson = consumer.result();
@@ -237,20 +236,6 @@ public class CreatePolicyNotificationTest {
               assertEquals(INVALID_ROLE, response.getString("detail"));
               assertEquals(INVALID_ROLE, response.getString(TITLE));
               checkProvider.flag();
-            })));
-
-    User trusteeUser = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-            .userId(userJson.getString("userId"))
-            .name(userJson.getString("firstName"), userJson.getString("lastName"))
-            .roles(List.of(Roles.TRUSTEE)).build();
-
-    policyService.createPolicyNotification(request, trusteeUser,
-            testContext.succeeding(response -> testContext.verify(() -> {
-              assertEquals(403, response.getInteger("status"));
-              assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
-              assertEquals(INVALID_ROLE, response.getString("detail"));
-              assertEquals(INVALID_ROLE, response.getString(TITLE));
-              checkTrustee.flag();
             })));
 
     User delegateUser = new UserBuilder().keycloakId(userJson.getString("keycloakId"))

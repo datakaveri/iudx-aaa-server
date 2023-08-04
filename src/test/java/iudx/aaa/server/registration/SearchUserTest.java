@@ -86,7 +86,6 @@ public class SearchUserTest {
 
   static Future<JsonObject> providerDeleg;
   static Future<JsonObject> consumerAdmin;
-  static Future<JsonObject> trustee;
   static Future<UUID> orgIdFut;
 
   @BeforeAll
@@ -125,7 +124,7 @@ public class SearchUserTest {
     options.put(CONFIG_AUTH_URL, dbConfig.getString(CONFIG_AUTH_URL)).put(CONFIG_OMITTED_SERVERS,
         dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS));
     /*
-     * create fake organization, and create 3 mock users. One user has an organization + phone
+     * create fake organization, and create 2 mock users. One user has an organization + phone
      * number other does not
      */
 
@@ -140,15 +139,11 @@ public class SearchUserTest {
     rolesB.put(Roles.CONSUMER, RoleStatus.APPROVED);
     rolesB.put(Roles.ADMIN, RoleStatus.APPROVED);
 
-    Map<Roles, RoleStatus> rolesC = new HashMap<Roles, RoleStatus>();
-    rolesC.put(Roles.TRUSTEE, RoleStatus.APPROVED);
-
     providerDeleg =
         orgIdFut.compose(id -> Utils.createFakeUser(pool, id.toString(), url, rolesA, true));
     consumerAdmin = Utils.createFakeUser(pool, Constants.NIL_UUID, "", rolesB, false);
-    trustee = Utils.createFakeUser(pool, Constants.NIL_UUID, "", rolesC, false);
 
-    CompositeFuture.all(providerDeleg, consumerAdmin, trustee).onSuccess(res -> {
+    CompositeFuture.all(providerDeleg, consumerAdmin).onSuccess(res -> {
       registrationService =
           new RegistrationServiceImpl(pool, kc, tokenService, policyService, options);
       testContext.completeNow();
@@ -161,7 +156,7 @@ public class SearchUserTest {
 
     Utils
         .deleteFakeUser(pool,
-            List.of(consumerAdmin.result(), providerDeleg.result(), trustee.result()))
+            List.of(consumerAdmin.result(), providerDeleg.result()))
         .compose(success -> pool.withConnection(
             conn -> conn.preparedQuery(SQL_DELETE_ORG).execute(Tuple.of(orgIdFut.result()))))
         .onComplete(x -> {
@@ -464,85 +459,6 @@ public class SearchUserTest {
           assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
           assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
           assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-          testContext.completeNow();
-        })));
-  }
-
-  @Test
-  @DisplayName("Test search - trustee does not have auth admin policy")
-  void searchTrusteeNoAuthAdminPolicy(VertxTestContext testContext) {
-    JsonObject userJson = trustee.result();
-    List<Roles> roles = List.of(Roles.TRUSTEE);
-
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(roles)
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
-
-    Mockito.doAnswer(i -> {
-      Promise<Void> p = i.getArgument(1);
-      p.fail(new ComposeException(403, URN_INVALID_INPUT, NO_AUTH_POLICY, NO_AUTH_ADMIN_POLICY));
-      return i.getMock();
-    }).when(policyService).checkAuthPolicy(Mockito.eq(userJson.getString("userId")), any());
-
-    JsonObject consumerUser = consumerAdmin.result();
-
-    JsonObject searchUser = new JsonObject().put("email", consumerUser.getString("email"))
-        .put("role", Roles.CONSUMER.toString().toLowerCase());
-    
-    registrationService.listUser(user, searchUser, new JsonObject(),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(403, response.getInteger("status"));
-          assertEquals(NO_AUTH_POLICY, response.getString("title"));
-          assertEquals(NO_AUTH_ADMIN_POLICY, response.getString("detail"));
-          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-          testContext.completeNow();
-        })));
-  }
-
-  @Test
-  @DisplayName("Test search - trustee finds consumer successfully")
-  void searchTrusteeFindConsumer(VertxTestContext testContext) {
-    JsonObject userJson = trustee.result();
-    List<Roles> roles = List.of(Roles.TRUSTEE);
-
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(roles)
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
-
-    JsonObject consumerUser = consumerAdmin.result();
-
-    Mockito.doAnswer(i -> {
-      Promise<Void> p = i.getArgument(1);
-      p.complete();
-      return i.getMock();
-    }).when(policyService).checkAuthPolicy(Mockito.eq(userJson.getString("userId")), any());
-
-    JsonObject kcResult = new JsonObject().put("keycloakId", consumerUser.getString("keycloakId"))
-        .put("email", consumerUser.getString("email"))
-        .put("name", new JsonObject().put("firstName", consumerUser.getString("firstName"))
-            .put("lastName", consumerUser.getString("lastName")));
-
-    Mockito.when(kc.findUserByEmail(consumerUser.getString("email")))
-        .thenReturn(Future.succeededFuture(kcResult));
-
-    JsonObject searchUser = new JsonObject().put("email", consumerUser.getString("email"))
-        .put("role", Roles.CONSUMER.toString().toLowerCase());
-    
-    registrationService.listUser(user, searchUser, new JsonObject(),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(200, response.getInteger("status"));
-          assertEquals(SUCC_TITLE_USER_FOUND, response.getString("title"));
-          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-
-          JsonObject result = response.getJsonObject("results");
-
-          JsonObject name = result.getJsonObject("name");
-          assertEquals(name.getString("firstName"), consumerUser.getString("firstName"));
-          assertEquals(name.getString("lastName"), consumerUser.getString("lastName"));
-
-          assertTrue(result.getJsonObject(RESP_ORG) == null);
-          assertEquals(result.getString("userId"), consumerUser.getString("userId"));
-
           testContext.completeNow();
         })));
   }

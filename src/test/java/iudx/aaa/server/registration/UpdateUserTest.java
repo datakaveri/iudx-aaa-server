@@ -225,77 +225,6 @@ public class UpdateUserTest {
   }
 
   @Test
-  @DisplayName("[Update roles] Test no org ID when delegate requesting trustee")
-  void delegateNoOrgId(VertxTestContext testContext) {
-    JsonObject req = new JsonObject().put("roles", new JsonArray().add("trustee"));
-
-    UpdateProfileRequest request = new UpdateProfileRequest(req);
-
-    List<Roles> roles = List.of(Roles.DELEGATE);
-    Map<Roles, RoleStatus> cons = new HashMap<Roles, RoleStatus>();
-    cons.put(Roles.DELEGATE, RoleStatus.APPROVED);
-
-    Future<JsonObject> delegate =
-        Utils.createFakeUser(pool, orgIdFut.result().toString(), "", cons, false);
-
-    delegate.onSuccess(userJson -> {
-      createdUsers.add(userJson);
-
-      User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-          .userId(userJson.getString("userId")).roles(roles)
-          .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
-
-      Mockito.when(kc.getEmailId(any()))
-          .thenReturn(Future.succeededFuture(userJson.getString("email")));
-
-      registrationService.updateUser(request, user,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(400, response.getInteger("status"));
-            assertEquals(ERR_TITLE_ORG_ID_REQUIRED, response.getString("title"));
-            assertEquals(URN_MISSING_INFO.toString(), response.getString("type"));
-            assertEquals(ERR_DETAIL_ORG_ID_REQUIRED, response.getString("detail"));
-            testContext.completeNow();
-          })));
-    });
-  }
-
-  @Test
-  @DisplayName("[Update roles] Test invalid org Id when delegate getting trustee")
-  void delegateInvalidOrg(VertxTestContext testContext) {
-    JsonObject req = new JsonObject().put("roles", new JsonArray().add("trustee")).put("orgId",
-        UUID.randomUUID().toString());
-
-    UpdateProfileRequest request = new UpdateProfileRequest(req);
-
-    List<Roles> roles = List.of(Roles.DELEGATE);
-    Map<Roles, RoleStatus> cons = new HashMap<Roles, RoleStatus>();
-    cons.put(Roles.DELEGATE, RoleStatus.APPROVED);
-
-    Future<JsonObject> consumer =
-        Utils.createFakeUser(pool, orgIdFut.result().toString(), "", cons, false);
-
-    consumer.onSuccess(userJson -> {
-      createdUsers.add(userJson);
-
-      User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-          .userId(userJson.getString("userId")).roles(roles)
-          .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
-
-      Mockito.when(kc.getEmailId(any()))
-          .thenReturn(Future.succeededFuture(userJson.getString("email")));
-
-      registrationService.updateUser(request, user,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(400, response.getInteger("status"));
-            assertEquals(ERR_TITLE_ORG_NO_EXIST, response.getString("title"));
-            assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-            assertEquals(ERR_DETAIL_ORG_NO_EXIST, response.getString("detail"));
-            testContext.completeNow();
-          })));
-    });
-  }
-
-  @Test
   @DisplayName("[Update roles] Test no org ID when consumer requesting delegate")
   void consumerNoOrgId(VertxTestContext testContext) {
     JsonObject req = new JsonObject().put("roles", new JsonArray().add("delegate"));
@@ -399,10 +328,10 @@ public class UpdateUserTest {
   }
 
   @Test
-  @DisplayName("[Update roles] Test consumer with gmail email cannot become delegate, trustee")
+  @DisplayName("[Update roles] Test consumer with gmail email cannot become delegate")
   void consumerDomainMismatch(VertxTestContext testContext) {
 
-    JsonObject req = new JsonObject().put("roles", new JsonArray().add("delegate").add("trustee"))
+    JsonObject req = new JsonObject().put("roles", new JsonArray().add("delegate"))
         .put("orgId", orgIdFut.result().toString());
 
     UpdateProfileRequest request = new UpdateProfileRequest(req);
@@ -497,128 +426,6 @@ public class UpdateUserTest {
     });
   }
 
-  @Test
-  @DisplayName("[Update roles] Test trustee get delegate role (orgId needed)")
-  void trusteeAddDele(VertxTestContext testContext) {
-
-    JsonObject req = new JsonObject().put("roles", new JsonArray().add("delegate")).put("orgId",
-        orgIdFut.result().toString());
-
-    UpdateProfileRequest request = new UpdateProfileRequest(req);
-
-    List<Roles> roles = List.of(Roles.TRUSTEE);
-    Map<Roles, RoleStatus> cons = new HashMap<Roles, RoleStatus>();
-    cons.put(Roles.TRUSTEE, RoleStatus.APPROVED);
-
-    Future<JsonObject> trustee =
-        Utils.createFakeUser(pool, orgIdFut.result().toString(), url, cons, false);
-
-    trustee.onSuccess(userJson -> {
-      createdUsers.add(userJson);
-
-      User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-          .userId(userJson.getString("userId")).roles(roles)
-          .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
-
-      Mockito.when(kc.getEmailId(any()))
-          .thenReturn(Future.succeededFuture(userJson.getString("email")));
-
-      registrationService.updateUser(request, user,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(200, response.getInteger("status"));
-            assertEquals(SUCC_TITLE_UPDATED_USER_ROLES, response.getString("title"));
-            assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-
-            JsonObject result = response.getJsonObject("results");
-
-            JsonObject name = result.getJsonObject("name");
-            assertEquals(name.getString("firstName"), userJson.getString("firstName"));
-            assertEquals(name.getString("lastName"), userJson.getString("lastName"));
-
-            @SuppressWarnings("unchecked")
-            List<String> returnedRoles = result.getJsonArray("roles").getList();
-            List<String> rolesString =
-                List.of(Roles.TRUSTEE.name().toLowerCase(), Roles.DELEGATE.name().toLowerCase());
-            assertTrue(
-                returnedRoles.containsAll(rolesString) && rolesString.containsAll(returnedRoles));
-
-            JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
-            JsonObject defaultClient = clients.getJsonObject(0);
-            assertTrue(clients.size() > 0);
-            assertEquals(defaultClient.getString(RESP_CLIENT_ID), userJson.getString("clientId"));
-
-            JsonObject org = result.getJsonObject(RESP_ORG);
-            assertEquals(org.getString("url"), userJson.getString("url"));
-
-            assertEquals(result.getString(RESP_EMAIL), userJson.getString("email"));
-            assertEquals(result.getString("userId"), userJson.getString("userId"));
-            assertEquals(result.getString("keycloakId"), userJson.getString("keycloakId"));
-
-            testContext.completeNow();
-          })));
-    });
-  }
-
-  @Test
-  @DisplayName("[Update roles] Test trustee get consumer role")
-  void trusteeAddCons(VertxTestContext testContext) {
-
-    JsonObject req = new JsonObject().put("roles", new JsonArray().add("consumer"));;
-
-    UpdateProfileRequest request = new UpdateProfileRequest(req);
-
-    List<Roles> roles = List.of(Roles.TRUSTEE);
-    Map<Roles, RoleStatus> cons = new HashMap<Roles, RoleStatus>();
-    cons.put(Roles.TRUSTEE, RoleStatus.APPROVED);
-
-    Future<JsonObject> trustee =
-        Utils.createFakeUser(pool, orgIdFut.result().toString(), url, cons, false);
-
-    trustee.onSuccess(userJson -> {
-      createdUsers.add(userJson);
-
-      User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-          .userId(userJson.getString("userId")).roles(roles)
-          .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
-
-      Mockito.when(kc.getEmailId(any()))
-          .thenReturn(Future.succeededFuture(userJson.getString("email")));
-
-      registrationService.updateUser(request, user,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(200, response.getInteger("status"));
-            assertEquals(SUCC_TITLE_UPDATED_USER_ROLES, response.getString("title"));
-            assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-
-            JsonObject result = response.getJsonObject("results");
-
-            JsonObject name = result.getJsonObject("name");
-            assertEquals(name.getString("firstName"), userJson.getString("firstName"));
-            assertEquals(name.getString("lastName"), userJson.getString("lastName"));
-
-            @SuppressWarnings("unchecked")
-            List<String> returnedRoles = result.getJsonArray("roles").getList();
-            List<String> rolesString =
-                List.of(Roles.TRUSTEE.name().toLowerCase(), Roles.CONSUMER.name().toLowerCase());
-            assertTrue(
-                returnedRoles.containsAll(rolesString) && rolesString.containsAll(returnedRoles));
-
-            JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
-            JsonObject defaultClient = clients.getJsonObject(0);
-            assertTrue(clients.size() > 0);
-            assertEquals(defaultClient.getString(RESP_CLIENT_ID), userJson.getString("clientId"));
-
-            JsonObject org = result.getJsonObject(RESP_ORG);
-            assertEquals(org.getString("url"), userJson.getString("url"));
-
-            assertEquals(result.getString(RESP_EMAIL), userJson.getString("email"));
-            assertEquals(result.getString("userId"), userJson.getString("userId"));
-            assertEquals(result.getString("keycloakId"), userJson.getString("keycloakId"));
-
-            testContext.completeNow();
-          })));
-    });
-  }
 
   @Test
   @DisplayName("[Update roles] Test existing role request")

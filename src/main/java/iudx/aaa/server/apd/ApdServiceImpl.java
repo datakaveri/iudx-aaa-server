@@ -27,7 +27,6 @@ import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_URL;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_EXISTING_DOMAIN;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_INVALID_DOMAIN;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_INVALID_UUID;
-import static iudx.aaa.server.apd.Constants.ERR_DETAIL_NOT_TRUSTEE;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_NO_ROLES_PUT;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_NO_USER_PROFILE;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_CANT_CHANGE_APD_STATUS;
@@ -37,7 +36,6 @@ import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_APDID;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_DOMAIN;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_REQUEST;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_REQUEST_ID;
-import static iudx.aaa.server.apd.Constants.ERR_TITLE_NOT_TRUSTEE;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_NO_ROLES_PUT;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_NO_USER_PROFILE;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_POLICY_EVAL_FAILED;
@@ -45,18 +43,14 @@ import static iudx.aaa.server.apd.Constants.GET_APDINFO_ID;
 import static iudx.aaa.server.apd.Constants.GET_APDINFO_URL;
 import static iudx.aaa.server.apd.Constants.INTERNALERROR;
 import static iudx.aaa.server.apd.Constants.LIST_AUTH_QUERY;
-import static iudx.aaa.server.apd.Constants.LIST_TRUSTEE_QUERY;
 import static iudx.aaa.server.apd.Constants.LIST_USER_QUERY;
 import static iudx.aaa.server.apd.Constants.NIL_UUID;
 import static iudx.aaa.server.apd.Constants.RESP_APD_ID;
 import static iudx.aaa.server.apd.Constants.RESP_APD_NAME;
-import static iudx.aaa.server.apd.Constants.RESP_APD_OWNER;
 import static iudx.aaa.server.apd.Constants.RESP_APD_STATUS;
 import static iudx.aaa.server.apd.Constants.RESP_APD_URL;
-import static iudx.aaa.server.apd.Constants.RESP_OWNER_USER_ID;
 import static iudx.aaa.server.apd.Constants.SQL_CHECK_ADMIN_OF_SERVER;
 import static iudx.aaa.server.apd.Constants.SQL_GET_APDS_BY_ID_ADMIN;
-import static iudx.aaa.server.apd.Constants.SQL_GET_APDS_BY_ID_TRUSTEE;
 import static iudx.aaa.server.apd.Constants.SQL_GET_APD_URL_STATUS;
 import static iudx.aaa.server.apd.Constants.SQL_INSERT_APD_IF_NOT_EXISTS;
 import static iudx.aaa.server.apd.Constants.SQL_UPDATE_APD_STATUS;
@@ -82,13 +76,11 @@ import iudx.aaa.server.apiserver.ApdInfoObj;
 import iudx.aaa.server.apiserver.ApdStatus;
 import iudx.aaa.server.apiserver.ApdUpdateRequest;
 import iudx.aaa.server.apiserver.CreateApdRequest;
-import iudx.aaa.server.apiserver.CreatePolicyRequest;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.util.ComposeException;
-import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.token.TokenService;
 import java.util.ArrayList;
@@ -98,7 +90,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
@@ -122,32 +113,27 @@ public class ApdServiceImpl implements ApdService {
   private PgPool pool;
   private ApdWebClient apdWebClient;
   private RegistrationService registrationService;
-  private PolicyService policyService;
   private TokenService tokenService;
 
   public ApdServiceImpl(PgPool pool, ApdWebClient apdWebClient, RegistrationService regService,
-      PolicyService polService, TokenService tokService, JsonObject options) {
+      TokenService tokService, JsonObject options) {
     this.pool = pool;
     this.apdWebClient = apdWebClient;
     this.registrationService = regService;
-    this.policyService = polService;
     this.tokenService = tokService;
     AUTH_SERVER_URL = options.getString(CONFIG_AUTH_URL);
 
   }
 
   /**
-   * authAdminStates and trusteeStates are Maps that determine what kind of state changes each user
+   * authAdminStates determines what kind of state changes each user
    * can make. See javadoc for updateApd for allowed states. Currently, each starting state is
    * present only once, so we can have Map<ApdStatus, ApdStatus>. If this changes, we can have
-   * Map<ApdStatus, Set<ApdStatus>>. Note that there is no PENDING starting state for trusteeStates.
+   * Map<ApdStatus, Set<ApdStatus>>. 
    * Since we use '==' for equality checking of ApdStatus enum, no NPE is thrown.
    */
-  static private Map<ApdStatus, ApdStatus> authAdminStates = Map.of(ApdStatus.PENDING,
-      ApdStatus.ACTIVE, ApdStatus.ACTIVE, ApdStatus.INACTIVE, ApdStatus.INACTIVE, ApdStatus.ACTIVE);
-
-  static private Map<ApdStatus, ApdStatus> trusteeStates =
-      Map.of(ApdStatus.ACTIVE, ApdStatus.INACTIVE, ApdStatus.INACTIVE, ApdStatus.PENDING);
+  static private Map<ApdStatus, ApdStatus> authAdminStates =
+      Map.of(ApdStatus.ACTIVE, ApdStatus.INACTIVE, ApdStatus.INACTIVE, ApdStatus.ACTIVE);
 
   @Override
   public ApdService listApd(User user, Handler<AsyncResult<JsonObject>> handler) {
@@ -163,10 +149,7 @@ public class ApdServiceImpl implements ApdService {
       return this;
     }
 
-    List<Roles> roles = user.getRoles();
-    Boolean isTrustee = roles.contains(Roles.TRUSTEE);
-    Future<Boolean> isAuthAdmin =
-            isTrustee ? Future.succeededFuture(false) : checkAdminServer(user);
+    Future<Boolean> isAuthAdmin = checkAdminServer(user);
 
     Future<List<String>> apdIds =
             isAuthAdmin.compose(
@@ -174,21 +157,16 @@ public class ApdServiceImpl implements ApdService {
                       String query;
                       Tuple tuple;
                       if (!authAdmin) {
-                        if (isTrustee) {
-                          query = LIST_TRUSTEE_QUERY;
-                          tuple = Tuple.of(UUID.fromString(user.getUserId()), ApdStatus.ACTIVE.toString());
-                        } else {
                           query = LIST_USER_QUERY;
                           tuple = Tuple.of(ApdStatus.ACTIVE.toString());
                         }
 
-                      } else {
+                       else {
                         query = LIST_AUTH_QUERY;
                         tuple =
                                 Tuple.of(
                                         ApdStatus.ACTIVE.toString(),
-                                        ApdStatus.INACTIVE.toString(),
-                                        ApdStatus.PENDING.toString());
+                                        ApdStatus.INACTIVE.toString());
                       }
 
                       Collector<Row, ?, List<String>> ApdIdCollector =
@@ -291,12 +269,10 @@ public class ApdServiceImpl implements ApdService {
       return this;
     }
 
-    List<Roles> roles = user.getRoles();
-    Boolean isTrustee = roles.contains(Roles.TRUSTEE);
     Future<Boolean> isAuthAdmin = checkAdminServer(user);
 
     Future<Void> checkUserRoles = isAuthAdmin.compose(res -> {
-      if (!(isTrustee || isAuthAdmin.result())) {
+      if (!isAuthAdmin.result()) {
         return Future.failedFuture(new ComposeException(403, URN_INVALID_ROLE.toString(),
             ERR_TITLE_NO_ROLES_PUT, ERR_DETAIL_NO_ROLES_PUT));
       }
@@ -306,19 +282,10 @@ public class ApdServiceImpl implements ApdService {
     Collector<Row, ?, Map<UUID, JsonObject>> collector =
         Collectors.toMap(row -> row.getUUID("apdId"), row -> row.toJson());
 
-    /* In case a user has both Auth Admin and trustee roles, auth admin takes precedence */
     Future<Map<UUID, JsonObject>> queryResult = checkUserRoles.compose(n -> {
-      String query;
-      Tuple tuple;
-      if (isAuthAdmin.result()) {
-        query = SQL_GET_APDS_BY_ID_ADMIN;
-        tuple = Tuple.of(apdIds.toArray(UUID[]::new));
-      } else {
-        query = SQL_GET_APDS_BY_ID_TRUSTEE;
-        tuple = Tuple.of(apdIds.toArray(UUID[]::new), UUID.fromString(user.getUserId()));
-      }
       return pool
-          .withConnection(conn -> conn.preparedQuery(query).collecting(collector).execute(tuple))
+          .withConnection(conn -> conn.preparedQuery(SQL_GET_APDS_BY_ID_ADMIN).collecting(collector)
+              .execute(Tuple.of(apdIds.toArray(UUID[]::new))))
           .map(res -> res.value());
     });
 
@@ -338,35 +305,9 @@ public class ApdServiceImpl implements ApdService {
       Map<UUID, ApdStatus> desiredStatus = request.stream()
           .collect(Collectors.toMap(i -> UUID.fromString(i.getApdId()), i -> i.getStatus()));
 
-      if (isAuthAdmin.result()) {
         return checkValidStatusChange(authAdminStates, currentStatus, desiredStatus);
-      } else {
-        return checkValidStatusChange(trusteeStates, currentStatus, desiredStatus);
-      }
     });
 
-    /*
-     * Function to get list of trustee user IDs who's APDs are being set to ACTIVE state. Auth Admin
-     * policies will be set for these trustees (whether they already have them or not). If not an
-     * auth admin, send empty list to skip the policy set.
-     */
-    Supplier<List<UUID>> trusteesWithActiveApds = () -> {
-      if (!isAuthAdmin.result()) {
-        return new ArrayList<UUID>();
-      }
-
-      List<UUID> ids = request.stream().filter(r -> r.getStatus() == ApdStatus.ACTIVE)
-          .map(r -> UUID.fromString(r.getApdId())).collect(Collectors.toList());
-
-      return ids.stream().map(r -> queryResult.result().get(r).getString("owner_id"))
-          .map(id -> UUID.fromString(id)).distinct().collect(Collectors.toList());
-    };
-
-    /* Function to get list of trustee user IDs from the query result map */
-    Supplier<List<String>> trusteeIds = () -> {
-      return queryResult.result().entrySet().stream()
-          .map(obj -> obj.getValue().getString("owner_id")).collect(Collectors.toList());
-    };
 
     validateStatus.compose(success -> {
       List<Tuple> tuple =
@@ -374,11 +315,9 @@ public class ApdServiceImpl implements ApdService {
               .collect(Collectors.toList());
 
       return pool
-          .withTransaction(conn -> conn.preparedQuery(SQL_UPDATE_APD_STATUS).executeBatch(tuple)
-              .compose(succ -> setAuthAdminPolicy(user, trusteesWithActiveApds.get()))
-              .compose(x -> getTrusteeDetails(trusteeIds.get())));
+          .withTransaction(conn -> conn.preparedQuery(SQL_UPDATE_APD_STATUS).executeBatch(tuple));
 
-    }).onSuccess(trusteeDetails -> {
+    }).onSuccess(updated -> {
       JsonArray response = new JsonArray();
       Map<UUID, JsonObject> apdDetails = queryResult.result();
 
@@ -388,9 +327,6 @@ public class ApdServiceImpl implements ApdService {
 
         obj.remove(RESP_APD_STATUS);
         obj.put(RESP_APD_STATUS, req.getStatus().toString().toLowerCase());
-
-        String ownerId = (String) obj.remove("owner_id");
-        obj.put(RESP_APD_OWNER, trusteeDetails.get(ownerId).put(RESP_OWNER_USER_ID, ownerId));
 
         response.add(obj);
         LOGGER.info("APD status updated : " + apdId.toString());
@@ -445,57 +381,6 @@ public class ApdServiceImpl implements ApdService {
     return p.future();
   }
 
-  /**
-   * Set auth admin policies for trustees whose APDs are going to ACTIVE state. As the trustee may
-   * already have the policy, the function handles both 'Created Policy' and 'Already Exists'. Due
-   * to this, the createPolicy method is called with individual requests instead of a list of
-   * requests ('Already Exists' will not allow the rest of the policies to be set if sent in list).
-   * 
-   * @param user The User object, in this case the Auth Admin
-   * @param activeTrustees list of user IDs of trustees in UUID
-   * @return a void future. If a policy is not set (for a reason other than already exists) or the
-   *         policy service fails, a failed future is returned.
-   */
-  private Future<Void> setAuthAdminPolicy(User user, List<UUID> activeTrustees) {
-
-    Promise<Void> response = Promise.promise();
-    /* Exit early if no trustee APDs going to active state or not auth admin */
-    if (activeTrustees.size() == 0) {
-      response.complete();
-      return response.future();
-    }
-
-    @SuppressWarnings("rawtypes")
-    List<Future> futures = new ArrayList<>();
-
-    for (UUID id : activeTrustees) {
-      JsonObject obj = new JsonObject();
-      obj.put("userId", id.toString());
-      obj.put("itemId", AUTH_SERVER_URL);
-      obj.put("constraints", new JsonObject());
-      obj.put("itemType", "resource_server");
-      CreatePolicyRequest req = new CreatePolicyRequest(obj);
-      Promise<JsonObject> promise = Promise.promise();
-      policyService.createPolicy(List.of(req), user, new JsonObject(), promise);
-      futures.add(promise.future());
-    }
-
-    CompositeFuture.all(futures).onSuccess(res -> {
-      List<JsonObject> result = res.list();
-      Boolean success =
-          result.stream().allMatch(obj -> obj.getString("type").equals(URN_SUCCESS.toString())
-              || obj.getString("type").equals(URN_ALREADY_EXISTS.toString()));
-      if (success) {
-        response.complete();
-      } else {
-        response.fail("Failed to set admin policy");
-      }
-    }).onFailure(res -> {
-      response.fail("Failed to set admin policy");
-    });
-    return response.future();
-  }
-
   @Override
   public ApdService createApd(CreateApdRequest request, User user,
       Handler<AsyncResult<JsonObject>> handler) {
@@ -509,16 +394,18 @@ public class ApdServiceImpl implements ApdService {
       return this;
     }
 
-    if (!user.getRoles().contains(Roles.TRUSTEE)) {
-      Response resp = new ResponseBuilder().type(URN_INVALID_ROLE).title(ERR_TITLE_NOT_TRUSTEE)
-          .detail(ERR_DETAIL_NOT_TRUSTEE).status(403).build();
-      handler.handle(Future.succeededFuture(resp.toJson()));
-      return this;
-    }
+    Future<Boolean> isAuthAdmin = checkAdminServer(user);
+
+    Future<Void> checkAdmin = isAuthAdmin.compose(res -> {
+      if (!isAuthAdmin.result()) {
+        return Future.failedFuture(new ComposeException(403, URN_INVALID_ROLE.toString(),
+            ERR_TITLE_NO_ROLES_PUT, ERR_DETAIL_NO_ROLES_PUT));
+      }
+      return Future.succeededFuture();
+    });
 
     String url = request.getUrl().toLowerCase();
     String name = request.getName();
-    UUID trusteeId = UUID.fromString(user.getUserId());
 
     if (!InternetDomainName.isValid(url)) {
       Response resp = new ResponseBuilder().type(URN_INVALID_INPUT).title(ERR_TITLE_INVALID_DOMAIN)
@@ -527,8 +414,12 @@ public class ApdServiceImpl implements ApdService {
       return this;
     }
 
-    Tuple tuple = Tuple.of(name, url, trusteeId);
-    Future<Boolean> isApdOnline = apdWebClient.checkApdExists(url);
+    Tuple tuple = Tuple.of(name, url);
+    /*
+     * Disable APD existence check via /userclasses (apdWebClient.checkApdExists(url)) API for now.
+     * TODO: maybe have a liveness check with a proper liveness API later on.
+     */
+    Future<Boolean> isApdOnline = checkAdmin.compose(res -> Future.succeededFuture(true));
 
     Future<UUID> apdId = isApdOnline
         .compose(success -> pool.withTransaction(
@@ -541,17 +432,10 @@ public class ApdServiceImpl implements ApdService {
           return Future.succeededFuture(res.iterator().next().getUUID(0));
         });
 
-    Future<Map<String, JsonObject>> trusteeDetailsFut =
-        apdId.compose(success -> getTrusteeDetails(List.of(trusteeId.toString())));
-
-    trusteeDetailsFut.onSuccess(trusteeDetails -> {
+    apdId.onSuccess(created -> {
       JsonObject response = new JsonObject();
       response.put(RESP_APD_ID, apdId.result().toString()).put(RESP_APD_NAME, name)
-          .put(RESP_APD_URL, url).put(RESP_APD_STATUS, ApdStatus.PENDING.toString().toLowerCase());
-
-      JsonObject ownerDetails = trusteeDetails.get(trusteeId.toString());
-      ownerDetails.put(RESP_OWNER_USER_ID, trusteeId.toString());
-      response.put(RESP_APD_OWNER, ownerDetails);
+          .put(RESP_APD_URL, url).put(RESP_APD_STATUS, ApdStatus.ACTIVE.toString().toLowerCase());
 
       LOGGER.info("APD registered with id : " + apdId.result().toString());
 
@@ -668,30 +552,18 @@ public class ApdServiceImpl implements ApdService {
                           return Future.succeededFuture(apdInfo);
                         }));
 
-    Future<Map<String, JsonObject>> trusteeDetailsFuture =
-            apdDetails.compose(
-                    details -> {
-                      List<String> userIds =
-                              details.stream().map(ApdInfoObj::getOwnerId).collect(Collectors.toList());
-                      return getTrusteeDetails(userIds);
-                    });
-
     Future<JsonObject> responseFuture =
-            trusteeDetailsFuture.compose(
-                    trusteeDetails -> {
+            apdDetails.compose(
+                    res -> {
                       JsonObject response = new JsonObject();
                       List<ApdInfoObj> apdDetailList = apdDetails.result();
                       apdDetailList.forEach(
                               details -> {
                                 JsonObject apdResponse = new JsonObject();
-                                apdResponse.put(
-                                        RESP_APD_OWNER,
-                                        trusteeDetails.get(details.getOwnerId()).put("id", details.getOwnerId()));
                                 apdResponse.put("url", details.getUrl());
                                 apdResponse.put("status", details.getStatus().toString().toLowerCase());
                                 apdResponse.put("name", details.getName());
                                 apdResponse.put("id",details.getId());
-                                apdResponse.remove("ownerId");
                                 if (req.equalsIgnoreCase("id")) {
                                   response.put(details.getId(), apdResponse);
                                 } else response.put(details.getUrl(), apdResponse);
@@ -718,13 +590,13 @@ public class ApdServiceImpl implements ApdService {
   }
 
   /**
-   * Calls RegistrationService.getUserDetails to specifically get details of trustees.
+   * Calls RegistrationService.getUserDetails.
    * 
    * @param userIds List of strings of user IDs
    * @return a future of a Map, mapping the string user ID to a JSON object containing the user
    *         details
    */
-  private Future<Map<String, JsonObject>> getTrusteeDetails(List<String> userIds) {
+  private Future<Map<String, JsonObject>> getUserDetails(List<String> userIds) {
     Promise<Map<String, JsonObject>> promise = Promise.promise();
     Promise<JsonObject> regServicePromise = Promise.promise();
     Future<JsonObject> response = regServicePromise.future();
@@ -789,7 +661,7 @@ public class ApdServiceImpl implements ApdService {
             .execute(Tuple.of(apdId)).map(res -> res.value()));
 
     Future<Map<String, JsonObject>> userAndOwnerDetails =
-        getTrusteeDetails(List.of(userId, ownerId));
+        getUserDetails(List.of(userId, ownerId));
 
     Future<JsonObject> authAccessToken = apdDetails.compose(list -> {
       /* In case the apdId sent does not exist, should never happen */

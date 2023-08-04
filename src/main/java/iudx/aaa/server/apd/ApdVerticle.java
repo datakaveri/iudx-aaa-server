@@ -13,7 +13,6 @@ import static iudx.aaa.server.apd.Constants.DB_CONNECT_TIMEOUT;
 import static iudx.aaa.server.admin.Constants.DB_RECONNECT_ATTEMPTS;
 import static iudx.aaa.server.admin.Constants.DB_RECONNECT_INTERVAL_MS;
 import static iudx.aaa.server.apd.Constants.REGISTRATION_SERVICE_ADDRESS;
-import static iudx.aaa.server.apd.Constants.POLICY_SERVICE_ADDRESS;
 import static iudx.aaa.server.apd.Constants.TOKEN_SERVICE_ADDRESS;
 
 import io.vertx.core.AbstractVerticle;
@@ -67,7 +66,6 @@ public class ApdVerticle extends AbstractVerticle {
   private WebClientOptions webClientOptions;
   private ApdWebClient apdWebClient;
   private RegistrationService registrationService;
-  private PolicyService policyService;
   private TokenService tokenService;
 
   private ApdService apdService;
@@ -131,10 +129,9 @@ public class ApdVerticle extends AbstractVerticle {
     apdWebClient = new ApdWebClient(webClient, apdWebCliConfig);
 
     registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
-    policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
     tokenService = TokenService.createProxy(vertx, TOKEN_SERVICE_ADDRESS);
-    apdService = new ApdServiceImpl(pool, apdWebClient, registrationService, policyService,
-        tokenService, apdServiceOptions);
+    apdService = new ApdServiceImpl(pool, apdWebClient, registrationService, tokenService,
+        apdServiceOptions);
     binder = new ServiceBinder(vertx);
     consumer = binder.setAddress(APD_SERVICE_ADDRESS).register(ApdService.class, apdService);
 

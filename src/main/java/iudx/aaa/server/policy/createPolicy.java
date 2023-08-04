@@ -369,36 +369,6 @@ public class createPolicy {
     return p.future();
   }
 
-  public Future<Boolean> checkAuthTrusteePolicy(String providerId, Set<UUID> apdIds) {
-    Promise<Boolean> p = Promise.promise();
-    pool.withConnection(
-        conn ->
-            conn.preparedQuery(CHECK_TRUSTEE_POLICY)
-                .execute(Tuple.of(providerId, status.ACTIVE, apdIds.toArray(UUID[]::new)))
-                .onFailure(
-                    obj -> {
-                      LOGGER.error(
-                          "checkAuthTrusteePolicy db fail :: " + obj.getLocalizedMessage());
-                      p.fail(INTERNALERROR);
-                    })
-                .onSuccess(
-                    obj -> {
-                      if (obj.rowCount() == apdIds.size()) p.complete(true);
-                      else {
-                        Response r =
-                            new Response.ResponseBuilder()
-                                .type(URN_INVALID_INPUT)
-                                .title(NO_AUTH_TRUSTEE_POLICY)
-                                .detail(NO_AUTH_TRUSTEE_POLICY)
-                                .status(403)
-                                .build();
-                        p.fail(new ComposeException(r));
-                      }
-                    }));
-
-    return p.future();
-  }
-
   public Future<List<Tuple>> userPolicyDuplicate(
       List<CreatePolicyRequest> req, Map<String, ResourceObj> resourceObj, User user) {
     Promise<List<Tuple>> p = Promise.promise();
