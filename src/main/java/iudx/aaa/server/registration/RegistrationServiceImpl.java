@@ -524,7 +524,6 @@ public class RegistrationServiceImpl implements RegistrationService {
     }
 
     Set<UUID> unique = new HashSet<UUID>();
-    Promise<Map<String, String>> userToKc = Promise.promise();
 
     for (String id : userIds) {
       if (id == null || !id.matches(UUID_REGEX)) {
@@ -534,36 +533,14 @@ public class RegistrationServiceImpl implements RegistrationService {
       unique.add(UUID.fromString(id));
     }
 
-    List<UUID> ids = new ArrayList<UUID>(unique);
+    List<String> ids = unique.stream().map(i -> i.toString()).collect(Collectors.toList());
 
-    Collector<Row, ?, Map<String, String>> collect = Collectors
-        .toMap(row -> row.getUUID("id").toString(), row -> row.getUUID("keycloak_id").toString());
+    Future<Map<String, JsonObject>> details = kc.getDetails(ids);
 
-    int size = ids.size();
-    /* Function to complete user-KC map promise and create list of Keycloak IDs */
-    Function<Map<String, String>, Future<List<String>>> getKcIdsList = (u2k) -> {
-      if (u2k.size() != size) {
-        return Future.failedFuture(
-            new ComposeException(400, URN_INVALID_INPUT, "Invalid user ID", "Invalid user ID"));
-      }
-
-      userToKc.complete(u2k);
-      List<String> kcIds =
-          u2k.entrySet().stream().map(id -> id.getValue()).collect(Collectors.toList());
-      return Future.succeededFuture(kcIds);
-    };
-
-    Tuple tup = Tuple.of(ids.toArray(UUID[]::new));
-    Future<Map<String, JsonObject>> details = pool.withConnection(conn -> conn
-        .preparedQuery(SQL_GET_KC_ID_FROM_ARR).collecting(collect).execute(tup)
-        .compose(res -> getKcIdsList.apply(res.value())).compose(kcIds -> kc.getDetails(kcIds)));
-
-    /* 'merge' userId-KcId and KcId-details maps */
-    details.onSuccess(kcToDetails -> {
-      Map<String, String> user2kc = userToKc.future().result();
+    details.onSuccess(idToDetails -> {
       JsonObject userDetails = new JsonObject();
 
-      user2kc.forEach((userId, kcId) -> userDetails.put(userId, kcToDetails.get(kcId)));
+      idToDetails.forEach((uid, jsonDet) -> userDetails.put(uid, jsonDet));
       handler.handle(Future.succeededFuture(userDetails));
     }).onFailure(e -> {
       if (e instanceof ComposeException) {
@@ -723,12 +700,9 @@ public class RegistrationServiceImpl implements RegistrationService {
       List<Tuple> tups = new ArrayList<Tuple>();
 
       kcInfoMap.forEach((emailId, fut) -> {
-        // TODO remove email hash
-        // add logging for added users
-        String hash = DigestUtils.sha1Hex(emailId.getBytes());
-        String emailHash = emailId.split("@")[1] + '/' + hash;
+        // TODO add logging for added users
         UUID userId = UUID.fromString(fut.result().getString("keycloakId"));
-        Tuple tup = Tuple.of(userId, NIL_PHONE, null, emailHash, userId);
+        Tuple tup = Tuple.of(userId, NIL_PHONE);
         tups.add(tup);
       });
 
