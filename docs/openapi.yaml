@@ -2085,7 +2085,7 @@ paths:
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
-            - User is not admin of IUDX AAA server
+            - User is not an admin 
           content:
             application/json:
               schema:
@@ -2102,7 +2102,7 @@ paths:
                     title: Not admin of a resource server
                     detail: You are not an admin of any resource server
       description: |-
-        Update the status of multiple Provider registrations to `approved` or `rejected`.This operation can be performed by an `admin` of the IUDX AAA server.
+        Update the status of multiple Provider registrations to `approved` or `rejected`. This operation can be performed by an admin of any registered resource server.
         The API takes the provider registration ID - `id` field obtained from the `GET /auth/v1/admin/provider/registrations` API - and the status to update.
       parameters:
         - schema:

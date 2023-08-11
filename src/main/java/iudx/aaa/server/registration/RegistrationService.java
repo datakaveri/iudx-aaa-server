@@ -10,7 +10,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import iudx.aaa.server.apiserver.RegistrationRequest;
+import iudx.aaa.server.apiserver.AddRolesRequest;
 import iudx.aaa.server.apiserver.ResetClientSecretRequest;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
@@ -55,7 +55,7 @@ public interface RegistrationService {
    * @return Registration Service which is a service
    */
   @Fluent
-  RegistrationService createUser(RegistrationRequest request, User user,
+  RegistrationService createUser(AddRolesRequest request, User user,
       Handler<AsyncResult<JsonObject>> handler);
 
   /**

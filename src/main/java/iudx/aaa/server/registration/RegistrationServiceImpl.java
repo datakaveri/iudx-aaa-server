@@ -8,34 +8,27 @@ import static iudx.aaa.server.registration.Constants.DEFAULT_CLIENT;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_CONSUMER_FOR_RS_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_DEFAULT_CLIENT_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_INVALID_CLI_ID;
-import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_USER_PROFILE;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_APPROVED_ROLES;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_PENDING_PROVIDER_RS_REG_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_PROVIDER_FOR_RS_EXISTS;
-import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ROLE_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_RS_NO_EXIST;
-import static iudx.aaa.server.registration.Constants.ERR_DETAIL_SEARCH_USR_INVALID_ROLE;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_FOUND;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_KC;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_DEFAULT_CLIENT_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_INVALID_CLI_ID;
-import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_USER_PROFILE;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_APPROVED_ROLES;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_PENDING_PROVIDER_RS_REG_EXISTS;
-import static iudx.aaa.server.registration.Constants.ERR_TITLE_ROLE_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_ROLE_FOR_RS_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_RS_NO_EXIST;
-import static iudx.aaa.server.registration.Constants.ERR_TITLE_SEARCH_USR_INVALID_ROLE;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_USER_NOT_FOUND;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_USER_NOT_KC;
 import static iudx.aaa.server.registration.Constants.NIL_PHONE;
-import static iudx.aaa.server.registration.Constants.NIL_UUID;
-import static iudx.aaa.server.registration.Constants.NO_ORG_CHECK;
 import static iudx.aaa.server.registration.Constants.PROVIDER_PENDING_MESG;
 import static iudx.aaa.server.registration.Constants.RESP_CLIENT_ARR;
 import static iudx.aaa.server.registration.Constants.RESP_CLIENT_ID;
 import static iudx.aaa.server.registration.Constants.RESP_CLIENT_NAME;
 import static iudx.aaa.server.registration.Constants.RESP_CLIENT_SC;
 import static iudx.aaa.server.registration.Constants.RESP_EMAIL;
-import static iudx.aaa.server.registration.Constants.RESP_ORG;
 import static iudx.aaa.server.registration.Constants.RESP_PHONE;
 import static iudx.aaa.server.registration.Constants.SQL_CHECK_CLIENT_ID_EXISTS;
 import static iudx.aaa.server.registration.Constants.SQL_CHECK_DEFAULT_CLIENT_EXISTS;
@@ -44,20 +37,16 @@ import static iudx.aaa.server.registration.Constants.SQL_CHECK_USER_HAS_PROV_CON
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_CLIENT;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_ROLE;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_USER_IF_NOT_EXISTS;
-import static iudx.aaa.server.registration.Constants.SQL_FIND_ORG_BY_ID;
 import static iudx.aaa.server.registration.Constants.SQL_GET_ALL_RS;
 import static iudx.aaa.server.registration.Constants.SQL_GET_CLIENTS_FORMATTED;
-import static iudx.aaa.server.registration.Constants.SQL_GET_KC_ID_FROM_ARR;
 import static iudx.aaa.server.registration.Constants.SQL_GET_PHONE;
 import static iudx.aaa.server.registration.Constants.SQL_GET_RS_IDS_BY_URL;
 import static iudx.aaa.server.registration.Constants.SQL_GET_RS_AND_APDS_FOR_REVOKE;
 import static iudx.aaa.server.registration.Constants.SQL_UPDATE_CLIENT_SECRET;
-import static iudx.aaa.server.registration.Constants.SQL_UPDATE_ORG_ID;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_ADDED_ROLES;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_CREATED_DEFAULT_CLIENT;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_REGEN_CLIENT_SECRET;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_RS_READ;
-import static iudx.aaa.server.registration.Constants.SUCC_TITLE_UPDATED_USER_ROLES;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_USER_FOUND;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_USER_READ;
 import static iudx.aaa.server.registration.Constants.UUID_REGEX;
@@ -72,7 +61,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
-import iudx.aaa.server.apiserver.RegistrationRequest;
+import iudx.aaa.server.apiserver.AddRolesRequest;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.RevokeToken;
@@ -83,17 +72,14 @@ import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.apiserver.util.Urn;
-import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.token.TokenService;
 import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -120,18 +106,16 @@ public class RegistrationServiceImpl implements RegistrationService {
   private PgPool pool;
   private KcAdmin kc;
   private TokenService tokenService;
-  private PolicyService policyService;
   public static String AUTH_SERVER_URL = "";
   public static List<String> SERVERS_OMITTED_FROM_TOKEN_REVOKE = new ArrayList<String>();
   
   private SecureRandom randomSource;
 
   public RegistrationServiceImpl(PgPool pool, KcAdmin kc, TokenService tokenService,
-      PolicyService policyService, JsonObject options) {
+      JsonObject options) {
     this.pool = pool;
     this.kc = kc;
     this.tokenService = tokenService;
-    this.policyService = policyService;
     AUTH_SERVER_URL = options.getString(CONFIG_AUTH_URL);
     SERVERS_OMITTED_FROM_TOKEN_REVOKE = options.getJsonArray(CONFIG_OMITTED_SERVERS).stream()
         .map(x -> (String) x).collect(Collectors.toList());
@@ -140,13 +124,14 @@ public class RegistrationServiceImpl implements RegistrationService {
   }
 
   @Override
-  public RegistrationService createUser(RegistrationRequest request, User user,
+  public RegistrationService createUser(AddRolesRequest request, User user,
       Handler<AsyncResult<JsonObject>> handler) {
 
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
     List<Roles> requestedRoles = request.getRolesToRegister();
     final String phone = request.getPhone();
+    final JsonObject userInfo = request.getUserInfo();
 
     List<String> ownedRsForProviderRole = user.getResServersForRole(Roles.PROVIDER);
     List<String> requestedRsForProviderRole = request.getProvider();
@@ -222,10 +207,10 @@ public class RegistrationServiceImpl implements RegistrationService {
 
           Collector<Row, ?, List<UUID>> uuidCollector =
               Collectors.mapping(row -> row.getUUID("resource_server_id"), Collectors.toList());
-          
+
           Map<UUID, String> requestedRsIdsToUrl = requestedRsForProviderRole.stream()
               .collect(Collectors.toMap(url -> getRequestedRs.result().get(url), url -> url));
-          
+
           UUID[] requestedRsIds = requestedRsIdsToUrl.keySet().toArray(UUID[]::new);
 
           return pool.withConnection(conn -> conn.preparedQuery(SQL_CHECK_PENDING_PROVIDER_ROLES)
@@ -234,8 +219,9 @@ public class RegistrationServiceImpl implements RegistrationService {
                 if (res.isEmpty()) {
                   return Future.succeededFuture();
                 } else {
-                  List<String> existing = res.stream().map(rsId -> requestedRsIdsToUrl.get(rsId)).collect(Collectors.toList());
-                  
+                  List<String> existing = res.stream().map(rsId -> requestedRsIdsToUrl.get(rsId))
+                      .collect(Collectors.toList());
+
                   return Future.failedFuture(new ComposeException(403, URN_INVALID_INPUT,
                       ERR_TITLE_PENDING_PROVIDER_RS_REG_EXISTS,
                       ERR_DETAIL_PENDING_PROVIDER_RS_REG_EXISTS + existing.toString()));
@@ -258,22 +244,20 @@ public class RegistrationServiceImpl implements RegistrationService {
       roleTupList.addAll(providerTup);
 
       return Future.succeededFuture(roleTupList);
-
     });
 
     Collector<Row, ?, List<JsonObject>> clientDetails =
         Collectors.mapping(row -> row.toJson(), Collectors.toList());
 
     /* Insertion into users, roles tables, and get client details if present */
-    Future<List<JsonObject>> insertUserAndRoles =
-        createRoleTuple.compose(rolesListTuple -> pool.withTransaction(conn -> conn
-            .preparedQuery(SQL_CREATE_USER_IF_NOT_EXISTS).execute(Tuple.of(user.getUserId(), phone))
+    Future<List<JsonObject>> insertUserAndRoles = createRoleTuple.compose(rolesListTuple -> pool
+        .withTransaction(conn -> conn.preparedQuery(SQL_CREATE_USER_IF_NOT_EXISTS)
+            .execute(Tuple.of(user.getUserId(), phone, userInfo))
             .compose(
                 userCreated -> conn.preparedQuery(SQL_CREATE_ROLE).executeBatch(rolesListTuple))
             .compose(succ -> conn.preparedQuery(SQL_GET_CLIENTS_FORMATTED).collecting(clientDetails)
                 .execute(Tuple.of(user.getUserId())).map(res -> res.value()))));
 
-    /* TODO: Add delegate and admin role info once delegate tables ready */
     insertUserAndRoles.onSuccess(clientInfo -> {
       List<Roles> existingRoles = user.getRoles();
       Map<String, JsonArray> existingRolesToRsMap = user.getRolesToRsMapping();
@@ -296,7 +280,7 @@ public class RegistrationServiceImpl implements RegistrationService {
       if (phone != NIL_PHONE) {
         payload.put(RESP_PHONE, phone);
       }
-
+      
       String title = SUCC_TITLE_ADDED_ROLES;
       if (requestedRoles.contains(Roles.PROVIDER)) {
         title = title + PROVIDER_PENDING_MESG;
@@ -325,7 +309,12 @@ public class RegistrationServiceImpl implements RegistrationService {
   public RegistrationService listUser(User user, Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
     
-    /* TODO: if roles list is empty, check user table to see if they have registered */
+    if (user.getRoles().isEmpty()) {
+      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
+          .title(ERR_TITLE_NO_APPROVED_ROLES).detail(ERR_DETAIL_NO_APPROVED_ROLES).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
 
     Future<JsonObject> phoneDetails =
         pool.withConnection(conn -> conn.preparedQuery(SQL_GET_PHONE)
@@ -385,9 +374,9 @@ public class RegistrationServiceImpl implements RegistrationService {
       Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
-    if (user.getUserId().equals(NIL_UUID)) {
+    if (user.getRoles().isEmpty()) {
       Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
-          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
+          .title(ERR_TITLE_NO_APPROVED_ROLES).detail(ERR_DETAIL_NO_APPROVED_ROLES).build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
@@ -450,7 +439,8 @@ public class RegistrationServiceImpl implements RegistrationService {
         response.put(RESP_PHONE, phone);
       }
 
-      LOGGER.info("Reset client secret for user {} for client ID {}", u.getUserId().toString(), request.getClientId());
+      LOGGER.info("Reset client secret for user {} for client ID {}", u.getUserId().toString(),
+          request.getClientId());
 
       Response r = new ResponseBuilder().type(URN_SUCCESS).title(title).status(200)
           .objectResults(response).build();
@@ -702,7 +692,8 @@ public class RegistrationServiceImpl implements RegistrationService {
       kcInfoMap.forEach((emailId, fut) -> {
         // TODO add logging for added users
         UUID userId = UUID.fromString(fut.result().getString("keycloakId"));
-        Tuple tup = Tuple.of(userId, NIL_PHONE);
+        JsonObject emptyUserInfo = new JsonObject();
+        Tuple tup = Tuple.of(userId, NIL_PHONE, emptyUserInfo);
         tups.add(tup);
       });
 
@@ -730,9 +721,9 @@ public class RegistrationServiceImpl implements RegistrationService {
       Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
     
-    if (user.getUserId().equals(NIL_UUID)) {
+    if (user.getRoles().isEmpty()) {
       Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
-          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
+          .title(ERR_TITLE_NO_APPROVED_ROLES).detail(ERR_DETAIL_NO_APPROVED_ROLES).build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
@@ -748,20 +739,39 @@ public class RegistrationServiceImpl implements RegistrationService {
             .collecting(clientIdCollector).execute(tuple).map(res -> res.value()))
         .compose(cidList -> {
           if (!cidList.isEmpty()) {
-            Response r = new ResponseBuilder().status(403).type(URN_ALREADY_EXISTS)
+            Response r = new ResponseBuilder().status(409).type(URN_ALREADY_EXISTS)
                 .title(ERR_TITLE_DEFAULT_CLIENT_EXISTS).detail(ERR_DETAIL_DEFAULT_CLIENT_EXISTS)
                 .errorContext(new JsonObject().put("clientId", cidList.get(0).toString())).build();
             return Future.failedFuture(new ComposeException(r));
           }
           return Future.succeededFuture();
         });
+    /*
+     * In case a COS admin wants to get client creds, they **may** not have an entry in the `users`
+     * table - since COS admins just need to be registered on Keycloak and are identified by their
+     * user ID in the config. Inserting into the `user_clients` table will throw an error due to
+     * foreign key constrains.
+     * 
+     * Hence to avoid this edge case we try to insert the COS admin as a user into the table.
+     */
+    Future<Void> cosAdminEdgeCase = checkDefaultClientId.compose(res -> {
+      List<Roles> roles = user.getRoles();
+
+      if (!(roles.contains(Roles.COS_ADMIN) && roles.size() == 1)) {
+        return Future.succeededFuture();
+      }
+
+      JsonObject emptyUserInfo = new JsonObject();
+      
+      return pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_USER_IF_NOT_EXISTS)
+          .execute(Tuple.of(userId, NIL_PHONE, emptyUserInfo)).mapEmpty());
+    });
     
-    Future<JsonObject> createClientCreds = checkDefaultClientId.compose(res -> {
+    Future<JsonObject> createClientCreds = cosAdminEdgeCase.compose(res -> {
       UUID clientId = UUID.randomUUID();
-      // TODO make this a class field, DO NOT INSTANTIATE EVERY TIME
-      SecureRandom random = new SecureRandom();
+      
       byte[] randBytes = new byte[CLIENT_SECRET_BYTES];
-      random.nextBytes(randBytes);
+      randomSource.nextBytes(randBytes);
       String clientSecret = Hex.encodeHexString(randBytes);
       String hashedClientSecret = DigestUtils.sha512Hex(clientSecret);
 

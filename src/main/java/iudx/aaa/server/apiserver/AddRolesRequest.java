@@ -14,19 +14,20 @@ import java.util.stream.Collectors;
  * Vert.x data object for the createUser API in Registration service.
  */
 @DataObject(generateConverter = true)
-public class RegistrationRequest {
+public class AddRolesRequest {
 
   String phone = Constants.NIL_PHONE;
   List<String> consumer = new ArrayList<String>();
   List<String> provider = new ArrayList<String>();
+  JsonObject userInfo = new JsonObject();
 
-  public RegistrationRequest(JsonObject json) {
-    RegistrationRequestConverter.fromJson(json, this);
+  public AddRolesRequest(JsonObject json) {
+    AddRolesRequestConverter.fromJson(json, this);
   }
 
   public JsonObject toJson() {
     JsonObject obj = new JsonObject();
-    RegistrationRequestConverter.toJson(this, obj);
+    AddRolesRequestConverter.toJson(this, obj);
     return obj;
   }
 
@@ -52,6 +53,14 @@ public class RegistrationRequest {
 
   public void setProvider(List<String> provider) {
     this.provider = new ArrayList<String>(provider);
+  }
+
+  public JsonObject getUserInfo() {
+    return userInfo;
+  }
+
+  public void setUserInfo(JsonObject userInfo) {
+    this.userInfo = userInfo;
   }
   
   public List<Roles> getRolesToRegister()
