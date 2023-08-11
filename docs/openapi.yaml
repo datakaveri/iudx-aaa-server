@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: IUDX-AAA-Server
-  version: 4.5.0
+  version: 5.0.0
   description: 'API specification for IUDX AAA Server. These APIs are used by users manage tokens, policy etc. These APIs requires valid token or client details for authentication.'
   license:
     name: MIT
@@ -123,9 +123,8 @@ paths:
               description: application/json
         '403':
           description: |-
-            - User policy does not exist for the user and resource
-            - APD policy does not exist for the resource
-            - The user does not belong to the user class specified by the APD policy
+            - User does not have the correct role for the request
+            - APD verification failed
             - The user is required to interact with the APD 
           content:
             application/json:
@@ -198,6 +197,7 @@ paths:
                     - resource_server
                     - resource
                     - resource_group
+                    - cos  
                 role:
                   type: string
                   maxLength: 10
@@ -207,6 +207,7 @@ paths:
                     - delegate
                     - consumer
                     - admin
+                    - cos_admin  
                 context:
                   type: object
               required:
@@ -244,16 +245,16 @@ paths:
                   itemId: rs.iudx.org.in
                   itemType: resource_server
                   role: admin
-              identity token for APD as consumer:
-                value:
-                  itemId: apd.iudx.org.in
-                  itemType: resource_server
-                  role: consumer
-              identity token for resource_server as provider:
+              Identity token for resource server as provider:
                 value:
                   itemId: rs.iudx.org.in
                   itemType: resource_server
                   role: provider
+              Identity token for COS Admin for COS:
+                value:
+                  itemId: cos.iudx.org.in
+                  itemType: cos
+                  role: cos_admin
               Requesting resource with context object in body:
                 value:
                   itemId: a007f760-8580-4401-81c1-b123da3de06f
@@ -276,32 +277,30 @@ paths:
 
         # Identity Token
         An Identity token is used by a user to identify themself to a resource server or APD.
-          - Valid item types - `resource_server`
-          - Item ID - URL of the server or APD
-          - Users with any role can get an identity token for either a resource server or APD
+          - Valid item types - `resource_server`, `cos` in case of COS admin
+          - Item ID - URL of the resource server or COS
           
-          **NOTE : If role is `admin`, the user must own the resource server.** 
-           
-          **NOTE : Users can be permitted to obtain identity tokens with the `admin` role if required.**
+        ## Conditions    
+          - If role is `admin`, the user must own/be the admin of the resource server.
+          - If role is `cos_admin`, the user must be the COS Admin and the `itemId` must be the COS URL.
+          - For any other role, the user must have the role for the particular resource server. 
+          - Users can be permitted to obtain identity tokens with the `admin` role if required.**
               
         # Access Token
-        An Access token is used to gain access to an Item on the resource server.
+        An Access token is used to gain access to an Item on a resource server.
 
           ## Tokens for providers
            - Valid item types - `resource`, `resource_group` 
-           - users with the `provider` role can get tokens for all of the resources that belong to them without having to set any specific policies to access them.
-           - If the provider wishes to get a token to access a particular server, they require a **policy by the server admin**.
+           - Users with the `provider` role can get tokens for all of the resources that belong to them without having to set any specific policies to access them.
             
           ## Tokens for delegates
           - Valid item types - `resource`, `resource_group` 
-          - Users with the `delegate` role can get tokens for resources if they:
-             1. Are a delegate to the provider who owns the resource
-             2. Have a policy set by the provider to access the resource 
-             3. Must have a valid policy set by the admin of the server
+          - In case the delegate is a consumer-delegate, a token is issued if a successful APD verification takes place for the requested item and the associated consumer
+          - In case the delegate is a provider-delegate, a token is issued if the associated provider owns the item
 
           ## Tokens for consumers
-          - Valid item types - `resource`, `resource_group`, `resource_server`
-          - Consumers can access the private resources for which they have a policy set by either the `provider` or by a `delegate`.
+          - Valid item types - `resource`, `resource_group`
+          - Consumers are granted tokens if there is a successful APD verification for the requested item and associated consumer
           
           ## Tokens for admins
            **Admins are only permitted to get identity tokens.**
@@ -320,17 +319,17 @@ paths:
            - `cons` : the constraints that the resource server recognizes. It is only returned for policies set for consumer 
            - `apd` : *(optional)* contains any data sent by the APD as a result of an **Allow** response (see *Resources restricted by APD Policies*)
           
-          # Resources restricted by APD Policies
+          # APD Verification 
          
-        In case access to a resource is defined using an APD policy (and there is no valid user policy for the requesting user and resource), the AAA server queries the APD with relevant information to see if the user belongs to the **_user class_** specified in the APD policy. The APD may respond in three ways:
-        - **Allow** : The user belongs to the user class. The AAA server generates the access token based on the constraints defined in the policy and sends it back.
+        For all access token requests for a consumer, the AAA server queries the APD associated with the requested item  with relevant information to verify if the consumer has access to the item. The APD may respond in three ways:
+        - **Allow** : The user has access. The AAA server generates the access token based on the constraints defined in the policy and sends it back.
             - In case the APD send constraints, these constraints will be put into the `apd` key in the JWT token in a JSON object called `apdConstraints`  
 
-        - **Deny** : The user does not belong to the user class. The AAA server returns a `403 Forbidden`.
-        - **Deny but the APD needs interaction** : The user does not belong to the user class, but the APD provides a mechanism for the user to interact with it. This interaction **may or may not** result in the user being included in the user class. The AAA server sends a `403 Forbidden` but includes a special **APD JWT token** that the user must use when interacting with the APD. 
+        - **Deny** : The user does not have access. The AAA server returns a `403 Forbidden`.
+        - **Deny but the APD needs interaction** : The APD provides a mechanism for the user to interact with it. This interaction **may or may not** result in the user being given access. The AAA server sends a `403 Forbidden` but includes a special **APD JWT token** that the user must use when interacting with the APD. 
 
         ## Context object for extra information
-        An APD may require extra information during user class evaluation. Any such information can be included in the `context` JSON object field in the API request body. 
+        An APD may require extra information during evaluation. Any such information can be included in the `context` JSON object field in the API request body. 
 
         In case an APD requires particular keys in the `context` object, The APD can send a **Deny** response with the details of the required keys and information.
 
@@ -633,10 +632,10 @@ paths:
       security:
         - authorization: []
     parameters: []
-  /auth/v1/user/profile:
+  /auth/v1/user/roles:
     post:
       summary: Add roles
-      operationId: post-auth-v1-user-profile
+      operationId: post-auth-v1-user-roles
       responses:
         '200':
           description: The roles have been added.
@@ -650,22 +649,6 @@ paths:
               schema:
                 description: ''
                 type: object
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:Success'
-                    title: The requested roles have been added.
-                    results:
-                      name:
-                        firstName: Foo
-                        lastName: Bar
-                      roles:
-                        - CONSUMER
-                      userId: 67194fc9-495e-40f7-b016-4470c1d4397f
-                      clients:
-                        - client: default
-                          clientId: 6d0b58c3-c0c4-48af-bca2-4f255c0e73a7
-                      email: ngoaf@chspomvjuq.com
-                      phone: '9989967899'
                 properties:
                   type:
                     type: string
@@ -678,12 +661,10 @@ paths:
                     required:
                       - name
                       - roles
+                      - rolesToRsMapping  
                       - userId
                       - email
                     properties:
-                      keycloakId:
-                        type: string
-                        minLength: 1
                       name:
                         type: object
                         required:
@@ -700,6 +681,8 @@ paths:
                         type: array
                         items:
                           type: string
+                      rolesToRsMapping:
+                        type: object
                       userId:
                         type: string
                         minLength: 1
@@ -740,6 +723,9 @@ paths:
                         lastName: Bar
                       roles:
                         - consumer
+                      rolesToRsMapping:
+                        consumer:
+                          - rs.cop.in
                       userId: 67194fc9-495e-40f7-b016-4470c1d4397f
                       clients:
                         - clientName: default
@@ -764,11 +750,11 @@ paths:
                     type: 'urn:dx:as:InvalidInput'
                     title: Missing or malformed parameters
                     detail: Invalid 'roles' array
-                orgId does not exist:
+                Resource Server does not exist:
                   value:
                     type: 'urn:dx:as:InvalidInput'
-                    title: Organization does not exist
-                    detail: Organization ID does not correspond to an organization
+                    title: Resource Server does not exist
+                    detail: Resource Server does not exist
         '401':
           description: '- Unauthorized - `token` invalid/expired'
           headers:
@@ -787,7 +773,7 @@ paths:
                     title: Token authentication failed
                     detail: Inactive Token
         '409':
-          description: A user profile already exists for the user
+          description: A requested role + resource server already exists
           content:
             application/json:
               schema:
@@ -796,8 +782,8 @@ paths:
                 User Already Exists:
                   value:
                     type: 'urn:dx:as:AlreadyExists'
-                    title: User exists
-                    detail: User has an existing user profile
+                    title: Role for resource server already exists
+                    detail: Provider/Consumer role exists for the requested resource servers
           headers:
             Content-Type:
               schema:
@@ -814,12 +800,12 @@ paths:
           description: Keycloak Issued token
           required: true
       description: |-
-        Add roles. Current valid roles are:
-        - **consumer**, which allows users to access to secure resource via tokens
-        - **provider**, which allows users to manage their resources across the IUDX sub systems
+        Add roles tied to a particular resource server in the COS. Current valid roles are:
+        - **consumer**, which allows users to access to secure resources on the associated resource server
+        - **provider**, which allows users to manage their resources on the particular resource server
           
         ## Provider registration
-        **Once a Provider has registered successfully, their registration request is subject to approval by an IUDX admin**. The `provider` role would not be part of the user profile till the user has been approved.
+        **Once a provider role has been added for a resource server, the role request is subject to approval by the associated resource server admin**. The role for that resource server will be considered _pending_ till approved.
       requestBody:
         content:
           application/json:
@@ -848,6 +834,10 @@ paths:
                   pattern: '^[9876]\d{9}$'
                   minLength: 10
                   maxLength: 10
+                userInfo:
+                  type: object
+                  minProperties: 0
+                  maxProperties: 5
             examples:
               Add roles:
                 value:
@@ -856,7 +846,21 @@ paths:
                   provider:
                     - rs.cop.in
                     - rs-one.cop.in
+              Add roles and give phone and user info:
+                value:
+                  consumer:
+                    - rs.cop.in
+                  provider:
+                    - rs.cop.in
+                    - rs-one.cop.in
+                  phone: 9889889881
+                  userInfo:
+                    organization: ACME Org.
+                    natureOfOrg: Company   
+                      
         description: |-
+          - Users can add the `provider` or `consumer` role along with a list of resource servers to be associated with said role  
+          - `userInfo` is an optional field that can be populated with data required for user information, if desired
         required: true
       tags:
         - User APIs
@@ -864,32 +868,15 @@ paths:
         - authorization: []
     get:
       summary: List User Roles
-      operationId: get-auth-v1-user-profile
+      operationId: get-auth-v1-user-roles
       responses:
         '200':
-          description: Successfully list user and their roles
+          description: Successfully list user information and their approved roles
           content:
             application/json:
               schema:
                 description: ''
                 type: object
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:Success'
-                    title: User details
-                    results:
-                      name:
-                        firstName: B
-                        lastName: c
-                      roles:
-                        - consumer
-                        - provider
-                      userId: a13eb955-c691-4fd3-b200-f18bc78810b5
-                      email: bye@example.com
-                      clients:
-                        - clientName: default
-                          clientId: a3e7e34c-44bf-41ff-ad86-2ee04a954418
-                      phone: '9984567899'
                 properties:
                   type:
                     type: string
@@ -920,6 +907,8 @@ paths:
                         type: array
                         items:
                           type: string
+                      rolesToRsMapping:
+                        type: object
                       userId:
                         type: string
                         minLength: 1
@@ -967,13 +956,17 @@ paths:
                     type: 'urn:dx:as:Success'
                     title: User details
                     results:
-                      keycloakId: c46e7a5d-7c2d-471e-8222-6a59a5095e7a
                       name:
                         firstName: B
                         lastName: c
                       roles:
                         - provider
                         - consumer
+                      rolesToRsMapping:
+                        provider:
+                          - rs.cop.in
+                        consumer:
+                          - rs.cop.in
                       userId: a13eb955-c691-4fd3-b200-f18bc78810b5
                       email: bye@example.com
                       clients:
@@ -985,31 +978,6 @@ paths:
               schema:
                 type: string
               description: application/json
-        '400':
-          description: |-
-            - Invalid `providerId` header
-            - Invalid `role`/`email` header
-            - If both `role` and `email` header not present
-          headers:
-            Content-Type:
-              schema:
-                type: string
-              description: application/json
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                Invalid providerId:
-                  value:
-                    type: 'urn:dx:as:InvalidInput'
-                    title: Malformed request/missing or malformed request parameters
-                    detail: '[Bad Request] Validation error for parameter providerId in location HEADER: provided string should have size >= 36'
-                role/email header missing:
-                  value:
-                    type: 'urn:dx:as:InvalidInput'
-                    title: Invalid search user request
-                    detail: Require both 'email' and 'role' header for search user
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
@@ -1029,30 +997,19 @@ paths:
                     type: 'urn:dx:as:InvalidAuthenticationToken'
                     title: Token authentication failed
                     detail: Inactive Token
-                Not auth delegate:
-                  value:
-                    type: 'urn:dx:as:MissingAuthenticationToken'
-                    title: Invalid delegate request
-                    detail: Invalid delegate request
         '404':
           description: |-
-            - A user profile for the user does not exist
-            - A user with requested email+role does not exist
+            - A user does not have any approved roles
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
-                User profile for the user does not exist:
+                User does not have any roles:
                   value:
                     type: 'urn:dx:as:MissingInformation'
-                    title: User profile does not exist
-                    detail: Please register to create user profile
-                User to be searched for cannot be found:
-                  value:
-                    type: 'urn:dx:as:InvalidInput'
-                    title: User not found
-                    detail: A user with given email and role not found
+                    title: User does not have any roles
+                    detail: Please add roles or wait for provider role approvals
       parameters:
         - schema:
             type: string
@@ -1065,8 +1022,8 @@ paths:
           required: true
       description: |-
         List roles of a user.
-        ## Get User profile
-        The response contains user details such as roles, name, email. It also lists the client ID of the user.
+
+        The response contains user details such as **approved** roles, name, email. It also lists the client ID of the user in case the user has fetched their default client.
       tags:
         - User APIs
       security:
@@ -1153,6 +1110,19 @@ paths:
                     type: 'urn:dx:as:InvalidInput'
                     title: Missing or malformed parameters
                     detail: Invalid
+        '404':
+          description: |-
+            - Requested user with email + role + resource server not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                User to be searched for cannot be found:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: User not found
+                    detail: A user with given email, role and resource server not found
       parameters:
         - schema:
             type: string
@@ -1177,7 +1147,7 @@ paths:
           name: resourceServer
           required: true
       description: |-
-        Anyone may search for a user by providing the email address, role and resource server for which the role is applicable. If a user exists, then the user ID `userId`, email and name is returned.
+        **Anyone** may search for a user registered on the COS with provider/consumer roles by providing the email address, role and resource server for which the role is applicable. If a user exists, then the user ID `userId`, email and name is returned.
       tags:
         - User APIs
   /auth/v1/user/clientcredentials:
@@ -1245,38 +1215,15 @@ paths:
                   - title
                   - results
               examples:
-                User Profile Response:
+                Default client credentials created:
                   value:
                     type: 'urn:dx:as:Success'
-                    title: User created
+                    title: Created default client credentials
                     results:
                       clients:
                         - clientName: default
                           clientId: 6d0b58c3-c0c4-48af-bca2-4f255c0e73a7
                           clientSecret: 73b66ab55ba4d07ea487310679aa0689b4bd2c9d
-        '400':
-          description: |-
-            - Malformed or missing data
-          headers:
-            Content-Type:
-              schema:
-                type: string
-              description: application/json
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
-              examples:
-                Invalid roles array:
-                  value:
-                    type: 'urn:dx:as:InvalidInput'
-                    title: Missing or malformed parameters
-                    detail: Invalid 'roles' array
-                orgId does not exist:
-                  value:
-                    type: 'urn:dx:as:InvalidInput'
-                    title: Organization does not exist
-                    detail: Organization ID does not correspond to an organization
         '401':
           description: '- Unauthorized - `token` invalid/expired'
           headers:
@@ -1294,23 +1241,38 @@ paths:
                     type: 'urn:dx:as:InvalidAuthenticationToken'
                     title: Token authentication failed
                     detail: Inactive Token
-        '403':
-          description: Description goes here
+        '409':
+          description: If default client credentials previously obtained 
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
-                User Already Exists:
+                Default client credentials previously obtained:
                   value:
                     type: 'urn:dx:as:AlreadyExists'
-                    title: User exists
-                    detail: User has an existing user profile
+                    title: Default client credentials exists
+                    detail: The default client credentials have already been created. If you have forgotten your client secret, please use the regenerate client secret API
+                    context: 
+                      clientId: 626b5314-7df4-404c-97bb-e07b49de0fb4 
           headers:
             Content-Type:
               schema:
                 type: string
               description: application/json
+        '404':
+          description: |-
+            - A user does not have any approved roles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                User does not have any roles:
+                  value:
+                    type: 'urn:dx:as:MissingInformation'
+                    title: User does not have any roles
+                    detail: Please add roles or wait for provider role approvals
       parameters:
         - schema:
             type: string
@@ -1338,24 +1300,6 @@ paths:
               schema:
                 description: ''
                 type: object
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:Success'
-                    title: Registered for requested roles
-                    results:
-                      keycloakId: c0c52fd1-e9de-456c-b553-8d408e8d2a42
-                      name:
-                        firstName: Foo
-                        lastName: Bar
-                      roles:
-                        - CONSUMER
-                        - DELEGATE
-                      userId: 67194fc9-495e-40f7-b016-4470c1d4397f
-                      clients:
-                        - client: default
-                          clientId: 6d0b58c3-c0c4-48af-bca2-4f255c0e73a7
-                      email: ngoaf@chspomvjuq.com
-                      phone: '9989967899'
                 properties:
                   type:
                     type: string
@@ -1368,6 +1312,7 @@ paths:
                     required:
                       - name
                       - roles
+                      - rolesToRsMapping  
                       - userId
                       - clients
                       - email
@@ -1391,6 +1336,8 @@ paths:
                         type: array
                         items:
                           type: string
+                      rolesToRsMapping:
+                        type: object
                       userId:
                         type: string
                         minLength: 1
@@ -1428,13 +1375,13 @@ paths:
                     type: 'urn:dx:as:Success'
                     title: Regenerated client secret for requested client ID
                     results:
-                      keycloakId: c0c52fd1-e9de-456c-b553-8d408e8d2a42
                       name:
                         firstName: Foo
                         lastName: Bar
                       roles:
                         - consumer
-                        - delegate
+                      rolesToRsMapping:
+
                       userId: 67194fc9-495e-40f7-b016-4470c1d4397f
                       clients:
                         - clientName: default
@@ -1481,11 +1428,10 @@ paths:
                     title: Invalid client ID
                     detail: Requested client ID not found
       description: |-
-        # Regenerate client secret
         A user may regenerate a client secret corresponding to a client ID in case they have lost the client secret or it has been compromised. A new client secret will be generated and sent as part of the output **and will not be shown again.** 
 
         ## Token revocation before regeneration
-        In addition to regenerating the client secret, **the AAA server notifies all servers recognized by IUDX to revoke all tokens issued in the user's name (with the user's credentials) before the regeneration request was made**. The AAA server is effectively calling the `POST /auth/v1/token/revoke` API for all servers on behalf of the user. This is done to account for the scenario where the client secret has been compromised and tokens have been issued by a malicious user. 
+        In addition to regenerating the client secret, **the AAA server notifies all servers - resource servers and APDs - recognized by IUDX to revoke all tokens issued in the user's name (with the user's credentials) before the regeneration request was made**. The AAA server is effectively calling the `POST /auth/v1/token/revoke` API for all servers on behalf of the user. This is done to account for the scenario where the client secret has been compromised and tokens have been issued by a malicious user. 
       parameters:
         - schema:
             type: string
@@ -1526,7 +1472,7 @@ paths:
         - authorization: []
   /auth/v1/resourceservers:
     get:
-      summary: Get Resource Server Details
+      summary: Get Registered Resource Servers
       tags:
         - Resource Server APIs
       responses:
@@ -1542,11 +1488,6 @@ paths:
               schema:
                 description: ''
                 type: object
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:Success'
-                    title: Resource Servers
-                    results: []
                 properties:
                   type:
                     type: string
@@ -1565,19 +1506,50 @@ paths:
                           type: string
                         url:
                           type: string
+                        owner:
+                          type: object
+                          required:
+                            - email
+                            - name
+                            - id
+                          properties:
+                            email:
+                              type: string
+                              minLength: 1
+                            name:
+                              type: object
+                              required:
+                                - firstName
+                                - lastName
+                              properties:
+                                firstName:
+                                  type: string
+                                  minLength: 1
+                                lastName:
+                                  type: string
+                                  minLength: 1
+                            id:
+                              type: string
+                              minLength: 1
                 required:
                   - type
                   - title
                   - results
               examples:
-                Get Organization Details:
+                Get Resource Server Details:
                   value:
                     type: 'urn:dx:as:Success'
                     title: Resource Servers
                     results:
                       - id: bc51dfff-ee8b-4438-8c0c-5881a482e124
-                        name: example
-                        url: example.com
+                        name: COP Resource Server
+                        url: rs.cop.in
+                        owner:
+                          email: rs-admin@datakaveri.org
+                          name:
+                            firstName: RS
+                            lastName: Admin
+                          id: 844e251b-574b-46e6-9247-f76f1f70a637
         '401':
           description: '- Unauthorized - `token` invalid/expired'
           headers:
@@ -1606,12 +1578,12 @@ paths:
           name: Authorization
           description: Keycloak Issued token
           required: true
-      description: Listing the details of registered Organization
+      description: Listing the details of registered resource servers
       security:
         - authorization: []
   /auth/v1/admin/resourceservers:
     post:
-      summary: Create Resource Server
+      summary: Create Resource Server - COS Admin
       operationId: post-auth-v1-admin-resourceservers
       responses:
         '201':
@@ -1639,31 +1611,55 @@ paths:
                         minLength: 1
                       url:
                         type: string
+                      owner:
+                        type: object
+                        required:
+                          - email
+                          - name
+                          - id
+                        properties:
+                          email:
+                            type: string
+                            minLength: 1
+                          name:
+                            type: object
+                            required:
+                              - firstName
+                              - lastName
+                            properties:
+                              firstName:
+                                type: string
+                                minLength: 1
+                              lastName:
+                                type: string
+                                minLength: 1
+                          id:
+                            type: string
+                            minLength: 1
                     required:
                       - id
                       - name
                       - url
+                      - owner  
                 required:
                   - type
                   - title
                   - results
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:Success'
-                    title: User created
-                    results:
-                      id: id
-                      name: name
-                      url: ''
               examples:
-                Create Organization:
+                Created Resource Server:
                   value:
-                    type: string
-                    title: string
+                    type: 'urn:dx:as:Success'
+                    title: Resource Server has been created
                     results:
-                      id: string
-                      name: string
-                      url: string
+                      id: bc51dfff-ee8b-4438-8c0c-5881a482e124
+                      name: COP Resource Server
+                      url: rs.cop.in
+                      owner:
+                        email: rs-admin@datakaveri.org
+                        name:
+                          firstName: RS
+                          lastName: Admin
+                        id: 844e251b-574b-46e6-9247-f76f1f70a637
           headers:
             Content-Type:
               schema:
@@ -1691,7 +1687,7 @@ paths:
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
-            - User is not an admin of IUDX AAA server
+            - User is not the COS Admin
           headers:
             Content-Type:
               schema:
@@ -1710,10 +1706,10 @@ paths:
                 User is not admin of AAA:
                   value:
                     type: 'urn:dx:as:InvalidRole'
-                    title: Not admin of auth server
-                    detail: You are not an admin of the auth server
+                    title: Not COS Admin
+                    detail: You are not the COS Admin
         '409':
-          description: If an organization with the requested `url`/domain already exists
+          description: If a resource server  with the requested `url` already exists
           headers:
             Content-Type:
               schema:
@@ -1729,7 +1725,22 @@ paths:
                     type: 'urn:dx:as:AlreadyExists'
                     title: Domains exists
                     detail: A resource server exists with the given domain
-      description: 'Register a Resource Server. This operation can be performed by an `admin` of the IUDX AAA server. '
+        '404':
+          description: |-
+            - A user does not have any approved roles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                User does not have any roles:
+                  value:
+                    type: 'urn:dx:as:MissingInformation'
+                    title: User does not have any roles
+                    detail: Please add roles or wait for provider role approvals
+      description: |-
+        Register a Resource Server. This operation can be performed by the **COS Admin only**. 
+        - The resource server is also assigned an owner/admin user during registration. The assigned admin/owner must be registered on the UAC.
       parameters:
         - schema:
             type: string
@@ -1746,11 +1757,6 @@ paths:
             schema:
               description: ''
               type: object
-              x-examples:
-                example-1:
-                  name: Example
-                  url: example.com
-                  owner: admin@admin.com
               properties:
                 name:
                   type: string
@@ -1775,11 +1781,9 @@ paths:
                 value:
                   name: Data Kaveri
                   url: datakaveri.org
-                  email: datakaveri-admin@iudx.org.in  
+                  owner: datakaveri-admin@iudx.org.in  
         description: |-
-          - The payload must have `name` and `url` to create a Organization.
-          - `url` must be a **valid domain/hostname**.
-          - The authentication details must be `admin` oriented. It must be the owner of the server.
+          - The `owner`
         required: true
       tags:
         - Admin APIs
@@ -1787,7 +1791,7 @@ paths:
         - authorization: []
   /auth/v1/admin/provider/registrations:
     get:
-      summary: Get Provider Registrations
+      summary: Get Provider Registrations - RS Admin
       tags:
         - Admin APIs
       responses:
@@ -1798,20 +1802,6 @@ paths:
               schema:
                 description: ''
                 type: object
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:Success'
-                    title: Provider registrations
-                    results:
-                      - userId: 543e251b-532b-46e6-9247-f76f1f70a664
-                        status: APPROVED
-                        email: test@gmail.com
-                        name:
-                          firstName: First
-                          lastName: Last
-                        organization:
-                          name: Foo
-                          url: foo.bar.in
                 properties:
                   type:
                     type: string
@@ -1826,9 +1816,14 @@ paths:
                     items:
                       type: object
                       properties:
+                        id:
+                          type: string
+                          minLength: 1
                         userId:
                           type: string
                           minLength: 1
+                        rsUrl:
+                          type: string
                         status:
                           type: string
                           minLength: 1
@@ -1851,19 +1846,10 @@ paths:
                           required:
                             - firstName
                             - lastName
-                        organization:
+                        userInfo:
                           type: object
-                          properties:
-                            name:
-                              type: string
-                              minLength: 1
-                            url:
-                              type: string
-                              minLength: 1
-                          required:
-                            - name
-                            - url
                       required:
+                        - id
                         - userId
                         - status
                 required:
@@ -1876,48 +1862,48 @@ paths:
                     type: 'urn:dx:as:Success'
                     title: Provider registrations
                     results:
-                      - userId: 844e251b-574b-46e6-9247-f76f1f70a637
+                      - id: c980f0c7-c5d4-4e30-9433-6ef405b98100
+                        userId: 844e251b-574b-46e6-9247-f76f1f70a637
                         status: approved
+                        rsUrl: rs.cop.in
                         email: xy@iisc.ac.in
                         name:
                           firstName: X
                           lastName: 'Y'
-                        organization:
-                          name: IISc
-                          url: iisc.ac.in
-                      - userId: a13eb955-c691-4fd3-b200-f18bc78810b5
+                        userInfo: {}
+                      - id: 99023477-b3ba-408a-a3b5-e378615260ff
+                        userId: a13eb955-c691-4fd3-b200-f18bc78810b5
                         status: approved
+                        rsUrl: rs.cop.in
                         email: someone@example.com
                         name:
                           firstName: Someone
                           lastName: Person
-                        organization:
-                          name: example
-                          url: example.com
-                      - userId: d34b1547-7281-4f66-b550-ed79f9bb0c36
+                        userInfo: {}
+                      - id: 0e36020a-edb1-4471-be21-a6c9946cdbb0
+                        userId: d34b1547-7281-4f66-b550-ed79f9bb0c36
                         status: approved
+                        rsUrl: rs.cop.in
                         email: individual@example.com
                         name:
                           firstName: Indiv
                           lastName: Vidual
-                        organization:
-                          name: example
-                          url: example.com
+                        userInfo: {}
                 List of rejected providers:
                   value:
                     type: 'urn:dx:as:Success'
                     title: Provider registrations
                     results:
-                      - userId: e5bf3f6f-f22b-463d-aacb-cd62fbd8056f
+                      - id: 5839621a-5a17-43c8-bdec-2eb1e0f95a3a
+                        userId: e5bf3f6f-f22b-463d-aacb-cd62fbd8056f
                         status: rejected
-                        organization:
-                          name: lmwohberob
-                          url: lmwohberob.com
-                      - userId: fd0dfa08-d87a-4a51-86ce-060424f981c5
+                        rsUrl: rs.cop.in
+                        userInfo: {}
+                      - id: 07d28249-adb7-4257-bec7-bb5c154c6865
+                        userId: fd0dfa08-d87a-4a51-86ce-060424f981c5
                         status: rejected
-                        organization:
-                          name: fufwcudijj
-                          url: fufwcudijj.com
+                        rsUrl: rs.cop.in
+                        userInfo: {}
         '400':
           description: '- Invalid filter value'
           headers:
@@ -1938,7 +1924,7 @@ paths:
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
-            - User is not admin of IUDX AAA server
+            - User is not admin of any resource server
           headers:
             Content-Type:
               schema:
@@ -1954,11 +1940,11 @@ paths:
                     type: 'urn:dx:as:InvalidAuthenticationToken'
                     title: Token authentication failed
                     detail: Inactive Token
-                Not admin of AAA:
+                Not admin of any resource server:
                   value:
                     type: 'urn:dx:as:InvalidRole'
-                    title: Not admin of auth server
-                    detail: You are not an admin of the auth server
+                    title: Not admin of a resource server
+                    detail: You are not an admin of any resource server
       operationId: get-auth-v1-admin-provider-registrations
       parameters:
         - schema:
@@ -1983,7 +1969,7 @@ paths:
           name: filter
           description: Filter the status of the Registration
       description: |-
-        Get all the provider registration details. This operation can be performed by an `admin` of the IUDX AAA server. 
+        This operation can be performed by an admin of any registered resource server. Get all the provider registration details  for the resource servers owned by the user.
         The request can be filtered based on the status of registration using the query param `filter`.
         The various statuses are:
         - `pending`
@@ -2009,17 +1995,6 @@ paths:
               schema:
                 description: ''
                 type: object
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:Success'
-                    title: Provider status updated
-                    results:
-                      - status: APPROVED
-                        userId: 844e251b-574b-46e6-9247-f76f1f70a637
-                        email: bob_provider@iisc.ac.in
-                        name:
-                          firstName: Bob
-                          lastName: Provider
                 properties:
                   type:
                     type: string
@@ -2034,6 +2009,9 @@ paths:
                     items:
                       type: object
                       properties:
+                        id:
+                          type: string
+                          minLength: 1
                         status:
                           type: string
                           minLength: 1
@@ -2043,6 +2021,8 @@ paths:
                         userId:
                           type: string
                           minLength: 1
+                        rsUrl:
+                          type: string
                         email:
                           type: string
                           minLength: 1
@@ -2058,11 +2038,16 @@ paths:
                             lastName:
                               type: string
                               minLength: 1
+                        userInfo:
+                          type: object
                       required:
+                        - id
                         - status
                         - userId
+                        - rsUrl  
                         - email
                         - name
+                        - userInfo  
                 required:
                   - type
                   - title
@@ -2073,26 +2058,29 @@ paths:
                     type: 'urn:dx:as:Success'
                     title: Provider status updated
                     results:
-                      - status: approved
+                      - id: 0e36020a-edb1-4471-be21-a6c9946cdbb0
+                        status: approved
                         userId: 355e251b-574b-46e6-9247-f76f1f70a123
+                        rsUrl: rs.cop.in  
                         email: test@gmail.com
                         name:
                           firstName: First
                           lastName: Last
+                        userInfo: {}
         '400':
           description: |-
             - Missing or malformed request
-            - Duplicate `userId`s in request
-            - Invalid `userId`or User is not provider/pending provider.
+            - Duplicate `id`s in request
+            - Invalid `id` - does not exist or not in pending state
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
-                User ID not pending/userId does not exist:
+                Provider registration ID not valid, does not exist / not in pending state:
                   value:
                     type: 'urn:dx:as:InvalidInput'
-                    title: 'Invalid User ID, not a provider/pending provider'
+                    title: 'Invalid provider registration ID - does not exist or not in pending state'
                     detail: c34b1565-7281-4f66-b220-ed79f9bb0a31
         '401':
           description: |-
@@ -2108,14 +2096,14 @@ paths:
                     type: 'urn:dx:as:InvalidAuthenticationToken'
                     title: Token authentication failed
                     detail: Inactive Token
-                User is not admin of AAA:
+                Not admin of any resource server:
                   value:
                     type: 'urn:dx:as:InvalidRole'
-                    title: Not admin of auth server
-                    detail: You are not an admin of the auth server
+                    title: Not admin of a resource server
+                    detail: You are not an admin of any resource server
       description: |-
         Update the status of multiple Provider registrations to `approved` or `rejected`.This operation can be performed by an `admin` of the IUDX AAA server.
-        The API takes the provider's user ID (obtained from the `GET /auth/v1/admin/provider/registrations` API) and the status to update.
+        The API takes the provider registration ID - `id` field obtained from the `GET /auth/v1/admin/provider/registrations` API - and the status to update.
       parameters:
         - schema:
             type: string
@@ -2132,10 +2120,6 @@ paths:
             schema:
               type: object
               description: ''
-              x-examples:
-                example-1:
-                  - userId: d34b1547-7281-4f66-b550-ed79f9bb0c36
-                    status: approved
               properties:
                 request:
                   type: array
@@ -2144,7 +2128,7 @@ paths:
                   items:
                     type: object
                     properties:
-                      userId:
+                      id:
                         type: string
                         format: uuid
                         pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
@@ -2158,7 +2142,7 @@ paths:
                         minLength: 7
                         maxLength: 8
                     required:
-                      - userId
+                      - id
                       - status
               required:
                 - request
@@ -2166,10 +2150,10 @@ paths:
               Updating Registration status:
                 value:
                   request:
-                    - userId: c34b1565-7281-4f66-b220-ed79f9bb0a31
+                    - id: c34b1565-7281-4f66-b220-ed79f9bb0a31
                       status: approved
         required: true
-        description: The request is an object with key `request` having value as an array of objects containing the provider's `userId` and the `status` to be updated for said provider
+        description: The request is an object with key `request` having value as an array of objects containing the provider registration IDs - `id` - from `GET /auth/v1/admin/provider/registrations` and the `status` to be updated for said provider
       tags:
         - Admin APIs
       security:
@@ -2177,6 +2161,7 @@ paths:
   /auth/v1/policies:
     get:
       summary: Get Policies
+      deprecated: true  
       tags:
         - Policies APIs
       responses:
@@ -2455,6 +2440,7 @@ paths:
     parameters: []
     delete:
       summary: Delete Policies
+      deprecated: true  
       operationId: delete-auth-v1-policies
       responses:
         '200':
@@ -2575,6 +2561,7 @@ paths:
         - authorization: []
     post:
       summary: Create Policies
+      deprecated: true  
       operationId: post-auth-v1-policies
       responses:
         '200':
@@ -2859,43 +2846,6 @@ paths:
               schema:
                 description: ''
                 type: object
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:Success'
-                    title: Delegations
-                    results:
-                      - id: 0bb3cd2b-331a-474c-8107-becdcbdb0b41
-                        url: foobar.iudx.io
-                        role: consumer  
-                        server: Foobar
-                        owner:
-                          email: someone@example.com
-                          name:
-                            firstName: Someone
-                            lastName: Person
-                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
-                        user:
-                          email: individual@example.com
-                          name:
-                            firstName: Indiv
-                            lastName: Vidual
-                          id: d34b1547-7281-4f66-b550-ed79f9bb0c36
-                      - id: 8f79dec9-a327-439c-b00b-731fea264af4
-                        url: foobar.iudx.io
-                        role: provider
-                        server: Foobar
-                        owner:
-                          email: someone@example.com
-                          name:
-                            firstName: Someone
-                            lastName: Person
-                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
-                        user:
-                          email: someone@example.com
-                          name:
-                            firstName: Someone
-                            lastName: Person
-                          id: a13eb955-c691-4fd3-b200-f18bc78810b5
                 properties:
                   type:
                     type: string
@@ -3031,7 +2981,7 @@ paths:
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
-            - User does have the `provider` or `consumer` roles
+            - User does have the `provider`, `consumer` or `delegate` roles
           headers:
             Content-Type:
               schema:
@@ -3061,7 +3011,7 @@ paths:
       description: |-
         Get delegations related to a particular user. The response depends upon the roles that the user has:
         - `provider`/`consumer` : returns all delegations created by the provider/consumer
-        - `delegate` : returns all providers/consumer who have assigned them as delegates for certain servers
+        - `delegate` : returns all providers/consumers who have assigned them as delegates for certain servers
 
       parameters:
         - schema:
@@ -3159,7 +3109,7 @@ paths:
                   value:
                     type: 'urn:dx:as:InvalidRole'
                     title: User does not have roles to use API
-                    detail: User with provider role or is an auth delegate may call the API
+                    detail: User with provider or consumer role may call the API
           headers:
             Content-Type:
               schema:
@@ -3183,10 +3133,6 @@ paths:
             schema:
               type: object
               description: ''
-              x-examples:
-                example-1:
-                  - id: 1e435fcb-11ce-4f4d-94c0-adf339932ba4
-                  - id: 7d50c547-9f36-4daa-bdc6-cca3c932379d
               properties:
                 request:
                   type: array
@@ -3225,7 +3171,8 @@ paths:
         '400':
           description: |-
             Bad Request
-            -the server url is not present in the db
+            - The resource server URL is not present on the server
+            - The user does not have the correct role for the requested resource server  
           content:
             application/json:
               schema:
@@ -3275,12 +3222,6 @@ paths:
             schema:
               description: ''
               type: object
-              x-examples:
-                example-1:
-                  request:
-                    - resSerUrl: rs.iudx.io
-                      userEmail: email@email.com
-                      role: consumer  
               properties:
                 request:
                   type: array
@@ -3327,6 +3268,7 @@ paths:
   /auth/v1/policies/requests:
     get:
       summary: List Access Requests
+      deprecated: true  
       responses:
         '200':
           description: Successfully listing all the requests of a Consumer or of a providers
@@ -3438,6 +3380,7 @@ paths:
     post:
       summary: Create Access Requests
       operationId: post-auth-v1-policies-requests
+      deprecated: true  
       responses:
         '200':
           description: OK
@@ -3601,6 +3544,7 @@ paths:
           description: Keycloak Issued token
     put:
       summary: Update Access Requests
+      deprecated: true  
       operationId: put-auth-v1-policies-requests
       responses:
         '200':
@@ -3769,6 +3713,7 @@ paths:
           name: providerId
     delete:
       summary: Withdraw Access Requests
+      deprecated: true  
       operationId: delete-auth-v1-policies-requests
       responses:
         '200':
@@ -4133,12 +4078,12 @@ paths:
                     minItems: 1
                     items:
                       required:
-                        - apdId
+                        - id
                         - name
                         - url
                         - status
                       properties:
-                        apdId:
+                        id:
                           type: string
                           minLength: 1
                         name:
@@ -4154,30 +4099,17 @@ paths:
                   - type
                   - title
                   - results
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:Success'
-                    title: Access Policy Domains
-                    results:
-                      - apdId: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
-                        name: DataKaveri APD
-                        url: apd.datakaveri.org
-                        status: pending
-                      - apdId: 540972fd-43df-43c1-9627-df2402a6b731
-                        name: IISc APD
-                        url: apd.iisc.ac.in
-                        status: active
               examples:
                 Example:
                   value:
                     type: 'urn:dx:as:Success'
                     title: Access Policy Domains
                     results:
-                      - apdId: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                      - id: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
                         name: DataKaveri APD
                         url: apd.datakaveri.org
-                        status: pending
-                      - apdId: 540972fd-43df-43c1-9627-df2402a6b731
+                        status: active
+                      - id: 540972fd-43df-43c1-9627-df2402a6b731
                         name: IISc APD
                         url: apd.iisc.ac.in
                         status: active
@@ -4188,34 +4120,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
               examples:
-                Example:
+                Invalid token:
                   value:
                     type: 'urn:dx:as:InvalidAuthenticationToken'
                     title: Token authentication failed
                     detail: Inactive Token
         '404':
-          description: '- A user profile for the user does not exist'
+          description: |-
+            - A user does not have any approved roles
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+                $ref: '#/components/schemas/ErrorResponse'
               examples:
-                User profile for the user does not exist:
+                User does not have any roles:
                   value:
                     type: 'urn:dx:as:MissingInformation'
-                    title: User profile does not exist
-                    detail: Please register to create user profile
+                    title: User does not have any roles
+                    detail: Please add roles or wait for provider role approvals
       operationId: get-auth-v1-apd
       description: |-
         Returns registered APDs. 
-        - If called by the AAA admin, returns all APD registrations
+        - If called by the COS Admin, returns all APD registrations
         - If called by a user with any other roles, returns all APDs in the **active** state
       security:
         - authorization: []
       tags:
         - Access Policy Domain (APD) APIs
     post:
-      summary: Register an Access Policy Domain
+      summary: Register an Access Policy Domain - COS Admin
       operationId: post-auth-v1-apd
       responses:
         '200':
@@ -4235,7 +4168,7 @@ paths:
                   results:
                     type: object
                     properties:
-                      apdId:
+                      id:
                         type: string
                         minLength: 1
                       name:
@@ -4248,7 +4181,7 @@ paths:
                         type: string
                         minLength: 1
                     required:
-                      - apdId
+                      - id
                       - name
                       - url
                       - status
@@ -4256,22 +4189,13 @@ paths:
                   - type
                   - title
                   - results
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:Success'
-                    title: The Access Policy Domain has been registered
-                    results:
-                      apdId: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
-                      name: zppcw
-                      url: zppcw.com
-                      status: active
               examples:
                 Example:
                   value:
                     type: 'urn:dx:as:Success'
                     title: The Access Policy Domain has been registered
                     results:
-                      apdId: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                      id: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
                       name: DataKaveri APD
                       url: apd.datakaveri.org
                       status: active
@@ -4296,41 +4220,35 @@ paths:
                     title: Invalid URL
                     detail: The URL is invalid
         '401':
-          description: '- Unauthorized - `token` invalid/expired'
+          description: '- Unauthorized - `token` invalid/expired or not COS Admin'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Unauthorized'
               examples:
-                Example:
+                Inactive/invalid token:
                   value:
                     type: 'urn:dx:as:InvalidAuthenticationToken'
                     title: Token authentication failed
                     detail: Inactive Token
-        '403':
-          description: '- User is not admin of AAA server'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
-              examples:
-                Example:
+                Not COS Admin:
                   value:
                     type: 'urn:dx:as:InvalidRole'
-                    title: Not admin 
-                    detail: Use does not have the admin
+                    title: Not COS Admin
+                    detail: User is not the COS Admin
         '404':
-          description: '- A user profile for the user does not exist'
+          description: |-
+            - A user does not have any approved roles
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+                $ref: '#/components/schemas/ErrorResponse'
               examples:
-                User profile for the user does not exist:
+                User does not have any roles:
                   value:
                     type: 'urn:dx:as:MissingInformation'
-                    title: User profile does not exist
-                    detail: Please register to create user profile
+                    title: User does not have any roles
+                    detail: Please add roles or wait for provider role approvals
         '409':
           description: '- An APD with the provided `url` already exists'
           content:
@@ -4344,7 +4262,7 @@ paths:
                     title: URL already exists
                     detail: An APD with the requested URL already exists
       description: |-
-        The AAA admin can add new APDs to the server. These APDs will be in the **active** state by default and once added, polcieis can be written for the APDs. 
+        The COS Admin can add new APDs to the server. These APDs will be in the **active** state by default. 
 
         ## APD Requirements during registration
         The APD URL must be provided during registration. The URL must be **reachable** as well as:
@@ -4381,7 +4299,7 @@ paths:
                   url: apd.datakaveri.org
         required: true
         description: |-
-          - AAA admin permitted to call the API.
+          - COS Admin permitted to call the API.
           - `url` must be a **valid reachable domain/hostname**. Examples of invalid `url`s are:
             - `https://example.com`
             - `example.com:8080`
@@ -4389,7 +4307,7 @@ paths:
       tags:
         - Access Policy Domain (APD) APIs
     put:
-      summary: Update Access Policy Domain status
+      summary: Update Access Policy Domain status - COS Admin
       operationId: put-auth-v1-apd
       responses:
         '200':
@@ -4412,12 +4330,12 @@ paths:
                     minItems: 1
                     items:
                       required:
-                        - apdId
+                        - id
                         - name
                         - url
                         - status
                       properties:
-                        apdId:
+                        id:
                           type: string
                           minLength: 1
                         name:
@@ -4442,7 +4360,7 @@ paths:
                     type: 'urn:dx:as:Success'
                     title: The status of the Access Policy Domains have been updated
                     results:
-                      - apdId: 11f0335d-0d0a-4f58-99b1-08e60e3f4750
+                      - id: 11f0335d-0d0a-4f58-99b1-08e60e3f4750
                         name: zwcev
                         url: zwcev.com
                         status: inactive
@@ -4452,11 +4370,11 @@ paths:
                     type: 'urn:dx:as:Success'
                     title: The status of the Access Policy Domains have been updated
                     results:
-                      - apdId: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                      - id: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
                         name: DataKaveri APD
                         url: apd.datakaveri.org
                         status: active
-                      - apdId: 540972fd-43df-43c1-9627-df2402a6b731
+                      - id: 540972fd-43df-43c1-9627-df2402a6b731
                         name: IISc APD
                         url: apd.iisc.ac.in
                         status: inactive
@@ -4481,52 +4399,52 @@ paths:
                     title: Duplicate APD ID in request
                     detail: 22bf1df3-7704-4be3-b64a-7f1fb8d1e97d
         '401':
-          description: '- Unauthorized - `token` invalid/expired'
+          description: '- Unauthorized - `token` invalid/expired or not COS admin'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
               examples:
-                Example:
+                Invalid/expired token:
                   value:
                     type: 'urn:dx:as:InvalidAuthenticationToken'
                     title: Token authentication failed
                     detail: Inactive Token
+                Not COS Admin:
+                  value:
+                    type: 'urn:dx:as:InvalidRole'
+                    title: Not COS Admin
+                    detail: User is not the COS Admin
         '403':
           description: |-
-            - User is not AAA admin
             - Cannot change status of a particular APD
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
               examples:
-                Invalid Roles:
-                  value:
-                    type: 'urn:dx:as:InvalidRole'
-                    title: Invalid roles to call API
-                    detail: Auth Server Admin may call the API
                 Cannot change status of an APD:
                   value:
                     type: 'urn:dx:as:InvalidInput'
                     title: Not allowed to change status for APD ID
                     detail: 073a3628-1f21-4828-bdeb-9620dfd6ed42
         '404':
-          description: '- A user profile for the user does not exist'
+          description: |-
+            - A user does not have any approved roles
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+                $ref: '#/components/schemas/ErrorResponse'
               examples:
-                User profile for the user does not exist:
+                User does not have any roles:
                   value:
                     type: 'urn:dx:as:MissingInformation'
-                    title: User profile does not exist
-                    detail: Please register to create user profile
+                    title: User does not have any roles
+                    detail: Please add roles or wait for provider role approvals
       description: |-
-        Allows the AAA admins to update status of APDs.
+        Allows the COS Admin to update status of APDs.
 
-        The AAA admin may change status :
+        The COS Admin may change status :
         - from **active** to **inactive**, in case the APD is not responsive or has been compromised
         - from **inactive** to **active**
 
@@ -4540,7 +4458,7 @@ paths:
               x-examples:
                 example-1:
                   request:
-                    - apdId: 3f08e1ba-f4c0-4ed0-86da-edf7092d6333
+                    - id: 3f08e1ba-f4c0-4ed0-86da-edf7092d6333
                       status: active
               additionalProperties: false
               properties:
@@ -4552,7 +4470,7 @@ paths:
                     type: object
                     additionalProperties: false
                     properties:
-                      apdId:
+                      id:
                         type: string
                         minLength: 36
                         format: uuid
@@ -4567,7 +4485,7 @@ paths:
                           - inactive
                         description: The status to be changed to
                     required:
-                      - apdId
+                      - id
                       - status
               required:
                 - request
@@ -4575,9 +4493,9 @@ paths:
               Example:
                 value:
                   request:
-                    - apdId: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                    - id: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
                       status: active
-                    - apdId: 540972fd-43df-43c1-9627-df2402a6b731
+                    - id: 540972fd-43df-43c1-9627-df2402a6b731
                       status: inactive
       security:
         - authorization: []
