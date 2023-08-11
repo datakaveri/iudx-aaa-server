@@ -40,6 +40,7 @@ import iudx.aaa.server.apd.ApdService;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.util.ClientAuthentication;
 import iudx.aaa.server.apiserver.util.FailureHandler;
+import iudx.aaa.server.apiserver.util.FetchRoles;
 import iudx.aaa.server.apiserver.util.OIDCAuthentication;
 import iudx.aaa.server.apiserver.util.ProviderAuthentication;
 import iudx.aaa.server.policy.PolicyService;
@@ -169,7 +170,8 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     /* Passing the full config to OIDC auth, as the config has all the required keycloak
      * options */
-    OIDCAuthentication oidcFlow = new OIDCAuthentication(vertx, pgPool, config());
+    OIDCAuthentication oidcFlow = new OIDCAuthentication(vertx, config());
+    FetchRoles fetchRoles = new FetchRoles(pgPool, config());
     ClientAuthentication clientFlow = new ClientAuthentication(pgPool);
     ProviderAuthentication providerAuth = new ProviderAuthentication(pgPool, authServerDomain);
     FailureHandler failureHandler = new FailureHandler();
@@ -187,6 +189,7 @@ public class ApiServerVerticle extends AbstractVerticle {
               // Post token create
               routerBuilder.operation(CREATE_TOKEN)
                       .handler(clientFlow)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Roles.allRoles))
                       .handler(this::createTokenHandler)
                       .failureHandler(failureHandler);
 
@@ -197,43 +200,51 @@ public class ApiServerVerticle extends AbstractVerticle {
 
               // Post token revoke
               routerBuilder.operation(REVOKE_TOKEN)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Roles.allRoles))
                       .handler(this::revokeTokenHandler)
                       .failureHandler(failureHandler);
 
               // Post user profile
-              routerBuilder.operation(CREATE_USER_PROFILE)
+              routerBuilder.operation(ADD_ROLES)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Roles.allRoles))
                       .handler(this::createUserProfileHandler)
                       .failureHandler(failureHandler);
 
               // Get user profile
-              routerBuilder.operation(GET_USER_PROFILE)
+              routerBuilder.operation(GET_USER_ROLES)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Roles.allRoles))
                       .handler(this::listUserProfileHandler)
                       .failureHandler(failureHandler);
 
               routerBuilder.operation(RESET_CLIENT_CRED)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Roles.allRoles))
                       .handler(this::resetClientCredHandler)
                       .failureHandler(failureHandler);
 
               // Get Resource Server Details
               routerBuilder.operation(GET_RESOURCE_SERVERS)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of()))
                       .handler(this::listResourceServersHandler)
                       .failureHandler(failureHandler);
 
               // Post Create Organization
               routerBuilder.operation(CREATE_RESOURCE_SERVER)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.COS_ADMIN)))
                       .handler(this::adminCreateResourceServerHandler)
                       .failureHandler(failureHandler);
 
               // Get Provider registrations
               routerBuilder.operation(GET_PVDR_REGISTRATION)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.ADMIN)))
                       .handler(this::adminGetProviderRegHandler)
                       .failureHandler(failureHandler);
 
               // Update Provider registration status
               routerBuilder.operation(UPDATE_PVDR_REGISTRATION)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.ADMIN)))
                       .handler(this::adminUpdateProviderRegHandler)
                       .failureHandler(failureHandler);
-
+/*
               // Get/lists the User policies
               routerBuilder.operation(GET_POLICIES)
                       .handler(providerAuth)
@@ -273,39 +284,47 @@ public class ApiServerVerticle extends AbstractVerticle {
               routerBuilder.operation(DELETE_POLICIES_REQUEST)
                   .handler(this::deleteNotificationHandler)
                   .failureHandler(failureHandler);
-
+*/
               // Get delegations by provider/delegate/auth delegate
               routerBuilder.operation(GET_DELEGATIONS)
+                      .handler(ctx -> fetchRoles.fetch(ctx,
+                          Set.of(Roles.CONSUMER, Roles.PROVIDER, Roles.DELEGATE)))
                       .handler(this::listDelegationsHandler)
                       .failureHandler(failureHandler);
 
               // Delete delegations by provider/delegate/auth delegate
               routerBuilder.operation(DELETE_DELEGATIONS)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.PROVIDER, Roles.CONSUMER)))
                       .handler(this::deleteDelegationsHandler)
                       .failureHandler(failureHandler);
 
               // Create delegations
               routerBuilder.operation(CREATE_DELEGATIONS)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.PROVIDER, Roles.CONSUMER)))
                       .handler(this::createDelegationsHandler)
                       .failureHandler(failureHandler);
 
               // Create APD
               routerBuilder.operation(CREATE_APD)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.COS_ADMIN)))
                       .handler(this::createApdHandler)
                       .failureHandler(failureHandler);
               
               // Update APD status
               routerBuilder.operation(UPDATE_APD)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.COS_ADMIN)))
                       .handler(this::updateApdHandler)
                       .failureHandler(failureHandler);
 
               // List APDs
               routerBuilder.operation(LIST_APD)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of()))
                       .handler(this::listApdHandler)
                       .failureHandler(failureHandler);
 
               // Get default client credentials
               routerBuilder.operation(GET_DEFAULT_CLIENT_CREDS)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Roles.allRoles))
                       .handler(this::getDefaultClientCredsHandler)
                       .failureHandler(failureHandler);
 
@@ -979,6 +998,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     msg.remove(STATUS);
     
     /* In case of a timeout, the response may already be sent */
+    System.out.println(msg);
     if(response.ended()) {
       LOGGER.warn("Trying to send processed API response after timeout");
       return Future.succeededFuture();

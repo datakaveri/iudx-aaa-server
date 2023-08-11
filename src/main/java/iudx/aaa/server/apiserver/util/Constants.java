@@ -59,8 +59,8 @@ public class Constants {
   public static final String CREATE_TOKEN = "post-auth-v1-token";
   public static final String TIP_TOKEN = "post-auth-v1-introspect"; 
   public static final String REVOKE_TOKEN = "post-auth-v1-revoke";
-  public static final String CREATE_USER_PROFILE = "post-auth-v1-user-profile";
-  public static final String GET_USER_PROFILE = "get-auth-v1-user-profile";
+  public static final String ADD_ROLES = "post-auth-v1-user-roles";
+  public static final String GET_USER_ROLES = "get-auth-v1-user-roles";
   public static final String RESET_CLIENT_CRED = "put-auth-v1-user-clientcredentials";
   public static final String GET_RESOURCE_SERVERS = "get-auth-v1-resourceservers";
   public static final String CREATE_RESOURCE_SERVER = "post-auth-v1-admin-resourceservers";
@@ -125,6 +125,7 @@ public class Constants {
   /* General */
   public static final String KC_GIVEN_NAME = "given_name";
   public static final String KC_FAMILY_NAME = "family_name";
+  public static final String OBTAINED_USER_ID = "user_id_from_keycloak_token_or_from_client_cred_validation";
   public static final String SUB = "sub";
   public static final String ID = "id";
   public static final String ROLES = "roles";
@@ -157,19 +158,27 @@ public class Constants {
 
 
   /* SQL Queries */
-  public static final String SQL_GET_USER_ROLES = 
-      "select roles.role, array_agg(url) AS rs_urls FROM roles JOIN resource_server "
+  
+  public static final String SQL_UNION = " UNION ";
+  
+  public static final String SQL_GET_PROVIDER_CONSUMER_ROLES = 
+      "SELECT roles.role, array_agg(url) AS rs_urls FROM roles JOIN resource_server "
       + " ON roles.resource_server_id = resource_server.id"
       + " WHERE roles.user_id = $1::uuid AND roles.status = 'APPROVED'"
       + " GROUP BY roles.role";
 
-  public static final String SQL_GET_KID_ROLES =
-      "SELECT u.id, q.keycloak_id as kid, client_secret, array_agg(r.role) as roles\n"
-          + "FROM (select user_id as id, client_secret from "
-          + "user_clients where client_id = $1) u\n" + "LEFT JOIN "
-          + "roles r ON u.id = r.user_id\n" + "LEFT JOIN " 
-          + "users q ON u.id = q.id\n"
-          + "where r.status='APPROVED' GROUP BY u.id, client_secret, keycloak_id";
+  public static final String SQL_GET_DELEGATE_ROLE = 
+      "SELECT 'DELEGATE'::role_enum AS role, array_agg(url) AS rs_urls FROM delegations"
+      + " JOIN roles ON delegations.role_id = roles.id"
+      + " JOIN resource_server on roles.resource_server_id = resource_server.id"
+      + " WHERE delegations.user_id = $1::uuid AND delegations.status = 'ACTIVE' HAVING array_agg(url) <> '{}'";
+
+  public static final String SQL_GET_ADMIN_ROLE =
+      "SELECT 'ADMIN'::role_enum AS role, array_agg(url) AS rs_urls"
+          + " FROM resource_server WHERE owner_id = $1::uuid HAVING array_agg(url) <> '{}'";
+  
+  public static final String SQL_GET_DETAILS_BY_CLIENT_ID =
+      "SELECT user_id, client_secret FROM user_clients where client_id = $1::uuid";
   
   public static final String CHECK_DELEGATE =
       "SELECT * FROM policies pol "
