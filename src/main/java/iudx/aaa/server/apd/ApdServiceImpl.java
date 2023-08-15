@@ -14,7 +14,6 @@ import static iudx.aaa.server.apd.Constants.APD_RESP_TYPE;
 import static iudx.aaa.server.apd.Constants.APD_URN_ALLOW;
 import static iudx.aaa.server.apd.Constants.APD_URN_DENY;
 import static iudx.aaa.server.apd.Constants.APD_URN_DENY_NEEDS_INT;
-import static iudx.aaa.server.apd.Constants.CONFIG_AUTH_URL;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_APD_CONSTRAINTS;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_APD_INTERAC;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_CAT_ID;
@@ -27,8 +26,8 @@ import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_URL;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_EXISTING_DOMAIN;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_INVALID_DOMAIN;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_INVALID_UUID;
-import static iudx.aaa.server.apd.Constants.ERR_DETAIL_NO_ROLES_PUT;
-import static iudx.aaa.server.apd.Constants.ERR_DETAIL_NO_USER_PROFILE;
+import static iudx.aaa.server.apd.Constants.ERR_DETAIL_NO_APPROVED_ROLES;
+import static iudx.aaa.server.apd.Constants.ERR_DETAIL_NO_COS_ADMIN_ROLE;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_CANT_CHANGE_APD_STATUS;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_DUPLICATE_REQ;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_EXISTING_DOMAIN;
@@ -36,21 +35,19 @@ import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_APDID;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_DOMAIN;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_REQUEST;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_REQUEST_ID;
-import static iudx.aaa.server.apd.Constants.ERR_TITLE_NO_ROLES_PUT;
-import static iudx.aaa.server.apd.Constants.ERR_TITLE_NO_USER_PROFILE;
+import static iudx.aaa.server.apd.Constants.ERR_TITLE_NO_APPROVED_ROLES;
+import static iudx.aaa.server.apd.Constants.ERR_TITLE_NO_COS_ADMIN_ROLE;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_POLICY_EVAL_FAILED;
 import static iudx.aaa.server.apd.Constants.GET_APDINFO_ID;
 import static iudx.aaa.server.apd.Constants.GET_APDINFO_URL;
 import static iudx.aaa.server.apd.Constants.INTERNALERROR;
 import static iudx.aaa.server.apd.Constants.LIST_AUTH_QUERY;
 import static iudx.aaa.server.apd.Constants.LIST_USER_QUERY;
-import static iudx.aaa.server.apd.Constants.NIL_UUID;
 import static iudx.aaa.server.apd.Constants.RESP_APD_ID;
 import static iudx.aaa.server.apd.Constants.RESP_APD_NAME;
 import static iudx.aaa.server.apd.Constants.RESP_APD_STATUS;
 import static iudx.aaa.server.apd.Constants.RESP_APD_URL;
-import static iudx.aaa.server.apd.Constants.SQL_CHECK_ADMIN_OF_SERVER;
-import static iudx.aaa.server.apd.Constants.SQL_GET_APDS_BY_ID_ADMIN;
+import static iudx.aaa.server.apd.Constants.SQL_GET_APDS_BY_ID_COS_ADMIN;
 import static iudx.aaa.server.apd.Constants.SQL_GET_APD_URL_STATUS;
 import static iudx.aaa.server.apd.Constants.SQL_INSERT_APD_IF_NOT_EXISTS;
 import static iudx.aaa.server.apd.Constants.SQL_UPDATE_APD_STATUS;
@@ -109,7 +106,6 @@ public class ApdServiceImpl implements ApdService {
 
   private static final Logger LOGGER = LogManager.getLogger(ApdServiceImpl.class);
 
-  private static String AUTH_SERVER_URL;
   private PgPool pool;
   private ApdWebClient apdWebClient;
   private RegistrationService registrationService;
@@ -121,8 +117,6 @@ public class ApdServiceImpl implements ApdService {
     this.apdWebClient = apdWebClient;
     this.registrationService = regService;
     this.tokenService = tokService;
-    AUTH_SERVER_URL = options.getString(CONFIG_AUTH_URL);
-
   }
 
   /**
@@ -137,45 +131,36 @@ public class ApdServiceImpl implements ApdService {
 
   @Override
   public ApdService listApd(User user, Handler<AsyncResult<JsonObject>> handler) {
-    if (user.getUserId().equals(NIL_UUID)) {
+    if (user.getRoles().isEmpty()) {
       Response r =
               new ResponseBuilder()
                       .status(404)
                       .type(URN_MISSING_INFO)
-                      .title(ERR_TITLE_NO_USER_PROFILE)
-                      .detail(ERR_DETAIL_NO_USER_PROFILE)
+                      .title(ERR_TITLE_NO_APPROVED_ROLES)
+                      .detail(ERR_DETAIL_NO_APPROVED_ROLES)
                       .build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
+    
+    String query;
+    Tuple tuple;
+    if(user.getRoles().contains(Roles.COS_ADMIN)) {
+      query = LIST_AUTH_QUERY;
+      tuple = Tuple.of(ApdStatus.ACTIVE.toString(),ApdStatus.INACTIVE.toString());
+    }
+    else {
+      query = LIST_USER_QUERY;
+      tuple = Tuple.of(ApdStatus.ACTIVE.toString());
+    }
 
-    Future<Boolean> isAuthAdmin = checkAdminServer(user);
+    Collector<Row, ?, List<String>> ApdIdCollector =
+        Collectors.mapping(row -> row.getUUID("id").toString(), Collectors.toList());
 
-    Future<List<String>> apdIds =
-            isAuthAdmin.compose(
-                    authAdmin -> {
-                      String query;
-                      Tuple tuple;
-                      if (!authAdmin) {
-                          query = LIST_USER_QUERY;
-                          tuple = Tuple.of(ApdStatus.ACTIVE.toString());
-                        }
-
-                       else {
-                        query = LIST_AUTH_QUERY;
-                        tuple =
-                                Tuple.of(
-                                        ApdStatus.ACTIVE.toString(),
-                                        ApdStatus.INACTIVE.toString());
-                      }
-
-                      Collector<Row, ?, List<String>> ApdIdCollector =
-                              Collectors.mapping(row -> row.getUUID("id").toString(), Collectors.toList());
-
-                      return pool.withConnection(
-                              conn -> conn.preparedQuery(query).collecting(ApdIdCollector).execute(tuple))
-                              .map(SqlResult::value);
-                    });
+    Future<List<String>> apdIds = pool
+        .withConnection(conn -> conn.preparedQuery(query).collecting(ApdIdCollector).execute(tuple))
+        .map(SqlResult::value);
+                    
 
     Future<JsonObject> apdDetails =
             apdIds.compose(
@@ -206,9 +191,6 @@ public class ApdServiceImpl implements ApdService {
                       JsonArray response = new JsonArray();
                         apdIds.result().forEach(id->{
                         JsonObject result = details.getJsonObject(id);
-                        String apdId = result.getString("id");
-                        result.remove("id");
-                        result.put("apdId",apdId);
                         response.add(result);
                       });
                       return Future.succeededFuture(response);
@@ -244,9 +226,9 @@ public class ApdServiceImpl implements ApdService {
 
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
-    if (user.getUserId().equals(NIL_UUID)) {
-      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
-          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
+    if (!user.getRoles().contains(Roles.COS_ADMIN)) {
+      Response r = new ResponseBuilder().status(401).type(URN_INVALID_ROLE)
+          .title(ERR_TITLE_NO_COS_ADMIN_ROLE).detail(ERR_DETAIL_NO_COS_ADMIN_ROLE).build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
@@ -269,25 +251,13 @@ public class ApdServiceImpl implements ApdService {
       return this;
     }
 
-    Future<Boolean> isAuthAdmin = checkAdminServer(user);
-
-    Future<Void> checkUserRoles = isAuthAdmin.compose(res -> {
-      if (!isAuthAdmin.result()) {
-        return Future.failedFuture(new ComposeException(403, URN_INVALID_ROLE.toString(),
-            ERR_TITLE_NO_ROLES_PUT, ERR_DETAIL_NO_ROLES_PUT));
-      }
-      return Future.succeededFuture();
-    });
-
     Collector<Row, ?, Map<UUID, JsonObject>> collector =
-        Collectors.toMap(row -> row.getUUID("apdId"), row -> row.toJson());
+        Collectors.toMap(row -> row.getUUID("id"), row -> row.toJson());
 
-    Future<Map<UUID, JsonObject>> queryResult = checkUserRoles.compose(n -> {
-      return pool
-          .withConnection(conn -> conn.preparedQuery(SQL_GET_APDS_BY_ID_ADMIN).collecting(collector)
+    Future<Map<UUID, JsonObject>> queryResult = pool
+          .withConnection(conn -> conn.preparedQuery(SQL_GET_APDS_BY_ID_COS_ADMIN).collecting(collector)
               .execute(Tuple.of(apdIds.toArray(UUID[]::new))))
           .map(res -> res.value());
-    });
 
     Future<Void> validateStatus = queryResult.compose(map -> {
       Set<UUID> queriedIds = map.keySet();
@@ -387,22 +357,12 @@ public class ApdServiceImpl implements ApdService {
 
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
-    if (user.getUserId().equals(NIL_UUID)) {
-      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
-          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
+    if (!user.getRoles().contains(Roles.COS_ADMIN)) {
+      Response r = new ResponseBuilder().status(401).type(URN_MISSING_INFO)
+          .title(ERR_TITLE_NO_COS_ADMIN_ROLE).detail(ERR_DETAIL_NO_COS_ADMIN_ROLE).build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
-
-    Future<Boolean> isAuthAdmin = checkAdminServer(user);
-
-    Future<Void> checkAdmin = isAuthAdmin.compose(res -> {
-      if (!isAuthAdmin.result()) {
-        return Future.failedFuture(new ComposeException(403, URN_INVALID_ROLE.toString(),
-            ERR_TITLE_NO_ROLES_PUT, ERR_DETAIL_NO_ROLES_PUT));
-      }
-      return Future.succeededFuture();
-    });
 
     String url = request.getUrl().toLowerCase();
     String name = request.getName();
@@ -419,7 +379,8 @@ public class ApdServiceImpl implements ApdService {
      * Disable APD existence check via /userclasses (apdWebClient.checkApdExists(url)) API for now.
      * TODO: maybe have a liveness check with a proper liveness API later on.
      */
-    Future<Boolean> isApdOnline = checkAdmin.compose(res -> Future.succeededFuture(true));
+    LOGGER.warn("APD liveness/existence check disabled!!!");
+    Future<Boolean> isApdOnline = Future.succeededFuture(true);
 
     Future<UUID> apdId = isApdOnline
         .compose(success -> pool.withTransaction(
@@ -612,29 +573,6 @@ public class ApdServiceImpl implements ApdService {
     });
 
     return promise.future();
-  }
-
-
-  /**
-   * Check if a user is an admin for a particular server.
-   * 
-   * @param user The user object
-   * @return Future of Boolean type
-   */
-  private Future<Boolean> checkAdminServer(User user) {
-    Promise<Boolean> p = Promise.promise();
-
-    if (!user.getRoles().contains(Roles.ADMIN)) {
-      p.complete(false);
-      return p.future();
-    }
-
-    pool.withConnection(conn -> conn.preparedQuery(SQL_CHECK_ADMIN_OF_SERVER)
-        .execute(Tuple.of(user.getUserId(), AUTH_SERVER_URL)).map(row -> row.size()))
-        .onSuccess(size -> p.complete(size == 0 ? false : true))
-        .onFailure(error -> p.fail(error.getMessage()));
-
-    return p.future();
   }
 
   @Override
