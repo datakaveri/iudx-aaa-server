@@ -21,7 +21,7 @@ public class Constants {
   public static final String X_CONTENT_TYPE_OPTIONS_NOSNIFF = "nosniff";
 
   /* Implementation specific headers */
-  public static final String HEADER_PROVIDER_ID = "providerId";
+  public static final String HEADER_DELEGATION_ID = "delegationId";
   public static final String HEADER_EMAIL = "email";
   public static final String HEADER_ROLE = "role";
   public static final String CLIENT_ID = "clientId";
@@ -107,7 +107,7 @@ public class Constants {
       "Refer to the " + ROUTE_DOC + " endpoint for documentation";
   public static final String KS_PARSE_ERROR = "Unable to parse KeyStore";
   public static final String ERR_PROVDERID = "General request- Delegate";
-  public static final String INVALID_PROVERID = "Invalid providerId";
+  public static final String INVALID_DELEGATION_ID = "Invalid delegationId";
   public static final String ERR_DELEGATE = "Invalid delegate request";
   public static final String ERR_DETAIL_SEARCH_USR = "Require both 'email' and 'role' header for search user";
   public static final String ERR_TITLE_SEARCH_USR = "Invalid search user request";
@@ -142,7 +142,7 @@ public class Constants {
   public static final String PUB_KEY = "publicKey";
   public static final String CERTIFICATE = "cert";
   public static final String REQUEST = "request";
-  public static final String DATA = "data";
+  public static final String DELEGATION_INFO = "delegation_info_object";
   public static final String CONTEXT_SEARCH_USER = "searchUserData";
   public static final String BODY = "body";
   public static final String API = "api";
@@ -180,31 +180,12 @@ public class Constants {
   public static final String SQL_GET_DETAILS_BY_CLIENT_ID =
       "SELECT user_id, client_secret FROM user_clients where client_id = $1::uuid";
   
-  public static final String CHECK_DELEGATE =
-      "SELECT * FROM policies pol "
-      + "INNER JOIN delegations del ON "
-      + "pol.owner_id = del.owner_id AND pol.user_id = del.user_id "
-      + "WHERE del.user_id = $1 AND "
-      + "del.owner_id = $2 AND "
-      + "del.resource_server_id = pol.item_id AND "
-      + "pol.status = 'ACTIVE' AND "
-      + "pol.expiry_time > now()";
-  
-  public static final String GET_DELEGATE = 
-      "WITH auth AS (\n" + 
-      "    SELECT owner_id, id FROM resource_server WHERE url = $1::text\n" + 
-      "), delegate AS (\n" + 
-      "    SELECT resource_server_id, user_id,owner_id FROM delegations \n" + 
-      "    WHERE user_id = $2::uuid \n" + 
-      "    AND owner_id = $3::uuid \n" + 
-      "    AND status = 'ACTIVE' \n" + 
-      "    AND resource_server_id = (SELECT id FROM auth)\n" + 
-      "), policy AS (\n" + 
-      "    SELECT * FROM policies WHERE item_id = (SELECT id FROM auth) \n" + 
-      "    AND owner_id = (SELECT owner_id FROM auth) \n" + 
-      "    AND user_id = (SELECT user_id FROM delegate)\n" + 
-      "    AND status = 'ACTIVE' \n" + 
-      "    AND expiry_time > now()\n" + 
-      ") SELECT * FROM policy";
-
+  public static final String SQL_GET_DELEGATION_BY_USER_AND_DELEG_ID =
+      "SELECT delegations.id AS \"delegationId\", role AS \"delegatedRole\""
+          + ", roles.user_id AS \"delegatorUserId\""
+          + ", resource_server.url AS \"delegatedRsUrl\" FROM delegations"
+          + " JOIN roles ON delegations.role_id = roles.id"
+          + " JOIN resource_server on roles.resource_server_id = resource_server.id"
+          + " WHERE delegations.id = $1::uuid AND delegations.user_id = $2::uuid"
+          + " AND delegations.status = 'ACTIVE'";
 }

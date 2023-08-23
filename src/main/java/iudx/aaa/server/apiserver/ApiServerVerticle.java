@@ -42,7 +42,7 @@ import iudx.aaa.server.apiserver.util.ClientAuthentication;
 import iudx.aaa.server.apiserver.util.FailureHandler;
 import iudx.aaa.server.apiserver.util.FetchRoles;
 import iudx.aaa.server.apiserver.util.OIDCAuthentication;
-import iudx.aaa.server.apiserver.util.ProviderAuthentication;
+import iudx.aaa.server.apiserver.util.DelegationIdAuthorization;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.token.TokenService;
@@ -156,7 +156,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     allowedHeaders.add(HEADER_REFERER);
     allowedHeaders.add(HEADER_ALLOW_ORIGIN);
 
-    allowedHeaders.add(HEADER_PROVIDER_ID);
+    allowedHeaders.add(HEADER_DELEGATION_ID);
     allowedHeaders.add(HEADER_EMAIL);
     allowedHeaders.add(HEADER_ROLE);
 
@@ -173,7 +173,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     OIDCAuthentication oidcFlow = new OIDCAuthentication(vertx, config());
     FetchRoles fetchRoles = new FetchRoles(pgPool, config());
     ClientAuthentication clientFlow = new ClientAuthentication(pgPool);
-    ProviderAuthentication providerAuth = new ProviderAuthentication(pgPool, authServerDomain);
+    DelegationIdAuthorization delegationAuth = new DelegationIdAuthorization(pgPool);
     FailureHandler failureHandler = new FailureHandler();
 
     RouterBuilder.create(vertx, "docs/openapi.yaml").onFailure(Throwable::printStackTrace)
@@ -190,6 +190,7 @@ public class ApiServerVerticle extends AbstractVerticle {
               routerBuilder.operation(CREATE_TOKEN)
                       .handler(clientFlow)
                       .handler(ctx -> fetchRoles.fetch(ctx, Roles.allRoles))
+                      .handler(delegationAuth)
                       .handler(this::createTokenHandler)
                       .failureHandler(failureHandler);
 
@@ -411,11 +412,12 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     /* Mapping request body to Object */
     JsonObject tokenRequestJson = context.body().asJsonObject();
-    tokenRequestJson.put(CLIENT_ID, context.get(CLIENT_ID));
     RequestToken requestTokenDTO = new RequestToken(tokenRequestJson);
     User user = context.get(USER);
+    
+    DelegationInformation delegationInfo = context.get(DELEGATION_INFO);
 
-    tokenService.createToken(requestTokenDTO, user, handler -> {
+    tokenService.createToken(requestTokenDTO, delegationInfo, user, handler -> {
       if (handler.succeeded()) {
         JsonObject result = handler.result();
         Future.future(future -> handleAuditLogs(context, result));
@@ -619,7 +621,7 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void listPolicyHandler(RoutingContext context) {
     User user = context.get(USER);
-    JsonObject data = Optional.ofNullable((JsonObject)context.get(DATA)).orElse(new JsonObject());
+    JsonObject data = Optional.ofNullable((JsonObject)context.get(DELEGATION_INFO)).orElse(new JsonObject());
 
     policyService.listPolicy(user, data, handler -> {
       if (handler.succeeded()) {
@@ -641,7 +643,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     JsonArray jsonRequest = arr.getJsonArray(REQUEST);
     List<CreatePolicyRequest> request = CreatePolicyRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
-    JsonObject data = Optional.ofNullable((JsonObject)context.get(DATA)).orElse(new JsonObject());
+    JsonObject data = Optional.ofNullable((JsonObject)context.get(DELEGATION_INFO)).orElse(new JsonObject());
     policyService.createPolicy(request,user,data, handler -> {
 
       if (handler.succeeded()) {
@@ -665,7 +667,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     JsonArray jsonRequest = arr.getJsonArray(REQUEST);
     List<DeletePolicyRequest> request = DeletePolicyRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
-    JsonObject data = Optional.ofNullable((JsonObject)context.get(DATA)).orElse(new JsonObject());
+    JsonObject data = Optional.ofNullable((JsonObject)context.get(DELEGATION_INFO)).orElse(new JsonObject());
     policyService.deletePolicy(jsonRequest, user,data, handler -> {
       if (handler.succeeded()) {
         JsonObject result = handler.result();
@@ -685,7 +687,7 @@ public class ApiServerVerticle extends AbstractVerticle {
   private void getPolicyNotificationHandler(RoutingContext context) {
 
     User user = context.get(USER);
-    JsonObject data = Optional.ofNullable((JsonObject)context.get(DATA)).orElse(new JsonObject());
+    JsonObject data = Optional.ofNullable((JsonObject)context.get(DELEGATION_INFO)).orElse(new JsonObject());
 
     policyService.listPolicyNotification(user, data, handler -> {
       if (handler.succeeded()) {
@@ -725,7 +727,7 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     JsonArray jsonRequest = context.body().asJsonObject().getJsonArray(REQUEST);
     List<UpdatePolicyNotification> request = UpdatePolicyNotification.jsonArrayToList(jsonRequest);
-    JsonObject data = Optional.ofNullable((JsonObject)context.get(DATA)).orElse(new JsonObject());
+    JsonObject data = Optional.ofNullable((JsonObject)context.get(DELEGATION_INFO)).orElse(new JsonObject());
     User user = context.get(USER);
 
     policyService.updatePolicyNotification(request, user, data, handler -> {
@@ -998,7 +1000,6 @@ public class ApiServerVerticle extends AbstractVerticle {
     msg.remove(STATUS);
     
     /* In case of a timeout, the response may already be sent */
-    System.out.println(msg);
     if(response.ended()) {
       LOGGER.warn("Trying to send processed API response after timeout");
       return Future.succeededFuture();

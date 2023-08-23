@@ -168,7 +168,7 @@ paths:
             pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
           in: header
           name: clientId
-          description: Keycloak Issued clientId
+          description: AAA Client ID
         - schema:
             type: string
             maxLength: 40
@@ -176,8 +176,17 @@ paths:
             minLength: 40
             example: 73b66ab55ba4d07ea487310679aa0689b4bd2c9d
           in: header
-          description: Keycloak Issued clientSecret
+          description: AAA Client Secret
           name: clientSecret
+        - schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+          in: header
+          name: delegationId
+          description: Delegation ID obtained from GET /delegations (in case delegate wants a token)
       requestBody:
         content:
           application/json:
@@ -294,9 +303,14 @@ paths:
            - Users with the `provider` role can get tokens for all of the resources that belong to them without having to set any specific policies to access them.
             
           ## Tokens for delegates
+          ### Delegation ID header
+          - **The `delegationId` header must be included - the ID can be obtained by calling the GET /delegations API**
+          - **The delegation ID determines which user + role + resource server the token request is being made on behalf by the delegate**  
+        ---
           - Valid item types - `resource`, `resource_group` 
-          - In case the delegate is a consumer-delegate, a token is issued if a successful APD verification takes place for the requested item and the associated consumer
-          - In case the delegate is a provider-delegate, a token is issued if the associated provider owns the item
+          - In case the delegate is making the request on behalf of a consumer, a token is issued if a successful APD verification takes place for the requested item and the associated consumer
+          - In case the delegate is making the request on behalf of a provider,, a token is issued if the associated provider owns the item
+          - On a successful token request, the access token will contain information about the delegator's user ID and role. See _JWT Access Token Response Structure_
 
           ## Tokens for consumers
           - Valid item types - `resource`, `resource_group`
@@ -313,11 +327,12 @@ paths:
            - `iss` : this tag contains the url of the server from the where the token was issued(IUDX auth server)
            - `aud` : the 'audience' tag contains the url of the server for which the token is valid
            - `exp` : when the token will expire in Unix format
-           - `iat` : indicates when the token was issued in unix format
+           - `iat` : indicates when the token was issued in Unix format
            - `iid` : resource type and resource id of the item for which the token is valid
            - `role` : role of the user 
-           - `cons` : the constraints that the resource server recognizes. It is only returned for policies set for consumer 
-           - `apd` : *(optional)* contains any data sent by the APD as a result of an **Allow** response (see *Resources restricted by APD Policies*)
+           - `cons` : the constraints that the resource server recognizes. Constraints sent back by the APD are included here. 
+           - `did` : when role is `delegate`, contains the user ID of the delegator
+           - `drl` : when the role is `delegate`, contains the role for which the delegated action is made
           
           # APD Verification 
          
