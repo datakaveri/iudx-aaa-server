@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @DataObject(generateConverter = true)
 public class ResetClientSecretRequest {
 
-  UUID clientId = UUID.fromString(Constants.NIL_UUID);
+  UUID clientId;
 
   public ResetClientSecretRequest(JsonObject json) {
     ResetClientSecretRequestConverter.fromJson(json, this);
