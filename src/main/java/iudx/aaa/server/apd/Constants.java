@@ -67,6 +67,10 @@ public class Constants {
   public static final String ERR_TITLE_INVALID_REQUEST =  "Invalid request";
   public static final String ERR_TITLE_INVALID_REQUEST_ID  =  "APD not present";
 
+  public static final String ERR_TITLE_APD_NOT_REGISTERED =  "APD URL not registered on COS";
+  public static final String ERR_DETAIL_APD_NOT_REGISTERED =
+      "The APD belonging to the item has not been registered to this COS";
+
   public static final String ERR_DETAIL_INVALID_UUID = "Invalid UUID";
 
   /* SQL */
@@ -82,7 +86,7 @@ public class Constants {
       "UPDATE apds SET status = $1::apd_status_enum, updated_at = NOW() WHERE id = $2::uuid";
   
   public static final String SQL_GET_APD_URL_STATUS =
-      "SELECT url, status FROM apds WHERE id = $1::uuid";
+      "SELECT url, status FROM apds WHERE url = $1::text";
 
   /* APD API endpoints and request metadata */
   public static final String APD_READ_USERCLASSES_API = "/userclasses";
@@ -101,7 +105,6 @@ public class Constants {
   public static final String APD_REQ_USER = "user";
   public static final String APD_REQ_OWNER = "owner";
   public static final String APD_REQ_ITEM =  "item";
-  public static final String APD_REQ_USERCLASS = "userClass";
   public static final String APD_REQ_CONTEXT = "context";
   
   /* APD JSON response keys */
@@ -115,7 +118,6 @@ public class Constants {
   /* create token service JSON key/values */
   public static final String CREATE_TOKEN_URL = "url";
   public static final String CREATE_TOKEN_CONSTRAINTS = "constraints";
-  public static final String CREATE_TOKEN_APD_CONSTRAINTS = "apdConstraints";
   public static final String CREATE_TOKEN_CAT_ID = "cat_id";
   public static final String CREATE_TOKEN_SESSIONID = "sessionId";
   public static final String CREATE_TOKEN_LINK = "link";

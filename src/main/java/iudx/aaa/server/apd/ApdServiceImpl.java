@@ -6,7 +6,6 @@ import static iudx.aaa.server.apd.Constants.APD_REQ_CONTEXT;
 import static iudx.aaa.server.apd.Constants.APD_REQ_ITEM;
 import static iudx.aaa.server.apd.Constants.APD_REQ_OWNER;
 import static iudx.aaa.server.apd.Constants.APD_REQ_USER;
-import static iudx.aaa.server.apd.Constants.APD_REQ_USERCLASS;
 import static iudx.aaa.server.apd.Constants.APD_RESP_DETAIL;
 import static iudx.aaa.server.apd.Constants.APD_RESP_LINK;
 import static iudx.aaa.server.apd.Constants.APD_RESP_SESSIONID;
@@ -14,7 +13,6 @@ import static iudx.aaa.server.apd.Constants.APD_RESP_TYPE;
 import static iudx.aaa.server.apd.Constants.APD_URN_ALLOW;
 import static iudx.aaa.server.apd.Constants.APD_URN_DENY;
 import static iudx.aaa.server.apd.Constants.APD_URN_DENY_NEEDS_INT;
-import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_APD_CONSTRAINTS;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_APD_INTERAC;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_CAT_ID;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_CONSTRAINTS;
@@ -26,8 +24,10 @@ import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_URL;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_EXISTING_DOMAIN;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_INVALID_DOMAIN;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_INVALID_UUID;
+import static iudx.aaa.server.apd.Constants.ERR_DETAIL_APD_NOT_REGISTERED;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_NO_APPROVED_ROLES;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_NO_COS_ADMIN_ROLE;
+import static iudx.aaa.server.apd.Constants.ERR_TITLE_APD_NOT_REGISTERED;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_CANT_CHANGE_APD_STATUS;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_DUPLICATE_REQ;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_EXISTING_DOMAIN;
@@ -581,14 +581,12 @@ public class ApdServiceImpl implements ApdService {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
     
     /* TODO: make apdContext a class */
-    UUID apdId = UUID.fromString(apdContext.getString("apdId"));
+    String apdUrl = apdContext.getString("apdUrl");
     String userId = apdContext.getString("userId");
     String ownerId = apdContext.getString("ownerId");
     String itemId = apdContext.getString("itemId");
     String itemType = apdContext.getString("itemType");
     String rsUrl = apdContext.getString("resSerUrl");
-    String userClass = apdContext.getString("userClass");
-    JsonObject constraints = apdContext.getJsonObject("constraints");
     JsonObject context = apdContext.getJsonObject("context");
 
     Collector<Row, ?, List<JsonObject>> collector =
@@ -596,18 +594,18 @@ public class ApdServiceImpl implements ApdService {
 
     Future<List<JsonObject>> apdDetails =
         pool.withConnection(conn -> conn.preparedQuery(SQL_GET_APD_URL_STATUS).collecting(collector)
-            .execute(Tuple.of(apdId)).map(res -> res.value()));
+            .execute(Tuple.of(apdUrl)).map(res -> res.value()));
 
     Future<Map<String, JsonObject>> userAndOwnerDetails =
         getUserDetails(List.of(userId, ownerId));
 
     Future<JsonObject> authAccessToken = apdDetails.compose(list -> {
-      /* In case the apdId sent does not exist, should never happen */
+      /* In case the APD URL in the CAT item was not registered on the server */
       if(list.isEmpty()) {
-        return Future.failedFuture("APD ID does not exist");
+        return Future.failedFuture(new ComposeException(403, URN_INVALID_INPUT,
+            ERR_TITLE_APD_NOT_REGISTERED, ERR_DETAIL_APD_NOT_REGISTERED));
       }
 
-      String apdUrl = list.get(0).getString("url");
       Promise<JsonObject> promise = Promise.promise();
       tokenService.getAuthServerToken(apdUrl, promise);
       return promise.future();
@@ -624,10 +622,9 @@ public class ApdServiceImpl implements ApdService {
           JsonObject item = new JsonObject().put("itemId", itemId).put("itemType", itemType);
 
           String token = authAccessToken.result().getString("accessToken");
-          String apdUrl = apdDetails.result().get(0).getString("url");
 
           apdRequest.put(APD_REQ_USER, user).put(APD_REQ_OWNER, owner).put(APD_REQ_ITEM, item)
-              .put(APD_REQ_USERCLASS, userClass).put(APD_REQ_CONTEXT, context);
+              .put(APD_REQ_CONTEXT, context);
 
           return apdWebClient.callVerifyApdEndpoint(apdUrl, token, apdRequest);
         });
@@ -650,18 +647,18 @@ public class ApdServiceImpl implements ApdService {
       JsonObject result = new JsonObject();
 
       if (response.getString(APD_RESP_TYPE).equals(APD_URN_ALLOW)) {
-        //check if 'apdConstraints' are present
-        if(response.containsKey(APD_CONSTRAINTS))
-        {
-          result.put(CREATE_TOKEN_APD_CONSTRAINTS,response.getJsonObject(APD_CONSTRAINTS));
+        
+        // check if 'apdConstraints' are present
+        if (response.containsKey(APD_CONSTRAINTS)) {
+          result.put(CREATE_TOKEN_CONSTRAINTS, response.getJsonObject(APD_CONSTRAINTS));
         }
-        result.put(CREATE_TOKEN_URL, rsUrl).put(CREATE_TOKEN_CONSTRAINTS, constraints)
+
+        result.put(CREATE_TOKEN_URL, rsUrl)
             .put(CREATE_TOKEN_CAT_ID, itemId).put(CREATE_TOKEN_STATUS, CREATE_TOKEN_SUCCESS);
 
         handler.handle(Future.succeededFuture(result));
         return;
       } else if (response.getString(APD_RESP_TYPE).equals(APD_URN_DENY_NEEDS_INT)) {
-        String apdUrl = apdDetails.result().get(0).getString("url");
         /*
          * TODO: consider also passing the `detail` that the APD sends so that the createToken
          * service can use it in it's response
