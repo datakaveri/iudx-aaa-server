@@ -47,8 +47,26 @@ public class Constants {
   public static final String DELEGATE_ROLE = "DELEGATE";
   public static final String USR_POL = "USER";
   public static final String APD_POL = "APD";
+  
+  /* Catalogue related constants */
+  public static final String CAT_ITEM_ENDPOINT = "/item";
+  public static final String CAT_RELATION_ENDPOINT = "/relationship";
 
   public static final String CALL_APD_APDID = "apdId";
+  public static final String CAT_REL_QUERY_PARAM = "rel";
+  public static final String CAT_REL_QUERY_VAL_ALL = "all";
+
+  public static final String CAT_RESP_TYPE_KEY = "type";
+  public static final String CAT_RESP_APD_KEY = "apd";
+  public static final String CAT_RESP_ACCESS_POLICY_KEY = "accessPolicy";
+  public static final String CAT_RESP_RES_SERVER_URL_KEY = "resourceServerHTTPAccessURL";
+  public static final String CAT_RESP_PROVIDER_USER_ID_KEY = "providerKcId";
+  public static final String CAT_SUCCESS_URN = "urn:dx:cat:Success";
+
+  public static final String CAT_RESP_RESOURCE_TYPE = "iudx:Resource";
+  public static final String CAT_RESP_PROVIDER_TYPE = "iudx:Provider";
+  public static final String CAT_RESP_RES_SERVER_TYPE = "iudx:ResourceServer";
+
   public static final String CALL_APD_USERID = "userId";
   public static final String CALL_APD_ITEM_ID = "itemId";
   public static final String CALL_APD_ITEM_TYPE = "itemType";
@@ -76,6 +94,8 @@ public class Constants {
   public static final String POLICY_NOT_FOUND = "policy not found";
   public static final String NOT_DELEGATE = "user is not a delegate";
   public static final String ITEMNOTFOUND = "Item does not exist";
+
+  public static final String ERR_NOT_VALID_RESOURCE = "Requested item is not a valid resource";
   public static final String NO_RES_SERVER = "Res server does not exist";
   public static final String DUPLICATE = "Request must be unique";
   // Title
@@ -103,7 +123,6 @@ public class Constants {
   // URN
   public static final String ID_NOT_PRESENT = "id does not exist";
 
-  public static final String CAT_SUCCESS_URN = "urn:dx:cat:Success";
   // future failure messages
   public static final String BAD_REQUEST = "bad request";
   public static final String SERVER_NOT_PRESENT = "servers not present";
@@ -114,7 +133,7 @@ public class Constants {
   public static final String NO_AUTH_POLICY = "No auth policy for user";
   public static final String NO_AUTH_TRUSTEE_POLICY = "No auth policy for user by trustee";
   public static final String INCORRECT_ITEM_TYPE = "incorrect item type";
-  public static final String INCORRECT_ITEM_ID = "incorrect item ID";
+  public static final String INCORRECT_ITEM_ID = "Item ID is not a valid UUID";
   public static final String UNAUTHORIZED = "Not allowed to create policies for resource";
   public static final String PROVIDER_NOT_REGISTERED = "Provider not a registered user";
   public static final String DUPLICATE_POLICY = "Policy already exists:";
