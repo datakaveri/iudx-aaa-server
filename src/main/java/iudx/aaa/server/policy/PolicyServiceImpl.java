@@ -20,12 +20,16 @@ import iudx.aaa.server.apiserver.ApdStatus;
 import iudx.aaa.server.apiserver.CreateDelegationRequest;
 import iudx.aaa.server.apiserver.CreatePolicyNotification;
 import iudx.aaa.server.apiserver.CreatePolicyRequest;
+import iudx.aaa.server.apiserver.DelegationInformation;
 import iudx.aaa.server.apiserver.DeleteDelegationRequest;
 import iudx.aaa.server.apiserver.DeletePolicyNotificationRequest;
 import iudx.aaa.server.apiserver.NotifRequestStatus;
+import iudx.aaa.server.apiserver.RequestToken;
 import iudx.aaa.server.apiserver.ResourceObj;
+import iudx.aaa.server.apiserver.ResourceObj2;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
+import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.UpdatePolicyNotification;
 import iudx.aaa.server.apiserver.User;
@@ -56,7 +60,7 @@ import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
 import static iudx.aaa.server.apiserver.util.Urn.URN_MISSING_INFO;
 import static iudx.aaa.server.apiserver.util.Urn.URN_SUCCESS;
 import static iudx.aaa.server.policy.Constants.*;
-import static iudx.aaa.server.token.Constants.INVALID_POLICY;
+import static iudx.aaa.server.token.Constants.ACCESS_DENIED;
 
 /**
  * The Policy Service Implementation.
@@ -665,536 +669,215 @@ public class PolicyServiceImpl implements PolicyService {
     return promise.future();
   }
 
-  Future<JsonObject> verifyConsumerPolicy(UUID userId, String itemId, String itemType,
-      JsonObject context, Map<String, ResourceObj> resDetails) {
+  /**
+   * Check if user with consumer role has access to requested resource by calling the concerned APD.
+   * 
+   * @param user the {@link User} object
+   * @param request the token request
+   * @param resource the requested resource
+   * @return JsonObject containing info for token creation
+   */
+  Future<JsonObject> verifyConsumerAccess(User user, RequestToken request, ResourceObj2 resource) {
 
     Promise<JsonObject> p = Promise.promise();
-
-    /*
-     * check itemType, if resGrp check only resGrp table else get resGrp from item id and check both
-     * res and resGrp tables as there may be a policy for the resGrp the res belongs to
-     */
-
-    Future<JsonObject> getResGrpConstraints;
-    Tuple resGroupTuple;
-
-    if (itemType.equals(itemTypes.RESOURCE_GROUP.toString())) {
-      resGroupTuple =
-          Tuple.of(userId, resDetails.get(itemId).getId(), itemTypes.RESOURCE_GROUP, status.ACTIVE);
-    } else {
-
-      resGroupTuple = Tuple.of(userId, resDetails.get(itemId).getResGrpId(),
-          itemTypes.RESOURCE_GROUP, status.ACTIVE);
-    }
-    getResGrpConstraints = pool.withConnection(
-        conn -> conn.preparedQuery(GET_CONSUMER_USER_POL_CONSTRAINTS).execute(resGroupTuple)
-            .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson() : null));
-
-    Future<JsonObject> getResItemConstraints;
-
-    if (itemType.equals(itemTypes.RESOURCE.toString())) {
-      getResItemConstraints =
-          pool.withConnection(conn -> conn.preparedQuery(GET_CONSUMER_USER_POL_CONSTRAINTS)
-              .execute(Tuple.of(userId, resDetails.get(itemId).getId(), itemTypes.RESOURCE,
-                  status.ACTIVE))
-              .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson() : null));
-    } else {
-      getResItemConstraints = Future.succeededFuture(new JsonObject());
-    }
-
-    Future<JsonObject> getUserPolicyConstraints =
-        CompositeFuture.all(getResGrpConstraints, getResItemConstraints).compose(ar -> {
-          if (itemType.equals(itemTypes.RESOURCE_GROUP.toString())) {
-            return getResGrpConstraints;
-          } else {
-            if (getResItemConstraints.result() == null)
-              return getResGrpConstraints;
-            else {
-              return getResItemConstraints;
-            }
-          }
-        });
-
-    Future<JsonObject> getApdPolicyDetails = getUserPolicyConstraints.compose(userPol -> {
-      if (userPol != null) {
-        return Future.succeededFuture(null);
-      }
-
-      Future<JsonObject> resGrpApdPolicy;
-      Future<JsonObject> resItemApdPolicy;
-      Tuple tuple;
-
-      if (itemType.equals(itemTypes.RESOURCE_GROUP.toString())) {
-        tuple =
-            Tuple.of(resDetails.get(itemId).getId(), itemTypes.RESOURCE_GROUP, status.ACTIVE);
-      } else {
-        tuple =
-            Tuple.of(resDetails.get(itemId).getResGrpId(), itemTypes.RESOURCE_GROUP, status.ACTIVE);
-      }
-
-      /* NOTE: Not checking for APD policy expiry in the queries */
-      resGrpApdPolicy = pool.withConnection(
-          conn -> conn.preparedQuery(GET_CONSUMER_APD_POL_DETAILS).execute(tuple)
-              .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson() : null));
-
-      if (itemType.equals(itemTypes.RESOURCE.toString())) {
-        resItemApdPolicy =
-            pool.withConnection(conn -> conn.preparedQuery(GET_CONSUMER_APD_POL_DETAILS)
-                .execute(
-                    Tuple.of(resDetails.get(itemId).getId(), itemTypes.RESOURCE, status.ACTIVE))
-                .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson() : null));
-      } else {
-        resItemApdPolicy = Future.succeededFuture(new JsonObject());
-      }
-
-      return CompositeFuture.all(resGrpApdPolicy, resItemApdPolicy).compose(ar -> {
-        if (itemType.equals(itemTypes.RESOURCE_GROUP.toString())) {
-          return resGrpApdPolicy;
-        } else {
-          if (resItemApdPolicy.result() == null)
-            return resGrpApdPolicy;
-          else {
-            return resItemApdPolicy;
-          }
-        }
-      });
-    });
-
-    Future<String> getUrl = pool
-        .withConnection(conn -> conn.preparedQuery(GET_URL)
-            .execute(Tuple.of(resDetails.get(itemId).getResServerID()))
-            .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().getString(URL) : null))
-        .compose(ar -> {
-          if (ar == null) {
-            Response r = new ResponseBuilder().status(403).type(URN_INVALID_INPUT)
-                .title(INVALID_POLICY).detail(NO_RES_SERVER).build();
-            return Future.failedFuture(new ComposeException(r));
-          } else {
-            return Future.succeededFuture(ar);
-          }
-        });
-
-    CompositeFuture.all(getUserPolicyConstraints, getApdPolicyDetails, getUrl)
-        .onSuccess(success -> {
-          if (getUserPolicyConstraints.result() != null) {
-            JsonObject details = new JsonObject();
-            details.mergeIn(getUserPolicyConstraints.result());
-            details.put(STATUS, SUCCESS);
-            details.put(CAT_ID, itemId);
-            details.put(URL, getUrl.result());
-            p.complete(details);
-          } else if (getApdPolicyDetails.result() != null) {
-            JsonObject apdDetails = getApdPolicyDetails.result();
-            JsonObject apdContext = new JsonObject();
-
-            /*
-             * itemType is in uppercase when it comes from the CatalogueClient, making it lowercase
-             * explicitly since in the token request, policy listing it's lowercase
-             */
-            apdContext.put(CALL_APD_APDID, apdDetails.getString(APD_ID))
-                .put(CALL_APD_USERID, userId.toString()).put(CALL_APD_ITEM_ID, itemId)
-                .put(CALL_APD_ITEM_TYPE, itemType.toLowerCase())
-                .put(CALL_APD_RES_SER_URL, getUrl.result())
-                .put(CALL_APD_USERCLASS, apdDetails.getString(USER_CLASS))
-                .put(CALL_APD_OWNERID, resDetails.get(itemId).getOwnerId().toString())
-                .put(CALL_APD_CONTEXT, context)
-                .put(CALL_APD_CONSTRAINTS, apdDetails.getJsonObject(CONSTRAINTS));
-
-            apdService.callApd(apdContext, p);
-          } else {
-            Response r = new ResponseBuilder().status(403).type(URN_INVALID_INPUT)
-                .title(INVALID_POLICY).detail(POLICY_NOT_FOUND).build();
-            p.fail(new ComposeException(r));
-          }
-        }).onFailure(failureHandler -> {
-          // check if compose Exception, p.fail(composeExp)
-
-          LOGGER.error("failed verifyConsumerPolicy: " + failureHandler.getLocalizedMessage());
-          if (failureHandler instanceof ComposeException)
-            p.fail(failureHandler);
-          else
-            p.fail(INTERNALERROR);
-        });
-    return p.future();
-  }
-
-  // change email hash parameter instead of item id for provider flow
-  Future<JsonObject> verifyProviderPolicy(
-      UUID userId, String itemId, String itemType, Map<String, ResourceObj> resDetails) {
-    Promise<JsonObject> p = Promise.promise();
-
-    if (!resDetails.get(itemId).getOwnerId().equals(userId)) {
+    
+    if(!user.getResServersForRole(Roles.CONSUMER).contains(resource.getResServerUrl())) {
       Response r =
           new ResponseBuilder()
           .status(403)
           .type(URN_INVALID_INPUT)
-          .title(INVALID_POLICY)
-          .detail(NOT_RES_OWNER)
+          .title(ACCESS_DENIED)
+          .detail(ERR_DETAIL_CONSUMER_DOESNT_HAVE_RS_ROLE)
           .build();
       p.fail(new ComposeException(r));
       return p.future();
     }
 
-    Future<JsonObject> getResSerOwner = pool.withConnection(
-        conn ->
-        conn.preparedQuery(GET_RES_SER_OWNER + itemType + GET_RES_SER_OWNER_JOIN)
-        .execute(Tuple.of(UUID.fromString(itemId)))
-        .map(
-            rows ->
-            rows.rowCount() > 0 ? rows.iterator().next().toJson() : null));
+    /*
+     * itemType is in uppercase when it comes from the CatalogueClient, making it lowercase
+     * explicitly since in the token request, policy listing it's lowercase
+     */
+    JsonObject apdContext = new JsonObject();
+    apdContext.put(CALL_APD_APDURL, resource.getApdUrl())
+    .put(CALL_APD_USERID, user.getUserId()).put(CALL_APD_ITEM_ID, request.getItemId())
+    .put(CALL_APD_ITEM_TYPE, resource.getItemType().toString().toLowerCase())
+    .put(CALL_APD_RES_SER_URL, resource.getResServerUrl())
+    .put(CALL_APD_OWNERID, resource.getOwnerId().toString())
+    .put(CALL_APD_CONTEXT, request.getContext());
 
-    Future<UUID> checkAdminPolicy =
-        getResSerOwner.compose(
-            success ->
-            {
-             return   pool.withConnection(
-                        conn -> {
-                          return conn.preparedQuery(CHECK_ADMIN_POLICY)
-                              .execute(
-                                  Tuple.of(
-                                      userId,
-                                      success.getString(OWNER_ID),
-                                      success.getString(ID),
-                                      itemTypes.RESOURCE_SERVER.toString(),
-                                      status.ACTIVE.toString()));
-                        })
-                    .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().getUUID(ID) : null)
-                    .compose(
-                        obj -> {
-                          if (obj == null) {
-                            Response r =
-                                new ResponseBuilder()
-                                    .status(403)
-                                    .type(URN_INVALID_INPUT)
-                                    .title(INVALID_POLICY)
-                                    .detail(NO_ADMIN_POLICY)
-                                    .build();
-                            return Future.failedFuture(new ComposeException(r));
-                          }
-                          return Future.succeededFuture(obj);
-                        });});
+    apdService.callApd(apdContext, p);
+    return p.future();
+  }
 
-    checkAdminPolicy
-        .onSuccess(
-            success -> {
-              if (!success.toString().isEmpty()) {
-                JsonObject details = new JsonObject();
-                details.put(STATUS, SUCCESS);
-                details.put(CAT_ID, itemId);
-                details.put(URL, getResSerOwner.result().getString("url"));
-                p.complete(details);
-              }
-            })
-        .onFailure(
-            failureHandler -> {
-              LOGGER.error("failed verifyProviderPolicy: " + failureHandler.getLocalizedMessage());
-              if (failureHandler instanceof ComposeException) {
-                p.fail(failureHandler);
-              } else p.fail(INTERNALERROR);
-            });
+  /**
+   * Check if user with provider role has access to requested resource.
+   * 
+   * @param user the {@link User} object
+   * @param request the token request
+   * @param resource the requested resource
+   * @return JsonObject containing info for token creation
+   */
+  Future<JsonObject> verifyProviderAccess(User user, RequestToken request, ResourceObj2 resource) {
+    Promise<JsonObject> p = Promise.promise();
+
+    if(!user.getResServersForRole(Roles.PROVIDER).contains(resource.getResServerUrl())) {
+      Response r =
+          new ResponseBuilder()
+          .status(403)
+          .type(URN_INVALID_INPUT)
+          .title(ACCESS_DENIED)
+          .detail(ERR_DETAIL_PROVIDER_DOESNT_HAVE_RS_ROLE)
+          .build();
+      p.fail(new ComposeException(r));
+      return p.future();
+    }
+    
+    if (!resource.getOwnerId().equals(UUID.fromString(user.getUserId()))) {
+      Response r =
+          new ResponseBuilder()
+          .status(403)
+          .type(URN_INVALID_INPUT)
+          .title(ACCESS_DENIED)
+          .detail(NOT_RES_OWNER)
+          .build();
+      p.fail(new ComposeException(r));
+      return p.future();
+    }
+    
+    if(resource.isPii()) {
+      Response r =
+          new ResponseBuilder()
+          .status(403)
+          .type(URN_INVALID_INPUT)
+          .title(ACCESS_DENIED)
+          .detail(ERR_DETAIL_PROVIDER_CANNOT_ACCESS_PII_RES)
+          .build();
+      p.fail(new ComposeException(r));
+      return p.future();
+    }
+
+    JsonObject details = new JsonObject();
+    details.put(STATUS, SUCCESS);
+    details.put(CAT_ID, request.getItemId());
+    details.put(URL, resource.getResServerUrl());
+    p.complete(details);
 
     return p.future();
   }
 
-  Future<JsonObject> verifyDelegatePolicy(
-      UUID userId,
-      String itemId,
-      String itemType,
-      Map<String, ResourceObj> resDetails) {
+  /**
+   * 
+   * Check if delegate has access to resource on behalf of delegator. Based on the kind of
+   * delegation, {@link PolicyServiceImpl#verifyConsumerAccess(User, RequestToken, ResourceObj2)} or
+   * {@link PolicyServiceImpl#verifyProviderAccess(User, RequestToken, ResourceObj2)} is called.
+   * 
+   * @param user the User object of the delegate
+   * @param request the token request
+   * @param delegInfo information about the delegation
+   * @param resource the requested resource
+   * @return JsonObject containing information to create token
+   */
+  Future<JsonObject> verifyDelegateAccess(
+      User user,
+      RequestToken request,
+      DelegationInformation delegInfo,
+      ResourceObj2 resource) {
     Promise<JsonObject> p = Promise.promise();
 
-    UUID getOwner = resDetails.get(itemId).getOwnerId();
-
-    Future<JsonObject> getResSerOwner = pool.withConnection(
-                    conn ->
-                        conn.preparedQuery(GET_RES_SERVER_OWNER_ID)
-                            .execute(Tuple.of(resDetails.get(itemId).getResServerID()))
-                            .map(
-                                rows ->
-                                    rows.rowCount() > 0 ? rows.iterator().next().toJson() : null));
-
-    Future<UUID> checkDelegation =
-        getResSerOwner.compose(
-            ar -> {
-              if (ar == null) {
-                Response r =
-                    new ResponseBuilder()
-                        .status(403)
-                        .type(URN_INVALID_INPUT)
-                        .title(INVALID_POLICY)
-                        .detail(UNAUTHORIZED_DELEGATE)
-                        .build();
-                return Future.failedFuture(new ComposeException(r));
-              }
-              return pool.withConnection(
-                  conn ->
-                      conn.preparedQuery(CHECK_DELEGATOINS_VERIFY)
-                          .execute(
-                              Tuple.of(
-                                  userId,
-                                  getOwner,
-                                  getResSerOwner.result().getString(ID),
-                                  status.ACTIVE.toString()))
-                          .map(
-                              rows ->
-                                  rows.rowCount() > 0 ? rows.iterator().next().getUUID(ID) : null));
-            });
-
-    Future<JsonObject> checkPolicy;
-    Future<JsonObject> checkResGrpPolicy;
-    Future<JsonObject> checkResPolicy;
-
-    checkResGrpPolicy =
-        checkDelegation.compose(
-            ar -> {
-              if (ar == null) {
-                Response r =
-                    new ResponseBuilder()
-                    .status(403)
-                    .type(URN_INVALID_INPUT)
-                    .title(INVALID_POLICY)
-                    .detail(UNAUTHORIZED_DELEGATE)
-                    .build();
-                return Future.failedFuture(new ComposeException(r));
-              }
-              return pool.withConnection(
-                  conn ->
-                  conn.preparedQuery(CHECK_POLICY)
-                  .execute(
-                      Tuple.of(
-                          userId,
-                          getOwner,
-                          resDetails.get(itemId).getResGrpId(),
-                          status.ACTIVE.toString()))
-                  .map(
-                      rows ->
-                      rows.rowCount() > 0 ? rows.iterator().next().toJson() : null));
-            });
+    /*
+     * Based on the delegation information, create a User object with the delegator's user ID, the
+     * delegated role and the delegated resource server
+     */
+    Roles delegatedRole = delegInfo.getDelegatedRole();
+    Map<String, JsonArray> delegatedRoletoRs =
+        Map.of(delegatedRole.toString(), new JsonArray().add(delegInfo.getDelegatedRsUrl()));
     
-      checkResPolicy =
-          checkDelegation.compose(
-              ar -> {
-                if (ar == null) {
-                  Response r =
-                      new ResponseBuilder()
-                          .status(403)
-                          .type(URN_INVALID_INPUT)
-                          .title(INVALID_POLICY)
-                          .detail(UNAUTHORIZED_DELEGATE)
-                          .build();
-                  return Future.failedFuture(new ComposeException(r));
-                }
-                return pool.withConnection(
-                    conn ->
-                        conn.preparedQuery(CHECK_POLICY)
-                            .execute(
-                                Tuple.of(
-                                    userId,
-                                    getOwner,
-                                    resDetails.get(itemId).getId(),
-                                    status.ACTIVE.toString()))
-                            .map(
-                                rows ->
-                                    rows.rowCount() > 0 ? rows.iterator().next().toJson() : null));
-              });
+    UserBuilder builder = new UserBuilder().roles(List.of(delegatedRole))
+        .rolesToRsMapping(delegatedRoletoRs).userId(delegInfo.getDelegatorUserId());
+    User delegatedUser = builder.build();
 
-      checkPolicy =
-          CompositeFuture.all(checkResGrpPolicy, checkResPolicy)
-              .compose(
-                  ar -> {
-                    if (itemType.equals(itemTypes.RESOURCE_GROUP.toString()))
-                      return checkResGrpPolicy;
-                    else {
-                      if (checkResPolicy.result() == null) return checkResGrpPolicy;
-                      return checkResPolicy;
-                    }
-                  });
+    Future<JsonObject> delegatedAction;
+    
+    if (delegatedRole.equals(Roles.CONSUMER)) {
+      delegatedAction = verifyConsumerAccess(delegatedUser, request, resource);
+    } else if (delegatedRole.equals(Roles.PROVIDER)) {
+      delegatedAction = verifyProviderAccess(delegatedUser, request, resource);
+    } else {
+      delegatedAction = Future.failedFuture(
+          "Resource access strategy not defined for role " + delegatedRole.toString());
+    }
 
-    Future<UUID> checkAdminPolicy =
-        checkPolicy.compose(
-            success ->
-                pool.withConnection(
-                        conn -> {
-                          if (checkPolicy.result() == null) {
-                            Response r =
-                                new ResponseBuilder()
-                                    .status(403)
-                                    .type(URN_INVALID_INPUT)
-                                    .title(INVALID_POLICY)
-                                    .detail(UNAUTHORIZED_DELEGATE)
-                                    .build();
-                            return Future.failedFuture(new ComposeException(r));
-                          }
-                          return conn.preparedQuery(CHECK_ADMIN_POLICY)
-                              .execute(
-                                  Tuple.of(
-                                      userId,
-                                      getResSerOwner.result().getString(OWNER_ID),
-                                      getResSerOwner.result().getString(ID),
-                                      itemTypes.RESOURCE_SERVER.toString(),
-                                      status.ACTIVE.toString()));
-                        })
-                    .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().getUUID(ID) : null)
-                    .compose(
-                        obj -> {
-                          if (obj == null) {
-                            Response r =
-                                new ResponseBuilder()
-                                    .status(403)
-                                    .type(URN_INVALID_INPUT)
-                                    .title(INVALID_POLICY)
-                                    .detail(NO_ADMIN_POLICY)
-                                    .build();
-                            return Future.failedFuture(new ComposeException(r));
-                          }
-                          return Future.succeededFuture(obj);
-                        }));
-
-    checkAdminPolicy
-        .onSuccess(
-            success -> {
-              if (!success.toString().isEmpty()) {
-                JsonObject details = new JsonObject();
-                details.put(STATUS, SUCCESS);
-                details.put(CAT_ID, itemId);
-                details.put(URL, getResSerOwner.result().getString(URL));
-                p.complete(details);
-              }
-            })
-        .onFailure(
-            failureHandler -> {
-              LOGGER.error("failed verifyDelegatePolicy ");
-              if (failureHandler instanceof ComposeException) {
-                ComposeException exp = (ComposeException) failureHandler;
-                p.fail(failureHandler);
-              } else p.fail(INTERNALERROR);
-            });
+    delegatedAction.compose(json -> {
+      json.put(CREATE_TOKEN_DID, delegInfo.getDelegatorUserId());
+      json.put(CREATE_TOKEN_DRL, delegInfo.getDelegatedRole().toString());
+      
+      return Future.succeededFuture(json);
+    }).onSuccess(succ -> p.complete(succ)).onFailure(fail -> p.fail(fail));
 
     return p.future();
   }
 
   @Override
-  public PolicyService verifyPolicy(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+  public PolicyService verifyResourceAccess(RequestToken request, DelegationInformation delegInfo,
+      User user, Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
-    UUID userId = UUID.fromString(request.getString(USERID));
-    String itemId = request.getString(ITEMID);
-    String itemType = request.getString(ITEMTYPE).toUpperCase();
-    String role = request.getString(ROLE).toUpperCase();
-    /* context will be empty JSON object if not set by user; see RequestToken */
-    JsonObject context = request.getJsonObject(CONTEXT);
+    
+    String itemIdStr = request.getItemId();
+    Roles role = request.getRole();
 
-    // verify policy does not expect the resServer itemType
-    if (itemType.equals(itemTypes.RESOURCE_SERVER.toString())) {
+    if (role.equals(Roles.ADMIN) || role.equals(Roles.COS_ADMIN)) {
       Response r =
           new ResponseBuilder()
               .status(403)
               .type(URN_INVALID_INPUT)
-              .title(INVALID_POLICY)
-              .detail(INCORRECT_ITEM_TYPE)
-              .build();
-      handler.handle(Future.failedFuture(new ComposeException(r)));
-      return this;
-    }
-
-    if (role.equals(roles.ADMIN.toString())) {
-      Response r =
-          new ResponseBuilder()
-              .status(403)
-              .type(URN_INVALID_INPUT)
-              .title(INVALID_POLICY)
+              .title(ACCESS_DENIED)
               .detail(INVALID_ROLE)
               .build();
       handler.handle(Future.failedFuture(new ComposeException(r)));
       return this;
     }
-
-    Future<String> getRoles =
-        pool.withConnection(
-            conn ->
-                conn.preparedQuery(GET_FROM_ROLES_TABLE)
-                    .execute(Tuple.of(userId, roles.valueOf(role), status.APPROVED))
-                    .compose(
-                        ar -> {
-                          if (ar.rowCount() > 0) {
-                            return Future.succeededFuture(ar.iterator().next().getString(ROLE));
-                          } else {
-                            Response r =
-                                new ResponseBuilder()
-                                    .status(403)
-                                    .type(URN_INVALID_INPUT)
-                                    .title(INVALID_POLICY)
-                                    .detail(INVALID_ROLE)
-                                    .build();
-                            return Future.failedFuture(new ComposeException(r));
-                          }
-                        }));
-
-    Future<Map<String, ResourceObj>> reqItemDetail;
-    // create map of item, use catalogue client - checkReqItems to check and fetch item
-    Map<String, List<String>> catItem = new HashMap<>();
-    if (itemType.equals(itemTypes.RESOURCE.toString())) {
-
-      ArrayList<String> list = new ArrayList<>();
-      list.add(itemId);
-      catItem.put(RES, list);
+    
+    if(!itemIdStr.matches(UUID_REGEX))
+    {
+      Response r =
+          new ResponseBuilder()
+              .status(400)
+              .type(URN_INVALID_INPUT)
+              .title(INVALID_INPUT)
+              .detail(INCORRECT_ITEM_ID)
+              .build();
+      handler.handle(Future.failedFuture(new ComposeException(r)));
+      return this;
     }
-    if (itemType.equals(itemTypes.RESOURCE_GROUP.toString())) {
-      ArrayList<String> list = new ArrayList<>();
-      list.add(itemId);
-      catItem.put(RES_GRP, list);
-    }
-    reqItemDetail = catalogueClient.checkReqItems(catItem);
 
-    String finalItem = itemId;
-    Future<JsonObject> verifyRolePolicy =
-        CompositeFuture.all(getRoles, reqItemDetail)
-            .compose(
-                success -> {
-                  Future<JsonObject> response;
-                  switch (getRoles.result()) {
-                    case CONSUMER_ROLE:
-                      {
-                        response =
-                            verifyConsumerPolicy(
-                                userId, finalItem, itemType, context, reqItemDetail.result());
-                        break;
-                      }
-                    case PROVIDER_ROLE:
-                      {
-                        response =
-                            verifyProviderPolicy(
-                                userId, finalItem, itemType, reqItemDetail.result());
-                        break;
-                      }
-                    case DELEGATE_ROLE:
-                      {
-                        response =
-                            verifyDelegatePolicy(
-                                userId,
-                                finalItem,
-                                itemType,
-                                reqItemDetail.result());
-                        break;
-                      }
-                    default:
-                      {
-                        response = Future.failedFuture(INTERNALERROR);
-                      }
-                  }
-                  return response;
-                });
+    UUID itemId = UUID.fromString(itemIdStr);
+    Future<ResourceObj2> resourceDetails = catalogueClient.getResourceDetails(itemId);
 
-    verifyRolePolicy.onSuccess(
+    Future<JsonObject> verifyAccessByRole = resourceDetails.compose(res -> {
+      if (role.equals(Roles.PROVIDER)) {
+        return verifyProviderAccess(user, request, res);
+      } else if (role.equals(Roles.CONSUMER)) {
+        return verifyConsumerAccess(user, request, res);
+      } else if (role.equals(Roles.DELEGATE)) {
+        return verifyDelegateAccess(user, request, delegInfo, res);
+      } else {
+        return Future
+            .failedFuture("Resource access strategy not defined for role " + role.toString());
+      }
+    });
+
+    verifyAccessByRole.onSuccess(
         s -> {
           handler.handle(Future.succeededFuture(s));
-        });
-
-    verifyRolePolicy.onFailure(
+        }).onFailure(
         e -> {
-          LOGGER.error("verifyRolePolicy failed" + e.getMessage());
           if (e instanceof ComposeException) {
             handler.handle(Future.failedFuture(e));
-          } else handler.handle(Future.failedFuture(INTERNALERROR));
+            return;
+          }
+          
+          LOGGER.error("Access evaluation failed : {}", e.getMessage());
+          handler.handle(Future.failedFuture(INTERNALERROR));
         });
 
     return this;

@@ -8,6 +8,9 @@ public class Constants {
   public static final int DB_RECONNECT_ATTEMPTS = 5;
   public static final long DB_RECONNECT_INTERVAL_MS = 10000;
   
+  public static final String UUID_REGEX =
+          "^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$";
+  
   // db columns
   public static final String USERID = "userId";
   public static final String ITEMID = "itemId";
@@ -39,6 +42,8 @@ public class Constants {
   public static final String RESOURCE_GROUP_TABLE = "resource_group";
   public static final String RESOURCE_TABLE = "resource";
   public static final String CAT_ID = "cat_id";
+  public static final String CREATE_TOKEN_DID = "delegatorUserId";
+  public static final String CREATE_TOKEN_DRL = "delegatorRole";
   public static final String APD_DETAILS = "apd";
   public static final String OWNER_DETAILS = "owner";
   public static final String USER_DETAILS = "user";
@@ -52,7 +57,6 @@ public class Constants {
   public static final String CAT_ITEM_ENDPOINT = "/item";
   public static final String CAT_RELATION_ENDPOINT = "/relationship";
 
-  public static final String CALL_APD_APDID = "apdId";
   public static final String CAT_REL_QUERY_PARAM = "rel";
   public static final String CAT_REL_QUERY_VAL_ALL = "all";
 
@@ -67,13 +71,12 @@ public class Constants {
   public static final String CAT_RESP_PROVIDER_TYPE = "iudx:Provider";
   public static final String CAT_RESP_RES_SERVER_TYPE = "iudx:ResourceServer";
 
+  public static final String CALL_APD_APDURL = "apdUrl";
   public static final String CALL_APD_USERID = "userId";
   public static final String CALL_APD_ITEM_ID = "itemId";
   public static final String CALL_APD_ITEM_TYPE = "itemType";
   public static final String CALL_APD_RES_SER_URL = "resSerUrl";
-  public static final String CALL_APD_USERCLASS = "userClass";
   public static final String CALL_APD_OWNERID = "ownerId";
-  public static final String CALL_APD_CONSTRAINTS = "constraints";
   public static final String CALL_APD_CONTEXT = "context";
 
   public static final String RESULTS = "results";
@@ -139,12 +142,19 @@ public class Constants {
   public static final String DUPLICATE_POLICY = "Policy already exists:";
   public static final String DUPLICATE_DELEGATION = "Delegation already exists";
   public static final String NO_USER = "no user";
-  public static final String NOT_RES_OWNER = "does not own the resource";
+  public static final String NOT_RES_OWNER = "Provider does not own the resource";
   public static final String NO_ADMIN_POLICY = "No admin policy";
   public static final String UNAUTHORIZED_DELEGATE = "Unauthorized";
   public static final String NO_AUTH_ADMIN_POLICY =
       "requested user does not have the required auth admin policies to call this API";
 
+  public static final String ERR_DETAIL_PROVIDER_DOESNT_HAVE_RS_ROLE =
+      "Provider does not have role for resource server hosting item";
+  public static final String ERR_DETAIL_CONSUMER_DOESNT_HAVE_RS_ROLE =
+      "Provider does not have role for resource server hosting item";
+  public static final String ERR_DETAIL_PROVIDER_CANNOT_ACCESS_PII_RES =
+      "Requested resource is a PII resource - provider is not allowed to access directly";
+      
   public static final String LOG_DB_ERROR = "Fail: Databse query; ";
   public static final String ERR_DUP_NOTIF_REQ = "Fail: Duplicate Access notification request; ";
   public static final String DUP_NOTIF_REQ = "Access request already exists";

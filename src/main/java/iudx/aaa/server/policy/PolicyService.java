@@ -12,8 +12,10 @@ import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.apiserver.CreateDelegationRequest;
 import iudx.aaa.server.apiserver.CreatePolicyNotification;
 import iudx.aaa.server.apiserver.CreatePolicyRequest;
+import iudx.aaa.server.apiserver.DelegationInformation;
 import iudx.aaa.server.apiserver.DeleteDelegationRequest;
 import iudx.aaa.server.apiserver.DeletePolicyNotificationRequest;
+import iudx.aaa.server.apiserver.RequestToken;
 import iudx.aaa.server.apiserver.UpdatePolicyNotification;
 import iudx.aaa.server.apiserver.User;
 
@@ -96,7 +98,8 @@ public interface PolicyService {
    */
 
   @Fluent
-  PolicyService verifyPolicy(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+  PolicyService verifyResourceAccess(RequestToken request, DelegationInformation delegInfo, User user,
+      Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * The setDefaultProviderPolicies implements setting default provider policies when they are
