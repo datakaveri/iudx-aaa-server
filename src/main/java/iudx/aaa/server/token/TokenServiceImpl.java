@@ -1,8 +1,5 @@
 package iudx.aaa.server.token;
 
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.json.Json;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import io.vertx.core.AsyncResult;
@@ -17,25 +14,23 @@ import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
+import iudx.aaa.server.apiserver.DelegationInformation;
 import iudx.aaa.server.apiserver.IntrospectToken;
+import iudx.aaa.server.apiserver.ItemType;
 import iudx.aaa.server.apiserver.RequestToken;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.RevokeToken;
+import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
-import static iudx.aaa.server.apd.Constants.APD_CONSTRAINTS;
 import static iudx.aaa.server.apiserver.util.Urn.*;
-import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_USER_PROFILE;
-import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_USER_PROFILE;
-import static iudx.aaa.server.registration.Constants.NIL_UUID;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_APPROVED_ROLES;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_APPROVED_ROLES;
 import static iudx.aaa.server.token.Constants.*;
 
 /**
@@ -73,40 +68,82 @@ public class TokenServiceImpl implements TokenService {
    * {@inheritDoc}
    */
   @Override
-  public TokenService createToken(RequestToken requestToken, User user, Handler<AsyncResult<JsonObject>> handler) {
+  public TokenService createToken(RequestToken request, DelegationInformation delegationInfo,
+      User user, Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug(REQ_RECEIVED);
 
-    String role = StringUtils.upperCase(requestToken.getRole());
-    List<String> roles = user.getRoles().stream().map(r -> r.name()).collect(Collectors.toList());
+    Roles role = request.getRole();
+    ItemType itemType = request.getItemType();
     
-    String itemType = requestToken.getItemType();
-    JsonObject request = JsonObject.mapFrom(requestToken);
-    request.put(USER_ID, user.getUserId());
+    JsonObject jsonRequest = request.toJson();
+    
+    /* manually putting user_id as it's required by getJwt */
+    jsonRequest.put(USER_ID, user.getUserId());
 
-    /* Checking if the userId is valid */
-    if (user.getUserId().equals(NIL_UUID)) {
+    /* Checking if the user has any roles */
+    if (user.getRoles().isEmpty()) {
       Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
-          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
+          .title(ERR_TITLE_NO_APPROVED_ROLES).detail(ERR_DETAIL_NO_APPROVED_ROLES).build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
-    
-    /* Verify the user role */
-    if (!roles.contains(role)) {
-      LOGGER.error(LOG_UNAUTHORIZED + INVALID_ROLE);
-      Response resp = new ResponseBuilder().status(400).type(URN_INVALID_ROLE).title(INVALID_ROLE)
-          .detail(INVALID_ROLE).build();
+
+    /* Verify that the user has the requested role - the resource server check is later */
+    if (!user.getRoles().contains(role)) {
+      Response resp = new ResponseBuilder().status(400).type(URN_INVALID_ROLE).title(ERR_TITLE_ROLE_NOT_OWNED)
+          .detail(ERR_DETAIL_ROLE_NOT_OWNED).build();
       handler.handle(Future.succeededFuture(resp.toJson()));
       return this;
     }
+    
+    if (role.equals(Roles.DELEGATE) && delegationInfo == null) {
+      Response resp = new ResponseBuilder().status(400).type(URN_MISSING_INFO)
+          .title(ERR_TITLE_DELEGATION_INFO_MISSING).detail(ERR_DETAIL_DELEGATION_INFO_MISSING)
+          .build();
+      handler.handle(Future.succeededFuture(resp.toJson()));
+      return this;
+    }
+    
+    if (itemType.equals(ItemType.RESOURCE_GROUP)) {
+      Response r = new ResponseBuilder().status(403).type(URN_INVALID_INPUT)
+          .title(ERR_TITLE_NO_RES_GRP_TOKEN)
+          .detail(ERR_DETAIL_NO_RES_GRP_TOKEN).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
+    else if(itemType.equals(ItemType.COS)) {
+      if(!request.getRole().equals(Roles.COS_ADMIN)) {
+        Response r = new ResponseBuilder().status(403).type(URN_INVALID_ROLE)
+            .title(ERR_TITLE_INVALID_ROLE_FOR_COS)
+            .detail(ERR_DETAIL_INVALID_ROLE_FOR_COS).build();
+        handler.handle(Future.succeededFuture(r.toJson()));
+        return this;
+      }
 
-    //update check to not include role check
-    if (RESOURCE_SVR.equals(itemType)) {
-      Future<Void> checkIdenToken = validateForIdentityToken(requestToken.getItemId(), role, user);
+      if(!request.getItemId().equals(CLAIM_ISSUER)) {
+        Response r = new ResponseBuilder().status(403).type(URN_INVALID_INPUT)
+            .title(ERR_TITLE_INVALID_COS_URL)
+            .detail(ERR_DETAIL_INVALID_COS_URL).build();
+        handler.handle(Future.succeededFuture(r.toJson()));
+        return this;
+      }
+      
+      jsonRequest.put(URL, request.getItemId());
+      JsonObject jwt = getJwt(jsonRequest);
+      
+      LOGGER.info(LOG_TOKEN_SUCC);
+      
+      Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
+          .objectResults(jwt).build();
+      handler.handle(Future.succeededFuture(resp.toJson()));
+    }
+    else if (itemType.equals(ItemType.RESOURCE_SERVER)) {
+      Future<JsonObject> checkIdenToken =
+          validateForIdentityToken(request.getItemId(), role, delegationInfo, user);
 
-      checkIdenToken.onSuccess(owner -> {
-        request.put(URL, requestToken.getItemId());
-        JsonObject jwt = getJwt(request);
+      checkIdenToken.onSuccess(result -> {
+        jsonRequest.mergeIn(result, true);
+        JsonObject jwt = getJwt(jsonRequest);
         
         LOGGER.info(LOG_TOKEN_SUCC);
         
@@ -124,23 +161,24 @@ public class TokenServiceImpl implements TokenService {
         handler.handle(Future.failedFuture("Internal error"));
       });
     }
-    else {
+    else if (itemType.equals(ItemType.RESOURCE)) {
       Promise<JsonObject> policyHandler = Promise.promise();
-      policyService.verifyPolicy(request, policyHandler);
+      policyService.verifyResourceAccess(request, delegationInfo, user, policyHandler);
+      
       policyHandler.future().onSuccess(result -> {
 
-        request.mergeIn(result, true);
+        jsonRequest.mergeIn(result, true);
 
-        if (request.getString(STATUS).equals(SUCCESS)) {
+        if (jsonRequest.getString(STATUS).equals(SUCCESS)) {
          
-          JsonObject jwt = getJwt(request);
+          JsonObject jwt = getJwt(jsonRequest);
         Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS).title(TOKEN_SUCCESS)
             .objectResults(jwt).build();
         
         handler.handle(Future.succeededFuture(resp.toJson()));
-        } else if (request.getString(STATUS).equals(APD_INTERACTION)) {
+        } else if (jsonRequest.getString(STATUS).equals(APD_INTERACTION)) {
           
-          JsonObject apdJwt = getApdJwt(request);
+          JsonObject apdJwt = getApdJwt(jsonRequest);
           /* Add context to the error response containing the APD token */
           Response resp = new ResponseBuilder().status(403).type(URN_MISSING_INFO)
               .title(ERR_TITLE_APD_INTERACT_REQUIRED).detail(ERR_DETAIL_APD_INTERACT_REQUIRED)
@@ -174,19 +212,11 @@ public class TokenServiceImpl implements TokenService {
 
     LOGGER.debug(REQ_RECEIVED);
     
-    /* Checking if the userId is valid */
-    if (user.getUserId().equals(NIL_UUID)) {
-      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
-          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
-    }
-
     /* Verify the user has some roles */
-    if (user.getRoles().isEmpty()) {
-      Response resp = new ResponseBuilder().status(400).type(URN_INVALID_ROLE).title(INVALID_ROLE)
-          .detail(INVALID_ROLE).build();
-      handler.handle(Future.succeededFuture(resp.toJson()));
+    if (!user.getRoles().isEmpty()) {
+      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
+          .title(ERR_TITLE_NO_APPROVED_ROLES).detail(ERR_DETAIL_NO_APPROVED_ROLES).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
 
@@ -214,9 +244,9 @@ public class TokenServiceImpl implements TokenService {
         boolean flag = dbExistsRow.getBoolean(EXISTS);
 
         if (flag == Boolean.FALSE) {
-          LOGGER.error("Fail: " + INVALID_RS_URL);
+          LOGGER.error("Fail: " + ERR_TITLE_INVALID_RS_URL);
           Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-              .title(INVALID_RS_URL).detail(INVALID_RS_URL).build();
+              .title(ERR_TITLE_INVALID_RS_URL).detail(ERR_DETAIL_INVALID_RS_URL).build();
           handler.handle(Future.succeededFuture(resp.toJson()));
           return;
         }
@@ -353,27 +383,32 @@ public class TokenServiceImpl implements TokenService {
    */
   public JsonObject getJwt(JsonObject request) {
     
-    JWTOptions options = new JWTOptions().setAlgorithm(JWT_ALGORITHM);
+    JWTOptions options = new JWTOptions().setAlgorithm(JWT_ALGORITHM)
+        .setHeader(new JsonObject().put(ISS, CLAIM_ISSUER));
     long timestamp = System.currentTimeMillis() / 1000;
     long expiry = timestamp + CLAIM_EXPIRY;
-    String itemType = request.getString(ITEM_TYPE);
+    String itemType = request.getString(ITEM_TYPE).toLowerCase();
     String iid = ITEM_TYPE_MAP.inverse().get(itemType)+":"+request.getString(ITEM_ID);
     String audience = request.getString(URL);
     
     /* Populate the token claims */
     JsonObject claims = new JsonObject();
-    //add apd cons
+    
     claims.put(SUB, request.getString(USER_ID))
           .put(ISS, CLAIM_ISSUER)
           .put(AUD, audience)
           .put(EXP, expiry)
           .put(IAT, timestamp)
           .put(IID, iid)
-          .put(ROLE, request.getString(ROLE))
+          .put(ROLE, request.getString(ROLE).toLowerCase())
           .put(CONS, request.getJsonObject(CONSTRAINTS, new JsonObject()));
 
-    if(request.containsKey(APD_CONSTRAINTS))
-      claims.put(APD,request.getJsonObject(APD_CONSTRAINTS, new JsonObject()));
+    if (request.containsKey("delegatorUserId")) {
+      claims.put(DID, request.getString("delegatorUserId"));
+    }
+    if (request.containsKey("delegatorRole")) {
+      claims.put(DRL, request.getString("delegatorRole").toLowerCase());
+    }
 
     String token = provider.generateToken(claims, options);
 
@@ -398,7 +433,8 @@ public class TokenServiceImpl implements TokenService {
    */
   public JsonObject getApdJwt(JsonObject request) {
     
-    JWTOptions options = new JWTOptions().setAlgorithm(JWT_ALGORITHM);
+    JWTOptions options = new JWTOptions().setAlgorithm(JWT_ALGORITHM)
+        .setHeader(new JsonObject().put(ISS, CLAIM_ISSUER));
     long timestamp = System.currentTimeMillis() / 1000;
     long expiry = timestamp + CLAIM_EXPIRY;
     String sessionId = request.getString(SESSION_ID);
@@ -468,51 +504,49 @@ public class TokenServiceImpl implements TokenService {
    * @param user the User object
    * @return void Future, succeeds if checks pass, fails with a ComposeException if they do not
    */
-  private Future<Void> validateForIdentityToken(String url, String role, User user) {
+  private Future<JsonObject> validateForIdentityToken(String url, Roles role,
+      DelegationInformation delegInfo, User user) {
 
-    Promise<Void> promise = Promise.promise();
+    Promise<JsonObject> promise = Promise.promise();
+    
+    if(role.equals(Roles.COS_ADMIN)) {
+        return Future.failedFuture(
+            new ComposeException(400, URN_INVALID_INPUT, ERR_COS_ADMIN_NO_RS, ERR_COS_ADMIN_NO_RS));
+    }
 
     Future<JsonArray> resServer = pgSelelctQuery(CHECK_RS_EXISTS_BY_URL, Tuple.of(url));
-    Future<JsonArray> apd = pgSelelctQuery(CHECK_APD_EXISTS_BY_URL, Tuple.of(url));
 
-    Future<Void> checkUrlExists = CompositeFuture.all(resServer, apd).compose(res -> {
-      if (resServer.result().isEmpty() && apd.result().isEmpty()) {
+    Future<Void> checkUrlExists = resServer.compose(res -> {
+      if (res.isEmpty()) {
         return Future.failedFuture(
-            new ComposeException(400, URN_INVALID_INPUT, INVALID_RS_URL, INVALID_RS_URL));
+            new ComposeException(400, URN_INVALID_INPUT, ERR_TITLE_INVALID_RS_URL,
+                ERR_DETAIL_INVALID_RS_URL));
       }
+      
       return Future.succeededFuture();
     });
-
-    Future<JsonArray> checkIfAdminOrTrustee = checkUrlExists.compose(res -> {
-      UUID userId = UUID.fromString(user.getUserId());
-
-      if (role.equalsIgnoreCase(ADMIN)) {
-        return pgSelelctQuery(GET_RS, Tuple.of(url, userId));
-      } else if (role.equalsIgnoreCase(TRUSTEE)) {
-        return pgSelelctQuery(CHECK_APD_OWNER, Tuple.of(url, userId));
-      } else {
-        // skip ownership query if requested role not admin or trustee
-        return Future.succeededFuture(new JsonArray());
+    
+    checkUrlExists.compose(res -> {
+      /*
+       * For delegates, we only need to check if the delegated URL is the same as requested URL
+       * because a delegation can be made only if the delegator has a role for that resource server
+       */
+      if(role.equals(Roles.DELEGATE) && delegInfo.getDelegatedRsUrl().equals(url)) {
+        JsonObject result =
+            new JsonObject().put(URL, url).put(CREATE_TOKEN_DID, delegInfo.getDelegatorUserId())
+                .put(CREATE_TOKEN_DRL, delegInfo.getDelegatedRole().toString());
+        return Future.succeededFuture(result);
       }
-    });
-
-    checkIfAdminOrTrustee.compose(result -> {
-      // skip ownership query if requested role not admin or trustee
-      if (!(role.equalsIgnoreCase(ADMIN) || role.equalsIgnoreCase(TRUSTEE))) {
-        return Future.succeededFuture();
+      else if(user.getResServersForRole(role).contains(url)) {
+        JsonObject result = new JsonObject().put(URL, url);
+        return Future.succeededFuture(result);
+        }
+      else {
+        return Future.failedFuture(new ComposeException(403, URN_INVALID_INPUT,
+            ACCESS_DENIED, ERR_DOES_NOT_HAVE_ROLE_FOR_RS));
       }
-
-      if (result.isEmpty()) {
-        return Future
-            .failedFuture(new ComposeException(403, URN_INVALID_INPUT, ERR_ADMIN, ERR_ADMIN));
-      }
-      return Future.succeededFuture();
-    }).onSuccess(succ -> {
-      promise.complete();
-    }).onFailure(err -> {
-      promise.fail(err);
-    });
-
+    }).onSuccess(succ -> promise.complete(succ)).onFailure(fail -> promise.fail(fail));
+    
     return promise.future();
   }
 }

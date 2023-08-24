@@ -5,56 +5,48 @@ import static iudx.aaa.server.registration.Constants.CLIENT_SECRET_BYTES;
 import static iudx.aaa.server.registration.Constants.CONFIG_AUTH_URL;
 import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
 import static iudx.aaa.server.registration.Constants.DEFAULT_CLIENT;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_CONSUMER_FOR_RS_EXISTS;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_DEFAULT_CLIENT_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_INVALID_CLI_ID;
-import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_USER_PROFILE;
-import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_ID_REQUIRED;
-import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_NO_EXIST;
-import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ORG_NO_MATCH;
-import static iudx.aaa.server.registration.Constants.ERR_DETAIL_ROLE_EXISTS;
-import static iudx.aaa.server.registration.Constants.ERR_DETAIL_SEARCH_USR_INVALID_ROLE;
-import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_EXISTS;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_APPROVED_ROLES;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_PENDING_PROVIDER_RS_REG_EXISTS;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_PROVIDER_FOR_RS_EXISTS;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_RS_NO_EXIST;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_FOUND;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_KC;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_DEFAULT_CLIENT_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_INVALID_CLI_ID;
-import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_USER_PROFILE;
-import static iudx.aaa.server.registration.Constants.ERR_TITLE_ORG_ID_REQUIRED;
-import static iudx.aaa.server.registration.Constants.ERR_TITLE_ORG_NO_EXIST;
-import static iudx.aaa.server.registration.Constants.ERR_TITLE_ORG_NO_MATCH;
-import static iudx.aaa.server.registration.Constants.ERR_TITLE_ROLE_EXISTS;
-import static iudx.aaa.server.registration.Constants.ERR_TITLE_SEARCH_USR_INVALID_ROLE;
-import static iudx.aaa.server.registration.Constants.ERR_TITLE_USER_EXISTS;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_APPROVED_ROLES;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_PENDING_PROVIDER_RS_REG_EXISTS;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_ROLE_FOR_RS_EXISTS;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_RS_NO_EXIST;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_USER_NOT_FOUND;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_USER_NOT_KC;
 import static iudx.aaa.server.registration.Constants.NIL_PHONE;
-import static iudx.aaa.server.registration.Constants.NIL_UUID;
-import static iudx.aaa.server.registration.Constants.NO_ORG_CHECK;
 import static iudx.aaa.server.registration.Constants.PROVIDER_PENDING_MESG;
 import static iudx.aaa.server.registration.Constants.RESP_CLIENT_ARR;
 import static iudx.aaa.server.registration.Constants.RESP_CLIENT_ID;
 import static iudx.aaa.server.registration.Constants.RESP_CLIENT_NAME;
 import static iudx.aaa.server.registration.Constants.RESP_CLIENT_SC;
 import static iudx.aaa.server.registration.Constants.RESP_EMAIL;
-import static iudx.aaa.server.registration.Constants.RESP_ORG;
 import static iudx.aaa.server.registration.Constants.RESP_PHONE;
 import static iudx.aaa.server.registration.Constants.SQL_CHECK_CLIENT_ID_EXISTS;
+import static iudx.aaa.server.registration.Constants.SQL_CHECK_DEFAULT_CLIENT_EXISTS;
+import static iudx.aaa.server.registration.Constants.SQL_CHECK_PENDING_PROVIDER_ROLES;
+import static iudx.aaa.server.registration.Constants.SQL_CHECK_USER_HAS_PROV_CONS_ROLE_FOR_RS;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_CLIENT;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_ROLE;
-import static iudx.aaa.server.registration.Constants.SQL_CREATE_USER;
-import static iudx.aaa.server.registration.Constants.SQL_FIND_ORG_BY_ID;
-import static iudx.aaa.server.registration.Constants.SQL_FIND_USER_BY_KC_ID;
-import static iudx.aaa.server.registration.Constants.SQL_GET_ALL_ORGS;
+import static iudx.aaa.server.registration.Constants.SQL_CREATE_USER_IF_NOT_EXISTS;
+import static iudx.aaa.server.registration.Constants.SQL_GET_ALL_RS;
 import static iudx.aaa.server.registration.Constants.SQL_GET_CLIENTS_FORMATTED;
-import static iudx.aaa.server.registration.Constants.SQL_GET_KC_ID_FROM_ARR;
-import static iudx.aaa.server.registration.Constants.SQL_GET_ORG_DETAILS;
-import static iudx.aaa.server.registration.Constants.SQL_GET_PHONE_JOIN_ORG;
-import static iudx.aaa.server.registration.Constants.SQL_GET_SERVERS_FOR_REVOKE;
-import static iudx.aaa.server.registration.Constants.SQL_GET_UID_ORG_ID_CHECK_ROLE;
+import static iudx.aaa.server.registration.Constants.SQL_GET_PHONE;
+import static iudx.aaa.server.registration.Constants.SQL_GET_RS_IDS_BY_URL;
+import static iudx.aaa.server.registration.Constants.SQL_GET_RS_AND_APDS_FOR_REVOKE;
 import static iudx.aaa.server.registration.Constants.SQL_UPDATE_CLIENT_SECRET;
-import static iudx.aaa.server.registration.Constants.SQL_UPDATE_ORG_ID;
-import static iudx.aaa.server.registration.Constants.SUCC_TITLE_CREATED_USER;
-import static iudx.aaa.server.registration.Constants.SUCC_TITLE_ORG_READ;
+import static iudx.aaa.server.registration.Constants.SUCC_TITLE_ADDED_ROLES;
+import static iudx.aaa.server.registration.Constants.SUCC_TITLE_CREATED_DEFAULT_CLIENT;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_REGEN_CLIENT_SECRET;
-import static iudx.aaa.server.registration.Constants.SUCC_TITLE_UPDATED_USER_ROLES;
+import static iudx.aaa.server.registration.Constants.SUCC_TITLE_RS_READ;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_USER_FOUND;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_USER_READ;
 import static iudx.aaa.server.registration.Constants.UUID_REGEX;
@@ -69,30 +61,29 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
-import iudx.aaa.server.apiserver.RegistrationRequest;
+import iudx.aaa.server.apiserver.AddRolesRequest;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.RevokeToken;
 import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
-import iudx.aaa.server.apiserver.UpdateProfileRequest;
+import iudx.aaa.server.apiserver.ResetClientSecretRequest;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.apiserver.util.ComposeException;
-import iudx.aaa.server.policy.PolicyService;
+import iudx.aaa.server.apiserver.util.Urn;
 import iudx.aaa.server.token.TokenService;
 import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
@@ -115,172 +106,191 @@ public class RegistrationServiceImpl implements RegistrationService {
   private PgPool pool;
   private KcAdmin kc;
   private TokenService tokenService;
-  private PolicyService policyService;
   public static String AUTH_SERVER_URL = "";
   public static List<String> SERVERS_OMITTED_FROM_TOKEN_REVOKE = new ArrayList<String>();
+  
+  private SecureRandom randomSource;
 
   public RegistrationServiceImpl(PgPool pool, KcAdmin kc, TokenService tokenService,
-      PolicyService policyService, JsonObject options) {
+      JsonObject options) {
     this.pool = pool;
     this.kc = kc;
     this.tokenService = tokenService;
-    this.policyService = policyService;
     AUTH_SERVER_URL = options.getString(CONFIG_AUTH_URL);
     SERVERS_OMITTED_FROM_TOKEN_REVOKE = options.getJsonArray(CONFIG_OMITTED_SERVERS).stream()
         .map(x -> (String) x).collect(Collectors.toList());
+    
+    randomSource = new SecureRandom();
   }
 
   @Override
-  public RegistrationService createUser(RegistrationRequest request, User user,
+  public RegistrationService createUser(AddRolesRequest request, User user,
       Handler<AsyncResult<JsonObject>> handler) {
 
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
-    List<Roles> requestedRoles = request.getRoles();
-    UUID orgId = UUID.fromString(request.getOrgId());
+    List<Roles> requestedRoles = request.getRolesToRegister();
     final String phone = request.getPhone();
+    final JsonObject userInfo = request.getUserInfo();
 
-    if (requestedRoles.contains(Roles.PROVIDER) || requestedRoles.contains(Roles.DELEGATE)) {
-      if (orgId.toString().equals(NIL_UUID)) {
-        Response r = new ResponseBuilder().status(400).type(URN_MISSING_INFO)
-            .title(ERR_TITLE_ORG_ID_REQUIRED).detail(ERR_DETAIL_ORG_ID_REQUIRED).build();
+    List<String> ownedRsForProviderRole = user.getResServersForRole(Roles.PROVIDER);
+    List<String> requestedRsForProviderRole = request.getProvider();
+
+    List<String> ownedRsForConsumerRole = user.getResServersForRole(Roles.CONSUMER);
+    List<String> requestedRsForConsumerRole = request.getConsumer();
+
+    Set<String> allRequestedRs =
+        Stream.concat(requestedRsForConsumerRole.stream(), requestedRsForProviderRole.stream())
+            .collect(Collectors.toSet());
+
+    if (requestedRoles.contains(Roles.PROVIDER)) {
+      List<String> duplicateProviderRs = ownedRsForProviderRole.stream()
+          .filter(rs -> requestedRsForProviderRole.contains(rs)).collect(Collectors.toList());
+
+      if (!duplicateProviderRs.isEmpty()) {
+        Response r = new ResponseBuilder().status(409).type(URN_ALREADY_EXISTS)
+            .title(ERR_TITLE_ROLE_FOR_RS_EXISTS)
+            .detail(ERR_DETAIL_PROVIDER_FOR_RS_EXISTS + duplicateProviderRs.toString()).build();
         handler.handle(Future.succeededFuture(r.toJson()));
         return this;
       }
     }
 
-    Map<Roles, RoleStatus> roles = new HashMap<Roles, RoleStatus>();
+    if (requestedRoles.contains(Roles.CONSUMER)) {
+      List<String> duplicateConsumerRs = ownedRsForConsumerRole.stream()
+          .filter(rs -> requestedRsForConsumerRole.contains(rs)).collect(Collectors.toList());
 
-    for (Roles r : requestedRoles) {
-      if (r == Roles.PROVIDER) {
-        roles.put(r, RoleStatus.PENDING);
-      } else {
-        roles.put(r, RoleStatus.APPROVED);
+      if (!duplicateConsumerRs.isEmpty()) {
+        Response r = new ResponseBuilder().status(409).type(URN_ALREADY_EXISTS)
+            .title(ERR_TITLE_ROLE_FOR_RS_EXISTS)
+            .detail(ERR_DETAIL_CONSUMER_FOR_RS_EXISTS + duplicateConsumerRs.toString()).build();
+        handler.handle(Future.succeededFuture(r.toJson()));
+        return this;
       }
     }
-    /* TODO later on, can check if user ID is not NIL_UUID */
-    Future<Integer> checkUserExist =
-        pool.withConnection(conn -> conn.preparedQuery(SQL_FIND_USER_BY_KC_ID)
-            .execute(Tuple.of(user.getKeycloakId())).map(rows -> rows.size()));
 
-    Future<String> email = kc.getEmailId(user.getKeycloakId());
+    Future<String> email = kc.getEmailId(user.getUserId());
+    Collector<Row, ?, Map<String, UUID>> rsCollector =
+        Collectors.toMap(row -> row.getString("url"), row -> row.getUUID("id"));
 
-    Future<String> checkOrgExist;
-    String orgIdToSet;
+    Future<Map<String, UUID>> getRequestedRs = pool
+        .withConnection(conn -> conn.preparedQuery(SQL_GET_RS_IDS_BY_URL).collecting(rsCollector)
+            .execute(Tuple.of(allRequestedRs.toArray(String[]::new))).map(res -> res.value()));
 
-    if (roles.containsKey(Roles.PROVIDER) || roles.containsKey(Roles.DELEGATE)) {
-      orgIdToSet = request.getOrgId();
-      checkOrgExist = pool.withConnection(
-          conn -> conn.preparedQuery(SQL_GET_ORG_DETAILS).execute(Tuple.of(orgId.toString())).map(
-              rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson().toString() : null));
-    } else {
-      checkOrgExist = Future.succeededFuture(NO_ORG_CHECK);
-      orgIdToSet = null;
-    }
+    Future<Void> checkEmailAndResourceServerUrls =
+        CompositeFuture.all(email, getRequestedRs).compose(arr -> {
 
-    /* Compose the previous futures to validate. Returns email ID of the user if successful */
-    Future<String> validation =
-        CompositeFuture.all(checkUserExist, email, checkOrgExist).compose(arr -> {
-
-          int userRow = (int) arr.list().get(0);
-          String emailId = (String) arr.list().get(1);
-          String orgDetails = (String) arr.list().get(2);
-
-          if (userRow != 0) {
-            return Future.failedFuture(new ComposeException(409, URN_ALREADY_EXISTS,
-                ERR_TITLE_USER_EXISTS, ERR_DETAIL_USER_EXISTS));
-          }
+          String emailId = arr.resultAt(0);
+          Map<String, UUID> rsDetails = arr.resultAt(1);
 
           if (emailId.length() == 0) {
             return Future.failedFuture(new ComposeException(400, URN_INVALID_INPUT,
                 ERR_TITLE_USER_NOT_KC, ERR_DETAIL_USER_NOT_KC));
           }
 
-          String emailDomain = emailId.split("@")[1];
+          List<String> missingRs = allRequestedRs.stream().filter(rs -> !rsDetails.containsKey(rs))
+              .collect(Collectors.toList());
 
-          if (orgDetails == null) {
+          if (!missingRs.isEmpty()) {
             return Future.failedFuture(new ComposeException(400, URN_INVALID_INPUT,
-                ERR_TITLE_ORG_NO_EXIST, ERR_DETAIL_ORG_NO_EXIST));
-          } else if (orgDetails == NO_ORG_CHECK) {
-            return Future.succeededFuture(emailId);
+                ERR_TITLE_RS_NO_EXIST, ERR_DETAIL_RS_NO_EXIST + missingRs.toString()));
           }
 
-          String url = new JsonObject(orgDetails).getString("url");
-
-          if (!url.equals(emailDomain)) {
-            return Future.failedFuture(new ComposeException(400, URN_INVALID_INPUT,
-                ERR_TITLE_ORG_NO_MATCH, ERR_DETAIL_ORG_NO_MATCH));
-          }
-
-          return Future.succeededFuture(emailId);
+          return Future.succeededFuture();
         });
 
-    /* create client ID and random client secret */
-    UUID clientId = UUID.randomUUID();
-    SecureRandom random = new SecureRandom();
-    byte[] randBytes = new byte[CLIENT_SECRET_BYTES];
-    random.nextBytes(randBytes);
-    String clientSecret = Hex.encodeHexString(randBytes);
+    Future<Void> checkForProviderPendingRegs =
+        checkEmailAndResourceServerUrls.compose(roleListTup -> {
+          if (!requestedRoles.contains(Roles.PROVIDER)) {
+            return Future.succeededFuture(roleListTup);
+          }
 
-    List<Roles> rolesForKc =
-        requestedRoles.stream().filter(x -> x != Roles.PROVIDER).collect(Collectors.toList());
+          Collector<Row, ?, List<UUID>> uuidCollector =
+              Collectors.mapping(row -> row.getUUID("resource_server_id"), Collectors.toList());
 
-    /* user Id is same as Keycloak ID */
-    UUID userId = UUID.fromString(user.getKeycloakId());
+          Map<UUID, String> requestedRsIdsToUrl = requestedRsForProviderRole.stream()
+              .collect(Collectors.toMap(url -> getRequestedRs.result().get(url), url -> url));
 
-    /*
-     * Function to form tuple for create user query. The email ID of the user is taken as input
-     */
-    Function<String, Tuple> createUserTup = (emailId) -> {
-      String hash = DigestUtils.sha1Hex(emailId.getBytes());
-      String emailHash = emailId.split("@")[1] + '/' + hash;
-      return Tuple.of(userId, phone, orgIdToSet, emailHash, user.getKeycloakId());
-    };
+          UUID[] requestedRsIds = requestedRsIdsToUrl.keySet().toArray(UUID[]::new);
 
-    List<Tuple> roleTuple = roles.entrySet().stream()
-          .map(p -> Tuple.of(userId, p.getKey().name(), p.getValue().name()))
+          return pool.withConnection(conn -> conn.preparedQuery(SQL_CHECK_PENDING_PROVIDER_ROLES)
+              .collecting(uuidCollector).execute(Tuple.of(requestedRsIds, user.getUserId()))
+              .map(succ -> succ.value()).compose(res -> {
+                if (res.isEmpty()) {
+                  return Future.succeededFuture();
+                } else {
+                  List<String> existing = res.stream().map(rsId -> requestedRsIdsToUrl.get(rsId))
+                      .collect(Collectors.toList());
+
+                  return Future.failedFuture(new ComposeException(403, URN_INVALID_INPUT,
+                      ERR_TITLE_PENDING_PROVIDER_RS_REG_EXISTS,
+                      ERR_DETAIL_PENDING_PROVIDER_RS_REG_EXISTS + existing.toString()));
+                }
+              }));
+        });
+
+    Future<List<Tuple>> createRoleTuple = checkForProviderPendingRegs.compose(res -> {
+      List<Tuple> roleTupList = new ArrayList<Tuple>();
+      Map<String, UUID> rsDetails = getRequestedRs.result();
+
+      List<Tuple> consumerTup =
+          requestedRsForConsumerRole.stream().map(url -> Tuple.of(user.getUserId(), Roles.CONSUMER,
+              rsDetails.get(url), RoleStatus.APPROVED)).collect(Collectors.toList());
+      roleTupList.addAll(consumerTup);
+
+      List<Tuple> providerTup = requestedRsForProviderRole.stream().map(
+          url -> Tuple.of(user.getUserId(), Roles.PROVIDER, rsDetails.get(url), RoleStatus.PENDING))
           .collect(Collectors.toList());
+      roleTupList.addAll(providerTup);
 
-    String hashedClientSecret = DigestUtils.sha512Hex(clientSecret);
-    Tuple clientTuple = Tuple.of(userId, clientId, hashedClientSecret, DEFAULT_CLIENT);
+      return Future.succeededFuture(roleTupList);
+    });
 
-    /* Insertion into users, roles, clients tables */
-    Future<Void> query = validation.compose(emailId -> pool.withTransaction(
-        conn -> conn.preparedQuery(SQL_CREATE_USER).execute(createUserTup.apply(emailId))
-            .compose(userCreated -> conn.preparedQuery(SQL_CREATE_ROLE).executeBatch(roleTuple))
-            .compose(rolesCreated -> conn.preparedQuery(SQL_CREATE_CLIENT).execute(clientTuple).mapEmpty())));
+    Collector<Row, ?, List<JsonObject>> clientDetails =
+        Collectors.mapping(row -> row.toJson(), Collectors.toList());
 
-    query.onSuccess(success -> {
+    /* Insertion into users, roles tables, and get client details if present */
+    Future<List<JsonObject>> insertUserAndRoles = createRoleTuple.compose(rolesListTuple -> pool
+        .withTransaction(conn -> conn.preparedQuery(SQL_CREATE_USER_IF_NOT_EXISTS)
+            .execute(Tuple.of(user.getUserId(), phone, userInfo))
+            .compose(
+                userCreated -> conn.preparedQuery(SQL_CREATE_ROLE).executeBatch(rolesListTuple))
+            .compose(succ -> conn.preparedQuery(SQL_GET_CLIENTS_FORMATTED).collecting(clientDetails)
+                .execute(Tuple.of(user.getUserId())).map(res -> res.value()))));
+
+    insertUserAndRoles.onSuccess(clientInfo -> {
+      List<Roles> existingRoles = user.getRoles();
+      Map<String, JsonArray> existingRolesToRsMap = user.getRolesToRsMapping();
+
+      if (requestedRoles.contains(Roles.CONSUMER)) {
+        existingRoles.add(Roles.CONSUMER);
+        existingRolesToRsMap.put(Roles.CONSUMER.toString(),
+            new JsonArray(requestedRsForConsumerRole));
+      }
+
       User u =
           new UserBuilder().name(user.getName().get("firstName"), user.getName().get("lastName"))
-              .roles(rolesForKc).keycloakId(user.getKeycloakId()).userId(userId.toString()).build();
+              .roles(existingRoles).rolesToRsMapping(existingRolesToRsMap).userId(user.getUserId())
+              .build();
 
-      JsonObject clientDetails = new JsonObject().put(RESP_CLIENT_NAME, DEFAULT_CLIENT)
-          .put(RESP_CLIENT_ID, clientId.toString()).put(RESP_CLIENT_SC, clientSecret);
-
-      JsonArray clients = new JsonArray().add(clientDetails);
+      JsonArray clients = new JsonArray(clientInfo);
       JsonObject payload =
-          u.toJsonResponse().put(RESP_CLIENT_ARR, clients).put(RESP_EMAIL, validation.result());
+          u.toJsonResponse().put(RESP_CLIENT_ARR, clients).put(RESP_EMAIL, email.result());
 
       if (phone != NIL_PHONE) {
         payload.put(RESP_PHONE, phone);
       }
-
-      if (checkOrgExist.result() != NO_ORG_CHECK) {
-        payload.put(RESP_ORG, new JsonObject(checkOrgExist.result()));
-      }
-
-      String title = SUCC_TITLE_CREATED_USER;
+      
+      String title = SUCC_TITLE_ADDED_ROLES;
       if (requestedRoles.contains(Roles.PROVIDER)) {
         title = title + PROVIDER_PENDING_MESG;
       }
 
-      Response r = new ResponseBuilder().type(URN_SUCCESS).title(title).status(201)
+      Response r = new ResponseBuilder().type(URN_SUCCESS).title(title).status(200)
           .objectResults(payload).build();
       handler.handle(Future.succeededFuture(r.toJson()));
 
-      LOGGER.info("Created user profile for {}  with roles {}", userId,
-          request.getRoles().toString());
+      LOGGER.info("Added roles {} for {}", requestedRoles, user.getUserId());
     }).onFailure(e -> {
       if (e instanceof ComposeException) {
         ComposeException exp = (ComposeException) e;
@@ -296,31 +306,21 @@ public class RegistrationServiceImpl implements RegistrationService {
   }
 
   @Override
-  public RegistrationService listUser(User user, JsonObject searchUserDetails,
-      JsonObject authDelegateDetails, Handler<AsyncResult<JsonObject>> handler) {
+  public RegistrationService listUser(User user, Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
-
-    if (user.getUserId().equals(NIL_UUID)) {
+    
+    if (user.getRoles().isEmpty()) {
       Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
-          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
+          .title(ERR_TITLE_NO_APPROVED_ROLES).detail(ERR_DETAIL_NO_APPROVED_ROLES).build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
 
-    /* If it's a search user flow */
-    if (!searchUserDetails.isEmpty()) {
-      Promise<JsonObject> promise = Promise.promise();
-      Boolean isAuthDelegate = !authDelegateDetails.isEmpty();
-      searchUser(user, searchUserDetails, isAuthDelegate, promise);
-      promise.future().onComplete(result -> handler.handle(result));
-      return this;
-    }
-
-    Future<JsonObject> phoneOrgDetails =
-        pool.withConnection(conn -> conn.preparedQuery(SQL_GET_PHONE_JOIN_ORG)
+    Future<JsonObject> phoneDetails =
+        pool.withConnection(conn -> conn.preparedQuery(SQL_GET_PHONE)
             .execute(Tuple.of(user.getUserId())).map(rows -> rows.iterator().next().toJson()));
 
-    Future<String> email = kc.getEmailId(user.getKeycloakId());
+    Future<String> email = kc.getEmailId(user.getUserId());
 
     Collector<Row, ?, List<JsonObject>> clientDetails =
         Collectors.mapping(row -> row.toJson(), Collectors.toList());
@@ -329,7 +329,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         pool.withConnection(conn -> conn.preparedQuery(SQL_GET_CLIENTS_FORMATTED)
             .collecting(clientDetails).execute(Tuple.of(user.getUserId())).map(res -> res.value()));
 
-    CompositeFuture.all(phoneOrgDetails, clientQuery, email).onSuccess(obj -> {
+    CompositeFuture.all(phoneDetails, clientQuery, email).onSuccess(obj -> {
 
       JsonObject details = (JsonObject) obj.list().get(0);
       @SuppressWarnings("unchecked")
@@ -352,11 +352,6 @@ public class RegistrationServiceImpl implements RegistrationService {
         response.put(RESP_PHONE, phone);
       }
 
-      /* details will have only org details or or only null */
-      if (details.getString("url") != null) {
-        response.put(RESP_ORG, details);
-      }
-
       Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_USER_READ).status(200)
           .objectResults(response).build();
       handler.handle(Future.succeededFuture(r.toJson()));
@@ -375,35 +370,26 @@ public class RegistrationServiceImpl implements RegistrationService {
   }
 
   @Override
-  public RegistrationService updateUser(UpdateProfileRequest request, User user,
+  public RegistrationService resetClientSecret(ResetClientSecretRequest request, User user,
       Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
-    if (user.getUserId().equals(NIL_UUID)) {
+    if (user.getRoles().isEmpty()) {
       Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
-          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
+          .title(ERR_TITLE_NO_APPROVED_ROLES).detail(ERR_DETAIL_NO_APPROVED_ROLES).build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
 
-    List<Roles> requestedRoles = request.getRoles();
     Promise<JsonObject> modification = Promise.promise();
 
-    /*
-     * OpenAPI validation forces either roles+orgId or clientId, so if it is client regen, the roles
-     * array will be empty
-     */
-    if (requestedRoles.size() == 0) {
-      resetClientSecret(user, request, modification);
-    } else {
-      addRoles(user, request, modification);
-    }
+    resetClientSecret(user, request, modification);
 
     /* After successful modification, get user details for response */
     Future<JsonObject> modified = modification.future();
 
-    Future<JsonObject> phoneOrgDetails =
-        modified.compose(x -> pool.withConnection(conn -> conn.preparedQuery(SQL_GET_PHONE_JOIN_ORG)
+    Future<JsonObject> phoneDetails =
+        modified.compose(x -> pool.withConnection(conn -> conn.preparedQuery(SQL_GET_PHONE)
             .execute(Tuple.of(user.getUserId())).map(rows -> rows.iterator().next().toJson())));
 
     Collector<Row, ?, List<JsonObject>> clientDetails =
@@ -414,9 +400,9 @@ public class RegistrationServiceImpl implements RegistrationService {
             .execute(Tuple.of(user.getUserId())).map(res -> res.value())));
 
     /* TODO: kc.getEmailId is slow, already being performed at addRole. Consider using once only */
-    Future<String> getEmail = modified.compose(x -> kc.getEmailId(user.getKeycloakId()));
+    Future<String> getEmail = modified.compose(x -> kc.getEmailId(user.getUserId()));
 
-    CompositeFuture.all(phoneOrgDetails, clientQuery, getEmail).onSuccess(obj -> {
+    CompositeFuture.all(phoneDetails, clientQuery, getEmail).onSuccess(obj -> {
       JsonObject details = (JsonObject) obj.list().get(0);
       @SuppressWarnings("unchecked")
       List<JsonObject> clients = (List<JsonObject>) obj.list().get(1);
@@ -428,29 +414,21 @@ public class RegistrationServiceImpl implements RegistrationService {
       JsonObject modifiedInfo = modified.result();
       String title = "";
 
-      if (modifiedInfo.containsKey("roles")) {
-        approvedRoles.clear();
-        @SuppressWarnings("unchecked")
-        List<Roles> updatedRolesArray = modifiedInfo.getJsonArray("roles").getList();
-        approvedRoles.addAll(updatedRolesArray);
-        title = SUCC_TITLE_UPDATED_USER_ROLES;
-      }
+      String updatedClientId = modifiedInfo.getString(RESP_CLIENT_ID);
+      String clientSecret = modifiedInfo.getString(RESP_CLIENT_SC);
 
-      if (modified.result().containsKey(RESP_CLIENT_ID)) {
-        String updatedClientId = modifiedInfo.getString(RESP_CLIENT_ID);
-        String clientSecret = modifiedInfo.getString(RESP_CLIENT_SC);
-        for (int i = 0; i < clients.size(); i++) {
-          JsonObject cli = clients.get(i);
-          if (cli.getString(RESP_CLIENT_ID).equals(updatedClientId)) {
-            clients.set(i, cli.put(RESP_CLIENT_SC, clientSecret));
-          }
+      for (int i = 0; i < clients.size(); i++) {
+        JsonObject cli = clients.get(i);
+        if (cli.getString(RESP_CLIENT_ID).equals(updatedClientId)) {
+          clients.set(i, cli.put(RESP_CLIENT_SC, clientSecret));
         }
-        title = SUCC_TITLE_REGEN_CLIENT_SECRET;
       }
+      
+      title = SUCC_TITLE_REGEN_CLIENT_SECRET;
 
       User u = new UserBuilder()
           .name(user.getName().get("firstName"), user.getName().get("lastName"))
-          .roles(approvedRoles).keycloakId(user.getKeycloakId()).userId(user.getUserId()).build();
+          .roles(approvedRoles).userId(user.getUserId()).build();
 
       JsonObject response = u.toJsonResponse();
       response.put(RESP_EMAIL, email);
@@ -461,12 +439,8 @@ public class RegistrationServiceImpl implements RegistrationService {
         response.put(RESP_PHONE, phone);
       }
 
-      /* details will have only org details or or only null */
-      if (details.getString("url") != null) {
-        response.put(RESP_ORG, details);
-      }
-
-      LOGGER.info("Updated user profile for " + u.getUserId().toString() + " (" + title + ")");
+      LOGGER.info("Reset client secret for user {} for client ID {}", u.getUserId().toString(),
+          request.getClientId());
 
       Response r = new ResponseBuilder().type(URN_SUCCESS).title(title).status(200)
           .objectResults(response).build();
@@ -486,23 +460,46 @@ public class RegistrationServiceImpl implements RegistrationService {
   }
 
   @Override
-  public RegistrationService listOrganization(Handler<AsyncResult<JsonObject>> handler) {
+  public RegistrationService listResourceServer(Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
     Collector<Row, ?, List<JsonObject>> orgCollect =
         Collectors.mapping(row -> row.toJson(), Collectors.toList());
 
-    pool.withConnection(conn -> conn.preparedQuery(SQL_GET_ALL_ORGS).collecting(orgCollect)
-        .execute().map(rows -> rows.value()).onSuccess(obj -> {
-          JsonArray resp = new JsonArray(obj);
+    Future<List<JsonObject>> rsFuture = pool.withConnection(conn -> conn
+        .preparedQuery(SQL_GET_ALL_RS).collecting(orgCollect).execute().map(rows -> rows.value()));
 
-          Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_ORG_READ)
-              .status(200).arrayResults(resp).build();
-          handler.handle(Future.succeededFuture(r.toJson()));
-        }).onFailure(e -> {
-          LOGGER.error(e.getMessage());
-          handler.handle(Future.failedFuture("Internal error"));
-        }));
+    Future<JsonObject> ownerFuture = rsFuture.compose(res -> {
+      Promise<JsonObject> promise = Promise.promise();
+      List<String> ownerIds =
+          res.stream().map(obj -> obj.getString("owner_id")).collect(Collectors.toList());
+
+      getUserDetails(ownerIds, promise);
+      return promise.future();
+    });
+
+    Future<JsonArray> result = ownerFuture.compose(ownerDetails -> {
+      List<JsonObject> rsDetails = rsFuture.result();
+      JsonArray arr = new JsonArray();
+
+      rsDetails.forEach(rs -> {
+        JsonObject ownerBlock = ownerDetails.getJsonObject(rs.getString("owner_id"));
+        ownerBlock.put("id", rs.remove("owner_id"));
+        rs.put("owner", ownerBlock);
+        arr.add(rs);
+      });
+      return Future.succeededFuture(arr);
+    });
+
+    result.onSuccess(res -> {
+      Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_RS_READ).status(200)
+          .arrayResults(res).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+    }).onFailure(e -> {
+      LOGGER.error(e.getMessage());
+      e.printStackTrace();
+      handler.handle(Future.failedFuture("Internal error"));
+    });
 
     return this;
   }
@@ -517,7 +514,6 @@ public class RegistrationServiceImpl implements RegistrationService {
     }
 
     Set<UUID> unique = new HashSet<UUID>();
-    Promise<Map<String, String>> userToKc = Promise.promise();
 
     for (String id : userIds) {
       if (id == null || !id.matches(UUID_REGEX)) {
@@ -527,36 +523,14 @@ public class RegistrationServiceImpl implements RegistrationService {
       unique.add(UUID.fromString(id));
     }
 
-    List<UUID> ids = new ArrayList<UUID>(unique);
+    List<String> ids = unique.stream().map(i -> i.toString()).collect(Collectors.toList());
 
-    Collector<Row, ?, Map<String, String>> collect = Collectors
-        .toMap(row -> row.getUUID("id").toString(), row -> row.getUUID("keycloak_id").toString());
+    Future<Map<String, JsonObject>> details = kc.getDetails(ids);
 
-    int size = ids.size();
-    /* Function to complete user-KC map promise and create list of Keycloak IDs */
-    Function<Map<String, String>, Future<List<String>>> getKcIdsList = (u2k) -> {
-      if (u2k.size() != size) {
-        return Future.failedFuture(
-            new ComposeException(400, URN_INVALID_INPUT, "Invalid user ID", "Invalid user ID"));
-      }
-
-      userToKc.complete(u2k);
-      List<String> kcIds =
-          u2k.entrySet().stream().map(id -> id.getValue()).collect(Collectors.toList());
-      return Future.succeededFuture(kcIds);
-    };
-
-    Tuple tup = Tuple.of(ids.toArray(UUID[]::new));
-    Future<Map<String, JsonObject>> details = pool.withConnection(conn -> conn
-        .preparedQuery(SQL_GET_KC_ID_FROM_ARR).collecting(collect).execute(tup)
-        .compose(res -> getKcIdsList.apply(res.value())).compose(kcIds -> kc.getDetails(kcIds)));
-
-    /* 'merge' userId-KcId and KcId-details maps */
-    details.onSuccess(kcToDetails -> {
-      Map<String, String> user2kc = userToKc.future().result();
+    details.onSuccess(idToDetails -> {
       JsonObject userDetails = new JsonObject();
 
-      user2kc.forEach((userId, kcId) -> userDetails.put(userId, kcToDetails.get(kcId)));
+      idToDetails.forEach((uid, jsonDet) -> userDetails.put(uid, jsonDet));
       handler.handle(Future.succeededFuture(userDetails));
     }).onFailure(e -> {
       if (e instanceof ComposeException) {
@@ -571,131 +545,6 @@ public class RegistrationServiceImpl implements RegistrationService {
   }
 
   /**
-   * Add roles to a user's user profile. Only consumer and delegate can be added currently. The
-   * promise argument succeeds with a JSON object containing the updated array of roles the user
-   * has, <i>roles</i>. The promise argument fails with a ComposeException in case of an expected
-   * error.
-   * 
-   * @param user The User object for the user who wants to add roles
-   * @param request The UpdateProfileRequest object containing the requested roles array and
-   *        organization ID
-   * @param promise A Promise indicating the success/failure of the operation
-   */
-  public void addRoles(User user, UpdateProfileRequest request, Promise<JsonObject> promise) {
-
-    List<Roles> registeredRoles = user.getRoles();
-    List<Roles> requestedRoles = request.getRoles();
-    String orgId = request.getOrgId();
-
-    Map<Roles, RoleStatus> roles = new HashMap<Roles, RoleStatus>();
-
-    for (Roles r : requestedRoles) {
-      roles.put(r, RoleStatus.APPROVED);
-    }
-
-    List<Roles> duplicate =
-        registeredRoles.stream().filter(requestedRoles::contains).collect(Collectors.toList());
-
-    if (duplicate.size() != 0) {
-      String dupRoles =
-          duplicate.stream().map(str -> str.name().toLowerCase()).collect(Collectors.joining(", "));
-
-      Response r = new ResponseBuilder().status(409).type(URN_ALREADY_EXISTS)
-          .title(ERR_TITLE_ROLE_EXISTS).detail(ERR_DETAIL_ROLE_EXISTS + dupRoles).build();
-      promise.fail(new ComposeException(r));
-      return;
-    }
-
-    Future<String> email = kc.getEmailId(user.getKeycloakId());
-    Future<String> checkOrgRequired;
-
-    /*
-     * orgId is needed always for delegate or trustee reg, even if the user has registered for
-     * provider role
-     */
-    if (requestedRoles.contains(Roles.DELEGATE)) {
-      if (orgId.toString().equals(NIL_UUID)) {
-        Response r = new ResponseBuilder().status(400).type(URN_MISSING_INFO)
-            .title(ERR_TITLE_ORG_ID_REQUIRED).detail(ERR_DETAIL_ORG_ID_REQUIRED).build();
-        promise.fail(new ComposeException(r));
-        return;
-      }
-      checkOrgRequired = pool.withConnection(
-          conn -> conn.preparedQuery(SQL_FIND_ORG_BY_ID).execute(Tuple.of(orgId.toString())).map(
-              rows -> rows.iterator().hasNext() ? rows.iterator().next().getString("url") : null));
-    } else {
-      checkOrgRequired = Future.succeededFuture(NO_ORG_CHECK);
-    }
-
-    Future<Void> validateOrg = CompositeFuture.all(checkOrgRequired, email).compose(x -> {
-      String url = (String) x.list().get(0);
-      String emailId = (String) x.list().get(1);
-
-      if (emailId.length() == 0) {
-        Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-            .title(ERR_TITLE_USER_NOT_KC).detail(ERR_DETAIL_USER_NOT_KC).build();
-        return Future.failedFuture(new ComposeException(r));
-      }
-
-      String emailDomain = emailId.split("@")[1];
-
-      if (url == null) {
-        Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-            .title(ERR_TITLE_ORG_NO_EXIST).detail(ERR_DETAIL_ORG_NO_EXIST).build();
-        return Future.failedFuture(new ComposeException(r));
-
-      } else if (!url.equals(emailDomain) && !url.equals(NO_ORG_CHECK)) {
-        Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-            .title(ERR_TITLE_ORG_NO_MATCH).detail(ERR_DETAIL_ORG_NO_MATCH).build();
-        return Future.failedFuture(new ComposeException(r));
-      }
-
-      return Future.succeededFuture();
-    });
-
-    List<Roles> rolesForKc =
-        requestedRoles.stream().filter(x -> x != Roles.PROVIDER).collect(Collectors.toList());
-
-    List<Tuple> roleDetails = roles.entrySet().stream()
-        .map(p -> Tuple.of(user.getUserId(), p.getKey().name(), p.getValue().name()))
-        .collect(Collectors.toList());
-
-    /* supplier to create tuple for org update */
-    Supplier<Tuple> updateOrgIdTup = () -> {
-      if (checkOrgRequired.result() == NO_ORG_CHECK) {
-        return Tuple.of(null, user.getUserId());
-      }
-      return Tuple.of(request.getOrgId(), user.getUserId());
-    };
-
-    Future<Void> performUpdate = validateOrg.compose(res -> pool.withTransaction(conn -> conn
-        .preparedQuery(SQL_CREATE_ROLE).executeBatch(roleDetails).compose(success -> conn
-            .preparedQuery(SQL_UPDATE_ORG_ID).execute(updateOrgIdTup.get()).mapEmpty())));
-
-    performUpdate.onSuccess(success -> {
-      /*
-       * TODO: the .getRoles() method in the User object returns the roles array by reference. We
-       * make a copy of said list here. The proper fix would be for the getter to either send a copy
-       * or an unmodifiable list.
-       */
-      List<Roles> updatedRoles = new ArrayList<Roles>(user.getRoles());
-      updatedRoles.addAll(rolesForKc);
-
-      JsonObject resp = new JsonObject().put("roles", updatedRoles);
-      promise.complete(resp);
-    }).onFailure(e -> {
-      if (e instanceof ComposeException) {
-        promise.fail(e);
-        return;
-      }
-
-      LOGGER.error(e.getMessage());
-      promise.fail("Internal error");
-    });
-    return;
-  }
-
-  /**
    * Reset client secret of a particular client ID for a user. The promise argument succeeds with a
    * JSON object containing the client ID <i>clientId</i> and the regenerated client secret
    * <i>clientSecret</i>. The promise argument fails with a ComposeException in case of an expected
@@ -705,7 +554,7 @@ public class RegistrationServiceImpl implements RegistrationService {
    * @param request The UpdateProfileRequest object containing the client ID
    * @param promise A Promise indicating the success/failure of the operation
    */
-  public void resetClientSecret(User user, UpdateProfileRequest request,
+  public void resetClientSecret(User user, ResetClientSecretRequest request,
       Promise<JsonObject> promise) {
     UUID userId = UUID.fromString(user.getUserId());
     UUID clientId = UUID.fromString(request.getClientId());
@@ -738,7 +587,7 @@ public class RegistrationServiceImpl implements RegistrationService {
       omittedServers.add(AUTH_SERVER_URL);
 
       return pool.withConnection(
-          conn -> conn.preparedQuery(SQL_GET_SERVERS_FOR_REVOKE).collecting(getTokenRevokeReqList)
+          conn -> conn.preparedQuery(SQL_GET_RS_AND_APDS_FOR_REVOKE).collecting(getTokenRevokeReqList)
               .execute(Tuple.of(omittedServers.toArray(String[]::new))).map(res -> res.value()));
     });
 
@@ -758,9 +607,8 @@ public class RegistrationServiceImpl implements RegistrationService {
        * revoke call to that particular server has failed. retry logic?, store info about revoke and
        * expose an API to servers?
        */
-      SecureRandom random = new SecureRandom();
       byte[] randBytes = new byte[CLIENT_SECRET_BYTES];
-      random.nextBytes(randBytes);
+      randomSource.nextBytes(randBytes);
       String clientSecret = Hex.encodeHexString(randBytes);
       String hashedClientSecret = DigestUtils.sha512Hex(clientSecret);
       Tuple tup = Tuple.of(hashedClientSecret, clientId, userId);
@@ -801,7 +649,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     tokenService.revokeToken(request, user, promise);
     promise.future().onSuccess(resp -> {
-      if (resp.getString("type").equals(URN_SUCCESS)) {
+      if (resp.getString("type").equals(URN_SUCCESS.toString())) {
         response.complete(true);
       } else {
         response.complete(false);
@@ -815,31 +663,157 @@ public class RegistrationServiceImpl implements RegistrationService {
     return response.future();
   }
 
-  public void searchUser(User user, JsonObject searchUserDetails, Boolean isAuthDelegate,
-      Promise<JsonObject> promise) {
+  @Override
+  public RegistrationService findUserByEmail(Set<String> emailIds,
+      Handler<AsyncResult<JsonObject>> handler) {
+
+    Map<String, Future<JsonObject>> kcInfoMap =
+        emailIds.stream().collect(Collectors.toMap(id -> id, id -> kc.findUserByEmail(id)));
+
+    @SuppressWarnings("rawtypes")
+    List<Future> kcFutures = new ArrayList<Future>(kcInfoMap.values());
+
+    Future<Void> checkAllEmailsExist = CompositeFuture.all(kcFutures).compose(res -> {
+      List<String> missingEmails =
+          kcInfoMap.entrySet().stream().filter(i -> i.getValue().result().isEmpty())
+              .map(i -> i.getKey()).collect(Collectors.toList());
+      
+      if (!missingEmails.isEmpty()) {
+        return Future.failedFuture(new ComposeException(400, Urn.URN_MISSING_INFO,
+            "Some email IDs do not exist", missingEmails.toString()));
+      }
+
+      return Future.succeededFuture();
+    });
+
+    Future<Void> insertIfNotExists = checkAllEmailsExist.compose(res -> {
+      List<Tuple> tups = new ArrayList<Tuple>();
+
+      kcInfoMap.forEach((emailId, fut) -> {
+        // TODO add logging for added users
+        UUID userId = UUID.fromString(fut.result().getString("keycloakId"));
+        JsonObject emptyUserInfo = new JsonObject();
+        Tuple tup = Tuple.of(userId, NIL_PHONE, emptyUserInfo);
+        tups.add(tup);
+      });
+
+      return pool.withTransaction(
+          conn -> conn.preparedQuery(SQL_CREATE_USER_IF_NOT_EXISTS).executeBatch(tups).mapEmpty());
+    });
+
+    insertIfNotExists.onSuccess(res -> {
+      JsonObject result = new JsonObject();
+      
+      kcInfoMap.forEach((emailId, fut) -> {
+        result.put(emailId, fut.result());
+      });
+      handler.handle(Future.succeededFuture(result));
+      
+    }).onFailure(err -> {
+      handler.handle(Future.failedFuture(err));
+    });
+
+    return this;
+  }
+
+  @Override
+  public RegistrationService getDefaultClientCredentials(User user,
+      Handler<AsyncResult<JsonObject>> handler) {
+    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+    
+    if (user.getRoles().isEmpty()) {
+      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
+          .title(ERR_TITLE_NO_APPROVED_ROLES).detail(ERR_DETAIL_NO_APPROVED_ROLES).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
+
+    UUID userId = UUID.fromString(user.getUserId());
+    Tuple tuple = Tuple.of(userId);
+
+    Collector<Row, ?, List<UUID>> clientIdCollector=
+        Collectors.mapping(row -> row.getUUID("client_id"), Collectors.toList());
+
+    Future<Void> checkDefaultClientId = pool
+        .withConnection(conn -> conn.preparedQuery(SQL_CHECK_DEFAULT_CLIENT_EXISTS)
+            .collecting(clientIdCollector).execute(tuple).map(res -> res.value()))
+        .compose(cidList -> {
+          if (!cidList.isEmpty()) {
+            Response r = new ResponseBuilder().status(409).type(URN_ALREADY_EXISTS)
+                .title(ERR_TITLE_DEFAULT_CLIENT_EXISTS).detail(ERR_DETAIL_DEFAULT_CLIENT_EXISTS)
+                .errorContext(new JsonObject().put("clientId", cidList.get(0).toString())).build();
+            return Future.failedFuture(new ComposeException(r));
+          }
+          return Future.succeededFuture();
+        });
+    /*
+     * In case a COS admin wants to get client creds, they **may** not have an entry in the `users`
+     * table - since COS admins just need to be registered on Keycloak and are identified by their
+     * user ID in the config. Inserting into the `user_clients` table will throw an error due to
+     * foreign key constrains.
+     * 
+     * Hence to avoid this edge case we try to insert the COS admin as a user into the table.
+     */
+    Future<Void> cosAdminEdgeCase = checkDefaultClientId.compose(res -> {
+      List<Roles> roles = user.getRoles();
+
+      if (!(roles.contains(Roles.COS_ADMIN) && roles.size() == 1)) {
+        return Future.succeededFuture();
+      }
+
+      JsonObject emptyUserInfo = new JsonObject();
+      
+      return pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_USER_IF_NOT_EXISTS)
+          .execute(Tuple.of(userId, NIL_PHONE, emptyUserInfo)).mapEmpty());
+    });
+    
+    Future<JsonObject> createClientCreds = cosAdminEdgeCase.compose(res -> {
+      UUID clientId = UUID.randomUUID();
+      
+      byte[] randBytes = new byte[CLIENT_SECRET_BYTES];
+      randomSource.nextBytes(randBytes);
+      String clientSecret = Hex.encodeHexString(randBytes);
+      String hashedClientSecret = DigestUtils.sha512Hex(clientSecret);
+
+      Tuple clientTuple = Tuple.of(userId, clientId, hashedClientSecret, DEFAULT_CLIENT);
+
+      JsonObject clientDetails = new JsonObject().put(RESP_CLIENT_NAME, DEFAULT_CLIENT)
+          .put(RESP_CLIENT_ID, clientId.toString()).put(RESP_CLIENT_SC, clientSecret);
+      
+      return pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_CLIENT).execute(clientTuple))
+          .compose(succ -> Future.succeededFuture(clientDetails));
+    });
+    
+    createClientCreds.onSuccess(creds -> {
+      Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_CREATED_DEFAULT_CLIENT)
+          .status(201).objectResults(creds).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+
+      LOGGER.info("Created default client credentials for {}", userId);
+    }).onFailure(e -> {
+      if (e instanceof ComposeException) {
+        ComposeException exp = (ComposeException) e;
+        handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+        return;
+      }
+
+      LOGGER.error(e.getMessage());
+      handler.handle(Future.failedFuture("Internal error"));
+    });
+    
+    return this;
+  }
+
+  @Override
+  public RegistrationService searchUser(String email, Roles role, String resourceServerUrl,
+      Handler<AsyncResult<JsonObject>> handler) {
+    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
     /* Create error denoting email+role does not exist */
     Supplier<Response> getSearchErr = () -> {
       return new ResponseBuilder().type(URN_INVALID_INPUT).title(ERR_TITLE_USER_NOT_FOUND)
           .status(404).detail(ERR_DETAIL_USER_NOT_FOUND).build();
     };
-
-    List<Roles> roles = user.getRoles();
-
-    if (roles.contains(Roles.PROVIDER) || roles.contains(Roles.ADMIN)) {
-      
-    } else if (roles.contains(Roles.DELEGATE) && isAuthDelegate) {
-
-    } else {
-      Response r = new ResponseBuilder().status(401).type(URN_INVALID_ROLE)
-          .title(ERR_TITLE_SEARCH_USR_INVALID_ROLE).detail(ERR_DETAIL_SEARCH_USR_INVALID_ROLE)
-          .build();
-      promise.complete(r.toJson());
-      return;
-    }
-
-    String email = searchUserDetails.getString("email").toLowerCase();
-    Roles role = Roles.valueOf(searchUserDetails.getString("role").toUpperCase());
 
     Future<JsonObject> foundUser = kc.findUserByEmail(email);
 
@@ -848,57 +822,51 @@ public class RegistrationServiceImpl implements RegistrationService {
         return Future.failedFuture(new ComposeException(getSearchErr.get()));
       }
 
+      // userId same as keycloakId
       UUID keycloakId = UUID.fromString(res.getString("keycloakId"));
       return Future.succeededFuture(keycloakId);
     });
 
-    /*
-     * Get user ID and org ID (if applicable) if the user + role exists (user profile is there and
-     * user has the requested role)
-     */
-    Future<JsonObject> getUserId = exists.compose(res -> pool.withConnection(
-        conn -> conn.preparedQuery(SQL_GET_UID_ORG_ID_CHECK_ROLE).execute(Tuple.of(res, role)).map(
-            row -> row.iterator().hasNext() ? row.iterator().next().toJson() : new JsonObject())));
+    /* 
+     * Since you can only search by CONSUMER and PROVIDER roles, we don't
+     * need to check the users table for existence and only check if roles.user_id
+     * is present */
+    Future<Boolean> checkHasRole = exists.compose(keycloakId -> pool.withConnection(conn -> conn
+        .preparedQuery(SQL_CHECK_USER_HAS_PROV_CONS_ROLE_FOR_RS)
+        .execute(Tuple.of(keycloakId, role, resourceServerUrl))
+        .map(row -> row.iterator().next().getBoolean("exists"))));
 
-    Future<JsonObject> getOrgIfNeeded = getUserId.compose(res -> {
-      if (res.isEmpty()) {
+    checkHasRole.compose(hasRole -> {
+      if(!hasRole) {
         return Future.failedFuture(new ComposeException(getSearchErr.get()));
       }
-
-      if (res.getString("organization_id") != null) {
-        return pool.withConnection(conn -> conn.preparedQuery(SQL_GET_ORG_DETAILS)
-            .execute(Tuple.of(UUID.fromString(res.getString("organization_id"))))
-            .map(row -> row.iterator().next().toJson()));
-      }
-
-      return Future.succeededFuture(new JsonObject());
-    });
-
-    getOrgIfNeeded.onSuccess(res -> {
+      
       JsonObject response = new JsonObject();
-
+      
       JsonObject userDetails = foundUser.result();
-      String userId = getUserId.result().getString("id");
+      
       response.put(RESP_EMAIL, userDetails.getString("email"));
-      response.put("userId", userId);
+      // userId same as keycloakId
+      response.put("userId", userDetails.getString("keycloakId"));
       response.put("name", userDetails.getJsonObject("name"));
-
-      if (!res.isEmpty()) {
-        response.put(RESP_ORG, res);
-      }
+      
+      return Future.succeededFuture(response);
+    }).onSuccess(res -> {
 
       Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_USER_FOUND).status(200)
-          .objectResults(response).build();
-      promise.complete(r.toJson());
+          .objectResults(res).build();
+
+      handler.handle(Future.succeededFuture(r.toJson()));
     }).onFailure(e -> {
       if (e instanceof ComposeException) {
-        promise.complete(((ComposeException) e).getResponse().toJson());
+        ComposeException exp = (ComposeException) e;
+        handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
         return;
       }
       LOGGER.error(e.getMessage());
-      promise.fail("Internal error");
+      handler.handle(Future.failedFuture("Internal error"));
     });
 
-    return;
+    return this;
   }
 }

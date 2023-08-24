@@ -29,6 +29,7 @@ import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.KcAdmin;
+import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.registration.Utils;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -67,6 +68,7 @@ public class GetProviderRegistrationsTest {
 
   private static KcAdmin kc = Mockito.mock(KcAdmin.class);
   private static PolicyService policyService = Mockito.mock(PolicyService.class);
+  private static RegistrationService registrationService = Mockito.mock(RegistrationService.class);
   private static Future<JsonObject> adminAuthUser;
   private static Future<JsonObject> adminOtherUser;
   private static Future<JsonObject> consumerUser;
@@ -162,7 +164,7 @@ public class GetProviderRegistrationsTest {
           return pool.withConnection(
               conn -> conn.preparedQuery(SQL_CREATE_ADMIN_SERVER).executeBatch(tup));
         }).onSuccess(res -> {
-          adminService = new AdminServiceImpl(pool, kc, policyService, options);
+          adminService = new AdminServiceImpl(pool, kc, policyService, registrationService, options);
           testContext.completeNow();
         }).onFailure(err -> testContext.failNow(err.getMessage()));
   }

@@ -4,6 +4,7 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
@@ -11,13 +12,16 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.SqlResult;
 import io.vertx.sqlclient.Tuple;
+import iudx.aaa.server.apiserver.ItemType;
 import iudx.aaa.server.apiserver.ResourceObj;
+import iudx.aaa.server.apiserver.ResourceObj2;
 import iudx.aaa.server.apiserver.Response;
+import iudx.aaa.server.apiserver.ResourceObj2.ResourceObjBuilder;
 import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.apiserver.util.Urn;
 import iudx.aaa.server.policy.Constants.itemTypes;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,6 +39,7 @@ import static iudx.aaa.server.policy.Constants.CAT_SUCCESS_URN;
 import static iudx.aaa.server.policy.Constants.CHECK_RESOURCE_EXIST;
 import static iudx.aaa.server.policy.Constants.CHECK_RESOURCE_EXIST_JOIN;
 import static iudx.aaa.server.policy.Constants.EMAIL_HASH;
+import static iudx.aaa.server.policy.Constants.ERR_NOT_VALID_RESOURCE;
 import static iudx.aaa.server.policy.Constants.GET_PROVIDER_ID;
 import static iudx.aaa.server.policy.Constants.GET_RES_CAT_IDS;
 import static iudx.aaa.server.policy.Constants.GET_RES_DETAILS;
@@ -63,6 +68,7 @@ import static iudx.aaa.server.policy.Constants.RESULTS;
 import static iudx.aaa.server.policy.Constants.RES_GRP;
 import static iudx.aaa.server.policy.Constants.TYPE;
 import static iudx.aaa.server.policy.Constants.URL;
+import static iudx.aaa.server.policy.Constants.*;
 
 public class CatalogueClient {
   private static final Logger LOGGER = LogManager.getLogger(CatalogueClient.class);
@@ -80,7 +86,7 @@ public class CatalogueClient {
 
     this.pool = pool;
     WebClientOptions clientOptions =
-        new WebClientOptions().setSsl(true).setVerifyHost(false).setTrustAll(true);
+        new WebClientOptions().setSsl(true).setVerifyHost(true).setTrustAll(false);
 
     this.client = WebClient.create(vertx, clientOptions);
     this.catHost = options.getString("catServerHost");
@@ -602,6 +608,122 @@ public class CatalogueClient {
           LOGGER.error("Fail: " + err.toString());
           promise.fail(INTERNALERROR);
         });
+    return promise.future();
+  }
+
+  /**
+   * Checks if given resource ID is a valid resource, gets all info about the resource and puts it
+   * into a {@link ResourceObj2} object.
+   * 
+   * @param itemId a UUID representing a resource
+   * @return a Future of {@link ResourceObj2} object containing all info if successful
+   */
+  public Future<ResourceObj2> getResourceDetails(UUID itemId) {
+    Promise<ResourceObj2> promise = Promise.promise();
+
+    ResourceObjBuilder builder = new ResourceObjBuilder();
+    
+    Future<JsonArray> catExistenceResponse =
+        client.get(catPort, catHost, catItemPath + CAT_ITEM_ENDPOINT)
+            .addQueryParam(ID, itemId.toString()).send().compose(res -> {
+              if (res.statusCode() == 200
+                  && res.bodyAsJsonObject().getString(TYPE).equals(CAT_SUCCESS_URN)) {
+                return Future.succeededFuture(res.bodyAsJsonObject().getJsonArray(RESULTS));
+              } else if (res.statusCode() == 404) {
+                Response r = new Response.ResponseBuilder().type(Urn.URN_INVALID_INPUT.toString())
+                    .title(ITEMNOTFOUND).detail(itemId.toString()).status(400).build();
+                return Future.failedFuture(new ComposeException(r));
+              } else {
+                LOGGER.error("failed fetchItem: " + res);
+                return Future.failedFuture(INTERNALERROR);
+              }
+            });
+
+    Future<JsonObject> itemValidation = catExistenceResponse.compose(resArr -> {
+      if (resArr.isEmpty()) {
+        LOGGER.error("Failed Catalogue item check : Results array empty");
+        return Future.failedFuture(INTERNALERROR);
+      }
+
+      JsonObject body = resArr.getJsonObject(0);
+
+      JsonArray itemTypes = body.getJsonArray(CAT_RESP_TYPE_KEY);
+
+      if (!itemTypes.contains(CAT_RESP_RESOURCE_TYPE)) {
+        Response r = new Response.ResponseBuilder().type(Urn.URN_INVALID_INPUT.toString())
+            .title(ERR_NOT_VALID_RESOURCE).detail(itemId.toString()).status(400).build();
+        return Future.failedFuture(new ComposeException(r));
+      }
+
+      if (!body.containsKey(CAT_RESP_APD_KEY)) {
+        LOGGER.error("Failed Catalogue item check : Resource {} does not have `apd` key",
+            itemId.toString());
+        return Future.failedFuture(INTERNALERROR);
+      }
+
+      if (!body.containsKey(CAT_RESP_ACCESS_POLICY_KEY)) {
+        LOGGER.error("Failed Catalogue item check : Resource {} does not have `accessPolicy` key",
+            itemId.toString());
+        return Future.failedFuture(INTERNALERROR);
+      }
+
+      builder.id(itemId);
+      builder.apdUrl(body.getString(CAT_RESP_APD_KEY));
+      builder.accessType(body.getString(CAT_RESP_ACCESS_POLICY_KEY));
+      builder.itemType(ItemType.RESOURCE);
+
+      return Future.succeededFuture();
+    });
+
+    Future<JsonArray> catRelationResponse = itemValidation
+        .compose(itemExists -> client.get(catPort, catHost, catItemPath + CAT_RELATION_ENDPOINT)
+            .addQueryParam(ID, itemId.toString())
+            .addQueryParam(CAT_REL_QUERY_PARAM, CAT_REL_QUERY_VAL_ALL).send().compose(res -> {
+              if (res.statusCode() == 200
+                  && res.bodyAsJsonObject().getString(TYPE).equals(CAT_SUCCESS_URN)) {
+                return Future.succeededFuture(res.bodyAsJsonObject().getJsonArray(RESULTS));
+              } else {
+                LOGGER.error("Failed Catalogue relation check : {} {}", res.statusCode(),
+                    res.bodyAsJsonObject().toString());
+                return Future.failedFuture(INTERNALERROR);
+              }
+            }));
+
+    Future<ResourceObj2> relationValidation = catRelationResponse.compose(resArr -> {
+      if (resArr.isEmpty()) {
+        LOGGER.error("Failed Catalogue relation check : Results array empty");
+        return Future.failedFuture(INTERNALERROR);
+      }
+
+      String providerUserId = "";
+      String resourceServerUrl = "";
+
+      for (int i = 0; i < resArr.size(); i++) {
+        JsonObject json = resArr.getJsonObject(i);
+        if (json.getJsonArray(CAT_RESP_TYPE_KEY).contains(CAT_RESP_RES_SERVER_TYPE)) {
+          resourceServerUrl = json.getString(CAT_RESP_RES_SERVER_URL_KEY, "");
+        } else if (json.getJsonArray(CAT_RESP_TYPE_KEY).contains(CAT_RESP_PROVIDER_TYPE)) {
+          providerUserId = json.getString(CAT_RESP_PROVIDER_USER_ID_KEY, "");
+        }
+      }
+
+      if (providerUserId.isEmpty() || resourceServerUrl.isEmpty()) {
+        LOGGER.error("Failed Catalogue relation check : relationship API - provider {}, rsURL {}",
+            providerUserId, resourceServerUrl);
+        return Future.failedFuture(INTERNALERROR);
+      }
+
+      // not getting resource group ID - may not be necessary
+      builder.ownerId(UUID.fromString(providerUserId));
+      builder.resServerUrl(resourceServerUrl);
+
+      return Future.succeededFuture(builder.build());
+    });
+    
+    relationValidation.onSuccess(res -> {
+      promise.complete(res);
+    }).onFailure(fail -> promise.fail(fail));
+
     return promise.future();
   }
 }

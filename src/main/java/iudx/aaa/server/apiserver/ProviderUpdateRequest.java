@@ -9,15 +9,15 @@ import io.vertx.core.json.JsonObject;
 
 @DataObject(generateConverter = true)
 public class ProviderUpdateRequest {
-  UUID userId;
+  UUID id;
   RoleStatus status;
 
-  public String getUserId() {
-    return userId.toString();
+  public String getId() {
+    return id.toString();
   }
 
-  public void setUserId(String userId) {
-    this.userId = UUID.fromString(userId);
+  public void setId(String id) {
+    this.id = UUID.fromString(id);
   }
 
   public RoleStatus getStatus() {

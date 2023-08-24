@@ -5,7 +5,6 @@ public class Constants {
   public static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
   public static final String TOKEN_SERVICE_ADDRESS = "iudx.aaa.token.service";
 
-  public static final String NIL_UUID = "00000000-0000-0000-0000-000000000000";
   public static final String UUID_REGEX =
           "^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$";
 
@@ -24,7 +23,7 @@ public class Constants {
   public static final long DB_RECONNECT_INTERVAL_MS = 10000;
 
   /* Response fields */
-  public static final String RESP_APD_ID = "apdId";
+  public static final String RESP_APD_ID = "id";
   public static final String RESP_APD_NAME = "name";
   public static final String RESP_APD_URL = "url";
   public static final String RESP_APD_STATUS = "status";
@@ -39,8 +38,9 @@ public class Constants {
 
   public static final String SUCC_TITLE_APD_READ = "Access Policy Domains";
 
-  public static final String ERR_TITLE_NO_USER_PROFILE = "User profile does not exist";
-  public static final String ERR_DETAIL_NO_USER_PROFILE = "Please register to create user profile";
+  public static final String ERR_TITLE_NO_APPROVED_ROLES = "User does not have any roles";
+  public static final String ERR_DETAIL_NO_APPROVED_ROLES =
+      "Please add roles or wait for approval of provider roles";
 
   public static final String ERR_TITLE_APD_NOT_RESPOND = "Invalid APD response";
   public static final String ERR_DETAIL_APD_NOT_RESPOND =
@@ -60,12 +60,16 @@ public class Constants {
   public static final String ERR_TITLE_CANT_CHANGE_APD_STATUS =
       "Not allowed to change status for APD ID";
 
-  public static final String ERR_TITLE_NO_ROLES_PUT = "Invalid roles to call API";
-  public static final String ERR_DETAIL_NO_ROLES_PUT =
-      "Auth Server Admin may call the API";
+  public static final String ERR_TITLE_NO_COS_ADMIN_ROLE = "Invalid roles to call API - not COS Admin";
+  public static final String ERR_DETAIL_NO_COS_ADMIN_ROLE =
+      "Only COS Admin may call the API";
 
   public static final String ERR_TITLE_INVALID_REQUEST =  "Invalid request";
   public static final String ERR_TITLE_INVALID_REQUEST_ID  =  "APD not present";
+
+  public static final String ERR_TITLE_APD_NOT_REGISTERED =  "APD URL not registered on COS";
+  public static final String ERR_DETAIL_APD_NOT_REGISTERED =
+      "The APD belonging to the item has not been registered to this COS";
 
   public static final String ERR_DETAIL_INVALID_UUID = "Invalid UUID";
 
@@ -75,17 +79,14 @@ public class Constants {
           + "($1::text, $2::text, 'ACTIVE', NOW(), NOW()) "
           + "ON CONFLICT (url) DO NOTHING RETURNING id";
 
-  public static final String SQL_CHECK_ADMIN_OF_SERVER =
-      "SELECT id FROM " + "resource_server WHERE owner_id = $1::uuid AND url = $2::text";
-
-  public static final String SQL_GET_APDS_BY_ID_ADMIN =
-      "SELECT id AS \"apdId\", name, url, status FROM apds WHERE id = ANY($1::uuid[])";
+  public static final String SQL_GET_APDS_BY_ID_COS_ADMIN =
+      "SELECT id, name, url, status FROM apds WHERE id = ANY($1::uuid[])";
 
   public static final String SQL_UPDATE_APD_STATUS =
       "UPDATE apds SET status = $1::apd_status_enum, updated_at = NOW() WHERE id = $2::uuid";
   
   public static final String SQL_GET_APD_URL_STATUS =
-      "SELECT url, status FROM apds WHERE id = $1::uuid";
+      "SELECT url, status FROM apds WHERE url = $1::text";
 
   /* APD API endpoints and request metadata */
   public static final String APD_READ_USERCLASSES_API = "/userclasses";
@@ -104,7 +105,6 @@ public class Constants {
   public static final String APD_REQ_USER = "user";
   public static final String APD_REQ_OWNER = "owner";
   public static final String APD_REQ_ITEM =  "item";
-  public static final String APD_REQ_USERCLASS = "userClass";
   public static final String APD_REQ_CONTEXT = "context";
   
   /* APD JSON response keys */
@@ -118,7 +118,6 @@ public class Constants {
   /* create token service JSON key/values */
   public static final String CREATE_TOKEN_URL = "url";
   public static final String CREATE_TOKEN_CONSTRAINTS = "constraints";
-  public static final String CREATE_TOKEN_APD_CONSTRAINTS = "apdConstraints";
   public static final String CREATE_TOKEN_CAT_ID = "cat_id";
   public static final String CREATE_TOKEN_SESSIONID = "sessionId";
   public static final String CREATE_TOKEN_LINK = "link";

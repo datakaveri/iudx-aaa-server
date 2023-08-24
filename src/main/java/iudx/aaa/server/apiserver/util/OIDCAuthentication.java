@@ -2,16 +2,13 @@ package iudx.aaa.server.apiserver.util;
 
 import static iudx.aaa.server.apiserver.util.Constants.*;
 import static iudx.aaa.server.apiserver.util.Urn.*;
-import java.util.List;
-import java.util.stream.Collectors;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.User;
@@ -21,28 +18,28 @@ import io.vertx.ext.auth.oauth2.OAuth2Options;
 import io.vertx.ext.auth.oauth2.providers.KeycloakAuth;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.AuthenticationHandler;
-import io.vertx.pgclient.PgPool;
-import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
-import iudx.aaa.server.apiserver.Roles;
-import iudx.aaa.server.apiserver.User.UserBuilder;
 
+/**
+ * Handles Keycloak token authentication. Validates that the token is valid and not expired. If
+ * validation successful, adds the <i>sub</i> field from the Keycloak token - the Keycloak user ID -
+ * and the first and last names of the user to the routing context. The Keycloak user ID is the user
+ * ID used in all tables and throughout the DX system.
+ */
 public class OIDCAuthentication implements AuthenticationHandler {
 
   private static final Logger LOGGER = LogManager.getLogger(OIDCAuthentication.class);
   private Vertx vertx;
-  private PgPool pgPool;
   private JsonObject keycloakOptions;
   private OAuth2Auth keycloak;
 
-  public OIDCAuthentication(Vertx vertx, PgPool pgPool, JsonObject keycloakOptions) {
+  public OIDCAuthentication(Vertx vertx, JsonObject keycloakOptions) {
     this.vertx = vertx;
-    this.pgPool = pgPool;
     this.keycloakOptions = keycloakOptions;
     keyCloackAuth();
   }
-
+  
   @Override
   public void handle(RoutingContext routingContext) {
     
@@ -61,8 +58,6 @@ public class OIDCAuthentication implements AuthenticationHandler {
     } else {
       token = null;
     }
-
-    iudx.aaa.server.apiserver.User.UserBuilder user = new UserBuilder();
 
     /* Handles OIDC Token Flow
      * A combination of routingContext.fail and routingContext.end ends the compose
@@ -94,25 +89,20 @@ public class OIDCAuthentication implements AuthenticationHandler {
       }).compose(mapper -> {
         LOGGER.debug("Info: JWT authenticated; UserInfo fetched");
         String kId = mapper.getString(SUB);
-        user.keycloakId(kId);
+        routingContext.put(OBTAINED_USER_ID, kId);
 
         String firstName = mapper.getString(KC_GIVEN_NAME, " ");
         String lastName = mapper.getString(KC_FAMILY_NAME, " ");
-        user.name(firstName, lastName);
-
-        return pgSelectUser(SQL_GET_USER_ROLES, kId);
+        routingContext.put(KC_GIVEN_NAME, firstName);
+        routingContext.put(KC_FAMILY_NAME, lastName);
+        
+        return Future.succeededFuture();
 
       }).onComplete(kcHandler -> {
         if (kcHandler.succeeded()) {
-          JsonObject result = kcHandler.result();
-
-          if (!result.isEmpty()) {
-            user.userId(result.getString(ID));
-            user.roles(processRoles(result.getJsonArray(ROLES)));
-          }
-
-          routingContext.put(CLIENT_ID, result.getString("client_id",NIL_UUID));
-          routingContext.put(USER, user.build()).next();
+          
+          routingContext.next();
+          
         } else if (kcHandler.failed()) {
           LOGGER.error("Fail: Request validation and authentication; " + kcHandler.cause());
           Response rs = new ResponseBuilder().status(500).title(INTERNAL_SVR_ERR)
@@ -167,41 +157,5 @@ public class OIDCAuthentication implements AuthenticationHandler {
         LOGGER.error(LOG_FAILED_DISCOVERY + discover.cause());
       }
     });
-  }
-
-  /**
-   * Handles database queries.
-   * 
-   * @param sql query
-   * @param if of the element
-   * @return Future promise which is JsonObject
-   */
-  public Future<JsonObject> pgSelectUser(String query, String id) {
-
-    Promise<JsonObject> promise = Promise.promise();
-    pgPool.withConnection(connection -> connection.preparedQuery(query).execute(Tuple.of(id))
-        .map(rows -> rows.rowCount() > 0 ? rows.iterator().next().toJson() : new JsonObject()))
-        .onComplete(handler -> {
-          if (handler.succeeded()) {
-            JsonObject details = handler.result();
-            promise.complete(details);
-          } else if (handler.failed()) {
-            promise.fail(handler.cause());
-          }
-        });
-    return promise.future();
-  }
-
-  /**
-   * Creates Roles enum.
-   * 
-   * @param role
-   * @return List having Roles
-   */
-  public List<Roles> processRoles(JsonArray role) {
-    List<Roles> roles = role.stream().filter(a -> Roles.exists(a.toString()))
-        .map(a -> Roles.valueOf(a.toString())).collect(Collectors.toList());
-
-    return roles;
   }
 }

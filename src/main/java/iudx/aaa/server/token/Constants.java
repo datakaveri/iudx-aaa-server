@@ -87,7 +87,12 @@ public class Constants {
   public static final String IID = "iid";
   public static final String CONS = "cons";
   public static final String APD = "apd";
+  public static final String DID = "did";
+  public static final String DRL = "drl";
   public static final String INTROSPECT_USERINFO = "userInfo";
+  
+  public static final String CREATE_TOKEN_DID = "delegatorUserId";
+  public static final String CREATE_TOKEN_DRL = "delegatorRole";
   
   /* JWT Constants for APD token */
   public static final String LINK = "link";
@@ -103,6 +108,7 @@ public class Constants {
     ITEM_TYPE_MAP.put("ri", "resource");
     ITEM_TYPE_MAP.put("rg","resource_group");
     ITEM_TYPE_MAP.put("rs","resource_server");
+    ITEM_TYPE_MAP.put("cos", "cos");
   }
   
   /* Response Messages */
@@ -118,8 +124,14 @@ public class Constants {
   public static final String INTERNAL_SVR_ERR = "Internal server error";
   public static final String INVALID_CLIENT_ID_SEC = "Invalid clientId/clientSecret";
   public static final String INVALID_ROLE = "Role not defined";
+
+  public static final String ERR_TITLE_DELEGATION_INFO_MISSING =
+      "Delegation information required for token request as delegate";
+  public static final String ERR_DETAIL_DELEGATION_INFO_MISSING =
+      "Please include the `delegationId` header in the request";
+
   public static final String CANNOT_REVOKE_ON_AUTH = "Cannot revoke tokens on auth server";
-  public static final String INVALID_POLICY = "Policy evaluation failed";
+  public static final String ACCESS_DENIED = "Access evaluation failed";
   public static final String TOKEN_SUCCESS = "Token created";
   public static final String ERR_TITLE_APD_INTERACT_REQUIRED = "APD interaction required";
   public static final String ERR_DETAIL_APD_INTERACT_REQUIRED =
@@ -128,7 +140,29 @@ public class Constants {
   public static final String TOKEN_REVOKED = "Token revoked";
   public static final String TOKEN_AUTHENTICATED = "Token authenticated";
   public static final String INVALID_USERID = "Empty/null userId";
-  public static final String INVALID_RS_URL = "Incorrect resourceServer URL";
+
+  public static final String ERR_TITLE_INVALID_RS_URL = "Invalid resource server URL";
+  public static final String ERR_DETAIL_INVALID_RS_URL = "Requested resource server URL does not exist";
+  
+  public static final String ERR_DOES_NOT_HAVE_ROLE_FOR_RS =
+      "User does not have requested role for requested resource server";
+
+  public static final String ERR_TITLE_NO_RES_GRP_TOKEN = "Cannot get token for item type resource group";
+  public static final String ERR_DETAIL_NO_RES_GRP_TOKEN =
+      "Item type resource_group not allowed; please get token at resource level";
+
+  public static final String ERR_TITLE_ROLE_NOT_OWNED = "Requested role not owned by user";
+  public static final String ERR_DETAIL_ROLE_NOT_OWNED = "The requested role is not owned by the user";
+
+  public static final String ERR_TITLE_INVALID_ROLE_FOR_COS = "Cannot request for item type `cos` with given role";
+  public static final String ERR_DETAIL_INVALID_ROLE_FOR_COS = "Item type `cos` can only be requested with COS Admin role";
+  
+  public static final String ERR_TITLE_INVALID_COS_URL = "Invalid COS URL in item ID";
+  public static final String ERR_DETAIL_INVALID_COS_URL =
+      "Correct COS URL must be used in item ID when requesting for item type `cos`";
+  
+  public static final String ERR_COS_ADMIN_NO_RS = "Cannot get token for resource server with COS Admin role";
+  
   public static final String INVALID_USER_CLIENT = "Incorrect userId/clientId";
   public static final String INVALID_CLIENT = "Invalid clientId";
   public static final String FAILED_REVOKE = "Revoke request failed";

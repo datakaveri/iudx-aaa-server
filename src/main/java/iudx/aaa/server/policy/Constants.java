@@ -8,6 +8,9 @@ public class Constants {
   public static final int DB_RECONNECT_ATTEMPTS = 5;
   public static final long DB_RECONNECT_INTERVAL_MS = 10000;
   
+  public static final String UUID_REGEX =
+          "^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$";
+  
   // db columns
   public static final String USERID = "userId";
   public static final String ITEMID = "itemId";
@@ -39,6 +42,8 @@ public class Constants {
   public static final String RESOURCE_GROUP_TABLE = "resource_group";
   public static final String RESOURCE_TABLE = "resource";
   public static final String CAT_ID = "cat_id";
+  public static final String CREATE_TOKEN_DID = "delegatorUserId";
+  public static final String CREATE_TOKEN_DRL = "delegatorRole";
   public static final String APD_DETAILS = "apd";
   public static final String OWNER_DETAILS = "owner";
   public static final String USER_DETAILS = "user";
@@ -47,15 +52,31 @@ public class Constants {
   public static final String DELEGATE_ROLE = "DELEGATE";
   public static final String USR_POL = "USER";
   public static final String APD_POL = "APD";
+  
+  /* Catalogue related constants */
+  public static final String CAT_ITEM_ENDPOINT = "/item";
+  public static final String CAT_RELATION_ENDPOINT = "/relationship";
 
-  public static final String CALL_APD_APDID = "apdId";
+  public static final String CAT_REL_QUERY_PARAM = "rel";
+  public static final String CAT_REL_QUERY_VAL_ALL = "all";
+
+  public static final String CAT_RESP_TYPE_KEY = "type";
+  public static final String CAT_RESP_APD_KEY = "apd";
+  public static final String CAT_RESP_ACCESS_POLICY_KEY = "accessPolicy";
+  public static final String CAT_RESP_RES_SERVER_URL_KEY = "resourceServerHTTPAccessURL";
+  public static final String CAT_RESP_PROVIDER_USER_ID_KEY = "providerKcId";
+  public static final String CAT_SUCCESS_URN = "urn:dx:cat:Success";
+
+  public static final String CAT_RESP_RESOURCE_TYPE = "iudx:Resource";
+  public static final String CAT_RESP_PROVIDER_TYPE = "iudx:Provider";
+  public static final String CAT_RESP_RES_SERVER_TYPE = "iudx:ResourceServer";
+
+  public static final String CALL_APD_APDURL = "apdUrl";
   public static final String CALL_APD_USERID = "userId";
   public static final String CALL_APD_ITEM_ID = "itemId";
   public static final String CALL_APD_ITEM_TYPE = "itemType";
   public static final String CALL_APD_RES_SER_URL = "resSerUrl";
-  public static final String CALL_APD_USERCLASS = "userClass";
   public static final String CALL_APD_OWNERID = "ownerId";
-  public static final String CALL_APD_CONSTRAINTS = "constraints";
   public static final String CALL_APD_CONTEXT = "context";
 
   public static final String RESULTS = "results";
@@ -76,6 +97,8 @@ public class Constants {
   public static final String POLICY_NOT_FOUND = "policy not found";
   public static final String NOT_DELEGATE = "user is not a delegate";
   public static final String ITEMNOTFOUND = "Item does not exist";
+
+  public static final String ERR_NOT_VALID_RESOURCE = "Requested item is not a valid resource";
   public static final String NO_RES_SERVER = "Res server does not exist";
   public static final String DUPLICATE = "Request must be unique";
   // Title
@@ -91,9 +114,11 @@ public class Constants {
   public static final String ERR_TITLE_AUTH_DELE_DELETE =
       "Auth delegate may not delete auth delegations";
   public static final String ERR_DETAIL_DEL_DELEGATE_ROLES =
-      "User with provider role or is an auth delegate may call the API";
+      "User with provider or consumer role may call the API";
   public static final String ERR_DETAIL_LIST_DELEGATE_ROLES =
-      "User with provider/delegate role or is an auth delegate may call the API";
+      "User with provider, consumer, delegate role may call the API";
+  public static final String ERR_DETAIL_CREATE_DELEGATE_ROLES =
+      "User with provider/consumer role may call the API";
   public static final String ERR_DETAIL_CONSUMER_ROLES =
       "User with consumer role may call the API";
   public static final String ERR_TITLE_AUTH_DELE_CREATE =
@@ -101,7 +126,6 @@ public class Constants {
   // URN
   public static final String ID_NOT_PRESENT = "id does not exist";
 
-  public static final String CAT_SUCCESS_URN = "urn:dx:cat:Success";
   // future failure messages
   public static final String BAD_REQUEST = "bad request";
   public static final String SERVER_NOT_PRESENT = "servers not present";
@@ -112,18 +136,25 @@ public class Constants {
   public static final String NO_AUTH_POLICY = "No auth policy for user";
   public static final String NO_AUTH_TRUSTEE_POLICY = "No auth policy for user by trustee";
   public static final String INCORRECT_ITEM_TYPE = "incorrect item type";
-  public static final String INCORRECT_ITEM_ID = "incorrect item ID";
+  public static final String INCORRECT_ITEM_ID = "Item ID is not a valid UUID";
   public static final String UNAUTHORIZED = "Not allowed to create policies for resource";
   public static final String PROVIDER_NOT_REGISTERED = "Provider not a registered user";
   public static final String DUPLICATE_POLICY = "Policy already exists:";
   public static final String DUPLICATE_DELEGATION = "Delegation already exists";
   public static final String NO_USER = "no user";
-  public static final String NOT_RES_OWNER = "does not own the resource";
+  public static final String NOT_RES_OWNER = "Provider does not own the resource";
   public static final String NO_ADMIN_POLICY = "No admin policy";
   public static final String UNAUTHORIZED_DELEGATE = "Unauthorized";
   public static final String NO_AUTH_ADMIN_POLICY =
       "requested user does not have the required auth admin policies to call this API";
 
+  public static final String ERR_DETAIL_PROVIDER_DOESNT_HAVE_RS_ROLE =
+      "Provider does not have role for resource server hosting item";
+  public static final String ERR_DETAIL_CONSUMER_DOESNT_HAVE_RS_ROLE =
+      "Provider does not have role for resource server hosting item";
+  public static final String ERR_DETAIL_PROVIDER_CANNOT_ACCESS_PII_RES =
+      "Requested resource is a PII resource - provider is not allowed to access directly";
+      
   public static final String LOG_DB_ERROR = "Fail: Databse query; ";
   public static final String ERR_DUP_NOTIF_REQ = "Fail: Duplicate Access notification request; ";
   public static final String DUP_NOTIF_REQ = "Access request already exists";
@@ -298,25 +329,23 @@ public class Constants {
           "select id from apd_policies where item_id =$1::UUID and item_type = $2::item_enum and owner_id = $3::UUID "
                   + " and status = $4::policy_status_enum and expiry_time > now()";
 
-  public static final String LIST_DELEGATE_AUTH_DELEGATE =
-      "SELECT d.id, d.owner_id, d.user_id, url, name AS server "
-          + "FROM delegations AS d JOIN resource_server ON"
-          + " d.resource_server_id = resource_server.id WHERE d.owner_id = $1::uuid AND url != $2::text AND d.status = 'ACTIVE'";
-
-  public static final String LIST_DELEGATE_AS_PROVIDER_DELEGATE =
-      "SELECT d.id, d.owner_id, d.user_id, url, name AS server "
-          + "FROM delegations AS d JOIN resource_server ON"
-          + " d.resource_server_id = resource_server.id"
-          + " WHERE d.status = 'ACTIVE' AND (d.owner_id = $1::uuid OR d.user_id = $1::uuid)";
+  public static final String LIST_DELEGATION_AS_DELEGATOR_OR_DELEGATE =
+      "SELECT d.id, d.user_id, url, roles.user_id AS delegator_id, lower(roles.role::text) AS role, name AS server "
+          + "FROM delegations AS d JOIN roles ON roles.id = d.role_id"
+          + " JOIN resource_server ON"
+          + " roles.resource_server_id = resource_server.id"
+          + " WHERE d.status = 'ACTIVE' AND (roles.user_id = $1::uuid OR d.user_id = $1::uuid)";
 
   public static final String GET_DELEGATIONS_BY_ID =
-      "SELECT d.id, url FROM delegations AS d JOIN resource_server ON"
-          + " d.resource_server_id = resource_server.id"
-          + " WHERE d.owner_id = $1::uuid AND d.id = ANY($2::uuid[]) AND d.status = 'ACTIVE'";
+      "SELECT d.id FROM delegations AS d"
+          + " JOIN roles ON roles.id = d.role_id"
+          + " JOIN resource_server ON"
+          + " roles.resource_server_id = resource_server.id"
+          + " WHERE roles.user_id = $1::uuid AND d.id = ANY($2::uuid[]) AND d.status = 'ACTIVE'";
 
   public static final String DELETE_DELEGATIONS =
       "UPDATE delegations SET status = 'DELETED', updated_at = NOW()"
-          + " WHERE owner_id = $1::uuid AND id = ANY($2::uuid[])";
+          + " WHERE id = ANY($1::uuid[])";
 
   public static final String CREATE_NOTIFI_POLICY_REQUEST =
       "INSERT INTO access_requests (user_id, item_id,item_type, owner_id, status, "
@@ -379,27 +408,17 @@ public class Constants {
           + " WHERE user_id = $1::uuid AND id = ANY($2::uuid[])";
 
   public static final String INSERT_DELEGATION =
-      "insert into delegations (owner_id,user_id,resource_server_id,status,created_at,updated_at) values "
-          + " ($1::UUID, $2::UUID, $3::UUID, $4::policy_status_enum, now() ,now())";
+      "insert into delegations (user_id, role_id, status, created_at, updated_at) values "
+          + " ($1::UUID, $2::UUID, $3::policy_status_enum, now() ,now())";
 
+  public static final String GET_ROLE_IDS_BY_ROLE_AND_RS = "SELECT roles.id, url, role FROM roles"
+      + " JOIN resource_server ON roles.resource_server_id = resource_server.id"
+      + " WHERE roles.user_id = $1::UUID AND role = ANY($2::role_enum[]) AND url = ANY($3::text[])";
   // create delegation
 
-  public static final String CHECK_ROLES =
-      "select user_id from roles where role = $1::role_enum"
-          + " and status = $2::role_status_enum and user_id = ANY($3::UUID[]) ";
-
-  public static final String GET_SERVER_DETAILS =
-      "select url,id from resource_server where url =  ANY($1::text[])";
-
-  public static final String CHECK_AUTH_POLICY_DELEGATION =
-      "select * from policies a inner join resource_server b on a.item_id = b.id "
-          + " where a.user_id = $1::UUID and a.item_type = $2::item_enum and"
-          + " b.url = $3::text and a.status =$4::policy_status_enum and a.expiry_time > now() ";
-
   public static final String CHECK_EXISTING_DELEGATIONS =
-      "select id from delegations where owner_id = $1::UUID "
-          + " and user_id =$2::UUID and resource_server_id = $3::UUID and  "
-          + " status = $4::policy_status_enum ";
+      "select id from delegations where user_id = $1::UUID "
+          + " and role_id = $2::UUID and status = $3::policy_status_enum ";
 
   public static final String EMAIL_BODY =
       "Hello, \n${CONSUMER_NAME} email ${CONSUMER_EMAIL} has requested access to your dataset ${REQUESTED_CAT_ID} for a time period of ${TIME_DURATION}. Please visit ${PUBLISHER_PANEL_URL} to approve/reject this request. \n \nRegards, \n${SENDER'S_NAME}";

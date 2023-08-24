@@ -14,7 +14,8 @@
       "databasePassword": "iudx@123"
     },
     "commonOptions":{
-      "authServerDomain":"auth.test.com"
+      "authServerDomain":"auth.test.com",
+      "cosAdminUserId": "a74792c1-a86d-48e4-b4f0-544585981718"
     },
     "keycloakOptions":{
       "keycloakHost": "identitydev.iudx.io",
