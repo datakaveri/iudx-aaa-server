@@ -71,4 +71,10 @@ public class Constants {
   public static final String SQL_CREATE_RS_IF_NOT_EXIST =
       "INSERT INTO resource_server (name, url, owner_id, created_at, updated_at) "
           + "VALUES ($1::text, $2::text, $3::UUID, NOW(), NOW()) ON CONFLICT (url) DO NOTHING RETURNING id";
+  
+  public static final String SQL_ADD_NEW_RES_SERVER_ROLE_FOR_ANY_CONSUMER =
+      " WITH new_roles AS (SELECT DISTINCT(user_id), $1::UUID, 'CONSUMER'::role_enum, 'APPROVED'::role_status_enum"
+      + ", NOW(), NOW() FROM roles WHERE role = 'CONSUMER' AND status = 'APPROVED')"
+      + " INSERT INTO roles (user_id, resource_server_id, role, status, created_at, updated_at)"
+      + " SELECT * FROM new_roles";
 }
