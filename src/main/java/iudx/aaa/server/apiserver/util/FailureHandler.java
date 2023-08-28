@@ -44,7 +44,7 @@ public class FailureHandler implements Handler<RoutingContext> {
     if (failure instanceof DecodeException) {
       processResponse(response, URN_INVALID_INPUT.toString(), INVALID_JSON);
     } else if (failure instanceof IllegalArgumentException) {
-      processResponse(response, URN_INVALID_INPUT.toString(), failure.getLocalizedMessage());
+      processResponse(response, failure.getLocalizedMessage());
     } else if (failure instanceof NullPointerException) {
       response.setStatusCode(500).end();
       return;

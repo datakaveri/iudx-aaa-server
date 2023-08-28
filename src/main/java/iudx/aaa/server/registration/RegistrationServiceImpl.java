@@ -803,38 +803,49 @@ public class RegistrationServiceImpl implements RegistrationService {
     
     return this;
   }
-
+  
   @Override
-  public RegistrationService searchUser(String email, Roles role, String resourceServerUrl,
+  public RegistrationService searchUser(String searchString, Roles role, String resourceServerUrl,
       Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
-    /* Create error denoting email+role does not exist */
+    /* Create error denoting email / userID + role does not exist */
     Supplier<Response> getSearchErr = () -> {
       return new ResponseBuilder().type(URN_INVALID_INPUT).title(ERR_TITLE_USER_NOT_FOUND)
           .status(404).detail(ERR_DETAIL_USER_NOT_FOUND).build();
     };
 
-    Future<JsonObject> foundUser = kc.findUserByEmail(email);
+    Future<JsonObject> foundUser;
+    Boolean searchByUserId = searchString.matches(UUID_REGEX);
 
-    Future<UUID> exists = foundUser.compose(res -> {
+    if (searchByUserId) {
+      foundUser = kc.getDetails(List.of(searchString))
+          .compose(res -> Future.succeededFuture(res.get(searchString)));
+    } else { // search by email
+      foundUser = kc.findUserByEmail(searchString);
+    }
+
+    Future<UUID> existsReturnUserId = foundUser.compose(res -> {
       if (res.isEmpty()) {
         return Future.failedFuture(new ComposeException(getSearchErr.get()));
       }
-
-      // userId same as keycloakId
-      UUID keycloakId = UUID.fromString(res.getString("keycloakId"));
-      return Future.succeededFuture(keycloakId);
+      
+      if (searchByUserId) {
+        return Future.succeededFuture(UUID.fromString(searchString));
+      } else {
+        // userId same as keycloakId
+        return Future.succeededFuture(UUID.fromString(res.getString("keycloakId")));
+      }
     });
 
     /* 
      * Since you can only search by CONSUMER and PROVIDER roles, we don't
      * need to check the users table for existence and only check if roles.user_id
      * is present */
-    Future<Boolean> checkHasRole = exists.compose(keycloakId -> pool.withConnection(conn -> conn
-        .preparedQuery(SQL_CHECK_USER_HAS_PROV_CONS_ROLE_FOR_RS)
-        .execute(Tuple.of(keycloakId, role, resourceServerUrl))
-        .map(row -> row.iterator().next().getBoolean("exists"))));
+    Future<Boolean> checkHasRole = existsReturnUserId.compose(keycloakId -> pool
+        .withConnection(conn -> conn.preparedQuery(SQL_CHECK_USER_HAS_PROV_CONS_ROLE_FOR_RS)
+            .execute(Tuple.of(keycloakId, role, resourceServerUrl))
+            .map(row -> row.iterator().next().getBoolean("exists"))));
 
     checkHasRole.compose(hasRole -> {
       if(!hasRole) {
@@ -846,8 +857,7 @@ public class RegistrationServiceImpl implements RegistrationService {
       JsonObject userDetails = foundUser.result();
       
       response.put(RESP_EMAIL, userDetails.getString("email"));
-      // userId same as keycloakId
-      response.put("userId", userDetails.getString("keycloakId"));
+      response.put("userId", existsReturnUserId.result().toString());
       response.put("name", userDetails.getJsonObject("name"));
       
       return Future.succeededFuture(response);
