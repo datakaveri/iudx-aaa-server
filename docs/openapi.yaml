@@ -1127,7 +1127,7 @@ paths:
                     detail: Invalid
         '404':
           description: |-
-            - Requested user with email + role + resource server not found
+            - Requested user with email/user ID + role + resource server not found
           content:
             application/json:
               schema:
@@ -1145,7 +1145,11 @@ paths:
             format: email
           in: query
           name: email
-          required: true
+        - schema:
+            type: string
+            format: uuid
+          in: query
+          name: userId
         - schema:
             type: string
             enum:
@@ -1162,7 +1166,7 @@ paths:
           name: resourceServer
           required: true
       description: |-
-        **Anyone** may search for a user registered on the COS with provider/consumer roles by providing the email address, role and resource server for which the role is applicable. If a user exists, then the user ID `userId`, email and name is returned.
+        **Anyone** may search for a user registered on the COS with provider/consumer roles by providing the email address **OR** COS user ID, role and resource server for which the role is applicable. If a user exists, then the user ID `userId`, email and name is returned.
       tags:
         - User APIs
   /auth/v1/user/clientcredentials:
