@@ -88,6 +88,7 @@ public class Constants {
   /* Query Params */
   public static final String QUERY_FILTER = "filter";
   public static final String QUERY_EMAIL = "email";
+  public static final String QUERY_USERID = "userId";
   public static final String QUERY_ROLE = "role";
   public static final String QUERY_RESOURCE_SERVER = "resourceServer";
 
@@ -99,6 +100,10 @@ public class Constants {
   public static final String ERR_TITLE_BAD_REQUEST =
       "Malformed request/missing or malformed request parameters";
   public static final String ERR_DETAIL_BAD_FILTER = "Invalid 'filter' value";
+  public static final String ERR_DETAIL_SEARCH_BOTH_PARAMS =
+      "Cannot have both `email` and `userId` query params in search";
+  public static final String ERR_DETAIL_SEARCH_MISSING_PARAMS =
+      "Both `email` and `userId` query params are missing - either must be present";
   public static final String INVALID_CLIENT = "Invalid clientId";
   public static final String LOG_FAILED_DISCOVERY = "Fail: Unable to discover keycloak instance; ";
   public static final String ERR_TIMEOUT = "Service unavailable";

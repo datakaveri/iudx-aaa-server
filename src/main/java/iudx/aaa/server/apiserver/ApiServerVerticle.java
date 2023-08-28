@@ -920,14 +920,29 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void searchUserHandler(RoutingContext context) {
     List<String> emailList = context.queryParam(QUERY_EMAIL);
+    List<String> userIdList = context.queryParam(QUERY_USERID);
     List<String> roleList = context.queryParam(QUERY_ROLE);
     List<String> rsList = context.queryParam(QUERY_RESOURCE_SERVER);
     
-    String email = emailList.get(0);
+    if(!emailList.isEmpty() && !userIdList.isEmpty()) {
+        throw new IllegalArgumentException(ERR_DETAIL_SEARCH_BOTH_PARAMS);
+    }
+
+    if(emailList.isEmpty() && userIdList.isEmpty()) {
+        throw new IllegalArgumentException(ERR_DETAIL_SEARCH_MISSING_PARAMS);
+    }
+    
+    String searchString;
+    if(!emailList.isEmpty()) {
+      searchString = emailList.get(0);
+    }else {
+      searchString = userIdList.get(0);
+    }
+    
     Roles role = Roles.valueOf(roleList.get(0).toUpperCase());
     String resourceServerUrl = rsList.get(0);
     
-    registrationService.searchUser(email, role, resourceServerUrl, handler -> {
+    registrationService.searchUser(searchString, role, resourceServerUrl, handler -> {
 
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());

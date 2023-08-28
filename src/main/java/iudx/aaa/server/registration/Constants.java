@@ -76,7 +76,7 @@ public class Constants {
 
   public static final String ERR_TITLE_USER_NOT_FOUND = "User not found";
   public static final String ERR_DETAIL_USER_NOT_FOUND =
-      "A user with given email and role + resource server not found";
+      "A user with given email/user ID, role and resource server not found";
 
   public static final String ERR_TITLE_INVALID_CLI_ID = "Invalid client ID";
   public static final String ERR_DETAIL_INVALID_CLI_ID = "Requested client ID not found";

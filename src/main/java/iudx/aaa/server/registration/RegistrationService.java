@@ -131,16 +131,17 @@ public interface RegistrationService {
       Handler<AsyncResult<JsonObject>> handler);
   
   /**
-   * Search for a user who has given email, role and resource server associated with the role on the
-   * COP.
+   * Search for a user who has given email <b>OR</b> user ID, role and resource server associated
+   * with the role on the COP.
    * 
-   * @param email the email address
+   * @param searchString the email address OR user ID - UUID regex matching is done to check which
+   *        is being sent
    * @param role the role
    * @param resourceServerUrl the resource server associated with the rol
    * @param handler the request handler which returns a JsonObject
    * @return RegistrationService which is a Service
    */
   @Fluent
-  RegistrationService searchUser(String email, Roles role, String resourceServerUrl,
+  RegistrationService searchUser(String searchString, Roles role, String resourceServerUrl,
       Handler<AsyncResult<JsonObject>> handler);
 }
