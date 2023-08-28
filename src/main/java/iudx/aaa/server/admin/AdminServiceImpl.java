@@ -11,6 +11,7 @@ import static iudx.aaa.server.admin.Constants.ERR_TITLE_INVALID_PROV_REG_ID;
 import static iudx.aaa.server.admin.Constants.ERR_TITLE_NOT_ADMIN;
 import static iudx.aaa.server.admin.Constants.ERR_TITLE_NO_COS_ADMIN_ROLE;
 import static iudx.aaa.server.admin.Constants.RESP_STATUS;
+import static iudx.aaa.server.admin.Constants.SQL_ADD_NEW_RES_SERVER_ROLE_FOR_ANY_CONSUMER;
 import static iudx.aaa.server.admin.Constants.SQL_CREATE_RS_IF_NOT_EXIST;
 import static iudx.aaa.server.admin.Constants.SQL_GET_PROVIDERS_FOR_RS_BY_STATUS;
 import static iudx.aaa.server.admin.Constants.SQL_GET_PENDING_PROVIDERS_BY_ID_AND_RS;
@@ -29,7 +30,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.CreateRsRequest;
 import iudx.aaa.server.apiserver.ProviderUpdateRequest;
@@ -267,25 +267,26 @@ public class AdminServiceImpl implements AdminService {
     registrationService.findUserByEmail(Set.of(ownerEmail), promise);
     Future<JsonObject> adminInfo = promise.future();
 
-    Future<RowSet<Row>> fut = adminInfo.compose(adminDetails -> {
+    Future<UUID> fut = adminInfo.compose(adminDetails -> {
       UUID ownerId =
           UUID.fromString(adminDetails.getJsonObject(ownerEmail).getString("keycloakId"));
 
-      return pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_RS_IF_NOT_EXIST)
-          .execute(Tuple.of(name, domain, ownerId)));
+      return pool.withTransaction(conn -> conn.preparedQuery(SQL_CREATE_RS_IF_NOT_EXIST)
+          .execute(Tuple.of(name, domain, ownerId)).compose(rows -> {
+            if (rows.rowCount() == 0) {
+              return Future.failedFuture(new ComposeException(409, URN_ALREADY_EXISTS,
+                  ERR_TITLE_DOMAIN_EXISTS, ERR_DETAIL_DOMAIN_EXISTS));
+            }
+            UUID id = rows.iterator().next().getUUID("id");
+            return Future.succeededFuture(id);
+          }).compose(id -> conn.preparedQuery(SQL_ADD_NEW_RES_SERVER_ROLE_FOR_ANY_CONSUMER)
+              .execute(Tuple.of(id)).map(res -> id)));
     });
 
-    fut.onSuccess(rows -> {
-      if (rows.rowCount() == 0) {
-        Response r = new ResponseBuilder().status(409).type(URN_ALREADY_EXISTS)
-            .title(ERR_TITLE_DOMAIN_EXISTS).detail(ERR_DETAIL_DOMAIN_EXISTS).build();
-        handler.handle(Future.succeededFuture(r.toJson()));
-        return;
-      }
+    fut.onSuccess(id -> {
 
-      String id = rows.iterator().next().getUUID("id").toString();
       JsonObject resp = new JsonObject();
-      resp.put("id", id).put("name", name).put("url", domain);
+      resp.put("id", id.toString()).put("name", name).put("url", domain);
       
       JsonObject ownerBlock = adminInfo.result().getJsonObject(ownerEmail);
       ownerBlock.put("id", ownerBlock.remove("keycloakId"));
@@ -294,7 +295,10 @@ public class AdminServiceImpl implements AdminService {
       Response r = new ResponseBuilder().status(201).type(URN_SUCCESS).title(SUCC_TITLE_CREATED_RS)
           .objectResults(resp).build();
       
-      LOGGER.info("Admin added new resource server {}", url);
+      LOGGER.info(
+          "Admin added new resource server {}. All existing users with a consumer role have been"
+          + " given a consumer role for this server (resource server ID {})",
+          url, id);
       handler.handle(Future.succeededFuture(r.toJson()));
     }).onFailure(e -> {
       if (e instanceof ComposeException) {

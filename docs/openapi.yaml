@@ -821,6 +821,9 @@ paths:
           
         ## Provider registration
         **Once a provider role has been added for a resource server, the role request is subject to approval by the associated resource server admin**. The role for that resource server will be considered _pending_ till approved.
+
+        ## Automatic Consumer role assignment for newly-added Resource Servers
+        Any user who has the consumer role for any existing resource server **will automatically be assigned the consumer role for any newly added resource servers.**
       requestBody:
         content:
           application/json:
@@ -1760,6 +1763,9 @@ paths:
       description: |-
         Register a Resource Server. This operation can be performed by the **COS Admin only**. 
         - The resource server is also assigned an owner/admin user during registration. The assigned admin/owner must be registered on the UAC.
+
+        ## Automatic Consumer role assignment for new Resource Servers
+        Any user who has the consumer role for any existing resource server **will automatically be assigned the consumer role for the newly added resource server.**
       parameters:
         - schema:
             type: string
