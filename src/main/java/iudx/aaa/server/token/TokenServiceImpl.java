@@ -403,11 +403,14 @@ public class TokenServiceImpl implements TokenService {
           .put(ROLE, request.getString(ROLE).toLowerCase())
           .put(CONS, request.getJsonObject(CONSTRAINTS, new JsonObject()));
 
-    if (request.containsKey("delegatorUserId")) {
-      claims.put(DID, request.getString("delegatorUserId"));
+    if (request.containsKey(CREATE_TOKEN_RG)) {
+      claims.put(RG, request.getString(CREATE_TOKEN_RG));
     }
-    if (request.containsKey("delegatorRole")) {
-      claims.put(DRL, request.getString("delegatorRole").toLowerCase());
+    if (request.containsKey(CREATE_TOKEN_DID)) {
+      claims.put(DID, request.getString(CREATE_TOKEN_DID));
+    }
+    if (request.containsKey(CREATE_TOKEN_DRL)) {
+      claims.put(DRL, request.getString(CREATE_TOKEN_DRL).toLowerCase());
     }
 
     String token = provider.generateToken(claims, options);

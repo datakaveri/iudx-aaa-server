@@ -44,6 +44,7 @@ public class Constants {
   public static final String CAT_ID = "cat_id";
   public static final String CREATE_TOKEN_DID = "delegatorUserId";
   public static final String CREATE_TOKEN_DRL = "delegatorRole";
+  public static final String CREATE_TOKEN_RG = "resourceGroupId";
   public static final String APD_DETAILS = "apd";
   public static final String OWNER_DETAILS = "owner";
   public static final String USER_DETAILS = "user";

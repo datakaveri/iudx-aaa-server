@@ -869,6 +869,7 @@ public class PolicyServiceImpl implements PolicyService {
 
     verifyAccessByRole.onSuccess(
         s -> {
+          s.put(CREATE_TOKEN_RG, resourceDetails.result().getResGrpId().toString());
           handler.handle(Future.succeededFuture(s));
         }).onFailure(
         e -> {

@@ -331,6 +331,7 @@ paths:
            - `iid` : resource type and resource id of the item for which the token is valid
            - `role` : role of the user 
            - `cons` : the constraints that the resource server recognizes. Constraints sent back by the APD are included here. 
+           - `rg` : when the requested item is a resource, this field exists containing the associated resource group ID
            - `did` : when role is `delegate`, contains the user ID of the delegator
            - `drl` : when the role is `delegate`, contains the role for which the delegated action is made
           

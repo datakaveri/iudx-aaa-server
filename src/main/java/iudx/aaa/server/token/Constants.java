@@ -89,10 +89,12 @@ public class Constants {
   public static final String APD = "apd";
   public static final String DID = "did";
   public static final String DRL = "drl";
+  public static final String RG = "rg";
   public static final String INTROSPECT_USERINFO = "userInfo";
   
   public static final String CREATE_TOKEN_DID = "delegatorUserId";
   public static final String CREATE_TOKEN_DRL = "delegatorRole";
+  public static final String CREATE_TOKEN_RG = "resourceGroupId";
   
   /* JWT Constants for APD token */
   public static final String LINK = "link";
