@@ -1,15 +1,16 @@
 {
 	"info": {
-		"_postman_id": "f7dcdd7a-86af-41d1-bdfe-f4b8974f4f26",
+		"_postman_id": "a5dc8580-7c17-4a9d-a7a9-5b7453d4d9c2",
 		"name": "IUDX-AAA-Server",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "14598828"
 	},
 	"item": [
 		{
-			"name": "User Profile APIs",
+			"name": "User APIs",
 			"item": [
 				{
-					"name": "Get organization details",
+					"name": "Get resource server details",
 					"request": {
 						"auth": {
 							"type": "oauth2",
@@ -84,21 +85,21 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/organizations",
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/resourceservers",
 							"host": [
 								"{{AUTH_ENDPOINT}}"
 							],
 							"path": [
 								"auth",
 								"v1",
-								"organizations"
+								"resourceservers"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Create User Profile",
+					"name": "Add Roles",
 					"request": {
 						"auth": {
 							"type": "oauth2",
@@ -174,7 +175,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"roles\": [\n        \"provider\",\n        \"consumer\",\n        \"delegate\"\n    ],\n    \"orgId\": \"894777b1-e82a-4cf8-b99a-86fc3d7d707b\"\n}",
+							"raw": "{\n    \"provider\": [\n        \"rs.iudx.io\"\n    ],\n    \"consumer\": [\n        \"rs.iudx.io\"\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -182,7 +183,7 @@
 							}
 						},
 						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/roles",
 							"host": [
 								"{{AUTH_ENDPOINT}}"
 							],
@@ -190,14 +191,14 @@
 								"auth",
 								"v1",
 								"user",
-								"profile"
+								"roles"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "List User Profile",
+					"name": "List User Roles",
 					"request": {
 						"auth": {
 							"type": "oauth2",
@@ -282,7 +283,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/roles",
 							"host": [
 								"{{AUTH_ENDPOINT}}"
 							],
@@ -290,109 +291,20 @@
 								"auth",
 								"v1",
 								"user",
-								"profile"
+								"roles"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Search User",
+					"name": "Search User By Email + Role + Resource Server",
 					"request": {
 						"auth": {
-							"type": "oauth2",
-							"oauth2": [
-								{
-									"key": "useBrowser",
-									"value": false,
-									"type": "boolean"
-								},
-								{
-									"key": "authUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
-									"type": "string"
-								},
-								{
-									"key": "state",
-									"value": "{{$randomAlphaNumeric}}",
-									"type": "string"
-								},
-								{
-									"key": "tokenType",
-									"value": "",
-									"type": "string"
-								},
-								{
-									"key": "accessToken",
-									"value": "",
-									"type": "string"
-								},
-								{
-									"key": "accessTokenUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
-									"type": "string"
-								},
-								{
-									"key": "redirect_uri",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
-									"type": "string"
-								},
-								{
-									"key": "tokenName",
-									"value": "Token",
-									"type": "string"
-								},
-								{
-									"key": "scope",
-									"value": "email",
-									"type": "string"
-								},
-								{
-									"key": "clientSecret",
-									"value": "",
-									"type": "string"
-								},
-								{
-									"key": "clientId",
-									"value": "account",
-									"type": "string"
-								},
-								{
-									"key": "grant_type",
-									"value": "authorization_code",
-									"type": "string"
-								},
-								{
-									"key": "password",
-									"value": "{{provider_password}}",
-									"type": "string"
-								},
-								{
-									"key": "username",
-									"value": "{{provider_username}}",
-									"type": "string"
-								},
-								{
-									"key": "addTokenTo",
-									"value": "header",
-									"type": "string"
-								}
-							]
+							"type": "noauth"
 						},
 						"method": "GET",
 						"header": [
-							{
-								"key": "email",
-								"value": "",
-								"description": "Email address of the user to search for",
-								"type": "text"
-							},
-							{
-								"key": "role",
-								"value": "",
-								"description": "Role of the user to search for",
-								"type": "text"
-							},
 							{
 								"key": "providerId",
 								"value": "",
@@ -402,7 +314,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/search?email=email@email.com&role=consumer&resourceServer=rs.iudx.io",
 							"host": [
 								"{{AUTH_ENDPOINT}}"
 							],
@@ -410,14 +322,79 @@
 								"auth",
 								"v1",
 								"user",
-								"profile"
+								"search"
+							],
+							"query": [
+								{
+									"key": "email",
+									"value": "email@email.com",
+									"description": "Email of user to search for"
+								},
+								{
+									"key": "role",
+									"value": "consumer",
+									"description": "Role of user to search for"
+								},
+								{
+									"key": "resourceServer",
+									"value": "rs.iudx.io",
+									"description": "Resource server for which role is applicable"
+								}
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Update user (add roles)",
+					"name": "Search User By User ID + Role + Resource Server",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "providerId",
+								"value": "",
+								"description": "Provider's User ID in case of auth delegate",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/search?userId=93cd6409-d0a5-4c3a-ba86-b4da145519bc&role=consumer&resourceServer=rs.iudx.io",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"user",
+								"search"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "93cd6409-d0a5-4c3a-ba86-b4da145519bc",
+									"description": "User ID of user to search for"
+								},
+								{
+									"key": "role",
+									"value": "consumer",
+									"description": "Role of user to search for"
+								},
+								{
+									"key": "resourceServer",
+									"value": "rs.iudx.io",
+									"description": "Resource server for which role is applicable"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Default Client Credentials",
 					"request": {
 						"auth": {
 							"type": "oauth2",
@@ -489,19 +466,10 @@
 								}
 							]
 						},
-						"method": "PUT",
+						"method": "GET",
 						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"roles\": [\n        \"consumer\",\n        \"delegate\"\n    ],\n    \"orgId\": \"894777b1-e82a-4cf8-b99a-86fc3d7d707b\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
 						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/clientcredentials",
 							"host": [
 								"{{AUTH_ENDPOINT}}"
 							],
@@ -509,14 +477,14 @@
 								"auth",
 								"v1",
 								"user",
-								"profile"
+								"clientcredentials"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Update user (regenerate client secret)",
+					"name": "Regenerate Client Secret",
 					"request": {
 						"auth": {
 							"type": "oauth2",
@@ -600,7 +568,7 @@
 							}
 						},
 						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/profile",
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/clientcredentials",
 							"host": [
 								"{{AUTH_ENDPOINT}}"
 							],
@@ -608,7 +576,7 @@
 								"auth",
 								"v1",
 								"user",
-								"profile"
+								"clientcredentials"
 							]
 						}
 					},
@@ -703,10 +671,18 @@
 							]
 						},
 						"method": "POST",
-						"header": [],
+						"header": [
+							{
+								"key": "delegationId",
+								"value": "",
+								"description": "Delegation ID if user is delegate getting token on behalf of delegator",
+								"type": "text",
+								"disabled": true
+							}
+						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"itemId\": \"datakaveri.org/facec5182e3bf44cc3ac42b0b611263676d668a2/rs.iudx.org.in/agartala-env-aqm\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
+							"raw": "{\n    \"itemId\": \"20158d6a-a219-4e10-8199-807ad34dbdff\",\n    \"itemType\": \"resource\",\n    \"role\": \"consumer\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -728,7 +704,7 @@
 					"response": []
 				},
 				{
-					"name": "Get token (via client-id, secret) Copy",
+					"name": "Get token (via client-id, secret)",
 					"request": {
 						"auth": {
 							"type": "noauth"
@@ -746,11 +722,18 @@
 								"value": "",
 								"type": "text",
 								"description": "Client secret (40 chars in hexadecimal)"
+							},
+							{
+								"key": "delegationId",
+								"value": "",
+								"description": "Delegation ID if user is delegate getting token on behalf of delegator",
+								"type": "text",
+								"disabled": true
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"itemId\": \"datakaveri.org/facec5182e3bf44cc3ac42b0b611263676d668a2/rs.iudx.org.in/agartala-env-aqm\",\n    \"itemType\": \"resource_group\",\n    \"role\": \"consumer\"\n}",
+							"raw": "{\n    \"itemId\": \"20158d6a-a219-4e10-8199-807ad34dbdff\",\n    \"itemType\": \"resource\",\n    \"role\": \"consumer\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -986,655 +969,6 @@
 			]
 		},
 		{
-			"name": "Notifications APIs",
-			"item": [
-				{
-					"name": "List Notifications",
-					"request": {
-						"auth": {
-							"type": "oauth2",
-							"oauth2": [
-								{
-									"key": "state",
-									"value": "{{$randomAlphaNumeric}}",
-									"type": "string"
-								},
-								{
-									"key": "authUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
-									"type": "string"
-								},
-								{
-									"key": "tokenType",
-									"value": "",
-									"type": "string"
-								},
-								{
-									"key": "accessToken",
-									"value": "",
-									"type": "string"
-								},
-								{
-									"key": "accessTokenUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
-									"type": "string"
-								},
-								{
-									"key": "redirect_uri",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
-									"type": "string"
-								},
-								{
-									"key": "tokenName",
-									"value": "Token",
-									"type": "string"
-								},
-								{
-									"key": "useBrowser",
-									"value": false,
-									"type": "boolean"
-								},
-								{
-									"key": "scope",
-									"value": "email",
-									"type": "string"
-								},
-								{
-									"key": "clientSecret",
-									"value": "",
-									"type": "string"
-								},
-								{
-									"key": "clientId",
-									"value": "account",
-									"type": "string"
-								},
-								{
-									"key": "grant_type",
-									"value": "authorization_code",
-									"type": "string"
-								},
-								{
-									"key": "password",
-									"value": "{{provider_password}}",
-									"type": "string"
-								},
-								{
-									"key": "username",
-									"value": "{{provider_username}}",
-									"type": "string"
-								},
-								{
-									"key": "addTokenTo",
-									"value": "header",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "providerId",
-								"value": "",
-								"description": "Provider's User ID in case of auth delegate",
-								"type": "text",
-								"disabled": true
-							}
-						],
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/requests",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies",
-								"requests"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create Notifications",
-					"request": {
-						"auth": {
-							"type": "oauth2",
-							"oauth2": [
-								{
-									"key": "state",
-									"value": "{{$randomAlphaNumeric}}",
-									"type": "string"
-								},
-								{
-									"key": "authUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
-									"type": "string"
-								},
-								{
-									"key": "tokenType",
-									"value": "",
-									"type": "string"
-								},
-								{
-									"key": "accessToken",
-									"value": "",
-									"type": "string"
-								},
-								{
-									"key": "accessTokenUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
-									"type": "string"
-								},
-								{
-									"key": "redirect_uri",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
-									"type": "string"
-								},
-								{
-									"key": "tokenName",
-									"value": "Token",
-									"type": "string"
-								},
-								{
-									"key": "useBrowser",
-									"value": false,
-									"type": "boolean"
-								},
-								{
-									"key": "scope",
-									"value": "email",
-									"type": "string"
-								},
-								{
-									"key": "clientSecret",
-									"value": "",
-									"type": "string"
-								},
-								{
-									"key": "clientId",
-									"value": "account",
-									"type": "string"
-								},
-								{
-									"key": "grant_type",
-									"value": "authorization_code",
-									"type": "string"
-								},
-								{
-									"key": "password",
-									"value": "{{provider_password}}",
-									"type": "string"
-								},
-								{
-									"key": "username",
-									"value": "{{provider_username}}",
-									"type": "string"
-								},
-								{
-									"key": "addTokenTo",
-									"value": "header",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/facec5182e3bf44cc3ac42b0b611263676d668a2/rs.iudx.org.in/agartala-env-aqm\",\n            \"itemType\": \"resource_group\",\n            \"expiryDuration\": \"P1Y2M10DT2H30M\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\",\n                    \"sub\",\n                    \"file\"\n                ]\n            }\n        }\n    ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/requests",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies",
-								"requests"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update Notifications",
-					"request": {
-						"auth": {
-							"type": "oauth2",
-							"oauth2": [
-								{
-									"key": "state",
-									"value": "{{$randomAlphaNumeric}}",
-									"type": "string"
-								},
-								{
-									"key": "authUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
-									"type": "string"
-								},
-								{
-									"key": "tokenType",
-									"value": "",
-									"type": "string"
-								},
-								{
-									"key": "accessToken",
-									"value": "",
-									"type": "string"
-								},
-								{
-									"key": "accessTokenUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
-									"type": "string"
-								},
-								{
-									"key": "redirect_uri",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
-									"type": "string"
-								},
-								{
-									"key": "tokenName",
-									"value": "Token",
-									"type": "string"
-								},
-								{
-									"key": "useBrowser",
-									"value": false,
-									"type": "boolean"
-								},
-								{
-									"key": "scope",
-									"value": "email",
-									"type": "string"
-								},
-								{
-									"key": "clientSecret",
-									"value": "",
-									"type": "string"
-								},
-								{
-									"key": "clientId",
-									"value": "account",
-									"type": "string"
-								},
-								{
-									"key": "grant_type",
-									"value": "authorization_code",
-									"type": "string"
-								},
-								{
-									"key": "password",
-									"value": "{{provider_password}}",
-									"type": "string"
-								},
-								{
-									"key": "username",
-									"value": "{{provider_username}}",
-									"type": "string"
-								},
-								{
-									"key": "addTokenTo",
-									"value": "header",
-									"type": "string"
-								}
-							]
-						},
-						"method": "PUT",
-						"header": [
-							{
-								"key": "providerId",
-								"value": "",
-								"description": "Provider's User ID in case of auth delegate",
-								"type": "text",
-								"disabled": true
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"requestId\": \"bca11712-f381-46a5-afa3-a29b00568ace\",\n            \"status\": \"approved\",\n            \"expiryDuration\": \"P1Y2M10DT2H30M\",\n            \"constraints\": {\n                \"access\": [\n                    \"api\",\n                    \"sub\",\n                    \"file\"\n                ]\n            }\n        }\n    ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/requests",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies",
-								"requests"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Policy APIs",
-			"item": [
-				{
-					"name": "List policy",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"auth": {
-							"type": "oauth2",
-							"oauth2": [
-								{
-									"key": "state",
-									"value": "{{$randomAlphaNumeric}}",
-									"type": "string"
-								},
-								{
-									"key": "authUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
-									"type": "string"
-								},
-								{
-									"key": "clientId",
-									"value": "account",
-									"type": "string"
-								},
-								{
-									"key": "accessTokenUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
-									"type": "string"
-								},
-								{
-									"key": "redirect_uri",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
-									"type": "string"
-								},
-								{
-									"key": "tokenName",
-									"value": "Token",
-									"type": "string"
-								},
-								{
-									"key": "useBrowser",
-									"value": false,
-									"type": "boolean"
-								},
-								{
-									"key": "scope",
-									"value": "email",
-									"type": "string"
-								},
-								{
-									"key": "clientSecret",
-									"value": "",
-									"type": "string"
-								},
-								{
-									"key": "grant_type",
-									"value": "authorization_code",
-									"type": "string"
-								},
-								{
-									"key": "password",
-									"value": "{{provider_password}}",
-									"type": "string"
-								},
-								{
-									"key": "username",
-									"value": "{{provider_username}}",
-									"type": "string"
-								},
-								{
-									"key": "addTokenTo",
-									"value": "header",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "providerId",
-								"value": "",
-								"description": "Provider's User ID in case of auth delegate",
-								"type": "default",
-								"disabled": true
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create policy",
-					"request": {
-						"auth": {
-							"type": "oauth2",
-							"oauth2": [
-								{
-									"key": "state",
-									"value": "{{$randomAlphaNumeric}}",
-									"type": "string"
-								},
-								{
-									"key": "authUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
-									"type": "string"
-								},
-								{
-									"key": "accessTokenUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
-									"type": "string"
-								},
-								{
-									"key": "redirect_uri",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
-									"type": "string"
-								},
-								{
-									"key": "tokenName",
-									"value": "Token",
-									"type": "string"
-								},
-								{
-									"key": "useBrowser",
-									"value": false,
-									"type": "boolean"
-								},
-								{
-									"key": "scope",
-									"value": "email",
-									"type": "string"
-								},
-								{
-									"key": "clientSecret",
-									"value": "",
-									"type": "string"
-								},
-								{
-									"key": "clientId",
-									"value": "account",
-									"type": "string"
-								},
-								{
-									"key": "grant_type",
-									"value": "authorization_code",
-									"type": "string"
-								},
-								{
-									"key": "password",
-									"value": "{{provider_password}}",
-									"type": "string"
-								},
-								{
-									"key": "username",
-									"value": "{{provider_username}}",
-									"type": "string"
-								},
-								{
-									"key": "addTokenTo",
-									"value": "header",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"itemId\": \"datakaveri.org/facec5182e3bf44cc3ac42b0b611263676d668a2/rs.iudx.org.in/agartala-env-aqm\",\n            \"itemType\": \"resource_group\",\n            \"userId\": \"fcbecd18-2ecb-4066-8a9e-f073aacbe579\",\n            \"constraints\": {\n                \"access\": [\n                    \"file\"\n                ]\n            },\n            \"expiryTime\": \"2023-09-09T04:22:36\"\n        }\n    ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete policy",
-					"request": {
-						"auth": {
-							"type": "oauth2",
-							"oauth2": [
-								{
-									"key": "state",
-									"value": "{{$randomAlphaNumeric}}",
-									"type": "string"
-								},
-								{
-									"key": "authUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
-									"type": "string"
-								},
-								{
-									"key": "accessTokenUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
-									"type": "string"
-								},
-								{
-									"key": "redirect_uri",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
-									"type": "string"
-								},
-								{
-									"key": "tokenName",
-									"value": "Token",
-									"type": "string"
-								},
-								{
-									"key": "useBrowser",
-									"value": false,
-									"type": "boolean"
-								},
-								{
-									"key": "scope",
-									"value": "email",
-									"type": "string"
-								},
-								{
-									"key": "clientSecret",
-									"value": "",
-									"type": "string"
-								},
-								{
-									"key": "clientId",
-									"value": "account",
-									"type": "string"
-								},
-								{
-									"key": "grant_type",
-									"value": "authorization_code",
-									"type": "string"
-								},
-								{
-									"key": "password",
-									"value": "{{provider_password}}",
-									"type": "string"
-								},
-								{
-									"key": "username",
-									"value": "{{provider_username}}",
-									"type": "string"
-								},
-								{
-									"key": "addTokenTo",
-									"value": "header",
-									"type": "string"
-								}
-							]
-						},
-						"method": "DELETE",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"id\": \"4c1fbdb2-c53c-487c-9a2f-1aae9a9bde23\"\n        }\n    ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"policies"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
 			"name": "Delegation APIs",
 			"item": [
 				{
@@ -1732,7 +1066,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"a13eb955-c691-4fd3-b200-f18bc78810b5\",\n            \"resSerId\": \"catalogue.iudx.org.in\"\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n        {\n            \"userEmail\": \"email@email.com\",\n            \"resSerUrl\": \"rs.iudx.io\",\n            \"role\": \"provider\"\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1740,14 +1074,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/delegations",
 							"host": [
 								"{{AUTH_ENDPOINT}}"
 							],
 							"path": [
 								"auth",
 								"v1",
-								"policies",
 								"delegations"
 							]
 						}
@@ -1838,24 +1171,15 @@
 							]
 						},
 						"method": "GET",
-						"header": [
-							{
-								"key": "providerId",
-								"value": "",
-								"description": "Provider's User ID in case of auth delegate",
-								"type": "text",
-								"disabled": true
-							}
-						],
+						"header": [],
 						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/delegations",
 							"host": [
 								"{{AUTH_ENDPOINT}}"
 							],
 							"path": [
 								"auth",
 								"v1",
-								"policies",
 								"delegations"
 							]
 						}
@@ -1965,14 +1289,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/policies/delegations",
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/delegations",
 							"host": [
 								"{{AUTH_ENDPOINT}}"
 							],
 							"path": [
 								"auth",
 								"v1",
-								"policies",
 								"delegations"
 							]
 						}
@@ -1985,7 +1308,7 @@
 			"name": "Admin APIs",
 			"item": [
 				{
-					"name": "Admin - create organization",
+					"name": "COS Admin - Create Resource Server",
 					"request": {
 						"auth": {
 							"type": "oauth2",
@@ -2061,7 +1384,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\":\"Example\",\n    \"url\":\"aaa.com\"\n}",
+							"raw": "{\n  \"name\": \"DX Resource Server\",\n  \"url\": \"rs.iudx.io\",\n  \"owner\": \"admin@iudx.io\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2069,7 +1392,7 @@
 							}
 						},
 						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/admin/organizations",
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/admin/resourceservers",
 							"host": [
 								"{{AUTH_ENDPOINT}}"
 							],
@@ -2077,14 +1400,14 @@
 								"auth",
 								"v1",
 								"admin",
-								"organizations"
+								"resourceservers"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Admin - get provider registrations",
+					"name": "RS Admin - get provider registrations",
 					"request": {
 						"auth": {
 							"type": "oauth2",
@@ -2159,7 +1482,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/admin/provider/registrations?filter=approved",
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/admin/provider/registrations?filter=pending",
 							"host": [
 								"{{AUTH_ENDPOINT}}"
 							],
@@ -2173,7 +1496,7 @@
 							"query": [
 								{
 									"key": "filter",
-									"value": "approved"
+									"value": "pending"
 								}
 							]
 						}
@@ -2181,7 +1504,7 @@
 					"response": []
 				},
 				{
-					"name": "Admin - update provider registrations",
+					"name": "RS Admin - update provider registrations",
 					"request": {
 						"auth": {
 							"type": "oauth2",
@@ -2257,7 +1580,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"userId\": \"3f08e1ba-f4c0-4ed0-86da-edf7092d6333\",\n            \"status\": \"approved\"\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n        {\n            \"id\": \"3f08e1ba-f4c0-4ed0-86da-edf7092d6333\",\n            \"status\": \"approved\"\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2286,7 +1609,7 @@
 			"name": "Access Policy Domain (APD) APIs",
 			"item": [
 				{
-					"name": "Create an Access Policy Domain",
+					"name": "COS Admin - Create an Access Policy Domain",
 					"request": {
 						"auth": {
 							"type": "oauth2",
@@ -2362,7 +1685,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\":\"Example\",\n    \"url\":\"aaa.com\"\n}",
+							"raw": "{\n    \"name\":\"DX APD\",\n    \"url\":\"apd.iudx.io\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2473,7 +1796,7 @@
 					"response": []
 				},
 				{
-					"name": "Update status of Access Policy Domains Copy",
+					"name": "COS Admin - Update status of Access Policy Domains",
 					"request": {
 						"auth": {
 							"type": "oauth2",
@@ -2549,7 +1872,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"apdId\": \"3f08e1ba-f4c0-4ed0-86da-edf7092d6333\",\n            \"status\": \"active\"\n        }\n    ]\n}",
+							"raw": "{\n    \"request\": [\n        {\n            \"id\": \"3f08e1ba-f4c0-4ed0-86da-edf7092d6333\",\n            \"status\": \"active\"\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
