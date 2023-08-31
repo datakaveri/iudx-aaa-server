@@ -1,15 +1,15 @@
 package iudx.aaa.server.admin;
 
 import static iudx.aaa.server.apiserver.util.Urn.*;
-import static iudx.aaa.server.registration.Utils.SQL_CREATE_ADMIN_SERVER;
-import static iudx.aaa.server.registration.Utils.SQL_DELETE_SERVERS;
+import static iudx.aaa.server.registration.Utils.SQL_DELETE_ROLES_OF_RS;
+import static iudx.aaa.server.registration.Utils.SQL_DELETE_RESOURCE_SERVER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
@@ -19,19 +19,16 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.CreateRsRequest;
-import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.apiserver.util.Urn;
 import iudx.aaa.server.configuration.Configuration;
-import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.KcAdmin;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.registration.Utils;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -67,22 +64,44 @@ public class CreateResourceServerTest {
   private static Vertx vertxObj;
 
   private static KcAdmin kc = Mockito.mock(KcAdmin.class);
-  private static PolicyService policyService = Mockito.mock(PolicyService.class);
   private static RegistrationService registrationService = Mockito.mock(RegistrationService.class);
-  private static Future<JsonObject> adminAuthUser;
-  private static Future<JsonObject> adminOtherUser;
-  private static Future<JsonObject> consumerUser;
 
-  private static List<String> createdRsUrls = new ArrayList<String>();
-
-  private static final String UUID_REGEX =
-      "^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$";
+  private static Utils utils;
 
   private static final String DUMMY_SERVER =
       "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
-  private static final String DUMMY_AUTH_SERVER =
-      "auth" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + "iudx.io";
 
+  /**
+   * Dummy COS Admin user. This user does not need to be registered, just needs to have the COS
+   * admin role in user object.
+   */
+  private static User cosAdminUser = new UserBuilder().roles(List.of(Roles.COS_ADMIN)).build();
+
+  /**
+   * Admin of the DUMMY_SERVER. Will also be the admin of all created RSs.
+   */
+  private static User adminUser =
+      new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.ADMIN))
+          .rolesToRsMapping(Map.of(Roles.ADMIN.toString(), new JsonArray().add(DUMMY_SERVER)))
+          .name("aa", "bb").build();
+
+  /**
+   * Test user for checking if user w/ consumer role has new consumer role added for new RS.
+   */
+  private static User roleTestUser =
+      new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.CONSUMER, Roles.PROVIDER))
+          .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER),
+              Roles.PROVIDER.toString(), new JsonArray().add(DUMMY_SERVER)))
+          .name("aa", "bb").build();
+
+  private static List<UUID> createdRsIds = new ArrayList<UUID>();
+
+  private static final String SQL_CHECK_APPROVED_ROLES_FOR_RS = "SELECT roles.id, role FROM roles"
+      + " JOIN resource_server ON roles.resource_server_id = resource_server.id"
+      + " WHERE user_id = $1::uuid AND url = $2::text AND status = 'APPROVED'";
+
+  private static final String UUID_REGEX =
+      "^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$";
 
   @BeforeAll
   @DisplayName("Deploying Verticle")
@@ -118,47 +137,25 @@ public class CreateResourceServerTest {
 
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
 
-    /* Do not take test config, use generated config */
-    JsonObject options = new JsonObject().put(Constants.CONFIG_AUTH_URL, DUMMY_AUTH_SERVER);
+    utils = new Utils(pool);
 
-    Map<Roles, RoleStatus> rolesA = new HashMap<Roles, RoleStatus>();
-    rolesA.put(Roles.ADMIN, RoleStatus.APPROVED);
-
-    Map<Roles, RoleStatus> rolesB = new HashMap<Roles, RoleStatus>();
-    rolesB.put(Roles.CONSUMER, RoleStatus.APPROVED);
-
-    adminAuthUser = Utils.createFakeUser(pool, Constants.NIL_UUID, "", rolesA, false);
-    adminOtherUser = Utils.createFakeUser(pool, Constants.NIL_UUID, "", rolesA, false);
-    consumerUser = Utils.createFakeUser(pool, Constants.NIL_UUID, "", rolesB, false);
-
-    CompositeFuture.all(adminAuthUser, adminOtherUser, consumerUser).compose(res -> {
-      JsonObject admin1 = (JsonObject) res.list().get(0);
-      UUID uid1 = UUID.fromString(admin1.getString("userId"));
-
-      JsonObject admin2 = (JsonObject) res.list().get(1);
-      UUID uid2 = UUID.fromString(admin2.getString("userId"));
-      List<Tuple> tup = List.of(Tuple.of("Auth Server", uid1, DUMMY_AUTH_SERVER),
-          Tuple.of("Other Server", uid2, DUMMY_SERVER));
-
-      return pool
-          .withConnection(conn -> conn.preparedQuery(SQL_CREATE_ADMIN_SERVER).executeBatch(tup));
-    }).onSuccess(res -> {
-      adminService = new AdminServiceImpl(pool, kc, policyService, registrationService, options);
-      testContext.completeNow();
-    }).onFailure(err -> testContext.failNow(err.getMessage()));
+    utils.createFakeResourceServer(DUMMY_SERVER, adminUser)
+        .compose(succ -> utils.createFakeUser(roleTestUser, false, false)).onSuccess(res -> {
+          adminService = new AdminServiceImpl(pool, kc, registrationService);
+          testContext.completeNow();
+        }).onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
 
   @AfterAll
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing....");
-    List<JsonObject> users =
-        List.of(adminAuthUser.result(), adminOtherUser.result(), consumerUser.result());
-    List<String> serverUrls = new ArrayList<String>(createdRsUrls);
-    serverUrls.addAll(List.of(DUMMY_AUTH_SERVER, DUMMY_SERVER));
-    Tuple servers = Tuple.of(serverUrls.toArray());
+    List<UUID> serverIds = new ArrayList<UUID>(createdRsIds);
+    Tuple servers = Tuple.of(serverIds.toArray(UUID[]::new));
 
-    pool.withConnection(conn -> conn.preparedQuery(SQL_DELETE_SERVERS).execute(servers)
-        .compose(success -> Utils.deleteFakeUser(pool, users))).onComplete(x -> {
+    pool.withTransaction(conn -> conn.preparedQuery(SQL_DELETE_ROLES_OF_RS).execute(servers)
+        .compose(res -> conn.preparedQuery(SQL_DELETE_RESOURCE_SERVER).execute(servers))
+        .compose(success -> utils.deleteFakeResourceServer())
+        .compose(res -> utils.deleteFakeUser())).onComplete(x -> {
           if (x.failed()) {
             LOGGER.warn(x.cause().getMessage());
           }
@@ -167,66 +164,21 @@ public class CreateResourceServerTest {
   }
 
   @Test
-  @DisplayName("Test no user profile")
-  void noUserProfile(VertxTestContext testContext) {
-    JsonObject userJson = adminAuthUser.result();
-
-    JsonObject json = new JsonObject().put("url", "foo.bar").put("name", "bar");
-    CreateRsRequest request = new CreateRsRequest(json);
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .name(userJson.getString("firstName"), userJson.getString("lastName"))
-        .roles(List.of(Roles.ADMIN)).build();
-
-    adminService.createResourceServer(request, user,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getInteger("status"), 404);
-          assertEquals(URN_MISSING_INFO.toString(), response.getString("type"));
-          assertEquals(Constants.ERR_TITLE_NO_USER_PROFILE, response.getString("title"));
-          assertEquals(Constants.ERR_DETAIL_NO_USER_PROFILE, response.getString("detail"));
-          testContext.completeNow();
-        })));
-  }
-
-  @Test
-  @DisplayName("Test not auth admin")
+  @DisplayName("Test not COS admin")
   void notAuthAdmin(VertxTestContext testContext) {
-    JsonObject userJson = adminOtherUser.result();
 
     JsonObject json =
         new JsonObject().put("url", "foo.bar").put("name", "bar").put("owner", "email@email.com");
     CreateRsRequest request = new CreateRsRequest(json);
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+
+    User user = new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.ADMIN)).build();
 
     adminService.createResourceServer(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 401);
           assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-          assertEquals(Constants.ERR_TITLE_NOT_AUTH_ADMIN, response.getString("title"));
-          assertEquals(Constants.ERR_DETAIL_NOT_AUTH_ADMIN, response.getString("detail"));
-          testContext.completeNow();
-        })));
-  }
-
-  @Test
-  @DisplayName("Test not an admin")
-  void notAdmin(VertxTestContext testContext) {
-    JsonObject userJson = consumerUser.result();
-
-    JsonObject json =
-        new JsonObject().put("url", "foo.bar").put("name", "bar").put("owner", "email@email.com");
-    CreateRsRequest request = new CreateRsRequest(json);
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.CONSUMER))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
-
-    adminService.createResourceServer(request, user,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getInteger("status"), 401);
-          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-          assertEquals(Constants.ERR_TITLE_NOT_AUTH_ADMIN, response.getString("title"));
-          assertEquals(Constants.ERR_DETAIL_NOT_AUTH_ADMIN, response.getString("detail"));
+          assertEquals(Constants.ERR_TITLE_NO_COS_ADMIN_ROLE, response.getString("title"));
+          assertEquals(Constants.ERR_DETAIL_NO_COS_ADMIN_ROLE, response.getString("detail"));
           testContext.completeNow();
         })));
   }
@@ -234,11 +186,6 @@ public class CreateResourceServerTest {
   @Test
   @DisplayName("Test invalid domains")
   void invalidDomains(VertxTestContext testContext) {
-    JsonObject userJson = adminAuthUser.result();
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
-
     Checkpoint protocolInUrl = testContext.checkpoint();
     Checkpoint pathInUrl = testContext.checkpoint();
     Checkpoint specialChars = testContext.checkpoint();
@@ -246,7 +193,8 @@ public class CreateResourceServerTest {
     JsonObject json = new JsonObject().put("url", "https://example.com").put("name", "bar")
         .put("owner", "email@email.com");
     CreateRsRequest request = new CreateRsRequest(json);
-    adminService.createResourceServer(request, user,
+
+    adminService.createResourceServer(request, cosAdminUser,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 400);
           assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
@@ -258,7 +206,7 @@ public class CreateResourceServerTest {
     json.clear().put("url", "example.com/path/1/2").put("name", "bar").put("owner",
         "email@email.com");
     request = new CreateRsRequest(json);
-    adminService.createResourceServer(request, user,
+    adminService.createResourceServer(request, cosAdminUser,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 400);
           assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
@@ -269,7 +217,7 @@ public class CreateResourceServerTest {
 
     json.clear().put("url", "example#@.abcd").put("name", "bar").put("owner", "email@email.com");
     request = new CreateRsRequest(json);
-    adminService.createResourceServer(request, user,
+    adminService.createResourceServer(request, cosAdminUser,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 400);
           assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
@@ -282,7 +230,6 @@ public class CreateResourceServerTest {
   @Test
   @DisplayName("Test owner email does not exist on Keycloak")
   void ownerEmailNotFound(VertxTestContext testContext) {
-    JsonObject userJson = adminAuthUser.result();
 
     String name = RandomStringUtils.randomAlphabetic(10);
     String url = name + ".com";
@@ -290,9 +237,6 @@ public class CreateResourceServerTest {
 
     JsonObject json = new JsonObject().put("url", url).put("name", name).put("owner", ownerEmail);
     CreateRsRequest request = new CreateRsRequest(json);
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
 
     Mockito.doAnswer(i -> {
       Promise<JsonObject> p = i.getArgument(1);
@@ -302,7 +246,7 @@ public class CreateResourceServerTest {
       return i.getMock();
     }).when(registrationService).findUserByEmail(Mockito.anySet(), Mockito.any());
 
-    adminService.createResourceServer(request, user,
+    adminService.createResourceServer(request, cosAdminUser,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 400);
           assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
@@ -313,35 +257,25 @@ public class CreateResourceServerTest {
   @Test
   @DisplayName("Test successful creation")
   void successfulCreation(VertxTestContext testContext) {
-    JsonObject userJson = adminAuthUser.result();
-
     String name = RandomStringUtils.randomAlphabetic(10);
     String url = name + ".com";
-    String ownerEmail = RandomStringUtils.randomAlphabetic(10) + "@gmail.com";
+    String ownerEmail = utils.getDetails(adminUser).email;
 
     JsonObject json = new JsonObject().put("url", url).put("name", name).put("owner", ownerEmail);
     CreateRsRequest request = new CreateRsRequest(json);
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
 
     Mockito.doAnswer(i -> {
       Promise<JsonObject> p = i.getArgument(1);
       Set<String> emails = i.getArgument(0);
       String email = new ArrayList<String>(emails).get(0);
 
-      /*
-       * Need a real user for having the insert into the RS table, hence we use consumer User's ID
-       */
-      JsonObject resp = new JsonObject()
-          .put("keycloakId", consumerUser.result().getString("keycloakId")).put("email", email)
-          .put("name", new JsonObject().put("firstName", "Name").put("lastName", "Name"));
+      JsonObject resp = utils.getKcAdminJson(adminUser);
 
       p.complete(new JsonObject().put(email, resp));
       return i.getMock();
     }).when(registrationService).findUserByEmail(Mockito.anySet(), Mockito.any());
 
-    adminService.createResourceServer(request, user,
+    adminService.createResourceServer(request, cosAdminUser,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 201);
           assertEquals(response.getString("type"), URN_SUCCESS.toString());
@@ -356,7 +290,7 @@ public class CreateResourceServerTest {
           assertTrue(result.getJsonObject("owner").containsKey("name"));
 
           assertTrue(result.getString("id").matches(UUID_REGEX));
-          createdRsUrls.add(result.getString("url"));
+          createdRsIds.add(UUID.fromString(result.getString("id")));
           testContext.completeNow();
         })));
   }
@@ -364,17 +298,13 @@ public class CreateResourceServerTest {
   @Test
   @DisplayName("Test existing resource server - same domain")
   void existingRs(VertxTestContext testContext) {
-    JsonObject userJson = adminAuthUser.result();
 
     String name = RandomStringUtils.randomAlphabetic(10);
     String url = name + ".com";
-    String ownerEmail = RandomStringUtils.randomAlphabetic(10) + "@gmail.com";
+    String ownerEmail = utils.getDetails(adminUser).email;
 
     JsonObject json = new JsonObject().put("url", url).put("name", name).put("owner", ownerEmail);
     CreateRsRequest request = new CreateRsRequest(json);
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
 
     Promise<Void> p1 = Promise.promise();
 
@@ -382,18 +312,14 @@ public class CreateResourceServerTest {
       Promise<JsonObject> p = i.getArgument(1);
       Set<String> emails = i.getArgument(0);
       String email = new ArrayList<String>(emails).get(0);
-        /*
-         * Need a real user for having the insert into the RS table, hence we use consumer User's ID
-         */
-        JsonObject resp = new JsonObject()
-            .put("keycloakId", consumerUser.result().getString("keycloakId")).put("email", email)
-            .put("name", new JsonObject().put("firstName", "Name").put("lastName", "Name"));
+
+      JsonObject resp = utils.getKcAdminJson(adminUser);
 
       p.complete(new JsonObject().put(email, resp));
       return i.getMock();
     }).when(registrationService).findUserByEmail(Mockito.anySet(), Mockito.any());
 
-    adminService.createResourceServer(request, user,
+    adminService.createResourceServer(request, cosAdminUser,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 201);
           assertEquals(response.getString("type"), URN_SUCCESS.toString());
@@ -408,12 +334,12 @@ public class CreateResourceServerTest {
           assertTrue(result.getJsonObject("owner").containsKey("name"));
 
           assertTrue(result.getString("id").matches(UUID_REGEX));
-          createdRsUrls.add(result.getString("url"));
+          createdRsIds.add(UUID.fromString(result.getString("id")));
           p1.complete();
         })));
 
     p1.future().onSuccess(succ -> {
-      adminService.createResourceServer(request, user,
+      adminService.createResourceServer(request, cosAdminUser,
           testContext.succeeding(response -> testContext.verify(() -> {
             assertEquals(response.getInteger("status"), 409);
             assertEquals(response.getString("type"), URN_ALREADY_EXISTS.toString());
@@ -427,18 +353,13 @@ public class CreateResourceServerTest {
   @Test
   @DisplayName("Test find user by email in RegistrationService failing")
   void regServiceFails(VertxTestContext testContext) {
-    JsonObject userJson = adminAuthUser.result();
 
     String name = RandomStringUtils.randomAlphabetic(10);
     String url = name + ".com";
-    String ownerEmail = RandomStringUtils.randomAlphabetic(10) + "@gmail.com";
+    String ownerEmail = utils.getDetails(adminUser).email;
 
     JsonObject json = new JsonObject().put("url", url).put("name", name).put("owner", ownerEmail);
     CreateRsRequest request = new CreateRsRequest(json);
-
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
 
     Promise<Void> p1 = Promise.promise();
 
@@ -448,7 +369,7 @@ public class CreateResourceServerTest {
       return i.getMock();
     }).when(registrationService).findUserByEmail(Mockito.anySet(), Mockito.any());
 
-    adminService.createResourceServer(request, user,
+    adminService.createResourceServer(request, cosAdminUser,
         testContext.failing(response -> testContext.verify(() -> {
           p1.complete();
         })));
@@ -463,15 +384,13 @@ public class CreateResourceServerTest {
         /*
          * Need a real user for having the insert into the RS table, hence we use consumer User's ID
          */
-        JsonObject resp = new JsonObject()
-            .put("keycloakId", consumerUser.result().getString("keycloakId")).put("email", email)
-            .put("name", new JsonObject().put("firstName", "Name").put("lastName", "Name"));
+        JsonObject resp = utils.getKcAdminJson(adminUser);
 
         p.complete(new JsonObject().put(email, resp));
         return i.getMock();
       }).when(registrationService).findUserByEmail(Mockito.anySet(), Mockito.any());
 
-      adminService.createResourceServer(request, user,
+      adminService.createResourceServer(request, cosAdminUser,
           testContext.succeeding(response -> testContext.verify(() -> {
             assertEquals(response.getInteger("status"), 201);
             assertEquals(response.getString("type"), URN_SUCCESS.toString());
@@ -486,9 +405,59 @@ public class CreateResourceServerTest {
             assertTrue(result.getJsonObject("owner").containsKey("name"));
 
             assertTrue(result.getString("id").matches(UUID_REGEX));
-            createdRsUrls.add(result.getString("url"));
+            createdRsIds.add(UUID.fromString(result.getString("id")));
             testContext.completeNow();
           })));
     });
+  }
+
+  @Test
+  @DisplayName("Test user w/ consumer role gets consumer role for newly added RS")
+  void consumerGetsConsumerRoleForNewRs(VertxTestContext testContext) {
+    String name = RandomStringUtils.randomAlphabetic(10);
+    String url = name + ".com";
+    String ownerEmail = utils.getDetails(adminUser).email;
+
+    Checkpoint userCurrentlyHasNoRolesForNewRs = testContext.checkpoint();
+    Checkpoint userHasNewConsumerRoleForNewRs = testContext.checkpoint();
+    JsonObject json = new JsonObject().put("url", url).put("name", name).put("owner", ownerEmail);
+    CreateRsRequest request = new CreateRsRequest(json);
+
+    Mockito.doAnswer(i -> {
+      Promise<JsonObject> p = i.getArgument(1);
+      Set<String> emails = i.getArgument(0);
+      String email = new ArrayList<String>(emails).get(0);
+
+      JsonObject resp = utils.getKcAdminJson(adminUser);
+
+      p.complete(new JsonObject().put(email, resp));
+      return i.getMock();
+    }).when(registrationService).findUserByEmail(Mockito.anySet(), Mockito.any());
+
+    Future<Void> roleCheckBeforeCreation =
+        pool.withConnection(conn -> conn.preparedQuery(SQL_CHECK_APPROVED_ROLES_FOR_RS)
+            .execute(Tuple.of(roleTestUser.getUserId(), url.toLowerCase()))).compose(rows -> {
+              if (rows.rowCount() == 0) {
+                userCurrentlyHasNoRolesForNewRs.flag();
+              }
+              return Future.succeededFuture();
+            });
+
+    roleCheckBeforeCreation.map(res -> adminService.createResourceServer(request, cosAdminUser,
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(response.getInteger("status"), 201);
+          assertEquals(response.getString("type"), URN_SUCCESS.toString());
+          assertEquals(response.getString("title"), Constants.SUCC_TITLE_CREATED_RS);
+          JsonObject result = response.getJsonObject("results");
+          createdRsIds.add(UUID.fromString(result.getString("id")));
+
+          pool.withConnection(conn -> conn.preparedQuery(SQL_CHECK_APPROVED_ROLES_FOR_RS)
+              .execute(Tuple.of(roleTestUser.getUserId(), url.toLowerCase()))).onSuccess(rows -> {
+                if (rows.rowCount() == 1
+                    && rows.iterator().next().get(Roles.class, "role").equals(Roles.CONSUMER)) {
+                  userHasNewConsumerRoleForNewRs.flag();
+                }
+              });
+        }))));
   }
 }
