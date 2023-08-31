@@ -96,6 +96,15 @@ public class Constants {
           + ", created_at, updated_at) VALUES ($1::uuid, $2::role_enum, $3::uuid, $4::role_status_enum"
           + ", NOW(), NOW())";
 
+  /**
+   * Used for inserting roles with the role IDs during tests. Makes things easier.
+   */
+  public static final String TEST_SQL_CREATE_ROLE_WITH_ID =
+      "INSERT INTO roles (id, user_id, role, resource_server_id, status"
+          + ", created_at, updated_at) VALUES ($1::uuid, $2::uuid, $3::role_enum, $4::uuid"
+          + ", $5::role_status_enum"
+          + ", NOW(), NOW())";
+
   public static final String SQL_CREATE_CLIENT = "INSERT INTO user_clients"
       + " (user_id, client_id, client_secret, client_name, created_at, updated_at)"
       + " VALUES ($1::uuid, $2::uuid, $3::text, $4::text, NOW(), NOW())";
