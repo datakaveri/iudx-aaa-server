@@ -76,6 +76,7 @@ public class Constants {
   public static final String GET_DELEGATIONS = "get-auth-v1-delegations";
   public static final String DELETE_DELEGATIONS = "delete-auth-v1-delegations";
   public static final String CREATE_DELEGATIONS = "post-auth-v1-delegations";
+  public static final String GET_DELEGATE_EMAILS = "get-auth-v1-delegations-emails";
   public static final String CREATE_APD = "post-auth-v1-apd";
   public static final String LIST_APD = "get-auth-v1-apd";
   public static final String UPDATE_APD = "put-auth-v1-apd";

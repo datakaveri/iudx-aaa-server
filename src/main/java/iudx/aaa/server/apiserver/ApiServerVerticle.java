@@ -286,14 +286,14 @@ public class ApiServerVerticle extends AbstractVerticle {
                   .handler(this::deleteNotificationHandler)
                   .failureHandler(failureHandler);
 */
-              // Get delegations by provider/delegate/auth delegate
+              // Get delegations by provider/consumer/delegate
               routerBuilder.operation(GET_DELEGATIONS)
                       .handler(ctx -> fetchRoles.fetch(ctx,
                           Set.of(Roles.CONSUMER, Roles.PROVIDER, Roles.DELEGATE)))
                       .handler(this::listDelegationsHandler)
                       .failureHandler(failureHandler);
 
-              // Delete delegations by provider/delegate/auth delegate
+              // Delete delegations by provider/consumer/delegate
               routerBuilder.operation(DELETE_DELEGATIONS)
                       .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.PROVIDER, Roles.CONSUMER)))
                       .handler(this::deleteDelegationsHandler)
@@ -303,6 +303,13 @@ public class ApiServerVerticle extends AbstractVerticle {
               routerBuilder.operation(CREATE_DELEGATIONS)
                       .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.PROVIDER, Roles.CONSUMER)))
                       .handler(this::createDelegationsHandler)
+                      .failureHandler(failureHandler);
+
+              // Get delegate emails
+              routerBuilder.operation(GET_DELEGATE_EMAILS)
+                      .handler(clientFlow)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.TRUSTEE)))
+                      .handler(this::getDelegateEmailsHandler)
                       .failureHandler(failureHandler);
 
               // Create APD
@@ -805,6 +812,32 @@ public class ApiServerVerticle extends AbstractVerticle {
     });
   }
 
+  /**
+   *
+   * @param context
+   */
+
+  private void getDelegateEmailsHandler(RoutingContext context) {
+
+    User user = context.get(USER);
+    
+    List<String> userIdList = context.queryParam(QUERY_USERID);
+    List<String> roleList = context.queryParam(QUERY_ROLE);
+    List<String> rsList = context.queryParam(QUERY_RESOURCE_SERVER);
+
+    String delegatorUserId = userIdList.get(0);
+    Roles delegatedRole = Roles.valueOf(roleList.get(0).toUpperCase());
+    String delegatedRsUrl = rsList.get(0);
+
+    policyService.getDelegateEmails(user, delegatorUserId, delegatedRole, delegatedRsUrl,
+        handler -> {
+          if (handler.succeeded()) {
+            processResponse(context.response(), handler.result());
+          } else {
+            processResponse(context.response(), handler.cause().getLocalizedMessage());
+          }
+        });
+  }
 
   /**
    * Create a delegation for a User.

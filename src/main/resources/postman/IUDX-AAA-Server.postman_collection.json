@@ -1311,6 +1311,59 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Get delegate emails",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "clientId",
+								"value": "",
+								"type": "text",
+								"description": "Client ID (UUID)"
+							},
+							{
+								"key": "clientSecret",
+								"value": "",
+								"type": "text",
+								"description": "Client secret (40 chars in hexadecimal)"
+							}
+						],
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/delegations/emails?userId=93cd6409-d0a5-4c3a-ba86-b4da145519bc&role=consumer&resourceServer=rs.iudx.io",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"delegations",
+								"emails"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "93cd6409-d0a5-4c3a-ba86-b4da145519bc",
+									"description": "User ID of user to check delegate emails"
+								},
+								{
+									"key": "role",
+									"value": "consumer",
+									"description": "The delegated role"
+								},
+								{
+									"key": "resourceServer",
+									"value": "rs.iudx.io",
+									"description": "The delegated resource server URL"
+								}
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
