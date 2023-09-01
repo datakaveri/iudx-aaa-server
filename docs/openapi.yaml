@@ -1048,7 +1048,7 @@ paths:
         - authorization: []
   /auth/v1/user/search:
     get:
-      summary: Search for User
+      summary: Search for User - Trustee
       operationId: get-auth-v1-user-search
       responses:
         '200':
@@ -1141,7 +1141,41 @@ paths:
                     type: 'urn:dx:as:InvalidInput'
                     title: User not found
                     detail: A user with given email, role and resource server not found
+        '401':
+          description: |-
+            - Unauthorized - `clientId` & `clientSecret` invalid/not match
+            - User does not have trustee role (i.e. is owner of registered and active APD)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+              examples:
+                Missing Authentication Details:
+                  value:
+                    type: 'urn:dx:as:MissingAuthenticationToken'
+                    title: Missing auth details
+                    detail: Missing auth details
       parameters:
+        - schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+          in: header
+          name: clientId
+          description: AAA Client ID
+          required: true  
+        - schema:
+            type: string
+            maxLength: 40
+            pattern: '^[0-9a-f]{40}$'
+            minLength: 40
+            example: 73b66ab55ba4d07ea487310679aa0689b4bd2c9d
+          in: header
+          description: AAA Client Secret
+          name: clientSecret
+          required: true  
         - schema:
             type: string
             pattern: '^(?=.{1,254}$)(?=.{1,64}@)[-!#$%&''*+/0-9=?A-Z^_`a-z{|}~]+(\.[-!#$%&''*+/0-9=?A-Z^_`a-z{|}~]+)*@[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$'
@@ -1169,7 +1203,7 @@ paths:
           name: resourceServer
           required: true
       description: |-
-        **Anyone** may search for a user registered on the COS with provider/consumer roles by providing the email address **OR** COS user ID, role and resource server for which the role is applicable. If a user exists, then the user ID `userId`, email and name is returned.
+        A valid user with **trustee** role i.e. **owner of a registered and active APD** may search for a user registered on the COS with provider/consumer roles by providing the email address **OR** COS user ID, role and resource server for which the role is applicable. If a user exists, then the user ID `userId`, email and name is returned. **The trustee is authenticated using client ID, client secret credentials.**
       tags:
         - User APIs
   /auth/v1/user/clientcredentials:
@@ -1691,6 +1725,7 @@ paths:
           description: |-
             - Malformed or missing data
             - Invalid `url`
+            - Owner email not registered on UAC
           headers:
             Content-Type:
               schema:
@@ -1725,7 +1760,7 @@ paths:
                     type: 'urn:dx:as:InvalidAuthenticationToken'
                     title: Token authentication failed
                     detail: Inactive Token
-                User is not admin of AAA:
+                User is not COS Admin:
                   value:
                     type: 'urn:dx:as:InvalidRole'
                     title: Not COS Admin
@@ -1802,7 +1837,7 @@ paths:
                 - url
                 - owner
             examples:
-              Create Organization:
+              Create Resource Server:
                 value:
                   name: Data Kaveri
                   url: datakaveri.org
@@ -3290,6 +3325,123 @@ paths:
                       role: provider
         description: The body is a JSON object with a JSON array containing the objects that need to be created.
         required: true
+  /auth/v1/delegations/emails:
+    get:
+      summary: Get Delegate Emails - Trustee
+      responses:
+        '200':
+          description: 'Successfully get list of delegate emails. If the requested user does not exist or does not have any valid delegations for the given role and resource server, `delegateEmails` array will be empty'
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+                properties:
+                  type:
+                    type: string
+                    minLength: 1
+                  title:
+                    type: string
+                    minLength: 1
+                  results:
+                    type: object
+                    properties:
+                      delegateEmails:
+                        type: array
+                        minLength: 0
+                        items:
+                          type: string
+                    required:
+                      - delegateEmails
+                required:
+                  - type
+                  - title
+                  - results
+              examples:
+                Success:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: Delegate emails
+                    results:
+                      delegateEmails:
+                        - delegate-one@datakaveri.org
+                        - delegate2@datakaveri.org
+                Requested user not registered on COS / does not have any valid delegations for role + RS:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: Delegate emails
+                    results:
+                      delegateEmails: []
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: application/json
+        '401':
+          description: |-
+            - Unauthorized - `clientId` & `clientSecret` invalid/not match
+            - User does not have trustee role (i.e. is owner of registered and active APD)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+              examples:
+                Missing Authentication Details:
+                  value:
+                    type: 'urn:dx:as:MissingAuthenticationToken'
+                    title: Missing auth details
+                    detail: Missing auth details
+      operationId: get-auth-v1-delegations-emails
+      description: |-
+        A valid user with **trustee** role i.e. **owner of a registered and active APD** may get the email addresses of a user's delegates for communication purposes. The trustee supplies a user ID, role and resource server. If a user has valid delegates for the given role and resource server, the email addresses are returned. **The trustee is authenticated using client ID, client secret credentials.** 
+        
+        **NOTE**: A `200 OK` with an empty `delegateEmails` array is returned even if the given user **is not registered on the COS**
+
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+            pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
+          in: header
+          name: clientId
+          description: AAA Client ID
+          required: true  
+        - schema:
+            type: string
+            maxLength: 40
+            pattern: '^[0-9a-f]{40}$'
+            minLength: 40
+            example: 73b66ab55ba4d07ea487310679aa0689b4bd2c9d
+          in: header
+          description: AAA Client Secret
+          name: clientSecret
+          required: true  
+        - schema:
+            type: string
+            format: uuid
+          in: query
+          name: userId
+          required: true
+        - schema:
+            type: string
+            enum:
+              - provider
+              - consumer
+          in: query
+          name: role
+          required: true
+        - schema:
+            type: string
+            maxLength: 100
+            minLength: 1
+          in: query
+          name: resourceServer
+          required: true
+      tags:
+        - Delegation APIs
+    parameters: []
   /auth/v1/policies/requests:
     get:
       summary: List Access Requests
@@ -4120,6 +4272,31 @@ paths:
                         status:
                           type: string
                           minLength: 1
+                        owner:
+                          type: object
+                          required:
+                            - email
+                            - name
+                            - id
+                          properties:
+                            email:
+                              type: string
+                              minLength: 1
+                            name:
+                              type: object
+                              required:
+                                - firstName
+                                - lastName
+                              properties:
+                                firstName:
+                                  type: string
+                                  minLength: 1
+                                lastName:
+                                  type: string
+                                  minLength: 1
+                            id:
+                              type: string
+                              minLength: 1
                 required:
                   - type
                   - title
@@ -4134,6 +4311,12 @@ paths:
                         name: DataKaveri APD
                         url: apd.datakaveri.org
                         status: active
+                        owner:
+                          email: apd-admin@datakaveri.org
+                          name:
+                            firstName: APD
+                            lastName: Admin
+                          id: fffe251b-574b-46e6-9247-f76f1f70a637
                       - id: 540972fd-43df-43c1-9627-df2402a6b731
                         name: IISc APD
                         url: apd.iisc.ac.in
@@ -4176,7 +4359,7 @@ paths:
       summary: Register an Access Policy Domain - COS Admin
       operationId: post-auth-v1-apd
       responses:
-        '200':
+        '201':
           description: The APD has been successfully registered
           content:
             application/json:
@@ -4199,6 +4382,31 @@ paths:
                       name:
                         type: string
                         minLength: 1
+                      owner:
+                        type: object
+                        required:
+                          - email
+                          - name
+                          - id
+                        properties:
+                          email:
+                            type: string
+                            minLength: 1
+                          name:
+                            type: object
+                            required:
+                              - firstName
+                              - lastName
+                            properties:
+                              firstName:
+                                type: string
+                                minLength: 1
+                              lastName:
+                                type: string
+                                minLength: 1
+                          id:
+                            type: string
+                            minLength: 1
                       url:
                         type: string
                         minLength: 1
@@ -4209,6 +4417,7 @@ paths:
                       - id
                       - name
                       - url
+                      - owner
                       - status
                 required:
                   - type
@@ -4223,22 +4432,23 @@ paths:
                       id: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
                       name: DataKaveri APD
                       url: apd.datakaveri.org
+                      owner:
+                        email: apd-admin@datakaveri.org
+                        name:
+                          firstName: APD
+                          lastName: Admin
+                        id: fffe251b-574b-46e6-9247-f76f1f70a637
                       status: active
         '400':
           description: |-
             - Malformed or missing data
             - Invalid `url`
-            - The APD (`url`) is not responding or has responded incorrectly
+            - Owner email not registered on UAC  
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
               examples:
-                APD not responding/responded incorrectly:
-                  value:
-                    type: 'urn:dx:as:InvalidInput'
-                    title: Invalid APD response
-                    detail: The APD is not responsive/has not responded correctly
                 Invalid url:
                   value:
                     type: 'urn:dx:as:InvalidInput'
@@ -4261,19 +4471,6 @@ paths:
                     type: 'urn:dx:as:InvalidRole'
                     title: Not COS Admin
                     detail: User is not the COS Admin
-        '404':
-          description: |-
-            - A user does not have any approved roles
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                User does not have any roles:
-                  value:
-                    type: 'urn:dx:as:MissingInformation'
-                    title: User does not have any roles
-                    detail: Please add roles or wait for provider role approvals
         '409':
           description: '- An APD with the provided `url` already exists'
           content:
@@ -4288,14 +4485,10 @@ paths:
                     detail: An APD with the requested URL already exists
       description: |-
         The COS Admin can add new APDs to the server. These APDs will be in the **active** state by default. 
+        - The resource server is also assigned an owner/trustee user during registration. The assigned owner/trustee must be registered on the UAC. They will be given the **trustee role** as a result of successful APD registration.
 
-        ## APD Requirements during registration
-        The APD URL must be provided during registration. The URL must be **reachable** as well as:
-        - Must be served on HTTPS at port 443
-        - Must not redirect
-        Additionally, The `GET /userclasses` API must be implemented and should 
-        - return `200 OK` with content-type `application/json` 
-        - send at least an empty JSON object in the response body
+        **NOTE**: The trustee role assignment exists as long as the APD is in active state.
+
       security:
         - authorization: []
       requestBody:
@@ -4314,14 +4507,22 @@ paths:
                 url:
                   type: string
                   description: The APD URL
+                owner:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                  pattern: '^(?=.{1,254}$)(?=.{1,64}@)[-!#$%&''*+/0-9=?A-Z^_`a-z{|}~]+(\.[-!#$%&''*+/0-9=?A-Z^_`a-z{|}~]+)*@[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$'
+                  description: The email of the APD owner  
               required:
                 - name
                 - url
+                - owner  
             examples:
               Example:
                 value:
                   name: DataKaveri APD
                   url: apd.datakaveri.org
+                  owner: apd-admin@datakaveri.org  
         required: true
         description: |-
           - COS Admin permitted to call the API.
@@ -4406,7 +4607,7 @@ paths:
         '400':
           description: |-
             - Malformed or missing data
-            - Invalid/non-existent `apdId`
+            - Invalid/non-existent APD ID
             - Duplicate APD IDs in `request` array
           content:
             application/json:

@@ -10,6 +10,7 @@ public class ApdInfoObj {
     UUID id;
     String name;
     String url;
+    String ownerId;
     ApdStatus status;
 
     public String getId() {
@@ -36,6 +37,14 @@ public class ApdInfoObj {
         this.url = url;
     }
 
+    public String getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
+    }
+
     public ApdStatus getStatus() {
         return status;
     }
@@ -48,6 +57,7 @@ public class ApdInfoObj {
         this.id = id;
         this.name = name;
         this.url = url;
+        this.ownerId = ownerId.toString();
         this.status = status;
     }
 

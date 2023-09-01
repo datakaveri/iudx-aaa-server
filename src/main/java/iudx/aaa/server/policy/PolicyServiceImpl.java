@@ -34,6 +34,7 @@ import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.UpdatePolicyNotification;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.util.ComposeException;
+import iudx.aaa.server.apiserver.util.Urn;
 import iudx.aaa.server.registration.RegistrationService;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -2008,5 +2009,69 @@ public class PolicyServiceImpl implements PolicyService {
                 }));
 
   return promise.future();
+  }
+
+  @Override
+  public PolicyService getDelegateEmails(User user, String delegatorUserId, Roles delegatedRole,
+      String delegatedRsUrl, Handler<AsyncResult<JsonObject>> handler) {
+    
+    if (!user.getRoles().contains(Roles.TRUSTEE)) {
+      Response r = new ResponseBuilder().status(401).type(URN_INVALID_ROLE)
+          .title(ERR_TITLE_NOT_TRUSTEE).detail(ERR_DETAIL_NOT_TRUSTEE).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
+    
+    Collector<Row, ?, Set<UUID>> delegateUserIdCollector =
+        Collectors.mapping(row -> row.getUUID("user_id"), Collectors.toSet());
+    
+    Tuple tuple = Tuple.of(UUID.fromString(delegatorUserId), delegatedRole, delegatedRsUrl);
+    
+    Future<Set<UUID>> check =
+        pool.withConnection(conn -> conn.preparedQuery(SQL_GET_DELEG_USER_IDS_BY_DELEGATION_INFO)
+            .collecting(delegateUserIdCollector).execute(tuple)).map(res -> res.value());
+    
+    Future<List<String>> uniqDelegIds = check.compose(ids -> {
+      if(!ids.isEmpty()) {
+        List<String> strIds = ids.stream().map(id -> id.toString()).collect(Collectors.toList());
+        return Future.succeededFuture(strIds);
+      }
+      
+      // if no delegates, whether user exists or not, return empty JSON array
+      Response resp =
+          new ResponseBuilder().status(200).type(Urn.URN_SUCCESS).title(SUCC_TITLE_DELEG_EMAILS)
+              .objectResults(new JsonObject().put("delegateEmails", new JsonArray())).build();
+      return Future.failedFuture(new ComposeException(resp));
+    });
+    
+    Future<JsonObject> getDelegatesInfo = uniqDelegIds.compose(ids -> {
+      Promise<JsonObject> userDetails = Promise.promise();
+      registrationService.getUserDetails(ids, userDetails);
+      return userDetails.future();
+    });
+    
+    Future<JsonArray> delegEmails = getDelegatesInfo.compose(json -> {
+      List<String> emailList = uniqDelegIds.result().stream()
+          .map(id -> json.getJsonObject(id).getString("email")).collect(Collectors.toList());
+      
+      return Future.succeededFuture(new JsonArray(emailList));
+    });
+    
+    delegEmails.onSuccess(res -> {
+      Response resp =
+          new ResponseBuilder().status(200).type(Urn.URN_SUCCESS).title(SUCC_TITLE_DELEG_EMAILS)
+              .objectResults(new JsonObject().put("delegateEmails", res)).build();
+      handler.handle(Future.succeededFuture(resp.toJson()));
+    }).onFailure(e -> {
+      if (e instanceof ComposeException) {
+        ComposeException exp = (ComposeException) e;
+        handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+        return;
+      }
+      LOGGER.error(e.getMessage());
+      handler.handle(Future.failedFuture("Internal error"));
+    });
+    
+    return this;
   }
 }

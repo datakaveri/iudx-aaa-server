@@ -9,6 +9,7 @@ import static iudx.aaa.server.registration.Constants.ERR_DETAIL_CONSUMER_FOR_RS_
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_DEFAULT_CLIENT_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_INVALID_CLI_ID;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_APPROVED_ROLES;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NOT_TRUSTEE;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_PENDING_PROVIDER_RS_REG_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_PROVIDER_FOR_RS_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_RS_NO_EXIST;
@@ -17,6 +18,7 @@ import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_KC;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_DEFAULT_CLIENT_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_INVALID_CLI_ID;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_APPROVED_ROLES;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_NOT_TRUSTEE;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_PENDING_PROVIDER_RS_REG_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_ROLE_FOR_RS_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_RS_NO_EXIST;
@@ -805,10 +807,17 @@ public class RegistrationServiceImpl implements RegistrationService {
   }
   
   @Override
-  public RegistrationService searchUser(String searchString, Roles role, String resourceServerUrl,
-      Handler<AsyncResult<JsonObject>> handler) {
+  public RegistrationService searchUser(User user, String searchString, Roles role,
+      String resourceServerUrl, Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
+    if (!user.getRoles().contains(Roles.TRUSTEE)) {
+      Response r = new ResponseBuilder().status(401).type(URN_INVALID_ROLE)
+          .title(ERR_TITLE_NOT_TRUSTEE).detail(ERR_DETAIL_NOT_TRUSTEE).build();
+      handler.handle(Future.succeededFuture(r.toJson()));
+      return this;
+    }
+    
     /* Create error denoting email / userID + role does not exist */
     Supplier<Response> getSearchErr = () -> {
       return new ResponseBuilder().type(URN_INVALID_INPUT).title(ERR_TITLE_USER_NOT_FOUND)

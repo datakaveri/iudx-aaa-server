@@ -1,7 +1,6 @@
 package iudx.aaa.server.apd;
 
 import static iudx.aaa.server.apd.Constants.APD_CONSTRAINTS;
-import static iudx.aaa.server.apd.Constants.APD_READ_USERCLASSES_API;
 import static iudx.aaa.server.apd.Constants.APD_RESP_DETAIL;
 import static iudx.aaa.server.apd.Constants.APD_RESP_SESSIONID;
 import static iudx.aaa.server.apd.Constants.APD_RESP_TYPE;
@@ -61,42 +60,6 @@ public class ApdWebClient {
 
   static Response failureResponse = new ResponseBuilder().type(URN_INVALID_INPUT)
       .title(ERR_TITLE_APD_NOT_RESPOND).detail(ERR_DETAIL_APD_NOT_RESPOND).status(400).build();
-
-  /**
-   * The function is used to check if the Access Policy Domain exists. This is needed when the APD
-   * is being registered. The read user class API is called on the URL provided. A succeeded future
-   * with value <i>true</i> is returned if the check is successful. A failed future with a
-   * ComposeException is returned if there is a failure when reaching the APD or in case of an
-   * internal error.
-   * 
-   * @param url The URL supplied during APD registration
-   * @return a boolean future indicating the result.
-   */
-  public Future<Boolean> checkApdExists(String url) {
-    Promise<Boolean> promise = Promise.promise();
-    RequestOptions options = new RequestOptions();
-    options.setHost(url).setPort(PORT).setURI(APD_READ_USERCLASSES_API);
-
-    webClient.request(HttpMethod.GET, options).timeout(webClientTimeoutMs)
-        .expect(ResponsePredicate.SC_OK).expect(ResponsePredicate.JSON).send().onSuccess(resp -> {
-          /*
-           * Currently, the only validation we do is to check if the APD returns a JSON object. We
-           * can add further validations if required
-           */
-          try {
-            JsonObject json =
-                Optional.ofNullable(resp.bodyAsJsonObject()).orElseThrow(DecodeException::new);
-            promise.complete(true);
-          } catch (DecodeException e) {
-            LOGGER.error("Invalid JSON sent by APD");
-            promise.fail(new ComposeException(failureResponse));
-          }
-        }).onFailure(err -> {
-          LOGGER.error(err.getMessage());
-          promise.fail(new ComposeException(failureResponse));
-        });
-    return promise.future();
-  }
 
   /**
    * Call an APD's verify endpoint.

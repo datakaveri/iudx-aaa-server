@@ -16,6 +16,7 @@ import iudx.aaa.server.apiserver.DelegationInformation;
 import iudx.aaa.server.apiserver.DeleteDelegationRequest;
 import iudx.aaa.server.apiserver.DeletePolicyNotificationRequest;
 import iudx.aaa.server.apiserver.RequestToken;
+import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.UpdatePolicyNotification;
 import iudx.aaa.server.apiserver.User;
 
@@ -212,4 +213,19 @@ public interface PolicyService {
   @Fluent
   PolicyService createDelegation(List<CreateDelegationRequest> request, User user,
       Handler<AsyncResult<JsonObject>> handler);
+
+  /**
+   * getDelegateEmails allows a trustee user to get all email addresses of valid delegates for user,
+   * given the delegated role and the delegated resource server.
+   * 
+   * @param user the trustee user calling the API 
+   * @param delegatorUserId the delegator's user ID
+   * @param delegatedRole the delegated role
+   * @param delegatedRsUrl the delegated RS URL
+   * @param handler
+   * @return
+   */
+  @Fluent
+  PolicyService getDelegateEmails(User user, String delegatorUserId, Roles delegatedRole,
+      String delegatedRsUrl, Handler<AsyncResult<JsonObject>> handler);
 }

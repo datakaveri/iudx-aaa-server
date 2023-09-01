@@ -27,6 +27,8 @@ public class Constants {
   public static final String RESP_APD_NAME = "name";
   public static final String RESP_APD_URL = "url";
   public static final String RESP_APD_STATUS = "status";
+  public static final String RESP_APD_OWNER = "owner";
+  public static final String RESP_OWNER_USER_ID = "id";
   public static final String INTERNALERROR = "internal server error";
 
   /* Response title and details */
@@ -75,9 +77,9 @@ public class Constants {
 
   /* SQL */
   public static final String SQL_INSERT_APD_IF_NOT_EXISTS =
-      "INSERT INTO apds (name, url, status, created_at, updated_at) VALUES "
-          + "($1::text, $2::text, 'ACTIVE', NOW(), NOW()) "
-          + "ON CONFLICT (url) DO NOTHING RETURNING id";
+      "INSERT INTO apds (name, url, owner_id, status, created_at, updated_at)"
+          + " VALUES($1::text, $2::text, $3::uuid, 'ACTIVE', NOW(), NOW())"
+          + " ON CONFLICT (url) DO NOTHING RETURNING id";
 
   public static final String SQL_GET_APDS_BY_ID_COS_ADMIN =
       "SELECT id, name, url, status FROM apds WHERE id = ANY($1::uuid[])";
@@ -89,7 +91,6 @@ public class Constants {
       "SELECT url, status FROM apds WHERE url = $1::text";
 
   /* APD API endpoints and request metadata */
-  public static final String APD_READ_USERCLASSES_API = "/userclasses";
   public static final String APD_VERIFY_API = "/verify";
   public static final String APD_VERIFY_AUTH_HEADER = "Authorization";
   public static final String APD_VERIFY_BEARER = "Bearer ";
@@ -128,8 +129,8 @@ public class Constants {
   public static final String APD_NOT_ACTIVE = " (NOTE: The APD is currently not in an active state.)";
   public static final String ERR_TITLE_POLICY_EVAL_FAILED = "Policy evaluation failed";
 
-  public static final String GET_APDINFO_ID = "SELECT id,name,url,status FROM apds where id = ANY($1::uuid[])";
-  public static final String GET_APDINFO_URL = "SELECT id,name,url,status FROM apds where url = ANY($1::text[])";
+  public static final String GET_APDINFO_ID = "SELECT id,name,url,owner_id AS \"ownerId\",status FROM apds where id = ANY($1::uuid[])";
+  public static final String GET_APDINFO_URL = "SELECT id,name,url,owner_id AS \"ownerId\",status FROM apds where url = ANY($1::text[])";
   public static final String LIST_AUTH_QUERY = "SELECT id FROM apds where status = $1::apd_status_enum or status = $2::apd_status_enum";
   public static final String LIST_USER_QUERY = "SELECT id FROM apds WHERE status = $1::apd_status_enum  ";
 }

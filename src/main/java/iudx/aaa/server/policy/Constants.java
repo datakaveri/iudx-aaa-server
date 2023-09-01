@@ -106,6 +106,7 @@ public class Constants {
   public static final String SUCC_TITLE_POLICY_DEL = "policy deleted";
   public static final String SUCC_TITLE_LIST_DELEGS = "Delegations";
   public static final String SUCC_TITLE_DELETE_DELE = "Deleted requested delegations";
+  public static final String SUCC_TITLE_DELEG_EMAILS = "Delegate emails";
   public static final String INVALID_ROLE = "Invalid role to perform operation";
   public static final String INVALID_INPUT = "Invalid Input";
   public static final String INVALID_DELEGATE = "user does not have access to resource";
@@ -168,6 +169,10 @@ public class Constants {
   public static final String REQ_ID_ALREADY_NOT_EXISTS = "requestId does not exists";
   public static final String REQ_ID_ALREADY_PROCESSED = "requestId already processed";
 
+  public static final String ERR_TITLE_NOT_TRUSTEE = "User does not have trustee role";
+  public static final String ERR_DETAIL_NOT_TRUSTEE =
+      "You are not a trustee of any registered and active APD";
+  
   // verify policy queries
   public static final String GET_FROM_ROLES_TABLE =
       "Select role from  roles where user_id = $1::UUID "
@@ -334,7 +339,8 @@ public class Constants {
           + "FROM delegations AS d JOIN roles ON roles.id = d.role_id"
           + " JOIN resource_server ON"
           + " roles.resource_server_id = resource_server.id"
-          + " WHERE d.status = 'ACTIVE' AND (roles.user_id = $1::uuid OR d.user_id = $1::uuid)";
+          + " WHERE d.status = 'ACTIVE' AND roles.status = 'APPROVED'"
+          + " AND (roles.user_id = $1::uuid OR d.user_id = $1::uuid)";
 
   public static final String GET_DELEGATIONS_BY_ID =
       "SELECT d.id FROM delegations AS d"
@@ -434,6 +440,15 @@ public class Constants {
       + " SELECT ARRAY_AGG(policy.user_id) AS user_id_array, provider_id FROM policy"
       + " JOIN delegate ON policy.user_id = delegate.user_id GROUP BY provider_id";
 
+  // roles.user_id is the owner of the role therefore the delegator
+  public static final String SQL_GET_DELEG_USER_IDS_BY_DELEGATION_INFO =
+      "SELECT delegations.user_id FROM delegations" 
+          + " JOIN roles ON delegations.role_id = roles.id"
+          + " JOIN resource_server on roles.resource_server_id = resource_server.id"
+          + " WHERE roles.user_id = $1::uuid AND roles.role = $2::role_enum"
+          + " AND resource_server.url = $3::text"
+          + " AND delegations.status = 'ACTIVE' AND roles.status = 'APPROVED'";
+  
   // item types
   public enum itemTypes {
     RESOURCE_SERVER("RESOURCE_SERVER"),

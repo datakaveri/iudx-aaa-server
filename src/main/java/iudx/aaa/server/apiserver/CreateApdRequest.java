@@ -1,11 +1,7 @@
 package iudx.aaa.server.apiserver;
 
 import io.vertx.codegen.annotations.DataObject;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Data object for create Access Policy Domain (APD) API. The validations performed for url are
@@ -16,6 +12,7 @@ import java.util.UUID;
 public class CreateApdRequest {
   String name;
   String url;
+  String owner;
 
   public String getName() {
     return name;
@@ -31,6 +28,14 @@ public class CreateApdRequest {
 
   public void setUrl(String url) {
     this.url = url;
+  }
+
+  public String getOwner() {
+    return owner;
+  }
+
+  public void setOwner(String owner) {
+    this.owner = owner;
   }
 
   public CreateApdRequest(JsonObject json) {
