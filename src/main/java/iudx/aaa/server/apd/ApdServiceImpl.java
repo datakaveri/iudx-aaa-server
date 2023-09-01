@@ -46,6 +46,8 @@ import static iudx.aaa.server.apd.Constants.LIST_USER_QUERY;
 import static iudx.aaa.server.apd.Constants.RESP_APD_ID;
 import static iudx.aaa.server.apd.Constants.RESP_APD_NAME;
 import static iudx.aaa.server.apd.Constants.RESP_APD_STATUS;
+import static iudx.aaa.server.apd.Constants.RESP_APD_OWNER;
+import static iudx.aaa.server.apd.Constants.RESP_OWNER_USER_ID;
 import static iudx.aaa.server.apd.Constants.RESP_APD_URL;
 import static iudx.aaa.server.apd.Constants.SQL_GET_APDS_BY_ID_COS_ADMIN;
 import static iudx.aaa.server.apd.Constants.SQL_GET_APD_URL_STATUS;
@@ -366,6 +368,7 @@ public class ApdServiceImpl implements ApdService {
 
     String url = request.getUrl().toLowerCase();
     String name = request.getName();
+    String ownerEmail = request.getOwner();
 
     if (!InternetDomainName.isValid(url)) {
       Response resp = new ResponseBuilder().type(URN_INVALID_INPUT).title(ERR_TITLE_INVALID_DOMAIN)
@@ -374,33 +377,48 @@ public class ApdServiceImpl implements ApdService {
       return this;
     }
 
-    Tuple tuple = Tuple.of(name, url);
     /*
      * Disable APD existence check via /userclasses (apdWebClient.checkApdExists(url)) API for now.
      * TODO: maybe have a liveness check with a proper liveness API later on.
      */
     LOGGER.warn("APD liveness/existence check disabled!!!");
     Future<Boolean> isApdOnline = Future.succeededFuture(true);
+    
+    Promise<JsonObject> promise = Promise.promise();
+    registrationService.findUserByEmail(Set.of(ownerEmail), promise);
+    Future<JsonObject> trusteeInfo = isApdOnline.compose(res -> promise.future());
 
-    Future<UUID> apdId = isApdOnline
-        .compose(success -> pool.withTransaction(
-            conn -> conn.preparedQuery(SQL_INSERT_APD_IF_NOT_EXISTS).execute(tuple)))
-        .compose(res -> {
-          if (res.size() == 0) {
-            return Future.failedFuture(new ComposeException(409, URN_ALREADY_EXISTS.toString(),
-                ERR_TITLE_EXISTING_DOMAIN, ERR_DETAIL_EXISTING_DOMAIN));
-          }
-          return Future.succeededFuture(res.iterator().next().getUUID(0));
-        });
+    Future<UUID> apdId = trusteeInfo.compose(trusteeDetails -> {
+
+      UUID ownerId =
+          UUID.fromString(trusteeDetails.getJsonObject(ownerEmail).getString("keycloakId"));
+
+      Tuple tuple = Tuple.of(name, url, ownerId);
+      
+      return pool
+          .withConnection(conn -> conn.preparedQuery(SQL_INSERT_APD_IF_NOT_EXISTS).execute(tuple))
+          .compose(res -> {
+            if (res.size() == 0) {
+              return Future.failedFuture(new ComposeException(409, URN_ALREADY_EXISTS.toString(),
+                  ERR_TITLE_EXISTING_DOMAIN, ERR_DETAIL_EXISTING_DOMAIN));
+            }
+            return Future.succeededFuture(res.iterator().next().getUUID(0));
+          });
+    });
 
     apdId.onSuccess(created -> {
       JsonObject response = new JsonObject();
+      
+      JsonObject ownerBlock = trusteeInfo.result().getJsonObject(ownerEmail);
+      ownerBlock.put(RESP_OWNER_USER_ID, ownerBlock.remove("keycloakId"));
+
       response.put(RESP_APD_ID, apdId.result().toString()).put(RESP_APD_NAME, name)
-          .put(RESP_APD_URL, url).put(RESP_APD_STATUS, ApdStatus.ACTIVE.toString().toLowerCase());
+          .put(RESP_APD_URL, url).put(RESP_APD_OWNER, ownerBlock)
+          .put(RESP_APD_STATUS, ApdStatus.ACTIVE.toString().toLowerCase());
 
-      LOGGER.info("APD registered with id : " + apdId.result().toString());
+      LOGGER.info("APD {} registered with owner {}", url, ownerEmail);
 
-      Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS)
+      Response resp = new ResponseBuilder().status(201).type(URN_SUCCESS)
           .title(SUCC_TITLE_REGISTERED_APD).objectResults(response).build();
       handler.handle(Future.succeededFuture(resp.toJson()));
     }).onFailure(e -> {
@@ -513,18 +531,28 @@ public class ApdServiceImpl implements ApdService {
                           return Future.succeededFuture(apdInfo);
                         }));
 
+    Future<Map<String, JsonObject>> trusteeDetailsFuture =
+                    apdDetails.compose(
+                            details -> {
+                              List<String> userIds =
+                                      details.stream().map(ApdInfoObj::getOwnerId).collect(Collectors.toList());
+                              return getUserDetails(userIds);
+                            });
+
     Future<JsonObject> responseFuture =
-            apdDetails.compose(
-                    res -> {
+            trusteeDetailsFuture.compose(
+                    trusteeDetails -> {
                       JsonObject response = new JsonObject();
                       List<ApdInfoObj> apdDetailList = apdDetails.result();
                       apdDetailList.forEach(
                               details -> {
                                 JsonObject apdResponse = new JsonObject();
-                                apdResponse.put("url", details.getUrl());
-                                apdResponse.put("status", details.getStatus().toString().toLowerCase());
-                                apdResponse.put("name", details.getName());
-                                apdResponse.put("id",details.getId());
+                                apdResponse.put(RESP_APD_OWNER,
+                                    trusteeDetails.get(details.getOwnerId()).put(RESP_OWNER_USER_ID, details.getOwnerId()));
+                                apdResponse.put(RESP_APD_URL, details.getUrl());
+                                apdResponse.put(RESP_APD_STATUS, details.getStatus().toString().toLowerCase());
+                                apdResponse.put(RESP_APD_NAME, details.getName());
+                                apdResponse.put(RESP_APD_ID, details.getId());
                                 if (req.equalsIgnoreCase("id")) {
                                   response.put(details.getId(), apdResponse);
                                 } else response.put(details.getUrl(), apdResponse);

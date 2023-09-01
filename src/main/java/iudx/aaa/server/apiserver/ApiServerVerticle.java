@@ -319,7 +319,7 @@ public class ApiServerVerticle extends AbstractVerticle {
 
               // List APDs
               routerBuilder.operation(LIST_APD)
-                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of()))
+                      .handler(ctx -> fetchRoles.fetch(ctx, Roles.allRoles))
                       .handler(this::listApdHandler)
                       .failureHandler(failureHandler);
 
