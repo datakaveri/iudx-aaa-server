@@ -82,7 +82,7 @@ public class CatalogueClient {
   public static final String CAT_RESP_APD_KEY = "apdURL";
   public static final String CAT_RESP_ACCESS_POLICY_KEY = "accessPolicy";
   public static final String CAT_RESP_RES_SERVER_URL_KEY = "resourceServerURL";
-  public static final String CAT_RESP_RES_GROUP_KEY = "resourceServerURL";
+  public static final String CAT_RESP_RES_GROUP_KEY = "resourceGroup";
   public static final String CAT_RESP_PROVIDER_USER_ID_KEY = "providerUserId";
   public static final String CAT_SUCCESS_URN = "urn:dx:cat:Success";
 
@@ -684,8 +684,8 @@ public class CatalogueClient {
         return Future.failedFuture(INTERNALERROR);
       }
 
-      if (!body.containsKey(CAT_RESP_RES_GROUP_KEY)
-          && body.getString(CAT_RESP_RES_GROUP_KEY).matches(UUID_REGEX)) {
+      if (!(body.containsKey(CAT_RESP_RES_GROUP_KEY)
+          && body.getString(CAT_RESP_RES_GROUP_KEY).matches(UUID_REGEX))) {
         LOGGER.error(
             "Failed Catalogue item check : Resource {} does not have `resourceGroup` key or is not UUID",
             itemId.toString());
