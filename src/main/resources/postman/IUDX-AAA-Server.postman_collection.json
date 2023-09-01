@@ -306,11 +306,16 @@
 						"method": "GET",
 						"header": [
 							{
-								"key": "providerId",
+								"key": "clientId",
 								"value": "",
-								"description": "Provider's User ID in case of auth delegate",
 								"type": "text",
-								"disabled": true
+								"description": "Client ID (UUID)"
+							},
+							{
+								"key": "clientSecret",
+								"value": "",
+								"type": "text",
+								"description": "Client secret (40 chars in hexadecimal)"
 							}
 						],
 						"url": {
@@ -354,11 +359,16 @@
 						"method": "GET",
 						"header": [
 							{
-								"key": "providerId",
+								"key": "clientId",
 								"value": "",
-								"description": "Provider's User ID in case of auth delegate",
 								"type": "text",
-								"disabled": true
+								"description": "Client ID (UUID)"
+							},
+							{
+								"key": "clientSecret",
+								"value": "",
+								"type": "text",
+								"description": "Client secret (40 chars in hexadecimal)"
 							}
 						],
 						"url": {

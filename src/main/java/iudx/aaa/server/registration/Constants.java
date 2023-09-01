@@ -74,6 +74,10 @@ public class Constants {
   public static final String ERR_DETAIL_PENDING_PROVIDER_RS_REG_EXISTS =
       "User has a pending provider registration for the requested resource server ";
 
+  public static final String ERR_TITLE_NOT_TRUSTEE = "User does not have trustee role";
+  public static final String ERR_DETAIL_NOT_TRUSTEE =
+      "You are not a trustee of any registered and active APD";
+  
   public static final String ERR_TITLE_USER_NOT_FOUND = "User not found";
   public static final String ERR_DETAIL_USER_NOT_FOUND =
       "A user with given email/user ID, role and resource server not found";

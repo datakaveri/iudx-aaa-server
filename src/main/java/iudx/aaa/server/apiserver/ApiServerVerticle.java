@@ -331,6 +331,8 @@ public class ApiServerVerticle extends AbstractVerticle {
 
               // Search User
               routerBuilder.operation(SEARCH_USER)
+                      .handler(clientFlow)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.TRUSTEE)))
                       .handler(this::searchUserHandler)
                       .failureHandler(failureHandler);
 
@@ -919,6 +921,8 @@ public class ApiServerVerticle extends AbstractVerticle {
    * @param context
    */
   private void searchUserHandler(RoutingContext context) {
+    User user = context.get(USER);
+    
     List<String> emailList = context.queryParam(QUERY_EMAIL);
     List<String> userIdList = context.queryParam(QUERY_USERID);
     List<String> roleList = context.queryParam(QUERY_ROLE);
@@ -942,7 +946,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     Roles role = Roles.valueOf(roleList.get(0).toUpperCase());
     String resourceServerUrl = rsList.get(0);
     
-    registrationService.searchUser(searchString, role, resourceServerUrl, handler -> {
+    registrationService.searchUser(user, searchString, role, resourceServerUrl, handler -> {
 
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
