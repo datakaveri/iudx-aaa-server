@@ -166,20 +166,22 @@ public class Constants {
   
   public static final String SQL_UNION = " UNION ";
   
+  // casting roles as text since the DB only recognizes PROVIDER, CONSUMER but Roles 
+  // has other values. (UNION of the role_enum with text does not work.) 
   public static final String SQL_GET_PROVIDER_CONSUMER_ROLES = 
-      "SELECT roles.role, array_agg(url) AS rs_urls FROM roles JOIN resource_server "
+      "SELECT roles.role::text, array_agg(url) AS rs_urls FROM roles JOIN resource_server "
       + " ON roles.resource_server_id = resource_server.id"
       + " WHERE roles.user_id = $1::uuid AND roles.status = 'APPROVED'"
       + " GROUP BY roles.role";
 
   public static final String SQL_GET_DELEGATE_ROLE = 
-      "SELECT 'DELEGATE'::role_enum AS role, array_agg(url) AS rs_urls FROM delegations"
+      "SELECT 'DELEGATE'::text AS role, array_agg(url) AS rs_urls FROM delegations"
       + " JOIN roles ON delegations.role_id = roles.id"
       + " JOIN resource_server on roles.resource_server_id = resource_server.id"
       + " WHERE delegations.user_id = $1::uuid AND delegations.status = 'ACTIVE' HAVING array_agg(url) <> '{}'";
 
   public static final String SQL_GET_ADMIN_ROLE =
-      "SELECT 'ADMIN'::role_enum AS role, array_agg(url) AS rs_urls"
+      "SELECT 'ADMIN'::text AS role, array_agg(url) AS rs_urls"
           + " FROM resource_server WHERE owner_id = $1::uuid HAVING array_agg(url) <> '{}'";
   
   public static final String SQL_GET_DETAILS_BY_CLIENT_ID =
