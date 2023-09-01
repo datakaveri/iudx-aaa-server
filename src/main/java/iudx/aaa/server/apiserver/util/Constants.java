@@ -199,5 +199,5 @@ public class Constants {
           + " JOIN roles ON delegations.role_id = roles.id"
           + " JOIN resource_server on roles.resource_server_id = resource_server.id"
           + " WHERE delegations.id = $1::uuid AND delegations.user_id = $2::uuid"
-          + " AND delegations.status = 'ACTIVE'";
+          + " AND delegations.status = 'ACTIVE' AND roles.status = 'APPROVED'";
 }

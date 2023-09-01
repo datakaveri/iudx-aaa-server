@@ -339,7 +339,8 @@ public class Constants {
           + "FROM delegations AS d JOIN roles ON roles.id = d.role_id"
           + " JOIN resource_server ON"
           + " roles.resource_server_id = resource_server.id"
-          + " WHERE d.status = 'ACTIVE' AND (roles.user_id = $1::uuid OR d.user_id = $1::uuid)";
+          + " WHERE d.status = 'ACTIVE' AND roles.status = 'APPROVED'"
+          + " AND (roles.user_id = $1::uuid OR d.user_id = $1::uuid)";
 
   public static final String GET_DELEGATIONS_BY_ID =
       "SELECT d.id FROM delegations AS d"
