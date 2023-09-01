@@ -91,7 +91,6 @@ public class Constants {
       "SELECT url, status FROM apds WHERE url = $1::text";
 
   /* APD API endpoints and request metadata */
-  public static final String APD_READ_USERCLASSES_API = "/userclasses";
   public static final String APD_VERIFY_API = "/verify";
   public static final String APD_VERIFY_AUTH_HEADER = "Authorization";
   public static final String APD_VERIFY_BEARER = "Bearer ";

@@ -377,16 +377,9 @@ public class ApdServiceImpl implements ApdService {
       return this;
     }
 
-    /*
-     * Disable APD existence check via /userclasses (apdWebClient.checkApdExists(url)) API for now.
-     * TODO: maybe have a liveness check with a proper liveness API later on.
-     */
-    LOGGER.warn("APD liveness/existence check disabled!!!");
-    Future<Boolean> isApdOnline = Future.succeededFuture(true);
-    
     Promise<JsonObject> promise = Promise.promise();
     registrationService.findUserByEmail(Set.of(ownerEmail), promise);
-    Future<JsonObject> trusteeInfo = isApdOnline.compose(res -> promise.future());
+    Future<JsonObject> trusteeInfo = promise.future();
 
     Future<UUID> apdId = trusteeInfo.compose(trusteeDetails -> {
 
