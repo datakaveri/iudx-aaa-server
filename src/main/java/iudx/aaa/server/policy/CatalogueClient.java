@@ -35,7 +35,6 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static iudx.aaa.server.policy.Constants.CAT_ID;
-import static iudx.aaa.server.policy.Constants.CAT_SUCCESS_URN;
 import static iudx.aaa.server.policy.Constants.CHECK_RESOURCE_EXIST;
 import static iudx.aaa.server.policy.Constants.CHECK_RESOURCE_EXIST_JOIN;
 import static iudx.aaa.server.policy.Constants.EMAIL_HASH;
@@ -73,6 +72,23 @@ import static iudx.aaa.server.policy.Constants.*;
 public class CatalogueClient {
   private static final Logger LOGGER = LogManager.getLogger(CatalogueClient.class);
 
+  public static final String CAT_ITEM_ENDPOINT = "/item";
+  public static final String CAT_RELATION_ENDPOINT = "/relationship";
+
+  public static final String CAT_REL_QUERY_PARAM = "rel";
+  public static final String CAT_REL_QUERY_VAL_ALL = "all";
+
+  public static final String CAT_RESP_TYPE_KEY = "type";
+  public static final String CAT_RESP_APD_KEY = "apdURL";
+  public static final String CAT_RESP_ACCESS_POLICY_KEY = "accessPolicy";
+  public static final String CAT_RESP_RES_SERVER_URL_KEY = "resourceServerURL";
+  public static final String CAT_RESP_PROVIDER_USER_ID_KEY = "providerUserId";
+  public static final String CAT_SUCCESS_URN = "urn:dx:cat:Success";
+
+  public static final String CAT_RESP_RESOURCE_TYPE = "iudx:Resource";
+  public static final String CAT_RESP_PROVIDER_TYPE = "iudx:Provider";
+  public static final String CAT_RESP_RES_SERVER_TYPE = "iudx:ResourceServer";
+  
   private final PgPool pool;
   private final WebClient client;
   private final String catHost;

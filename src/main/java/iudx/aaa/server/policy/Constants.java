@@ -54,22 +54,6 @@ public class Constants {
   public static final String APD_POL = "APD";
   
   /* Catalogue related constants */
-  public static final String CAT_ITEM_ENDPOINT = "/item";
-  public static final String CAT_RELATION_ENDPOINT = "/relationship";
-
-  public static final String CAT_REL_QUERY_PARAM = "rel";
-  public static final String CAT_REL_QUERY_VAL_ALL = "all";
-
-  public static final String CAT_RESP_TYPE_KEY = "type";
-  public static final String CAT_RESP_APD_KEY = "apd";
-  public static final String CAT_RESP_ACCESS_POLICY_KEY = "accessPolicy";
-  public static final String CAT_RESP_RES_SERVER_URL_KEY = "resourceServerHTTPAccessURL";
-  public static final String CAT_RESP_PROVIDER_USER_ID_KEY = "providerKcId";
-  public static final String CAT_SUCCESS_URN = "urn:dx:cat:Success";
-
-  public static final String CAT_RESP_RESOURCE_TYPE = "iudx:Resource";
-  public static final String CAT_RESP_PROVIDER_TYPE = "iudx:Provider";
-  public static final String CAT_RESP_RES_SERVER_TYPE = "iudx:ResourceServer";
 
   public static final String CALL_APD_APDURL = "apdUrl";
   public static final String CALL_APD_USERID = "userId";
