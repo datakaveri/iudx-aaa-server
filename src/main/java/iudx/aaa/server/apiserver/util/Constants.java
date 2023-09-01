@@ -183,6 +183,10 @@ public class Constants {
   public static final String SQL_GET_ADMIN_ROLE =
       "SELECT 'ADMIN'::text AS role, array_agg(url) AS rs_urls"
           + " FROM resource_server WHERE owner_id = $1::uuid HAVING array_agg(url) <> '{}'";
+
+  public static final String SQL_GET_TRUSTEE_ROLE =
+      "SELECT 'TRUSTEE'::text AS role, array_agg(url) AS rs_urls"
+          + " FROM apds WHERE owner_id = $1::uuid HAVING array_agg(url) <> '{}'";
   
   public static final String SQL_GET_DETAILS_BY_CLIENT_ID =
       "SELECT user_id, client_secret FROM user_clients where client_id = $1::uuid";

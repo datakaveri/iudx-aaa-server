@@ -7,6 +7,7 @@ import static iudx.aaa.server.apiserver.util.Constants.OBTAINED_USER_ID;
 import static iudx.aaa.server.apiserver.util.Constants.SQL_GET_ADMIN_ROLE;
 import static iudx.aaa.server.apiserver.util.Constants.SQL_GET_DELEGATE_ROLE;
 import static iudx.aaa.server.apiserver.util.Constants.SQL_GET_PROVIDER_CONSUMER_ROLES;
+import static iudx.aaa.server.apiserver.util.Constants.SQL_GET_TRUSTEE_ROLE;
 import static iudx.aaa.server.apiserver.util.Constants.SQL_UNION;
 import static iudx.aaa.server.apiserver.util.Constants.USER;
 
@@ -106,6 +107,12 @@ public class FetchRoles  {
 
     if (requestedRoles.contains(Roles.DELEGATE)) {
       queries.add(SQL_GET_DELEGATE_ROLE);
+    }
+    
+    // if trustee role present, gets added to User.roles and User.rolesToRsMapping
+    // EVEN THOUGH APD is not an RS 
+    if (requestedRoles.contains(Roles.TRUSTEE)) {
+      queries.add(SQL_GET_TRUSTEE_ROLE);
     }
 
     if (requestedRoles.contains(Roles.ADMIN)) {

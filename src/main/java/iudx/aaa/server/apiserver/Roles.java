@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
  * Enum that defines all valid roles recognized by the AAA server.
  */
 public enum Roles {
-  PROVIDER, DELEGATE, CONSUMER, ADMIN, COS_ADMIN;
+  PROVIDER, DELEGATE, CONSUMER, ADMIN, COS_ADMIN, TRUSTEE;
 
   static List<String> rolesAsStrings =
       Arrays.stream(Roles.values()).map(r -> r.name()).collect(Collectors.toList());
