@@ -87,13 +87,15 @@ public class AdminServiceImpl implements AdminService {
     
     List<String> resServersAdmin = user.getResServersForRole(Roles.ADMIN);
 
-    Collector<Row, ?, Map<UUID, JsonObject>> getData = Collectors.toMap(row -> row.getUUID("userId"),
-        row -> row.toJson());
+    Collector<Row, ?, List<JsonObject>> jsonCollector =
+        Collectors.mapping(row -> row.toJson(), Collectors.toList());
 
-    Future<Map<UUID, JsonObject>> providerInfo = pool
+    Future<List<JsonObject>> providerRegInfo = pool
         .withConnection(
-            conn -> conn.preparedQuery(SQL_GET_PROVIDERS_FOR_RS_BY_STATUS).collecting(getData)
-                .execute(Tuple.of(filter.name(), resServersAdmin.toArray())).map(x -> x.value()))
+            conn -> conn.preparedQuery(SQL_GET_PROVIDERS_FOR_RS_BY_STATUS).collecting(jsonCollector)
+                .execute(Tuple.of(filter.name())
+                    .addArrayOfString(resServersAdmin.toArray(String[]::new)))
+                .map(x -> x.value()))
         .compose(res -> {
           if (res.size() > 0) {
             return Future.succeededFuture(res);
@@ -108,17 +110,20 @@ public class AdminServiceImpl implements AdminService {
           return Future.failedFuture(new ComposeException(r));
         });
 
-    Future<Map<String, JsonObject>> nameDetails = providerInfo.compose(res -> kc.getDetails(
-        res.entrySet().stream().map(i -> i.getKey().toString()).collect(Collectors.toList())));
+    Future<Map<String, JsonObject>> nameDetails = providerRegInfo.compose(data -> {
+      List<String> userIds =
+          data.stream().map(i -> i.getString("userId")).distinct().collect(Collectors.toList());
+
+      return kc.getDetails(userIds);
+    });
 
       nameDetails.onSuccess(nameDet -> {
 
       JsonArray resp = new JsonArray();
-      providerInfo.result().forEach((userId, json) -> {
-        JsonObject obj = new JsonObject();
-
-        obj.put(RESP_STATUS, filter.name().toLowerCase());
-        obj.mergeIn(nameDet.get(userId.toString()));
+      providerRegInfo.result().forEach(regInfo -> {
+        JsonObject obj = regInfo.copy();
+        
+        obj.mergeIn(nameDet.get(regInfo.getString("userId")));
         resp.add(obj);
       });
 

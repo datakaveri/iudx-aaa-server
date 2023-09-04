@@ -52,7 +52,8 @@ public class Constants {
 
   /* SQL */
   public static final String SQL_GET_PROVIDERS_FOR_RS_BY_STATUS =
-      "SELECT users.id AS \"userId\", roles.id, userinfo, resource_server.url AS \"rsUrl\" FROM users"
+      "SELECT roles.id, users.id AS \"userId\", lower(status::text) AS status"
+          + ", userinfo, resource_server.url AS \"rsUrl\" FROM users"
           + " JOIN roles ON users.id = roles.user_id"
           + " JOIN resource_server ON roles.resource_server_id = resource_server.id"
           + " WHERE roles.role = 'PROVIDER' AND roles.status = $1::role_status_enum"
