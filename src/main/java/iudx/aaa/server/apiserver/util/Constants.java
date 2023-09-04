@@ -66,13 +66,6 @@ public class Constants {
   public static final String CREATE_RESOURCE_SERVER = "post-auth-v1-admin-resourceservers";
   public static final String GET_PVDR_REGISTRATION = "get-auth-v1-admin-provider-registrations";
   public static final String UPDATE_PVDR_REGISTRATION = "put-auth-v1-admin-provider-registrations";
-  public static final String GET_POLICIES = "get-auth-v1-policies";
-  public static final String CREATE_POLICIES = "post-auth-v1-policies";
-  public static final String DELETE_POLICIES = "delete-auth-v1-policies";
-  public static final String GET_POLICIES_REQUEST = "get-auth-v1-policies-requests";
-  public static final String POST_POLICIES_REQUEST = "post-auth-v1-policies-requests";
-  public static final String PUT_POLICIES_REQUEST = "put-auth-v1-policies-requests";
-  public static final String DELETE_POLICIES_REQUEST = "delete-auth-v1-policies-requests";
   public static final String GET_DELEGATIONS = "get-auth-v1-delegations";
   public static final String DELETE_DELEGATIONS = "delete-auth-v1-delegations";
   public static final String CREATE_DELEGATIONS = "post-auth-v1-delegations";

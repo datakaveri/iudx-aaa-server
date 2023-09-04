@@ -52,7 +52,6 @@ public class PolicyVerticle extends AbstractVerticle {
   private RegistrationService registrationService;
   private ApdService apdService;
   private CatalogueClient catalogueClient;
-  private EmailClient emailClient;
   private ServiceBinder binder;
   private MessageConsumer<JsonObject> consumer;
   private static final Logger LOGGER = LogManager.getLogger(PolicyVerticle.class);
@@ -113,9 +112,8 @@ public class PolicyVerticle extends AbstractVerticle {
     registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
     apdService = ApdService.createProxy(vertx, APD_SERVICE_ADDRESS);
     catalogueClient = new CatalogueClient(vertx, pool, catalogueOptions);
-    emailClient = new EmailClient(vertx,emailOptions);
     policyService = new PolicyServiceImpl(pool, registrationService, apdService, catalogueClient,
-        authOptions, catOptions,emailClient);
+        authOptions, catOptions);
 
     binder = new ServiceBinder(vertx);
     consumer =
