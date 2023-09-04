@@ -9,7 +9,6 @@ import java.security.cert.Certificate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.logging.log4j.LogManager;
@@ -245,47 +244,7 @@ public class ApiServerVerticle extends AbstractVerticle {
                       .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.ADMIN)))
                       .handler(this::adminUpdateProviderRegHandler)
                       .failureHandler(failureHandler);
-/*
-              // Get/lists the User policies
-              routerBuilder.operation(GET_POLICIES)
-                      .handler(providerAuth)
-                      .handler(this::listPolicyHandler)
-                      .failureHandler(failureHandler);
 
-              // Create a new User policies
-              routerBuilder.operation(CREATE_POLICIES)
-                      .handler(providerAuth)
-                      .handler(this::createPolicyHandler)
-                      .failureHandler(failureHandler);
-
-              // Delete a User policies
-              routerBuilder.operation(DELETE_POLICIES)
-                      .handler(providerAuth)
-                      .handler(this::deletePolicyHandler)
-                      .failureHandler(failureHandler);
-
-              // Lists all the policies related requests for user/provider
-              routerBuilder.operation(GET_POLICIES_REQUEST)
-                      .handler(providerAuth)
-                      .handler(this::getPolicyNotificationHandler)
-                      .failureHandler(failureHandler);
-
-              // Creates new policy request for user
-              routerBuilder.operation(POST_POLICIES_REQUEST)
-                      .handler(this::createPolicyNotificationHandler)
-                      .failureHandler(failureHandler);
-
-              // Updates the policy request by provider/delegate
-              routerBuilder.operation(PUT_POLICIES_REQUEST)
-                      .handler(providerAuth)
-                      .handler(this::updatePolicyNotificationHandler)
-                      .failureHandler(failureHandler);
-
-              // deletes the policy request by consumer
-              routerBuilder.operation(DELETE_POLICIES_REQUEST)
-                  .handler(this::deleteNotificationHandler)
-                  .failureHandler(failureHandler);
-*/
               // Get delegations by provider/consumer/delegate
               routerBuilder.operation(GET_DELEGATIONS)
                       .handler(ctx -> fetchRoles.fetch(ctx,
@@ -613,153 +572,6 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     User user = context.get(USER);
     adminService.updateProviderRegistrationStatus(request, user, handler -> {
-      if (handler.succeeded()) {
-        JsonObject result = handler.result();
-        Future.future(future -> handleAuditLogs(context, result));
-        processResponse(context.response(), handler.result());
-      } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
-      }
-    });
-  }
-
-  /**
-   * Lists Policy associated with a User.
-   *
-   * @param context
-   */
-  private void listPolicyHandler(RoutingContext context) {
-    User user = context.get(USER);
-    JsonObject data = Optional.ofNullable((JsonObject)context.get(DELEGATION_INFO)).orElse(new JsonObject());
-
-    policyService.listPolicy(user, data, handler -> {
-      if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
-      } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
-      }
-    });
-  }
-
-  /**
-   * Create a Policy for a User.
-   *
-   * @param context
-   */
-  private void createPolicyHandler(RoutingContext context) {
-
-    JsonObject arr = context.body().asJsonObject();
-    JsonArray jsonRequest = arr.getJsonArray(REQUEST);
-    List<CreatePolicyRequest> request = CreatePolicyRequest.jsonArrayToList(jsonRequest);
-    User user = context.get(USER);
-    JsonObject data = Optional.ofNullable((JsonObject)context.get(DELEGATION_INFO)).orElse(new JsonObject());
-    policyService.createPolicy(request,user,data, handler -> {
-
-      if (handler.succeeded()) {
-        JsonObject result = handler.result();
-        Future.future(future -> handleAuditLogs(context, result));
-        processResponse(context.response(), handler.result());
-      } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
-      }
-    });
-  }
-
-  /**
-   * Delete a policy assoicated with a User.
-   *
-   * @param context
-   */
-  private void deletePolicyHandler(RoutingContext context) {
-
-    JsonObject arr = context.body().asJsonObject();
-    JsonArray jsonRequest = arr.getJsonArray(REQUEST);
-    List<DeletePolicyRequest> request = DeletePolicyRequest.jsonArrayToList(jsonRequest);
-    User user = context.get(USER);
-    JsonObject data = Optional.ofNullable((JsonObject)context.get(DELEGATION_INFO)).orElse(new JsonObject());
-    policyService.deletePolicy(jsonRequest, user,data, handler -> {
-      if (handler.succeeded()) {
-        JsonObject result = handler.result();
-        Future.future(future -> handleAuditLogs(context, result));
-        processResponse(context.response(), handler.result());
-      } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
-      }
-    });
-  }
-
-  /**
-   * Get all the resource access requests by user to provider/delegate.
-   *
-   * @param context
-   */
-  private void getPolicyNotificationHandler(RoutingContext context) {
-
-    User user = context.get(USER);
-    JsonObject data = Optional.ofNullable((JsonObject)context.get(DELEGATION_INFO)).orElse(new JsonObject());
-
-    policyService.listPolicyNotification(user, data, handler -> {
-      if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
-      } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
-      }
-    });
-  }
-
-  /**
-   * Create the resource access requests by user to provider/delegate.
-   *
-   * @param context
-   */
-  private void createPolicyNotificationHandler(RoutingContext context) {
-
-    JsonArray jsonRequest = context.body().asJsonObject().getJsonArray(REQUEST);
-    List<CreatePolicyNotification> request = CreatePolicyNotification.jsonArrayToList(jsonRequest);
-    User user = context.get(USER);
-
-    policyService.createPolicyNotification(request, user, handler -> {
-      if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
-      } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
-      }
-    });
-  }
-
-  /**
-   * Update the access status, expiry of resources by provider/delegate for user.
-   *
-   * @param context
-   */
-  private void updatePolicyNotificationHandler(RoutingContext context) {
-
-    JsonArray jsonRequest = context.body().asJsonObject().getJsonArray(REQUEST);
-    List<UpdatePolicyNotification> request = UpdatePolicyNotification.jsonArrayToList(jsonRequest);
-    JsonObject data = Optional.ofNullable((JsonObject)context.get(DELEGATION_INFO)).orElse(new JsonObject());
-    User user = context.get(USER);
-
-    policyService.updatePolicyNotification(request, user, data, handler -> {
-      if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
-      } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
-      }
-    });
-  }
-
-  /**
-   * Delete a notification created by a User.
-   *
-   * @param context
-   */
-  private void deleteNotificationHandler(RoutingContext context) {
-
-    JsonObject arr = context.body().asJsonObject();
-    JsonArray jsonRequest = arr.getJsonArray(REQUEST);
-    List<DeletePolicyNotificationRequest> request = DeletePolicyNotificationRequest.jsonArrayToList(jsonRequest);
-    User user = context.get(USER);
-    policyService.deletePolicyNotification(request, user,handler -> {
       if (handler.succeeded()) {
         JsonObject result = handler.result();
         Future.future(future -> handleAuditLogs(context, result));

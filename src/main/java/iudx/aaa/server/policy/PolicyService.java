@@ -10,14 +10,10 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.apiserver.CreateDelegationRequest;
-import iudx.aaa.server.apiserver.CreatePolicyNotification;
-import iudx.aaa.server.apiserver.CreatePolicyRequest;
 import iudx.aaa.server.apiserver.DelegationInformation;
 import iudx.aaa.server.apiserver.DeleteDelegationRequest;
-import iudx.aaa.server.apiserver.DeletePolicyNotificationRequest;
 import iudx.aaa.server.apiserver.RequestToken;
 import iudx.aaa.server.apiserver.Roles;
-import iudx.aaa.server.apiserver.UpdatePolicyNotification;
 import iudx.aaa.server.apiserver.User;
 
 import java.util.List;
@@ -54,43 +50,6 @@ public interface PolicyService {
   }
   
   /**
-   * The createPolicy implements the policy creation operation.
-   * 
-   * @param request which is a list of DataObject
-   * @param user which is a DataObject
-   * @param handler handler which is a Request Handler
-   * @return PolicyService which is a Service
-   */
-
-  @Fluent
-  PolicyService createPolicy(List<CreatePolicyRequest> request ,User user,JsonObject data, Handler<AsyncResult<JsonObject>> handler);
-
-  /**
-   * The deletePolicy implements the policy delete operation.
-   * 
-   * @param request which is a JsonArray
-   * @param user which is a DataObject
-   * @param handler handler which is a Request Handler
-   * @return PolicyService which is a Service
-   */
-  
-  @Fluent
-  PolicyService deletePolicy(JsonArray request, User user,JsonObject data, Handler<AsyncResult<JsonObject>> handler);
-
-  /**
-   * The listPolicy implements the policy list operation.
-   * 
-   * @param user which is a DataObject
-   * @param data which is a JsonObject
-   * @param handler which is a Request Handler
-   * @return PolicyService which is a Service
-   */
-
-  @Fluent
-  PolicyService listPolicy(User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler);
-
-
-  /**
    * The verifyPolicy implements the policy list operation.
    *
    * @param request which is a JsonObject
@@ -100,79 +59,6 @@ public interface PolicyService {
 
   @Fluent
   PolicyService verifyResourceAccess(RequestToken request, DelegationInformation delegInfo, User user,
-      Handler<AsyncResult<JsonObject>> handler);
-
-  /**
-   * The setDefaultProviderPolicies implements setting default provider policies when they are
-   * approved by an auth server admin.
-   *
-   * @param userIds a list of Strings (as UUIDs) of user IDs
-   * @param handler which is a Request Handler
-   * @return PolicyService which is a Service
-   */
-
-  /**
-   * The checkAuthPolicy exposes a method to check if a user has a valid policy set
-   * by the auth admin for the auth server
-   * Future<Void> succeeds if policy is present
-   * ComposeExeption is thrown if no policy present
-   * @param userId String (as UUIDs) of user IDs
-   * @param handler which is a Request Handler
-   * @return PolicyService which is a Service
-   */
-
-  @Fluent
-  PolicyService checkAuthPolicy(String userId,
-      Handler<AsyncResult<Void>> handler);
-  
-  /**
-   * The createPolicyNotification implements the creating request for user policies.
-   * 
-   * @param request which is a list of {@link CreatePolicyNotification} DataObject
-   * @param user which is a {@link User} DataObect
-   * @param handler which is a Request Handler
-   * @return PolicyService which is a Service
-   */
-  
-  @Fluent
-  PolicyService createPolicyNotification(List<CreatePolicyNotification> request, User user, Handler<AsyncResult<JsonObject>> handler);
-  
-  /**
-   * The listPolicyNotification implements the listing request for user and provider/delegate.
-   * 
-   * @param user which is a {@link User} DataObect
-   * @Param data which is a {@link JsonObject}
-   * @param handler which is a Request Handler
-   * @return PolicyService which is a Service
-   */
-
-  @Fluent
-  PolicyService listPolicyNotification(User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler);
-
-  /**
-   * The updatePolicyNotification implements the updating resources access/status by provider/delegate.
-   * 
-   * @param request which is a list of {@link UpdatePolicyNotification} DataObject
-   * @param user which is a {@link User} DataObect
-   * @param data which is a {@link JsonObject}
-   * @param handler which is a Request Handler
-   * @return PolicyService which is a Service
-   */
-  
-  @Fluent
-  PolicyService updatePolicyNotification(List<UpdatePolicyNotification> request, User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler);
-
-  /**
-   * deletePolicyNotification implements the ability for a consumer to delete(withdraw)
-   * any notification they have created which have not been approved or rejected by the provider
-   *
-   * @param request which is a list of DeletePolicyNotificationRequest objects
-   * @param user which is a {@link User} DataObject
-   * @param handler which is a Request Handler
-   * @return PolicyService which is a Service
-   */
-  @Fluent
-  PolicyService deletePolicyNotification(List<DeletePolicyNotificationRequest> request, User user,
       Handler<AsyncResult<JsonObject>> handler);
 
 
