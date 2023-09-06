@@ -5,9 +5,12 @@ import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Tuple;
+import iudx.aaa.server.apiserver.ApdStatus;
 import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.security.SecureRandom;
@@ -25,6 +28,7 @@ import static iudx.aaa.server.registration.Constants.SQL_CREATE_CLIENT;
 import static iudx.aaa.server.registration.Constants.TEST_SQL_CREATE_ROLE_WITH_ID;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_USER_IF_NOT_EXISTS;
 import static iudx.aaa.server.admin.Constants.SQL_CREATE_RS_IF_NOT_EXIST;
+import static iudx.aaa.server.apd.Constants.SQL_INSERT_APD_IF_NOT_EXISTS;
 
 /**
  * Class to help create fake data and store it so that it's easily accessible.
@@ -43,10 +47,10 @@ public class Utils {
       + "resource_server ON d.resource_server_id = resource_server.id"
       + " WHERE url = ANY($1::text[]) AND d.owner_id = $2::uuid";
   public static final String SQL_CREATE_APD =
-      "INSERT INTO apds (id, name, url, status, created_at, updated_at) VALUES "
-          + "($1::uuid, $2::text, $3::text, $4::apd_status_enum, NOW(), NOW()) ";
+      "INSERT INTO apds (name, owner_id, url, status, created_at, updated_at) VALUES "
+          + "($1::text, $2::uuid, $3::text, $4::apd_status_enum, NOW(), NOW()) RETURNING id";
   public static final String SQL_DELETE_APD =
-      "UPDATE apds SET status ='INACTIVE' where owner_id = ANY($1::uuid[])";
+      "UPDATE apds SET status ='INACTIVE' where id = ANY($1::uuid[])";
   private static final String SQL_DELETE_USER_BY_ID =
       "DELETE FROM users WHERE id = ANY($1::uuid[])";
 
@@ -62,10 +66,13 @@ public class Utils {
 
   PgPool pool;
   Map<String, UUID> resourceServerMap = new HashMap<String, UUID>();
+  public Map<String, UUID> apdMap = new HashMap<String, UUID>();
   private Map<UUID, FakeUserDetails> userMap = new HashMap<UUID, FakeUserDetails>();
 
+  private SecureRandom randomSource;
   public Utils(PgPool pool) {
     this.pool = pool;
+    randomSource = new SecureRandom();
   }
 
   /**
@@ -126,7 +133,10 @@ public class Utils {
         .compose(res -> conn.preparedQuery(SQL_CREATE_RS_IF_NOT_EXIST).execute(rsTuple))
         .compose(rows -> {
           resourceServerMap.put(url, rows.iterator().next().getUUID("id"));
-          userMap.put(UUID.fromString(admin.getUserId()), new FakeUserDetails());
+          
+          if (!userMap.containsKey(UUID.fromString(admin.getUserId()))) {
+            userMap.put(UUID.fromString(admin.getUserId()), new FakeUserDetails());
+          }
           return Future.succeededFuture();
         })).onSuccess(succ -> response.complete())
         .onFailure(fail -> response.fail("Fake RS creation error " + fail.toString()));
@@ -221,14 +231,86 @@ public class Utils {
     });
 
     pool.withTransaction(conn -> conn.preparedQuery(SQL_CREATE_USER_IF_NOT_EXISTS)
-        .execute(Tuple.of(user.getUserId(), phone, userInfo)).compose(roleDetails -> conn
-            .preparedQuery(TEST_SQL_CREATE_ROLE_WITH_ID).executeBatch(roleTuple)))
-        .onSuccess(row -> {
+        .execute(Tuple.of(user.getUserId(), phone, userInfo)).compose(roleDetails -> {
+          if (!roleTuple.isEmpty()) {
+            return conn.preparedQuery(TEST_SQL_CREATE_ROLE_WITH_ID).executeBatch(roleTuple);
+          } else
+            return Future.succeededFuture();
+        })).onSuccess(row -> {
           userMap.put(UUID.fromString(user.getUserId()), details);
           response.complete();
         }).onFailure(res -> {
-          res.printStackTrace();
           response.fail("Failed to create fake user" + res.getMessage());
+        });
+
+    return response.future();
+  }
+
+  /**
+   * Create a mock APD based on URL and trustee user. The trustee user is created if it not
+   * exists.
+   *
+   * @param url URL of the APD to be created
+   * @param trustee trustee user
+   * @return Void future indicating success or failure
+   */
+  public Future<Void> createFakeApd(String url, User trustee, ApdStatus status) {
+    Promise<Void> response = Promise.promise();
+
+    Tuple apdTuple = Tuple.of(url + "name", trustee.getUserId(), url, status);
+
+    pool.withTransaction(conn -> conn.preparedQuery(SQL_CREATE_USER_IF_NOT_EXISTS)
+        .execute(Tuple.of(trustee.getUserId(), NIL_PHONE, new JsonObject()))
+        .compose(res -> conn.preparedQuery(SQL_CREATE_APD).execute(apdTuple)))
+        .compose(rows -> {
+          apdMap.put(url, rows.iterator().next().getUUID("id"));
+          if (!userMap.containsKey(UUID.fromString(trustee.getUserId()))) {
+            userMap.put(UUID.fromString(trustee.getUserId()), new FakeUserDetails());
+          }
+          return Future.succeededFuture();
+        }).onSuccess(succ -> response.complete())
+        .onFailure(fail -> response.fail("Fake APD creation error " + fail.toString()));
+
+    return response.future();
+  }
+
+  /**
+   * Deletes APDs that are added using {@link #createFakeApd(String, User)}
+   *
+   * @return Void future indicating success or failure
+   */
+  public Future<Void> deleteFakeApd() {
+    Promise<Void> response = Promise.promise();
+
+    List<UUID> ids = apdMap.entrySet().stream().map(obj -> obj.getValue())
+        .collect(Collectors.toList());
+
+    Tuple tuple = Tuple.of(ids.toArray(UUID[]::new));
+    pool.withConnection(conn -> conn.preparedQuery(SQL_DELETE_APD).execute(tuple))
+        .onSuccess(succ -> response.complete())
+        .onFailure(fail -> response.fail("Db failure: " + fail.toString()));
+    return response.future();
+  }
+  
+  public Future<Void> createClientCreds(User user) {
+    Promise<Void> response = Promise.promise();
+    UUID clientId = UUID.randomUUID();
+    byte[] randBytes = new byte[CLIENT_SECRET_BYTES];
+    randomSource.nextBytes(randBytes);
+    String clientSecret = Hex.encodeHexString(randBytes);
+    String hashedClientSecret = DigestUtils.sha512Hex(clientSecret);
+    Tuple clientTuple = Tuple.of(user.getUserId(), clientId, hashedClientSecret, DEFAULT_CLIENT);
+
+    pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_CLIENT).execute(clientTuple))
+        .compose(res -> {
+          FakeUserDetails details = this.getDetails(user);
+          details.clientId = clientId.toString();
+          details.clientSecret = clientSecret;
+
+          userMap.put(UUID.fromString(user.getUserId()), details);
+          return Future.succeededFuture();
+        }).onSuccess(res -> response.complete()).onFailure(fail -> {
+          response.fail("Failed client creation");
         });
 
     return response.future();

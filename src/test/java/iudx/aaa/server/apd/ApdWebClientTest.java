@@ -4,7 +4,7 @@ import static iudx.aaa.server.apd.Constants.APD_CONSTRAINTS;
 import static iudx.aaa.server.apd.Constants.APD_REQ_OWNER;
 import static iudx.aaa.server.apd.Constants.APD_REQ_ITEM;
 import static iudx.aaa.server.apd.Constants.APD_REQ_USER;
-import static iudx.aaa.server.apd.Constants.APD_REQ_USERCLASS;
+import static iudx.aaa.server.apd.Constants.APD_REQ_CONTEXT;
 import static iudx.aaa.server.apd.Constants.APD_RESP_DETAIL;
 import static iudx.aaa.server.apd.Constants.APD_RESP_SESSIONID;
 import static iudx.aaa.server.apd.Constants.APD_RESP_TYPE;
@@ -71,28 +71,8 @@ public class ApdWebClientTest {
     testContext.completeNow();
   }
 
+
   @Order(1)
-  @RepeatedTest(TestApdServerVerticle.USERCLASS_ERRORS)
-  @DisplayName("Test get userclass error cases")
-  void testGetUserclassErrors(VertxTestContext testContext) {
-    testContext.assertFailure(apdWebClient.checkApdExists("localhost")).recover(r -> {
-      assertTrue(r instanceof ComposeException);
-      assertTrue(r.getLocalizedMessage().equals(ERR_DETAIL_APD_NOT_RESPOND));
-      return Future.succeededFuture();
-    }).onSuccess(x -> testContext.completeNow());
-  }
-
-  @Order(2)
-  @Test
-  @DisplayName("Test get userclass success")
-  void testGetUserclassSuccess(VertxTestContext testContext) {
-    testContext.assertComplete(apdWebClient.checkApdExists("localhost")).compose(r -> {
-      assertTrue(r);
-      return Future.succeededFuture();
-    }).onSuccess(x -> testContext.completeNow());
-  }
-
-  @Order(3)
   @RepeatedTest(TestApdServerVerticle.VERIFY_ERRORS)
   @DisplayName("Test post verify error cases")
   void testPostVerifyErrors(VertxTestContext testContext) {
@@ -101,7 +81,7 @@ public class ApdWebClientTest {
      */
     JsonObject request =
         new JsonObject().put(APD_REQ_USER, new JsonObject()).put(APD_REQ_OWNER, new JsonObject())
-            .put(APD_REQ_ITEM, new JsonObject()).put(APD_REQ_USERCLASS, "TestError");
+            .put(APD_REQ_ITEM, new JsonObject()).put(APD_REQ_CONTEXT, new JsonObject().put("TestError", true));
     testContext.assertFailure(apdWebClient.callVerifyApdEndpoint("localhost", "token", request))
         .recover(r -> {
           assertTrue(r instanceof ComposeException);
@@ -110,13 +90,13 @@ public class ApdWebClientTest {
         }).onSuccess(x -> testContext.completeNow());
   }
 
-  @Order(4)
+  @Order(2)
   @Test
   @DisplayName("Test post verify allow")
   void testPostVerifyAllow(VertxTestContext testContext) {
     JsonObject request =
         new JsonObject().put(APD_REQ_USER, new JsonObject()).put(APD_REQ_OWNER, new JsonObject())
-            .put(APD_REQ_ITEM, new JsonObject()).put(APD_REQ_USERCLASS, "TestAllow");
+            .put(APD_REQ_ITEM, new JsonObject()).put(APD_REQ_CONTEXT, new JsonObject().put("TestAllow", true));
     testContext.assertComplete(apdWebClient.callVerifyApdEndpoint("localhost", "token", request))
         .compose(r -> {
           assertEquals(r.getString(APD_RESP_TYPE), APD_URN_ALLOW);
@@ -125,13 +105,13 @@ public class ApdWebClientTest {
   }
 
   //add Test post verify allow with constraints
-  @Order(5)
+  @Order(3)
   @Test
   @DisplayName("Test post verify allow with constraints")
   void testPostVerifyAllowWCons(VertxTestContext testContext) {
       JsonObject request =
           new JsonObject().put(APD_REQ_USER, new JsonObject()).put(APD_REQ_OWNER, new JsonObject())
-              .put(APD_REQ_ITEM, new JsonObject()).put(APD_REQ_USERCLASS, "TestSuccessWConstraints");
+              .put(APD_REQ_ITEM, new JsonObject()).put(APD_REQ_CONTEXT, new JsonObject().put("TestSuccessWConstraints", true));
       testContext.assertComplete(apdWebClient.callVerifyApdEndpoint("localhost", "token", request))
           .compose(r -> {
               assertEquals(r.getString(APD_RESP_TYPE), APD_URN_ALLOW);
@@ -140,13 +120,13 @@ public class ApdWebClientTest {
           }).onSuccess(x -> testContext.completeNow());
   }
 
-  @Order(6)
+  @Order(4)
   @Test
   @DisplayName("Test post verify deny")
   void testPostVerifyDeny(VertxTestContext testContext) {
     JsonObject request =
         new JsonObject().put(APD_REQ_USER, new JsonObject()).put(APD_REQ_OWNER, new JsonObject())
-            .put(APD_REQ_ITEM, new JsonObject()).put(APD_REQ_USERCLASS, "TestDeny");
+            .put(APD_REQ_ITEM, new JsonObject()).put(APD_REQ_CONTEXT, new JsonObject().put("TestDeny", true));
     testContext.assertComplete(apdWebClient.callVerifyApdEndpoint("localhost", "token", request))
         .compose(r -> {
           assertEquals(r.getString(APD_RESP_TYPE), APD_URN_DENY);
@@ -156,13 +136,13 @@ public class ApdWebClientTest {
         }).onSuccess(x -> testContext.completeNow());
   }
 
-  @Order(7)
+  @Order(5)
   @Test
   @DisplayName("Test post verify deny-needs-interaction")
   void testPostVerifyDenyNeedsInteraction(VertxTestContext testContext) {
     JsonObject request =
         new JsonObject().put(APD_REQ_USER, new JsonObject()).put(APD_REQ_OWNER, new JsonObject())
-            .put(APD_REQ_ITEM, new JsonObject()).put(APD_REQ_USERCLASS, "TestDenyNInteraction");
+            .put(APD_REQ_ITEM, new JsonObject()).put(APD_REQ_CONTEXT, new JsonObject().put("TestDenyNInteraction", true));
     testContext.assertComplete(apdWebClient.callVerifyApdEndpoint("localhost", "token", request))
         .compose(r -> {
           assertEquals(r.getString(APD_RESP_TYPE), APD_URN_DENY_NEEDS_INT);
