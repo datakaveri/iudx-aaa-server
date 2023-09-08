@@ -39,9 +39,9 @@ public class CatalogueClient {
   public static final String CAT_RESP_TYPE_KEY = "type";
   public static final String CAT_RESP_APD_KEY = "apdURL";
   public static final String CAT_RESP_ACCESS_POLICY_KEY = "accessPolicy";
-  public static final String CAT_RESP_RES_SERVER_URL_KEY = "resourceServerURL";
+  public static final String CAT_RESP_RES_SERVER_URL_KEY = "resourceServerRegURL";
   public static final String CAT_RESP_RES_GROUP_KEY = "resourceGroup";
-  public static final String CAT_RESP_PROVIDER_USER_ID_KEY = "providerUserId";
+  public static final String CAT_RESP_PROVIDER_USER_ID_KEY = "ownerUserId";
   public static final String CAT_SUCCESS_URN = "urn:dx:cat:Success";
 
   public static final String CAT_RESP_RESOURCE_TYPE = "iudx:Resource";
