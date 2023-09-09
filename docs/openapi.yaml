@@ -614,7 +614,7 @@ paths:
                     type: string
                     title: string
                     detail: string
-      description: 'Revoke tokens **issued for a particular resource server**. Once revoked, any tokens issued before the revocation with the `aud` field being the resource server will not be accepted by said resource server.'
+      description: 'Revoke tokens **issued for a particular resource server or APD**. Once revoked, any tokens issued before the revocation with the `aud` field being the resource server should not be accepted by said resource server or APD.'
       tags:
         - Token APIs
       parameters:

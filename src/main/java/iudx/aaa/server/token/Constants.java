@@ -143,8 +143,9 @@ public class Constants {
   public static final String TOKEN_AUTHENTICATED = "Token authenticated";
   public static final String INVALID_USERID = "Empty/null userId";
 
-  public static final String ERR_TITLE_INVALID_RS_URL = "Invalid resource server URL";
-  public static final String ERR_DETAIL_INVALID_RS_URL = "Requested resource server URL does not exist";
+  public static final String ERR_TITLE_INVALID_RS_APD_URL = "Invalid resource server/APD URL";
+  public static final String ERR_DETAIL_INVALID_RS_APD_URL = "Requested resource server/APD URL does not exist"
+      + " or APD is not active anymore";
   
   public static final String ERR_DOES_NOT_HAVE_ROLE_FOR_RS =
       "User does not have requested role for requested resource server";
@@ -186,7 +187,8 @@ public class Constants {
       "SELECT client_id FROM user_clients WHERE user_id = $1";
   
   public static final String GET_URL =
-      "SELECT EXISTS (SELECT 1 FROM resource_server WHERE url = $1)";
+      "SELECT EXISTS (SELECT 1 FROM resource_server WHERE url = $1::text"
+      + " UNION SELECT 1 FROM apds WHERE url = $1::text AND status = 'ACTIVE')";
   
   public static final String GET_RS = "SELECT resource_server.id FROM resource_server LEFT JOIN resource_server_admins" +
           " ON resource_server.id = resource_server_admins.resource_server_id" +

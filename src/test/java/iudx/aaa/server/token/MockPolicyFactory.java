@@ -29,9 +29,9 @@ public class MockPolicyFactory {
 
     asyncResult = Mockito.mock(AsyncResult.class);
     Mockito.doAnswer((Answer<AsyncResult<JsonObject>>) arguments -> {
-      ((Handler<AsyncResult<JsonObject>>) arguments.getArgument(1)).handle(asyncResult);
+      ((Handler<AsyncResult<JsonObject>>) arguments.getArgument(3)).handle(asyncResult);
       return null;
-    }).when(policyService).verifyPolicy(Mockito.any(), Mockito.any());
+    }).when(policyService).verifyResourceAccess(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
   }
 
   public PolicyService getInstance() {
@@ -88,5 +88,11 @@ public class MockPolicyFactory {
       Mockito.when(asyncResult.failed()).thenReturn(false);
       Mockito.when(asyncResult.succeeded()).thenReturn(true);
     }
+  }
+  
+  public void setResponse(JsonObject response) {
+      Mockito.when(asyncResult.result()).thenReturn(response);
+      Mockito.when(asyncResult.failed()).thenReturn(false);
+      Mockito.when(asyncResult.succeeded()).thenReturn(true);
   }
 }
