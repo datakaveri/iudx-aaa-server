@@ -70,6 +70,7 @@ public class Utils {
   private Map<UUID, FakeUserDetails> userMap = new HashMap<UUID, FakeUserDetails>();
 
   private SecureRandom randomSource;
+
   public Utils(PgPool pool) {
     this.pool = pool;
     randomSource = new SecureRandom();
@@ -133,7 +134,7 @@ public class Utils {
         .compose(res -> conn.preparedQuery(SQL_CREATE_RS_IF_NOT_EXIST).execute(rsTuple))
         .compose(rows -> {
           resourceServerMap.put(url, rows.iterator().next().getUUID("id"));
-          
+
           if (!userMap.containsKey(UUID.fromString(admin.getUserId()))) {
             userMap.put(UUID.fromString(admin.getUserId()), new FakeUserDetails());
           }
@@ -247,8 +248,7 @@ public class Utils {
   }
 
   /**
-   * Create a mock APD based on URL and trustee user. The trustee user is created if it not
-   * exists.
+   * Create a mock APD based on URL and trustee user. The trustee user is created if it not exists.
    *
    * @param url URL of the APD to be created
    * @param trustee trustee user
@@ -261,8 +261,7 @@ public class Utils {
 
     pool.withTransaction(conn -> conn.preparedQuery(SQL_CREATE_USER_IF_NOT_EXISTS)
         .execute(Tuple.of(trustee.getUserId(), NIL_PHONE, new JsonObject()))
-        .compose(res -> conn.preparedQuery(SQL_CREATE_APD).execute(apdTuple)))
-        .compose(rows -> {
+        .compose(res -> conn.preparedQuery(SQL_CREATE_APD).execute(apdTuple))).compose(rows -> {
           apdMap.put(url, rows.iterator().next().getUUID("id"));
           if (!userMap.containsKey(UUID.fromString(trustee.getUserId()))) {
             userMap.put(UUID.fromString(trustee.getUserId()), new FakeUserDetails());
@@ -282,8 +281,8 @@ public class Utils {
   public Future<Void> deleteFakeApd() {
     Promise<Void> response = Promise.promise();
 
-    List<UUID> ids = apdMap.entrySet().stream().map(obj -> obj.getValue())
-        .collect(Collectors.toList());
+    List<UUID> ids =
+        apdMap.entrySet().stream().map(obj -> obj.getValue()).collect(Collectors.toList());
 
     Tuple tuple = Tuple.of(ids.toArray(UUID[]::new));
     pool.withConnection(conn -> conn.preparedQuery(SQL_DELETE_APD).execute(tuple))
@@ -291,7 +290,7 @@ public class Utils {
         .onFailure(fail -> response.fail("Db failure: " + fail.toString()));
     return response.future();
   }
-  
+
   public Future<Void> createClientCreds(User user) {
     Promise<Void> response = Promise.promise();
     UUID clientId = UUID.randomUUID();
@@ -311,6 +310,23 @@ public class Utils {
           return Future.succeededFuture();
         }).onSuccess(res -> response.complete()).onFailure(fail -> {
           response.fail("Failed client creation");
+        });
+
+    return response.future();
+  }
+
+  public Future<Void> addProviderStatusRole(User user, String rsUrl, RoleStatus status,
+      UUID roleId) {
+    Promise<Void> response = Promise.promise();
+
+    Tuple tup =
+        Tuple.of(roleId, user.getUserId(), Roles.PROVIDER, resourceServerMap.get(rsUrl), status);
+
+    pool.withConnection(conn -> conn.preparedQuery(TEST_SQL_CREATE_ROLE_WITH_ID).execute(tup))
+        .compose(res -> {
+          return Future.succeededFuture();
+        }).onSuccess(res -> response.complete()).onFailure(fail -> {
+          response.fail("Failed role creation");
         });
 
     return response.future();

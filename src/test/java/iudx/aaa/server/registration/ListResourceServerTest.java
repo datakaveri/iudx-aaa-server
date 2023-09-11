@@ -4,25 +4,22 @@ import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.registration.Constants.CONFIG_AUTH_URL;
 import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_RS_READ;
-import static iudx.aaa.server.registration.Utils.SQL_CREATE_ADMIN_SERVER;
-import static iudx.aaa.server.registration.Utils.SQL_DELETE_SERVERS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
-import io.vertx.sqlclient.Tuple;
-import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
+import iudx.aaa.server.apiserver.User;
+import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.configuration.Configuration;
-import iudx.aaa.server.policy.Constants.roles;
-import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.token.TokenService;
 import java.util.HashMap;
 import java.util.List;
@@ -61,7 +58,6 @@ public class ListResourceServerTest {
 
   private static KcAdmin kc = Mockito.mock(KcAdmin.class);
   private static TokenService tokenService = Mockito.mock(TokenService.class);
-  private static PolicyService policyService = Mockito.mock(PolicyService.class);
   private static JsonObject options = new JsonObject();
 
   private static final String DUMMY_SERVER_ONE =
@@ -69,8 +65,17 @@ public class ListResourceServerTest {
   private static final String DUMMY_SERVER_TWO =
       "dummytwo" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + "iudx.io";
 
-  private static Future<JsonObject> adminOneUser;
-  private static Future<JsonObject> adminTwoUser;
+  private static User adminOneUser =
+      new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.ADMIN))
+          .rolesToRsMapping(Map.of(Roles.ADMIN.toString(), new JsonArray().add(DUMMY_SERVER_ONE)))
+          .name("aa", "bb").build();
+  
+  private static User adminTwoUser =
+      new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.ADMIN))
+          .rolesToRsMapping(Map.of(Roles.ADMIN.toString(), new JsonArray().add(DUMMY_SERVER_ONE)))
+          .name("aa", "bb").build();
+  
+  private static Utils utils;
 
   @BeforeAll
   @DisplayName("Deploying Verticle")
@@ -107,36 +112,22 @@ public class ListResourceServerTest {
 
     options.put(CONFIG_AUTH_URL, dbConfig.getString(CONFIG_AUTH_URL)).put(CONFIG_OMITTED_SERVERS,
         dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS));
-
-    adminOneUser = Utils.createFakeUser(pool, Constants.NIL_UUID, "",
-        Map.of(Roles.ADMIN, RoleStatus.APPROVED), false);
-    adminTwoUser = Utils.createFakeUser(pool, Constants.NIL_UUID, "",
-        Map.of(Roles.ADMIN, RoleStatus.APPROVED), false);
+    
+    utils = new Utils(pool);
 
     /* create fake resource servers */
-    CompositeFuture.all(adminOneUser, adminTwoUser).compose(res -> {
-      JsonObject admin1 = (JsonObject) res.list().get(0);
-      UUID uid1 = UUID.fromString(admin1.getString("userId"));
-
-      JsonObject admin2 = (JsonObject) res.list().get(1);
-      UUID uid2 = UUID.fromString(admin2.getString("userId"));
-      List<Tuple> tup = List.of(Tuple.of("Dummy Server One", uid1, DUMMY_SERVER_ONE),
-          Tuple.of("Dummy Server Two", uid2, DUMMY_SERVER_TWO));
-
-      return pool
-          .withConnection(conn -> conn.preparedQuery(SQL_CREATE_ADMIN_SERVER).executeBatch(tup));
-    }).onSuccess(succ -> {
-      registrationService =
-          new RegistrationServiceImpl(pool, kc, tokenService, policyService, options);
-      testContext.completeNow();
-    }).onFailure(err -> testContext.failNow(err.getMessage()));
+    CompositeFuture.all(utils.createFakeResourceServer(DUMMY_SERVER_ONE, adminOneUser),
+        utils.createFakeResourceServer(DUMMY_SERVER_TWO, adminTwoUser)).onSuccess(succ -> {
+          registrationService =
+              new RegistrationServiceImpl(pool, kc, tokenService, options);
+          testContext.completeNow();
+        }).onFailure(err -> testContext.failNow(err.getMessage()));
   }
 
   @AfterAll
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing and resetting DB");
-    pool.withConnection(conn -> conn.preparedQuery(SQL_DELETE_SERVERS)
-        .execute(Tuple.of(List.of(DUMMY_SERVER_TWO, DUMMY_SERVER_ONE).toArray()))).onComplete(x -> {
+       utils.deleteFakeResourceServer().onComplete(x -> {
           vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
         });
   }
@@ -156,22 +147,12 @@ public class ListResourceServerTest {
         resp.put(id, new JsonObject());
       });
 
-      JsonObject userJson1 = adminOneUser.result();
-      JsonObject details1 = new JsonObject().put("email", userJson1.getString("email")).put("name",
-          new JsonObject().put("firstName", userJson1.getString("firstName")).put("lastName",
-              userJson1.getString("lastName")));
-
-      JsonObject userJson2 = adminTwoUser.result();
-      JsonObject details2 = new JsonObject().put("email", userJson2.getString("email")).put("name",
-          new JsonObject().put("firstName", userJson2.getString("firstName")).put("lastName",
-              userJson2.getString("lastName")));
-
-      resp.replace(adminOneUser.result().getString("userId"), details1);
-      resp.replace(adminTwoUser.result().getString("userId"), details2);
+      resp.replace(adminOneUser.getUserId(), utils.getKcAdminJson(adminOneUser));
+      resp.replace(adminTwoUser.getUserId(), utils.getKcAdminJson(adminTwoUser));
 
       return Future.succeededFuture(resp);
     }).when(kc).getDetails(Mockito.anyList());
-
+    
     registrationService
         .listResourceServer(testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(SUCC_TITLE_RS_READ, response.getString("title"));
@@ -181,15 +162,13 @@ public class ListResourceServerTest {
           List<JsonObject> list = response.getJsonArray("results").getList();
 
           Boolean oneExists = list.stream().anyMatch(obj -> {
-            return (obj.getString("name").equals("Dummy Server One")
-                && obj.getString("url").equals(DUMMY_SERVER_ONE) && obj.getJsonObject("owner")
-                    .getString("id").equals(adminOneUser.result().getString("userId")));
+            return (obj.getString("url").equals(DUMMY_SERVER_ONE) && obj.getJsonObject("owner")
+                    .getString("id").equals(adminOneUser.getUserId()));
           });
 
           Boolean twoExists = list.stream().anyMatch(obj -> {
-            return (obj.getString("name").equals("Dummy Server Two")
-                && obj.getString("url").equals(DUMMY_SERVER_TWO) && obj.getJsonObject("owner")
-                    .getString("id").equals(adminTwoUser.result().getString("userId")));
+            return (obj.getString("url").equals(DUMMY_SERVER_TWO) && obj.getJsonObject("owner")
+                    .getString("id").equals(adminTwoUser.getUserId()));
           });
 
           assertTrue(oneExists);

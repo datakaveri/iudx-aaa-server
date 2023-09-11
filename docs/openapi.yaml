@@ -1224,15 +1224,6 @@ paths:
               schema:
                 description: ''
                 type: object
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:Success'
-                    title: User created
-                    results:
-                      clients:
-                        - client: default
-                          clientId: 6d0b58c3-c0c4-48af-bca2-4f255c0e73a7
-                          clientSecret: a18cb9fc-06b3-4ae5-8220-86fc4e89a1a6
                 properties:
                   type:
                     type: string
@@ -1242,31 +1233,22 @@ paths:
                     minLength: 1
                   results:
                     type: object
-                    required:
-                      - clients
                     properties:
-                      clients:
-                        type: array
-                        uniqueItems: true
-                        minItems: 1
-                        items:
-                          type: object
-                          properties:
-                            clientName:
-                              type: string
-                              minLength: 1
-                            clientId:
-                              type: string
-                              minLength: 1
-                            clientSecret:
-                              type: string
-                              minLength: 40
-                              maxLength: 40
-                              pattern: '^[0-9a-f]{40}$'
-                          required:
-                            - clientName
-                            - clientId
-                            - clientSecret
+                      clientName:
+                        type: string
+                        minLength: 1
+                      clientId:
+                        type: string
+                        minLength: 1
+                      clientSecret:
+                        type: string
+                        minLength: 40
+                        maxLength: 40
+                        pattern: '^[0-9a-f]{40}$'
+                    required:
+                      - clientName
+                      - clientId
+                      - clientSecret
                 required:
                   - type
                   - title
@@ -1277,10 +1259,9 @@ paths:
                     type: 'urn:dx:as:Success'
                     title: Created default client credentials
                     results:
-                      clients:
-                        - clientName: default
-                          clientId: 6d0b58c3-c0c4-48af-bca2-4f255c0e73a7
-                          clientSecret: 73b66ab55ba4d07ea487310679aa0689b4bd2c9d
+                      clientName: default
+                      clientId: 6d0b58c3-c0c4-48af-bca2-4f255c0e73a7
+                      clientSecret: 73b66ab55ba4d07ea487310679aa0689b4bd2c9d
         '401':
           description: '- Unauthorized - `token` invalid/expired'
           headers:
@@ -1341,7 +1322,7 @@ paths:
           description: Keycloak Issued token
           required: true
       description: |-
-        The user would receive a client ID and a client secret. The client ID and client secret can be used instead of the OIDC flow to request for tokens. **The client secret is ONLY shown to the user here and can never be obtained again.**
+        The user would receive a default client ID and a client secret. The client ID and client secret can be used instead of the OIDC flow to request for tokens. **The client secret is ONLY shown to the user here and can never be obtained again.**
       tags:
         - User APIs
       security:

@@ -447,7 +447,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     AddRolesRequest request = new AddRolesRequest(jsonRequest);
     User user = context.get(USER);
 
-    registrationService.createUser(request, user, handler -> {
+    registrationService.addRoles(request, user, handler -> {
       if (handler.succeeded()) {
         JsonObject result = handler.result();
         Future.future(future -> handleAuditLogs(context, result));

@@ -47,15 +47,15 @@ public interface RegistrationService {
   }
 
   /**
-   * createUser implements creation of user profile operation.
+   * addRoles implements adding of roles to the user.
    * 
-   * @param request the request body in the form of RegistrationRequest data object
+   * @param request the request body in the form of {@link AddRolesRequest} data object
    * @param user the User object i.e. the user calling the API
    * @param handler the request handler which returns a JsonObject
    * @return Registration Service which is a service
    */
   @Fluent
-  RegistrationService createUser(AddRolesRequest request, User user,
+  RegistrationService addRoles(AddRolesRequest request, User user,
       Handler<AsyncResult<JsonObject>> handler);
 
   /**

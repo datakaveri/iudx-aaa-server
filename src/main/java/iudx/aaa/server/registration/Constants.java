@@ -59,6 +59,8 @@ public class Constants {
       "Provider role exists for the requested resource servers ";
   public static final String ERR_DETAIL_CONSUMER_FOR_RS_EXISTS =
       "Consumer role exists for the requested resource servers ";
+  
+  public static final String ERR_CONTEXT_EXISTING_ROLE_FOR_RS = "existingRs";
 
   public static final String ERR_TITLE_USER_EXISTS = "User exists";
   public static final String ERR_DETAIL_USER_EXISTS = "User has an existing user profile";
@@ -69,14 +71,15 @@ public class Constants {
   public static final String ERR_TITLE_RS_NO_EXIST = "Resource server does not exist";
   public static final String ERR_DETAIL_RS_NO_EXIST =
       "Resource server URL does not correspond to a registered resource server ";
+  public static final String ERR_CONTEXT_NOT_FOUND_RS_URLS = "urls";
 
-  public static final String ERR_TITLE_PENDING_PROVIDER_RS_REG_EXISTS = "Pending provider registration for resource server";
-  public static final String ERR_DETAIL_PENDING_PROVIDER_RS_REG_EXISTS =
-      "User has a pending provider registration for the requested resource server ";
+  public static final String ERR_TITLE_PENDING_REJECTED_PROVIDER_RS_REG_EXISTS = "Pending/Rejected provider registration for resource server";
+  public static final String ERR_DETAIL_PENDING_REJECTED_PROVIDER_RS_REG_EXISTS =
+      "User has a pending/rejected provider registration for the requested resource servers";
 
   public static final String ERR_TITLE_NOT_TRUSTEE = "User does not have trustee role";
   public static final String ERR_DETAIL_NOT_TRUSTEE =
-      "You are not a trustee of any registered and active APD";
+      "Only trustees may call this API. You are not a trustee of any registered and active APD";
   
   public static final String ERR_TITLE_USER_NOT_FOUND = "User not found";
   public static final String ERR_DETAIL_USER_NOT_FOUND =
@@ -89,6 +92,9 @@ public class Constants {
   public static final String ERR_DETAIL_DEFAULT_CLIENT_EXISTS =
       "The default client credentials have already been created. "
       + "If you have forgotten your client secret, please use the regenerate client secret API";
+  
+  public static final String ERR_TITLE_EMAILS_NOT_AT_UAC_KEYCLOAK =
+      "Some email IDs have not been registered at UAC";
 
   /* SQL queries */
   public static final String SQL_CREATE_ROLE =
@@ -146,9 +152,9 @@ public class Constants {
 
   public static final String SQL_CREATE_USER_IF_NOT_EXISTS =
       "INSERT INTO users (id, phone, userinfo, created_at, updated_at) VALUES ($1::uuid, $2::text"
-          + ",$3::jsonb, NOW(), NOW()) ON CONFLICT (id) DO NOTHING";
+          + ",$3::jsonb, NOW(), NOW()) ON CONFLICT (id) DO NOTHING RETURNING id";
   
-  public static final String SQL_CHECK_PENDING_PROVIDER_ROLES =
-      "SELECT resource_server_id FROM roles WHERE role = 'PROVIDER' AND status = 'PENDING' AND resource_server_id = ANY($1::UUID[])"
-          + " AND user_id = $2::UUID";
+  public static final String SQL_CHECK_PENDING_REJECTED_PROVIDER_ROLES =
+      "SELECT resource_server_id, status FROM roles WHERE role = 'PROVIDER' AND (status = 'PENDING' OR status = 'REJECTED')"
+      + " AND resource_server_id = ANY($1::UUID[]) AND user_id = $2::UUID";
 }
