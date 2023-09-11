@@ -56,7 +56,7 @@ public class User {
   }
 
   public List<String> getResServersForRole(Roles role) {
-    return rolesToRsMapping.get(role.toString().toLowerCase());
+    return rolesToRsMapping.getOrDefault(role.toString().toLowerCase(), new ArrayList<String>());
   }
 
   public Map<String, String> getName() {
@@ -76,11 +76,11 @@ public class User {
   }
 
   public List<Roles> getRoles() {
-    return roles;
+    return new ArrayList<Roles>(roles);
   }
 
   public void setRoles(List<Roles> roles) {
-    this.roles = roles;
+    this.roles = new ArrayList<Roles>(roles);
   }
 
   public Map<String, JsonArray> getRolesToRsMapping() {
