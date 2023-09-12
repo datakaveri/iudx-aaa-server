@@ -14,7 +14,7 @@ import org.apache.commons.lang3.RandomStringUtils;
  */
 public class FakeUserDetails {
   public String phone = NIL_PHONE;
-  JsonObject userInfo = new JsonObject();
+  public JsonObject userInfo = new JsonObject();
   public String email = RandomStringUtils.randomAlphabetic(10) + "@gmail.com";
   public String clientId;
   public String clientSecret;

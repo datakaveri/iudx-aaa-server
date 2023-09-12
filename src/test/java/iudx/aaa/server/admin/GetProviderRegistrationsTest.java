@@ -1,38 +1,29 @@
 package iudx.aaa.server.admin;
 
-import static iudx.aaa.server.apiserver.util.Urn.*;
-import static iudx.aaa.server.registration.Utils.SQL_CREATE_ADMIN_SERVER;
-import static iudx.aaa.server.registration.Utils.SQL_CREATE_ORG;
-import static iudx.aaa.server.registration.Utils.SQL_DELETE_ORG;
-import static iudx.aaa.server.registration.Utils.SQL_DELETE_SERVERS;
+import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
+import static iudx.aaa.server.apiserver.util.Urn.URN_SUCCESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
-import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.configuration.Configuration;
-import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.KcAdmin;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.registration.Utils;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -67,31 +58,9 @@ public class GetProviderRegistrationsTest {
   private static Vertx vertxObj;
 
   private static KcAdmin kc = Mockito.mock(KcAdmin.class);
-  private static PolicyService policyService = Mockito.mock(PolicyService.class);
   private static RegistrationService registrationService = Mockito.mock(RegistrationService.class);
-  private static Future<JsonObject> adminAuthUser;
-  private static Future<JsonObject> adminOtherUser;
-  private static Future<JsonObject> consumerUser;
 
-  private static List<UUID> orgIds = new ArrayList<UUID>();
-
-  private static final String UUID_REGEX =
-      "^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$";
-
-  private static final String DUMMY_SERVER =
-      "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
-  private static final String DUMMY_AUTH_SERVER =
-      "auth" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + "iudx.io";
-
-  static String name = RandomStringUtils.randomAlphabetic(10).toLowerCase();
-  static String url = name + ".com";
-  static Promise<UUID> orgId;
-
-  static Future<JsonObject> providerPending;
-  static Future<JsonObject> providerRejected;
-  static Future<JsonObject> providerApproved;
-
-  static Future<UUID> orgIdFut;
+  private static Utils utils;
 
   @BeforeAll
   @DisplayName("Deploying Verticle")
@@ -115,9 +84,9 @@ public class GetProviderRegistrationsTest {
     if (connectOptions == null) {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
-      connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
-          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
-          .setProperties(schemaProp);
+      connectOptions =
+          new PgConnectOptions().setPort(databasePort).setHost(databaseIP).setDatabase(databaseName)
+              .setUser(databaseUserName).setPassword(databasePassword).setProperties(schemaProp);
     }
 
     /* Pool options */
@@ -127,59 +96,16 @@ public class GetProviderRegistrationsTest {
 
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
 
-    /* Do not take test config, use generated config */
-    JsonObject options = new JsonObject().put(Constants.CONFIG_AUTH_URL, DUMMY_AUTH_SERVER);
+    utils = new Utils(pool);
 
-    Map<Roles, RoleStatus> rolesA = new HashMap<Roles, RoleStatus>();
-    rolesA.put(Roles.ADMIN, RoleStatus.APPROVED);
-
-    Map<Roles, RoleStatus> rolesB = new HashMap<Roles, RoleStatus>();
-    rolesB.put(Roles.CONSUMER, RoleStatus.APPROVED);
-
-    adminAuthUser = Utils.createFakeUser(pool, Constants.NIL_UUID, "", rolesA, false);
-    adminOtherUser = Utils.createFakeUser(pool, Constants.NIL_UUID, "", rolesA, false);
-    consumerUser = Utils.createFakeUser(pool, Constants.NIL_UUID, "", rolesB, false);
-
-    orgIdFut = pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_ORG)
-        .execute(Tuple.of(name, url)).map(row -> row.iterator().next().getUUID("id")));
-
-    providerApproved = orgIdFut.compose(id -> Utils.createFakeUser(pool, id.toString(), url,
-        Map.of(Roles.PROVIDER, RoleStatus.APPROVED), true));
-
-    providerRejected = orgIdFut.compose(id -> Utils.createFakeUser(pool, id.toString(), url,
-        Map.of(Roles.PROVIDER, RoleStatus.REJECTED), true));
-
-    providerPending = orgIdFut.compose(id -> Utils.createFakeUser(pool, id.toString(), url,
-        Map.of(Roles.PROVIDER, RoleStatus.PENDING), true));
-    CompositeFuture.all(adminAuthUser, adminOtherUser, consumerUser, providerApproved,
-        providerPending, providerRejected).compose(res -> {
-          JsonObject admin1 = (JsonObject) res.list().get(0);
-          UUID uid1 = UUID.fromString(admin1.getString("userId"));
-
-          JsonObject admin2 = (JsonObject) res.list().get(1);
-          UUID uid2 = UUID.fromString(admin2.getString("userId"));
-          List<Tuple> tup = List.of(Tuple.of("Auth Server", uid1, DUMMY_AUTH_SERVER),
-              Tuple.of("Other Server", uid2, DUMMY_SERVER));
-
-          return pool.withConnection(
-              conn -> conn.preparedQuery(SQL_CREATE_ADMIN_SERVER).executeBatch(tup));
-        }).onSuccess(res -> {
-          adminService = new AdminServiceImpl(pool, kc, policyService, registrationService, options);
-          testContext.completeNow();
-        }).onFailure(err -> testContext.failNow(err.getMessage()));
+    adminService = new AdminServiceImpl(pool, kc, registrationService);
+    testContext.completeNow();
   }
 
   @AfterAll
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing....");
-    Tuple servers = Tuple.of(List.of(DUMMY_AUTH_SERVER, DUMMY_SERVER).toArray());
-    List<JsonObject> users =
-        List.of(adminAuthUser.result(), adminOtherUser.result(), consumerUser.result(),
-            providerPending.result(), providerRejected.result(), providerApproved.result());
-
-    pool.withConnection(conn -> conn.preparedQuery(SQL_DELETE_SERVERS).execute(servers)
-        .compose(success -> Utils.deleteFakeUser(pool, users))
-        .compose(succ -> conn.preparedQuery(SQL_DELETE_ORG).execute(Tuple.of(orgIdFut.result()))))
+    utils.deleteFakeResourceServer().compose(res -> utils.deleteFakeResourceServer())
         .onComplete(x -> {
           if (x.failed()) {
             LOGGER.warn(x.cause().getMessage());
@@ -189,202 +115,427 @@ public class GetProviderRegistrationsTest {
   }
 
   @Test
-  @DisplayName("Test no user profile")
-  void noUserProfile(VertxTestContext testContext) {
-    JsonObject userJson = adminAuthUser.result();
-
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .name(userJson.getString("firstName"), userJson.getString("lastName"))
-        .roles(List.of(Roles.ADMIN)).build();
-
-    Map<String, JsonObject> resp = new HashMap<String, JsonObject>();
-    Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
-    adminService.getProviderRegistrations(RoleStatus.PENDING, user,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getInteger("status"), 404);
-          assertEquals(URN_MISSING_INFO.toString(), response.getString("type"));
-          assertEquals(Constants.ERR_TITLE_NO_USER_PROFILE, response.getString("title"));
-          assertEquals(Constants.ERR_DETAIL_NO_USER_PROFILE, response.getString("detail"));
-          testContext.completeNow();
-        })));
-  }
-
-  @Test
-  @DisplayName("Test not auth admin")
-  void notAuthAdmin(VertxTestContext testContext) {
-    JsonObject userJson = adminOtherUser.result();
-
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
-
-    Map<String, JsonObject> resp = new HashMap<String, JsonObject>();
-    Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
-    adminService.getProviderRegistrations(RoleStatus.PENDING, user,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getInteger("status"), 401);
-          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-          assertEquals(Constants.ERR_TITLE_NOT_AUTH_ADMIN, response.getString("title"));
-          assertEquals(Constants.ERR_DETAIL_NOT_AUTH_ADMIN, response.getString("detail"));
-          testContext.completeNow();
-        })));
-  }
-
-  @Test
   @DisplayName("Test not an admin")
   void notAdmin(VertxTestContext testContext) {
-    JsonObject userJson = consumerUser.result();
 
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.CONSUMER))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+    User user = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
 
-    Map<String, JsonObject> resp = new HashMap<String, JsonObject>();
-    Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
     adminService.getProviderRegistrations(RoleStatus.PENDING, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 401);
           assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-          assertEquals(Constants.ERR_TITLE_NOT_AUTH_ADMIN, response.getString("title"));
-          assertEquals(Constants.ERR_DETAIL_NOT_AUTH_ADMIN, response.getString("detail"));
+          assertEquals(Constants.ERR_TITLE_NOT_ADMIN, response.getString("title"));
+          assertEquals(Constants.ERR_DETAIL_NOT_ADMIN, response.getString("detail"));
           testContext.completeNow();
         })));
   }
+  
+  @Test
+  @DisplayName("Test no registrations in any state")
+  void noRegsInAnyState(VertxTestContext testContext) {
 
-  /*
-   * NOTE: Unable to test if a filter value returns an empty result, as we don't knwo the state of
-   * the DB. We mock KcAdmin getDetails function as well as the Map<String, JsonObject> returned by
-   * said function. This is because we don't know the values already existing in the table. Hence,
-   * we mock the Map.get(<String>) function to return an empty JsonObject, but if it is the expected
-   * userId String, we return the expected output.
-   */
+    String SERVER_URL = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
+
+    User adminUser = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    adminUser.setRoles(List.of(Roles.ADMIN));
+    adminUser.setRolesToRsMapping(Map.of(Roles.ADMIN.toString(), new JsonArray().add(SERVER_URL)));
+
+    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL, adminUser);
+
+    Checkpoint pendingEmpty = testContext.checkpoint();
+    Checkpoint rejectedEmpty = testContext.checkpoint();
+    Checkpoint approvedEmpty = testContext.checkpoint();
+
+    setup.onSuccess(succ -> {
+      adminService.getProviderRegistrations(RoleStatus.PENDING, adminUser,
+          testContext.succeeding(response -> testContext.verify(() -> {
+            assertEquals(response.getInteger("status"), 200);
+            assertEquals(response.getString("type"), URN_SUCCESS.toString());
+            assertEquals(response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
+            JsonArray res = response.getJsonArray("results");
+            assertTrue(res.isEmpty());
+            pendingEmpty.flag();
+          })));
+
+      adminService.getProviderRegistrations(RoleStatus.REJECTED, adminUser,
+          testContext.succeeding(response -> testContext.verify(() -> {
+            assertEquals(response.getInteger("status"), 200);
+            assertEquals(response.getString("type"), URN_SUCCESS.toString());
+            assertEquals(response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
+            JsonArray res = response.getJsonArray("results");
+            assertTrue(res.isEmpty());
+            rejectedEmpty.flag();
+          })));
+      
+      adminService.getProviderRegistrations(RoleStatus.APPROVED, adminUser,
+          testContext.succeeding(response -> testContext.verify(() -> {
+            assertEquals(response.getInteger("status"), 200);
+            assertEquals(response.getString("type"), URN_SUCCESS.toString());
+            assertEquals(response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
+            JsonArray res = response.getJsonArray("results");
+            assertTrue(res.isEmpty());
+            approvedEmpty.flag();
+          })));
+    });
+  }
 
   @Test
   @DisplayName("Test get pending registration")
   void pendingReg(VertxTestContext testContext) {
-    JsonObject providerJson = providerPending.result();
-    JsonObject details = new JsonObject().put("email", providerJson.getString("email")).put("name",
-        new JsonObject().put("firstName", providerJson.getString("firstName")).put("lastName",
-            providerJson.getString("lastName")));
 
-    JsonObject userJson = adminAuthUser.result();
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+    String SERVER_URL = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
 
-    /* Mock the actual result returned by KC */
-    Map<String, JsonObject> resp = Mockito.mock(Map.class);
-    Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
-    Mockito.when(resp.get(anyString())).thenReturn(new JsonObject());
-    Mockito.when(resp.get(providerJson.getString("keycloakId"))).thenReturn(details);
+    User adminUser = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    adminUser.setRoles(List.of(Roles.ADMIN));
+    adminUser.setRolesToRsMapping(Map.of(Roles.ADMIN.toString(), new JsonArray().add(SERVER_URL)));
 
-    adminService.getProviderRegistrations(RoleStatus.PENDING, user,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getString("type"), URN_SUCCESS.toString());
-          assertEquals(response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
-          JsonArray res = response.getJsonArray("results");
-          assertTrue(res.size() > 0);
+    User providerA = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    User providerB = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
 
-          res.forEach(i -> {
-            JsonObject j = (JsonObject) i;
-            if (j.getString("userId").equals(providerJson.getString("userId"))) {
+    UUID providerAPendingId = UUID.randomUUID();
+    UUID providerBPendingId = UUID.randomUUID();
 
+    Checkpoint sawProviderA = testContext.checkpoint();
+    Checkpoint sawProviderB = testContext.checkpoint();
+
+    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL, adminUser)
+        .compose(res -> utils.createFakeUser(providerA, false, true))
+        .compose(res -> utils.createFakeUser(providerB, false, true))
+        .compose(res -> utils.addProviderStatusRole(providerA, SERVER_URL, RoleStatus.PENDING,
+            providerAPendingId))
+        .compose(res -> utils.addProviderStatusRole(providerB, SERVER_URL, RoleStatus.PENDING,
+            providerBPendingId));
+
+    setup.onSuccess(succ -> {
+
+      Map<String, JsonObject> mockKcResp = Map.of(providerA.getUserId(),
+          utils.getKcAdminJson(providerA), providerB.getUserId(), utils.getKcAdminJson(providerB));
+      Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
+
+      adminService.getProviderRegistrations(RoleStatus.PENDING, adminUser,
+          testContext.succeeding(response -> testContext.verify(() -> {
+            assertEquals(response.getInteger("status"), 200);
+            assertEquals(response.getString("type"), URN_SUCCESS.toString());
+            assertEquals(response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
+            JsonArray res = response.getJsonArray("results");
+            assertTrue(res.size() == 2);
+
+            res.forEach(i -> {
+              JsonObject j = (JsonObject) i;
+              
               assertEquals(j.getString(Constants.RESP_STATUS),
                   RoleStatus.PENDING.name().toLowerCase());
-              JsonObject org = j.getJsonObject(Constants.RESP_ORG);
-              assertEquals(org.getString("url"), providerJson.getString("url"));
+              assertEquals(j.getString("rsUrl"), SERVER_URL);
+              
+              if (j.getString("id").equals(providerAPendingId.toString())) {
+                assertEquals(j.getString("email"), utils.getDetails(providerA).email);
+                assertEquals(j.getString("userId"), providerA.getUserId());
+                assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
+                sawProviderA.flag();
+              }
 
-              assertEquals(j.getString("email"), providerJson.getString("email"));
-              assertEquals(j.getString("userId"), providerJson.getString("userId"));
-              testContext.completeNow();
-            }
-          });
-        })));
+              if (j.getString("id").equals(providerBPendingId.toString())) {
+                assertEquals(j.getString("email"), utils.getDetails(providerB).email);
+                assertEquals(j.getString("userId"), providerB.getUserId());
+                assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerB).userInfo);
+                sawProviderB.flag();
+              }
+            });
+          })));
+    });
   }
-
+  
   @Test
   @DisplayName("Test get approved registration")
   void approvedReg(VertxTestContext testContext) {
-    JsonObject providerJson = providerApproved.result();
-    JsonObject details = new JsonObject().put("email", providerJson.getString("email")).put("name",
-        new JsonObject().put("firstName", providerJson.getString("firstName")).put("lastName",
-            providerJson.getString("lastName")));
 
-    JsonObject userJson = adminAuthUser.result();
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+    String SERVER_URL = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
 
-    /* Mock the actual result returned by KC */
-    Map<String, JsonObject> resp = Mockito.mock(Map.class);
-    Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
-    Mockito.when(resp.get(anyString())).thenReturn(new JsonObject());
-    Mockito.when(resp.get(providerJson.getString("keycloakId"))).thenReturn(details);
+    User adminUser = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    adminUser.setRoles(List.of(Roles.ADMIN));
+    adminUser.setRolesToRsMapping(Map.of(Roles.ADMIN.toString(), new JsonArray().add(SERVER_URL)));
 
-    adminService.getProviderRegistrations(RoleStatus.APPROVED, user,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getString("type"), URN_SUCCESS.toString());
-          assertEquals(response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
-          JsonArray res = response.getJsonArray("results");
-          assertTrue(res.size() > 0);
+    User providerA = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    User providerB = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
 
-          res.forEach(i -> {
-            JsonObject j = (JsonObject) i;
-            if (j.getString("userId").equals(providerJson.getString("userId"))) {
+    UUID providerAPendingId = UUID.randomUUID();
+    UUID providerBPendingId = UUID.randomUUID();
 
+    Checkpoint sawProviderA = testContext.checkpoint();
+    Checkpoint sawProviderB = testContext.checkpoint();
+
+    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL, adminUser)
+        .compose(res -> utils.createFakeUser(providerA, false, true))
+        .compose(res -> utils.createFakeUser(providerB, false, true))
+        .compose(res -> utils.addProviderStatusRole(providerA, SERVER_URL, RoleStatus.APPROVED,
+            providerAPendingId))
+        .compose(res -> utils.addProviderStatusRole(providerB, SERVER_URL, RoleStatus.APPROVED,
+            providerBPendingId));
+
+    setup.onSuccess(succ -> {
+
+      Map<String, JsonObject> mockKcResp = Map.of(providerA.getUserId(),
+          utils.getKcAdminJson(providerA), providerB.getUserId(), utils.getKcAdminJson(providerB));
+      Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
+
+      adminService.getProviderRegistrations(RoleStatus.APPROVED, adminUser,
+          testContext.succeeding(response -> testContext.verify(() -> {
+            assertEquals(response.getInteger("status"), 200);
+            assertEquals(response.getString("type"), URN_SUCCESS.toString());
+            assertEquals(response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
+            JsonArray res = response.getJsonArray("results");
+            assertTrue(res.size() == 2);
+
+            res.forEach(i -> {
+              JsonObject j = (JsonObject) i;
               assertEquals(j.getString(Constants.RESP_STATUS),
                   RoleStatus.APPROVED.name().toLowerCase());
-              JsonObject org = j.getJsonObject(Constants.RESP_ORG);
-              assertEquals(org.getString("url"), providerJson.getString("url"));
+              assertEquals(j.getString("rsUrl"), SERVER_URL);
+              
+              if (j.getString("id").equals(providerAPendingId.toString())) {
+                assertEquals(j.getString("email"), utils.getDetails(providerA).email);
+                assertEquals(j.getString("userId"), providerA.getUserId());
+                assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
+                sawProviderA.flag();
+              }
 
-              assertEquals(j.getString("email"), providerJson.getString("email"));
-              assertEquals(j.getString("userId"), providerJson.getString("userId"));
-              testContext.completeNow();
-            }
-          });
-        })));
+              if (j.getString("id").equals(providerBPendingId.toString())) {
+                assertEquals(j.getString("email"), utils.getDetails(providerB).email);
+                assertEquals(j.getString("userId"), providerB.getUserId());
+                assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerB).userInfo);
+                sawProviderB.flag();
+              }
+            });
+          })));
+    });
   }
-
+  
   @Test
   @DisplayName("Test get rejected registration")
   void rejectedReg(VertxTestContext testContext) {
-    JsonObject providerJson = providerRejected.result();
-    JsonObject details = new JsonObject().put("email", providerJson.getString("email")).put("name",
-        new JsonObject().put("firstName", providerJson.getString("firstName")).put("lastName",
-            providerJson.getString("lastName")));
 
-    JsonObject userJson = adminAuthUser.result();
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+    String SERVER_URL = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
 
-    /* Mock the actual result returned by KC */
-    Map<String, JsonObject> resp = Mockito.mock(Map.class);
-    Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
-    Mockito.when(resp.get(anyString())).thenReturn(new JsonObject());
-    Mockito.when(resp.get(providerJson.getString("keycloakId"))).thenReturn(details);
+    User adminUser = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    adminUser.setRoles(List.of(Roles.ADMIN));
+    adminUser.setRolesToRsMapping(Map.of(Roles.ADMIN.toString(), new JsonArray().add(SERVER_URL)));
 
-    adminService.getProviderRegistrations(RoleStatus.REJECTED, user,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getString("type"), URN_SUCCESS.toString());
-          assertEquals(response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
-          JsonArray res = response.getJsonArray("results");
-          assertTrue(res.size() > 0);
+    User providerA = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    User providerB = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
 
-          res.forEach(i -> {
-            JsonObject j = (JsonObject) i;
-            if (j.getString("userId").equals(providerJson.getString("userId"))) {
+    UUID providerAPendingId = UUID.randomUUID();
+    UUID providerBPendingId = UUID.randomUUID();
 
+    Checkpoint sawProviderA = testContext.checkpoint();
+    Checkpoint sawProviderB = testContext.checkpoint();
+
+    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL, adminUser)
+        .compose(res -> utils.createFakeUser(providerA, false, true))
+        .compose(res -> utils.createFakeUser(providerB, false, true))
+        .compose(res -> utils.addProviderStatusRole(providerA, SERVER_URL, RoleStatus.REJECTED,
+            providerAPendingId))
+        .compose(res -> utils.addProviderStatusRole(providerB, SERVER_URL, RoleStatus.REJECTED,
+            providerBPendingId));
+
+    setup.onSuccess(succ -> {
+
+      Map<String, JsonObject> mockKcResp = Map.of(providerA.getUserId(),
+          utils.getKcAdminJson(providerA), providerB.getUserId(), utils.getKcAdminJson(providerB));
+      Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
+
+      adminService.getProviderRegistrations(RoleStatus.REJECTED, adminUser,
+          testContext.succeeding(response -> testContext.verify(() -> {
+            assertEquals(response.getInteger("status"), 200);
+            assertEquals(response.getString("type"), URN_SUCCESS.toString());
+            assertEquals(response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
+            JsonArray res = response.getJsonArray("results");
+            assertTrue(res.size() == 2);
+
+            res.forEach(i -> {
+              JsonObject j = (JsonObject) i;
               assertEquals(j.getString(Constants.RESP_STATUS),
                   RoleStatus.REJECTED.name().toLowerCase());
-              JsonObject org = j.getJsonObject(Constants.RESP_ORG);
-              assertEquals(org.getString("url"), providerJson.getString("url"));
+              assertEquals(j.getString("rsUrl"), SERVER_URL);
+              
+              if (j.getString("id").equals(providerAPendingId.toString())) {
+                assertEquals(j.getString("email"), utils.getDetails(providerA).email);
+                assertEquals(j.getString("userId"), providerA.getUserId());
+                assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
+                sawProviderA.flag();
+              }
 
-              assertEquals(j.getString("email"), providerJson.getString("email"));
-              assertEquals(j.getString("userId"), providerJson.getString("userId"));
-              testContext.completeNow();
-            }
-          });
-        })));
+              if (j.getString("id").equals(providerBPendingId.toString())) {
+                assertEquals(j.getString("email"), utils.getDetails(providerB).email);
+                assertEquals(j.getString("userId"), providerB.getUserId());
+                assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerB).userInfo);
+                sawProviderB.flag();
+              }
+            });
+          })));
+    });
+  }
+  
+  @Test
+  @DisplayName("Test admin of multiple RS viewing only pending registrations across all their owned servers")
+  void adminOfMultipleRs(VertxTestContext testContext) {
+
+    String SERVER_URL_ONE = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
+    String SERVER_URL_TWO = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
+
+    User adminUser = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    adminUser.setRoles(List.of(Roles.ADMIN));
+    adminUser.setRolesToRsMapping(
+        Map.of(Roles.ADMIN.toString(), new JsonArray(List.of(SERVER_URL_ONE, SERVER_URL_TWO))));
+
+    User providerA = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    User providerB = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    User providerC = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    User providerD = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+
+    UUID providerAPendingIdOnServerOne = UUID.randomUUID();
+    UUID providerBPendingIdOnServerTwo = UUID.randomUUID();
+    
+    UUID providerCApprovedIdOnServerTwo = UUID.randomUUID();
+    UUID providerDRejectedIdOnServerOne = UUID.randomUUID();
+
+    Checkpoint sawProviderA = testContext.checkpoint();
+    Checkpoint sawProviderB = testContext.checkpoint();
+
+    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL_ONE, adminUser)
+        .compose(res -> utils.createFakeResourceServer(SERVER_URL_TWO, adminUser))
+        .compose(res -> utils.createFakeUser(providerA, false, true))
+        .compose(res -> utils.createFakeUser(providerB, false, true))
+        .compose(res -> utils.createFakeUser(providerC, false, true))
+        .compose(res -> utils.createFakeUser(providerD, false, true))
+        .compose(res -> utils.addProviderStatusRole(providerA, SERVER_URL_ONE, RoleStatus.PENDING,
+            providerAPendingIdOnServerOne))
+        .compose(res -> utils.addProviderStatusRole(providerB, SERVER_URL_TWO, RoleStatus.PENDING,
+            providerBPendingIdOnServerTwo))
+        .compose(res -> utils.addProviderStatusRole(providerC, SERVER_URL_TWO, RoleStatus.APPROVED,
+            providerCApprovedIdOnServerTwo))
+        .compose(res -> utils.addProviderStatusRole(providerD, SERVER_URL_ONE, RoleStatus.REJECTED,
+            providerDRejectedIdOnServerOne));
+
+    setup.onSuccess(succ -> {
+
+      Map<String, JsonObject> mockKcResp = Map.of(providerA.getUserId(),
+          utils.getKcAdminJson(providerA), providerB.getUserId(), utils.getKcAdminJson(providerB));
+      Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
+
+      adminService.getProviderRegistrations(RoleStatus.PENDING, adminUser,
+          testContext.succeeding(response -> testContext.verify(() -> {
+            assertEquals(response.getInteger("status"), 200);
+            assertEquals(response.getString("type"), URN_SUCCESS.toString());
+            assertEquals(response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
+            JsonArray res = response.getJsonArray("results");
+            assertTrue(res.size() == 2);
+
+            res.forEach(i -> {
+              JsonObject j = (JsonObject) i;
+              assertEquals(j.getString(Constants.RESP_STATUS),
+                  RoleStatus.PENDING.name().toLowerCase());
+              
+              if (j.getString("id").equals(providerAPendingIdOnServerOne.toString())) {
+              assertEquals(j.getString("rsUrl"), SERVER_URL_ONE);
+                assertEquals(j.getString("email"), utils.getDetails(providerA).email);
+                assertEquals(j.getString("userId"), providerA.getUserId());
+                assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
+                sawProviderA.flag();
+              }
+
+              if (j.getString("id").equals(providerBPendingIdOnServerTwo.toString())) {
+                assertEquals(j.getString("rsUrl"), SERVER_URL_TWO);
+                assertEquals(j.getString("email"), utils.getDetails(providerB).email);
+                assertEquals(j.getString("userId"), providerB.getUserId());
+                assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerB).userInfo);
+                sawProviderB.flag();
+              }
+            });
+          })));
+    });
+  }
+  
+  @Test
+  @DisplayName("Test admin getting registrations only associated with them")
+  void adminGettingOnlyRegAssociatedWithThem(VertxTestContext testContext) {
+    String SERVER_URL_ONE = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
+    String SERVER_URL_TWO = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
+
+    User adminOfOne = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    adminOfOne.setRoles(List.of(Roles.ADMIN));
+    adminOfOne.setRolesToRsMapping(
+        Map.of(Roles.ADMIN.toString(), new JsonArray(List.of(SERVER_URL_ONE))));
+    
+    User adminOfTwo = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    adminOfTwo.setRoles(List.of(Roles.ADMIN));
+    adminOfTwo.setRolesToRsMapping(
+        Map.of(Roles.ADMIN.toString(), new JsonArray(List.of(SERVER_URL_TWO))));
+
+    User providerA = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    User providerB = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    User providerC = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    User providerD = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+
+    UUID providerAPendingIdOnServerOne = UUID.randomUUID();
+    UUID providerBPendingIdOnServerOne = UUID.randomUUID();
+    
+    UUID providerCPendingIdOnServerTwo = UUID.randomUUID();
+    UUID providerDPendingIdOnServerTwo = UUID.randomUUID();
+
+    Checkpoint sawProviderA = testContext.checkpoint();
+    Checkpoint sawProviderB = testContext.checkpoint();
+
+    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL_ONE, adminOfOne)
+        .compose(res -> utils.createFakeResourceServer(SERVER_URL_TWO, adminOfTwo))
+        .compose(res -> utils.createFakeUser(providerA, false, true))
+        .compose(res -> utils.createFakeUser(providerB, false, true))
+        .compose(res -> utils.createFakeUser(providerC, false, true))
+        .compose(res -> utils.createFakeUser(providerD, false, true))
+        .compose(res -> utils.addProviderStatusRole(providerA, SERVER_URL_ONE, RoleStatus.PENDING,
+            providerAPendingIdOnServerOne))
+        .compose(res -> utils.addProviderStatusRole(providerB, SERVER_URL_ONE, RoleStatus.PENDING,
+            providerBPendingIdOnServerOne))
+        .compose(res -> utils.addProviderStatusRole(providerC, SERVER_URL_TWO, RoleStatus.APPROVED,
+            providerCPendingIdOnServerTwo))
+        .compose(res -> utils.addProviderStatusRole(providerD, SERVER_URL_TWO, RoleStatus.REJECTED,
+            providerDPendingIdOnServerTwo));
+
+    setup.onSuccess(succ -> {
+
+      Map<String, JsonObject> mockKcResp = Map.of(providerA.getUserId(),
+          utils.getKcAdminJson(providerA), providerB.getUserId(), utils.getKcAdminJson(providerB));
+      Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
+
+      adminService.getProviderRegistrations(RoleStatus.PENDING, adminOfOne,
+          testContext.succeeding(response -> testContext.verify(() -> {
+            assertEquals(response.getInteger("status"), 200);
+            assertEquals(response.getString("type"), URN_SUCCESS.toString());
+            assertEquals(response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
+            JsonArray res = response.getJsonArray("results");
+            assertTrue(res.size() == 2);
+
+            res.forEach(i -> {
+              JsonObject j = (JsonObject) i;
+              assertEquals(j.getString(Constants.RESP_STATUS),
+                  RoleStatus.PENDING.name().toLowerCase());
+              
+              if (j.getString("id").equals(providerAPendingIdOnServerOne.toString())) {
+              assertEquals(j.getString("rsUrl"), SERVER_URL_ONE);
+                assertEquals(j.getString("email"), utils.getDetails(providerA).email);
+                assertEquals(j.getString("userId"), providerA.getUserId());
+                assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
+                sawProviderA.flag();
+              }
+
+              if (j.getString("id").equals(providerBPendingIdOnServerOne.toString())) {
+                assertEquals(j.getString("rsUrl"), SERVER_URL_ONE);
+                assertEquals(j.getString("email"), utils.getDetails(providerB).email);
+                assertEquals(j.getString("userId"), providerB.getUserId());
+                assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerB).userInfo);
+                sawProviderB.flag();
+              }
+            });
+          })));
+    });
   }
 }

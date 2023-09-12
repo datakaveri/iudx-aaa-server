@@ -53,7 +53,7 @@ public class Constants {
   /* SQL */
   public static final String SQL_GET_PROVIDERS_FOR_RS_BY_STATUS =
       "SELECT roles.id, users.id AS \"userId\", lower(status::text) AS status"
-          + ", userinfo, resource_server.url AS \"rsUrl\" FROM users"
+          + ", userinfo AS \"userInfo\", resource_server.url AS \"rsUrl\" FROM users"
           + " JOIN roles ON users.id = roles.user_id"
           + " JOIN resource_server ON roles.resource_server_id = resource_server.id"
           + " WHERE roles.role = 'PROVIDER' AND roles.status = $1::role_status_enum"
@@ -63,7 +63,8 @@ public class Constants {
       "UPDATE roles SET status = $1::role_status_enum, updated_at = NOW() WHERE id = $2::uuid";
 
   public static final String SQL_GET_PENDING_PROVIDERS_BY_ID_AND_RS = 
-      "SELECT users.id AS \"userId\", roles.id, userinfo, resource_server.url AS \"rsUrl\" FROM users"
+      "SELECT users.id AS \"userId\", roles.id, userinfo AS \"userInfo\""
+          + ", resource_server.url AS \"rsUrl\" FROM users"
           + " JOIN roles ON users.id = roles.user_id"
           + " JOIN resource_server ON roles.resource_server_id = resource_server.id"
           + " WHERE roles.role = 'PROVIDER' AND roles.status = 'PENDING' AND roles.id = ANY($1::uuid[])"

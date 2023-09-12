@@ -1,28 +1,17 @@
 package iudx.aaa.server.admin;
 
 import static iudx.aaa.server.apiserver.util.Urn.*;
-import static iudx.aaa.server.admin.Constants.CONFIG_AUTH_URL;
-import static iudx.aaa.server.admin.Constants.ERR_DETAIL_NOT_AUTH_ADMIN;
-import static iudx.aaa.server.admin.Constants.ERR_DETAIL_NO_USER_PROFILE;
+import static iudx.aaa.server.admin.Constants.ERR_DETAIL_NOT_ADMIN;
 import static iudx.aaa.server.admin.Constants.ERR_TITLE_DUPLICATE_REQ;
-import static iudx.aaa.server.admin.Constants.ERR_TITLE_INVALID_USER;
-import static iudx.aaa.server.admin.Constants.ERR_TITLE_NOT_AUTH_ADMIN;
-import static iudx.aaa.server.admin.Constants.ERR_TITLE_NO_USER_PROFILE;
-import static iudx.aaa.server.admin.Constants.NIL_UUID;
+import static iudx.aaa.server.admin.Constants.ERR_TITLE_INVALID_PROV_REG_ID;
+import static iudx.aaa.server.admin.Constants.ERR_TITLE_NOT_ADMIN;
 import static iudx.aaa.server.admin.Constants.RESP_STATUS;
 import static iudx.aaa.server.admin.Constants.SUCC_TITLE_PROV_STATUS_UPDATE;
-import static iudx.aaa.server.registration.Utils.SQL_CREATE_ADMIN_SERVER;
-import static iudx.aaa.server.registration.Utils.SQL_CREATE_ORG;
-import static iudx.aaa.server.registration.Utils.SQL_DELETE_ORG;
-import static iudx.aaa.server.registration.Utils.SQL_DELETE_SERVERS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -32,7 +21,6 @@ import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
-import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.ProviderUpdateRequest;
 import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
@@ -43,7 +31,6 @@ import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.KcAdmin;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.registration.Utils;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -80,26 +67,8 @@ public class UpdateProviderRegistrationStatusTest {
   private static KcAdmin kc = Mockito.mock(KcAdmin.class);
   private static PolicyService policyService = Mockito.mock(PolicyService.class);
   private static RegistrationService registrationService = Mockito.mock(RegistrationService.class);
-  private static Future<JsonObject> adminAuthUser;
-  private static Future<JsonObject> adminOtherUser;
-  private static Future<JsonObject> consumerUser;
 
-  private static final String DUMMY_SERVER =
-      "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
-  private static final String DUMMY_AUTH_SERVER =
-      "auth" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + "iudx.io";
-
-  static String name = RandomStringUtils.randomAlphabetic(10).toLowerCase();
-  static String url = name + ".com";
-  static Promise<UUID> orgId;
-
-  static Future<JsonObject> providerPending1;
-  static Future<JsonObject> providerPending2;
-  static Future<JsonObject> providerPending3;
-  static Future<JsonObject> providerRejected;
-  static Future<JsonObject> providerApproved;
-
-  static Future<UUID> orgIdFut;
+  private static Utils utils;
 
   @BeforeAll
   @DisplayName("Deploying Verticle")
@@ -123,9 +92,9 @@ public class UpdateProviderRegistrationStatusTest {
     if (connectOptions == null) {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
-      connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
-          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
-          .setProperties(schemaProp);
+      connectOptions =
+          new PgConnectOptions().setPort(databasePort).setHost(databaseIP).setDatabase(databaseName)
+              .setUser(databaseUserName).setPassword(databasePassword).setProperties(schemaProp);
     }
 
     /* Pool options */
@@ -135,69 +104,16 @@ public class UpdateProviderRegistrationStatusTest {
 
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
 
-    /* Do not take test config, use generated config */
-    JsonObject options = new JsonObject().put(CONFIG_AUTH_URL, DUMMY_AUTH_SERVER);
+    utils = new Utils(pool);
 
-    Map<Roles, RoleStatus> rolesA = new HashMap<Roles, RoleStatus>();
-    rolesA.put(Roles.ADMIN, RoleStatus.APPROVED);
-
-    Map<Roles, RoleStatus> rolesB = new HashMap<Roles, RoleStatus>();
-    rolesB.put(Roles.CONSUMER, RoleStatus.APPROVED);
-
-    adminAuthUser = Utils.createFakeUser(pool, NIL_UUID, "", rolesA, false);
-    adminOtherUser = Utils.createFakeUser(pool, NIL_UUID, "", rolesA, false);
-    consumerUser = Utils.createFakeUser(pool, NIL_UUID, "", rolesB, false);
-
-    orgIdFut = pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_ORG)
-        .execute(Tuple.of(name, url)).map(row -> row.iterator().next().getUUID("id")));
-
-    providerApproved = orgIdFut.compose(id -> Utils.createFakeUser(pool, id.toString(), url,
-        Map.of(Roles.PROVIDER, RoleStatus.APPROVED), true));
-
-    providerRejected = orgIdFut.compose(id -> Utils.createFakeUser(pool, id.toString(), url,
-        Map.of(Roles.PROVIDER, RoleStatus.REJECTED), true));
-
-    providerPending1 = orgIdFut.compose(id -> Utils.createFakeUser(pool, id.toString(), url,
-        Map.of(Roles.PROVIDER, RoleStatus.PENDING), true));
-
-    providerPending2 = orgIdFut.compose(id -> Utils.createFakeUser(pool, id.toString(), url,
-        Map.of(Roles.PROVIDER, RoleStatus.PENDING), true));
-
-    providerPending3 = orgIdFut.compose(id -> Utils.createFakeUser(pool, id.toString(), url,
-        Map.of(Roles.PROVIDER, RoleStatus.PENDING), true));
-
-    @SuppressWarnings("rawtypes")
-    List<Future> list = List.of(adminAuthUser, adminOtherUser, consumerUser, providerApproved,
-        providerPending1, providerPending2, providerPending3, providerRejected);
-
-    CompositeFuture.all(list).compose(res -> {
-      JsonObject admin1 = (JsonObject) res.list().get(0);
-      UUID uid1 = UUID.fromString(admin1.getString("userId"));
-
-      JsonObject admin2 = (JsonObject) res.list().get(1);
-      UUID uid2 = UUID.fromString(admin2.getString("userId"));
-      List<Tuple> tup = List.of(Tuple.of("Auth Server", uid1, DUMMY_AUTH_SERVER),
-          Tuple.of("Other Server", uid2, DUMMY_SERVER));
-
-      return pool
-          .withConnection(conn -> conn.preparedQuery(SQL_CREATE_ADMIN_SERVER).executeBatch(tup));
-    }).onSuccess(res -> {
-      adminService = new AdminServiceImpl(pool, kc, policyService, registrationService, options);
-      testContext.completeNow();
-    }).onFailure(err -> testContext.failNow(err.getMessage()));
+    adminService = new AdminServiceImpl(pool, kc, registrationService);
+    testContext.completeNow();
   }
 
   @AfterAll
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing....");
-    Tuple servers = Tuple.of(List.of(DUMMY_AUTH_SERVER, DUMMY_SERVER).toArray());
-    List<JsonObject> users = List.of(adminAuthUser.result(), adminOtherUser.result(),
-        consumerUser.result(), providerPending1.result(), providerPending2.result(),
-        providerPending3.result(), providerRejected.result(), providerApproved.result());
-
-    pool.withConnection(conn -> conn.preparedQuery(SQL_DELETE_SERVERS).execute(servers)
-        .compose(success -> Utils.deleteFakeUser(pool, users))
-        .compose(succ -> conn.preparedQuery(SQL_DELETE_ORG).execute(Tuple.of(orgIdFut.result()))))
+    utils.deleteFakeResourceServer().compose(res -> utils.deleteFakeResourceServer())
         .onComplete(x -> {
           if (x.failed()) {
             LOGGER.warn(x.cause().getMessage());
@@ -207,329 +123,506 @@ public class UpdateProviderRegistrationStatusTest {
   }
 
   @Test
-  @DisplayName("Test no user profile")
-  void noUserProfile(VertxTestContext testContext) {
-    JsonObject userJson = adminAuthUser.result();
-
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .name(userJson.getString("firstName"), userJson.getString("lastName"))
-        .roles(List.of(Roles.ADMIN)).build();
-
-    JsonObject providerJson = providerPending1.result();
-
-    JsonArray req = new JsonArray().add(
-        new JsonObject().put("userId", providerJson.getString("userId")).put("status", "approved"));
-    List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
-
-    adminService.updateProviderRegistrationStatus(request, user,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getInteger("status"), 404);
-          assertEquals(URN_MISSING_INFO.toString(), response.getString("type"));
-          assertEquals(ERR_TITLE_NO_USER_PROFILE, response.getString("title"));
-          assertEquals(ERR_DETAIL_NO_USER_PROFILE, response.getString("detail"));
-          testContext.completeNow();
-        })));
-  }
-
-  @Test
-  @DisplayName("Test not auth admin")
-  void notAuthAdmin(VertxTestContext testContext) {
-    JsonObject userJson = adminOtherUser.result();
-
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
-
-    JsonObject providerJson = providerPending1.result();
-
-    JsonArray req = new JsonArray().add(
-        new JsonObject().put("userId", providerJson.getString("userId")).put("status", "approved"));
-    List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
-
-    adminService.updateProviderRegistrationStatus(request, user,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getInteger("status"), 401);
-          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-          assertEquals(ERR_TITLE_NOT_AUTH_ADMIN, response.getString("title"));
-          assertEquals(ERR_DETAIL_NOT_AUTH_ADMIN, response.getString("detail"));
-          testContext.completeNow();
-        })));
-  }
-
-  @Test
   @DisplayName("Test not an admin")
   void notAdmin(VertxTestContext testContext) {
-    JsonObject userJson = consumerUser.result();
 
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.CONSUMER))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+    User user = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
 
-    JsonObject providerJson = providerPending1.result();
+    UUID id = UUID.randomUUID();
 
-    JsonArray req = new JsonArray().add(
-        new JsonObject().put("userId", providerJson.getString("userId")).put("status", "approved"));
+    JsonArray req =
+        new JsonArray().add(new JsonObject().put("id", id.toString()).put("status", "approved"));
+
     List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
     adminService.updateProviderRegistrationStatus(request, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 401);
           assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-          assertEquals(ERR_TITLE_NOT_AUTH_ADMIN, response.getString("title"));
-          assertEquals(ERR_DETAIL_NOT_AUTH_ADMIN, response.getString("detail"));
+          assertEquals(ERR_TITLE_NOT_ADMIN, response.getString("title"));
+          assertEquals(ERR_DETAIL_NOT_ADMIN, response.getString("detail"));
           testContext.completeNow();
         })));
   }
 
   @Test
-  @DisplayName("Test duplicate user IDs in request")
-  void duplicateUserIds(VertxTestContext testContext) {
-    JsonObject userJson = adminAuthUser.result();
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+  @DisplayName("Test duplicate IDs in request")
+  void duplicateIds(VertxTestContext testContext) {
 
-    JsonObject providerOneJson = providerPending1.result();
-    JsonObject providerTwoJson = providerPending2.result();
+    // using fake user of a non-existent RS and fake IDs for this test
+    User fakeAdminUser = new UserBuilder().userId(UUID.randomUUID()).build();
+    fakeAdminUser.setRoles(List.of(Roles.ADMIN));
+    fakeAdminUser.setRolesToRsMapping(Map.of(Roles.ADMIN.toString(),
+        new JsonArray().add(RandomStringUtils.randomAlphabetic(10) + ".com")));
+
+    UUID duplicateId = UUID.randomUUID();
 
     JsonArray req = new JsonArray()
-        .add(new JsonObject().put("userId", providerOneJson.getString("userId")).put("status",
-            "approved"))
-        .add(new JsonObject().put("userId", providerTwoJson.getString("userId")).put("status",
-            "rejected"))
-        .add(new JsonObject().put("userId", providerOneJson.getString("userId")).put("status",
-            "rejected"));
+        .add(new JsonObject().put("id", duplicateId.toString()).put("status", "approved"))
+        .add(new JsonObject().put("id", duplicateId.toString()).put("status", "rejected"))
+        .add(new JsonObject().put("id", UUID.randomUUID().toString()).put("status", "rejected"));
+
     List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-    adminService.updateProviderRegistrationStatus(request, user,
+    adminService.updateProviderRegistrationStatus(request, fakeAdminUser,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(response.getInteger("status"), 400);
           assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
           assertEquals(ERR_TITLE_DUPLICATE_REQ, response.getString("title"));
-          assertEquals(providerOneJson.getString("userId"), response.getString("detail"));
+          assertEquals(duplicateId.toString(), response.getString("detail"));
           testContext.completeNow();
-        })));
-  }
-
-  /*
-   * NOTE: We mock KcAdmin getDetails function as well as the Map<String, JsonObject> returned by
-   * said function. This is because we don't know the values already existing in the table. Hence,
-   * we mock the Map.get(<String>) function to return an empty JsonObject, but if it is the expected
-   * userId String, we return the expected output.
-   * 
-   * We additionally mock PolicyService.setDefaultProviderPolicies, by completing the promise/Async
-   * Handler with an empty JsonObject
-   */
-
-  @Test
-  @DisplayName("Test approve provider")
-  void approveprovider(VertxTestContext testContext) {
-    JsonObject userJson = adminAuthUser.result();
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
-
-    JsonObject providerJson = providerPending1.result();
-    JsonObject details = new JsonObject().put("email", providerJson.getString("email")).put("name",
-        new JsonObject().put("firstName", providerJson.getString("firstName")).put("lastName",
-            providerJson.getString("lastName")));
-
-    JsonArray req = new JsonArray().add(
-        new JsonObject().put("userId", providerJson.getString("userId")).put("status", "approved"));
-    List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
-
-    /** MOCKS -> mock PolicyService, kc.getDetails **/
-    Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(3);
-      p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
-      return i.getMock();
-    }).when(policyService).createPolicy(any(), any(),any(),any());
-
-    @SuppressWarnings("unchecked")
-    Map<String, JsonObject> resp = Mockito.mock(Map.class);
-    Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
-    Mockito.when(resp.get(anyString())).thenReturn(new JsonObject());
-    Mockito.when(resp.get(providerJson.getString("keycloakId"))).thenReturn(details);
-    /***********************************************************************/
-
-    adminService.updateProviderRegistrationStatus(request, user,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getString("type"), URN_SUCCESS.toString());
-          assertEquals(response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
-          JsonArray res = response.getJsonArray("results");
-          assertTrue(res.size() > 0);
-
-          res.forEach(i -> {
-            JsonObject j = (JsonObject) i;
-            if (j.getString("userId").equals(providerJson.getString("userId"))) {
-
-              assertEquals(j.getString(RESP_STATUS), RoleStatus.APPROVED.name().toLowerCase());
-
-              assertEquals(j.getString("email"), providerJson.getString("email"));
-              assertEquals(j.getString("userId"), providerJson.getString("userId"));
-              testContext.completeNow();
-            }
-          });
         })));
   }
 
   @Test
-  @DisplayName("Test fail already approved")
-  void alreadyApproved(VertxTestContext testContext) {
-    JsonObject providerJson = providerApproved.result();
-    JsonObject details = new JsonObject().put("email", providerJson.getString("email")).put("name",
-        new JsonObject().put("firstName", providerJson.getString("firstName")).put("lastName",
-            providerJson.getString("lastName")));
+  @DisplayName("Test approve provider")
+  void approveProvider(VertxTestContext testContext) {
+    String SERVER_URL = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
 
-    JsonObject userJson = adminAuthUser.result();
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+    User adminUser = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    adminUser.setRoles(List.of(Roles.ADMIN));
+    adminUser.setRolesToRsMapping(Map.of(Roles.ADMIN.toString(), new JsonArray().add(SERVER_URL)));
 
-    JsonArray req = new JsonArray().add(
-        new JsonObject().put("userId", providerJson.getString("userId")).put("status", "approved"));
-    List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
+    User providerA = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
 
-    /** MOCKS -> mock PolicyService, kc.getDetails **/
-    Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(3);
-      p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
-      return i.getMock();
-    }).when(policyService).createPolicy(any(),any(),any(),any());
+    UUID providerAPendingId = UUID.randomUUID();
 
-    @SuppressWarnings("unchecked")
-    Map<String, JsonObject> resp = Mockito.mock(Map.class);
-    Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
-    Mockito.when(resp.get(anyString())).thenReturn(new JsonObject());
-    Mockito.when(resp.get(providerJson.getString("keycloakId"))).thenReturn(details);
-    /***********************************************************************/
+    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL, adminUser)
+        .compose(res -> utils.createFakeUser(providerA, false, true)).compose(res -> utils
+            .addProviderStatusRole(providerA, SERVER_URL, RoleStatus.PENDING, providerAPendingId));
 
-    adminService.updateProviderRegistrationStatus(request, user,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
-          assertEquals(response.getString("title"), ERR_TITLE_INVALID_USER);
-          assertEquals(response.getString("detail"), providerJson.getString("userId"));
-          testContext.completeNow();
-        })));
+    setup.onSuccess(succ -> {
+
+      Map<String, JsonObject> mockKcResp =
+          Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
+      Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
+
+      JsonArray req = new JsonArray()
+          .add(new JsonObject().put("id", providerAPendingId.toString()).put("status", "approved"));
+      List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
+
+      adminService.updateProviderRegistrationStatus(request, adminUser,
+          testContext.succeeding(response -> testContext.verify(() -> {
+            assertEquals(response.getInteger("status"), 200);
+            assertEquals(response.getString("type"), URN_SUCCESS.toString());
+            assertEquals(response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
+            JsonArray res = response.getJsonArray("results");
+            assertTrue(res.size() == 1);
+
+            JsonObject j = res.getJsonObject(0);
+            assertEquals(j.getString("id"), providerAPendingId.toString());
+            assertEquals(j.getString(RESP_STATUS), RoleStatus.APPROVED.name().toLowerCase());
+
+            assertEquals(j.getString("email"), utils.getDetails(providerA).email);
+            assertEquals(j.getString("userId"), providerA.getUserId());
+            assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
+            testContext.completeNow();
+          })));
+    });
+  }
+
+  @Test
+  @DisplayName("Test reject provider")
+  void rejectProvider(VertxTestContext testContext) {
+    String SERVER_URL = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
+
+    User adminUser = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    adminUser.setRoles(List.of(Roles.ADMIN));
+    adminUser.setRolesToRsMapping(Map.of(Roles.ADMIN.toString(), new JsonArray().add(SERVER_URL)));
+
+    User providerA = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+
+    UUID providerAPendingId = UUID.randomUUID();
+
+    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL, adminUser)
+        .compose(res -> utils.createFakeUser(providerA, false, true)).compose(res -> utils
+            .addProviderStatusRole(providerA, SERVER_URL, RoleStatus.PENDING, providerAPendingId));
+
+    setup.onSuccess(succ -> {
+
+      Map<String, JsonObject> mockKcResp =
+          Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
+      Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
+
+      JsonArray req = new JsonArray()
+          .add(new JsonObject().put("id", providerAPendingId.toString()).put("status", "rejected"));
+      List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
+
+      adminService.updateProviderRegistrationStatus(request, adminUser,
+          testContext.succeeding(response -> testContext.verify(() -> {
+            assertEquals(response.getInteger("status"), 200);
+            assertEquals(response.getString("type"), URN_SUCCESS.toString());
+            assertEquals(response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
+            JsonArray res = response.getJsonArray("results");
+            assertTrue(res.size() == 1);
+
+            JsonObject j = res.getJsonObject(0);
+            assertEquals(j.getString("id"), providerAPendingId.toString());
+            assertEquals(j.getString(RESP_STATUS), RoleStatus.REJECTED.name().toLowerCase());
+
+            assertEquals(j.getString("email"), utils.getDetails(providerA).email);
+            assertEquals(j.getString("userId"), providerA.getUserId());
+            assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
+            testContext.completeNow();
+          })));
+    });
+  }
+
+  @Test
+  @DisplayName("Test non-existent ID")
+  void notExistentId(VertxTestContext testContext) {
+    String SERVER_URL = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
+
+    User adminUser = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    adminUser.setRoles(List.of(Roles.ADMIN));
+    adminUser.setRolesToRsMapping(Map.of(Roles.ADMIN.toString(), new JsonArray().add(SERVER_URL)));
+
+    User providerA = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+
+    UUID providerAPendingId = UUID.randomUUID();
+
+    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL, adminUser)
+        .compose(res -> utils.createFakeUser(providerA, false, true)).compose(res -> utils
+            .addProviderStatusRole(providerA, SERVER_URL, RoleStatus.PENDING, providerAPendingId));
+
+    UUID nonExistentId = UUID.randomUUID();
+
+    setup.onSuccess(succ -> {
+
+      Map<String, JsonObject> mockKcResp =
+          Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
+      Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
+
+      JsonArray req = new JsonArray()
+          .add(new JsonObject().put("id", providerAPendingId.toString()).put("status", "approved"))
+          .add(new JsonObject().put("id", nonExistentId.toString()).put("status", "approved"));
+      List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
+
+      adminService.updateProviderRegistrationStatus(request, adminUser,
+          testContext.succeeding(response -> testContext.verify(() -> {
+            assertEquals(response.getInteger("status"), 400);
+            assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
+            assertEquals(response.getString("title"), ERR_TITLE_INVALID_PROV_REG_ID);
+            assertEquals(response.getString("detail"), nonExistentId.toString());
+            testContext.completeNow();
+          })));
+    });
+  }
+
+  @Test
+  @DisplayName("Test ID that does not belong to the admin")
+  void idDoesNotBelongToAdmin(VertxTestContext testContext) {
+    String SERVER_URL_ONE = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
+    String SERVER_URL_TWO = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
+
+    User adminOfOne = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    adminOfOne.setRoles(List.of(Roles.ADMIN));
+    adminOfOne
+        .setRolesToRsMapping(Map.of(Roles.ADMIN.toString(), new JsonArray().add(SERVER_URL_ONE)));
+
+    User providerA = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+
+    UUID providerAPendingIdOnOne = UUID.randomUUID();
+    UUID providerAPendingIdOnTwo = UUID.randomUUID();
+
+    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL_ONE, adminOfOne)
+        .compose(res -> utils.createFakeResourceServer(SERVER_URL_TWO,
+            new UserBuilder().userId(UUID.randomUUID()).build()))
+        .compose(res -> utils.createFakeUser(providerA, false, true))
+        .compose(res -> utils.addProviderStatusRole(providerA, SERVER_URL_ONE, RoleStatus.PENDING,
+            providerAPendingIdOnOne))
+        .compose(res -> utils.addProviderStatusRole(providerA, SERVER_URL_TWO, RoleStatus.PENDING,
+            providerAPendingIdOnTwo));
+
+    setup.onSuccess(succ -> {
+
+      Map<String, JsonObject> mockKcResp =
+          Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
+      Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
+
+      JsonArray req = new JsonArray()
+          .add(new JsonObject().put("id", providerAPendingIdOnOne.toString()).put("status",
+              "rejected"))
+          .add(new JsonObject().put("id", providerAPendingIdOnTwo.toString()).put("status",
+              "rejected"));
+      List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
+
+      adminService.updateProviderRegistrationStatus(request, adminOfOne,
+          testContext.succeeding(response -> testContext.verify(() -> {
+            assertEquals(response.getInteger("status"), 400);
+            assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
+            assertEquals(response.getString("title"), ERR_TITLE_INVALID_PROV_REG_ID);
+            assertEquals(response.getString("detail"), providerAPendingIdOnTwo.toString());
+            testContext.completeNow();
+          })));
+    });
+  }
+
+  @Test
+  @DisplayName("Test both approve and reject in same request for different servers owned by the admin")
+  void approveAndRejectTogetherOnDifferentServers(VertxTestContext testContext) {
+    String SERVER_URL_ONE = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
+    String SERVER_URL_TWO = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
+
+    User adminUser = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    adminUser.setRoles(List.of(Roles.ADMIN));
+    adminUser.setRolesToRsMapping(
+        Map.of(Roles.ADMIN.toString(), new JsonArray(List.of(SERVER_URL_ONE, SERVER_URL_TWO))));
+
+    User providerA = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    User providerB = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+
+    UUID providerAPendingIdOnOne = UUID.randomUUID();
+    UUID providerBPendingIdOnTwo = UUID.randomUUID();
+
+    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL_ONE, adminUser)
+        .compose(res -> utils.createFakeResourceServer(SERVER_URL_TWO, adminUser))
+        .compose(res -> utils.createFakeUser(providerA, false, true))
+        .compose(res -> utils.createFakeUser(providerB, false, true))
+        .compose(res -> utils.addProviderStatusRole(providerA, SERVER_URL_ONE, RoleStatus.PENDING,
+            providerAPendingIdOnOne))
+        .compose(res -> utils.addProviderStatusRole(providerB, SERVER_URL_TWO, RoleStatus.PENDING,
+            providerBPendingIdOnTwo));
+
+    Checkpoint sawProviderA = testContext.checkpoint();
+    Checkpoint sawProviderB = testContext.checkpoint();
+
+    setup.onSuccess(succ -> {
+
+      Map<String, JsonObject> mockKcResp = Map.of(providerA.getUserId(),
+          utils.getKcAdminJson(providerA), providerB.getUserId(), utils.getKcAdminJson(providerB));
+      Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
+
+      JsonArray req = new JsonArray()
+          .add(new JsonObject().put("id", providerAPendingIdOnOne.toString()).put("status",
+              "approved"))
+          .add(new JsonObject().put("id", providerBPendingIdOnTwo.toString()).put("status",
+              "rejected"));
+      List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
+
+      adminService.updateProviderRegistrationStatus(request, adminUser,
+          testContext.succeeding(response -> testContext.verify(() -> {
+            assertEquals(response.getInteger("status"), 200);
+            assertEquals(response.getString("type"), URN_SUCCESS.toString());
+            assertEquals(response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
+            JsonArray res = response.getJsonArray("results");
+            assertTrue(res.size() == 2);
+
+            res.forEach(i -> {
+              JsonObject j = (JsonObject) i;
+
+              if (j.getString("id").equals(providerAPendingIdOnOne.toString())) {
+                assertEquals(j.getString(Constants.RESP_STATUS),
+                    RoleStatus.APPROVED.name().toLowerCase());
+                assertEquals(j.getString("rsUrl"), SERVER_URL_ONE);
+                assertEquals(j.getString("email"), utils.getDetails(providerA).email);
+                assertEquals(j.getString("userId"), providerA.getUserId());
+                assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
+                sawProviderA.flag();
+              }
+
+              if (j.getString("id").equals(providerBPendingIdOnTwo.toString())) {
+                assertEquals(j.getString(Constants.RESP_STATUS),
+                    RoleStatus.REJECTED.name().toLowerCase());
+                assertEquals(j.getString("rsUrl"), SERVER_URL_TWO);
+                assertEquals(j.getString("email"), utils.getDetails(providerB).email);
+                assertEquals(j.getString("userId"), providerB.getUserId());
+                assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerB).userInfo);
+                sawProviderB.flag();
+              }
+            });
+          })));
+    });
+  }
+
+  @Test
+  @DisplayName("Test approve provider and approve again")
+  void approveProviderAndApproveAgain(VertxTestContext testContext) {
+    String SERVER_URL = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
+
+    User adminUser = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    adminUser.setRoles(List.of(Roles.ADMIN));
+    adminUser.setRolesToRsMapping(Map.of(Roles.ADMIN.toString(), new JsonArray().add(SERVER_URL)));
+
+    User providerA = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+
+    UUID providerAPendingId = UUID.randomUUID();
+
+    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL, adminUser)
+        .compose(res -> utils.createFakeUser(providerA, false, true)).compose(res -> utils
+            .addProviderStatusRole(providerA, SERVER_URL, RoleStatus.PENDING, providerAPendingId));
+
+    Checkpoint approveSuccessfully = testContext.checkpoint();
+    Checkpoint failApprove = testContext.checkpoint();
+
+    setup.onSuccess(succ -> {
+
+      Map<String, JsonObject> mockKcResp =
+          Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
+      Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
+
+      JsonArray req = new JsonArray()
+          .add(new JsonObject().put("id", providerAPendingId.toString()).put("status", "approved"));
+      List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
+
+      adminService.updateProviderRegistrationStatus(request, adminUser,
+          testContext.succeeding(response -> testContext.verify(() -> {
+            assertEquals(response.getInteger("status"), 200);
+            assertEquals(response.getString("type"), URN_SUCCESS.toString());
+            assertEquals(response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
+            JsonArray res = response.getJsonArray("results");
+            assertTrue(res.size() == 1);
+
+            JsonObject j = res.getJsonObject(0);
+            assertEquals(j.getString("id"), providerAPendingId.toString());
+            assertEquals(j.getString(RESP_STATUS), RoleStatus.APPROVED.name().toLowerCase());
+
+            assertEquals(j.getString("email"), utils.getDetails(providerA).email);
+            assertEquals(j.getString("userId"), providerA.getUserId());
+            assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
+
+            approveSuccessfully.flag();
+
+            JsonArray badReq = new JsonArray().add(new JsonObject()
+                .put("id", providerAPendingId.toString()).put("status", "approved"));
+            List<ProviderUpdateRequest> badRequest = ProviderUpdateRequest.jsonArrayToList(badReq);
+
+            adminService.updateProviderRegistrationStatus(badRequest, adminUser,
+                testContext.succeeding(resp -> testContext.verify(() -> {
+                  assertEquals(resp.getInteger("status"), 400);
+                  assertEquals(resp.getString("type"), URN_INVALID_INPUT.toString());
+                  assertEquals(resp.getString("title"), ERR_TITLE_INVALID_PROV_REG_ID);
+                  assertEquals(resp.getString("detail"), providerAPendingId.toString());
+
+                  failApprove.flag();
+                })));
+          })));
+    });
   }
 
   @Test
   @DisplayName("Test reject provider and approve again")
-  void rejectProvider(VertxTestContext testContext) {
-    JsonObject userJson = adminAuthUser.result();
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+  void rejectProviderThenApprove(VertxTestContext testContext) {
+    String SERVER_URL = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
 
-    JsonObject providerJson = providerPending2.result();
-    JsonObject details = new JsonObject().put("email", providerJson.getString("email")).put("name",
-        new JsonObject().put("firstName", providerJson.getString("firstName")).put("lastName",
-            providerJson.getString("lastName")));
+    User adminUser = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    adminUser.setRoles(List.of(Roles.ADMIN));
+    adminUser.setRolesToRsMapping(Map.of(Roles.ADMIN.toString(), new JsonArray().add(SERVER_URL)));
 
-    JsonArray req = new JsonArray().add(
-        new JsonObject().put("userId", providerJson.getString("userId")).put("status", "rejected"));
-    List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
+    User providerA = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
 
-    /** MOCKS -> mock PolicyService, kc.getDetails **/
-    Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(3);
-      p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
-      return i.getMock();
-    }).when(policyService).createPolicy(any(),any(),any(),any());
+    UUID providerAPendingId = UUID.randomUUID();
 
-    @SuppressWarnings("unchecked")
-    Map<String, JsonObject> resp = Mockito.mock(Map.class);
-    Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
-    Mockito.when(resp.get(anyString())).thenReturn(new JsonObject());
-    Mockito.when(resp.get(providerJson.getString("keycloakId"))).thenReturn(details);
-    /***********************************************************************/
+    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL, adminUser)
+        .compose(res -> utils.createFakeUser(providerA, false, true)).compose(res -> utils
+            .addProviderStatusRole(providerA, SERVER_URL, RoleStatus.PENDING, providerAPendingId));
 
-    Checkpoint rejected = testContext.checkpoint();
-    Checkpoint fail = testContext.checkpoint();
+    Checkpoint rejectSuccessfully = testContext.checkpoint();
+    Checkpoint failApprove = testContext.checkpoint();
 
-    adminService.updateProviderRegistrationStatus(request, user,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getString("type"), URN_SUCCESS.toString());
-          assertEquals(response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
-          JsonArray res = response.getJsonArray("results");
-          assertTrue(res.size() > 0);
+    setup.onSuccess(succ -> {
 
-          res.forEach(i -> {
-            JsonObject j = (JsonObject) i;
-            if (j.getString("userId").equals(providerJson.getString("userId"))) {
+      Map<String, JsonObject> mockKcResp =
+          Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
+      Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
 
-              assertEquals(j.getString(RESP_STATUS), RoleStatus.REJECTED.name().toLowerCase());
+      JsonArray req = new JsonArray()
+          .add(new JsonObject().put("id", providerAPendingId.toString()).put("status", "rejected"));
+      List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-              assertEquals(j.getString("email"), providerJson.getString("email"));
-              assertEquals(j.getString("userId"), providerJson.getString("userId"));
-              rejected.flag();
-            }
-          });
+      adminService.updateProviderRegistrationStatus(request, adminUser,
+          testContext.succeeding(response -> testContext.verify(() -> {
+            assertEquals(response.getInteger("status"), 200);
+            assertEquals(response.getString("type"), URN_SUCCESS.toString());
+            assertEquals(response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
+            JsonArray res = response.getJsonArray("results");
+            assertTrue(res.size() == 1);
 
-          adminService.updateProviderRegistrationStatus(request, user,
-              testContext.succeeding(r -> testContext.verify(() -> {
-                assertEquals(r.getString("type"), URN_INVALID_INPUT.toString());
-                assertEquals(r.getString("title"), ERR_TITLE_INVALID_USER);
-                assertEquals(r.getString("detail"), providerJson.getString("userId"));
-                fail.flag();
-              })));
-        })));
+            JsonObject j = res.getJsonObject(0);
+            assertEquals(j.getString("id"), providerAPendingId.toString());
+            assertEquals(j.getString(RESP_STATUS), RoleStatus.REJECTED.name().toLowerCase());
+
+            assertEquals(j.getString("email"), utils.getDetails(providerA).email);
+            assertEquals(j.getString("userId"), providerA.getUserId());
+            assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
+
+            rejectSuccessfully.flag();
+
+            JsonArray badReq = new JsonArray().add(new JsonObject()
+                .put("id", providerAPendingId.toString()).put("status", "approved"));
+            List<ProviderUpdateRequest> badRequest = ProviderUpdateRequest.jsonArrayToList(badReq);
+
+            adminService.updateProviderRegistrationStatus(badRequest, adminUser,
+                testContext.succeeding(resp -> testContext.verify(() -> {
+                  assertEquals(resp.getInteger("status"), 400);
+                  assertEquals(resp.getString("type"), URN_INVALID_INPUT.toString());
+                  assertEquals(resp.getString("title"), ERR_TITLE_INVALID_PROV_REG_ID);
+                  assertEquals(resp.getString("detail"), providerAPendingId.toString());
+
+                  failApprove.flag();
+                })));
+          })));
+    });
   }
 
   @Test
-  @DisplayName("Test createPolicy fail and transaction rollback")
-  /*
-   * Testing if a failure in createPolicy rolls back the transaction. We attempt to approve the
-   * provider, but fail createPolicy. We then attempt to successfully reject the provider
-   */
-  void createPolicyFailtransaction(VertxTestContext testContext) {
-    JsonObject userJson = adminAuthUser.result();
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(List.of(Roles.ADMIN))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+  @DisplayName("Test Keycloak fails to get details + rollback ")
+  void keycloakFailRollback(VertxTestContext testContext) {
+    String SERVER_URL = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
 
-    JsonObject providerJson = providerPending3.result();
-    JsonObject details = new JsonObject().put("email", providerJson.getString("email")).put("name",
-        new JsonObject().put("firstName", providerJson.getString("firstName")).put("lastName",
-            providerJson.getString("lastName")));
+    User adminUser = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
+    adminUser.setRoles(List.of(Roles.ADMIN));
+    adminUser.setRolesToRsMapping(Map.of(Roles.ADMIN.toString(), new JsonArray().add(SERVER_URL)));
 
-    JsonArray req = new JsonArray().add(
-        new JsonObject().put("userId", providerJson.getString("userId")).put("status", "approved"));
-    List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
+    User providerA = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
 
-    /** MOCKS -> mock PolicyService, kc.getDetails **/
-    Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(3);
-      p.fail("Failed to set admin ");
-      return i.getMock();
-    }).when(policyService).createPolicy(any(),any(),any(),any());
+    UUID providerAPendingId = UUID.randomUUID();
 
-    @SuppressWarnings("unchecked")
-    Map<String, JsonObject> resp = Mockito.mock(Map.class);
-    Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
-    Mockito.when(resp.get(anyString())).thenReturn(new JsonObject());
-    Mockito.when(resp.get(providerJson.getString("keycloakId"))).thenReturn(details);
-    /***********************************************************************/
+    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL, adminUser)
+        .compose(res -> utils.createFakeUser(providerA, false, true)).compose(res -> utils
+            .addProviderStatusRole(providerA, SERVER_URL, RoleStatus.PENDING, providerAPendingId));
 
-    Checkpoint failed = testContext.checkpoint();
-    Checkpoint rejectedSuccess = testContext.checkpoint();
+    Checkpoint keycloakFailed = testContext.checkpoint();
+    Checkpoint rollBackSuccess = testContext.checkpoint();
 
-    adminService.updateProviderRegistrationStatus(request, user, testContext.failing(response -> {
-      failed.flag();
+    setup.onSuccess(succ -> {
 
-      /* change request to rejected */
-      JsonArray j = new JsonArray().add(new JsonObject()
-          .put("userId", providerJson.getString("userId")).put("status", "rejected"));
-      List<ProviderUpdateRequest> newRequest = ProviderUpdateRequest.jsonArrayToList(j);
+      // bad KC behaviour
+      Mockito.when(kc.getDetails(any())).thenReturn(Future.failedFuture("fail"));
 
-      adminService.updateProviderRegistrationStatus(newRequest, user,
-          testContext.succeeding(r -> testContext.verify(() -> {
-            assertEquals(r.getString("type"), URN_SUCCESS.toString());
-            assertEquals(r.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
-            JsonArray res = r.getJsonArray("results");
-            assertTrue(res.size() > 0);
-            rejectedSuccess.flag();
+      JsonArray req = new JsonArray()
+          .add(new JsonObject().put("id", providerAPendingId.toString()).put("status", "approved"));
+      List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
+
+      adminService.updateProviderRegistrationStatus(request, adminUser,
+          testContext.failing(err -> testContext.verify(() -> {
+            keycloakFailed.flag();
+
+            // mock correct KC behaviour
+            Map<String, JsonObject> mockKcResp =
+                Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
+            Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
+
+            // request should succeed because of rollback
+            adminService.updateProviderRegistrationStatus(request, adminUser,
+                testContext.succeeding(response -> testContext.verify(() -> {
+                  assertEquals(response.getInteger("status"), 200);
+                  assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                  assertEquals(response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
+                  JsonArray res = response.getJsonArray("results");
+                  assertTrue(res.size() == 1);
+
+                  JsonObject j = res.getJsonObject(0);
+                  assertEquals(j.getString("id"), providerAPendingId.toString());
+                  assertEquals(j.getString(RESP_STATUS), RoleStatus.APPROVED.name().toLowerCase());
+
+                  assertEquals(j.getString("email"), utils.getDetails(providerA).email);
+                  assertEquals(j.getString("userId"), providerA.getUserId());
+                  assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
+                  
+                  rollBackSuccess.flag();
+                })));
           })));
-    }));
+    });
   }
 }
