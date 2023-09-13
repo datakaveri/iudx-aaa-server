@@ -2,12 +2,9 @@ package iudx.aaa.server.policy;
 
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
-import io.vertx.ext.web.client.WebClientOptions;
-import io.vertx.pgclient.PgPool;
 import iudx.aaa.server.apiserver.ItemType;
 import iudx.aaa.server.apiserver.ResourceObj;
 import iudx.aaa.server.apiserver.Response;
@@ -48,28 +45,17 @@ public class CatalogueClient {
   public static final String CAT_RESP_PROVIDER_TYPE = "iudx:Provider";
   public static final String CAT_RESP_RES_SERVER_TYPE = "iudx:ResourceServer";
   
-  private final PgPool pool;
   private final WebClient client;
   private final String catHost;
   private final Integer catPort;
   private final String catItemPath;
-  private final String authUrl;
-  private final String resUrl;
-  private final String domain;
 
-  public CatalogueClient(Vertx vertx, PgPool pool, JsonObject options) {
+  public CatalogueClient(WebClient client, JsonObject options) {
 
-    this.pool = pool;
-    WebClientOptions clientOptions =
-        new WebClientOptions().setSsl(true).setVerifyHost(true).setTrustAll(false);
-
-    this.client = WebClient.create(vertx, clientOptions);
+    this.client = client;
     this.catHost = options.getString("catServerHost");
     this.catPort = Integer.parseInt(options.getString("catServerPort"));
     this.catItemPath = options.getString("catServerItemPath");
-    this.authUrl = options.getString("authServerUrl");
-    this.resUrl = options.getString("resURL");
-    this.domain = options.getString("domain");
   }
 
   /**

@@ -1,5 +1,6 @@
 package iudx.aaa.server.policy;
 
+import static iudx.aaa.server.apiserver.util.Urn.URN_ALREADY_EXISTS;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
 import static iudx.aaa.server.apiserver.util.Urn.URN_SUCCESS;
@@ -10,10 +11,12 @@ import static iudx.aaa.server.policy.Constants.CALL_APD_ITEM_TYPE;
 import static iudx.aaa.server.policy.Constants.CALL_APD_OWNERID;
 import static iudx.aaa.server.policy.Constants.CALL_APD_RES_SER_URL;
 import static iudx.aaa.server.policy.Constants.CALL_APD_USERID;
+import static iudx.aaa.server.policy.Constants.CHECK_EXISTING_DELEGATIONS;
 import static iudx.aaa.server.policy.Constants.CREATE_TOKEN_DID;
 import static iudx.aaa.server.policy.Constants.CREATE_TOKEN_DRL;
 import static iudx.aaa.server.policy.Constants.CREATE_TOKEN_RG;
 import static iudx.aaa.server.policy.Constants.DELETE_DELEGATIONS;
+import static iudx.aaa.server.policy.Constants.DUPLICATE_DELEGATION;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_CONSUMER_DOESNT_HAVE_RS_ROLE;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_CREATE_DELEGATE_ROLES;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_DEL_DELEGATE_ROLES;
@@ -26,7 +29,9 @@ import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ROLES;
 import static iudx.aaa.server.policy.Constants.ERR_TITLE_NOT_TRUSTEE;
 import static iudx.aaa.server.policy.Constants.GET_DELEGATIONS_BY_ID;
 import static iudx.aaa.server.policy.Constants.GET_ROLE_IDS_BY_ROLE_AND_RS;
+import static iudx.aaa.server.policy.Constants.ID;
 import static iudx.aaa.server.policy.Constants.INCORRECT_ITEM_ID;
+import static iudx.aaa.server.policy.Constants.INSERT_DELEGATION;
 import static iudx.aaa.server.policy.Constants.INTERNALERROR;
 import static iudx.aaa.server.policy.Constants.INVALID_INPUT;
 import static iudx.aaa.server.policy.Constants.INVALID_ROLE;
@@ -63,10 +68,12 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apd.ApdService;
 import iudx.aaa.server.apiserver.CreateDelegationRequest;
 import iudx.aaa.server.apiserver.DelegationInformation;
+import iudx.aaa.server.apiserver.DelegationStatus;
 import iudx.aaa.server.apiserver.DeleteDelegationRequest;
 import iudx.aaa.server.apiserver.RequestToken;
 import iudx.aaa.server.apiserver.ResourceObj;
@@ -77,7 +84,6 @@ import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.apiserver.util.Urn;
-import iudx.aaa.server.policy.Constants.status;
 import iudx.aaa.server.registration.RegistrationService;
 
 /**
@@ -97,7 +103,6 @@ public class PolicyServiceImpl implements PolicyService {
   private final PgPool pool;
   private final RegistrationService registrationService;
   private final ApdService apdService;
-  private final createDelegate createDelegate;
   private final CatalogueClient catalogueClient;
 
   // Create the pooled client
@@ -120,7 +125,6 @@ public class PolicyServiceImpl implements PolicyService {
     this.registrationService = registrationService;
     this.apdService = apdService;
     this.catalogueClient = catalogueClient;
-    this.createDelegate = new createDelegate(pool, authOptions);
   }
 
   /**
@@ -470,7 +474,8 @@ public class PolicyServiceImpl implements PolicyService {
         .compose(
             i ->
                 pool.withTransaction(
-                    conn -> conn.preparedQuery(DELETE_DELEGATIONS).execute(Tuple.of(ids.toArray(UUID[]::new)))))
+                conn -> conn.preparedQuery(DELETE_DELEGATIONS)
+                    .execute(Tuple.of(ids.toArray(UUID[]::new)))))
         .onSuccess(
             res -> {
               Response r =
@@ -551,24 +556,47 @@ public class PolicyServiceImpl implements PolicyService {
     Tuple tup = Tuple.of(user.getUserId()).addArrayOfString(rolesArr)
         .addArrayOfString(requestedResServers.toArray(String[]::new));
 
+    // using a pair here since we need a combo of role + RS URL to map to the associated role ID
     Future<Map<Pair<Roles, String>, UUID>> getRoleIds = checkUsersExist
         .compose(res -> pool.withConnection(conn -> conn.preparedQuery(GET_ROLE_IDS_BY_ROLE_AND_RS)
             .collecting(roleRsToRoleIdCollector).execute(tup).map(succ -> succ.value())));
 
-    Future<Boolean> createTuplesAndInsert = getRoleIds.compose(roleMap -> {
+    Future<List<Tuple>> createTuples = getRoleIds.compose(roleMap -> {
+      
       Map<String, JsonObject> userMap = jsonObjectToMap.apply(checkUsersExist.result());
       List<Tuple> tups = new ArrayList<Tuple>();
 
       request.forEach(obj -> {
         UUID delegateId = UUID.fromString(userMap.get(obj.getUserEmail()).getString("keycloakId"));
         UUID roleId = roleMap.get(Pair.of(obj.getRole(), obj.getResSerUrl()));
-        tups.add(Tuple.of(delegateId, roleId, status.ACTIVE));
+        tups.add(Tuple.of(delegateId, roleId, DelegationStatus.ACTIVE));
       });
 
-      return createDelegate.insertItems(tups);
+      return Future.succeededFuture(tups);
+    });
+    
+    Future<Void> checkDuplicatesAndInsert = createTuples.compose(tuples -> {
+      
+      return pool.withTransaction(conn -> conn.preparedQuery(CHECK_EXISTING_DELEGATIONS)
+          .executeBatch(tuples).compose(ar -> {
+            // This check to get response when batch query is executed for select
+            RowSet<Row> rows = ar;
+            List<UUID> ids = new ArrayList<>();
+            while (rows != null) {
+              rows.iterator().forEachRemaining(row -> {
+                ids.add(row.getUUID(ID));
+              });
+              rows = rows.next();
+            }
+            if (ids.size() > 0) {
+              return Future.failedFuture(new ComposeException(409, URN_ALREADY_EXISTS,
+                  DUPLICATE_DELEGATION, ids.toString()));
+            }
+            return Future.succeededFuture(tuples);
+          }).compose(tups -> conn.preparedQuery(INSERT_DELEGATION).executeBatch(tups).mapEmpty()));
     });
 
-    createTuplesAndInsert
+    checkDuplicatesAndInsert
         .onSuccess(
             succ -> {
               Response r =
