@@ -916,16 +916,31 @@ public class TokenServiceTest {
       
     RequestToken request = new RequestToken(delegJsonReq);
     
-    DelegationInformation delegInfo = new DelegationInformation(UUID.randomUUID(),
+    Checkpoint consDelegFail = testContext.checkpoint();
+    Checkpoint provDelegFail = testContext.checkpoint();
+
+    DelegationInformation consDelegInfo = new DelegationInformation(UUID.randomUUID(),
         UUID.fromString(normalUser.getUserId()), Roles.CONSUMER, delegatedRsUrl);
+
+    DelegationInformation provDelegInfo = new DelegationInformation(UUID.randomUUID(),
+        UUID.fromString(normalUser.getUserId()), Roles.PROVIDER, delegatedRsUrl);
     
-    tokenService.createToken(request, delegInfo, delegateUser,
+    tokenService.createToken(request, consDelegInfo, delegateUser,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
           assertEquals(ACCESS_DENIED, response.getString("title"));
           assertEquals(ERR_DOES_NOT_HAVE_ROLE_FOR_RS, response.getString("detail"));
           assertEquals(403, response.getInteger("status"));
-          testContext.completeNow();
+          consDelegFail.flag();
+        })));
+
+    tokenService.createToken(request, provDelegInfo, delegateUser,
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+          assertEquals(ACCESS_DENIED, response.getString("title"));
+          assertEquals(ERR_DOES_NOT_HAVE_ROLE_FOR_RS, response.getString("detail"));
+          assertEquals(403, response.getInteger("status"));
+          provDelegFail.flag();
         })));
   }
   
@@ -943,16 +958,32 @@ public class TokenServiceTest {
           .put("itemType", "resource_server").put("role", "delegate");
       
     RequestToken request = new RequestToken(delegJsonReq);
-    DelegationInformation delegInfo = new DelegationInformation(UUID.randomUUID(),
-        UUID.fromString(normalUser.getUserId()), Roles.CONSUMER, DUMMY_SERVER);
     
-    tokenService.createToken(request, delegInfo, delegateUser,
+    Checkpoint consDelegFail = testContext.checkpoint();
+    Checkpoint provDelegFail = testContext.checkpoint();
+
+    DelegationInformation consDelegInfo = new DelegationInformation(UUID.randomUUID(),
+        UUID.fromString(normalUser.getUserId()), Roles.CONSUMER, DUMMY_SERVER);
+
+    DelegationInformation provDelegInfo = new DelegationInformation(UUID.randomUUID(),
+        UUID.fromString(normalUser.getUserId()), Roles.PROVIDER, DUMMY_SERVER);
+    
+    tokenService.createToken(request, consDelegInfo, delegateUser,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
           assertEquals(ERR_TITLE_INVALID_RS_APD_URL, response.getString("title"));
           assertEquals(ERR_DETAIL_INVALID_RS_APD_URL, response.getString("detail"));
           assertEquals(400, response.getInteger("status"));
-          testContext.completeNow();
+          consDelegFail.flag();
+        })));
+
+    tokenService.createToken(request, provDelegInfo, delegateUser,
+        testContext.succeeding(response -> testContext.verify(() -> {
+          assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+          assertEquals(ERR_TITLE_INVALID_RS_APD_URL, response.getString("title"));
+          assertEquals(ERR_DETAIL_INVALID_RS_APD_URL, response.getString("detail"));
+          assertEquals(400, response.getInteger("status"));
+          provDelegFail.flag();
         })));
   }
 

@@ -64,9 +64,12 @@ public class Constants {
   public static final String NOT_RES_OWNER = "Provider does not own the resource";
 
   public static final String ERR_DETAIL_PROVIDER_DOESNT_HAVE_RS_ROLE =
-      "Provider does not have role for resource server hosting item";
+      "Provider does not have role for resource server hosting the item";
+  public static final String ERR_DETAIL_DELEGATED_RS_URL_NOT_MATCH_ITEM_RS =
+      "The resource server associated with the supplied delegation ID"
+      + " does not match the resource server hosting the item";
   public static final String ERR_DETAIL_CONSUMER_DOESNT_HAVE_RS_ROLE =
-      "Provider does not have role for resource server hosting item";
+      "Provider does not have role for resource server hosting theitem";
   public static final String ERR_DETAIL_PROVIDER_CANNOT_ACCESS_PII_RES =
       "Requested resource is a PII resource - provider is not allowed to access directly";
       

@@ -20,6 +20,7 @@ import static iudx.aaa.server.policy.Constants.DUPLICATE_DELEGATION;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_CONSUMER_DOESNT_HAVE_RS_ROLE;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_CREATE_DELEGATE_ROLES;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_DEL_DELEGATE_ROLES;
+import static iudx.aaa.server.policy.Constants.ERR_DETAIL_DELEGATED_RS_URL_NOT_MATCH_ITEM_RS;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_LIST_DELEGATE_ROLES;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_NOT_TRUSTEE;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_PROVIDER_CANNOT_ACCESS_PII_RES;
@@ -241,6 +242,18 @@ public class PolicyServiceImpl implements PolicyService {
       DelegationInformation delegInfo,
       ResourceObj resource) {
     Promise<JsonObject> p = Promise.promise();
+    
+    if(!delegInfo.getDelegatedRsUrl().equals(resource.getResServerUrl())) {
+      Response r =
+          new ResponseBuilder()
+          .status(403)
+          .type(URN_INVALID_INPUT)
+          .title(ACCESS_DENIED)
+          .detail(ERR_DETAIL_DELEGATED_RS_URL_NOT_MATCH_ITEM_RS)
+          .build();
+      p.fail(new ComposeException(r));
+      return p.future();
+    }
 
     /*
      * Based on the delegation information, create a User object with the delegator's user ID, the
@@ -262,7 +275,7 @@ public class PolicyServiceImpl implements PolicyService {
       delegatedAction = verifyProviderAccess(delegatedUser, request, resource);
     } else {
       delegatedAction = Future.failedFuture(
-          "Resource access strategy not defined for role " + delegatedRole.toString());
+          "Delegated resource access strategy not defined for role " + delegatedRole.toString());
     }
 
     delegatedAction.compose(json -> {
@@ -508,7 +521,7 @@ public class PolicyServiceImpl implements PolicyService {
       Handler<AsyncResult<JsonObject>> handler) {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
-    if (!user.getRoles().contains(Roles.PROVIDER) && user.getRoles().contains(Roles.CONSUMER)) {
+    if (!(user.getRoles().contains(Roles.PROVIDER) || user.getRoles().contains(Roles.CONSUMER))) {
       Response r =
           new Response.ResponseBuilder()
               .type(URN_INVALID_ROLE)
