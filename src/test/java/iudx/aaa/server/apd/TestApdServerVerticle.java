@@ -1,8 +1,7 @@
 package iudx.aaa.server.apd;
 
 import static iudx.aaa.server.apd.Constants.APD_CONSTRAINTS;
-import static iudx.aaa.server.apd.Constants.APD_READ_USERCLASSES_API;
-import static iudx.aaa.server.apd.Constants.APD_REQ_USERCLASS;
+import static iudx.aaa.server.apd.Constants.APD_REQ_CONTEXT;
 import static iudx.aaa.server.apd.Constants.APD_RESP_DETAIL;
 import static iudx.aaa.server.apd.Constants.APD_RESP_LINK;
 import static iudx.aaa.server.apd.Constants.APD_RESP_SESSIONID;
@@ -26,10 +25,8 @@ import org.apache.logging.log4j.Logger;
 
 public class TestApdServerVerticle extends AbstractVerticle {
 
-  public static final int USERCLASS_ERRORS = 10;
   public static final int VERIFY_ERRORS = 22;
   private Router router = Router.router(vertx);
-  private int userclassErrorCounter = 0;
   private int verifyErrorCounter = 0;
   private HttpServer server;
 
@@ -38,25 +35,20 @@ public class TestApdServerVerticle extends AbstractVerticle {
   @Override
   public void start() throws Exception {
 
-    router.get(APD_READ_USERCLASSES_API).handler(context -> {
-      userclassErrorCounter++;
-      getUserClass(context, userclassErrorCounter);
-    });
-
     router.post(APD_VERIFY_API).handler(BodyHandler.create()).handler(context -> {
       JsonObject body = context.body().asJsonObject();
-      if (body.getString(APD_REQ_USERCLASS).equals("TestError")) {
+      if (body.getJsonObject(APD_REQ_CONTEXT).containsKey("TestError")) {
 
         verifyErrorCounter++;
         postVerify(context, verifyErrorCounter);
-      } else if (body.getString(APD_REQ_USERCLASS).equals("TestDeny")) {
+      } else if (body.getJsonObject(APD_REQ_CONTEXT).containsKey("TestDeny")) {
 
         HttpServerResponse response = context.response();
         JsonObject jsonResponse =
             new JsonObject().put(APD_RESP_TYPE, APD_URN_DENY).put(APD_RESP_DETAIL, "Error");
         response.setStatusCode(403).putHeader("Content-type", "application/json")
             .end(jsonResponse.encode());
-      } else if (body.getString(APD_REQ_USERCLASS).equals("TestDenyNInteraction")) {
+      } else if (body.getJsonObject(APD_REQ_CONTEXT).containsKey("TestDenyNInteraction")) {
 
         HttpServerResponse response = context.response();
         JsonObject jsonResponse = new JsonObject().put(APD_RESP_TYPE, APD_URN_DENY_NEEDS_INT)
@@ -66,7 +58,7 @@ public class TestApdServerVerticle extends AbstractVerticle {
             .end(jsonResponse.encode());
       }
       //add else if allow with userClass
-      else if(body.getString(APD_REQ_USERCLASS).equals("TestSuccessWConstraints")){
+      else if(body.getJsonObject(APD_REQ_CONTEXT).containsKey("TestSuccessWConstraints")){
         HttpServerResponse response = context.response();
         JsonObject jsonResponse = new JsonObject().put(APD_RESP_TYPE, APD_URN_ALLOW).put(APD_CONSTRAINTS,new JsonObject());
         response.setStatusCode(200).putHeader("Content-type", "application/json")
@@ -217,52 +209,6 @@ public class TestApdServerVerticle extends AbstractVerticle {
         response.setStatusCode(403).putHeader("Content-type", "application/json")
             .end(jsonResponse.encode());
         break;
-    }
-    return;
-  }
-
-  private void getUserClass(RoutingContext context, int counter) {
-    HttpServerResponse response = context.response();
-    switch (counter) {
-      case 1:
-        response.setStatusCode(200).putHeader("Content-type", "application/html")
-            .end("<html></html>");
-        break;
-      case 2:
-        vertx.setTimer(7000, res -> {
-          response.setStatusCode(200).putHeader("Content-type", "application/json").end("{}");
-        });
-        break;
-      case 3:
-        response.setStatusCode(200).putHeader("Content-type", "application/json")
-            .end("this is not JSON");
-        break;
-      case 4:
-        response.setStatusCode(301).putHeader("Location", "example.com").end();
-        break;
-      case 5:
-        response.setStatusCode(200).putHeader("Content-type", "application/json").end("[]");
-        break;
-      case 6:
-        response.setStatusCode(200).putHeader("Content-type", "text/html").end("{}");
-        break;
-      case 7:
-        response.setStatusCode(200).putHeader("Content-type",
-            "multipart/form-data; boundary=---------------------------974767299852498929531610575")
-            .end("{}");
-        break;
-      case 8:
-        response.setStatusCode(200).putHeader("Content-type", "application/x-www-form-urlencoded")
-            .end("{}");
-        break;
-      case 9:
-        response.setStatusCode(200).putHeader("Content-type", "application/json").end();
-        break;
-      case USERCLASS_ERRORS:
-        response.setStatusCode(400).putHeader("Content-type", "application/json").end("{}");
-        break;
-      default:
-        response.setStatusCode(200).putHeader("Content-type", "application/json").end("{}");
     }
     return;
   }

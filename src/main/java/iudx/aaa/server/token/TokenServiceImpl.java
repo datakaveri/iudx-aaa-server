@@ -90,7 +90,7 @@ public class TokenServiceImpl implements TokenService {
 
     /* Verify that the user has the requested role - the resource server check is later */
     if (!user.getRoles().contains(role)) {
-      Response resp = new ResponseBuilder().status(400).type(URN_INVALID_ROLE).title(ERR_TITLE_ROLE_NOT_OWNED)
+      Response resp = new ResponseBuilder().status(403).type(URN_INVALID_ROLE).title(ERR_TITLE_ROLE_NOT_OWNED)
           .detail(ERR_DETAIL_ROLE_NOT_OWNED).build();
       handler.handle(Future.succeededFuture(resp.toJson()));
       return this;
@@ -213,7 +213,7 @@ public class TokenServiceImpl implements TokenService {
     LOGGER.debug(REQ_RECEIVED);
     
     /* Verify the user has some roles */
-    if (!user.getRoles().isEmpty()) {
+    if (user.getRoles().isEmpty()) {
       Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
           .title(ERR_TITLE_NO_APPROVED_ROLES).detail(ERR_DETAIL_NO_APPROVED_ROLES).build();
       handler.handle(Future.succeededFuture(r.toJson()));
@@ -244,9 +244,9 @@ public class TokenServiceImpl implements TokenService {
         boolean flag = dbExistsRow.getBoolean(EXISTS);
 
         if (flag == Boolean.FALSE) {
-          LOGGER.error("Fail: " + ERR_TITLE_INVALID_RS_URL);
+          LOGGER.error("Fail: " + ERR_TITLE_INVALID_RS_APD_URL);
           Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-              .title(ERR_TITLE_INVALID_RS_URL).detail(ERR_DETAIL_INVALID_RS_URL).build();
+              .title(ERR_TITLE_INVALID_RS_APD_URL).detail(ERR_DETAIL_INVALID_RS_APD_URL).build();
           handler.handle(Future.succeededFuture(resp.toJson()));
           return;
         }
@@ -522,8 +522,8 @@ public class TokenServiceImpl implements TokenService {
     Future<Void> checkUrlExists = resServer.compose(res -> {
       if (res.isEmpty()) {
         return Future.failedFuture(
-            new ComposeException(400, URN_INVALID_INPUT, ERR_TITLE_INVALID_RS_URL,
-                ERR_DETAIL_INVALID_RS_URL));
+            new ComposeException(400, URN_INVALID_INPUT, ERR_TITLE_INVALID_RS_APD_URL,
+                ERR_DETAIL_INVALID_RS_APD_URL));
       }
       
       return Future.succeededFuture();
@@ -534,20 +534,24 @@ public class TokenServiceImpl implements TokenService {
        * For delegates, we only need to check if the delegated URL is the same as requested URL
        * because a delegation can be made only if the delegator has a role for that resource server
        */
-      if(role.equals(Roles.DELEGATE) && delegInfo.getDelegatedRsUrl().equals(url)) {
-        JsonObject result =
-            new JsonObject().put(URL, url).put(CREATE_TOKEN_DID, delegInfo.getDelegatorUserId())
-                .put(CREATE_TOKEN_DRL, delegInfo.getDelegatedRole().toString());
-        return Future.succeededFuture(result);
+      if (role.equals(Roles.DELEGATE)) {
+        if (delegInfo.getDelegatedRsUrl().equals(url)) {
+          JsonObject result =
+              new JsonObject().put(URL, url).put(CREATE_TOKEN_DID, delegInfo.getDelegatorUserId())
+                  .put(CREATE_TOKEN_DRL, delegInfo.getDelegatedRole().toString());
+          return Future.succeededFuture(result);
+        }
+        return Future.failedFuture(new ComposeException(403, URN_INVALID_INPUT, ACCESS_DENIED,
+            ERR_DOES_NOT_HAVE_ROLE_FOR_RS));
       }
-      else if(user.getResServersForRole(role).contains(url)) {
+      
+      if (user.getResServersForRole(role).contains(url)) {
         JsonObject result = new JsonObject().put(URL, url);
         return Future.succeededFuture(result);
-        }
-      else {
-        return Future.failedFuture(new ComposeException(403, URN_INVALID_INPUT,
-            ACCESS_DENIED, ERR_DOES_NOT_HAVE_ROLE_FOR_RS));
       }
+      
+      return Future.failedFuture(new ComposeException(403, URN_INVALID_INPUT, ACCESS_DENIED,
+          ERR_DOES_NOT_HAVE_ROLE_FOR_RS));
     }).onSuccess(succ -> promise.complete(succ)).onFailure(fail -> promise.fail(fail));
     
     return promise.future();

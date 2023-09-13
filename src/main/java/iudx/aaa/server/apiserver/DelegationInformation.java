@@ -20,6 +20,14 @@ public class DelegationInformation {
   public DelegationInformation(JsonObject json) {
     DelegationInformationConverter.fromJson(json, this);
   }
+  
+  public DelegationInformation(UUID delegationId, UUID delegatorUserId, Roles delegatedRole,
+      String delegatedRsUrl) {
+    this.delegationId = delegationId;
+    this.delegatorUserId = delegatorUserId;
+    this.delegatedRole = delegatedRole;
+    this.delegatedRsUrl = delegatedRsUrl;
+  }
 
   public JsonObject toJson() {
     JsonObject obj = new JsonObject();

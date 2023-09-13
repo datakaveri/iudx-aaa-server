@@ -64,9 +64,12 @@ public class Constants {
   public static final String NOT_RES_OWNER = "Provider does not own the resource";
 
   public static final String ERR_DETAIL_PROVIDER_DOESNT_HAVE_RS_ROLE =
-      "Provider does not have role for resource server hosting item";
+      "Provider does not have role for resource server hosting the item";
+  public static final String ERR_DETAIL_DELEGATED_RS_URL_NOT_MATCH_ITEM_RS =
+      "The resource server associated with the supplied delegation ID"
+      + " does not match the resource server hosting the item";
   public static final String ERR_DETAIL_CONSUMER_DOESNT_HAVE_RS_ROLE =
-      "Provider does not have role for resource server hosting item";
+      "Provider does not have role for resource server hosting theitem";
   public static final String ERR_DETAIL_PROVIDER_CANNOT_ACCESS_PII_RES =
       "Requested resource is a PII resource - provider is not allowed to access directly";
       
@@ -74,11 +77,6 @@ public class Constants {
   public static final String ERR_DETAIL_NOT_TRUSTEE =
       "You are not a trustee of any registered and active APD";
   
-  public static final String CHECK_DELEGATOINS_VERIFY =
-      "select id from delegations where user_id = $1::UUID"
-          + " and owner_id = $2::UUID and resource_server_id = $3::UUID "
-          + " and status = $4::policy_status_enum";
-
   public static final String LIST_DELEGATION_AS_DELEGATOR_OR_DELEGATE =
       "SELECT d.id, d.user_id, url, roles.user_id AS delegator_id, lower(roles.role::text) AS role, name AS server "
           + "FROM delegations AS d JOIN roles ON roles.id = d.role_id"
@@ -118,24 +116,4 @@ public class Constants {
           + " WHERE roles.user_id = $1::uuid AND roles.role = $2::role_enum"
           + " AND resource_server.url = $3::text"
           + " AND delegations.status = 'ACTIVE' AND roles.status = 'APPROVED'";
-  
-  // status
-  public enum status {
-    APPROVED("APPROVED"),
-    PENDING("PENDING"),
-    ACTIVE("ACTIVE"),
-    DELETED("DELETED"),
-    SUCCESS("SUCCESS"),
-    WITHDRAWN("WITHDRAWN");
-
-    private final String status;
-
-    status(String status) {
-      this.status = status;
-    }
-
-    public String getStatus() {
-      return status;
-    }
-  }
 }

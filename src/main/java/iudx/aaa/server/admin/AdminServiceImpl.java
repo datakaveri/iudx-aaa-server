@@ -79,7 +79,7 @@ public class AdminServiceImpl implements AdminService {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
     if (!user.getRoles().contains(Roles.ADMIN)) {
-      Response r = new ResponseBuilder().status(401).type(URN_MISSING_INFO)
+      Response r = new ResponseBuilder().status(401).type(URN_INVALID_ROLE)
           .title(ERR_TITLE_NOT_ADMIN).detail(ERR_DETAIL_NOT_ADMIN).build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
@@ -149,7 +149,7 @@ public class AdminServiceImpl implements AdminService {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
     if (!user.getRoles().contains(Roles.ADMIN)) {
-      Response r = new ResponseBuilder().status(401).type(URN_MISSING_INFO)
+      Response r = new ResponseBuilder().status(401).type(URN_INVALID_ROLE)
           .title(ERR_TITLE_NOT_ADMIN).detail(ERR_DETAIL_NOT_ADMIN).build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;

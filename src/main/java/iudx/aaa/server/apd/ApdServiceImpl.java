@@ -112,6 +112,8 @@ public class ApdServiceImpl implements ApdService {
   private ApdWebClient apdWebClient;
   private RegistrationService registrationService;
   private TokenService tokenService;
+  
+  private static final JsonObject DEFAULT_CONSTRAINTS = new JsonObject();
 
   public ApdServiceImpl(PgPool pool, ApdWebClient apdWebClient, RegistrationService regService,
       TokenService tokService, JsonObject options) {
@@ -241,7 +243,7 @@ public class ApdServiceImpl implements ApdService {
      */
     Set<UUID> apdIds = new HashSet<UUID>();
     List<UUID> requestedApdIds =
-        request.stream().map(r -> UUID.fromString(r.getApdId())).collect(Collectors.toList());
+        request.stream().map(r -> UUID.fromString(r.getId())).collect(Collectors.toList());
     List<UUID> duplicates =
         requestedApdIds.stream().filter(id -> apdIds.add(id) == false).collect(Collectors.toList());
 
@@ -275,7 +277,7 @@ public class ApdServiceImpl implements ApdService {
           .toMap(i -> i.getKey(), i -> ApdStatus.valueOf(i.getValue().getString("status"))));
 
       Map<UUID, ApdStatus> desiredStatus = request.stream()
-          .collect(Collectors.toMap(i -> UUID.fromString(i.getApdId()), i -> i.getStatus()));
+          .collect(Collectors.toMap(i -> UUID.fromString(i.getId()), i -> i.getStatus()));
 
         return checkValidStatusChange(authAdminStates, currentStatus, desiredStatus);
     });
@@ -283,7 +285,7 @@ public class ApdServiceImpl implements ApdService {
 
     validateStatus.compose(success -> {
       List<Tuple> tuple =
-          request.stream().map(req -> Tuple.of(req.getStatus(), UUID.fromString(req.getApdId())))
+          request.stream().map(req -> Tuple.of(req.getStatus(), UUID.fromString(req.getId())))
               .collect(Collectors.toList());
 
       return pool
@@ -294,7 +296,7 @@ public class ApdServiceImpl implements ApdService {
       Map<UUID, JsonObject> apdDetails = queryResult.result();
 
       for (ApdUpdateRequest req : request) {
-        UUID apdId = UUID.fromString(req.getApdId());
+        UUID apdId = UUID.fromString(req.getId());
         JsonObject obj = apdDetails.get(apdId);
 
         obj.remove(RESP_APD_STATUS);
@@ -360,7 +362,7 @@ public class ApdServiceImpl implements ApdService {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
     if (!user.getRoles().contains(Roles.COS_ADMIN)) {
-      Response r = new ResponseBuilder().status(401).type(URN_MISSING_INFO)
+      Response r = new ResponseBuilder().status(401).type(URN_INVALID_ROLE)
           .title(ERR_TITLE_NO_COS_ADMIN_ROLE).detail(ERR_DETAIL_NO_COS_ADMIN_ROLE).build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
@@ -647,7 +649,29 @@ public class ApdServiceImpl implements ApdService {
           apdRequest.put(APD_REQ_USER, user).put(APD_REQ_OWNER, owner).put(APD_REQ_ITEM, item)
               .put(APD_REQ_CONTEXT, context);
 
-          return apdWebClient.callVerifyApdEndpoint(apdUrl, token, apdRequest);
+          /*
+           * In case the web client fails to get a valid response from the APD, we catch the
+           * ComposeException and add a message to the detail in case the APD was in an inactive
+           * state.
+           */
+          return apdWebClient.callVerifyApdEndpoint(apdUrl, token, apdRequest)
+              .recover(webClientErr -> {
+                if (webClientErr instanceof ComposeException) {
+                  String apdStatus = apdDetails.result().get(0).getString("status");
+                  String apdNotActiveMesg = APD_NOT_ACTIVE;
+                  if (ApdStatus.valueOf(apdStatus).equals(ApdStatus.ACTIVE)) {
+                    apdNotActiveMesg = "";
+                  }
+
+                  ComposeException exp = (ComposeException) webClientErr;
+                  Response err = exp.getResponse();
+                  err.setDetail(err.getDetail() + apdNotActiveMesg);
+                  err.setTitle(ERR_TITLE_POLICY_EVAL_FAILED);
+                  return Future.failedFuture(new ComposeException(err));
+                } else {
+                  return Future.failedFuture(webClientErr);
+                }
+              });
         });
 
     /*
@@ -669,10 +693,9 @@ public class ApdServiceImpl implements ApdService {
 
       if (response.getString(APD_RESP_TYPE).equals(APD_URN_ALLOW)) {
         
-        // check if 'apdConstraints' are present
-        if (response.containsKey(APD_CONSTRAINTS)) {
-          result.put(CREATE_TOKEN_CONSTRAINTS, response.getJsonObject(APD_CONSTRAINTS));
-        }
+        // use 'apdConstraints' if present in response, else send Default constraints
+        result.put(CREATE_TOKEN_CONSTRAINTS,
+            response.getJsonObject(APD_CONSTRAINTS, DEFAULT_CONSTRAINTS));
 
         result.put(CREATE_TOKEN_URL, rsUrl)
             .put(CREATE_TOKEN_CAT_ID, itemId).put(CREATE_TOKEN_STATUS, CREATE_TOKEN_SUCCESS);
@@ -691,20 +714,8 @@ public class ApdServiceImpl implements ApdService {
 
         handler.handle(Future.succeededFuture(result));
         return;
-      }
+      } else if (response.getString(APD_RESP_TYPE).equals(APD_URN_DENY)) {
 
-      /* Add extra message if APD not active and has denied */
-      String apdStatus = apdDetails.result().get(0).getString("status");
-      String apdNotActiveMesg = APD_NOT_ACTIVE;
-      if (ApdStatus.valueOf(apdStatus).equals(ApdStatus.ACTIVE)) {
-        apdNotActiveMesg = "";
-      }
-
-      handler.handle(Future.failedFuture(
-          new ComposeException(403, URN_INVALID_INPUT, ERR_TITLE_POLICY_EVAL_FAILED,
-              response.getString(APD_RESP_DETAIL) + apdNotActiveMesg)));
-    }).onFailure(e -> {
-      if (e instanceof ComposeException) {
         /* Add extra message if APD not active and has denied */
         String apdStatus = apdDetails.result().get(0).getString("status");
         String apdNotActiveMesg = APD_NOT_ACTIVE;
@@ -712,12 +723,13 @@ public class ApdServiceImpl implements ApdService {
           apdNotActiveMesg = "";
         }
 
-        ComposeException exp = (ComposeException) e;
-        Response err = exp.getResponse();
-        err.setDetail(err.getDetail() + apdNotActiveMesg);
-        err.setTitle(ERR_TITLE_POLICY_EVAL_FAILED);
-        /* send back failed future - returning to createToken and not API server */
-        handler.handle(Future.failedFuture(new ComposeException(err)));
+        handler.handle(Future.failedFuture(new ComposeException(403, URN_INVALID_INPUT,
+            ERR_TITLE_POLICY_EVAL_FAILED, response.getString(APD_RESP_DETAIL) + apdNotActiveMesg)));
+        return;
+      }
+    }).onFailure(e -> {
+      if (e instanceof ComposeException) {
+        handler.handle(Future.failedFuture(e));
         return;
       }
       LOGGER.error(e.getMessage());
