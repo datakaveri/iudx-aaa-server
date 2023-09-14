@@ -17,6 +17,7 @@ import static iudx.aaa.server.policy.Constants.CREATE_TOKEN_DRL;
 import static iudx.aaa.server.policy.Constants.CREATE_TOKEN_RG;
 import static iudx.aaa.server.policy.Constants.DELETE_DELEGATIONS;
 import static iudx.aaa.server.policy.Constants.DUPLICATE_DELEGATION;
+import static iudx.aaa.server.policy.Constants.ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_CONSUMER_DOESNT_HAVE_RS_ROLE;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_CREATE_DELEGATE_ROLES;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_DEL_DELEGATE_ROLES;
@@ -25,9 +26,11 @@ import static iudx.aaa.server.policy.Constants.ERR_DETAIL_LIST_DELEGATE_ROLES;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_NOT_TRUSTEE;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_PROVIDER_CANNOT_ACCESS_PII_RES;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_PROVIDER_DOESNT_HAVE_RS_ROLE;
+import static iudx.aaa.server.policy.Constants.ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE;
 import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ID;
 import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ROLES;
 import static iudx.aaa.server.policy.Constants.ERR_TITLE_NOT_TRUSTEE;
+import static iudx.aaa.server.policy.Constants.ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE;
 import static iudx.aaa.server.policy.Constants.GET_DELEGATIONS_BY_ID;
 import static iudx.aaa.server.policy.Constants.GET_ROLE_IDS_BY_ROLE_AND_RS;
 import static iudx.aaa.server.policy.Constants.ID;
@@ -38,6 +41,7 @@ import static iudx.aaa.server.policy.Constants.INVALID_INPUT;
 import static iudx.aaa.server.policy.Constants.INVALID_ROLE;
 import static iudx.aaa.server.policy.Constants.LIST_DELEGATION_AS_DELEGATOR_OR_DELEGATE;
 import static iudx.aaa.server.policy.Constants.NOT_RES_OWNER;
+import static iudx.aaa.server.policy.Constants.RESP_DELEG_EMAILS;
 import static iudx.aaa.server.policy.Constants.SQL_GET_DELEG_USER_IDS_BY_DELEGATION_INFO;
 import static iudx.aaa.server.policy.Constants.STATUS;
 import static iudx.aaa.server.policy.Constants.SUCCESS;
@@ -542,10 +546,12 @@ public class PolicyServiceImpl implements PolicyService {
     {
       Response r =
           new Response.ResponseBuilder()
-              .type(URN_INVALID_ROLE)
-              .title(ERR_TITLE_INVALID_ROLES)
-              .detail(ERR_DETAIL_CREATE_DELEGATE_ROLES)
-              .status(401)
+              .type(URN_INVALID_INPUT)
+              .title(ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE)
+              .detail(ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE)
+              .errorContext(new JsonObject().put(ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
+                  new JsonArray(rsRoleNotOwnedByUser)))
+              .status(400)
               .build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
@@ -616,7 +622,7 @@ public class PolicyServiceImpl implements PolicyService {
                   new Response.ResponseBuilder()
                       .type(URN_SUCCESS)
                       .title("added delegations")
-                      .status(200)
+                      .status(201)
                       .build();
               handler.handle(Future.succeededFuture(r.toJson()));
             })
@@ -660,7 +666,7 @@ public class PolicyServiceImpl implements PolicyService {
       // if no delegates, whether user exists or not, return empty JSON array
       Response resp =
           new ResponseBuilder().status(200).type(Urn.URN_SUCCESS).title(SUCC_TITLE_DELEG_EMAILS)
-              .objectResults(new JsonObject().put("delegateEmails", new JsonArray())).build();
+              .objectResults(new JsonObject().put(RESP_DELEG_EMAILS, new JsonArray())).build();
       return Future.failedFuture(new ComposeException(resp));
     });
     
