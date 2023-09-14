@@ -6,9 +6,10 @@ import io.vertx.core.json.JsonObject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.ProcessingException;
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ProcessingException;
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.jboss.resteasy.client.jaxrs.internal.ResteasyClientBuilderImpl;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
@@ -41,10 +42,16 @@ public class KcAdmin {
   public KcAdmin(String serverUrl, String realm, String clientId, String clientSecret,
       int poolSize) {
 
+    /* NOTE: Not sure if it's 'correct' to use ResteasyClientBuilderImpl, but there doesn't seem to
+     * be any other way to get the connectionPoolSize option using this.
+     * 
+     *  See here - https://stackoverflow.com/a/65853591
+     */
+    ResteasyClient client = new ResteasyClientBuilderImpl().connectionPoolSize(poolSize).build();
     this.realm = realm;
     keycloak = KeycloakBuilder.builder().serverUrl(serverUrl).realm(realm)
-        .grantType(OAuth2Constants.CLIENT_CREDENTIALS).clientId(clientId).clientSecret(clientSecret)
-        .resteasyClient(new ResteasyClientBuilder().connectionPoolSize(poolSize).build()).build();
+        .grantType(OAuth2Constants.CLIENT_CREDENTIALS).clientId(clientId).clientSecret(clientSecret).resteasyClient(client)
+        .build();
   }
 
   /**

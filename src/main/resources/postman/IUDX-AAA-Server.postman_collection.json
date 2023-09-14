@@ -47,7 +47,7 @@
 								},
 								{
 									"key": "scope",
-									"value": "email",
+									"value": "email openid",
 									"type": "string"
 								},
 								{
@@ -136,7 +136,7 @@
 								},
 								{
 									"key": "scope",
-									"value": "email",
+									"value": "email openid",
 									"type": "string"
 								},
 								{
@@ -245,7 +245,7 @@
 								},
 								{
 									"key": "scope",
-									"value": "email",
+									"value": "email openid",
 									"type": "string"
 								},
 								{
@@ -441,7 +441,7 @@
 								},
 								{
 									"key": "scope",
-									"value": "email",
+									"value": "email openid",
 									"type": "string"
 								},
 								{
@@ -531,7 +531,7 @@
 								},
 								{
 									"key": "scope",
-									"value": "email",
+									"value": "email openid",
 									"type": "string"
 								},
 								{
@@ -645,7 +645,7 @@
 								},
 								{
 									"key": "scope",
-									"value": "email",
+									"value": "email openid",
 									"type": "string"
 								},
 								{
@@ -812,7 +812,7 @@
 								},
 								{
 									"key": "scope",
-									"value": "email",
+									"value": "email openid",
 									"type": "string"
 								},
 								{
@@ -916,7 +916,7 @@
 								},
 								{
 									"key": "scope",
-									"value": "email",
+									"value": "email openid",
 									"type": "string"
 								},
 								{
@@ -1029,7 +1029,7 @@
 								},
 								{
 									"key": "scope",
-									"value": "email",
+									"value": "email openid",
 									"type": "string"
 								},
 								{
@@ -1145,7 +1145,7 @@
 								},
 								{
 									"key": "scope",
-									"value": "email",
+									"value": "email openid",
 									"type": "string"
 								},
 								{
@@ -1244,7 +1244,7 @@
 								},
 								{
 									"key": "scope",
-									"value": "email",
+									"value": "email openid",
 									"type": "string"
 								},
 								{
@@ -1408,7 +1408,7 @@
 								},
 								{
 									"key": "scope",
-									"value": "email",
+									"value": "email openid",
 									"type": "string"
 								},
 								{
@@ -1507,7 +1507,7 @@
 								},
 								{
 									"key": "scope",
-									"value": "email",
+									"value": "email openid",
 									"type": "string"
 								},
 								{
@@ -1604,7 +1604,7 @@
 								},
 								{
 									"key": "scope",
-									"value": "email",
+									"value": "email openid",
 									"type": "string"
 								},
 								{
@@ -1709,7 +1709,7 @@
 								},
 								{
 									"key": "scope",
-									"value": "email",
+									"value": "email openid",
 									"type": "string"
 								},
 								{
@@ -1806,7 +1806,7 @@
 								},
 								{
 									"key": "scope",
-									"value": "email",
+									"value": "email openid",
 									"type": "string"
 								},
 								{
@@ -1895,7 +1895,7 @@
 								},
 								{
 									"key": "scope",
-									"value": "email",
+									"value": "email openid",
 									"type": "string"
 								},
 								{
