@@ -27,8 +27,7 @@
 		<maven-surefire-report-plugin.version>3.0.0-M7</maven-surefire-report-plugin.version>
         <spotless.version>2.31.0</spotless.version>
 		<openjdk.version>11</openjdk.version>
-		<keycloak.version>18.0.1</keycloak.version>
-		<resteasy.version>3.13.2.Final</resteasy.version>
+		<keycloak.version>22.0.1</keycloak.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<exec.mainClass>iudx.aaa.server.deploy.Deployer</exec.mainClass>
 		<exec.mainClassDev>iudx.aaa.server.deploy.DeployerDev
@@ -131,17 +130,6 @@
       <artifactId>bcpkix-jdk15on</artifactId>
       <version>1.58</version>
     </dependency>
-		<dependency>
-			<groupId>org.jboss.resteasy</groupId>
-			<artifactId>resteasy-client</artifactId>
-			<version>${resteasy.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.jboss.resteasy</groupId>
-			<artifactId>resteasy-jackson2-provider</artifactId>
-			<version>${resteasy.version}</version>
-		</dependency>
 		<dependency>
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-unit</artifactId>
