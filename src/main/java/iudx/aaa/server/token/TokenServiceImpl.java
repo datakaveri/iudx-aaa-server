@@ -220,7 +220,7 @@ public class TokenServiceImpl implements TokenService {
       return this;
     }
 
-    String rsUrl = revokeToken.getRsUrl().toLowerCase();
+    String rsUrl = revokeToken.getRsUrl();
 
     /* Check if the user is trying to revoke tokens on auth */
     if (rsUrl.equals(CLAIM_ISSUER)) {

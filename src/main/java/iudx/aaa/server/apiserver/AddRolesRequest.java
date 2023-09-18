@@ -38,13 +38,13 @@ public class AddRolesRequest {
   public void setPhone(String phone) {
     this.phone = phone;
   }
-  
+
   public List<String> getConsumer() {
     return new ArrayList<String>(this.consumer);
   }
 
   public void setConsumer(List<String> consumer) {
-    this.consumer = new ArrayList<String>(consumer);
+    this.consumer = consumer.stream().map(String::toLowerCase).collect(Collectors.toList());
   }
 
   public List<String> getProvider() {
@@ -52,7 +52,7 @@ public class AddRolesRequest {
   }
 
   public void setProvider(List<String> provider) {
-    this.provider = new ArrayList<String>(provider);
+    this.provider = provider.stream().map(String::toLowerCase).collect(Collectors.toList());
   }
 
   public JsonObject getUserInfo() {
@@ -62,18 +62,17 @@ public class AddRolesRequest {
   public void setUserInfo(JsonObject userInfo) {
     this.userInfo = userInfo;
   }
-  
-  public List<Roles> getRolesToRegister()
-  {
+
+  public List<Roles> getRolesToRegister() {
     List<Roles> roles = new ArrayList<Roles>();
-    if(!consumer.isEmpty()) {
+    if (!consumer.isEmpty()) {
       roles.add(Roles.CONSUMER);
     }
-    if(!provider.isEmpty()) {
+    if (!provider.isEmpty()) {
       roles.add(Roles.PROVIDER);
     }
-      
-     return roles;
+
+    return roles;
   }
 
 }

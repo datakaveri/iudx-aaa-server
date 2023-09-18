@@ -15,7 +15,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 public class FakeUserDetails {
   public String phone = NIL_PHONE;
   public JsonObject userInfo = new JsonObject();
-  public String email = RandomStringUtils.randomAlphabetic(10) + "@gmail.com";
+  public String email = RandomStringUtils.randomAlphabetic(10).toLowerCase() + "@gmail.com";
   public String clientId;
   public String clientSecret;
   private Map<String, UUID> roleAndRsUrlToRoleId = new HashMap<String, UUID>();

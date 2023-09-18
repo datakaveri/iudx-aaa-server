@@ -637,9 +637,9 @@ public class ApiServerVerticle extends AbstractVerticle {
     List<String> roleList = context.queryParam(QUERY_ROLE);
     List<String> rsList = context.queryParam(QUERY_RESOURCE_SERVER);
 
-    String delegatorUserId = userIdList.get(0);
+    String delegatorUserId = userIdList.get(0).toLowerCase();
     Roles delegatedRole = Roles.valueOf(roleList.get(0).toUpperCase());
-    String delegatedRsUrl = rsList.get(0);
+    String delegatedRsUrl = rsList.get(0).toLowerCase();
 
     policyService.getDelegateEmails(user, delegatorUserId, delegatedRole, delegatedRsUrl,
         handler -> {
@@ -783,13 +783,13 @@ public class ApiServerVerticle extends AbstractVerticle {
     
     String searchString;
     if(!emailList.isEmpty()) {
-      searchString = emailList.get(0);
+      searchString = emailList.get(0).toLowerCase();
     }else {
-      searchString = userIdList.get(0);
+      searchString = userIdList.get(0).toLowerCase();
     }
     
     Roles role = Roles.valueOf(roleList.get(0).toUpperCase());
-    String resourceServerUrl = rsList.get(0);
+    String resourceServerUrl = rsList.get(0).toLowerCase();
     
     registrationService.searchUser(user, searchString, role, resourceServerUrl, handler -> {
 

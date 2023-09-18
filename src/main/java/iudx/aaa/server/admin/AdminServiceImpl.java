@@ -253,7 +253,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     String name = request.getName();
-    String url = request.getUrl().toLowerCase();
+    String url = request.getUrl();
     String ownerEmail = request.getOwner();
     String domain;
 
