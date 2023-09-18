@@ -368,7 +368,7 @@ public class ApdServiceImpl implements ApdService {
       return this;
     }
 
-    String url = request.getUrl().toLowerCase();
+    String url = request.getUrl();
     String name = request.getName();
     String ownerEmail = request.getOwner();
 

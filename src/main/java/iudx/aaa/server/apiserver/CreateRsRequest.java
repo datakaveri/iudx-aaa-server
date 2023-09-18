@@ -31,7 +31,7 @@ public class CreateRsRequest {
   }
 
   public void setUrl(String url) {
-    this.url = url;
+    this.url = url.toLowerCase();
   }
 
   public String getOwner() {
@@ -39,7 +39,7 @@ public class CreateRsRequest {
   }
 
   public void setOwner(String owner) {
-    this.owner = owner;
+    this.owner = owner.toLowerCase();
   }
 
   public CreateRsRequest(JsonObject json) {

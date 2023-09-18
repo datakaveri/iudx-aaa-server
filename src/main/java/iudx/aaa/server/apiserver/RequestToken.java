@@ -49,7 +49,7 @@ public class RequestToken {
   }
 
   public void setItemId(String itemId) {
-    this.itemId = itemId;
+    this.itemId = itemId.toLowerCase();
   }
 
   public JsonObject getContext() {
