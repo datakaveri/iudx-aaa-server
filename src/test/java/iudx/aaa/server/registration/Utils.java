@@ -6,13 +6,13 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.ApdStatus;
+import iudx.aaa.server.apiserver.DelegationStatus;
 import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.RandomStringUtils;
-
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,6 +26,7 @@ import static iudx.aaa.server.registration.Constants.DEFAULT_CLIENT;
 import static iudx.aaa.server.registration.Constants.NIL_PHONE;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_CLIENT;
 import static iudx.aaa.server.registration.Constants.TEST_SQL_CREATE_ROLE_WITH_ID;
+import static iudx.aaa.server.policy.Constants.TEST_INSERT_DELEGATION;
 import static iudx.aaa.server.registration.Constants.SQL_CREATE_USER_IF_NOT_EXISTS;
 import static iudx.aaa.server.admin.Constants.SQL_CREATE_RS_IF_NOT_EXIST;
 import static iudx.aaa.server.apd.Constants.SQL_INSERT_APD_IF_NOT_EXISTS;
@@ -43,9 +44,6 @@ public class Utils {
       + "(owner_id, user_id, resource_server_id,status, created_at, updated_at) "
       + "VALUES ($1::uuid, $2::uuid, $3::uuid, $4::" + "policy_status_enum, NOW(), NOW())"
       + " RETURNING id, resource_server_id";
-  public static final String SQL_GET_DELEG_IDS = "SELECT d.id, url FROM delegations AS d JOIN "
-      + "resource_server ON d.resource_server_id = resource_server.id"
-      + " WHERE url = ANY($1::text[]) AND d.owner_id = $2::uuid";
   public static final String SQL_CREATE_APD =
       "INSERT INTO apds (name, owner_id, url, status, created_at, updated_at) VALUES "
           + "($1::text, $2::uuid, $3::text, $4::apd_status_enum, NOW(), NOW()) RETURNING id";
@@ -62,10 +60,11 @@ public class Utils {
           + "VALUES ($1::UUID, $2::UUID,$3::UUID,'ACTIVE'::policy_status_enum,NOW(),NOW())";
 
   public static final String SQL_DELETE_DELEGATE =
-      "UPDATE delegations SET status ='DELETED' where owner_id = ANY($1::uuid[])";
+      "UPDATE delegations SET status ='DELETED' where id = ANY($1::uuid[])";
 
   PgPool pool;
   Map<String, UUID> resourceServerMap = new HashMap<String, UUID>();
+  List<UUID> delegationsList = new ArrayList<UUID>();
   public Map<String, UUID> apdMap = new HashMap<String, UUID>();
   private Map<UUID, FakeUserDetails> userMap = new HashMap<UUID, FakeUserDetails>();
 
@@ -173,10 +172,39 @@ public class Utils {
    * @param itemId UUID of the id of the resource_server on which delegation is to be made
    * @return Void future indicating success or failure
    */
-  public static Future<Void> createDelegation(PgPool pool, UUID userId, UUID ownerId, UUID itemId) {
+  public  Future<Void> createFakeDelegation(UUID id, User delegator, User delegate,
+      String rsUrl, Roles role, DelegationStatus status) {
     Promise<Void> response = Promise.promise();
-    Tuple tuple = Tuple.of(ownerId, userId, itemId);
-    pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_DELEGATE).execute(tuple))
+    
+    UUID roleId = userMap.get(UUID.fromString(delegator.getUserId())).getRoleId(role, rsUrl);
+    if(roleId == null) {
+      response.fail("The delegator does not have the requested role for requested RS");
+      return response.future();
+    }
+    
+    Tuple tuple = Tuple.of(id, delegate.getUserId(), roleId, status);
+    
+    pool.withTransaction(conn -> conn.preparedQuery(SQL_CREATE_USER_IF_NOT_EXISTS)
+        .execute(Tuple.of(delegate.getUserId(), NIL_PHONE, new JsonObject()))
+        .compose(res -> conn.preparedQuery(TEST_INSERT_DELEGATION).execute(tuple))
+        .compose(rows -> {
+          delegationsList.add(id);
+
+          if (!userMap.containsKey(UUID.fromString(delegate.getUserId()))) {
+            userMap.put(UUID.fromString(delegate.getUserId()), new FakeUserDetails());
+          }
+          return Future.succeededFuture();
+        })).onSuccess(succ -> response.complete())
+        .onFailure(fail -> response.fail("Fake delegation creation error " + fail.toString()));
+    
+    return response.future();
+  }
+  
+  public Future<Void> deleteFakeDelegation() {
+    Promise<Void> response = Promise.promise();
+
+    Tuple tuple = Tuple.of(delegationsList.toArray(UUID[]::new));
+    pool.withConnection(conn -> conn.preparedQuery(SQL_DELETE_DELEGATE).execute(tuple))
         .onSuccess(succ -> response.complete())
         .onFailure(fail -> response.fail("Db failure: " + fail.toString()));
     return response.future();

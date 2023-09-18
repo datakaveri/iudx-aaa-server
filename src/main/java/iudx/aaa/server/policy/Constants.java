@@ -44,6 +44,8 @@ public class Constants {
   public static final String SUCC_TITLE_LIST_DELEGS = "Delegations";
   public static final String SUCC_TITLE_DELETE_DELE = "Deleted requested delegations";
   public static final String SUCC_TITLE_DELEG_EMAILS = "Delegate emails";
+  
+  public static final String RESP_DELEG_EMAILS = "delegateEmails";
 
   public static final String INVALID_ROLE = "Invalid role to perform operation";
   public static final String INVALID_INPUT = "Invalid Input";
@@ -56,6 +58,12 @@ public class Constants {
       "User with provider, consumer, delegate role may call the API";
   public static final String ERR_DETAIL_CREATE_DELEGATE_ROLES =
       "User with provider/consumer role may call the API";
+  public static final String ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE =
+      "User does not have role for requested RS URL / RS does not exist ";
+  public static final String ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE =
+      "User does not have requested delegated role for given resource server"
+      + " (Resource server may not exist also)";
+  public static final String ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE = "rsUrls";
 
   // future failure messages
   public static final String INCORRECT_ITEM_TYPE = "incorrect item type";
@@ -99,6 +107,11 @@ public class Constants {
   public static final String INSERT_DELEGATION =
       "insert into delegations (user_id, role_id, status, created_at, updated_at) values "
           + " ($1::UUID, $2::UUID, $3::policy_status_enum, now() ,now())";
+
+  // for unit testing
+  public static final String TEST_INSERT_DELEGATION =
+      "insert into delegations (id, user_id, role_id, status, created_at, updated_at) values "
+          + " ($1::UUID, $2::UUID, $3::UUID, $4::policy_status_enum, now() ,now())";
 
   public static final String GET_ROLE_IDS_BY_ROLE_AND_RS = "SELECT roles.id, url, role FROM roles"
       + " JOIN resource_server ON roles.resource_server_id = resource_server.id"

@@ -3208,13 +3208,14 @@ paths:
       summary: Create Delegations
       operationId: post-auth-v1-delegations
       responses:
-        '200':
+        '201':
           description: OK
         '400':
           description: |-
             Bad Request
             - The resource server URL is not present on the server
             - The user does not have the correct role for the requested resource server  
+            - The requested user email is not registered on the UAC 
           content:
             application/json:
               schema:
@@ -3377,7 +3378,10 @@ paths:
       description: |-
         A valid user with **trustee** role i.e. **owner of a registered and active APD** may get the email addresses of a user's delegates for communication purposes. The trustee supplies a user ID, role and resource server. If a user has valid delegates for the given role and resource server, the email addresses are returned. **The trustee is authenticated using client ID, client secret credentials.** 
         
-        **NOTE**: A `200 OK` with an empty `delegateEmails` array is returned even if the given user **is not registered on the COS**
+        **NOTE**: A `200 OK` with an empty `delegateEmails` array is returned even if 
+          - The requested user **is not registered on the COS** or **does not exist on UAC**
+          - The requested **resource server does not exist**
+          - The requested user **does not have a role for the requested resource server**
 
       parameters:
         - schema:
