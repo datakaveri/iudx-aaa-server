@@ -35,7 +35,7 @@ public class CreateApdRequest {
   }
 
   public void setOwner(String owner) {
-    this.owner = owner;
+    this.owner = owner.toLowerCase();
   }
 
   public CreateApdRequest(JsonObject json) {

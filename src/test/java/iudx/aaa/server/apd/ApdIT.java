@@ -1,22 +1,28 @@
-package iudx.aaa.server.admin;
+package iudx.aaa.server.apd;
 
+import org.junit.jupiter.api.extension.ExtendWith;
 import static io.restassured.RestAssured.*;
-import static iudx.aaa.server.admin.Constants.*;
-import static iudx.aaa.server.registration.Constants.*;
+import static iudx.aaa.server.apd.Constants.*;
+import static iudx.aaa.server.token.Constants.*;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_EMAILS_NOT_AT_UAC_KEYCLOAK;
 import static org.hamcrest.Matchers.*;
 import java.util.List;
+import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import io.restassured.http.ContentType;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import iudx.aaa.server.apiserver.ItemType;
 import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.util.Urn;
@@ -25,7 +31,7 @@ import iudx.aaa.server.registration.KcAdminExtension;
 import iudx.aaa.server.registration.KcAdminInt;
 
 @ExtendWith(KcAdminExtension.class)
-public class CreateAndGetResourceServerIT {
+public class ApdIT {
 
   /**
    * Token with consumer, provider, admin, trustee and delegate roles.
@@ -40,15 +46,8 @@ public class CreateAndGetResourceServerIT {
   @BeforeAll
   static void setup(KcAdminInt kc) {
     baseURI = "http://localhost";
-
-    String portSet = System.getProperty("integrationTestPort");
-    if (NumberUtils.isDigits(portSet)) {
-      port = NumberUtils.createInteger(portSet);
-    } else {
-      port = 8443;
-    }
+    port = 8443;
     basePath = "/auth/v1";
-    enableLoggingOfRequestAndResponseIfValidationFails();
 
     String DUMMY_SERVER = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
 
@@ -111,56 +110,55 @@ public class CreateAndGetResourceServerIT {
         .post("/delegations").then()
         .statusCode(describedAs("Setup - Created delegation", is(201)));
   }
-
+  
   @Test
-  @DisplayName("Create Resource Server - No token sent")
-  void createRsNoToken(KcAdminInt kc) {
+  @DisplayName("Create APD - No token sent")
+  void createApdNoToken(KcAdminInt kc) {
     JsonObject body = new JsonObject().put("name", "name").put("url", "url.com").put("owner",
         "some-email@gmail.com");
 
     given().contentType(ContentType.JSON).body(body.toString()).when()
-        .post("/admin/resourceservers").then().statusCode(401).and()
+        .post("/apd").then().statusCode(401).and()
         .body("type", equalTo(Urn.URN_MISSING_AUTH_TOKEN.toString()));
   }
 
   @Test
-  @DisplayName("Create Resource Server - User without roles cannot call API")
-  void createRsNoRoles(KcAdminInt kc) {
+  @DisplayName("Create APD - User without roles cannot call API")
+  void createApdNoRoles(KcAdminInt kc) {
     JsonObject body = new JsonObject().put("name", "name").put("url", "url.com").put("owner",
         "some-email@gmail.com");
 
     given().auth().oauth2(tokenNoRoles).contentType(ContentType.JSON).body(body.toString()).when()
-        .post("/admin/resourceservers").then().statusCode(401).and()
+        .post("/apd").then().statusCode(401).and()
         .body("type", equalTo(Urn.URN_INVALID_ROLE.toString())).and()
         .body("title", equalTo(ERR_TITLE_NO_COS_ADMIN_ROLE)).and()
         .body("detail", equalTo(ERR_DETAIL_NO_COS_ADMIN_ROLE));
   }
 
   @Test
-  @DisplayName("Create Resource Server - User with consumer, provider, admin, delegate, trustee roles cannot call API")
-  void createRsRolesNotAllowed(KcAdminInt kc) {
+  @DisplayName("Create APD - User with consumer, provider, admin, delegate, trustee roles cannot call API")
+  void createApdRolesNotAllowed(KcAdminInt kc) {
     JsonObject body = new JsonObject().put("name", "name").put("url", "url.com").put("owner",
         "some-email@gmail.com");
 
     given().auth().oauth2(tokenRoles).contentType(ContentType.JSON).body(body.toString()).when()
-        .post("/admin/resourceservers").then().statusCode(401).and()
+        .post("/apd").then().statusCode(401).and()
         .body("type", equalTo(Urn.URN_INVALID_ROLE.toString())).and()
         .body("title", equalTo(ERR_TITLE_NO_COS_ADMIN_ROLE)).and()
         .body("detail", equalTo(ERR_DETAIL_NO_COS_ADMIN_ROLE));
   }
 
   @Test
-  @DisplayName("Create Resource Server - Empty body")
-  void createRsEmptyBody(KcAdminInt kc) {
+  @DisplayName("Create APD - Empty body")
+  void createApdEmptyBody(KcAdminInt kc) {
 
-    given().auth().oauth2(kc.cosAdminToken).contentType(ContentType.JSON).when()
-        .post("/admin/resourceservers").then().statusCode(400)
-        .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
+    given().auth().oauth2(kc.cosAdminToken).when().post("/apd").then().statusCode(400)
+        .and().body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
   }
 
   @Test
-  @DisplayName("Create Resource Server - Missing keys")
-  void createRsMissingKeys(KcAdminInt kc) {
+  @DisplayName("Create APD - Missing keys")
+  void createApdMissingKeys(KcAdminInt kc) {
 
     JsonObject body = new JsonObject().put("name", "name").put("url", "url.com").put("owner",
         "some-email@gmail.com");
@@ -173,33 +171,33 @@ public class CreateAndGetResourceServerIT {
     missingOwner.remove("owner");
 
     given().auth().oauth2(kc.cosAdminToken).contentType(ContentType.JSON).body(missingName.toString()).when()
-        .post("/admin/resourceservers").then().statusCode(400).and()
+        .post("/apd").then().statusCode(400).and()
         .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
 
     given().auth().oauth2(kc.cosAdminToken).contentType(ContentType.JSON).body(missingOwner.toString()).when()
-        .post("/admin/resourceservers").then().statusCode(400).and()
+        .post("/apd").then().statusCode(400).and()
         .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
 
     given().auth().oauth2(kc.cosAdminToken).contentType(ContentType.JSON).body(missingUrl.toString()).when()
-        .post("/admin/resourceservers").then().statusCode(400).and()
+        .post("/apd").then().statusCode(400).and()
         .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
   }
 
   @Test
-  @DisplayName("Create Resource Server - Invalid email")
-  void createRsInvalidEmail(KcAdminInt kc) {
+  @DisplayName("Create APD - Invalid email")
+  void createApdInvalidEmail(KcAdminInt kc) {
 
     JsonObject body = new JsonObject().put("name", "name").put("url", "url.com").put("owner",
         "some-emailsasd12jdnamdgmail.com");
 
     given().auth().oauth2(kc.cosAdminToken).contentType(ContentType.JSON).body(body.toString()).when()
-        .post("/admin/resourceservers").then().statusCode(400).and()
+        .post("/apd").then().statusCode(400).and()
         .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
   }
 
   @Test
-  @DisplayName("Create Resource Server - Invalid URLs - caught by OpenAPI")
-  void createRsInvalidUrlOAS(KcAdminInt kc) {
+  @DisplayName("Create APD - Invalid URLs - caught by OpenAPI")
+  void createApdInvalidUrlOAS(KcAdminInt kc) {
 
     JsonObject body = new JsonObject().put("name", "name").put("url", "url.com").put("owner",
         "someemail@gmail.com");
@@ -210,14 +208,14 @@ public class CreateAndGetResourceServerIT {
       body.put("url", url);
 
       given().auth().oauth2(kc.cosAdminToken).contentType(ContentType.JSON).body(body.toString()).when()
-          .post("/admin/resourceservers").then().statusCode(400).and()
+          .post("/apd").then().statusCode(400).and()
           .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
     });
   }
 
   @Test
-  @DisplayName("Create Resource Server - Invalid URLs - caught by Guava lib")
-  void createRsInvalidUrlGuava(KcAdminInt kc) {
+  @DisplayName("Create APD - Invalid URLs - caught by Guava lib")
+  void createApdInvalidUrlGuava(KcAdminInt kc) {
 
     JsonObject body = new JsonObject().put("name", "name").put("url", "url.com").put("owner",
         "someemail@gmail.com");
@@ -228,7 +226,7 @@ public class CreateAndGetResourceServerIT {
       body.put("url", url);
 
       given().auth().oauth2(kc.cosAdminToken).contentType(ContentType.JSON).body(body.toString()).when()
-          .post("/admin/resourceservers").then().statusCode(400).and()
+          .post("/apd").then().statusCode(400).and()
           .body("type", equalTo(Urn.URN_INVALID_INPUT.toString())).and()
           .body("title", equalTo(ERR_TITLE_INVALID_DOMAIN)).and()
           .body("detail", equalTo(ERR_DETAIL_INVALID_DOMAIN));
@@ -236,23 +234,23 @@ public class CreateAndGetResourceServerIT {
   }
   
   @Test
-  @DisplayName("Create Resource Server - Email not registered on UAC")
-  void createRsEmailNotOnUac(KcAdminInt kc) {
+  @DisplayName("Create APD - Email not registered on UAC")
+  void createApdEmailNotOnUac(KcAdminInt kc) {
 
     String badEmail = RandomStringUtils.randomAlphabetic(15) +"@gmail.com";
     JsonObject body = new JsonObject().put("name", "name").put("url", "url.com").put("owner",
         badEmail);
 
       given().auth().oauth2(kc.cosAdminToken).contentType(ContentType.JSON).body(body.toString()).when()
-          .post("/admin/resourceservers").then().statusCode(400).and()
+          .post("/apd").then().statusCode(400).and()
           .body("type", equalTo(Urn.URN_INVALID_INPUT.toString())).and()
           .body("title", equalTo(ERR_TITLE_EMAILS_NOT_AT_UAC_KEYCLOAK)).and()
           .body("detail", stringContainsInOrder(badEmail.toLowerCase()));
   }
   
   @Test
-  @DisplayName("Create Resource Server - Successfully created RS")
-  void createRsSuccess(KcAdminInt kc) {
+  @DisplayName("Create APD - Successfully created APD")
+  void createApdSuccess(KcAdminInt kc) {
 
     String email = IntegTestHelpers.email();
     kc.createUser(email);
@@ -263,9 +261,9 @@ public class CreateAndGetResourceServerIT {
         email);
 
       given().auth().oauth2(kc.cosAdminToken).contentType(ContentType.JSON).body(body.toString()).when()
-          .post("/admin/resourceservers").then().statusCode(201).and()
+          .post("/apd").then().statusCode(201).and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString())).and()
-          .body("title", equalTo(SUCC_TITLE_CREATED_RS)).and()
+          .body("title", equalTo(SUCC_TITLE_REGISTERED_APD)).and()
           .body("results", hasKey("id"))
           .body("results", hasKey("owner"))
           .rootPath("results")
@@ -279,8 +277,8 @@ public class CreateAndGetResourceServerIT {
   }
   
   @Test
-  @DisplayName("Create Resource Server - Duplicate RS")
-  void createRsDuplicate(KcAdminInt kc) {
+  @DisplayName("Create APD - Duplicate APD")
+  void createApdDuplicate(KcAdminInt kc) {
 
     String email = IntegTestHelpers.email();
     kc.createUser(email);
@@ -291,28 +289,28 @@ public class CreateAndGetResourceServerIT {
         email);
 
       given().auth().oauth2(kc.cosAdminToken).contentType(ContentType.JSON).body(body.toString()).when()
-          .post("/admin/resourceservers").then().statusCode(201).and()
+          .post("/apd").then().statusCode(201).and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString())).and()
-          .body("title", equalTo(SUCC_TITLE_CREATED_RS));
+          .body("title", equalTo(SUCC_TITLE_REGISTERED_APD));
 
       given().auth().oauth2(kc.cosAdminToken).contentType(ContentType.JSON).body(body.toString()).when()
-          .post("/admin/resourceservers").then().statusCode(409).and()
+          .post("/apd").then().statusCode(409).and()
           .body("type", equalTo(Urn.URN_ALREADY_EXISTS.toString())).and()
-          .body("title", equalTo(ERR_TITLE_DOMAIN_EXISTS)).and()
-          .body("detail", equalTo(ERR_DETAIL_DOMAIN_EXISTS));
+          .body("title", equalTo(ERR_TITLE_EXISTING_DOMAIN)).and()
+          .body("detail", equalTo(ERR_DETAIL_EXISTING_DOMAIN));
   }
   
   @Test
-  @DisplayName("Get Resource Server - No token sent")
+  @DisplayName("Get APD - No token sent")
   void getRsNoToken(KcAdminInt kc) {
 
     when()
-        .get("/resourceservers").then().statusCode(401).and()
+        .get("/apd").then().statusCode(401).and()
         .body("type", equalTo(Urn.URN_MISSING_AUTH_TOKEN.toString()));
   }
   
   @Nested
-  @DisplayName("Get Resource Server - Any user with valid token can call API")
+  @DisplayName("Get APD - Any user with valid token can call API")
   @TestInstance(Lifecycle.PER_CLASS)
   class GetRsSuccess {
 
@@ -322,14 +320,14 @@ public class CreateAndGetResourceServerIT {
     String serverUrl = serverName + ".com";
 
     @BeforeAll
-    void createRs(KcAdminInt kc) {
+    void createApd(KcAdminInt kc) {
       kc.createUser(email);
       
       JsonObject body = new JsonObject().put("name", serverName).put("url", serverUrl).put("owner",
           email);
 
       serverId = given().auth().oauth2(kc.cosAdminToken).contentType(ContentType.JSON)
-          .body(body.toString()).when().post("/admin/resourceservers").then()
+          .body(body.toString()).when().post("/apd").then()
           .statusCode(describedAs("Created RS for Get resource server", is(201))).extract()
           .path("results.id");
     }
@@ -339,9 +337,9 @@ public class CreateAndGetResourceServerIT {
     void cosAdminViewRs(KcAdminInt kc)
     {
       given().auth().oauth2(kc.cosAdminToken).contentType(ContentType.JSON).when()
-          .get("/resourceservers").then().statusCode(200).and()
+          .get("/apd").then().statusCode(200).and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString())).and()
-          .body("title", equalTo(SUCC_TITLE_RS_READ))
+          .body("title", equalTo(SUCC_TITLE_APD_READ))
           .body("results", hasSize(greaterThan(0)))
           .rootPath("results.find { it.id == '%s' }", withArgs(serverId))
           .body("", hasKey("id"))
@@ -356,13 +354,13 @@ public class CreateAndGetResourceServerIT {
     }
     
     @Test
-    @DisplayName("COS Admin can get RS")
+    @DisplayName("All roles can get APD")
     void rolesViewRs()
     {
       given().auth().oauth2(tokenRoles).contentType(ContentType.JSON).when()
-          .get("/resourceservers").then().statusCode(200).and()
+          .get("/apd").then().statusCode(200).and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString())).and()
-          .body("title", equalTo(SUCC_TITLE_RS_READ))
+          .body("title", equalTo(SUCC_TITLE_APD_READ))
           .body("results", hasSize(greaterThan(0)))
           .rootPath("results.find { it.id == '%s' }", withArgs(serverId))
           .body("", hasKey("id"))
@@ -377,24 +375,15 @@ public class CreateAndGetResourceServerIT {
     }
     
     @Test
-    @DisplayName("No roles can get RS")
+    @DisplayName("No roles cannot get APD")
     void noRolesViewRs()
     {
       given().auth().oauth2(tokenNoRoles).contentType(ContentType.JSON).when()
-          .get("/resourceservers").then().statusCode(200).and()
-          .body("type", equalTo(Urn.URN_SUCCESS.toString())).and()
-          .body("title", equalTo(SUCC_TITLE_RS_READ))
-          .body("results", hasSize(greaterThan(0)))
-          .rootPath("results.find { it.id == '%s' }", withArgs(serverId))
-          .body("", hasKey("id"))
-          .body("name", equalTo(serverName)).and()
-          .body("url", equalTo(serverUrl.toLowerCase())).and()
-          .body("", hasKey("owner")).and()
-          .body("owner", hasKey("id")).and()
-          .body("owner", hasKey("name")).and()
-          .body("owner.name", hasKey("firstName")).and()
-          .body("owner.name", hasKey("lastName")).and()
-          .body("owner.email", equalTo(email.toLowerCase()));
+          .get("/apd").then().statusCode(404).and()
+          .statusCode(404)
+          .body("type", equalTo(Urn.URN_MISSING_INFO.toString()))
+          .body("title", equalTo(ERR_TITLE_NO_APPROVED_ROLES.toString()))
+          .body("detail", equalTo(ERR_DETAIL_NO_APPROVED_ROLES.toString()));
     }
   }
 }
