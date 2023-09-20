@@ -9,6 +9,7 @@ import static org.hamcrest.Matchers.*;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
@@ -49,8 +50,14 @@ public class ClientCredentialsIT {
   @BeforeAll
   static void setup(KcAdminInt kc) {
     baseURI = "http://localhost";
-    port = 8443;
+    String portSet = System.getProperty("integrationTestPort");
+    if (NumberUtils.isDigits(portSet)) {
+      port = NumberUtils.createInteger(portSet);
+    } else {
+      port = 8443;
+    }
     basePath = "/auth/v1";
+    enableLoggingOfRequestAndResponseIfValidationFails();
 
     tokenNoRoles = kc.createUser(IntegTestHelpers.email());
 

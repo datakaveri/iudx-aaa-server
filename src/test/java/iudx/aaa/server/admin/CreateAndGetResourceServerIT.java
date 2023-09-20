@@ -6,6 +6,7 @@ import static iudx.aaa.server.registration.Constants.*;
 import static org.hamcrest.Matchers.*;
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -39,8 +40,15 @@ public class CreateAndGetResourceServerIT {
   @BeforeAll
   static void setup(KcAdminInt kc) {
     baseURI = "http://localhost";
-    port = 8443;
+
+    String portSet = System.getProperty("integrationTestPort");
+    if (NumberUtils.isDigits(portSet)) {
+      port = NumberUtils.createInteger(portSet);
+    } else {
+      port = 8443;
+    }
     basePath = "/auth/v1";
+    enableLoggingOfRequestAndResponseIfValidationFails();
 
     String DUMMY_SERVER = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
 

@@ -60,7 +60,6 @@ pipeline {
       steps{
         script{
             sh 'docker/runIntegTests.sh'
-            sh 'scp src/test/resources/Integration_Test.postman_collection.json jenkins@jenkins-master:/var/lib/jenkins/iudx/aaa/Newman/'
             sh 'docker compose -f docker-compose-test.yml up -d integTest'
             sh 'sleep 45'
         }
@@ -83,17 +82,27 @@ pipeline {
             startZap ([host: 'localhost', port: 8090, zapHome: '/var/lib/jenkins/tools/com.cloudbees.jenkins.plugins.customtools.CustomTool/OWASP_ZAP/ZAP_2.11.0'])
             sh 'curl http://127.0.0.1:8090/JSON/pscan/action/disableScanners/?ids=10096'
             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-              sh 'HTTP_PROXY=\'127.0.0.1:8090\' newman run /var/lib/jenkins/iudx/aaa/Newman/Integration_Test.postman_collection.json -e /home/ubuntu/configs/aaa-postman-env.json --insecure -r htmlextra --reporter-htmlextra-export /var/lib/jenkins/iudx/aaa/Newman/report/report.html --reporter-htmlextra-skipSensitiveData'
             }
-            runZapAttack()
           }
+        }
+        script{
+            sh 'cp /home/ubuntu/configs/aaa-config-integ.json configs/config-integ.json'
+            sh 'mvn test-compile failsafe:integration-test  -DskipUnitTests=true -DintegrationTestPort=8090'
+            }
+        node('built-in') {
+          script{
+            runZapAttack()
+            }
         }
       }
       post{
         always{
+          xunit (
+             thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+             tools: [ JUnit(pattern: 'target/failsafe-reports/*.xml') ]
+             )
           node('built-in') {
             script{
-              publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '/var/lib/jenkins/iudx/aaa/Newman/report/', reportFiles: 'report.html', reportName: 'HTML Report', reportTitles: '', reportName: 'Integration Test Report'])
               archiveZap failHighAlerts: 1, failMediumAlerts: 1, failLowAlerts: 2
             }  
           }
