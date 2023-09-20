@@ -51,6 +51,7 @@ public class ClientCredentialsIT {
     baseURI = "http://localhost";
     port = 8443;
     basePath = "/auth/v1";
+    enableLoggingOfRequestAndResponseIfValidationFails();
 
     tokenNoRoles = kc.createUser(IntegTestHelpers.email());
 

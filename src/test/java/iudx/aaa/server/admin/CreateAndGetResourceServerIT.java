@@ -41,6 +41,7 @@ public class CreateAndGetResourceServerIT {
     baseURI = "http://localhost";
     port = 8443;
     basePath = "/auth/v1";
+    enableLoggingOfRequestAndResponseIfValidationFails();
 
     String DUMMY_SERVER = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
 

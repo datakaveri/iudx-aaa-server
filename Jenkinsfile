@@ -83,23 +83,30 @@ pipeline {
             startZap ([host: 'localhost', port: 8090, zapHome: '/var/lib/jenkins/tools/com.cloudbees.jenkins.plugins.customtools.CustomTool/OWASP_ZAP/ZAP_2.11.0'])
             sh 'curl http://127.0.0.1:8090/JSON/pscan/action/disableScanners/?ids=10096'
             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-              sh 'mvn integration-test  -DskipUnitTests=true'
             }
-            runZapAttack()
           }
+        }
+        script{
+            sh 'cp /home/ubuntu/configs/aaa-config-integ.json configs/config-integ.json'
+            sh 'mvn test-compile failsafe:integration-test  -DskipUnitTests=true'
+            }
+        node('built-in') {
+          script{
+            runZapAttack()
+            }
         }
       }
       post{
         always{
           node('built-in') {
-            xunit (
-             thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-             tools: [ JUnit(pattern: 'target/failsafe-reports/*.xml') ]
-             )
             script{
               archiveZap failHighAlerts: 1, failMediumAlerts: 1, failLowAlerts: 2
             }  
           }
+          xunit (
+             thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+             tools: [ JUnit(pattern: 'target/failsafe-reports/*.xml') ]
+             )
         }
         failure{
           error "Test failure. Stopping pipeline execution!"
