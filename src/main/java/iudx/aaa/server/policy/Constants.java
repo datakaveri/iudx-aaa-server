@@ -81,10 +81,6 @@ public class Constants {
   public static final String ERR_DETAIL_PROVIDER_CANNOT_ACCESS_PII_RES =
       "Requested resource is a PII resource - provider is not allowed to access directly";
       
-  public static final String ERR_TITLE_NOT_TRUSTEE = "User does not have trustee role";
-  public static final String ERR_DETAIL_NOT_TRUSTEE =
-      "You are not a trustee of any registered and active APD";
-  
   public static final String LIST_DELEGATION_AS_DELEGATOR_OR_DELEGATE =
       "SELECT d.id, d.user_id, url, roles.user_id AS delegator_id, lower(roles.role::text) AS role, name AS server "
           + "FROM delegations AS d JOIN roles ON roles.id = d.role_id"

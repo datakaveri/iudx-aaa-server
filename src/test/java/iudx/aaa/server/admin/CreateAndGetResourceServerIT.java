@@ -5,18 +5,23 @@ import static iudx.aaa.server.admin.Constants.*;
 import static iudx.aaa.server.registration.Constants.*;
 import static org.hamcrest.Matchers.*;
 import java.util.List;
+import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import io.restassured.http.ContentType;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import iudx.aaa.server.apiserver.ItemType;
 import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.util.Urn;
@@ -250,16 +255,91 @@ public class CreateAndGetResourceServerIT {
           .body("detail", stringContainsInOrder(badEmail.toLowerCase()));
   }
   
-  @Test
-  @DisplayName("Create Resource Server - Successfully created RS")
-  void createRsSuccess(KcAdminInt kc) {
+  @Nested
+  @TestMethodOrder(OrderAnnotation.class)
+  @TestInstance(Lifecycle.PER_CLASS)
+  @DisplayName("Create Resource Server - Successfully created RS and testing side-effects")
+  class CreateRsSuccess{
 
     String email = IntegTestHelpers.email();
-    kc.createUser(email);
+    String adminToken;
     String serverName = RandomStringUtils.randomAlphabetic(10);
     String serverUrl = serverName + ".com";
     
-    JsonObject body = new JsonObject().put("name", serverName).put("url", serverUrl).put("owner",
+    @BeforeAll
+    void setup(KcAdminInt kc)
+    {
+      adminToken = kc.createUser(email);
+    }
+    
+    @Test
+    @Order(1)
+    @DisplayName("User w/ consumer role does not have RS URL in roles-RS mapping")
+    void consNoHaveRs()
+    {
+      given().auth().oauth2(tokenRoles).contentType(ContentType.JSON).when()
+          .get("/user/roles").then().statusCode(200)
+          .body("type", equalTo(Urn.URN_SUCCESS.toString()))
+          .body("title", equalTo(SUCC_TITLE_USER_READ))
+          .body("results.rolesToRsMapping.consumer", not(hasItem(serverUrl.toLowerCase())));
+    }
+    
+    @Test
+    @Order(2)
+    @DisplayName("User about to become admin does not have admin role and cannot call provider reg APIs")
+    void newAdminUserNoAdminRoleOrProviderRegApis()
+    {
+      given().auth().oauth2(adminToken).contentType(ContentType.JSON).when()
+          .get("/user/roles").then().statusCode(404)
+          .body("type", equalTo(Urn.URN_MISSING_INFO.toString()))
+          .body("title", equalTo(ERR_TITLE_NO_APPROVED_ROLES))
+          .body("detail", equalTo(ERR_DETAIL_NO_APPROVED_ROLES));
+    }
+    
+    @Test
+    @Order(3)
+    @DisplayName("User about to become admin cannot call provider reg APIs")
+    void newAdminUserNoProviderRegApis()
+    {
+      given().auth().oauth2(adminToken).contentType(ContentType.JSON).when()
+          .get("/admin/provider/registrations").then().statusCode(401)
+          .body("type", equalTo(Urn.URN_INVALID_ROLE.toString()))
+          .body("title", equalTo(ERR_TITLE_NOT_ADMIN))
+          .body("detail", equalTo(ERR_DETAIL_NOT_ADMIN));
+      
+      JsonObject provData = new JsonObject().put("request",
+          new JsonArray().add(new JsonObject().put("id", UUID.randomUUID().toString()).put("status",
+              RoleStatus.APPROVED.toString().toLowerCase())));
+      
+      given().auth().oauth2(adminToken).contentType(ContentType.JSON).body(provData.toString()).when()
+          .put("/admin/provider/registrations").then().statusCode(401)
+          .body("type", equalTo(Urn.URN_INVALID_ROLE.toString()))
+          .body("title", equalTo(ERR_TITLE_NOT_ADMIN))
+          .body("detail", equalTo(ERR_DETAIL_NOT_ADMIN));
+    }
+    
+    @Test
+    @Order(4)
+    @DisplayName("User about to become admin cannot get admin token")
+    void newAdminUserNoToken()
+    {
+      JsonObject tokenBody = new JsonObject().put("itemId", serverUrl)
+        .put("itemType", ItemType.RESOURCE_SERVER.toString().toLowerCase())
+        .put("role", Roles.ADMIN.toString().toLowerCase());
+      
+      given().auth().oauth2(adminToken)
+          .contentType(ContentType.JSON).body(tokenBody.toString()).when()
+          .post("/token").then()
+          .statusCode(404)
+          .body("type", equalTo(Urn.URN_MISSING_INFO.toString()));
+    }
+    
+    @Test
+    @Order(5)
+    @DisplayName("Create resource server success")
+    void createRsSuccess(KcAdminInt kc)
+    {
+      JsonObject body = new JsonObject().put("name", serverName).put("url", serverUrl).put("owner",
         email);
 
       given().auth().oauth2(kc.cosAdminToken).contentType(ContentType.JSON).body(body.toString()).when()
@@ -276,6 +356,63 @@ public class CreateAndGetResourceServerIT {
           .body("owner.name", hasKey("firstName")).and()
           .body("owner.name", hasKey("lastName")).and()
           .body("owner.email", equalTo(email.toLowerCase()));
+    }
+    
+    @Test
+    @Order(6)
+    @DisplayName("User w/ consumer role has new RS URL in roles-RS mapping automatically")
+    void consHaveRs()
+    {
+      given().auth().oauth2(tokenRoles).contentType(ContentType.JSON).when()
+          .get("/user/roles").then().statusCode(200)
+          .body("type", equalTo(Urn.URN_SUCCESS.toString()))
+          .body("title", equalTo(SUCC_TITLE_USER_READ))
+          .body("results.rolesToRsMapping.consumer", hasItem(serverUrl.toLowerCase()));
+    }
+    
+    @Test
+    @Order(7)
+    @DisplayName("New admin user has admin role")
+    void newAdminUserHasAdminRole()
+    {
+      given().auth().oauth2(adminToken).contentType(ContentType.JSON).when()
+          .get("/user/roles").then().statusCode(200)
+          .body("type", equalTo(Urn.URN_SUCCESS.toString()))
+          .body("title", equalTo(SUCC_TITLE_USER_READ))
+          .body("results.roles", hasItem(Roles.ADMIN.toString().toLowerCase()))
+          .body("results.rolesToRsMapping.admin", hasItem(serverUrl.toLowerCase()));
+    }
+      
+    @Test
+    @Order(8)
+    @DisplayName("New admin user can call provider reg APIs")
+    void newAdminUserCanCallProviderRegApis() {
+      given().auth().oauth2(adminToken).contentType(ContentType.JSON).when()
+          .get("/admin/provider/registrations").then().statusCode(not(401));
+      
+      JsonObject provData = new JsonObject().put("id", UUID.randomUUID().toString()).put("status",
+          RoleStatus.APPROVED.toString().toLowerCase());
+      
+      given().auth().oauth2(adminToken).contentType(ContentType.JSON).body(provData.toString())
+      .when().put("/admin/provider/registrations")
+      .then().statusCode(not(401));
+    }
+    
+    @Test
+    @Order(9)
+    @DisplayName("New admin user cannot get admin token")
+    void newAdminUserGetToken()
+    {
+      JsonObject tokenBody = new JsonObject().put("itemId", serverUrl)
+        .put("itemType", ItemType.RESOURCE_SERVER.toString().toLowerCase())
+        .put("role", Roles.ADMIN.toString().toLowerCase());
+      
+      given().auth().oauth2(adminToken)
+          .contentType(ContentType.JSON).body(tokenBody.toString()).when()
+          .post("/token").then()
+          .statusCode(200)
+          .body("type", equalTo(Urn.URN_SUCCESS.toString()));
+    }
   }
   
   @Test
@@ -313,6 +450,7 @@ public class CreateAndGetResourceServerIT {
   
   @Nested
   @DisplayName("Get Resource Server - Any user with valid token can call API")
+  @TestMethodOrder(OrderAnnotation.class)
   @TestInstance(Lifecycle.PER_CLASS)
   class GetRsSuccess {
 
@@ -320,8 +458,35 @@ public class CreateAndGetResourceServerIT {
     String email = IntegTestHelpers.email();
     String serverName = RandomStringUtils.randomAlphabetic(10);
     String serverUrl = serverName + ".com";
+    
+    @Test
+    @Order(1)
+    @DisplayName("No user can see the RS before created")
+    void tobeCreatedRsCannotBeSeen(KcAdminInt kc)
+    {
+      
+      given().auth().oauth2(kc.cosAdminToken).contentType(ContentType.JSON).when()
+          .get("/resourceservers").then().statusCode(200).and()
+          .body("type", equalTo(Urn.URN_SUCCESS.toString())).and()
+          .body("title", equalTo(SUCC_TITLE_RS_READ))
+          .body("results.find { it.url == '%s' }", withArgs(serverUrl), is(nullValue()));
+      
+      given().auth().oauth2(tokenRoles).contentType(ContentType.JSON).when()
+          .get("/resourceservers").then().statusCode(200).and()
+          .body("type", equalTo(Urn.URN_SUCCESS.toString())).and()
+          .body("title", equalTo(SUCC_TITLE_RS_READ))
+          .body("results.find { it.url == '%s' }", withArgs(serverUrl), is(nullValue()));
+      
+      given().auth().oauth2(tokenNoRoles).contentType(ContentType.JSON).when()
+          .get("/resourceservers").then().statusCode(200).and()
+          .body("type", equalTo(Urn.URN_SUCCESS.toString())).and()
+          .body("title", equalTo(SUCC_TITLE_RS_READ))
+          .body("results.find { it.url == '%s' }", withArgs(serverUrl), is(nullValue()));
+    }
 
-    @BeforeAll
+    @Test
+    @DisplayName("Create RS")
+    @Order(2)
     void createRs(KcAdminInt kc) {
       kc.createUser(email);
       
@@ -336,6 +501,7 @@ public class CreateAndGetResourceServerIT {
     
     @Test
     @DisplayName("COS Admin can get RS")
+    @Order(3)
     void cosAdminViewRs(KcAdminInt kc)
     {
       given().auth().oauth2(kc.cosAdminToken).contentType(ContentType.JSON).when()
@@ -357,6 +523,7 @@ public class CreateAndGetResourceServerIT {
     
     @Test
     @DisplayName("COS Admin can get RS")
+    @Order(4)
     void rolesViewRs()
     {
       given().auth().oauth2(tokenRoles).contentType(ContentType.JSON).when()
@@ -377,6 +544,7 @@ public class CreateAndGetResourceServerIT {
     }
     
     @Test
+    @Order(5)
     @DisplayName("No roles can get RS")
     void noRolesViewRs()
     {

@@ -198,8 +198,7 @@ public class ClientCredentialsIT {
           .body("title", equalTo(TOKEN_SUCCESS.toString()))
           .body("results", hasKey(ACCESS_TOKEN))
           .body("results", hasKey("expiry"))
-          .body("results", hasKey("server"))
-          .extract().path("results");
+          .body("results", hasKey("server"));
     }
 
     @Test
