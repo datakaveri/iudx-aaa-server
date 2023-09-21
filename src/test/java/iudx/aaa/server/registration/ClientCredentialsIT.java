@@ -297,4 +297,18 @@ public class ClientCredentialsIT {
           .body("detail", equalTo(ERR_DETAIL_INVALID_CLI_ID.toString()));
     }
   }
+
+    @DisplayName("Get Default creds for COS Admin - will get inserted into DB")
+    void getDefaultCredsForCosAdmin(KcAdminInt kc) {
+
+      given().auth().oauth2(kc.cosAdminToken).contentType(ContentType.JSON).when()
+          .get("/user/clientcredentials").then()
+          .statusCode(201)
+          .body("type", equalTo(Urn.URN_SUCCESS.toString()))
+          .body("title", equalTo(SUCC_TITLE_CREATED_DEFAULT_CLIENT.toString()))
+          .body("results.clientName", equalTo(DEFAULT_CLIENT))
+          .body("results", hasKey(RESP_CLIENT_ID))
+          .body("results", hasKey(RESP_CLIENT_SC))
+          .extract().response().asString();
+    }
 }

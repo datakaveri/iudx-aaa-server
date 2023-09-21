@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
@@ -54,8 +55,14 @@ public class ApdIT {
   @BeforeAll
   static void setup(KcAdminInt kc) {
     baseURI = "http://localhost";
-    port = 8443;
+    String portSet = System.getProperty("integrationTestPort");
+    if (NumberUtils.isDigits(portSet)) {
+      port = NumberUtils.createInteger(portSet);
+    } else {
+      port = 8443;
+    }
     basePath = "/auth/v1";
+    enableLoggingOfRequestAndResponseIfValidationFails();
 
     tokenNoRoles = kc.createUser(IntegTestHelpers.email());
 
@@ -158,7 +165,7 @@ public class ApdIT {
   @DisplayName("Create APD - Empty body")
   void createApdEmptyBody(KcAdminInt kc) {
 
-    given().auth().oauth2(kc.cosAdminToken).when().post("/apd").then().statusCode(400)
+    given().auth().oauth2(kc.cosAdminToken).contentType(ContentType.JSON).when().post("/apd").then().statusCode(400)
         .and().body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
   }
 
