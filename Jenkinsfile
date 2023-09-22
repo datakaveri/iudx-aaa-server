@@ -79,15 +79,15 @@ pipeline {
       steps{
         node('built-in') {
           script{
-            startZap ([host: 'localhost', port: 8090, zapHome: '/var/lib/jenkins/tools/com.cloudbees.jenkins.plugins.customtools.CustomTool/OWASP_ZAP/ZAP_2.11.0'])
-            sh 'curl http://127.0.0.1:8090/JSON/pscan/action/disableScanners/?ids=10096'
+            startZap ([host: '0.0.0.0', port: 8090, zapHome: '/var/lib/jenkins/tools/com.cloudbees.jenkins.plugins.customtools.CustomTool/OWASP_ZAP/ZAP_2.11.0'])
+            sh 'curl http://0.0.0.0:8090/JSON/pscan/action/disableScanners/?ids=10096'
             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
             }
           }
         }
         script{
             sh 'cp /home/ubuntu/configs/aaa-config-integ.json configs/config-integ.json'
-            sh 'mvn test-compile failsafe:integration-test  -DskipUnitTests=true -DintegrationTestPort=8090'
+            sh 'mvn test-compile failsafe:integration-test  -DskipUnitTests=true -DintTestProxyHost=jenkins-master-priv -DintTestProxyPort=8090'
             }
         node('built-in') {
           script{

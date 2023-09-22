@@ -3,6 +3,7 @@ package iudx.aaa.server.apd;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static io.restassured.RestAssured.*;
 import static iudx.aaa.server.apd.Constants.*;
+import static iudx.aaa.server.apiserver.util.Constants.*;
 import static iudx.aaa.server.token.Constants.*;
 import static iudx.aaa.server.registration.Constants.RESP_CLIENT_ID;
 import static iudx.aaa.server.registration.Constants.RESP_CLIENT_SC;
@@ -64,13 +65,16 @@ public class TrusteeOperationsIT {
   @BeforeAll
   static void setup(KcAdminInt kc) {
     baseURI = "http://localhost";
-    String portSet = System.getProperty("integrationTestPort");
-    if (NumberUtils.isDigits(portSet)) {
-      port = NumberUtils.createInteger(portSet);
-    } else {
-      port = 8443;
-    }
+    port = 8443;
     basePath = "/auth/v1";
+    
+    String proxyHost = System.getProperty("intTestProxyHost");
+    String proxyPort = System.getProperty("intTestProxyPort");
+    
+    if(proxyHost != null && proxyPort != null) {
+      proxy(proxyHost, Integer.parseInt(proxyPort));
+    }
+    
     enableLoggingOfRequestAndResponseIfValidationFails();
 
     String rolesEmail = IntegTestHelpers.email();
@@ -246,9 +250,14 @@ public class TrusteeOperationsIT {
     @DisplayName("Search user - Invalid params")
     void searchUserInvalidParams()
     {
+
+      given().when().headers(trusteeClientCreds)
+          .get("/user/search").then().statusCode(400).and()
+          .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
+      
       Map<String, String> queryParams = Map.of("email", UUID.randomUUID().toString(), "resourceServer",
               DUMMY_SERVER, "role", Roles.CONSUMER.toString().toLowerCase());
-      
+
       given().when().headers(trusteeClientCreds)
       .queryParams(queryParams)
           .get("/user/search").then().statusCode(400).and()
@@ -308,6 +317,46 @@ public class TrusteeOperationsIT {
           .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()))
           .body("title", equalTo(ERR_TITLE_USER_NOT_FOUND))
           .body("detail", equalTo(ERR_DETAIL_USER_NOT_FOUND));
+  }
+  
+  @Test
+  @DisplayName("Search user - missing client creds")
+  void searchUserUserMissingClientCreds(KcAdminInt kc) {
+      Map<String, String> queryParams = Map.of("email", noRolesEmail, "resourceServer",
+              DUMMY_SERVER, "role", Roles.CONSUMER.toString().toLowerCase());
+      
+      given().when()
+      .queryParams(queryParams)
+          .get("/user/search").then().statusCode(400)
+          .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
+
+      queryParams = Map.of("userId", noRolesUserId, "resourceServer",
+              DUMMY_SERVER, "role", Roles.PROVIDER.toString().toLowerCase());
+      
+      given().when()
+      .queryParams(queryParams)
+          .get("/user/search").then().statusCode(400)
+          .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
+  }
+  
+  @Test
+  @DisplayName("Search user - passing token instead of client creds")
+  void searchUserUserPassingToken(KcAdminInt kc) {
+      Map<String, String> queryParams = Map.of("email", noRolesEmail, "resourceServer",
+              DUMMY_SERVER, "role", Roles.CONSUMER.toString().toLowerCase());
+      
+      given().auth().oauth2(kc.cosAdminToken).when()
+      .queryParams(queryParams)
+          .get("/user/search").then().statusCode(400)
+          .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
+
+      queryParams = Map.of("userId", noRolesUserId, "resourceServer",
+              DUMMY_SERVER, "role", Roles.PROVIDER.toString().toLowerCase());
+      
+      given().auth().oauth2(kc.cosAdminToken).when()
+      .queryParams(queryParams)
+          .get("/user/search").then().statusCode(400)
+          .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
   }
   
   @Test
@@ -540,7 +589,6 @@ public class TrusteeOperationsIT {
     }
   }
   
-  
   @Test
   @DisplayName("Consumer, provider, admin, delegate cannot call get delegate emails")
   void rolesCannotCallDelegEmailApis()
@@ -558,6 +606,10 @@ public class TrusteeOperationsIT {
     @DisplayName("Search user - Missing and invalid params")
     void getDelegateEmailsMissingAndInvalidParams()
     {
+      given().when().headers(trusteeClientCreds)
+          .get("/delegations/emails").then().statusCode(400).and()
+          .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
+      
       Map<String, String> queryParams = Map.of("resourceServer",
               DUMMY_SERVER, "role", Roles.CONSUMER.toString().toLowerCase());
       
@@ -622,6 +674,30 @@ public class TrusteeOperationsIT {
           .body("type", equalTo(Urn.URN_SUCCESS.toString()))
           .body("title", equalTo(SUCC_TITLE_DELEG_EMAILS))
           .body("results.delegateEmails", hasSize(0));
+  }
+
+  @Test
+  @DisplayName("Get delegate emails - not passing client creds")
+  void getDelegateEmailsNoClientCreds(KcAdminInt kc) {
+      Map<String, String> queryParams = Map.of("userId", noRolesUserId, "resourceServer",
+              DUMMY_SERVER, "role", Roles.PROVIDER.toString().toLowerCase());
+      
+      given().when()
+      .queryParams(queryParams)
+          .get("/delegations/emails").then().statusCode(400).and()
+          .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
+  }
+  
+  @Test
+  @DisplayName("Get delegate emails - passing token")
+  void getDelegateEmailsPassingToken(KcAdminInt kc) {
+      Map<String, String> queryParams = Map.of("userId", noRolesUserId, "resourceServer",
+              DUMMY_SERVER, "role", Roles.PROVIDER.toString().toLowerCase());
+      
+      given().auth().oauth2(kc.cosAdminToken).when()
+      .queryParams(queryParams)
+          .get("/delegations/emails").then().statusCode(400).and()
+          .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
   }
   
   @Test

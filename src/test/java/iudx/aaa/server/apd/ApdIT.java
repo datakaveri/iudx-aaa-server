@@ -55,13 +55,16 @@ public class ApdIT {
   @BeforeAll
   static void setup(KcAdminInt kc) {
     baseURI = "http://localhost";
-    String portSet = System.getProperty("integrationTestPort");
-    if (NumberUtils.isDigits(portSet)) {
-      port = NumberUtils.createInteger(portSet);
-    } else {
-      port = 8443;
-    }
+    port = 8443;
     basePath = "/auth/v1";
+    
+    String proxyHost = System.getProperty("intTestProxyHost");
+    String proxyPort = System.getProperty("intTestProxyPort");
+    
+    if(proxyHost != null && proxyPort != null) {
+      proxy(proxyHost, Integer.parseInt(proxyPort));
+    }
+    
     enableLoggingOfRequestAndResponseIfValidationFails();
 
     tokenNoRoles = kc.createUser(IntegTestHelpers.email());
