@@ -36,8 +36,9 @@ import iudx.aaa.server.apiserver.util.Urn;
 import iudx.aaa.server.registration.IntegTestHelpers;
 import iudx.aaa.server.registration.KcAdminExtension;
 import iudx.aaa.server.registration.KcAdminInt;
+import iudx.aaa.server.registration.RestAssuredConfigExtension;
 
-@ExtendWith(KcAdminExtension.class)
+@ExtendWith({KcAdminExtension.class, RestAssuredConfigExtension.class})
 public class ApdIT {
 
   /**
@@ -54,19 +55,6 @@ public class ApdIT {
 
   @BeforeAll
   static void setup(KcAdminInt kc) {
-    baseURI = "http://localhost";
-    port = 8443;
-    basePath = "/auth/v1";
-    
-    String proxyHost = System.getProperty("intTestProxyHost");
-    String proxyPort = System.getProperty("intTestProxyPort");
-    
-    if(proxyHost != null && proxyPort != null) {
-      proxy(proxyHost, Integer.parseInt(proxyPort));
-    }
-    
-    enableLoggingOfRequestAndResponseIfValidationFails();
-
     tokenNoRoles = kc.createUser(IntegTestHelpers.email());
 
     String email = IntegTestHelpers.email();
