@@ -244,9 +244,9 @@ public class TokenServiceImpl implements TokenService {
         boolean flag = dbExistsRow.getBoolean(EXISTS);
 
         if (flag == Boolean.FALSE) {
-          LOGGER.error("Fail: " + ERR_TITLE_INVALID_RS_APD_URL);
+          LOGGER.error("Fail: " + ERR_TITLE_INVALID_RS);
           Response resp = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-              .title(ERR_TITLE_INVALID_RS_APD_URL).detail(ERR_DETAIL_INVALID_RS_APD_URL).build();
+              .title(ERR_TITLE_INVALID_RS_APD_REVOKE).detail(ERR_DETAIL_INVALID_RS_APD_REVOKE).build();
           handler.handle(Future.succeededFuture(resp.toJson()));
           return;
         }
@@ -522,8 +522,8 @@ public class TokenServiceImpl implements TokenService {
     Future<Void> checkUrlExists = resServer.compose(res -> {
       if (res.isEmpty()) {
         return Future.failedFuture(
-            new ComposeException(400, URN_INVALID_INPUT, ERR_TITLE_INVALID_RS_APD_URL,
-                ERR_DETAIL_INVALID_RS_APD_URL));
+            new ComposeException(400, URN_INVALID_INPUT, ERR_TITLE_INVALID_RS,
+                ERR_DETAIL_INVALID_RS));
       }
       
       return Future.succeededFuture();

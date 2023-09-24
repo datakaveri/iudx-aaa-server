@@ -37,7 +37,7 @@ import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_REQUEST;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_REQUEST_ID;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_NO_APPROVED_ROLES;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_NO_COS_ADMIN_ROLE;
-import static iudx.aaa.server.apd.Constants.ERR_TITLE_POLICY_EVAL_FAILED;
+import static iudx.aaa.server.apd.Constants.ERR_TITLE_APD_EVAL_FAILED;
 import static iudx.aaa.server.apd.Constants.GET_APDINFO_ID;
 import static iudx.aaa.server.apd.Constants.GET_APDINFO_URL;
 import static iudx.aaa.server.apd.Constants.INTERNALERROR;
@@ -666,7 +666,7 @@ public class ApdServiceImpl implements ApdService {
                   ComposeException exp = (ComposeException) webClientErr;
                   Response err = exp.getResponse();
                   err.setDetail(err.getDetail() + apdNotActiveMesg);
-                  err.setTitle(ERR_TITLE_POLICY_EVAL_FAILED);
+                  err.setTitle(ERR_TITLE_APD_EVAL_FAILED);
                   return Future.failedFuture(new ComposeException(err));
                 } else {
                   return Future.failedFuture(webClientErr);
@@ -724,7 +724,7 @@ public class ApdServiceImpl implements ApdService {
         }
 
         handler.handle(Future.failedFuture(new ComposeException(403, URN_INVALID_INPUT,
-            ERR_TITLE_POLICY_EVAL_FAILED, response.getString(APD_RESP_DETAIL) + apdNotActiveMesg)));
+            ERR_TITLE_APD_EVAL_FAILED, response.getString(APD_RESP_DETAIL) + apdNotActiveMesg)));
         return;
       }
     }).onFailure(e -> {

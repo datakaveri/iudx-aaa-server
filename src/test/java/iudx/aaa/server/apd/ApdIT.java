@@ -794,7 +794,7 @@ public class ApdIT {
           .get("/user/roles").then().statusCode(200).and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString())).and()
           .body("results.roles", hasItem(Roles.TRUSTEE.toString().toLowerCase()))
-          .body("results.rolesToRsMapping.trustee", hasItem(serverUrl.toLowerCase()));
+          .body("results.rolesToRsMapping.trustee", containsInAnyOrder(serverUrl.toLowerCase()));
     }
     
     @Test
