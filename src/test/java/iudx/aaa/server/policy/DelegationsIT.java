@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.TestMethodOrder;
-import org.junit.jupiter.api.extension.ExtendWith;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.vertx.core.json.JsonArray;
@@ -52,6 +51,7 @@ public class DelegationsIT {
   @BeforeAll
   static void setup(KcAdminInt kc) {
     String rolesEmail = IntegTestHelpers.email();
+ 
     tokenNoRoles = kc.createUser(IntegTestHelpers.email());
     
     tokenRoles = kc.createUser(rolesEmail);
@@ -134,7 +134,7 @@ public class DelegationsIT {
   {
     JsonObject delegReq = new JsonObject().put("request",
         new JsonArray().add(new JsonObject()
-            .put("userEmail", RandomStringUtils.randomAlphabetic(10) + "@gmail.com")
+            .put("userEmail", IntegTestHelpers.email())
             .put("resSerUrl", ALPHA_SERVER).put("role", Roles.CONSUMER.toString().toLowerCase())));
     
     given().auth().oauth2(tokenRoles).contentType(ContentType.JSON).body(delegReq.toString()).when()
@@ -158,7 +158,7 @@ public class DelegationsIT {
   {
     JsonObject delegReq = new JsonObject().put("request",
         new JsonArray().add(new JsonObject()
-            .put("userEmail", RandomStringUtils.randomAlphabetic(10) + "@gmail.com")
+            .put("userEmail", IntegTestHelpers.email())
             .put("resSerUrl", ALPHA_SERVER).put("role", Roles.CONSUMER.toString().toLowerCase())));
     
     given().auth().oauth2(tokenNoRoles).contentType(ContentType.JSON).body(delegReq.toString()).when()
@@ -175,7 +175,7 @@ public class DelegationsIT {
   {
     JsonObject delegReq = new JsonObject().put("request",
         new JsonArray().add(new JsonObject()
-            .put("userEmail", RandomStringUtils.randomAlphabetic(10) + "@gmail.com")
+            .put("userEmail", IntegTestHelpers.email())
             .put("resSerUrl", ALPHA_SERVER).put("role", Roles.CONSUMER.toString().toLowerCase())));
     
     given().contentType(ContentType.JSON).body(delegReq.toString()).when()
@@ -200,7 +200,7 @@ public class DelegationsIT {
   {
     JsonObject delegReq = new JsonObject().put("request",
         new JsonArray().add(new JsonObject()
-            .put("userEmail", RandomStringUtils.randomAlphabetic(10) + "@gmail.com")
+            .put("userEmail", IntegTestHelpers.email())
             .put("role", Roles.CONSUMER.toString().toLowerCase())));
     
     given().auth().oauth2(consumerToken).contentType(ContentType.JSON).body(delegReq.toString()).when()
@@ -210,7 +210,7 @@ public class DelegationsIT {
     
     delegReq = new JsonObject().put("request",
         new JsonArray().add(new JsonObject()
-            .put("userEmail", RandomStringUtils.randomAlphabetic(10) + "@gmail.com")
+            .put("userEmail", IntegTestHelpers.email())
             .put("resSerUrl", ALPHA_SERVER)));
 
     given().auth().oauth2(consumerToken).contentType(ContentType.JSON).body(delegReq.toString()).when()
@@ -228,7 +228,7 @@ public class DelegationsIT {
     .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
     
     delegReq = new JsonObject()
-            .put("userEmail", RandomStringUtils.randomAlphabetic(10) + "@gmail.com")
+            .put("userEmail", IntegTestHelpers.email())
             .put("resSerUrl", ALPHA_SERVER).put("role", Roles.CONSUMER.toString().toLowerCase());
 
     given().auth().oauth2(consumerToken).contentType(ContentType.JSON).body(delegReq.toString()).when()
@@ -253,7 +253,7 @@ public class DelegationsIT {
     
     delegReq = new JsonObject().put("request",
         new JsonArray().add(new JsonObject()
-            .put("userEmail", RandomStringUtils.randomAlphabetic(10) + "@gmail.com")
+            .put("userEmail", IntegTestHelpers.email())
             .put("resSerUrl", "%sasesajdn").put("role", Roles.CONSUMER.toString().toLowerCase())));
 
     given().auth().oauth2(consumerToken).contentType(ContentType.JSON).body(delegReq.toString()).when()
@@ -263,8 +263,30 @@ public class DelegationsIT {
     
     delegReq = new JsonObject().put("request",
         new JsonArray().add(new JsonObject()
-            .put("userEmail", RandomStringUtils.randomAlphabetic(10) + "@gmail.com")
+            .put("userEmail", IntegTestHelpers.email())
             .put("resSerUrl", ALPHA_SERVER).put("role", Roles.ADMIN.toString().toLowerCase())));
+
+    given().auth().oauth2(consumerToken).contentType(ContentType.JSON).body(delegReq.toString()).when()
+    .post("/delegations").then()
+    .statusCode(400)
+    .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
+    
+    // uppercase email not allowed
+    delegReq = new JsonObject().put("request",
+        new JsonArray().add(new JsonObject()
+            .put("userEmail", IntegTestHelpers.email().toUpperCase())
+            .put("resSerUrl", ALPHA_SERVER).put("role", Roles.CONSUMER.toString().toLowerCase())));
+
+    given().auth().oauth2(consumerToken).contentType(ContentType.JSON).body(delegReq.toString()).when()
+    .post("/delegations").then()
+    .statusCode(400)
+    .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
+    
+    // uppercase server URL not allowed
+    delegReq = new JsonObject().put("request",
+        new JsonArray().add(new JsonObject()
+            .put("userEmail", IntegTestHelpers.email())
+            .put("resSerUrl", ALPHA_SERVER.toUpperCase()).put("role", Roles.CONSUMER.toString().toLowerCase())));
 
     given().auth().oauth2(consumerToken).contentType(ContentType.JSON).body(delegReq.toString()).when()
     .post("/delegations").then()
@@ -278,10 +300,10 @@ public class DelegationsIT {
   {
     JsonObject delegReq = new JsonObject().put("request",
         new JsonArray().add(new JsonObject()
-            .put("userEmail", RandomStringUtils.randomAlphabetic(10) + "@gmail.com")
+            .put("userEmail", consumerEmail)
             .put("resSerUrl", ALPHA_SERVER).put("role", Roles.CONSUMER.toString().toLowerCase()))
         .add(new JsonObject()
-            .put("userEmail", RandomStringUtils.randomAlphabetic(10) + "@gmail.com")
+            .put("userEmail", consumerEmail)
             .put("resSerUrl", ALPHA_SERVER).put("role", Roles.CONSUMER.toString().toLowerCase()))
         );  
     
@@ -301,7 +323,7 @@ public class DelegationsIT {
     JsonObject delegReq =
         new JsonObject().put("request",
             new JsonArray().add(new JsonObject()
-                .put("userEmail", RandomStringUtils.randomAlphabetic(10) + "@gmail.com")
+                .put("userEmail", IntegTestHelpers.email())
                 .put("resSerUrl", rsNotExist)
                 .put("role", Roles.CONSUMER.toString().toLowerCase())));
 
@@ -320,10 +342,10 @@ public class DelegationsIT {
   {
     JsonObject delegReq = new JsonObject().put("request",
         new JsonArray().add(new JsonObject()
-            .put("userEmail", RandomStringUtils.randomAlphabetic(10) + "@gmail.com")
+            .put("userEmail", IntegTestHelpers.email())
             .put("resSerUrl", ALPHA_SERVER).put("role", Roles.CONSUMER.toString().toLowerCase()))
         .add(new JsonObject()
-            .put("userEmail", RandomStringUtils.randomAlphabetic(10) + "@gmail.com")
+            .put("userEmail", IntegTestHelpers.email())
             .put("resSerUrl", BRAVO_SERVER).put("role", Roles.PROVIDER.toString().toLowerCase()))
         ); 
    
@@ -351,10 +373,10 @@ public class DelegationsIT {
   {
     JsonObject consumerDelegReq = new JsonObject().put("request",
         new JsonArray().add(new JsonObject()
-            .put("userEmail", RandomStringUtils.randomAlphabetic(10) + "@gmail.com")
+            .put("userEmail", IntegTestHelpers.email())
             .put("resSerUrl", DUMMY_SERVER_NO_ONE_HAS_ROLES).put("role", Roles.CONSUMER.toString().toLowerCase()))
         .add(new JsonObject()
-            .put("userEmail", RandomStringUtils.randomAlphabetic(10) + "@gmail.com")
+            .put("userEmail", IntegTestHelpers.email())
             .put("resSerUrl", ALPHA_SERVER).put("role", Roles.CONSUMER.toString().toLowerCase()))
         ); 
    
@@ -368,10 +390,10 @@ public class DelegationsIT {
     
     JsonObject providerDelegReq = new JsonObject().put("request",
         new JsonArray().add(new JsonObject()
-            .put("userEmail", RandomStringUtils.randomAlphabetic(10) + "@gmail.com")
+            .put("userEmail", IntegTestHelpers.email())
             .put("resSerUrl", ALPHA_SERVER).put("role", Roles.PROVIDER.toString().toLowerCase()))
         .add(new JsonObject()
-            .put("userEmail", RandomStringUtils.randomAlphabetic(10) + "@gmail.com")
+            .put("userEmail", IntegTestHelpers.email())
             .put("resSerUrl", DUMMY_SERVER_NO_ONE_HAS_ROLES).put("role", Roles.PROVIDER.toString().toLowerCase()))
         ); 
    
@@ -388,7 +410,7 @@ public class DelegationsIT {
   @DisplayName("Create delegation - email doesn't exist on UAC Keycloak")
   void createDelegationEmailNotExist()
   {
-    String badEmail = RandomStringUtils.randomAlphabetic(10) + "@gmail.com";
+    String badEmail = IntegTestHelpers.email();
     
     JsonObject delegReq = new JsonObject().put("request",
         new JsonArray().add(new JsonObject()

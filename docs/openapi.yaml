@@ -837,23 +837,23 @@ paths:
               properties:
                 consumer:
                   type: array
-                  description: List of resource servers for consumer role  
+                  description: List of resource servers for consumer role **in lowercase** 
                   minItems: 1
                   uniqueItems: true
                   items:
                     type: string
                     minLength: 1
-                    pattern: '^[a-zA-Z0-9_\-\.]+$'
+                    pattern: '^[a-z0-9_\-\.]+$'
                     maxLength: 100
                 provider:
                   type: array
-                  description: List of resource servers for provider role  
+                  description: List of resource servers for provider role **in lowercase**
                   minItems: 1
                   uniqueItems: true
                   items:
                     type: string
                     minLength: 1
-                    pattern: '^[a-zA-Z0-9_\-\.]+$'
+                    pattern: '^[a-z0-9_\-\.]+$'
                     maxLength: 100
                 phone:
                   type: string
@@ -889,6 +889,7 @@ paths:
                       
         description: |-
           - Users can add the `provider` or `consumer` role along with a list of resource servers to be associated with said role  
+          - Resource server URLs in `provider` and `consumer` arrays must be **lowercase**  
           - `userInfo` is an optional field that can be populated with data required for user information, if desired
         required: true
       tags:
@@ -1010,7 +1011,6 @@ paths:
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
-            - Not a valid auth delegate
           headers:
             Content-Type:
               schema:
@@ -2189,15 +2189,11 @@ paths:
                         type: string
                         format: uuid
                         pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
-                        minLength: 36
-                        maxLength: 36
                       status:
                         type: string
                         enum:
                           - approved
                           - rejected
-                        minLength: 7
-                        maxLength: 8
                     required:
                       - id
                       - status
@@ -2377,11 +2373,6 @@ paths:
                     type: 'urn:dx:as:InvalidAuthenticationToken'
                     title: Token authentication failed
                     detail: Inactive Token
-                Invalid providerId - no delegation exists:
-                  value:
-                    type: 'urn:dx:as:MissingAuthenticationToken'
-                    title: Invalid delegate request
-                    detail: Invalid delegate request
                 User does not have required roles:
                   value:
                     type: 'urn:dx:as:InvalidRole'
@@ -2391,7 +2382,7 @@ paths:
       description: |-
         Get delegations related to a particular user. The response depends upon the roles that the user has:
         - `provider`/`consumer` : returns all delegations created by the provider/consumer
-        - `delegate` : returns all providers/consumers who have assigned them as delegates for certain servers
+        - `delegate` : returns all providers/consumers who have assigned them as delegates for certain resource servers
 
       parameters:
         - schema:
@@ -2424,11 +2415,6 @@ paths:
               schema:
                 description: ''
                 type: object
-                x-examples:
-                  example-1:
-                    type: 'urn:dx:as:Success'
-                    title: Deleted requested delegations
-                    results: {}
                 properties:
                   type:
                     type: string
@@ -2456,11 +2442,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
-                Bad providerId header:
-                  value:
-                    type: 'urn:dx:as:InvalidInput'
-                    title: Malformed request/missing or malformed request parameters
-                    detail: '[Bad Request] Validation error for parameter providerId in location HEADER: provided string should have size >= 36'
                 Invalid/deleted delegation ID:
                   value:
                     type: 'urn:dx:as:InvalidInput'
@@ -2547,10 +2528,31 @@ paths:
       operationId: post-auth-v1-delegations
       responses:
         '201':
-          description: OK
+          description: Created delegations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    minLength: 1
+                  title:
+                    type: string
+                    minLength: 1
+                  results:
+                    type: object
+                required:
+                  - type
+                  - title
+              examples:
+                Created delegations:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: added delegations
         '400':
           description: |-
-            Bad Request
+            - Bad Request
             - The resource server URL is not present on the server
             - The user does not have the correct role for the requested resource server  
             - The requested user email is not registered on the UAC 
@@ -2558,17 +2560,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                RS URL not present / User does have role for RS:
+                  value:
+                    type: urn:dx:as:InvalidInput
+                    title: 'User does not have role for requested RS URL / RS does not exist'
+                    detail: User does not have requested delegated role for given resource server (Resource server may not exist also)
+                    context:
+                      rsUrls:
+                        - sbtuuosujr.com
+                Emails not on UAC:
+                  value:
+                    type: urn:dx:as:InvalidInput
+                    title: Some email IDs have not been registered at UAC
+                    detail: "[vtgusrficq@gmail.com]"        
           headers:
             Content-Type:
               schema:
                 type: string
               description: application/json
         '401':
-          description: '- Unauthorized - `token` invalid/expired'
+          description: |-
+            - Unauthorized - `token` invalid/expired
+            - User does not have consumer/provider role
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Unauthorized'
+              examples:
+                Does not have role:
+                  value:
+                    type: urn:dx:as:InvalidRole
+                    title: User does not have roles to use API
+                    detail: User with provider/consumer role may call the API  
           headers:
             Content-Type:
               schema:
@@ -2577,12 +2601,20 @@ paths:
         '409':
           description: |-
             - Delegation already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'  
+              examples:
+                Does not have role:
+                  value:
+                    type: urn:dx:as:AlreadyExists
+                    title: Delegation already exists
+                    detail: "[dc31e990-3dec-40be-837c-dc8457e74853]"
       description: |
-        Create new delegations
-        - `userEmail` : Email address of the user to be made delegate
-        - `resourceServerId` : URL of the resource server the user is to be made a delegate for.
-        - `role` : Role for which the user can operate on the resource server
+        Allow consumers and providers to create consumer-delegates or provider delegates respectively for a particular resource server. The delegates will be allowed to perform operations on behalf of the consumer or provider on the resource server or on entities belonging to the resource server.
 
+        The user intended to be the delegate (`userEmail`)  must be registered on the UAC. They will be given the **delegate** role as a result of successful delegation creation.
       parameters:
         - schema:
             type: string
@@ -2614,14 +2646,17 @@ paths:
                       resSerUrl:
                         type: string
                         minLength: 1
-                        pattern: '^[a-zA-Z0-9_*\-*\.\/]+$'
+                        pattern: '^[a-z0-9_*\-*\.\/]+$'
                         maxLength: 100
+                        description: URL of the resource server the user is to be made a delegate for **in lowercase**  
                       userEmail:
                         type: string
                         format: email
-                        pattern: '^(?=.{1,254}$)(?=.{1,64}@)[-!#$%&''*+/0-9=?A-Z^_`a-z{|}~]+(\.[-!#$%&''*+/0-9=?A-Z^_`a-z{|}~]+)*@[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$'
+                        pattern: '^(?=.{1,254}$)(?=.{1,64}@)[-!#$%&''*+/0-9=?^_`a-z{|}~]+(\.[-!#$%&''*+/0-9=?^_`a-z{|}~]+)*@[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$'
+                        description: Email address of the user to be made delegate **in lowercase** 
                       role:
                         type: string
+                        description: Role for which the user can operate on the resource server 
                         enum:
                           - consumer
                           - provider
@@ -2632,13 +2667,13 @@ paths:
               required:
                 - request
             examples:
-              single request:
+              Single Request:
                 value:
                   request:
                     - resSerUrl: rs.iudx.io
                       userEmail: email@email.com
                       role: consumer
-              multiple request:
+              Multiple Request:
                 value:
                   request:
                     - resSerUrl: rs.iudx.io
@@ -2647,7 +2682,8 @@ paths:
                     - resSerUrl: auth.iudx.io
                       userEmail: email@email.com
                       role: provider
-        description: The body is a JSON object with a JSON array containing the objects that need to be created.
+        description: |-
+          - `userEmail`, `resSerUrl` **must be in lowercase**
         required: true
   /auth/v1/delegations/emails:
     get:
@@ -2728,8 +2764,6 @@ paths:
         - schema:
             type: string
             format: uuid
-            minLength: 36
-            maxLength: 36
             pattern: '^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$'
           in: header
           name: clientId
