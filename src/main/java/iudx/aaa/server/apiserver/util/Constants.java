@@ -132,7 +132,7 @@ public class Constants {
   public static final String KEYCLOAK_ADMIN_CLIENT_ID = "keycloakAdminClientId";
   public static final String KEYCLOAK_ADMIN_CLIENT_SECRET = "keycloakAdminClientSecret";
   public static final String KID = "kid";
-  public static final String KEYCLOAK_SITE = "keycloakSite";
+  public static final String KEYCLOAK_URL = "keycloakUrl";
   public static final String KEYCLOAK_REALM = "keycloakRealm";
   public static final String KEYCLOAK_JWT_LEEWAY = "keycloakJwtLeeway";
   public static final String STATUS = "status";

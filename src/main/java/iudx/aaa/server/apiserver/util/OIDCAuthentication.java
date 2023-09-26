@@ -137,8 +137,9 @@ public class OIDCAuthentication implements AuthenticationHandler {
    * keys. (It is actually the full config verticle config object)
    */
   public void keyCloackAuth() {
-    String site = keycloakOptions.getString(KEYCLOAK_SITE);
+    String url = keycloakOptions.getString(KEYCLOAK_URL);
     String realm = keycloakOptions.getString(KEYCLOAK_REALM);
+    String site = url + "/realms/" + realm;
 
     /* Options for OAuth2, KeyCloack. */
     OAuth2Options options = new OAuth2Options()
