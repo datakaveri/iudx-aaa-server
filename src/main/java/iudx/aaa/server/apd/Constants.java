@@ -127,7 +127,7 @@ public class Constants {
   public static final String CREATE_TOKEN_APD_INTERAC = "apd-interaction";
   
   public static final String APD_NOT_ACTIVE = " (NOTE: The APD is currently not in an active state.)";
-  public static final String ERR_TITLE_POLICY_EVAL_FAILED = "Policy evaluation failed";
+  public static final String ERR_TITLE_APD_EVAL_FAILED = "APD evaluation failed";
 
   public static final String GET_APDINFO_ID = "SELECT id,name,url,owner_id AS \"ownerId\",status FROM apds where id = ANY($1::uuid[])";
   public static final String GET_APDINFO_URL = "SELECT id,name,url,owner_id AS \"ownerId\",status FROM apds where url = ANY($1::text[])";

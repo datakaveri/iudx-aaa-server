@@ -136,7 +136,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
     List<Roles> requestedRoles = request.getRolesToRegister();
-    final String phone = request.getPhone();
+    final String phoneInReq = request.getPhone();
     final JsonObject userInfo = request.getUserInfo();
 
     List<String> ownedRsForProviderRole = user.getResServersForRole(Roles.PROVIDER);
@@ -251,37 +251,48 @@ public class RegistrationServiceImpl implements RegistrationService {
                     return Future.failedFuture(new ComposeException(resp));
                   }));
         });
+    
+    /* get phone number if available, else return empty string */
+    Future<JsonObject> phoneDetails = checkForProviderRejectedPendingRegs.compose(i ->pool.withConnection(
+        conn -> conn.preparedQuery(SQL_GET_PHONE).execute(Tuple.of(user.getUserId()))
+            .map(rows -> rows.iterator().hasNext() ? rows.iterator().next().toJson()
+                : new JsonObject().put(RESP_PHONE, "")))); 
 
-    Future<List<Tuple>> createRoleTuple = checkForProviderRejectedPendingRegs.compose(res -> {
-      List<Tuple> roleTupList = new ArrayList<Tuple>();
-      Map<String, UUID> rsDetails = getRequestedRs.result();
-
-      List<Tuple> consumerTup =
-          requestedRsForConsumerRole.stream().map(url -> Tuple.of(user.getUserId(), Roles.CONSUMER,
-              rsDetails.get(url), RoleStatus.APPROVED)).collect(Collectors.toList());
-      roleTupList.addAll(consumerTup);
-
-      List<Tuple> providerTup = requestedRsForProviderRole.stream().map(
-          url -> Tuple.of(user.getUserId(), Roles.PROVIDER, rsDetails.get(url), RoleStatus.PENDING))
-          .collect(Collectors.toList());
-      roleTupList.addAll(providerTup);
-
-      return Future.succeededFuture(roleTupList);
-    });
-
-    Collector<Row, ?, List<JsonObject>> clientDetails =
+    Collector<Row, ?, List<JsonObject>> clientCollector =
         Collectors.mapping(row -> row.toJson(), Collectors.toList());
 
-    /* Insertion into users, roles tables, and get client details if present */
-    Future<List<JsonObject>> insertUserAndRoles = createRoleTuple.compose(rolesListTuple -> pool
-        .withTransaction(conn -> conn.preparedQuery(SQL_CREATE_USER_IF_NOT_EXISTS)
-            .execute(Tuple.of(user.getUserId(), phone, userInfo))
-            .compose(
-                userCreated -> conn.preparedQuery(SQL_CREATE_ROLE).executeBatch(rolesListTuple))
-            .compose(succ -> conn.preparedQuery(SQL_GET_CLIENTS_FORMATTED).collecting(clientDetails)
-                .execute(Tuple.of(user.getUserId())).map(res -> res.value()))));
+    /* get clients if available */
+    Future<List<JsonObject>> clientDetails =
+        checkForProviderRejectedPendingRegs.compose(i -> pool.withConnection(
+            conn -> conn.preparedQuery(SQL_GET_CLIENTS_FORMATTED).collecting(clientCollector)
+                .execute(Tuple.of(user.getUserId())).map(res -> res.value())));
 
-    insertUserAndRoles.onSuccess(clientInfo -> {
+    Future<List<Tuple>> createRoleTuple =
+        CompositeFuture.all(phoneDetails, clientDetails).compose(res -> {
+          List<Tuple> roleTupList = new ArrayList<Tuple>();
+          Map<String, UUID> rsDetails = getRequestedRs.result();
+
+          List<Tuple> consumerTup = requestedRsForConsumerRole.stream().map(url -> Tuple
+              .of(user.getUserId(), Roles.CONSUMER, rsDetails.get(url), RoleStatus.APPROVED))
+              .collect(Collectors.toList());
+          roleTupList.addAll(consumerTup);
+
+          List<Tuple> providerTup = requestedRsForProviderRole.stream().map(url -> Tuple
+              .of(user.getUserId(), Roles.PROVIDER, rsDetails.get(url), RoleStatus.PENDING))
+              .collect(Collectors.toList());
+          roleTupList.addAll(providerTup);
+
+          return Future.succeededFuture(roleTupList);
+        });
+    
+    /* Insertion into users, roles tables */
+    Future<Void> insertUserAndRoles = createRoleTuple.compose(rolesListTuple -> pool
+        .withTransaction(conn -> conn.preparedQuery(SQL_CREATE_USER_IF_NOT_EXISTS)
+            .execute(Tuple.of(user.getUserId(), phoneInReq, userInfo))
+            .compose(
+                userCreated -> conn.preparedQuery(SQL_CREATE_ROLE).executeBatch(rolesListTuple).mapEmpty())));
+
+    insertUserAndRoles.onSuccess(inserted -> {
       List<Roles> existingRoles = user.getRoles();
       Map<String, JsonArray> existingRolesToRsMap = user.getRolesToRsMapping();
 
@@ -312,12 +323,18 @@ public class RegistrationServiceImpl implements RegistrationService {
       JsonObject payload =
           u.toJsonResponse().put(RESP_EMAIL, email.result());
 
-      if (phone != NIL_PHONE) {
-        payload.put(RESP_PHONE, phone);
+      String phoneInDb = phoneDetails.result().getString(RESP_PHONE);
+      
+      // if phoneInDb is NIL_PHONE - user did not enter number first time and cannot update it
+      // if phoneInDb is blank - user is coming first time, so use phoneInReq if it's not NIL_PHONE
+      if (!phoneInDb.equals(NIL_PHONE) && !phoneInDb.isBlank()) {
+        payload.put(RESP_PHONE, phoneInDb);
+      } else if (phoneInDb.isBlank() && !phoneInReq.equals(NIL_PHONE)) {
+        payload.put(RESP_PHONE, phoneInReq);
       }
       
-      if(!clientInfo.isEmpty()) {
-        payload.put(RESP_CLIENT_ARR, new JsonArray(clientInfo));
+      if(!clientDetails.result().isEmpty()) {
+        payload.put(RESP_CLIENT_ARR, new JsonArray(clientDetails.result()));
       }
       
       String title = SUCC_TITLE_ADDED_ROLES;

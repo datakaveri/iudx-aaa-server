@@ -143,8 +143,11 @@ public class Constants {
   public static final String TOKEN_AUTHENTICATED = "Token authenticated";
   public static final String INVALID_USERID = "Empty/null userId";
 
-  public static final String ERR_TITLE_INVALID_RS_APD_URL = "Invalid resource server/APD URL";
-  public static final String ERR_DETAIL_INVALID_RS_APD_URL = "Requested resource server/APD URL does not exist"
+  public static final String ERR_TITLE_INVALID_RS = "Invalid resource server";
+  public static final String ERR_DETAIL_INVALID_RS = "Requested resource server does not exist";
+  
+  public static final String ERR_TITLE_INVALID_RS_APD_REVOKE = "Invalid resource server/APD URL";
+  public static final String ERR_DETAIL_INVALID_RS_APD_REVOKE = "Requested resource server/APD URL does not exist"
       + " or APD is not active anymore";
   
   public static final String ERR_DOES_NOT_HAVE_ROLE_FOR_RS =

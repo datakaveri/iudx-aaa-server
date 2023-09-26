@@ -26,7 +26,7 @@ import static iudx.aaa.server.token.Constants.ERR_DETAIL_APD_INTERACT_REQUIRED;
 import static iudx.aaa.server.token.Constants.ERR_DETAIL_DELEGATION_INFO_MISSING;
 import static iudx.aaa.server.token.Constants.ERR_DETAIL_INVALID_COS_URL;
 import static iudx.aaa.server.token.Constants.ERR_DETAIL_INVALID_ROLE_FOR_COS;
-import static iudx.aaa.server.token.Constants.ERR_DETAIL_INVALID_RS_APD_URL;
+import static iudx.aaa.server.token.Constants.ERR_DETAIL_INVALID_RS;
 import static iudx.aaa.server.token.Constants.ERR_DETAIL_NO_RES_GRP_TOKEN;
 import static iudx.aaa.server.token.Constants.ERR_DETAIL_ROLE_NOT_OWNED;
 import static iudx.aaa.server.token.Constants.ERR_DOES_NOT_HAVE_ROLE_FOR_RS;
@@ -34,7 +34,7 @@ import static iudx.aaa.server.token.Constants.ERR_TITLE_APD_INTERACT_REQUIRED;
 import static iudx.aaa.server.token.Constants.ERR_TITLE_DELEGATION_INFO_MISSING;
 import static iudx.aaa.server.token.Constants.ERR_TITLE_INVALID_COS_URL;
 import static iudx.aaa.server.token.Constants.ERR_TITLE_INVALID_ROLE_FOR_COS;
-import static iudx.aaa.server.token.Constants.ERR_TITLE_INVALID_RS_APD_URL;
+import static iudx.aaa.server.token.Constants.ERR_TITLE_INVALID_RS;
 import static iudx.aaa.server.token.Constants.ERR_TITLE_NO_RES_GRP_TOKEN;
 import static iudx.aaa.server.token.Constants.ERR_TITLE_ROLE_NOT_OWNED;
 import static iudx.aaa.server.token.Constants.EXP;
@@ -857,8 +857,8 @@ public class TokenServiceTest {
     tokenService.createToken(request, null, user,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-          assertEquals(ERR_TITLE_INVALID_RS_APD_URL, response.getString("title"));
-          assertEquals(ERR_DETAIL_INVALID_RS_APD_URL, response.getString("detail"));
+          assertEquals(ERR_TITLE_INVALID_RS, response.getString("title"));
+          assertEquals(ERR_DETAIL_INVALID_RS, response.getString("detail"));
           assertEquals(400, response.getInteger("status"));
           checks.get(role).flag();
         })));
@@ -971,8 +971,8 @@ public class TokenServiceTest {
     tokenService.createToken(request, consDelegInfo, delegateUser,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-          assertEquals(ERR_TITLE_INVALID_RS_APD_URL, response.getString("title"));
-          assertEquals(ERR_DETAIL_INVALID_RS_APD_URL, response.getString("detail"));
+          assertEquals(ERR_TITLE_INVALID_RS, response.getString("title"));
+          assertEquals(ERR_DETAIL_INVALID_RS, response.getString("detail"));
           assertEquals(400, response.getInteger("status"));
           consDelegFail.flag();
         })));
@@ -980,8 +980,8 @@ public class TokenServiceTest {
     tokenService.createToken(request, provDelegInfo, delegateUser,
         testContext.succeeding(response -> testContext.verify(() -> {
           assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-          assertEquals(ERR_TITLE_INVALID_RS_APD_URL, response.getString("title"));
-          assertEquals(ERR_DETAIL_INVALID_RS_APD_URL, response.getString("detail"));
+          assertEquals(ERR_TITLE_INVALID_RS, response.getString("title"));
+          assertEquals(ERR_DETAIL_INVALID_RS, response.getString("detail"));
           assertEquals(400, response.getInteger("status"));
           provDelegFail.flag();
         })));

@@ -77,14 +77,10 @@ public class Constants {
       "The resource server associated with the supplied delegation ID"
       + " does not match the resource server hosting the item";
   public static final String ERR_DETAIL_CONSUMER_DOESNT_HAVE_RS_ROLE =
-      "Provider does not have role for resource server hosting theitem";
+      "Provider does not have role for resource server hosting the item";
   public static final String ERR_DETAIL_PROVIDER_CANNOT_ACCESS_PII_RES =
-      "Requested resource is a PII resource - provider is not allowed to access directly";
+      "Requested resource is a PII resource - provider cannot access directly";
       
-  public static final String ERR_TITLE_NOT_TRUSTEE = "User does not have trustee role";
-  public static final String ERR_DETAIL_NOT_TRUSTEE =
-      "You are not a trustee of any registered and active APD";
-  
   public static final String LIST_DELEGATION_AS_DELEGATOR_OR_DELEGATE =
       "SELECT d.id, d.user_id, url, roles.user_id AS delegator_id, lower(roles.role::text) AS role, name AS server "
           + "FROM delegations AS d JOIN roles ON roles.id = d.role_id"

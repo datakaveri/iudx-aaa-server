@@ -46,7 +46,7 @@ public class DelegationIdAuthorization implements Handler<RoutingContext> {
 
     if(!user.getRoles().contains(Roles.DELEGATE))
     {
-      Response rs = new ResponseBuilder().status(401).type(URN_MISSING_AUTH_TOKEN)
+      Response rs = new ResponseBuilder().status(401).type(URN_INVALID_INPUT)
           .title(INVALID_DELEGATION_ID).detail(INVALID_DELEGATION_ID).build();
       routingContext.fail(new Throwable(rs.toJsonString()));
       return;
@@ -56,7 +56,7 @@ public class DelegationIdAuthorization implements Handler<RoutingContext> {
     
     if(delegationIdStr.isBlank()) {
       LOGGER.error("Fail: {}; {}", ERR_PROVDERID, "empty/null");
-      Response rs = new ResponseBuilder().status(401).type(URN_MISSING_AUTH_TOKEN)
+      Response rs = new ResponseBuilder().status(401).type(URN_INVALID_INPUT)
           .title(INVALID_DELEGATION_ID).detail(INVALID_DELEGATION_ID).build();
       routingContext.fail(new Throwable(rs.toJsonString()));
       return;
@@ -76,7 +76,7 @@ public class DelegationIdAuthorization implements Handler<RoutingContext> {
           routingContext.fail(new Throwable(rs.toJsonString()));
         }).onSuccess(rows -> {
           if (rows.rowCount() == 0) {
-            Response rs = new ResponseBuilder().status(401).type(URN_MISSING_AUTH_TOKEN)
+            Response rs = new ResponseBuilder().status(401).type(URN_INVALID_INPUT)
                 .title(ERR_DELEGATE).detail(ERR_DELEGATE).build();
             routingContext.fail(new Throwable(rs.toJsonString()));
           }

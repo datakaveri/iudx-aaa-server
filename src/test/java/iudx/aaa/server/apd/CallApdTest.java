@@ -21,7 +21,7 @@ import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_URL;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_APD_NOT_RESPOND;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_APD_NOT_REGISTERED;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_APD_NOT_RESPOND;
-import static iudx.aaa.server.apd.Constants.ERR_TITLE_POLICY_EVAL_FAILED;
+import static iudx.aaa.server.apd.Constants.ERR_TITLE_APD_EVAL_FAILED;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_APD_NOT_REGISTERED;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -282,7 +282,7 @@ public class CallApdTest {
       ComposeException exp = (ComposeException) response;
       Response errResp = exp.getResponse();
       assertEquals(errResp.getType(), URN_INVALID_INPUT.toString());
-      assertEquals(errResp.getTitle(), ERR_TITLE_POLICY_EVAL_FAILED);
+      assertEquals(errResp.getTitle(), ERR_TITLE_APD_EVAL_FAILED);
       assertEquals(errResp.getDetail(), ERR_DETAIL_APD_NOT_RESPOND + APD_NOT_ACTIVE);
       testContext.completeNow();
     })));
@@ -428,7 +428,7 @@ public class CallApdTest {
       ComposeException exp = (ComposeException) response;
       Response errResp = exp.getResponse();
       assertEquals(errResp.getType(), URN_INVALID_INPUT.toString());
-      assertEquals(errResp.getTitle(), ERR_TITLE_POLICY_EVAL_FAILED);
+      assertEquals(errResp.getTitle(), ERR_TITLE_APD_EVAL_FAILED);
       assertEquals(errResp.getDetail(), "Not allowed");
       testContext.completeNow();
     })));

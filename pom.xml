@@ -12,7 +12,7 @@
 		<micrometer.version>1.9.2</micrometer.version>
 		<curator.version>5.3.0</curator.version>
 		<apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
-		<junit-jupiter-engine.version>5.8.2</junit-jupiter-engine.version>
+		<junit-jupiter-engine.version>5.9.1</junit-jupiter-engine.version>
 		<apache-log4j2.version>2.17.1</apache-log4j2.version>
 		<lmax-disruptor.version>3.4.4</lmax-disruptor.version>
 		<jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
@@ -24,14 +24,15 @@
 		<exec-maven-plugin.version>3.1.0</exec-maven-plugin.version>
 		<maven-pmd-plugin.version>3.20.0</maven-pmd-plugin.version>
 		<maven-checkstyle-plugin-google.version>3.1.2</maven-checkstyle-plugin-google.version>
-		<maven-surefire-report-plugin.version>3.0.0-M7</maven-surefire-report-plugin.version>
-        <spotless.version>2.31.0</spotless.version>
+		<maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>
+		<restassured.version>5.3.2</restassured.version>
 		<openjdk.version>11</openjdk.version>
 		<keycloak.version>22.0.1</keycloak.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<exec.mainClass>iudx.aaa.server.deploy.Deployer</exec.mainClass>
 		<exec.mainClassDev>iudx.aaa.server.deploy.DeployerDev
 		</exec.mainClassDev>
+		<skipUnitTests>false</skipUnitTests>
 	</properties>
 
 	<dependencyManagement>
@@ -96,23 +97,15 @@
 			<version>${guava.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>io.vertx</groupId>
-			<artifactId>vertx-mail-client</artifactId>
-			<version>${vertx.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.threeten</groupId>
-			<artifactId>threeten-extra</artifactId>
-			<version>1.7.2</version>
-		</dependency>
-		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
 			<version>${junit-jupiter-engine.version}</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-junit5</artifactId>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<artifactId>keycloak-admin-client</artifactId>
@@ -201,12 +194,6 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.powermock</groupId>
-			<artifactId>powermock-api-mockito2</artifactId>
-			<version>2.0.9</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-auth-oauth2</artifactId>
 		</dependency>
@@ -214,12 +201,7 @@
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-web-openapi</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>joda-time</groupId>
-			<artifactId>joda-time</artifactId>
-			<version>2.11.1</version>
-		</dependency>
-		<!-- log4j2 logging dependencies-->
+		<!-- log4j2 logging dependencies -->
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
@@ -238,6 +220,18 @@
 			<groupId>com.lmax</groupId>
 			<artifactId>disruptor</artifactId>
 			<version>${lmax-disruptor.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.rest-assured</groupId>
+			<artifactId>rest-assured</artifactId>
+			<version>${restassured.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.rest-assured</groupId>
+			<artifactId>json-path</artifactId>
+			<version>${restassured.version}</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
@@ -325,6 +319,19 @@
                     <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
                 </configuration>
             </plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<version>${maven-surefire-plugin.version}</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
@@ -499,7 +506,10 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>${maven-surefire-report-plugin.version}</version>
+				<version>${maven-surefire-plugin.version}</version>
+				<configuration>
+					<skipTests>${skipUnitTests}</skipTests>
+				</configuration>
 			</plugin>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -520,7 +530,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-report-plugin</artifactId>
-				<version>${maven-surefire-report-plugin.version}</version>
+				<version>${maven-surefire-plugin.version}</version>
 				<reportSets>
 					<reportSet>
 						<reports>

@@ -2,8 +2,8 @@ package iudx.aaa.server.policy;
 
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
 import static iudx.aaa.server.apiserver.util.Urn.URN_SUCCESS;
-import static iudx.aaa.server.policy.Constants.ERR_DETAIL_NOT_TRUSTEE;
-import static iudx.aaa.server.policy.Constants.ERR_TITLE_NOT_TRUSTEE;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NOT_TRUSTEE;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_NOT_TRUSTEE;
 import static iudx.aaa.server.policy.Constants.RESP_DELEG_EMAILS;
 import static iudx.aaa.server.policy.Constants.SUCC_TITLE_DELEG_EMAILS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
