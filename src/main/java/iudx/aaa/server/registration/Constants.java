@@ -120,10 +120,7 @@ public class Constants {
 
   public static final String SQL_GET_ALL_RS =
       "SELECT id, name, url, owner_id FROM resource_server";
-
-  public static final String SQL_GET_REG_ROLES =
-      "SELECT role FROM roles WHERE user_id = $1::uuid";
-
+  
   public static final String SQL_GET_CLIENTS_FORMATTED =
       "SELECT client_name as \"clientName\", client_id as \"clientId\" " + " FROM "
           + "user_clients WHERE user_id = $1::uuid";

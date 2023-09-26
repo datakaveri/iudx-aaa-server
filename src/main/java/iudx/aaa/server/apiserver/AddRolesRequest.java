@@ -1,13 +1,10 @@
 package iudx.aaa.server.apiserver;
 
 import io.vertx.codegen.annotations.DataObject;
-import io.vertx.codegen.format.SnakeCase;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.registration.Constants;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
