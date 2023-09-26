@@ -64,8 +64,6 @@ public class CreateDelegationTest {
   private static PgPool pgclient;
   private static PoolOptions poolOptions;
   private static PgConnectOptions connectOptions;
-  private static JsonObject authOptions;
-  private static JsonObject catOptions;
   private static PolicyService policyService;
   private static ApdService apdService = Mockito.mock(ApdService.class);
   private static RegistrationServiceImpl registrationService =
@@ -94,9 +92,6 @@ public class CreateDelegationTest {
     databaseUserName = dbConfig.getString("databaseUserName");
     databasePassword = dbConfig.getString("databasePassword");
     poolSize = Integer.parseInt(dbConfig.getString("poolSize"));
-    authOptions = dbConfig.getJsonObject("authOptions");
-    catOptions = dbConfig.getJsonObject("catOptions");
-    authOptions.put("authServerUrl", dbConfig.getString("authServerDomain"));
 
     /* Set Connection Object and schema */
     if (connectOptions == null) {
@@ -120,7 +115,7 @@ public class CreateDelegationTest {
     utils = new Utils(pgclient);
 
     policyService = new PolicyServiceImpl(pgclient, registrationService, apdService,
-        catalogueClient, authOptions, catOptions);
+        catalogueClient);
     testContext.completeNow();
   }
 

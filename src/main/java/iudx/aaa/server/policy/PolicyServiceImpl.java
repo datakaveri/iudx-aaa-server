@@ -123,9 +123,7 @@ public class PolicyServiceImpl implements PolicyService {
       PgPool pool,
       RegistrationService registrationService,
       ApdService apdService,
-      CatalogueClient catalogueClient,
-      JsonObject authOptions,
-      JsonObject catServerOptions) {
+      CatalogueClient catalogueClient) {
     this.pool = pool;
     this.registrationService = registrationService;
     this.apdService = apdService;

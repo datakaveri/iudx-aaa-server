@@ -64,8 +64,6 @@ public class GetDelegateEmailsTest {
   private static ApdService apdService = Mockito.mock(ApdService.class);
 
   private static RegistrationService registrationService;
-  private static JsonObject authOptions;
-  private static JsonObject catOptions;
 
   private static Vertx vertxObj;
   private static MockRegistrationFactory mockRegistrationFactory = new MockRegistrationFactory();
@@ -106,14 +104,6 @@ public class GetDelegateEmailsTest {
     databaseUserName = dbConfig.getString("databaseUserName");
     databasePassword = dbConfig.getString("databasePassword");
     poolSize = Integer.parseInt(dbConfig.getString("poolSize"));
-    authOptions = dbConfig.getJsonObject("authOptions");
-    catOptions = dbConfig.getJsonObject("catOptions");
-
-    /*
-     * Injecting authServerUrl into 'authOptions' from config().'authServerDomain' TODO - make this
-     * uniform
-     */
-    authOptions.put("authServerUrl", dbConfig.getString("authServerDomain"));
 
     /* Set Connection Object and schema */
     if (connectOptions == null) {
@@ -141,8 +131,7 @@ public class GetDelegateEmailsTest {
 
     create.onSuccess(res -> {
       registrationService = mockRegistrationFactory.getInstance();
-      policyService = new PolicyServiceImpl(pool, registrationService, apdService, catalogueClient,
-          authOptions, catOptions);
+      policyService = new PolicyServiceImpl(pool, registrationService, apdService, catalogueClient);
       testContext.completeNow();
     }).onFailure(err -> testContext.failNow(err.getMessage()));
   }
