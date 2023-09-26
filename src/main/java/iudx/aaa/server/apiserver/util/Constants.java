@@ -129,8 +129,8 @@ public class Constants {
   public static final String ID = "id";
   public static final String ROLES = "roles";
   public static final String USER = "user";
-  public static final String KEYCLOAK_AAA_SERVER_CLIENT_ID = "keycloakAaaClientId";
-  public static final String KEYCLOAK_AAA_SERVER_CLIENT_SECRET = "keycloakAaaClientSecret";
+  public static final String KEYCLOAK_ADMIN_CLIENT_ID = "keycloakAdminClientId";
+  public static final String KEYCLOAK_ADMIN_CLIENT_SECRET = "keycloakAdminClientSecret";
   public static final String KID = "kid";
   public static final String KEYCLOAK_SITE = "keycloakSite";
   public static final String KEYCLOAK_REALM = "keycloakRealm";

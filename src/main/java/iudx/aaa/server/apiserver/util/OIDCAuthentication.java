@@ -142,8 +142,8 @@ public class OIDCAuthentication implements AuthenticationHandler {
 
     /* Options for OAuth2, KeyCloack. */
     OAuth2Options options = new OAuth2Options()
-        .setClientId(keycloakOptions.getString(KEYCLOAK_AAA_SERVER_CLIENT_ID))
-        .setClientSecret(keycloakOptions.getString(KEYCLOAK_AAA_SERVER_CLIENT_SECRET))
+        .setClientId(keycloakOptions.getString(KEYCLOAK_ADMIN_CLIENT_ID))
+        .setClientSecret(keycloakOptions.getString(KEYCLOAK_ADMIN_CLIENT_SECRET))
         .setTenant(realm).setSite(site)
         .setJWTOptions(new JWTOptions().setLeeway(keycloakOptions.getInteger(KEYCLOAK_JWT_LEEWAY)));
 
