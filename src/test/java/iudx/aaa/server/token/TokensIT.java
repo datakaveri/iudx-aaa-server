@@ -73,135 +73,136 @@ public class TokensIT {
   
   @BeforeAll
   static void setup(KcAdminInt kc) {
-   Properties tokenEntities = new Properties(); 
-   try {
-    tokenEntities.load(TokensIT.class.getClassLoader().getResourceAsStream("tokenTestEntities.properties"));
-  } catch (IOException e) {
-    // TODO Auto-generated catch block
-    e.printStackTrace();
-  }
+    Properties tokenEntities = new Properties(); 
+    try {
+      tokenEntities.load(TokensIT.class.getClassLoader()
+          .getResourceAsStream("IntegrationTestEntities.properties"));
+    } catch (IOException e) {
+      e.printStackTrace();
+      return;
+    }
 
-   REAL_RS_URL = tokenEntities.getProperty("REAL_RS_URL");
-   REAL_APD_URL = tokenEntities.getProperty("REAL_APD_URL");
-   REAL_COS_URL = tokenEntities.getProperty("REAL_COS_URL");
-   PROVIDER_ALPHA_EMAIL = tokenEntities.getProperty("PROVIDER_ALPHA_EMAIL");
-   PROVIDER_BRAVO_EMAIL = tokenEntities.getProperty("PROVIDER_BRAVO_EMAIL");
-   
-   ALPHA_RES_GROUP_ID = UUID.fromString(tokenEntities.getProperty("ALPHA_RES_GROUP_ID"));
-   BRAVO_RES_GROUP_ID = UUID.fromString(tokenEntities.getProperty("BRAVO_RES_GROUP_ID"));
-   
-   ALPHA_RES_ITEM_SECURE_ID = UUID.fromString(tokenEntities.getProperty("ALPHA_RES_ITEM_SECURE_ID"));
-   ALPHA_RES_ITEM_OPEN_ID = UUID.fromString(tokenEntities.getProperty("ALPHA_RES_ITEM_OPEN_ID"));
-   
-   BRAVO_RES_ITEM_SECURE_ID = UUID.fromString(tokenEntities.getProperty("BRAVO_RES_ITEM_SECURE_ID"));
-   BRAVO_RES_ITEM_PII_ID = UUID.fromString(tokenEntities.getProperty("BRAVO_RES_ITEM_PII_ID"));
-   
-   String adminDummyRsEmail = IntegTestHelpers.email();
-   
-   adminRealRsToken = kc.createUser(adminRealRsEmail);
-   adminDummyRsToken = kc.createUser(adminDummyRsEmail);
-   
-   // register REAL_RS_URL
-   JsonObject rsReqRealUrl =
-       new JsonObject().put("name", "name").put("url", REAL_RS_URL).put("owner", adminRealRsEmail);
+    REAL_RS_URL = tokenEntities.getProperty("REAL_RS_URL");
+    REAL_APD_URL = tokenEntities.getProperty("REAL_APD_URL");
+    REAL_COS_URL = tokenEntities.getProperty("REAL_COS_URL");
+    PROVIDER_ALPHA_EMAIL = tokenEntities.getProperty("PROVIDER_ALPHA_EMAIL");
+    PROVIDER_BRAVO_EMAIL = tokenEntities.getProperty("PROVIDER_BRAVO_EMAIL");
+
+    ALPHA_RES_GROUP_ID = UUID.fromString(tokenEntities.getProperty("ALPHA_RES_GROUP_ID"));
+    BRAVO_RES_GROUP_ID = UUID.fromString(tokenEntities.getProperty("BRAVO_RES_GROUP_ID"));
+
+    ALPHA_RES_ITEM_SECURE_ID = UUID.fromString(tokenEntities.getProperty("ALPHA_RES_ITEM_SECURE_ID"));
+    ALPHA_RES_ITEM_OPEN_ID = UUID.fromString(tokenEntities.getProperty("ALPHA_RES_ITEM_OPEN_ID"));
+
+    BRAVO_RES_ITEM_SECURE_ID = UUID.fromString(tokenEntities.getProperty("BRAVO_RES_ITEM_SECURE_ID"));
+    BRAVO_RES_ITEM_PII_ID = UUID.fromString(tokenEntities.getProperty("BRAVO_RES_ITEM_PII_ID"));
+
+    String adminDummyRsEmail = IntegTestHelpers.email();
+
+    adminRealRsToken = kc.createUser(adminRealRsEmail);
+    adminDummyRsToken = kc.createUser(adminDummyRsEmail);
+
+    // register REAL_RS_URL
+    JsonObject rsReqRealUrl =
+        new JsonObject().put("name", "name").put("url", REAL_RS_URL).put("owner", adminRealRsEmail);
 
     given().auth().oauth2(kc.cosAdminToken).contentType(ContentType.JSON).body(rsReqRealUrl.toString())
-        .when().post("/admin/resourceservers").then()
-        .statusCode(describedAs("Setup - Created Real RS server", is(201)));
-    
-   // register DUMMY_RS_URL
-   JsonObject rsReqDummyServer =
-       new JsonObject().put("name", "name").put("url", DUMMY_RS_SERVER).put("owner", adminDummyRsEmail);
-   
+    .when().post("/admin/resourceservers").then()
+    .statusCode(describedAs("Setup - Created Real RS server", is(201)));
+
+    // register DUMMY_RS_URL
+    JsonObject rsReqDummyServer =
+        new JsonObject().put("name", "name").put("url", DUMMY_RS_SERVER).put("owner", adminDummyRsEmail);
+
     given().auth().oauth2(kc.cosAdminToken).contentType(ContentType.JSON).body(rsReqDummyServer.toString())
         .when().post("/admin/resourceservers").then()
         .statusCode(describedAs("Setup - Created Dummy RS server", is(201)));
     
-   // register consumers
+    // register consumers
     consumerRealRsToken = kc.createUser(consumerRealRsEmail);
     consumerDummyRsToken = kc.createUser(IntegTestHelpers.email());
-    
+
     JsonObject consRealReq = new JsonObject().put("consumer", new JsonArray().add(REAL_RS_URL));
     JsonObject consDummyReq = new JsonObject().put("consumer", new JsonArray().add(DUMMY_RS_SERVER));
-    
+
     given().auth().oauth2(consumerRealRsToken).contentType(ContentType.JSON).body(consRealReq.toString()).when()
-        .post("/user/roles").then()
-        .statusCode(describedAs("Setup - Added consumer with Real RS role", is(200)));
-    
+    .post("/user/roles").then()
+    .statusCode(describedAs("Setup - Added consumer with Real RS role", is(200)));
+
     given().auth().oauth2(consumerDummyRsToken).contentType(ContentType.JSON).body(consDummyReq.toString()).when()
-        .post("/user/roles").then()
-        .statusCode(describedAs("Setup - Added consumer with Dummy RS role", is(200)));
-    
+    .post("/user/roles").then()
+    .statusCode(describedAs("Setup - Added consumer with Dummy RS role", is(200)));
+
     // register Alpha and Bravo providers
     JsonObject provReq = new JsonObject().put("provider", new JsonArray().add(REAL_RS_URL));
-    
+
     providerAlphaToken = kc.getToken(PROVIDER_ALPHA_EMAIL);
     providerBravoToken = kc.getToken(PROVIDER_BRAVO_EMAIL);
-    
+
     given().auth().oauth2(providerAlphaToken).contentType(ContentType.JSON).body(provReq.toString()).when()
-        .post("/user/roles").then()
-        .statusCode(describedAs("Setup - Added provider Alpha with role for Real RS", is(200)));
+    .post("/user/roles").then()
+    .statusCode(describedAs("Setup - Added provider Alpha with role for Real RS", is(200)));
 
     given().auth().oauth2(providerBravoToken).contentType(ContentType.JSON).body(provReq.toString()).when()
-        .post("/user/roles").then()
-        .statusCode(describedAs("Setup - Added provider Bravo with role for Real RS ", is(200)));
-    
+    .post("/user/roles").then()
+    .statusCode(describedAs("Setup - Added provider Bravo with role for Real RS ", is(200)));
+
     // approve Alpha and Bravo providers
     Response response =  
-    given().auth().oauth2(adminRealRsToken).contentType(ContentType.JSON).when()
+        given().auth().oauth2(adminRealRsToken).contentType(ContentType.JSON).when()
         .get("/admin/provider/registrations").then()
         .statusCode(describedAs("Setup - Get provider reg. ID for Alpha, Bravo providers", is(200))).extract().response();
-    
+
     String provAlphaId =
         response.jsonPath().param("email", PROVIDER_ALPHA_EMAIL).param("rsUrl", REAL_RS_URL)
-            .getString("results.find { it.email == email && it.rsUrl == rsUrl}.id");
+        .getString("results.find { it.email == email && it.rsUrl == rsUrl}.id");
     String provBravoId =
         response.jsonPath().param("email", PROVIDER_BRAVO_EMAIL).param("rsUrl", REAL_RS_URL)
-            .getString("results.find { it.email == email && it.rsUrl == rsUrl}.id");
-    
+        .getString("results.find { it.email == email && it.rsUrl == rsUrl}.id");
+
     JsonObject approveReq = new JsonObject().put("request", new JsonArray().add(new JsonObject()
         .put("status", RoleStatus.APPROVED.toString().toLowerCase()).put("id", provAlphaId)).add(new JsonObject()
-        .put("status", RoleStatus.APPROVED.toString().toLowerCase()).put("id", provBravoId))
+            .put("status", RoleStatus.APPROVED.toString().toLowerCase()).put("id", provBravoId))
         );
 
     given().auth().oauth2(adminRealRsToken).contentType(ContentType.JSON).body(approveReq.toString()).when()
-        .put("/admin/provider/registrations").then()
-        .statusCode(describedAs("Setup - Approve Alpha and Bravo providers for Real RS server", is(200)));
-    
+    .put("/admin/provider/registrations").then()
+    .statusCode(describedAs("Setup - Approve Alpha and Bravo providers for Real RS server", is(200)));
+
     // register provider for DUMMY_RS
     String providerDummyRsEmail = IntegTestHelpers.email();
     providerDummyRsToken = kc.createUser(providerDummyRsEmail);
-    
+
     JsonObject provDummyRsReq = new JsonObject().put("provider", new JsonArray().add(DUMMY_RS_SERVER));
-    
+
     given().auth().oauth2(providerDummyRsToken).contentType(ContentType.JSON).body(provDummyRsReq.toString()).when()
-        .post("/user/roles").then()
-        .statusCode(describedAs("Setup - Added provider with role for Dummy RS ", is(200)));
-    
+    .post("/user/roles").then()
+    .statusCode(describedAs("Setup - Added provider with role for Dummy RS ", is(200)));
+
     // approve provider for DUMMY_RS
     String dummyProviderRegId = given().auth().oauth2(adminDummyRsToken).contentType(ContentType.JSON).when()
         .get("/admin/provider/registrations").then()
         .statusCode(describedAs("Setup - Get provider reg. ID for dummy provider", is(200))).extract()
         .path("results.find { it.email == '%s' }.id", providerDummyRsEmail);
-    
+
     JsonObject approveProviderDummyRsReq = new JsonObject().put("request", new JsonArray().add(new JsonObject()
         .put("status", RoleStatus.APPROVED.toString().toLowerCase()).put("id", dummyProviderRegId))
         );
-    
+
     given().auth().oauth2(adminDummyRsToken).contentType(ContentType.JSON).body(approveProviderDummyRsReq.toString()).when()
-        .put("/admin/provider/registrations").then()
-        .statusCode(describedAs("Setup - Approve provider for Dummy RS server", is(200)));
-    
+    .put("/admin/provider/registrations").then()
+    .statusCode(describedAs("Setup - Approve provider for Dummy RS server", is(200)));
+
     // register APD REAL_APD_URL
     String trusteeEmail  = IntegTestHelpers.email();
     trusteeToken = kc.createUser(trusteeEmail);
-    
+
     JsonObject apdReq = new JsonObject().put("name", "name")
         .put("url", REAL_APD_URL)
         .put("owner", trusteeEmail);
 
     given().auth().oauth2(kc.cosAdminToken).contentType(ContentType.JSON).body(apdReq.toString()).when()
-        .post("/apd").then()
+    .post("/apd").then()
         .statusCode(describedAs("Setup - Created dummy APD", is(201)));
   }
   
