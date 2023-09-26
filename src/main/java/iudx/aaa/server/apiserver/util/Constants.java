@@ -37,7 +37,7 @@ public class Constants {
   public static final String POOLSIZE = "poolSize";
   public static final String KEYSTORE_PATH = "keystorePath";
   public static final String KEYSTPRE_PASSWORD = "keystorePassword";
-  public static final String AUTHSERVER_DOMAIN = "authServerDomain";
+  public static final String COS_DOMAIN = "cosDomain";
   public static final String KEYCLOACK_OPTIONS = "keycloakOptions";
   public static final int PG_CONNECTION_TIMEOUT = 10000;
   public static final int DB_RECONNECT_ATTEMPTS = 5;

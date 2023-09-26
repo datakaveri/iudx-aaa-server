@@ -3,7 +3,7 @@ package iudx.aaa.server.registration;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
 import static iudx.aaa.server.apiserver.util.Urn.URN_SUCCESS;
-import static iudx.aaa.server.registration.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.registration.Constants.CONFIG_COS_URL;
 import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NOT_TRUSTEE;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_FOUND;
@@ -125,7 +125,7 @@ public class SearchUserTest {
 
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
 
-    options.put(CONFIG_AUTH_URL, dbConfig.getString(CONFIG_AUTH_URL)).put(CONFIG_OMITTED_SERVERS,
+    options.put(CONFIG_COS_URL, dbConfig.getString(CONFIG_COS_URL)).put(CONFIG_OMITTED_SERVERS,
         dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS));
 
     utils = new Utils(pool);

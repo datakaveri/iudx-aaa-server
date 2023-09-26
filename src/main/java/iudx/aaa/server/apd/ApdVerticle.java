@@ -1,6 +1,6 @@
 package iudx.aaa.server.apd;
 
-import static iudx.aaa.server.apd.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.apd.Constants.CONFIG_COS_URL;
 import static iudx.aaa.server.apd.Constants.CONFIG_WEBCLI_TIMEOUTMS;
 import static iudx.aaa.server.apd.Constants.DATABASE_IP;
 import static iudx.aaa.server.apd.Constants.DATABASE_NAME;
@@ -93,9 +93,9 @@ public class ApdVerticle extends AbstractVerticle {
     poolSize = Integer.parseInt(config().getString(DATABASE_POOLSIZE));
 
     /*
-     * Pass an `options` JSON object to the serviceImpl with a key:val being the authServerDomain
+     * Pass an `options` JSON object to the serviceImpl with a key:val being the cosDomain
      */
-    apdServiceOptions = new JsonObject().put(CONFIG_AUTH_URL, config().getString(CONFIG_AUTH_URL));
+    apdServiceOptions = new JsonObject().put(CONFIG_COS_URL, config().getString(CONFIG_COS_URL));
 
     /*
      * Pass an `options` JSON object to the webClient with a key:val being the default timeout

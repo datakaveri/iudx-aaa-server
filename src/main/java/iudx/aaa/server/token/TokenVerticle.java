@@ -72,13 +72,13 @@ public class TokenVerticle extends AbstractVerticle {
     poolSize = Integer.parseInt(config().getString(POOLSIZE));
     keystorePath = config().getString(KEYSTORE_PATH);
     keystorePassword = config().getString(KEYSTPRE_PASSWORD);
-    String issuer = config().getString(AUTHSERVER_DOMAIN,"");
+    String issuer = config().getString(COS_DOMAIN,"");
 
     if(issuer != null && !issuer.isBlank()) {
       CLAIM_ISSUER = issuer;
     } else {
-      LOGGER.fatal("Fail: authServerDomain not set");
-      throw new IllegalStateException("authServerDomain not set");
+      LOGGER.fatal("Fail: cosDomain not set");
+      throw new IllegalStateException("cosDomain not set");
     }
 
     /* Set Connection Object and schema */

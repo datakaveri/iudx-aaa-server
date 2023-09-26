@@ -39,7 +39,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static iudx.aaa.server.apd.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.apd.Constants.CONFIG_COS_URL;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_REQUEST_ID;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_APD;
 import static iudx.aaa.server.apd.Constants.*;
@@ -136,7 +136,7 @@ public class  ListApdTest {
 
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
 
-    JsonObject options = new JsonObject().put(CONFIG_AUTH_URL, dbConfig.getString(CONFIG_AUTH_URL));
+    JsonObject options = new JsonObject().put(CONFIG_COS_URL, dbConfig.getString(CONFIG_COS_URL));
     
     utils = new Utils(pool);
 

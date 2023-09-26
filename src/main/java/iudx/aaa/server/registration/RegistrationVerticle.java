@@ -1,6 +1,6 @@
 package iudx.aaa.server.registration;
 
-import static iudx.aaa.server.registration.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.registration.Constants.CONFIG_COS_URL;
 import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
 import static iudx.aaa.server.registration.Constants.DATABASE_IP;
 import static iudx.aaa.server.registration.Constants.DB_CONNECT_TIMEOUT;
@@ -98,7 +98,7 @@ public class RegistrationVerticle extends AbstractVerticle {
     keycloakAdminClientSecret = config().getString(KC_ADMIN_CLIENT_SEC);
     keycloakAdminPoolSize = Integer.parseInt(config().getString(KC_ADMIN_POOLSIZE));
 
-    options = new JsonObject().put(CONFIG_AUTH_URL, config().getString(CONFIG_AUTH_URL))
+    options = new JsonObject().put(CONFIG_COS_URL, config().getString(CONFIG_COS_URL))
         .put(CONFIG_OMITTED_SERVERS, config().getJsonArray(CONFIG_OMITTED_SERVERS));
 
     /* Set Connection Object and schema */

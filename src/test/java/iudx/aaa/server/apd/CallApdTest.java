@@ -9,7 +9,7 @@ import static iudx.aaa.server.apd.Constants.APD_RESP_TYPE;
 import static iudx.aaa.server.apd.Constants.APD_URN_ALLOW;
 import static iudx.aaa.server.apd.Constants.APD_URN_DENY;
 import static iudx.aaa.server.apd.Constants.APD_URN_DENY_NEEDS_INT;
-import static iudx.aaa.server.apd.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.apd.Constants.CONFIG_COS_URL;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_APD_INTERAC;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_CAT_ID;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_CONSTRAINTS;
@@ -135,7 +135,7 @@ public class CallApdTest {
 
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
 
-    JsonObject options = new JsonObject().put(CONFIG_AUTH_URL, dbConfig.getString(CONFIG_AUTH_URL));
+    JsonObject options = new JsonObject().put(CONFIG_COS_URL, dbConfig.getString(CONFIG_COS_URL));
     
     utils = new Utils(pool);
 

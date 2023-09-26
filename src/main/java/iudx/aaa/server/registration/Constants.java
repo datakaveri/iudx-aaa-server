@@ -28,7 +28,7 @@ public class Constants {
   public static final String KC_ADMIN_CLIENT_ID = "keycloakAdminClientId";
   public static final String KC_ADMIN_CLIENT_SEC = "keycloakAdminClientSecret";
   public static final String KC_ADMIN_POOLSIZE = "keycloakAdminPoolSize";
-  public static final String CONFIG_AUTH_URL = "authServerDomain";
+  public static final String CONFIG_COS_URL = "cosDomain";
   public static final String CONFIG_OMITTED_SERVERS = "serversOmittedFromRevoke";
   
   public static final int CLIENT_SECRET_BYTES = 20; 

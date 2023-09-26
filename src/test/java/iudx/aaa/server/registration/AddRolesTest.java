@@ -3,7 +3,7 @@ package iudx.aaa.server.registration;
 import static iudx.aaa.server.apiserver.util.Urn.URN_ALREADY_EXISTS;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
 import static iudx.aaa.server.apiserver.util.Urn.URN_SUCCESS;
-import static iudx.aaa.server.registration.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.registration.Constants.CONFIG_COS_URL;
 import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
 import static iudx.aaa.server.registration.Constants.ERR_CONTEXT_EXISTING_ROLE_FOR_RS;
 import static iudx.aaa.server.registration.Constants.ERR_CONTEXT_NOT_FOUND_RS_URLS;
@@ -122,7 +122,7 @@ public class AddRolesTest {
 
     utils = new Utils(pool);
 
-    options.put(CONFIG_AUTH_URL, dbConfig.getString(CONFIG_AUTH_URL)).put(CONFIG_OMITTED_SERVERS,
+    options.put(CONFIG_COS_URL, dbConfig.getString(CONFIG_COS_URL)).put(CONFIG_OMITTED_SERVERS,
         dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS));
 
     CompositeFuture.all(

@@ -1,7 +1,7 @@
 package iudx.aaa.server.registration;
 
 import static iudx.aaa.server.apiserver.util.Urn.*;
-import static iudx.aaa.server.registration.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.registration.Constants.CONFIG_COS_URL;
 import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_APPROVED_ROLES;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_KC;
@@ -117,7 +117,7 @@ public class ListUserRolesTest {
 
     utils = new Utils(pool);
 
-    options.put(CONFIG_AUTH_URL, dbConfig.getString(CONFIG_AUTH_URL)).put(CONFIG_OMITTED_SERVERS,
+    options.put(CONFIG_COS_URL, dbConfig.getString(CONFIG_COS_URL)).put(CONFIG_OMITTED_SERVERS,
         dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS));
 
     Future<Void> create = utils.createFakeResourceServer(DUMMY_SERVER,
