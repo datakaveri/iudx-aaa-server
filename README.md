@@ -1,8 +1,7 @@
 [![Build Status](https://img.shields.io/jenkins/build?jobUrl=https%3A%2F%2Fjenkins.iudx.io%2Fjob%2Fiudx%2520aaa-server%2520%28master%29%2520pipeline%2F)](https://jenkins.iudx.io/job/iudx%20aaa-server%20(master)%20pipeline/lastBuild/)
 [![Jenkins Coverage](https://img.shields.io/jenkins/coverage/jacoco?jobUrl=https%3A%2F%2Fjenkins.iudx.io%2Fjob%2Fiudx%2520aaa-server%2520%28master%29%2520pipeline%2F)](https://jenkins.iudx.io/job/iudx%20aaa-server%20(master)%20pipeline/lastBuild/jacoco/)
-[![Unit Tests](https://img.shields.io/jenkins/tests?jobUrl=https%3A%2F%2Fjenkins.iudx.io%2Fjob%2Fiudx%2520aaa-server%2520%28master%29%2520pipeline%2F&label=unit%20tests)](https://jenkins.iudx.io/job/iudx%20aaa-server%20(master)%20pipeline/lastBuild/testReport/)
+[![Unit and Integration Tests](https://img.shields.io/jenkins/tests?jobUrl=https%3A%2F%2Fjenkins.iudx.io%2Fjob%2Fiudx%2520aaa-server%2520%28master%29%2520pipeline%2F&label=unit%20and%20integration%20tests)](https://jenkins.iudx.io/job/iudx%20aaa-server%20(master)%20pipeline/lastBuild/testReport/)
 [![Security Tests](https://img.shields.io/jenkins/build?jobUrl=https%3A%2F%2Fjenkins.iudx.io%2Fjob%2Fiudx%2520aaa-server%2520%28master%29%2520pipeline%2F&label=security%20tests)](https://jenkins.iudx.io/job/iudx%20aaa-server%20(master)%20pipeline/lastBuild/zap/)
-[![Integration Tests](https://img.shields.io/jenkins/build?jobUrl=https%3A%2F%2Fjenkins.iudx.io%2Fjob%2Fiudx%2520aaa-server%2520%28master%29%2520pipeline%2F&label=integration%20tests)](https://jenkins.iudx.io/job/iudx%20aaa-server%20(master)%20pipeline/Integration_20Test_20Report/)
 [![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/6743/badge)](https://bestpractices.coreinfrastructure.org/projects/6743)
 
 
@@ -71,15 +70,11 @@ The database details should then be added to the server config.
 
 The AAA server uses [Keycloak](https://www.keycloak.org/about.html) to manage user identity. Please refer [here](https://www.keycloak.org/docs/latest/server_admin/#core-concepts-and-terms) to become familiar with Keycloak terminology.
 
-1. The AAA server required clients to be configured that would allow the server to interact with Keycloak. The main clients are:
+1. The AAA server requires a client to be configured that would allow the server to interact with Keycloak. The client would be able to search for users on the configured Keycloak realm, as well as validate OIDC tokens issued by Keycloak from that realm. This client must have the capability to search for users and realms (In Service account roles -> client roles -> realm-management -> add _view-users_ to Assigned roles) 
 
-- The **admin client** to be configured for the `RegistrationVerticle` and `AdminVerticle`. This client performs admin-related tasks on Keycloak. This client must have the capability to view and update users and realms (In Service account roles -> client roles -> realm-management -> add _view-users_ to Assigned roles) 
-- The **normal client** to be configured for the `TokenVerticle` and `ApiServerVerticle`. This client would allow the server to validate Keycloak JWT tokens.
+2. `Email as username` needs to be configured in the `Login` tab of the Realm settings.
 
-2. The roles `provider`, `consumer`, `delegate` and `admin` need to be added to the realm.
-3. `Email as username` needs to be configured in the `Login` tab of the Realm settings.
-
-The Keycloak host and port, along with the client IDs and client secret information should then be added to the server config.
+The Keycloak URL and realm information along with the client IDs and client secret information should then be added to the server config.
 
 ### Docker based
 1. Install docker and docker-compose
