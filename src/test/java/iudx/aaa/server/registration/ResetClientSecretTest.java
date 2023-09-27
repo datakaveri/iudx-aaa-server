@@ -3,7 +3,7 @@ package iudx.aaa.server.registration;
 import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.registration.Constants.CLIENT_SECRET_BYTES;
 import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
-import static iudx.aaa.server.registration.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.registration.Constants.CONFIG_COS_URL;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_INVALID_CLI_ID;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_APPROVED_ROLES;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_INVALID_CLI_ID;
@@ -112,7 +112,7 @@ public class ResetClientSecretTest {
     }
 
     options.put(CONFIG_OMITTED_SERVERS, dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS))
-        .put(CONFIG_AUTH_URL, dbConfig.getString(CONFIG_AUTH_URL));
+        .put(CONFIG_COS_URL, dbConfig.getString(CONFIG_COS_URL));
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
     
     utils = new Utils(pool);

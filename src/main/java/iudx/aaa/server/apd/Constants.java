@@ -9,7 +9,7 @@ public class Constants {
           "^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$";
 
   /* Config related */
-  public static final String CONFIG_AUTH_URL = "authServerDomain";
+  public static final String CONFIG_COS_URL = "cosDomain";
   public static final String CONFIG_WEBCLI_TIMEOUTMS = "webClientTimeoutMs";
   public static final String DATABASE_IP = "databaseIP";
   public static final String DATABASE_PORT = "databasePort";

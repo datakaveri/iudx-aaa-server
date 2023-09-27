@@ -29,13 +29,8 @@ public class Constants {
   public static final String POOLSIZE = "poolSize";
   public static final String KEYSTORE_PATH = "keystorePath";
   public static final String KEYSTPRE_PASSWORD = "keystorePassword";
-  public static final String AUTHSERVER_DOMAIN = "authServerDomain";
+  public static final String COS_DOMAIN = "cosDomain";
 
-  public static final String KEYCLOAK_HOST = "keycloakHost";
-  public static final String KEYCLOAK_PORT = "keycloakPort";
-  public static final String KEYCLOAK_TOKEN_URI = "keycloakTokenUri";
-  public static final String KEYCLOAK_AAA_SERVER_CLIENT_ID = "keycloakAaaClientId";
-  public static final String KEYCLOAK_AAA_SERVER_CLIENT_SECRET = "keycloakAaaClientSecret";
   public static final int PG_CONNECTION_TIMEOUT = 10000;
   public static final int DB_RECONNECT_ATTEMPTS = 5;
   public static final long DB_RECONNECT_INTERVAL_MS = 10000;

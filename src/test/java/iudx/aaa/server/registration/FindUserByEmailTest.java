@@ -1,6 +1,6 @@
 package iudx.aaa.server.registration;
 
-import static iudx.aaa.server.registration.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.registration.Constants.CONFIG_COS_URL;
 import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_EMAILS_NOT_AT_UAC_KEYCLOAK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -117,7 +117,7 @@ public class FindUserByEmailTest {
 
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
 
-    options.put(CONFIG_AUTH_URL, dbConfig.getString(CONFIG_AUTH_URL)).put(CONFIG_OMITTED_SERVERS,
+    options.put(CONFIG_COS_URL, dbConfig.getString(CONFIG_COS_URL)).put(CONFIG_OMITTED_SERVERS,
         dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS));
 
     utils = new Utils(pool);

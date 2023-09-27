@@ -47,8 +47,6 @@ public class PolicyVerticle extends AbstractVerticle {
   private PoolOptions poolOptions;
   private PgConnectOptions connectOptions;
   private JsonObject catalogueOptions;
-  private JsonObject authOptions;
-  private JsonObject catOptions;
   private PolicyService policyService;
   private RegistrationService registrationService;
   private ApdService apdService;
@@ -77,18 +75,6 @@ public class PolicyVerticle extends AbstractVerticle {
     databasePassword = config().getString("databasePassword");
     poolSize = Integer.parseInt(config().getString("poolSize"));
     catalogueOptions = config().getJsonObject("catalogueOptions");
-    catalogueOptions.put("domain",config().getString("domain"));
-    catalogueOptions.put("resURL",config().getJsonObject("resOptions").getString("resURL"));
-    authOptions = config().getJsonObject("authOptions");
-    catOptions = config().getJsonObject("catOptions");
-
-    /*
-     * Injecting authServerUrl into 'authOptions' from config().'authServerDomain'
-     * TODO - make this uniform
-     */
-    authOptions.put("authServerUrl", config().getString("authServerDomain"));
-
-    //get options for catalogue client
 
     /* Set Connection Object and schema */
     if (connectOptions == null) {
@@ -116,8 +102,7 @@ public class PolicyVerticle extends AbstractVerticle {
     registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
     apdService = ApdService.createProxy(vertx, APD_SERVICE_ADDRESS);
     catalogueClient = new CatalogueClient(webClientForCatClient, catalogueOptions);
-    policyService = new PolicyServiceImpl(pool, registrationService, apdService, catalogueClient,
-        authOptions, catOptions);
+    policyService = new PolicyServiceImpl(pool, registrationService, apdService, catalogueClient);
 
     binder = new ServiceBinder(vertx);
     consumer =

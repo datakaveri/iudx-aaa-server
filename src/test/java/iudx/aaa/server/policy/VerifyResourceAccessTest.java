@@ -88,9 +88,6 @@ public class VerifyResourceAccessTest {
   private static ApdService apdService = Mockito.mock(ApdService.class);
   private static RegistrationService registrationService = Mockito.mock(RegistrationService.class);
   private static CatalogueClient catalogueClient = Mockito.mock(CatalogueClient.class);
-  private static JsonObject catalogueOptions;
-  private static JsonObject authOptions;
-  private static JsonObject catOptions;
 
   private static Vertx vertxObj;
   
@@ -114,19 +111,6 @@ public class VerifyResourceAccessTest {
     databaseUserName = dbConfig.getString("databaseUserName");
     databasePassword = dbConfig.getString("databasePassword");
     poolSize = Integer.parseInt(dbConfig.getString("poolSize"));
-    catalogueOptions = dbConfig.getJsonObject("catalogueOptions");
-    catalogueOptions.put("domain", dbConfig.getString("domain"));
-    catalogueOptions.put("resURL", dbConfig.getJsonObject("resOptions").getString("resURL"));
-    authOptions = dbConfig.getJsonObject("authOptions");
-    catOptions = dbConfig.getJsonObject("catOptions");
-
-    /*
-     * Injecting authServerUrl into 'authOptions' and 'catalogueOptions' from config().'authServerDomain'
-     * TODO - make this uniform
-     */
-    authOptions.put("authServerUrl", dbConfig.getString("authServerDomain"));
-
-    // get options for catalogue client
 
     /* Set Connection Object and schema */
     if (connectOptions == null) {
@@ -150,8 +134,7 @@ public class VerifyResourceAccessTest {
     /* Create the client pool */
 
     PgPool pool = PgPool.pool(vertx, connectOptions, poolOptions);
-    policyService = new PolicyServiceImpl(pool, registrationService, apdService, catalogueClient,
-        authOptions, catOptions);
+    policyService = new PolicyServiceImpl(pool, registrationService, apdService, catalogueClient);
     testContext.completeNow();
   }
 

@@ -1,6 +1,6 @@
 package iudx.aaa.server.apd;
 
-import static iudx.aaa.server.apd.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.apd.Constants.CONFIG_COS_URL;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_NO_COS_ADMIN_ROLE;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_CANT_CHANGE_APD_STATUS;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_DUPLICATE_REQ;
@@ -141,7 +141,7 @@ public class UpdateApdTest {
 
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
 
-    JsonObject options = new JsonObject().put(CONFIG_AUTH_URL, dbConfig.getString(CONFIG_AUTH_URL));
+    JsonObject options = new JsonObject().put(CONFIG_COS_URL, dbConfig.getString(CONFIG_COS_URL));
     
     utils = new Utils(pool);
 

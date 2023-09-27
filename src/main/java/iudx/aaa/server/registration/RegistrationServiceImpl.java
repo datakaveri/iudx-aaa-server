@@ -2,7 +2,7 @@ package iudx.aaa.server.registration;
 
 import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.registration.Constants.CLIENT_SECRET_BYTES;
-import static iudx.aaa.server.registration.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.registration.Constants.CONFIG_COS_URL;
 import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
 import static iudx.aaa.server.registration.Constants.DEFAULT_CLIENT;
 import static iudx.aaa.server.registration.Constants.ERR_CONTEXT_EXISTING_ROLE_FOR_RS;
@@ -112,7 +112,7 @@ public class RegistrationServiceImpl implements RegistrationService {
   private PgPool pool;
   private KcAdmin kc;
   private TokenService tokenService;
-  public static String AUTH_SERVER_URL = "";
+  public static String COS_URL = "";
   public static List<String> SERVERS_OMITTED_FROM_TOKEN_REVOKE = new ArrayList<String>();
   
   private SecureRandom randomSource;
@@ -122,7 +122,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     this.pool = pool;
     this.kc = kc;
     this.tokenService = tokenService;
-    AUTH_SERVER_URL = options.getString(CONFIG_AUTH_URL);
+    COS_URL = options.getString(CONFIG_COS_URL);
     SERVERS_OMITTED_FROM_TOKEN_REVOKE = options.getJsonArray(CONFIG_OMITTED_SERVERS).stream()
         .map(x -> (String) x).collect(Collectors.toList());
     
@@ -645,7 +645,7 @@ public class RegistrationServiceImpl implements RegistrationService {
        * bother if a revocation succeeds (HTTP 200) or fails (any other status code, DNS error))
        */
       List<String> omittedServers = SERVERS_OMITTED_FROM_TOKEN_REVOKE;
-      omittedServers.add(AUTH_SERVER_URL);
+      omittedServers.add(COS_URL);
 
       return pool.withConnection(
           conn -> conn.preparedQuery(SQL_GET_RS_AND_APDS_FOR_REVOKE).collecting(getTokenRevokeReqList)

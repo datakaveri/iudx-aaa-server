@@ -48,14 +48,14 @@ public class CatalogueClient {
   private final WebClient client;
   private final String catHost;
   private final Integer catPort;
-  private final String catItemPath;
+  private final String catBasePath;
 
   public CatalogueClient(WebClient client, JsonObject options) {
 
     this.client = client;
     this.catHost = options.getString("catServerHost");
     this.catPort = Integer.parseInt(options.getString("catServerPort"));
-    this.catItemPath = options.getString("catServerItemPath");
+    this.catBasePath = options.getString("catServerBasePath");
   }
 
   /**
@@ -71,7 +71,7 @@ public class CatalogueClient {
     ResourceObjBuilder builder = new ResourceObjBuilder();
     
     Future<JsonArray> catExistenceResponse =
-        client.get(catPort, catHost, catItemPath + CAT_ITEM_ENDPOINT)
+        client.get(catPort, catHost, catBasePath + CAT_ITEM_ENDPOINT)
             .addQueryParam(ID, itemId.toString()).send().compose(res -> {
               if (res.statusCode() == 200
                   && res.bodyAsJsonObject().getString(TYPE).equals(CAT_SUCCESS_URN)) {
@@ -132,7 +132,7 @@ public class CatalogueClient {
     });
 
     Future<JsonArray> catRelationResponse = itemValidation
-        .compose(itemExists -> client.get(catPort, catHost, catItemPath + CAT_RELATION_ENDPOINT)
+        .compose(itemExists -> client.get(catPort, catHost, catBasePath + CAT_RELATION_ENDPOINT)
             .addQueryParam(ID, itemId.toString())
             .addQueryParam(CAT_REL_QUERY_PARAM, CAT_REL_QUERY_VAL_ALL).send().compose(res -> {
               if (res.statusCode() == 200

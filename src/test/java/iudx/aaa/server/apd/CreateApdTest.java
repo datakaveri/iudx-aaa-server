@@ -1,6 +1,6 @@
 package iudx.aaa.server.apd;
 
-import static iudx.aaa.server.apd.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.apd.Constants.CONFIG_COS_URL;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_APD_NOT_RESPOND;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_EXISTING_DOMAIN;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_INVALID_DOMAIN;
@@ -133,7 +133,7 @@ public class CreateApdTest {
 
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
 
-    JsonObject options = new JsonObject().put(CONFIG_AUTH_URL, dbConfig.getString(CONFIG_AUTH_URL));
+    JsonObject options = new JsonObject().put(CONFIG_COS_URL, dbConfig.getString(CONFIG_COS_URL));
     
     utils = new Utils(pool);
     
