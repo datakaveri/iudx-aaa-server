@@ -9,7 +9,6 @@ import java.security.cert.Certificate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.logging.log4j.LogManager;
@@ -40,9 +39,9 @@ import iudx.aaa.server.apd.ApdService;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.util.ClientAuthentication;
 import iudx.aaa.server.apiserver.util.FailureHandler;
+import iudx.aaa.server.apiserver.util.FetchRoles;
 import iudx.aaa.server.apiserver.util.OIDCAuthentication;
-import iudx.aaa.server.apiserver.util.ProviderAuthentication;
-import iudx.aaa.server.apiserver.util.SearchUserHandler;
+import iudx.aaa.server.apiserver.util.DelegationIdAuthorization;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.token.TokenService;
@@ -86,7 +85,7 @@ public class ApiServerVerticle extends AbstractVerticle {
 
   private long serverTimeout;
   private String corsRegex;
-  private String authServerDomain;
+  private String cosDomain;
 
   /** Service addresses */
   private static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
@@ -124,7 +123,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     JsonObject keycloakOptions = config().getJsonObject(KEYCLOACK_OPTIONS);
     serverTimeout = Long.parseLong(config().getString(SERVER_TIMEOUT_MS));
     corsRegex = config().getString(CORS_REGEX);
-    authServerDomain = config().getString(AUTHSERVER_DOMAIN);
+    cosDomain = config().getString(COS_DOMAIN);
     jwtKeystorePath = config().getString(KEYSTORE_PATH);
     jwtKeystorePassword = config().getString(KEYSTPRE_PASSWORD);
 
@@ -156,7 +155,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     allowedHeaders.add(HEADER_REFERER);
     allowedHeaders.add(HEADER_ALLOW_ORIGIN);
 
-    allowedHeaders.add(HEADER_PROVIDER_ID);
+    allowedHeaders.add(HEADER_DELEGATION_ID);
     allowedHeaders.add(HEADER_EMAIL);
     allowedHeaders.add(HEADER_ROLE);
 
@@ -170,10 +169,10 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     /* Passing the full config to OIDC auth, as the config has all the required keycloak
      * options */
-    OIDCAuthentication oidcFlow = new OIDCAuthentication(vertx, pgPool, config());
+    OIDCAuthentication oidcFlow = new OIDCAuthentication(vertx, config());
+    FetchRoles fetchRoles = new FetchRoles(pgPool, config());
     ClientAuthentication clientFlow = new ClientAuthentication(pgPool);
-    ProviderAuthentication providerAuth = new ProviderAuthentication(pgPool, authServerDomain);
-    SearchUserHandler searchUser = new SearchUserHandler();
+    DelegationIdAuthorization delegationAuth = new DelegationIdAuthorization(pgPool);
     FailureHandler failureHandler = new FailureHandler();
 
     RouterBuilder.create(vertx, "docs/openapi.yaml").onFailure(Throwable::printStackTrace)
@@ -189,6 +188,8 @@ public class ApiServerVerticle extends AbstractVerticle {
               // Post token create
               routerBuilder.operation(CREATE_TOKEN)
                       .handler(clientFlow)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Roles.allRoles))
+                      .handler(delegationAuth)
                       .handler(this::createTokenHandler)
                       .failureHandler(failureHandler);
 
@@ -199,116 +200,106 @@ public class ApiServerVerticle extends AbstractVerticle {
 
               // Post token revoke
               routerBuilder.operation(REVOKE_TOKEN)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Roles.allRoles))
                       .handler(this::revokeTokenHandler)
                       .failureHandler(failureHandler);
 
               // Post user profile
-              routerBuilder.operation(CREATE_USER_PROFILE)
+              routerBuilder.operation(ADD_ROLES)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Roles.allRoles))
                       .handler(this::createUserProfileHandler)
                       .failureHandler(failureHandler);
 
               // Get user profile
-              routerBuilder.operation(GET_USER_PROFILE)
-                      .handler(providerAuth)
-                      .handler(searchUser)
+              routerBuilder.operation(GET_USER_ROLES)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Roles.allRoles))
                       .handler(this::listUserProfileHandler)
                       .failureHandler(failureHandler);
 
-              routerBuilder.operation(UPDATE_USER_PROFILE)
-                      .handler(this::updateUserProfileHandler)
+              routerBuilder.operation(RESET_CLIENT_CRED)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Roles.allRoles))
+                      .handler(this::resetClientCredHandler)
                       .failureHandler(failureHandler);
 
-              // Get Organization Details
-              routerBuilder.operation(GET_ORGANIZATIONS)
-                      .handler(this::listOrganizationHandler)
+              // Get Resource Server Details
+              routerBuilder.operation(GET_RESOURCE_SERVERS)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of()))
+                      .handler(this::listResourceServersHandler)
                       .failureHandler(failureHandler);
 
               // Post Create Organization
-              routerBuilder.operation(CREATE_ORGANIZATIONS)
-                      .handler(this::adminCreateOrganizationHandler)
+              routerBuilder.operation(CREATE_RESOURCE_SERVER)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.COS_ADMIN)))
+                      .handler(this::adminCreateResourceServerHandler)
                       .failureHandler(failureHandler);
 
               // Get Provider registrations
               routerBuilder.operation(GET_PVDR_REGISTRATION)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.ADMIN)))
                       .handler(this::adminGetProviderRegHandler)
                       .failureHandler(failureHandler);
 
               // Update Provider registration status
               routerBuilder.operation(UPDATE_PVDR_REGISTRATION)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.ADMIN)))
                       .handler(this::adminUpdateProviderRegHandler)
                       .failureHandler(failureHandler);
 
-              // Get/lists the User policies
-              routerBuilder.operation(GET_POLICIES)
-                      .handler(providerAuth)
-                      .handler(this::listPolicyHandler)
-                      .failureHandler(failureHandler);
-
-              // Create a new User policies
-              routerBuilder.operation(CREATE_POLICIES)
-                      .handler(providerAuth)
-                      .handler(this::createPolicyHandler)
-                      .failureHandler(failureHandler);
-
-              // Delete a User policies
-              routerBuilder.operation(DELETE_POLICIES)
-                      .handler(providerAuth)
-                      .handler(this::deletePolicyHandler)
-                      .failureHandler(failureHandler);
-
-              // Lists all the policies related requests for user/provider
-              routerBuilder.operation(GET_POLICIES_REQUEST)
-                      .handler(providerAuth)
-                      .handler(this::getPolicyNotificationHandler)
-                      .failureHandler(failureHandler);
-
-              // Creates new policy request for user
-              routerBuilder.operation(POST_POLICIES_REQUEST)
-                      .handler(this::createPolicyNotificationHandler)
-                      .failureHandler(failureHandler);
-
-              // Updates the policy request by provider/delegate
-              routerBuilder.operation(PUT_POLICIES_REQUEST)
-                      .handler(providerAuth)
-                      .handler(this::updatePolicyNotificationHandler)
-                      .failureHandler(failureHandler);
-
-              // deletes the policy request by consumer
-              routerBuilder.operation(DELETE_POLICIES_REQUEST)
-                  .handler(this::deleteNotificationHandler)
-                  .failureHandler(failureHandler);
-
-              // Get delegations by provider/delegate/auth delegate
+              // Get delegations by provider/consumer/delegate
               routerBuilder.operation(GET_DELEGATIONS)
-                      .handler(providerAuth)
+                      .handler(ctx -> fetchRoles.fetch(ctx,
+                          Set.of(Roles.CONSUMER, Roles.PROVIDER, Roles.DELEGATE)))
                       .handler(this::listDelegationsHandler)
                       .failureHandler(failureHandler);
 
-              // Delete delegations by provider/delegate/auth delegate
+              // Delete delegations by provider/consumer/delegate
               routerBuilder.operation(DELETE_DELEGATIONS)
-                      .handler(providerAuth)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.PROVIDER, Roles.CONSUMER)))
                       .handler(this::deleteDelegationsHandler)
                       .failureHandler(failureHandler);
 
               // Create delegations
               routerBuilder.operation(CREATE_DELEGATIONS)
-                      .handler(providerAuth)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.PROVIDER, Roles.CONSUMER)))
                       .handler(this::createDelegationsHandler)
+                      .failureHandler(failureHandler);
+
+              // Get delegate emails
+              routerBuilder.operation(GET_DELEGATE_EMAILS)
+                      .handler(clientFlow)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.TRUSTEE)))
+                      .handler(this::getDelegateEmailsHandler)
                       .failureHandler(failureHandler);
 
               // Create APD
               routerBuilder.operation(CREATE_APD)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.COS_ADMIN)))
                       .handler(this::createApdHandler)
                       .failureHandler(failureHandler);
               
               // Update APD status
               routerBuilder.operation(UPDATE_APD)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.COS_ADMIN)))
                       .handler(this::updateApdHandler)
                       .failureHandler(failureHandler);
 
               // List APDs
               routerBuilder.operation(LIST_APD)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Roles.allRoles))
                       .handler(this::listApdHandler)
+                      .failureHandler(failureHandler);
+
+              // Get default client credentials
+              routerBuilder.operation(GET_DEFAULT_CLIENT_CREDS)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Roles.allRoles))
+                      .handler(this::getDefaultClientCredsHandler)
+                      .failureHandler(failureHandler);
+
+              // Search User
+              routerBuilder.operation(SEARCH_USER)
+                      .handler(clientFlow)
+                      .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.TRUSTEE)))
+                      .handler(this::searchUserHandler)
                       .failureHandler(failureHandler);
 
               // Get PublicKey
@@ -389,11 +380,12 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     /* Mapping request body to Object */
     JsonObject tokenRequestJson = context.body().asJsonObject();
-    tokenRequestJson.put(CLIENT_ID, context.get(CLIENT_ID));
     RequestToken requestTokenDTO = new RequestToken(tokenRequestJson);
     User user = context.get(USER);
+    
+    DelegationInformation delegationInfo = context.get(DELEGATION_INFO);
 
-    tokenService.createToken(requestTokenDTO, user, handler -> {
+    tokenService.createToken(requestTokenDTO, delegationInfo, user, handler -> {
       if (handler.succeeded()) {
         JsonObject result = handler.result();
         Future.future(future -> handleAuditLogs(context, result));
@@ -452,10 +444,10 @@ public class ApiServerVerticle extends AbstractVerticle {
    */
   private void createUserProfileHandler(RoutingContext context) {
     JsonObject jsonRequest = context.body().asJsonObject();
-    RegistrationRequest request = new RegistrationRequest(jsonRequest);
+    AddRolesRequest request = new AddRolesRequest(jsonRequest);
     User user = context.get(USER);
 
-    registrationService.createUser(request, user, handler -> {
+    registrationService.addRoles(request, user, handler -> {
       if (handler.succeeded()) {
         JsonObject result = handler.result();
         Future.future(future -> handleAuditLogs(context, result));
@@ -474,13 +466,7 @@ public class ApiServerVerticle extends AbstractVerticle {
   private void listUserProfileHandler(RoutingContext context) {
     User user = context.get(USER);
 
-    JsonObject authDelegateDetails =
-            Optional.ofNullable((JsonObject) context.get(DATA)).orElse(new JsonObject());
-
-    JsonObject searchUserDetails =
-            Optional.ofNullable((JsonObject) context.get(CONTEXT_SEARCH_USER)).orElse(new JsonObject());
-
-    registrationService.listUser(user, searchUserDetails, authDelegateDetails, handler -> {
+    registrationService.listUser(user, handler -> {
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {
@@ -490,16 +476,16 @@ public class ApiServerVerticle extends AbstractVerticle {
   }
 
   /**
-   * Handles user profile update.
+   * Handles client credential reset.
    *
    * @param context
    */
-  private void updateUserProfileHandler(RoutingContext context) {
+  private void resetClientCredHandler(RoutingContext context) {
     JsonObject jsonRequest = context.body().asJsonObject();
-    UpdateProfileRequest request = new UpdateProfileRequest(jsonRequest);
+    ResetClientSecretRequest request = new ResetClientSecretRequest(jsonRequest);
     User user = context.get(USER);
 
-    registrationService.updateUser(request, user, handler -> {
+    registrationService.resetClientSecret(request, user, handler -> {
       if (handler.succeeded()) {
         JsonObject result = handler.result();
         Future.future(future -> handleAuditLogs(context, result));
@@ -511,12 +497,12 @@ public class ApiServerVerticle extends AbstractVerticle {
   }
 
   /**
-   * Handles organization listing.
+   * Handles resource server listing.
    *
    * @param context
    */
-  private void listOrganizationHandler(RoutingContext context) {
-    registrationService.listOrganization(handler -> {
+  private void listResourceServersHandler(RoutingContext context) {
+    registrationService.listResourceServer(handler -> {
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {
@@ -530,12 +516,12 @@ public class ApiServerVerticle extends AbstractVerticle {
    *
    * @param context
    */
-  private void adminCreateOrganizationHandler(RoutingContext context) {
+  private void adminCreateResourceServerHandler(RoutingContext context) {
     JsonObject jsonRequest = context.body().asJsonObject();
-    CreateOrgRequest request = new CreateOrgRequest(jsonRequest);
+    CreateRsRequest request = new CreateRsRequest(jsonRequest);
     User user = context.get(USER);
 
-    adminService.createOrganization(request, user, handler -> {
+    adminService.createResourceServer(request, user, handler -> {
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {
@@ -597,153 +583,6 @@ public class ApiServerVerticle extends AbstractVerticle {
   }
 
   /**
-   * Lists Policy associated with a User.
-   *
-   * @param context
-   */
-  private void listPolicyHandler(RoutingContext context) {
-    User user = context.get(USER);
-    JsonObject data = Optional.ofNullable((JsonObject)context.get(DATA)).orElse(new JsonObject());
-
-    policyService.listPolicy(user, data, handler -> {
-      if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
-      } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
-      }
-    });
-  }
-
-  /**
-   * Create a Policy for a User.
-   *
-   * @param context
-   */
-  private void createPolicyHandler(RoutingContext context) {
-
-    JsonObject arr = context.body().asJsonObject();
-    JsonArray jsonRequest = arr.getJsonArray(REQUEST);
-    List<CreatePolicyRequest> request = CreatePolicyRequest.jsonArrayToList(jsonRequest);
-    User user = context.get(USER);
-    JsonObject data = Optional.ofNullable((JsonObject)context.get(DATA)).orElse(new JsonObject());
-    policyService.createPolicy(request,user,data, handler -> {
-
-      if (handler.succeeded()) {
-        JsonObject result = handler.result();
-        Future.future(future -> handleAuditLogs(context, result));
-        processResponse(context.response(), handler.result());
-      } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
-      }
-    });
-  }
-
-  /**
-   * Delete a policy assoicated with a User.
-   *
-   * @param context
-   */
-  private void deletePolicyHandler(RoutingContext context) {
-
-    JsonObject arr = context.body().asJsonObject();
-    JsonArray jsonRequest = arr.getJsonArray(REQUEST);
-    List<DeletePolicyRequest> request = DeletePolicyRequest.jsonArrayToList(jsonRequest);
-    User user = context.get(USER);
-    JsonObject data = Optional.ofNullable((JsonObject)context.get(DATA)).orElse(new JsonObject());
-    policyService.deletePolicy(jsonRequest, user,data, handler -> {
-      if (handler.succeeded()) {
-        JsonObject result = handler.result();
-        Future.future(future -> handleAuditLogs(context, result));
-        processResponse(context.response(), handler.result());
-      } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
-      }
-    });
-  }
-
-  /**
-   * Get all the resource access requests by user to provider/delegate.
-   *
-   * @param context
-   */
-  private void getPolicyNotificationHandler(RoutingContext context) {
-
-    User user = context.get(USER);
-    JsonObject data = Optional.ofNullable((JsonObject)context.get(DATA)).orElse(new JsonObject());
-
-    policyService.listPolicyNotification(user, data, handler -> {
-      if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
-      } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
-      }
-    });
-  }
-
-  /**
-   * Create the resource access requests by user to provider/delegate.
-   *
-   * @param context
-   */
-  private void createPolicyNotificationHandler(RoutingContext context) {
-
-    JsonArray jsonRequest = context.body().asJsonObject().getJsonArray(REQUEST);
-    List<CreatePolicyNotification> request = CreatePolicyNotification.jsonArrayToList(jsonRequest);
-    User user = context.get(USER);
-
-    policyService.createPolicyNotification(request, user, handler -> {
-      if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
-      } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
-      }
-    });
-  }
-
-  /**
-   * Update the access status, expiry of resources by provider/delegate for user.
-   *
-   * @param context
-   */
-  private void updatePolicyNotificationHandler(RoutingContext context) {
-
-    JsonArray jsonRequest = context.body().asJsonObject().getJsonArray(REQUEST);
-    List<UpdatePolicyNotification> request = UpdatePolicyNotification.jsonArrayToList(jsonRequest);
-    JsonObject data = Optional.ofNullable((JsonObject)context.get(DATA)).orElse(new JsonObject());
-    User user = context.get(USER);
-
-    policyService.updatePolicyNotification(request, user, data, handler -> {
-      if (handler.succeeded()) {
-        processResponse(context.response(), handler.result());
-      } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
-      }
-    });
-  }
-
-  /**
-   * Delete a notification created by a User.
-   *
-   * @param context
-   */
-  private void deleteNotificationHandler(RoutingContext context) {
-
-    JsonObject arr = context.body().asJsonObject();
-    JsonArray jsonRequest = arr.getJsonArray(REQUEST);
-    List<DeletePolicyNotificationRequest> request = DeletePolicyNotificationRequest.jsonArrayToList(jsonRequest);
-    User user = context.get(USER);
-    policyService.deletePolicyNotification(request, user,handler -> {
-      if (handler.succeeded()) {
-        JsonObject result = handler.result();
-        Future.future(future -> handleAuditLogs(context, result));
-        processResponse(context.response(), handler.result());
-      } else {
-        processResponse(context.response(), handler.cause().getLocalizedMessage());
-      }
-    });
-  }
-
-  /**
    * List delegations for provider/delegate/auth delegate
    *
    * @param context
@@ -751,10 +590,8 @@ public class ApiServerVerticle extends AbstractVerticle {
   private void listDelegationsHandler(RoutingContext context) {
 
     User user = context.get(USER);
-    JsonObject authDelegateDetails =
-            Optional.ofNullable((JsonObject) context.get(DATA)).orElse(new JsonObject());
 
-    policyService.listDelegation(user, authDelegateDetails, handler -> {
+    policyService.listDelegation(user, handler -> {
       if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {
@@ -775,10 +612,8 @@ public class ApiServerVerticle extends AbstractVerticle {
     List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(arr);
 
     User user = context.get(USER);
-    JsonObject authDelegateDetails =
-            Optional.ofNullable((JsonObject) context.get(DATA)).orElse(new JsonObject());
 
-    policyService.deleteDelegation(request, user, authDelegateDetails, handler -> {
+    policyService.deleteDelegation(request, user, handler -> {
       if (handler.succeeded()) {
         JsonObject result = handler.result();
         Future.future(future -> handleAuditLogs(context, result));
@@ -789,6 +624,32 @@ public class ApiServerVerticle extends AbstractVerticle {
     });
   }
 
+  /**
+   *
+   * @param context
+   */
+
+  private void getDelegateEmailsHandler(RoutingContext context) {
+
+    User user = context.get(USER);
+    
+    List<String> userIdList = context.queryParam(QUERY_USERID);
+    List<String> roleList = context.queryParam(QUERY_ROLE);
+    List<String> rsList = context.queryParam(QUERY_RESOURCE_SERVER);
+
+    String delegatorUserId = userIdList.get(0).toLowerCase();
+    Roles delegatedRole = Roles.valueOf(roleList.get(0).toUpperCase());
+    String delegatedRsUrl = rsList.get(0).toLowerCase();
+
+    policyService.getDelegateEmails(user, delegatorUserId, delegatedRole, delegatedRsUrl,
+        handler -> {
+          if (handler.succeeded()) {
+            processResponse(context.response(), handler.result());
+          } else {
+            processResponse(context.response(), handler.cause().getLocalizedMessage());
+          }
+        });
+  }
 
   /**
    * Create a delegation for a User.
@@ -801,10 +662,8 @@ public class ApiServerVerticle extends AbstractVerticle {
     JsonArray jsonRequest = arr.getJsonArray(REQUEST);
     List<CreateDelegationRequest> request = CreateDelegationRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
-    JsonObject authDelegateDetails =
-            Optional.ofNullable((JsonObject) context.get(DATA)).orElse(new JsonObject());
 
-    policyService.createDelegation(request,user,authDelegateDetails, handler -> {
+    policyService.createDelegation(request, user, handler -> {
 
       if (handler.succeeded()) {
         JsonObject result = handler.result();
@@ -875,6 +734,66 @@ public class ApiServerVerticle extends AbstractVerticle {
       if (handler.succeeded()) {
         JsonObject result = handler.result();
         Future.future(future -> handleAuditLogs(context, result));
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+
+  /**
+   * Get default client credentials.
+   * 
+   * @param context
+   */
+  private void getDefaultClientCredsHandler(RoutingContext context) {
+
+    User user = context.get(USER);
+
+    registrationService.getDefaultClientCredentials(user, handler -> {
+
+      if (handler.succeeded()) {
+        processResponse(context.response(), handler.result());
+      } else {
+        processResponse(context.response(), handler.cause().getLocalizedMessage());
+      }
+    });
+  }
+
+  /**
+   * Search for user.
+   * 
+   * @param context
+   */
+  private void searchUserHandler(RoutingContext context) {
+    User user = context.get(USER);
+    
+    List<String> emailList = context.queryParam(QUERY_EMAIL);
+    List<String> userIdList = context.queryParam(QUERY_USERID);
+    List<String> roleList = context.queryParam(QUERY_ROLE);
+    List<String> rsList = context.queryParam(QUERY_RESOURCE_SERVER);
+    
+    if(!emailList.isEmpty() && !userIdList.isEmpty()) {
+        throw new IllegalArgumentException(ERR_DETAIL_SEARCH_BOTH_PARAMS);
+    }
+
+    if(emailList.isEmpty() && userIdList.isEmpty()) {
+        throw new IllegalArgumentException(ERR_DETAIL_SEARCH_MISSING_PARAMS);
+    }
+    
+    String searchString;
+    if(!emailList.isEmpty()) {
+      searchString = emailList.get(0).toLowerCase();
+    }else {
+      searchString = userIdList.get(0).toLowerCase();
+    }
+    
+    Roles role = Roles.valueOf(roleList.get(0).toUpperCase());
+    String resourceServerUrl = rsList.get(0).toLowerCase();
+    
+    registrationService.searchUser(user, searchString, role, resourceServerUrl, handler -> {
+
+      if (handler.succeeded()) {
         processResponse(context.response(), handler.result());
       } else {
         processResponse(context.response(), handler.cause().getLocalizedMessage());

@@ -1,7 +1,7 @@
 package iudx.aaa.server.registration;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.ProxyGen;
@@ -10,8 +10,9 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import iudx.aaa.server.apiserver.RegistrationRequest;
-import iudx.aaa.server.apiserver.UpdateProfileRequest;
+import iudx.aaa.server.apiserver.AddRolesRequest;
+import iudx.aaa.server.apiserver.ResetClientSecretRequest;
+import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 
 /**
@@ -46,37 +47,30 @@ public interface RegistrationService {
   }
 
   /**
-   * createUser implements creation of user profile operation.
+   * addRoles implements adding of roles to the user.
    * 
-   * @param request the request body in the form of RegistrationRequest data object
+   * @param request the request body in the form of {@link AddRolesRequest} data object
    * @param user the User object i.e. the user calling the API
    * @param handler the request handler which returns a JsonObject
    * @return Registration Service which is a service
    */
   @Fluent
-  RegistrationService createUser(RegistrationRequest request, User user,
+  RegistrationService addRoles(AddRolesRequest request, User user,
       Handler<AsyncResult<JsonObject>> handler);
 
   /**
-   * The listUser implements the user list operation. It additionally implements a search function
-   * for providers, admins and auth delegates to search for a user's details from their email
-   * address and role.
+   * The listUser implements the user list operation.
    * 
    * @param user the User object i.e. the user calling the API
-   * @param searchUserDetails a JSON object with the email and role
-   * @param authDelegateDetails a JSON object with the auth delegate details if an auth delegate
-   *        calls the API
    * @param handler the request handler which returns a JsonObject
    * @return RegistrationService which is a Service
    */
 
   @Fluent
-  RegistrationService listUser(User user, JsonObject searchUserDetails,
-      JsonObject authDelegateDetails, Handler<AsyncResult<JsonObject>> handler);
+  RegistrationService listUser(User user, Handler<AsyncResult<JsonObject>> handler);
 
   /**
-   * The updateUser implements the user update operation. Currently role addition and client secret
-   * regeneration is allowed.
+   * The resetClientSecret implements client secret regeneration.
    * 
    * @param request the request body in the form of UpdateProfileRequest data object
    * @param handler the request handler which returns a JsonObject
@@ -84,18 +78,18 @@ public interface RegistrationService {
    */
 
   @Fluent
-  RegistrationService updateUser(UpdateProfileRequest request, User user,
+  RegistrationService resetClientSecret(ResetClientSecretRequest request, User user,
       Handler<AsyncResult<JsonObject>> handler);
 
   /**
-   * The listOrganization implements listing organzations.
+   * The listResourceServer implements listing resource servers.
    * 
    * @param handler the request handler which returns a JsonObject
    * @return RegistrationService which is a Service
    */
 
   @Fluent
-  RegistrationService listOrganization(Handler<AsyncResult<JsonObject>> handler);
+  RegistrationService listResourceServer(Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * The getUserDetails implements getting user details. Other services may call this service to get
@@ -109,4 +103,46 @@ public interface RegistrationService {
   @Fluent
   RegistrationService getUserDetails(List<String> userIds,
       Handler<AsyncResult<JsonObject>> handler);
+
+  /**
+   * The findUsersByEmail implements finding users by their email ID from Keycloak. Users who are
+   * found are then inserted into the database if they were not already there (specifically into the
+   * users table).
+   * 
+   * @param emailIds set of email IDs
+   * @param handler the request handler which returns a JsonObject
+   * @return RegistrationService which is a Service
+   */
+  @Fluent
+  RegistrationService findUserByEmail(Set<String> emailIds,
+      Handler<AsyncResult<JsonObject>> handler);
+
+  /**
+   * Get default client credentials. A user can fetch their automatically created client ID and
+   * client secret with the client name<em>default</em> <b>once</b>. Once the user has requested
+   * them, the client secret cannot be obtained again using this API.
+   * 
+   * @param user the User object
+   * @param handler the request handler which returns a JsonObject
+   * @return RegistrationService which is a Service
+   */
+  @Fluent
+  RegistrationService getDefaultClientCredentials(User user,
+      Handler<AsyncResult<JsonObject>> handler);
+  
+  /**
+   * Search for a user done by trustee given email <b>OR</b> user ID, role and resource server
+   * associated with the role on the COP.
+   * 
+   * @param user the trustee user calling the API
+   * @param searchString the email address OR user ID - UUID regex matching is done to check which
+   *        is being sent
+   * @param role the role
+   * @param resourceServerUrl the resource server associated with the rol
+   * @param handler the request handler which returns a JsonObject
+   * @return RegistrationService which is a Service
+   */
+  @Fluent
+  RegistrationService searchUser(User user, String searchString, Roles role,
+      String resourceServerUrl, Handler<AsyncResult<JsonObject>> handler);
 }

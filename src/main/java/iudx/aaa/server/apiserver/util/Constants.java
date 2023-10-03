@@ -21,7 +21,7 @@ public class Constants {
   public static final String X_CONTENT_TYPE_OPTIONS_NOSNIFF = "nosniff";
 
   /* Implementation specific headers */
-  public static final String HEADER_PROVIDER_ID = "providerId";
+  public static final String HEADER_DELEGATION_ID = "delegationId";
   public static final String HEADER_EMAIL = "email";
   public static final String HEADER_ROLE = "role";
   public static final String CLIENT_ID = "clientId";
@@ -37,7 +37,7 @@ public class Constants {
   public static final String POOLSIZE = "poolSize";
   public static final String KEYSTORE_PATH = "keystorePath";
   public static final String KEYSTPRE_PASSWORD = "keystorePassword";
-  public static final String AUTHSERVER_DOMAIN = "authServerDomain";
+  public static final String COS_DOMAIN = "cosDomain";
   public static final String KEYCLOACK_OPTIONS = "keycloakOptions";
   public static final int PG_CONNECTION_TIMEOUT = 10000;
   public static final int DB_RECONNECT_ATTEMPTS = 5;
@@ -59,32 +59,32 @@ public class Constants {
   public static final String CREATE_TOKEN = "post-auth-v1-token";
   public static final String TIP_TOKEN = "post-auth-v1-introspect"; 
   public static final String REVOKE_TOKEN = "post-auth-v1-revoke";
-  public static final String CREATE_USER_PROFILE = "post-auth-v1-user-profile";
-  public static final String GET_USER_PROFILE = "get-auth-v1-user-profile";
-  public static final String UPDATE_USER_PROFILE = "put-auth-v1-user-profile";
-  public static final String GET_ORGANIZATIONS = "get-auth-v1-organizations";
-  public static final String CREATE_ORGANIZATIONS = "post-auth-v1-admin-organizations";
+  public static final String ADD_ROLES = "post-auth-v1-user-roles";
+  public static final String GET_USER_ROLES = "get-auth-v1-user-roles";
+  public static final String RESET_CLIENT_CRED = "put-auth-v1-user-clientcredentials";
+  public static final String GET_RESOURCE_SERVERS = "get-auth-v1-resourceservers";
+  public static final String CREATE_RESOURCE_SERVER = "post-auth-v1-admin-resourceservers";
   public static final String GET_PVDR_REGISTRATION = "get-auth-v1-admin-provider-registrations";
   public static final String UPDATE_PVDR_REGISTRATION = "put-auth-v1-admin-provider-registrations";
-  public static final String GET_POLICIES = "get-auth-v1-policies";
-  public static final String CREATE_POLICIES = "post-auth-v1-policies";
-  public static final String DELETE_POLICIES = "delete-auth-v1-policies";
-  public static final String GET_POLICIES_REQUEST = "get-auth-v1-policies-requests";
-  public static final String POST_POLICIES_REQUEST = "post-auth-v1-policies-requests";
-  public static final String PUT_POLICIES_REQUEST = "put-auth-v1-policies-requests";
-  public static final String DELETE_POLICIES_REQUEST = "delete-auth-v1-policies-requests";
-  public static final String GET_DELEGATIONS = "get-auth-v1-policies-delegations";
-  public static final String DELETE_DELEGATIONS = "delete-auth-v1-policies-delegations";
-  public static final String CREATE_DELEGATIONS = "post-auth-v1-policies-delegations";
+  public static final String GET_DELEGATIONS = "get-auth-v1-delegations";
+  public static final String DELETE_DELEGATIONS = "delete-auth-v1-delegations";
+  public static final String CREATE_DELEGATIONS = "post-auth-v1-delegations";
+  public static final String GET_DELEGATE_EMAILS = "get-auth-v1-delegations-emails";
   public static final String CREATE_APD = "post-auth-v1-apd";
   public static final String LIST_APD = "get-auth-v1-apd";
   public static final String UPDATE_APD = "put-auth-v1-apd";
   public static final String GET_CERT = "get-auth-v1-cert";
   public static final String GET_JWKS = "get-auth-v1-jwks";
+  public static final String GET_DEFAULT_CLIENT_CREDS = "get-auth-v1-user-clientcredentials";
+  public static final String SEARCH_USER = "get-auth-v1-user-search";
   public static final String TOKEN_ROUTE = "/auth/v1/token";
 
   /* Query Params */
   public static final String QUERY_FILTER = "filter";
+  public static final String QUERY_EMAIL = "email";
+  public static final String QUERY_USERID = "userId";
+  public static final String QUERY_ROLE = "role";
+  public static final String QUERY_RESOURCE_SERVER = "resourceServer";
 
   public static final String TOKEN_FAILED = "Token authentication failed";
   public static final String MISSING_TOKEN = "Missing accessToken";
@@ -94,6 +94,10 @@ public class Constants {
   public static final String ERR_TITLE_BAD_REQUEST =
       "Malformed request/missing or malformed request parameters";
   public static final String ERR_DETAIL_BAD_FILTER = "Invalid 'filter' value";
+  public static final String ERR_DETAIL_SEARCH_BOTH_PARAMS =
+      "Cannot have both `email` and `userId` query params in search";
+  public static final String ERR_DETAIL_SEARCH_MISSING_PARAMS =
+      "Both `email` and `userId` query params are missing - either must be present";
   public static final String INVALID_CLIENT = "Invalid clientId";
   public static final String LOG_FAILED_DISCOVERY = "Fail: Unable to discover keycloak instance; ";
   public static final String ERR_TIMEOUT = "Service unavailable";
@@ -102,7 +106,7 @@ public class Constants {
       "Refer to the " + ROUTE_DOC + " endpoint for documentation";
   public static final String KS_PARSE_ERROR = "Unable to parse KeyStore";
   public static final String ERR_PROVDERID = "General request- Delegate";
-  public static final String INVALID_PROVERID = "Invalid providerId";
+  public static final String INVALID_DELEGATION_ID = "Invalid delegationId";
   public static final String ERR_DELEGATE = "Invalid delegate request";
   public static final String ERR_DETAIL_SEARCH_USR = "Require both 'email' and 'role' header for search user";
   public static final String ERR_TITLE_SEARCH_USR = "Invalid search user request";
@@ -120,14 +124,15 @@ public class Constants {
   /* General */
   public static final String KC_GIVEN_NAME = "given_name";
   public static final String KC_FAMILY_NAME = "family_name";
+  public static final String OBTAINED_USER_ID = "user_id_from_keycloak_token_or_from_client_cred_validation";
   public static final String SUB = "sub";
   public static final String ID = "id";
   public static final String ROLES = "roles";
   public static final String USER = "user";
-  public static final String KEYCLOAK_AAA_SERVER_CLIENT_ID = "keycloakAaaClientId";
-  public static final String KEYCLOAK_AAA_SERVER_CLIENT_SECRET = "keycloakAaaClientSecret";
+  public static final String KEYCLOAK_ADMIN_CLIENT_ID = "keycloakAdminClientId";
+  public static final String KEYCLOAK_ADMIN_CLIENT_SECRET = "keycloakAdminClientSecret";
   public static final String KID = "kid";
-  public static final String KEYCLOAK_SITE = "keycloakSite";
+  public static final String KEYCLOAK_URL = "keycloakUrl";
   public static final String KEYCLOAK_REALM = "keycloakRealm";
   public static final String KEYCLOAK_JWT_LEEWAY = "keycloakJwtLeeway";
   public static final String STATUS = "status";
@@ -136,7 +141,7 @@ public class Constants {
   public static final String PUB_KEY = "publicKey";
   public static final String CERTIFICATE = "cert";
   public static final String REQUEST = "request";
-  public static final String DATA = "data";
+  public static final String DELEGATION_INFO = "delegation_info_object";
   public static final String CONTEXT_SEARCH_USER = "searchUserData";
   public static final String BODY = "body";
   public static final String API = "api";
@@ -152,46 +157,40 @@ public class Constants {
 
 
   /* SQL Queries */
-  public static final String SQL_GET_USER_ROLES = 
-      "select roles.user_id AS id, coalesce(array_agg(roles.role) filter (where status = 'APPROVED'), '{}') AS roles"
-      + ", client_id FROM roles JOIN user_clients"
-      + " ON roles.user_id = user_clients.user_id"
-      + " WHERE roles.user_id = (SELECT id FROM users WHERE keycloak_id = $1)"
-      + " GROUP BY client_id, roles.user_id";
-
-  public static final String SQL_GET_KID_ROLES =
-      "SELECT u.id, q.keycloak_id as kid, client_secret, array_agg(r.role) as roles\n"
-          + "FROM (select user_id as id, client_secret from "
-          + "user_clients where client_id = $1) u\n" + "LEFT JOIN "
-          + "roles r ON u.id = r.user_id\n" + "LEFT JOIN " 
-          + "users q ON u.id = q.id\n"
-          + "where r.status='APPROVED' GROUP BY u.id, client_secret, keycloak_id";
   
-  public static final String CHECK_DELEGATE =
-      "SELECT * FROM policies pol "
-      + "INNER JOIN delegations del ON "
-      + "pol.owner_id = del.owner_id AND pol.user_id = del.user_id "
-      + "WHERE del.user_id = $1 AND "
-      + "del.owner_id = $2 AND "
-      + "del.resource_server_id = pol.item_id AND "
-      + "pol.status = 'ACTIVE' AND "
-      + "pol.expiry_time > now()";
+  public static final String SQL_UNION = " UNION ";
   
-  public static final String GET_DELEGATE = 
-      "WITH auth AS (\n" + 
-      "    SELECT owner_id, id FROM resource_server WHERE url = $1::text\n" + 
-      "), delegate AS (\n" + 
-      "    SELECT resource_server_id, user_id,owner_id FROM delegations \n" + 
-      "    WHERE user_id = $2::uuid \n" + 
-      "    AND owner_id = $3::uuid \n" + 
-      "    AND status = 'ACTIVE' \n" + 
-      "    AND resource_server_id = (SELECT id FROM auth)\n" + 
-      "), policy AS (\n" + 
-      "    SELECT * FROM policies WHERE item_id = (SELECT id FROM auth) \n" + 
-      "    AND owner_id = (SELECT owner_id FROM auth) \n" + 
-      "    AND user_id = (SELECT user_id FROM delegate)\n" + 
-      "    AND status = 'ACTIVE' \n" + 
-      "    AND expiry_time > now()\n" + 
-      ") SELECT * FROM policy";
+  // casting roles as text since the DB only recognizes PROVIDER, CONSUMER but Roles 
+  // has other values. (UNION of the role_enum with text does not work.) 
+  public static final String SQL_GET_PROVIDER_CONSUMER_ROLES = 
+      "SELECT roles.role::text, array_agg(url) AS rs_urls FROM roles JOIN resource_server "
+      + " ON roles.resource_server_id = resource_server.id"
+      + " WHERE roles.user_id = $1::uuid AND roles.status = 'APPROVED'"
+      + " GROUP BY roles.role";
 
+  public static final String SQL_GET_DELEGATE_ROLE = 
+      "SELECT 'DELEGATE'::text AS role, array_agg(url) AS rs_urls FROM delegations"
+      + " JOIN roles ON delegations.role_id = roles.id"
+      + " JOIN resource_server on roles.resource_server_id = resource_server.id"
+      + " WHERE delegations.user_id = $1::uuid AND delegations.status = 'ACTIVE' HAVING array_agg(url) <> '{}'";
+
+  public static final String SQL_GET_ADMIN_ROLE =
+      "SELECT 'ADMIN'::text AS role, array_agg(url) AS rs_urls"
+          + " FROM resource_server WHERE owner_id = $1::uuid HAVING array_agg(url) <> '{}'";
+
+  public static final String SQL_GET_TRUSTEE_ROLE =
+      "SELECT 'TRUSTEE'::text AS role, array_agg(url) AS rs_urls"
+          + " FROM apds WHERE owner_id = $1::uuid AND status = 'ACTIVE' HAVING array_agg(url) <> '{}'";
+  
+  public static final String SQL_GET_DETAILS_BY_CLIENT_ID =
+      "SELECT user_id, client_secret FROM user_clients where client_id = $1::uuid";
+  
+  public static final String SQL_GET_DELEGATION_BY_USER_AND_DELEG_ID =
+      "SELECT delegations.id AS \"delegationId\", role AS \"delegatedRole\""
+          + ", roles.user_id AS \"delegatorUserId\""
+          + ", resource_server.url AS \"delegatedRsUrl\" FROM delegations"
+          + " JOIN roles ON delegations.role_id = roles.id"
+          + " JOIN resource_server on roles.resource_server_id = resource_server.id"
+          + " WHERE delegations.id = $1::uuid AND delegations.user_id = $2::uuid"
+          + " AND delegations.status = 'ACTIVE' AND roles.status = 'APPROVED'";
 }

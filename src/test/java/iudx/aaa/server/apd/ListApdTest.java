@@ -2,17 +2,17 @@ package iudx.aaa.server.apd;
 
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
-import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.ApdStatus;
-import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
@@ -39,35 +39,19 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static iudx.aaa.server.apd.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.apd.Constants.CONFIG_COS_URL;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_REQUEST_ID;
-import static iudx.aaa.server.apd.Constants.NIL_UUID;
-import static iudx.aaa.server.registration.Utils.SQL_CREATE_ADMIN_SERVER;
 import static iudx.aaa.server.registration.Utils.SQL_CREATE_APD;
-import static iudx.aaa.server.registration.Utils.SQL_DELETE_SERVERS;
+import static iudx.aaa.server.apd.Constants.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith({VertxExtension.class})
 @TestMethodOrder(OrderAnnotation.class)
 public class  ListApdTest {
 
-  private static final String DUMMY_SERVER =
-      "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
-  private static final String DUMMY_AUTH_SERVER =
-      "auth" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + "iudx.io";
-  
-  private static final UUID ACTIVE_A_ID = UUID.randomUUID();
-  private static final UUID INACTIVE_A_ID = UUID.randomUUID();
-  private static final UUID ACTIVE_B_ID = UUID.randomUUID();
-  private static final UUID INACTIVE_B_ID = UUID.randomUUID();
-  private static final String ACTIVE_A = RandomStringUtils.randomAlphabetic(5).toLowerCase();
-  private static final String INACTIVE_A = RandomStringUtils.randomAlphabetic(5).toLowerCase();
-  private static final String ACTIVE_B = RandomStringUtils.randomAlphabetic(5).toLowerCase();
-  private static final String INACTIVE_B = RandomStringUtils.randomAlphabetic(5).toLowerCase();
 
-  static String name = RandomStringUtils.randomAlphabetic(10).toLowerCase();
-  static String url = name + ".com";
-  static Future<UUID> orgIdFut;
   private static Logger LOGGER = LogManager.getLogger(ListApdTest.class);
   private static Configuration config;
   private static String databaseIP;
@@ -86,9 +70,37 @@ public class  ListApdTest {
   private static RegistrationService registrationService = Mockito.mock(RegistrationService.class);
   private static TokenService tokenService = Mockito.mock(TokenService.class);
 
-  private static Future<JsonObject> normalUser;
-  private static Future<JsonObject> authAdmin;
-  private static Future<JsonObject> otherAdmin;
+  private static final String ACTIVE_A =
+      "apd" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
+  
+  private static final String ACTIVE_B = 
+      "apd" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
+  
+  private static final String INACTIVE_A =
+      "apd" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
+  
+  private static final String INACTIVE_B = 
+      "apd" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
+  
+  private static User normalUser = new UserBuilder().userId(UUID.randomUUID()).build();
+  
+  private static User trusteeAUser =
+      new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.TRUSTEE))
+          .rolesToRsMapping(
+              Map.of(Roles.TRUSTEE.toString(), new JsonArray(List.of(ACTIVE_A, INACTIVE_A))))
+          .name("aa", "bb").build();
+  
+  private static User trusteeBUser =
+      new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.TRUSTEE))
+          .rolesToRsMapping(
+              Map.of(Roles.TRUSTEE.toString(), new JsonArray(List.of(ACTIVE_B, INACTIVE_B))))
+          .name("aa", "bb").build();
+  
+  private static User cosAdmin = 
+      new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.COS_ADMIN))
+          .build();
+  
+  private static Utils utils;
 
   @BeforeAll
   @DisplayName("Deploying Verticle")
@@ -124,42 +136,17 @@ public class  ListApdTest {
 
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
 
-    /* Do not take test config, use generated config */
-    JsonObject options = new JsonObject().put(CONFIG_AUTH_URL, DUMMY_AUTH_SERVER);
+    JsonObject options = new JsonObject().put(CONFIG_COS_URL, dbConfig.getString(CONFIG_COS_URL));
+    
+    utils = new Utils(pool);
 
-    orgIdFut = pool.withConnection(conn -> conn.preparedQuery(Utils.SQL_CREATE_ORG)
-        .execute(Tuple.of(name, url)).map(row -> row.iterator().next().getUUID("id")));
-    normalUser = orgIdFut.compose(orgId -> Utils.createFakeUser(pool, orgId.toString(), "",
-        Map.of(Roles.CONSUMER, RoleStatus.APPROVED), false));
-    authAdmin = orgIdFut.compose(orgId -> Utils.createFakeUser(pool, orgId.toString(), "",
-        Map.of(Roles.ADMIN, RoleStatus.APPROVED), false));
-    otherAdmin = orgIdFut.compose(orgId -> Utils.createFakeUser(pool, orgId.toString(), "",
-        Map.of(Roles.ADMIN, RoleStatus.APPROVED), false));
+    Future<Void> create = utils.createFakeApd(ACTIVE_A, trusteeAUser, ApdStatus.ACTIVE)
+        .compose(res -> utils.createFakeApd(ACTIVE_B, trusteeBUser, ApdStatus.ACTIVE))
+        .compose(res -> utils.createFakeApd(INACTIVE_A, trusteeAUser, ApdStatus.INACTIVE))
+        .compose(res -> utils.createFakeApd(INACTIVE_B, trusteeBUser, ApdStatus.INACTIVE))
+        .compose(res -> utils.createFakeUser(normalUser, false, false));
 
-    CompositeFuture.all(normalUser, authAdmin, otherAdmin).compose(succ -> {
-      // create servers for admins
-      JsonObject admin1 = authAdmin.result();
-      UUID uid1 = UUID.fromString(admin1.getString("userId"));
-
-      JsonObject admin2 = otherAdmin.result();
-      UUID uid2 = UUID.fromString(admin2.getString("userId"));
-      List<Tuple> tup = List.of(Tuple.of("Auth Server", uid1, DUMMY_AUTH_SERVER),
-          Tuple.of("Other Server", uid2, DUMMY_SERVER));
-
-      /*
-       * To test the different APD states, we create 4 APDs. Slightly
-       * different from other tests, we also create the UUID APD IDs and insert into the DB instead
-       * of relying on the auto-create in DB
-       */
-      List<Tuple> apdTup = List.of(
-          Tuple.of(ACTIVE_A_ID, ACTIVE_A, ACTIVE_A + ".com", ApdStatus.ACTIVE),
-          Tuple.of(INACTIVE_A_ID, INACTIVE_A, INACTIVE_A + ".com", ApdStatus.INACTIVE),
-          Tuple.of(ACTIVE_B_ID, ACTIVE_B, ACTIVE_B + ".com", ApdStatus.ACTIVE),
-          Tuple.of(INACTIVE_B_ID, INACTIVE_B, INACTIVE_B + ".com", ApdStatus.INACTIVE));
-
-      return pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_ADMIN_SERVER)
-          .executeBatch(tup).compose(x -> conn.preparedQuery(SQL_CREATE_APD).executeBatch(apdTup)));
-    }).onSuccess(x -> {
+    create.onSuccess(x -> {
       apdService =
           new ApdServiceImpl(pool, apdWebClient, registrationService, tokenService, options);
       testContext.completeNow();
@@ -171,14 +158,8 @@ public class  ListApdTest {
   @AfterAll
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing....");
-    Tuple servers = Tuple.of(List.of(DUMMY_AUTH_SERVER, DUMMY_SERVER).toArray());
-    List<JsonObject> users =
-        List.of(normalUser.result(), otherAdmin.result(), authAdmin.result());
-
-    pool.withConnection(conn -> conn.preparedQuery(SQL_DELETE_SERVERS).execute(servers)
-        .compose(success -> Utils.deleteFakeUser(pool, users)).compose(
-            succ -> conn.preparedQuery(Utils.SQL_DELETE_ORG).execute(Tuple.of(orgIdFut.result()))))
-        .onComplete(x -> {
+    utils.deleteFakeApd().compose(res -> utils.deleteFakeUser())
+        .compose(res -> utils.deleteFakeResourceServer()).onComplete(x -> {
           if (x.failed()) {
             LOGGER.warn(x.cause().getMessage());
           }
@@ -256,8 +237,20 @@ public class  ListApdTest {
   void multipleSuccessApdId(VertxTestContext testContext) {
 
     List<String> request = new ArrayList<String>();
-    request.add(ACTIVE_A_ID.toString());
-    request.add(ACTIVE_B_ID.toString());
+    
+    String activeApdAId = utils.apdMap.get(ACTIVE_A).toString();
+    String inActiveApdBId = utils.apdMap.get(INACTIVE_B).toString();
+    
+    request.add(activeApdAId);
+    request.add(inActiveApdBId);
+    
+    Mockito.doAnswer(i -> {
+      Promise<JsonObject> p = i.getArgument(1);
+
+      p.complete(new JsonObject().put(trusteeAUser.getUserId(), utils.getKcAdminJson(trusteeAUser))
+          .put(trusteeBUser.getUserId(), utils.getKcAdminJson(trusteeBUser)));
+      return i.getMock();
+    }).when(registrationService).getUserDetails(Mockito.any(), Mockito.any());
 
     apdService.getApdDetails(
         List.of(),
@@ -266,28 +259,76 @@ public class  ListApdTest {
             response -> {
               testContext.verify(
                   () -> {
-                    JsonObject respOne = response.getJsonObject(ACTIVE_A_ID.toString());
-                    JsonObject respTwo = response.getJsonObject(ACTIVE_B_ID.toString());
-                    assertEquals(respOne.getString("status"), "active");
-                    assertEquals(respTwo.getString("status"), "active");
+                    JsonObject respOne = response.getJsonObject(activeApdAId);
+                    JsonObject respTwo = response.getJsonObject(inActiveApdBId);
+                    
+                    assertEquals(respOne.getString(RESP_APD_STATUS),
+                        ApdStatus.ACTIVE.toString().toLowerCase());
+                    assertEquals(respTwo.getString(RESP_APD_STATUS),
+                        ApdStatus.INACTIVE.toString().toLowerCase());
+                    
+                    assertEquals(respOne.getJsonObject(RESP_APD_OWNER).getString("email"),
+                        utils.getDetails(trusteeAUser).email);
+                    assertEquals(respTwo.getJsonObject(RESP_APD_OWNER).getString("email"),
+                        utils.getDetails(trusteeBUser).email);
+                    testContext.completeNow();
+                  });
+            }));
+  }
+  
+  @Test
+  @DisplayName("Test multipleSuccess - apdUrl")
+  void multipleSuccessApdUrl(VertxTestContext testContext) {
+
+    List<String> request = new ArrayList<String>();
+    
+    request.add(ACTIVE_A);
+    request.add(INACTIVE_B);
+    
+    Mockito.doAnswer(i -> {
+      Promise<JsonObject> p = i.getArgument(1);
+
+      p.complete(new JsonObject().put(trusteeAUser.getUserId(), utils.getKcAdminJson(trusteeAUser))
+          .put(trusteeBUser.getUserId(), utils.getKcAdminJson(trusteeBUser)));
+      return i.getMock();
+    }).when(registrationService).getUserDetails(Mockito.any(), Mockito.any());
+
+    apdService.getApdDetails(
+        request,
+        List.of(),
+        testContext.succeeding(
+            response -> {
+              testContext.verify(
+                  () -> {
+                    JsonObject respOne = response.getJsonObject(ACTIVE_A);
+                    JsonObject respTwo = response.getJsonObject(INACTIVE_B);
+                    
+                    assertEquals(respOne.getString(RESP_APD_STATUS),
+                        ApdStatus.ACTIVE.toString().toLowerCase());
+                    assertEquals(respTwo.getString(RESP_APD_STATUS),
+                        ApdStatus.INACTIVE.toString().toLowerCase());
+                    
+                    assertEquals(respOne.getJsonObject(RESP_APD_OWNER).getString("email"),
+                        utils.getDetails(trusteeAUser).email);
+                    assertEquals(respTwo.getJsonObject(RESP_APD_OWNER).getString("email"),
+                        utils.getDetails(trusteeBUser).email);
                     testContext.completeNow();
                   });
             }));
   }
 
     @Test
-    @DisplayName("Test multiple list - consumer")
+    @DisplayName("List APD - Test no roles")
     void ListInvalidUser(VertxTestContext testContext) {
 
-        UUID uid1 = UUID.fromString(NIL_UUID);
-        Roles role = Roles.PROVIDER;
-        User user = new UserBuilder().userId(uid1).roles(List.of(role)).build();
+        UUID uid1 = UUID.randomUUID();
+        User user = new UserBuilder().userId(uid1).build();
 
         apdService.listApd(user,
                 testContext.succeeding(response -> {
                     testContext.verify(() ->
                             {
-                                assertEquals(response.getString("title"),"User profile does not exist");
+                                assertEquals(response.getString("title"),ERR_TITLE_NO_APPROVED_ROLES);
                                 testContext.completeNow();
                             }
                     );
@@ -295,113 +336,237 @@ public class  ListApdTest {
     }
 
 
-    //authAdmin role gets all apds
     @Test
-    @DisplayName("Test multiple list - authAdmin")
-    void ListAuthAdmin(VertxTestContext testContext) {
+    @DisplayName("List APD - COS Admin")
+    void ListCosAdmin(VertxTestContext testContext) {
 
-        JsonObject admin1 = authAdmin.result();
-        UUID uid1 = UUID.fromString(admin1.getString("userId"));
-        Roles role = Roles.ADMIN;
-        User user = new UserBuilder().userId(uid1).roles(List.of(role)).build();
+      String activeApdAId = utils.apdMap.get(ACTIVE_A).toString();
+      String activeApdBId = utils.apdMap.get(ACTIVE_B).toString();
+      String inActiveApdAId = utils.apdMap.get(INACTIVE_A).toString();
+      String inActiveApdBId = utils.apdMap.get(INACTIVE_B).toString();
+      
+     Mockito.doAnswer(i -> {
+      Promise<JsonObject> p = i.getArgument(1);
+      List<String> userIds = i.getArgument(0);
+      JsonObject response = new JsonObject();
+      
+      userIds.forEach(id -> {
+        response.put(id, new JsonObject());
+      });
+      
+      response.put(trusteeAUser.getUserId(), utils.getKcAdminJson(trusteeAUser))
+          .put(trusteeBUser.getUserId(), utils.getKcAdminJson(trusteeBUser));
+      
+      p.complete(response);
+      return i.getMock();
+    }).when(registrationService).getUserDetails(Mockito.any(), Mockito.any());
 
-        apdService.listApd(user,
+     Checkpoint checkActiveA = testContext.checkpoint();
+     Checkpoint checkActiveB = testContext.checkpoint();
+     Checkpoint checkInActiveA = testContext.checkpoint();
+     Checkpoint checkInActiveB = testContext.checkpoint();
+     
+        apdService.listApd(cosAdmin,
                 testContext.succeeding(response -> {
                     testContext.verify(() -> {
                         JsonArray responseArr = response.getJsonArray("results");
 
-                        List<JsonObject> respObjList = new ArrayList<>();
-
                         for (int i=0;i<responseArr.size();i++){
-                            respObjList.add(responseArr.getJsonObject(i));
+                          JsonObject obj = responseArr.getJsonObject(i);
+                          
+                          if(obj.getString(RESP_APD_URL).equals(ACTIVE_A.toLowerCase())) {
+                           assertEquals(obj.getString(RESP_APD_STATUS),
+                              ApdStatus.ACTIVE.toString().toLowerCase());
+                           assertEquals(obj.getString(RESP_APD_ID), activeApdAId);
+                           assertEquals(obj.getString(RESP_APD_NAME), ACTIVE_A + "name");
+                           JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
+                           
+                           assertEquals(owner.getString("id"), trusteeAUser.getUserId());
+                           assertEquals(owner.getString("email"), utils.getDetails(trusteeAUser).email);
+                           checkActiveA.flag();
+                          }
+                          
+                          if(obj.getString(RESP_APD_URL).equals(ACTIVE_B.toLowerCase())) {
+                           assertEquals(obj.getString(RESP_APD_STATUS),
+                              ApdStatus.ACTIVE.toString().toLowerCase());
+                           assertEquals(obj.getString(RESP_APD_ID), activeApdBId);
+                           assertEquals(obj.getString(RESP_APD_NAME), ACTIVE_B + "name");
+                           JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
+                           
+                           assertEquals(owner.getString("id"), trusteeBUser.getUserId());
+                           assertEquals(owner.getString("email"), utils.getDetails(trusteeBUser).email);
+                           checkActiveB.flag();
+                          }
+                          
+                          if(obj.getString(RESP_APD_URL).equals(INACTIVE_A.toLowerCase())) {
+                           assertEquals(obj.getString(RESP_APD_STATUS),
+                              ApdStatus.INACTIVE.toString().toLowerCase());
+                           assertEquals(obj.getString(RESP_APD_ID), inActiveApdAId);
+                           assertEquals(obj.getString(RESP_APD_NAME), INACTIVE_A + "name");
+                           JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
+                           
+                           assertEquals(owner.getString("id"), trusteeAUser.getUserId());
+                           assertEquals(owner.getString("email"), utils.getDetails(trusteeAUser).email);
+                           checkInActiveA.flag();
+                          }
+                          
+                          if(obj.getString(RESP_APD_URL).equals(INACTIVE_B.toLowerCase())) {
+                           assertEquals(obj.getString(RESP_APD_STATUS),
+                              ApdStatus.INACTIVE.toString().toLowerCase());
+                           assertEquals(obj.getString(RESP_APD_ID), inActiveApdBId);
+                           assertEquals(obj.getString(RESP_APD_NAME), INACTIVE_B + "name");
+                           JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
+                           
+                           assertEquals(owner.getString("id"), trusteeBUser.getUserId());
+                           assertEquals(owner.getString("email"), utils.getDetails(trusteeBUser).email);
+                           checkInActiveB.flag();
+                          }
                         }
-
-                        String status_ACTIVE_A =  respObjList.stream().filter(obj -> obj.getString("apdId")
-                                .equals(ACTIVE_A_ID.toString())).map(ar -> ar.getString("status"))
-                                .collect(Collectors.joining());
-
-                        String status_INACTIVE_A =  respObjList.stream().filter(obj -> obj.getString("apdId")
-                                .equals(INACTIVE_A_ID.toString())).map(ar -> ar.getString("status"))
-                                .collect(Collectors.joining());
-
-                        assertEquals(status_ACTIVE_A, ApdStatus.ACTIVE.toString().toLowerCase());
-                        assertEquals(status_INACTIVE_A, ApdStatus.INACTIVE.toString().toLowerCase());
-                                testContext.completeNow();
-                            }
-                    );
+                    });
                 }));
     }
 
-    //provider role gets all active apds
     @Test
-    @DisplayName("Test multiple list - provider")
-    void ListApdProvider(VertxTestContext testContext) {
+    @DisplayName("List APD - provider/consumer/admin")
+    void ListApdAsProviderConsumerAdmin(VertxTestContext testContext) {
 
-        JsonObject userdets = normalUser.result();
-        UUID uid1 = UUID.fromString(userdets.getString("userId"));
-        Roles role = Roles.PROVIDER;
-        User user = new UserBuilder().userId(uid1).roles(List.of(role)).build();
+      User provConsAdminUser = new User(normalUser.toJson());
+      provConsAdminUser.setRoles(List.of(Roles.CONSUMER, Roles.PROVIDER, Roles.ADMIN));
+      provConsAdminUser.setRolesToRsMapping(
+          Map.of(Roles.CONSUMER.toString(), new JsonArray().add("some-url.com"),
+              Roles.PROVIDER.toString(), new JsonArray().add("some-url.com"),
+              Roles.ADMIN.toString(), new JsonArray().add("some-url.com")));
 
-        apdService.listApd(user,
+      String activeApdAId = utils.apdMap.get(ACTIVE_A).toString();
+      String activeApdBId = utils.apdMap.get(ACTIVE_B).toString();
+      
+     Mockito.doAnswer(i -> {
+      Promise<JsonObject> p = i.getArgument(1);
+      List<String> userIds = i.getArgument(0);
+      JsonObject response = new JsonObject();
+      
+      userIds.forEach(id -> {
+        response.put(id, new JsonObject());
+      });
+      
+      response.put(trusteeAUser.getUserId(), utils.getKcAdminJson(trusteeAUser))
+          .put(trusteeBUser.getUserId(), utils.getKcAdminJson(trusteeBUser));
+      
+      p.complete(response);
+      return i.getMock();
+    }).when(registrationService).getUserDetails(Mockito.any(), Mockito.any());
+
+     Checkpoint checkActiveA = testContext.checkpoint();
+     Checkpoint checkActiveB = testContext.checkpoint();
+     
+        apdService.listApd(provConsAdminUser,
                 testContext.succeeding(response -> {
                     testContext.verify(() -> {
                         JsonArray responseArr = response.getJsonArray("results");
 
-                        List<JsonObject> respObjList = new ArrayList<>();
-
                         for (int i=0;i<responseArr.size();i++){
-                            respObjList.add(responseArr.getJsonObject(i));
+                          JsonObject obj = responseArr.getJsonObject(i);
+                          
+                          assertTrue(!obj.getString(RESP_APD_STATUS)
+                            .equals(ApdStatus.INACTIVE.toString().toLowerCase()));
+                          
+                          assertTrue(!(obj.getString(RESP_APD_URL).equals(INACTIVE_A)
+                            && obj.getString(RESP_APD_URL).equals(INACTIVE_B)));
+                          
+                          if(obj.getString(RESP_APD_URL).equals(ACTIVE_A.toLowerCase())) {
+                           assertEquals(obj.getString(RESP_APD_STATUS),
+                              ApdStatus.ACTIVE.toString().toLowerCase());
+                           assertEquals(obj.getString(RESP_APD_ID), activeApdAId);
+                           assertEquals(obj.getString(RESP_APD_NAME), ACTIVE_A + "name");
+                           JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
+                           
+                           assertEquals(owner.getString("id"), trusteeAUser.getUserId());
+                           assertEquals(owner.getString("email"), utils.getDetails(trusteeAUser).email);
+                           checkActiveA.flag();
+                          }
+                          
+                          if(obj.getString(RESP_APD_URL).equals(ACTIVE_B.toLowerCase())) {
+                           assertEquals(obj.getString(RESP_APD_STATUS),
+                              ApdStatus.ACTIVE.toString().toLowerCase());
+                           assertEquals(obj.getString(RESP_APD_ID), activeApdBId);
+                           assertEquals(obj.getString(RESP_APD_NAME), ACTIVE_B + "name");
+                           JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
+                           
+                           assertEquals(owner.getString("id"), trusteeBUser.getUserId());
+                           assertEquals(owner.getString("email"), utils.getDetails(trusteeBUser).email);
+                           checkActiveB.flag();
+                          }
+                          
                         }
-
-                        String status_ACTIVE_A =  respObjList.stream().filter(obj -> obj.getString("apdId")
-                                .equals(ACTIVE_A_ID.toString())).map(ar -> ar.getString("status"))
-                                .collect(Collectors.joining());
-
-                        String status_ACTIVE_B =  respObjList.stream().filter(obj -> obj.getString("apdId")
-                                .equals(ACTIVE_B_ID.toString())).map(ar -> ar.getString("status"))
-                                .collect(Collectors.joining());
-
-                        assertEquals(status_ACTIVE_A, ApdStatus.ACTIVE.toString().toLowerCase());
-                        assertEquals(status_ACTIVE_B, ApdStatus.ACTIVE.toString().toLowerCase());
-                                testContext.completeNow();
-                            }
-                    );
+                    });
                 }));
     }
-
-    //consumer role gets all active apds
+    
     @Test
-    @DisplayName("Test multiple list - consumer")
-    void ListApdConsumer(VertxTestContext testContext) {
+    @DisplayName("List APD - trustee - sees only active")
+    void ListApdAsTrustee(VertxTestContext testContext) {
 
-        JsonObject userDets = normalUser.result();
-        UUID uid1 = UUID.fromString(userDets.getString("userId"));
-        Roles role = Roles.CONSUMER;
-        User user = new UserBuilder().userId(uid1).roles(List.of(role)).build();
+      String activeApdAId = utils.apdMap.get(ACTIVE_A).toString();
+      String activeApdBId = utils.apdMap.get(ACTIVE_B).toString();
+      
+     Mockito.doAnswer(i -> {
+      Promise<JsonObject> p = i.getArgument(1);
+      List<String> userIds = i.getArgument(0);
+      JsonObject response = new JsonObject();
+      
+      userIds.forEach(id -> {
+        response.put(id, new JsonObject());
+      });
+      
+      response.put(trusteeAUser.getUserId(), utils.getKcAdminJson(trusteeAUser))
+          .put(trusteeBUser.getUserId(), utils.getKcAdminJson(trusteeBUser));
+      
+      p.complete(response);
+      return i.getMock();
+    }).when(registrationService).getUserDetails(Mockito.any(), Mockito.any());
 
-        apdService.listApd(user,
+     Checkpoint checkActiveA = testContext.checkpoint();
+     Checkpoint checkActiveB = testContext.checkpoint();
+     
+        apdService.listApd(trusteeAUser,
                 testContext.succeeding(response -> {
                     testContext.verify(() -> {
                         JsonArray responseArr = response.getJsonArray("results");
 
-                        List<JsonObject> respObjList = new ArrayList<>();
-
                         for (int i=0;i<responseArr.size();i++){
-                            respObjList.add(responseArr.getJsonObject(i));
+                          JsonObject obj = responseArr.getJsonObject(i);
+                          
+                          assertTrue(!obj.getString(RESP_APD_STATUS)
+                            .equals(ApdStatus.INACTIVE.toString().toLowerCase()));
+                          assertTrue(!(obj.getString(RESP_APD_URL).equals(INACTIVE_A)
+                            && obj.getString(RESP_APD_URL).equals(INACTIVE_B)));
+                          
+                          if(obj.getString(RESP_APD_URL).equals(ACTIVE_A.toLowerCase())) {
+                           assertEquals(obj.getString(RESP_APD_STATUS),
+                              ApdStatus.ACTIVE.toString().toLowerCase());
+                           assertEquals(obj.getString(RESP_APD_ID), activeApdAId);
+                           assertEquals(obj.getString(RESP_APD_NAME), ACTIVE_A + "name");
+                           JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
+                           
+                           assertEquals(owner.getString("id"), trusteeAUser.getUserId());
+                           assertEquals(owner.getString("email"), utils.getDetails(trusteeAUser).email);
+                           checkActiveA.flag();
+                          }
+                          
+                          if(obj.getString(RESP_APD_URL).equals(ACTIVE_B.toLowerCase())) {
+                           assertEquals(obj.getString(RESP_APD_STATUS),
+                              ApdStatus.ACTIVE.toString().toLowerCase());
+                           assertEquals(obj.getString(RESP_APD_ID), activeApdBId);
+                           assertEquals(obj.getString(RESP_APD_NAME), ACTIVE_B + "name");
+                           JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
+                           
+                           assertEquals(owner.getString("id"), trusteeBUser.getUserId());
+                           assertEquals(owner.getString("email"), utils.getDetails(trusteeBUser).email);
+                           checkActiveB.flag();
+                          } 
                         }
-
-                        String status_ACTIVE_A =  respObjList.stream().filter(obj -> obj.getString("apdId")
-                                .equals(ACTIVE_A_ID.toString())).map(ar -> ar.getString("status"))
-                                .collect(Collectors.joining());
-                        String status_ACTIVE_B =  respObjList.stream().filter(obj -> obj.getString("apdId")
-                                .equals(ACTIVE_B_ID.toString())).map(ar -> ar.getString("status"))
-                                .collect(Collectors.joining());
-
-                        assertEquals(status_ACTIVE_A, ApdStatus.ACTIVE.toString().toLowerCase());
-                        assertEquals(status_ACTIVE_B, ApdStatus.ACTIVE.toString().toLowerCase());
-                                testContext.completeNow();
-                            }
-                    );
+                    });
                 }));
     }
 }
+    

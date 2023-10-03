@@ -1,0 +1,3 @@
+ALTER TABLE users ADD COLUMN userinfo jsonb NOT NULL DEFAULT '{}';
+ALTER TABLE users ALTER COLUMN userinfo DROP DEFAULT;
+

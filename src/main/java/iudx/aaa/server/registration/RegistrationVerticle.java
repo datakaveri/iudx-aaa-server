@@ -1,6 +1,6 @@
 package iudx.aaa.server.registration;
 
-import static iudx.aaa.server.registration.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.registration.Constants.CONFIG_COS_URL;
 import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
 import static iudx.aaa.server.registration.Constants.DATABASE_IP;
 import static iudx.aaa.server.registration.Constants.DB_CONNECT_TIMEOUT;
@@ -28,7 +28,6 @@ import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.serviceproxy.ServiceBinder;
 import io.vertx.sqlclient.PoolOptions;
-import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.token.TokenService;
 
 /**
@@ -66,14 +65,12 @@ public class RegistrationVerticle extends AbstractVerticle {
   private static JsonObject options;
   private static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
   private static final String TOKEN_SERVICE_ADDRESS = "iudx.aaa.token.service";
-  private static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
   private RegistrationService registrationService;
   private ServiceBinder binder;
   private MessageConsumer<JsonObject> consumer;
   private static final Logger LOGGER = LogManager.getLogger(RegistrationVerticle.class);
   
   private TokenService tokenService;
-  private PolicyService policyService;
 
   /**
    * This method is used to start the Verticle. It deploys a verticle in a cluster, registers the
@@ -101,7 +98,7 @@ public class RegistrationVerticle extends AbstractVerticle {
     keycloakAdminClientSecret = config().getString(KC_ADMIN_CLIENT_SEC);
     keycloakAdminPoolSize = Integer.parseInt(config().getString(KC_ADMIN_POOLSIZE));
 
-    options = new JsonObject().put(CONFIG_AUTH_URL, config().getString(CONFIG_AUTH_URL))
+    options = new JsonObject().put(CONFIG_COS_URL, config().getString(CONFIG_COS_URL))
         .put(CONFIG_OMITTED_SERVERS, config().getJsonArray(CONFIG_OMITTED_SERVERS));
 
     /* Set Connection Object and schema */
@@ -127,9 +124,7 @@ public class RegistrationVerticle extends AbstractVerticle {
         keycloakAdminClientSecret, keycloakAdminPoolSize);
 
     tokenService = TokenService.createProxy(vertx, TOKEN_SERVICE_ADDRESS);
-    policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
-    registrationService =
-        new RegistrationServiceImpl(pool, kcadmin, tokenService, policyService, options);
+    registrationService = new RegistrationServiceImpl(pool, kcadmin, tokenService, options);
     binder = new ServiceBinder(vertx);
     consumer = binder.setAddress(REGISTRATION_SERVICE_ADDRESS)
         .register(RegistrationService.class, registrationService);

@@ -10,11 +10,10 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.apiserver.CreateDelegationRequest;
-import iudx.aaa.server.apiserver.CreatePolicyNotification;
-import iudx.aaa.server.apiserver.CreatePolicyRequest;
+import iudx.aaa.server.apiserver.DelegationInformation;
 import iudx.aaa.server.apiserver.DeleteDelegationRequest;
-import iudx.aaa.server.apiserver.DeletePolicyNotificationRequest;
-import iudx.aaa.server.apiserver.UpdatePolicyNotification;
+import iudx.aaa.server.apiserver.RequestToken;
+import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 
 import java.util.List;
@@ -51,43 +50,6 @@ public interface PolicyService {
   }
   
   /**
-   * The createPolicy implements the policy creation operation.
-   * 
-   * @param request which is a list of DataObject
-   * @param user which is a DataObject
-   * @param handler handler which is a Request Handler
-   * @return PolicyService which is a Service
-   */
-
-  @Fluent
-  PolicyService createPolicy(List<CreatePolicyRequest> request ,User user,JsonObject data, Handler<AsyncResult<JsonObject>> handler);
-
-  /**
-   * The deletePolicy implements the policy delete operation.
-   * 
-   * @param request which is a JsonArray
-   * @param user which is a DataObject
-   * @param handler handler which is a Request Handler
-   * @return PolicyService which is a Service
-   */
-  
-  @Fluent
-  PolicyService deletePolicy(JsonArray request, User user,JsonObject data, Handler<AsyncResult<JsonObject>> handler);
-
-  /**
-   * The listPolicy implements the policy list operation.
-   * 
-   * @param user which is a DataObject
-   * @param data which is a JsonObject
-   * @param handler which is a Request Handler
-   * @return PolicyService which is a Service
-   */
-
-  @Fluent
-  PolicyService listPolicy(User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler);
-
-
-  /**
    * The verifyPolicy implements the policy list operation.
    *
    * @param request which is a JsonObject
@@ -96,130 +58,60 @@ public interface PolicyService {
    */
 
   @Fluent
-  PolicyService verifyPolicy(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+  PolicyService verifyResourceAccess(RequestToken request, DelegationInformation delegInfo, User user,
+      Handler<AsyncResult<JsonObject>> handler);
+
 
   /**
-   * The setDefaultProviderPolicies implements setting default provider policies when they are
-   * approved by an auth server admin.
-   *
-   * @param userIds a list of Strings (as UUIDs) of user IDs
-   * @param handler which is a Request Handler
-   * @return PolicyService which is a Service
-   */
-
-  /**
-   * The checkAuthPolicy exposes a method to check if a user has a valid policy set
-   * by the auth admin for the auth server
-   * Future<Void> succeeds if policy is present
-   * ComposeExeption is thrown if no policy present
-   * @param userId String (as UUIDs) of user IDs
-   * @param handler which is a Request Handler
-   * @return PolicyService which is a Service
-   */
-
-  @Fluent
-  PolicyService checkAuthPolicy(String userId,
-      Handler<AsyncResult<Void>> handler);
-  
-  /**
-   * The createPolicyNotification implements the creating request for user policies.
+   * listDelegation implements the ability for a provider/consumer to view the delegations they have created.
+   * Additionally, delegates may view the delegations assigned to them by providers/consumers.
    * 
-   * @param request which is a list of {@link CreatePolicyNotification} DataObject
-   * @param user which is a {@link User} DataObect
-   * @param handler which is a Request Handler
-   * @return PolicyService which is a Service
-   */
-  
-  @Fluent
-  PolicyService createPolicyNotification(List<CreatePolicyNotification> request, User user, Handler<AsyncResult<JsonObject>> handler);
-  
-  /**
-   * The listPolicyNotification implements the listing request for user and provider/delegate.
-   * 
-   * @param user which is a {@link User} DataObect
-   * @Param data which is a {@link JsonObject}
-   * @param handler which is a Request Handler
-   * @return PolicyService which is a Service
-   */
-
-  @Fluent
-  PolicyService listPolicyNotification(User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler);
-
-  /**
-   * The updatePolicyNotification implements the updating resources access/status by provider/delegate.
-   * 
-   * @param request which is a list of {@link UpdatePolicyNotification} DataObject
-   * @param user which is a {@link User} DataObect
-   * @param data which is a {@link JsonObject}
-   * @param handler which is a Request Handler
-   * @return PolicyService which is a Service
-   */
-  
-  @Fluent
-  PolicyService updatePolicyNotification(List<UpdatePolicyNotification> request, User user, JsonObject data, Handler<AsyncResult<JsonObject>> handler);
-
-  /**
-   * deletePolicyNotification implements the ability for a consumer to delete(withdraw)
-   * any notification they have created which have not been approved or rejected by the provider
-   *
-   * @param request which is a list of DeletePolicyNotificationRequest objects
    * @param user which is a {@link User} DataObject
    * @param handler which is a Request Handler
    * @return PolicyService which is a Service
    */
   @Fluent
-  PolicyService deletePolicyNotification(List<DeletePolicyNotificationRequest> request, User user,
-      Handler<AsyncResult<JsonObject>> handler);
-
+  PolicyService listDelegation(User user, Handler<AsyncResult<JsonObject>> handler);
 
   /**
-   * listDelegation implements the ability for a provider to view the delegations they have created.
-   * It allows auth delegates to perform the same on behalf of a provider (although an auth delegate
-   * may not view auth delegate-related information). Additionally, delegates may view the
-   * delegations assigned to them by providers.
-   * 
-   * @param user which is a {@link User} DataObject
-   * @param authDelegateDetails which contains details of the provider, etc. in case the caller is
-   *        an auth delegate
-   * @param handler which is a Request Handler
-   * @return PolicyService which is a Service
-   */
-  @Fluent
-  PolicyService listDelegation(User user, JsonObject authDelegateDetails,
-      Handler<AsyncResult<JsonObject>> handler);
-
-  /**
-   * deleteDelegation implements the ability for a provider to delete the delegations they have
-   * created. It allows auth delegates to perform the same on behalf of a provider (although an auth
-   * delegate may not delete aauth delegate-related information).
+   * deleteDelegation implements the ability for a provider/consumer to delete the delegations they have
+   * created. 
    * 
    * @param request which is a list of DeleteDelegationRequest objects
    * @param user which is a {@link User} DataObject
-   * @param authDelegateDetails which contains details of the provider, etc. in case the caller is
    *        an auth delegate
    * @param handler which is a Request Handler
    * @return PolicyService which is a Service
    */
   @Fluent
   PolicyService deleteDelegation(List<DeleteDelegationRequest> request, User user,
-      JsonObject authDelegateDetails, Handler<AsyncResult<JsonObject>> handler);
-
+      Handler<AsyncResult<JsonObject>> handler);
 
   /**
-   * createDelegation implements the ability for a provider to create delegations.
-   * It allows auth delegates to perform the same on behalf of a provider (although an auth
-   * delegate may not create auth delegate-related information).
+   * createDelegation implements the ability for a provider/consumer to create delegations.
    *
    * @param request which is a list of CreateDelegationRequest objects
    * @param user which is a {@link User} DataObject
-   * @param authDelegateDetails which contains details of the provider, etc. in case the caller is
    *        an auth delegate
    * @param handler which is a Request Handler
    * @return PolicyService which is a Service
    */
   @Fluent
-  PolicyService  createDelegation(
-          List<CreateDelegationRequest> request, User user, JsonObject authDelegateDetails, Handler<AsyncResult<JsonObject>> handler);
+  PolicyService createDelegation(List<CreateDelegationRequest> request, User user,
+      Handler<AsyncResult<JsonObject>> handler);
 
-
+  /**
+   * getDelegateEmails allows a trustee user to get all email addresses of valid delegates for user,
+   * given the delegated role and the delegated resource server.
+   * 
+   * @param user the trustee user calling the API 
+   * @param delegatorUserId the delegator's user ID
+   * @param delegatedRole the delegated role
+   * @param delegatedRsUrl the delegated RS URL
+   * @param handler
+   * @return
+   */
+  @Fluent
+  PolicyService getDelegateEmails(User user, String delegatorUserId, Roles delegatedRole,
+      String delegatedRsUrl, Handler<AsyncResult<JsonObject>> handler);
 }

@@ -1,1 +1,0 @@
-ALTER TABLE apds DROP COLUMN owner_id;

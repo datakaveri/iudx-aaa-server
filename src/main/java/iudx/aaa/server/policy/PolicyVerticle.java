@@ -1,6 +1,8 @@
 package iudx.aaa.server.policy;
 
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.WebClientOptions;
 import iudx.aaa.server.apd.ApdService;
 import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
@@ -45,14 +47,10 @@ public class PolicyVerticle extends AbstractVerticle {
   private PoolOptions poolOptions;
   private PgConnectOptions connectOptions;
   private JsonObject catalogueOptions;
-  private JsonObject authOptions;
-  private JsonObject catOptions;
-  private JsonObject emailOptions;
   private PolicyService policyService;
   private RegistrationService registrationService;
   private ApdService apdService;
   private CatalogueClient catalogueClient;
-  private EmailClient emailClient;
   private ServiceBinder binder;
   private MessageConsumer<JsonObject> consumer;
   private static final Logger LOGGER = LogManager.getLogger(PolicyVerticle.class);
@@ -77,20 +75,6 @@ public class PolicyVerticle extends AbstractVerticle {
     databasePassword = config().getString("databasePassword");
     poolSize = Integer.parseInt(config().getString("poolSize"));
     catalogueOptions = config().getJsonObject("catalogueOptions");
-    catalogueOptions.put("domain",config().getString("domain"));
-    catalogueOptions.put("resURL",config().getJsonObject("resOptions").getString("resURL"));
-    authOptions = config().getJsonObject("authOptions");
-    catOptions = config().getJsonObject("catOptions");
-    emailOptions = config().getJsonObject("emailOptions");
-
-    /*
-     * Injecting authServerUrl into 'authOptions' and 'catalogueOptions' from config().'authServerDomain'
-     * TODO - make this uniform
-     */
-    authOptions.put("authServerUrl", config().getString("authServerDomain"));
-    catalogueOptions.put("authServerUrl", config().getString("authServerDomain"));
-
-    //get options for catalogue client
 
     /* Set Connection Object and schema */
     if (connectOptions == null) {
@@ -108,14 +92,17 @@ public class PolicyVerticle extends AbstractVerticle {
       poolOptions = new PoolOptions().setMaxSize(poolSize);
     }
 
+    WebClientOptions clientOptions =
+        new WebClientOptions().setSsl(true).setVerifyHost(true).setTrustAll(false);
+    
+    WebClient webClientForCatClient = WebClient.create(vertx, clientOptions);
+
     /* Create the client pool */
     PgPool pool = PgPool.pool(vertx, connectOptions, poolOptions);
     registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
     apdService = ApdService.createProxy(vertx, APD_SERVICE_ADDRESS);
-    catalogueClient = new CatalogueClient(vertx, pool, catalogueOptions);
-    emailClient = new EmailClient(vertx,emailOptions);
-    policyService = new PolicyServiceImpl(pool, registrationService, apdService, catalogueClient,
-        authOptions, catOptions,emailClient);
+    catalogueClient = new CatalogueClient(webClientForCatClient, catalogueOptions);
+    policyService = new PolicyServiceImpl(pool, registrationService, apdService, catalogueClient);
 
     binder = new ServiceBinder(vertx);
     consumer =

@@ -9,15 +9,15 @@ import io.vertx.core.json.JsonObject;
 
 @DataObject(generateConverter = true)
 public class ApdUpdateRequest {
-  UUID apdId;
+  UUID id;
   ApdStatus status;
 
-  public String getApdId() {
-    return apdId.toString();
+  public String getId() {
+    return id.toString();
   }
 
-  public void setApdId(String apdId) {
-    this.apdId = UUID.fromString(apdId);
+  public void setId(String id) {
+    this.id = UUID.fromString(id);
   }
 
   public ApdStatus getStatus() {

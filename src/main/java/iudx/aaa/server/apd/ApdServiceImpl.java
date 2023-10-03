@@ -6,7 +6,6 @@ import static iudx.aaa.server.apd.Constants.APD_REQ_CONTEXT;
 import static iudx.aaa.server.apd.Constants.APD_REQ_ITEM;
 import static iudx.aaa.server.apd.Constants.APD_REQ_OWNER;
 import static iudx.aaa.server.apd.Constants.APD_REQ_USER;
-import static iudx.aaa.server.apd.Constants.APD_REQ_USERCLASS;
 import static iudx.aaa.server.apd.Constants.APD_RESP_DETAIL;
 import static iudx.aaa.server.apd.Constants.APD_RESP_LINK;
 import static iudx.aaa.server.apd.Constants.APD_RESP_SESSIONID;
@@ -14,8 +13,6 @@ import static iudx.aaa.server.apd.Constants.APD_RESP_TYPE;
 import static iudx.aaa.server.apd.Constants.APD_URN_ALLOW;
 import static iudx.aaa.server.apd.Constants.APD_URN_DENY;
 import static iudx.aaa.server.apd.Constants.APD_URN_DENY_NEEDS_INT;
-import static iudx.aaa.server.apd.Constants.CONFIG_AUTH_URL;
-import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_APD_CONSTRAINTS;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_APD_INTERAC;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_CAT_ID;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_CONSTRAINTS;
@@ -27,8 +24,10 @@ import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_URL;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_EXISTING_DOMAIN;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_INVALID_DOMAIN;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_INVALID_UUID;
-import static iudx.aaa.server.apd.Constants.ERR_DETAIL_NO_ROLES_PUT;
-import static iudx.aaa.server.apd.Constants.ERR_DETAIL_NO_USER_PROFILE;
+import static iudx.aaa.server.apd.Constants.ERR_DETAIL_APD_NOT_REGISTERED;
+import static iudx.aaa.server.apd.Constants.ERR_DETAIL_NO_APPROVED_ROLES;
+import static iudx.aaa.server.apd.Constants.ERR_DETAIL_NO_COS_ADMIN_ROLE;
+import static iudx.aaa.server.apd.Constants.ERR_TITLE_APD_NOT_REGISTERED;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_CANT_CHANGE_APD_STATUS;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_DUPLICATE_REQ;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_EXISTING_DOMAIN;
@@ -36,21 +35,21 @@ import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_APDID;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_DOMAIN;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_REQUEST;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_INVALID_REQUEST_ID;
-import static iudx.aaa.server.apd.Constants.ERR_TITLE_NO_ROLES_PUT;
-import static iudx.aaa.server.apd.Constants.ERR_TITLE_NO_USER_PROFILE;
-import static iudx.aaa.server.apd.Constants.ERR_TITLE_POLICY_EVAL_FAILED;
+import static iudx.aaa.server.apd.Constants.ERR_TITLE_NO_APPROVED_ROLES;
+import static iudx.aaa.server.apd.Constants.ERR_TITLE_NO_COS_ADMIN_ROLE;
+import static iudx.aaa.server.apd.Constants.ERR_TITLE_APD_EVAL_FAILED;
 import static iudx.aaa.server.apd.Constants.GET_APDINFO_ID;
 import static iudx.aaa.server.apd.Constants.GET_APDINFO_URL;
 import static iudx.aaa.server.apd.Constants.INTERNALERROR;
 import static iudx.aaa.server.apd.Constants.LIST_AUTH_QUERY;
 import static iudx.aaa.server.apd.Constants.LIST_USER_QUERY;
-import static iudx.aaa.server.apd.Constants.NIL_UUID;
 import static iudx.aaa.server.apd.Constants.RESP_APD_ID;
 import static iudx.aaa.server.apd.Constants.RESP_APD_NAME;
 import static iudx.aaa.server.apd.Constants.RESP_APD_STATUS;
+import static iudx.aaa.server.apd.Constants.RESP_APD_OWNER;
+import static iudx.aaa.server.apd.Constants.RESP_OWNER_USER_ID;
 import static iudx.aaa.server.apd.Constants.RESP_APD_URL;
-import static iudx.aaa.server.apd.Constants.SQL_CHECK_ADMIN_OF_SERVER;
-import static iudx.aaa.server.apd.Constants.SQL_GET_APDS_BY_ID_ADMIN;
+import static iudx.aaa.server.apd.Constants.SQL_GET_APDS_BY_ID_COS_ADMIN;
 import static iudx.aaa.server.apd.Constants.SQL_GET_APD_URL_STATUS;
 import static iudx.aaa.server.apd.Constants.SQL_INSERT_APD_IF_NOT_EXISTS;
 import static iudx.aaa.server.apd.Constants.SQL_UPDATE_APD_STATUS;
@@ -109,11 +108,12 @@ public class ApdServiceImpl implements ApdService {
 
   private static final Logger LOGGER = LogManager.getLogger(ApdServiceImpl.class);
 
-  private static String AUTH_SERVER_URL;
   private PgPool pool;
   private ApdWebClient apdWebClient;
   private RegistrationService registrationService;
   private TokenService tokenService;
+  
+  private static final JsonObject DEFAULT_CONSTRAINTS = new JsonObject();
 
   public ApdServiceImpl(PgPool pool, ApdWebClient apdWebClient, RegistrationService regService,
       TokenService tokService, JsonObject options) {
@@ -121,8 +121,6 @@ public class ApdServiceImpl implements ApdService {
     this.apdWebClient = apdWebClient;
     this.registrationService = regService;
     this.tokenService = tokService;
-    AUTH_SERVER_URL = options.getString(CONFIG_AUTH_URL);
-
   }
 
   /**
@@ -137,45 +135,36 @@ public class ApdServiceImpl implements ApdService {
 
   @Override
   public ApdService listApd(User user, Handler<AsyncResult<JsonObject>> handler) {
-    if (user.getUserId().equals(NIL_UUID)) {
+    if (user.getRoles().isEmpty()) {
       Response r =
               new ResponseBuilder()
                       .status(404)
                       .type(URN_MISSING_INFO)
-                      .title(ERR_TITLE_NO_USER_PROFILE)
-                      .detail(ERR_DETAIL_NO_USER_PROFILE)
+                      .title(ERR_TITLE_NO_APPROVED_ROLES)
+                      .detail(ERR_DETAIL_NO_APPROVED_ROLES)
                       .build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
+    
+    String query;
+    Tuple tuple;
+    if(user.getRoles().contains(Roles.COS_ADMIN)) {
+      query = LIST_AUTH_QUERY;
+      tuple = Tuple.of(ApdStatus.ACTIVE.toString(),ApdStatus.INACTIVE.toString());
+    }
+    else {
+      query = LIST_USER_QUERY;
+      tuple = Tuple.of(ApdStatus.ACTIVE.toString());
+    }
 
-    Future<Boolean> isAuthAdmin = checkAdminServer(user);
+    Collector<Row, ?, List<String>> ApdIdCollector =
+        Collectors.mapping(row -> row.getUUID("id").toString(), Collectors.toList());
 
-    Future<List<String>> apdIds =
-            isAuthAdmin.compose(
-                    authAdmin -> {
-                      String query;
-                      Tuple tuple;
-                      if (!authAdmin) {
-                          query = LIST_USER_QUERY;
-                          tuple = Tuple.of(ApdStatus.ACTIVE.toString());
-                        }
-
-                       else {
-                        query = LIST_AUTH_QUERY;
-                        tuple =
-                                Tuple.of(
-                                        ApdStatus.ACTIVE.toString(),
-                                        ApdStatus.INACTIVE.toString());
-                      }
-
-                      Collector<Row, ?, List<String>> ApdIdCollector =
-                              Collectors.mapping(row -> row.getUUID("id").toString(), Collectors.toList());
-
-                      return pool.withConnection(
-                              conn -> conn.preparedQuery(query).collecting(ApdIdCollector).execute(tuple))
-                              .map(SqlResult::value);
-                    });
+    Future<List<String>> apdIds = pool
+        .withConnection(conn -> conn.preparedQuery(query).collecting(ApdIdCollector).execute(tuple))
+        .map(SqlResult::value);
+                    
 
     Future<JsonObject> apdDetails =
             apdIds.compose(
@@ -206,9 +195,6 @@ public class ApdServiceImpl implements ApdService {
                       JsonArray response = new JsonArray();
                         apdIds.result().forEach(id->{
                         JsonObject result = details.getJsonObject(id);
-                        String apdId = result.getString("id");
-                        result.remove("id");
-                        result.put("apdId",apdId);
                         response.add(result);
                       });
                       return Future.succeededFuture(response);
@@ -244,9 +230,9 @@ public class ApdServiceImpl implements ApdService {
 
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
-    if (user.getUserId().equals(NIL_UUID)) {
-      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
-          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
+    if (!user.getRoles().contains(Roles.COS_ADMIN)) {
+      Response r = new ResponseBuilder().status(401).type(URN_INVALID_ROLE)
+          .title(ERR_TITLE_NO_COS_ADMIN_ROLE).detail(ERR_DETAIL_NO_COS_ADMIN_ROLE).build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
@@ -257,7 +243,7 @@ public class ApdServiceImpl implements ApdService {
      */
     Set<UUID> apdIds = new HashSet<UUID>();
     List<UUID> requestedApdIds =
-        request.stream().map(r -> UUID.fromString(r.getApdId())).collect(Collectors.toList());
+        request.stream().map(r -> UUID.fromString(r.getId())).collect(Collectors.toList());
     List<UUID> duplicates =
         requestedApdIds.stream().filter(id -> apdIds.add(id) == false).collect(Collectors.toList());
 
@@ -269,25 +255,13 @@ public class ApdServiceImpl implements ApdService {
       return this;
     }
 
-    Future<Boolean> isAuthAdmin = checkAdminServer(user);
-
-    Future<Void> checkUserRoles = isAuthAdmin.compose(res -> {
-      if (!isAuthAdmin.result()) {
-        return Future.failedFuture(new ComposeException(403, URN_INVALID_ROLE.toString(),
-            ERR_TITLE_NO_ROLES_PUT, ERR_DETAIL_NO_ROLES_PUT));
-      }
-      return Future.succeededFuture();
-    });
-
     Collector<Row, ?, Map<UUID, JsonObject>> collector =
-        Collectors.toMap(row -> row.getUUID("apdId"), row -> row.toJson());
+        Collectors.toMap(row -> row.getUUID("id"), row -> row.toJson());
 
-    Future<Map<UUID, JsonObject>> queryResult = checkUserRoles.compose(n -> {
-      return pool
-          .withConnection(conn -> conn.preparedQuery(SQL_GET_APDS_BY_ID_ADMIN).collecting(collector)
+    Future<Map<UUID, JsonObject>> queryResult = pool
+          .withConnection(conn -> conn.preparedQuery(SQL_GET_APDS_BY_ID_COS_ADMIN).collecting(collector)
               .execute(Tuple.of(apdIds.toArray(UUID[]::new))))
           .map(res -> res.value());
-    });
 
     Future<Void> validateStatus = queryResult.compose(map -> {
       Set<UUID> queriedIds = map.keySet();
@@ -303,7 +277,7 @@ public class ApdServiceImpl implements ApdService {
           .toMap(i -> i.getKey(), i -> ApdStatus.valueOf(i.getValue().getString("status"))));
 
       Map<UUID, ApdStatus> desiredStatus = request.stream()
-          .collect(Collectors.toMap(i -> UUID.fromString(i.getApdId()), i -> i.getStatus()));
+          .collect(Collectors.toMap(i -> UUID.fromString(i.getId()), i -> i.getStatus()));
 
         return checkValidStatusChange(authAdminStates, currentStatus, desiredStatus);
     });
@@ -311,7 +285,7 @@ public class ApdServiceImpl implements ApdService {
 
     validateStatus.compose(success -> {
       List<Tuple> tuple =
-          request.stream().map(req -> Tuple.of(req.getStatus(), UUID.fromString(req.getApdId())))
+          request.stream().map(req -> Tuple.of(req.getStatus(), UUID.fromString(req.getId())))
               .collect(Collectors.toList());
 
       return pool
@@ -322,7 +296,7 @@ public class ApdServiceImpl implements ApdService {
       Map<UUID, JsonObject> apdDetails = queryResult.result();
 
       for (ApdUpdateRequest req : request) {
-        UUID apdId = UUID.fromString(req.getApdId());
+        UUID apdId = UUID.fromString(req.getId());
         JsonObject obj = apdDetails.get(apdId);
 
         obj.remove(RESP_APD_STATUS);
@@ -387,25 +361,16 @@ public class ApdServiceImpl implements ApdService {
 
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
 
-    if (user.getUserId().equals(NIL_UUID)) {
-      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
-          .title(ERR_TITLE_NO_USER_PROFILE).detail(ERR_DETAIL_NO_USER_PROFILE).build();
+    if (!user.getRoles().contains(Roles.COS_ADMIN)) {
+      Response r = new ResponseBuilder().status(401).type(URN_INVALID_ROLE)
+          .title(ERR_TITLE_NO_COS_ADMIN_ROLE).detail(ERR_DETAIL_NO_COS_ADMIN_ROLE).build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
 
-    Future<Boolean> isAuthAdmin = checkAdminServer(user);
-
-    Future<Void> checkAdmin = isAuthAdmin.compose(res -> {
-      if (!isAuthAdmin.result()) {
-        return Future.failedFuture(new ComposeException(403, URN_INVALID_ROLE.toString(),
-            ERR_TITLE_NO_ROLES_PUT, ERR_DETAIL_NO_ROLES_PUT));
-      }
-      return Future.succeededFuture();
-    });
-
-    String url = request.getUrl().toLowerCase();
+    String url = request.getUrl();
     String name = request.getName();
+    String ownerEmail = request.getOwner();
 
     if (!InternetDomainName.isValid(url)) {
       Response resp = new ResponseBuilder().type(URN_INVALID_INPUT).title(ERR_TITLE_INVALID_DOMAIN)
@@ -414,32 +379,41 @@ public class ApdServiceImpl implements ApdService {
       return this;
     }
 
-    Tuple tuple = Tuple.of(name, url);
-    /*
-     * Disable APD existence check via /userclasses (apdWebClient.checkApdExists(url)) API for now.
-     * TODO: maybe have a liveness check with a proper liveness API later on.
-     */
-    Future<Boolean> isApdOnline = checkAdmin.compose(res -> Future.succeededFuture(true));
+    Promise<JsonObject> promise = Promise.promise();
+    registrationService.findUserByEmail(Set.of(ownerEmail), promise);
+    Future<JsonObject> trusteeInfo = promise.future();
 
-    Future<UUID> apdId = isApdOnline
-        .compose(success -> pool.withTransaction(
-            conn -> conn.preparedQuery(SQL_INSERT_APD_IF_NOT_EXISTS).execute(tuple)))
-        .compose(res -> {
-          if (res.size() == 0) {
-            return Future.failedFuture(new ComposeException(409, URN_ALREADY_EXISTS.toString(),
-                ERR_TITLE_EXISTING_DOMAIN, ERR_DETAIL_EXISTING_DOMAIN));
-          }
-          return Future.succeededFuture(res.iterator().next().getUUID(0));
-        });
+    Future<UUID> apdId = trusteeInfo.compose(trusteeDetails -> {
+
+      UUID ownerId =
+          UUID.fromString(trusteeDetails.getJsonObject(ownerEmail).getString("keycloakId"));
+
+      Tuple tuple = Tuple.of(name, url, ownerId);
+      
+      return pool
+          .withConnection(conn -> conn.preparedQuery(SQL_INSERT_APD_IF_NOT_EXISTS).execute(tuple))
+          .compose(res -> {
+            if (res.size() == 0) {
+              return Future.failedFuture(new ComposeException(409, URN_ALREADY_EXISTS.toString(),
+                  ERR_TITLE_EXISTING_DOMAIN, ERR_DETAIL_EXISTING_DOMAIN));
+            }
+            return Future.succeededFuture(res.iterator().next().getUUID(0));
+          });
+    });
 
     apdId.onSuccess(created -> {
       JsonObject response = new JsonObject();
+      
+      JsonObject ownerBlock = trusteeInfo.result().getJsonObject(ownerEmail);
+      ownerBlock.put(RESP_OWNER_USER_ID, ownerBlock.remove("keycloakId"));
+
       response.put(RESP_APD_ID, apdId.result().toString()).put(RESP_APD_NAME, name)
-          .put(RESP_APD_URL, url).put(RESP_APD_STATUS, ApdStatus.ACTIVE.toString().toLowerCase());
+          .put(RESP_APD_URL, url).put(RESP_APD_OWNER, ownerBlock)
+          .put(RESP_APD_STATUS, ApdStatus.ACTIVE.toString().toLowerCase());
 
-      LOGGER.info("APD registered with id : " + apdId.result().toString());
+      LOGGER.info("APD {} registered with owner {}", url, ownerEmail);
 
-      Response resp = new ResponseBuilder().status(200).type(URN_SUCCESS)
+      Response resp = new ResponseBuilder().status(201).type(URN_SUCCESS)
           .title(SUCC_TITLE_REGISTERED_APD).objectResults(response).build();
       handler.handle(Future.succeededFuture(resp.toJson()));
     }).onFailure(e -> {
@@ -552,18 +526,28 @@ public class ApdServiceImpl implements ApdService {
                           return Future.succeededFuture(apdInfo);
                         }));
 
+    Future<Map<String, JsonObject>> trusteeDetailsFuture =
+                    apdDetails.compose(
+                            details -> {
+                              List<String> userIds =
+                                      details.stream().map(ApdInfoObj::getOwnerId).collect(Collectors.toList());
+                              return getUserDetails(userIds);
+                            });
+
     Future<JsonObject> responseFuture =
-            apdDetails.compose(
-                    res -> {
+            trusteeDetailsFuture.compose(
+                    trusteeDetails -> {
                       JsonObject response = new JsonObject();
                       List<ApdInfoObj> apdDetailList = apdDetails.result();
                       apdDetailList.forEach(
                               details -> {
                                 JsonObject apdResponse = new JsonObject();
-                                apdResponse.put("url", details.getUrl());
-                                apdResponse.put("status", details.getStatus().toString().toLowerCase());
-                                apdResponse.put("name", details.getName());
-                                apdResponse.put("id",details.getId());
+                                apdResponse.put(RESP_APD_OWNER,
+                                    trusteeDetails.get(details.getOwnerId()).put(RESP_OWNER_USER_ID, details.getOwnerId()));
+                                apdResponse.put(RESP_APD_URL, details.getUrl());
+                                apdResponse.put(RESP_APD_STATUS, details.getStatus().toString().toLowerCase());
+                                apdResponse.put(RESP_APD_NAME, details.getName());
+                                apdResponse.put(RESP_APD_ID, details.getId());
                                 if (req.equalsIgnoreCase("id")) {
                                   response.put(details.getId(), apdResponse);
                                 } else response.put(details.getUrl(), apdResponse);
@@ -614,43 +598,18 @@ public class ApdServiceImpl implements ApdService {
     return promise.future();
   }
 
-
-  /**
-   * Check if a user is an admin for a particular server.
-   * 
-   * @param user The user object
-   * @return Future of Boolean type
-   */
-  private Future<Boolean> checkAdminServer(User user) {
-    Promise<Boolean> p = Promise.promise();
-
-    if (!user.getRoles().contains(Roles.ADMIN)) {
-      p.complete(false);
-      return p.future();
-    }
-
-    pool.withConnection(conn -> conn.preparedQuery(SQL_CHECK_ADMIN_OF_SERVER)
-        .execute(Tuple.of(user.getUserId(), AUTH_SERVER_URL)).map(row -> row.size()))
-        .onSuccess(size -> p.complete(size == 0 ? false : true))
-        .onFailure(error -> p.fail(error.getMessage()));
-
-    return p.future();
-  }
-
   @Override
   public ApdService callApd(JsonObject apdContext, Handler<AsyncResult<JsonObject>> handler) {
 
     LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
     
     /* TODO: make apdContext a class */
-    UUID apdId = UUID.fromString(apdContext.getString("apdId"));
+    String apdUrl = apdContext.getString("apdUrl");
     String userId = apdContext.getString("userId");
     String ownerId = apdContext.getString("ownerId");
     String itemId = apdContext.getString("itemId");
     String itemType = apdContext.getString("itemType");
     String rsUrl = apdContext.getString("resSerUrl");
-    String userClass = apdContext.getString("userClass");
-    JsonObject constraints = apdContext.getJsonObject("constraints");
     JsonObject context = apdContext.getJsonObject("context");
 
     Collector<Row, ?, List<JsonObject>> collector =
@@ -658,18 +617,18 @@ public class ApdServiceImpl implements ApdService {
 
     Future<List<JsonObject>> apdDetails =
         pool.withConnection(conn -> conn.preparedQuery(SQL_GET_APD_URL_STATUS).collecting(collector)
-            .execute(Tuple.of(apdId)).map(res -> res.value()));
+            .execute(Tuple.of(apdUrl)).map(res -> res.value()));
 
     Future<Map<String, JsonObject>> userAndOwnerDetails =
         getUserDetails(List.of(userId, ownerId));
 
     Future<JsonObject> authAccessToken = apdDetails.compose(list -> {
-      /* In case the apdId sent does not exist, should never happen */
+      /* In case the APD URL in the CAT item was not registered on the server */
       if(list.isEmpty()) {
-        return Future.failedFuture("APD ID does not exist");
+        return Future.failedFuture(new ComposeException(403, URN_INVALID_INPUT,
+            ERR_TITLE_APD_NOT_REGISTERED, ERR_DETAIL_APD_NOT_REGISTERED));
       }
 
-      String apdUrl = list.get(0).getString("url");
       Promise<JsonObject> promise = Promise.promise();
       tokenService.getAuthServerToken(apdUrl, promise);
       return promise.future();
@@ -686,12 +645,33 @@ public class ApdServiceImpl implements ApdService {
           JsonObject item = new JsonObject().put("itemId", itemId).put("itemType", itemType);
 
           String token = authAccessToken.result().getString("accessToken");
-          String apdUrl = apdDetails.result().get(0).getString("url");
 
           apdRequest.put(APD_REQ_USER, user).put(APD_REQ_OWNER, owner).put(APD_REQ_ITEM, item)
-              .put(APD_REQ_USERCLASS, userClass).put(APD_REQ_CONTEXT, context);
+              .put(APD_REQ_CONTEXT, context);
 
-          return apdWebClient.callVerifyApdEndpoint(apdUrl, token, apdRequest);
+          /*
+           * In case the web client fails to get a valid response from the APD, we catch the
+           * ComposeException and add a message to the detail in case the APD was in an inactive
+           * state.
+           */
+          return apdWebClient.callVerifyApdEndpoint(apdUrl, token, apdRequest)
+              .recover(webClientErr -> {
+                if (webClientErr instanceof ComposeException) {
+                  String apdStatus = apdDetails.result().get(0).getString("status");
+                  String apdNotActiveMesg = APD_NOT_ACTIVE;
+                  if (ApdStatus.valueOf(apdStatus).equals(ApdStatus.ACTIVE)) {
+                    apdNotActiveMesg = "";
+                  }
+
+                  ComposeException exp = (ComposeException) webClientErr;
+                  Response err = exp.getResponse();
+                  err.setDetail(err.getDetail() + apdNotActiveMesg);
+                  err.setTitle(ERR_TITLE_APD_EVAL_FAILED);
+                  return Future.failedFuture(new ComposeException(err));
+                } else {
+                  return Future.failedFuture(webClientErr);
+                }
+              });
         });
 
     /*
@@ -712,18 +692,17 @@ public class ApdServiceImpl implements ApdService {
       JsonObject result = new JsonObject();
 
       if (response.getString(APD_RESP_TYPE).equals(APD_URN_ALLOW)) {
-        //check if 'apdConstraints' are present
-        if(response.containsKey(APD_CONSTRAINTS))
-        {
-          result.put(CREATE_TOKEN_APD_CONSTRAINTS,response.getJsonObject(APD_CONSTRAINTS));
-        }
-        result.put(CREATE_TOKEN_URL, rsUrl).put(CREATE_TOKEN_CONSTRAINTS, constraints)
+        
+        // use 'apdConstraints' if present in response, else send Default constraints
+        result.put(CREATE_TOKEN_CONSTRAINTS,
+            response.getJsonObject(APD_CONSTRAINTS, DEFAULT_CONSTRAINTS));
+
+        result.put(CREATE_TOKEN_URL, rsUrl)
             .put(CREATE_TOKEN_CAT_ID, itemId).put(CREATE_TOKEN_STATUS, CREATE_TOKEN_SUCCESS);
 
         handler.handle(Future.succeededFuture(result));
         return;
       } else if (response.getString(APD_RESP_TYPE).equals(APD_URN_DENY_NEEDS_INT)) {
-        String apdUrl = apdDetails.result().get(0).getString("url");
         /*
          * TODO: consider also passing the `detail` that the APD sends so that the createToken
          * service can use it in it's response
@@ -735,20 +714,8 @@ public class ApdServiceImpl implements ApdService {
 
         handler.handle(Future.succeededFuture(result));
         return;
-      }
+      } else if (response.getString(APD_RESP_TYPE).equals(APD_URN_DENY)) {
 
-      /* Add extra message if APD not active and has denied */
-      String apdStatus = apdDetails.result().get(0).getString("status");
-      String apdNotActiveMesg = APD_NOT_ACTIVE;
-      if (ApdStatus.valueOf(apdStatus).equals(ApdStatus.ACTIVE)) {
-        apdNotActiveMesg = "";
-      }
-
-      handler.handle(Future.failedFuture(
-          new ComposeException(403, URN_INVALID_INPUT, ERR_TITLE_POLICY_EVAL_FAILED,
-              response.getString(APD_RESP_DETAIL) + apdNotActiveMesg)));
-    }).onFailure(e -> {
-      if (e instanceof ComposeException) {
         /* Add extra message if APD not active and has denied */
         String apdStatus = apdDetails.result().get(0).getString("status");
         String apdNotActiveMesg = APD_NOT_ACTIVE;
@@ -756,12 +723,13 @@ public class ApdServiceImpl implements ApdService {
           apdNotActiveMesg = "";
         }
 
-        ComposeException exp = (ComposeException) e;
-        Response err = exp.getResponse();
-        err.setDetail(err.getDetail() + apdNotActiveMesg);
-        err.setTitle(ERR_TITLE_POLICY_EVAL_FAILED);
-        /* send back failed future - returning to createToken and not API server */
-        handler.handle(Future.failedFuture(new ComposeException(err)));
+        handler.handle(Future.failedFuture(new ComposeException(403, URN_INVALID_INPUT,
+            ERR_TITLE_APD_EVAL_FAILED, response.getString(APD_RESP_DETAIL) + apdNotActiveMesg)));
+        return;
+      }
+    }).onFailure(e -> {
+      if (e instanceof ComposeException) {
+        handler.handle(Future.failedFuture(e));
         return;
       }
       LOGGER.error(e.getMessage());

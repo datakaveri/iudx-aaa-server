@@ -1,6 +1,5 @@
 package iudx.aaa.server.admin;
 
-import static iudx.aaa.server.admin.Constants.CONFIG_AUTH_URL;
 import static iudx.aaa.server.admin.Constants.DATABASE_IP;
 import static iudx.aaa.server.admin.Constants.DATABASE_NAME;
 import static iudx.aaa.server.admin.Constants.DATABASE_PASSWORD;
@@ -16,7 +15,7 @@ import static iudx.aaa.server.admin.Constants.KC_ADMIN_CLIENT_SEC;
 import static iudx.aaa.server.admin.Constants.KC_ADMIN_POOLSIZE;
 import static iudx.aaa.server.admin.Constants.KEYCLOAK_REALM;
 import static iudx.aaa.server.admin.Constants.KEYCLOAK_URL;
-import static iudx.aaa.server.admin.Constants.POLICY_SERVICE_ADDRESS;
+import static iudx.aaa.server.admin.Constants.REGISTRATION_SERVICE_ADDRESS;
 import java.util.Map;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.MessageConsumer;
@@ -25,8 +24,8 @@ import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.serviceproxy.ServiceBinder;
 import io.vertx.sqlclient.PoolOptions;
-import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.KcAdmin;
+import iudx.aaa.server.registration.RegistrationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -63,13 +62,12 @@ public class AdminVerticle extends AbstractVerticle {
   private PoolOptions poolOptions;
   private PgConnectOptions connectOptions;
   private static final String ADMIN_SERVICE_ADDRESS = "iudx.aaa.admin.service";
-  private static JsonObject options;
   private AdminService adminService;
   private ServiceBinder binder;
   private MessageConsumer<JsonObject> consumer;
   private static final Logger LOGGER = LogManager.getLogger(AdminVerticle.class);
 
-  private PolicyService policyService;
+  private RegistrationService registrationService;
   /**
    * This method is used to start the Verticle. It deploys a verticle in a cluster, registers the
    * service with the Event bus against an address, publishes the service with the service discovery
@@ -96,10 +94,6 @@ public class AdminVerticle extends AbstractVerticle {
     keycloakAdminClientSecret = config().getString(KC_ADMIN_CLIENT_SEC);
     keycloakAdminPoolSize = Integer.parseInt(config().getString(KC_ADMIN_POOLSIZE));
 
-    /* Pass an `options` JSON object to the serviceImpl with a key:val being the
-     * authServerDomain */
-    options = new JsonObject().put(CONFIG_AUTH_URL, config().getString(CONFIG_AUTH_URL));
-
     /* Set Connection Object and schema */
     if (connectOptions == null) {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
@@ -122,8 +116,8 @@ public class AdminVerticle extends AbstractVerticle {
     KcAdmin kcadmin = new KcAdmin(keycloakUrl, keycloakRealm, keycloakAdminClientId,
         keycloakAdminClientSecret, keycloakAdminPoolSize);
 
-    policyService = PolicyService.createProxy(vertx, POLICY_SERVICE_ADDRESS);
-    adminService = new AdminServiceImpl(pool, kcadmin, policyService, options);
+    registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
+    adminService = new AdminServiceImpl(pool, kcadmin, registrationService);
     binder = new ServiceBinder(vertx);
     consumer = binder.setAddress(ADMIN_SERVICE_ADDRESS).register(AdminService.class,
         adminService);
