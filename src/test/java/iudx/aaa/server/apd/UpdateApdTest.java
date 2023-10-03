@@ -1,6 +1,5 @@
 package iudx.aaa.server.apd;
 
-import static iudx.aaa.server.apd.Constants.CONFIG_COS_URL;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_NO_COS_ADMIN_ROLE;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_CANT_CHANGE_APD_STATUS;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_DUPLICATE_REQ;
@@ -50,6 +49,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 
+/** Unit tests for APD status update. */
 @ExtendWith({VertxExtension.class})
 @TestMethodOrder(OrderAnnotation.class)
 public class UpdateApdTest {
@@ -77,34 +77,39 @@ public class UpdateApdTest {
 
   private static final String ACTIVE_A =
       "apd" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
-  
-  private static final String ACTIVE_B = 
+
+  private static final String ACTIVE_B =
       "apd" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
-  
+
   private static final String INACTIVE_A =
       "apd" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
-  
-  private static final String INACTIVE_B = 
+
+  private static final String INACTIVE_B =
       "apd" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
-  
+
   private static User normalUser = new UserBuilder().userId(UUID.randomUUID()).build();
-  
+
   private static User trusteeAUser =
-      new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.TRUSTEE))
+      new UserBuilder()
+          .userId(UUID.randomUUID())
+          .roles(List.of(Roles.TRUSTEE))
           .rolesToRsMapping(
               Map.of(Roles.TRUSTEE.toString(), new JsonArray(List.of(ACTIVE_A, INACTIVE_A))))
-          .name("aa", "bb").build();
-  
+          .name("aa", "bb")
+          .build();
+
   private static User trusteeBUser =
-      new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.TRUSTEE))
+      new UserBuilder()
+          .userId(UUID.randomUUID())
+          .roles(List.of(Roles.TRUSTEE))
           .rolesToRsMapping(
               Map.of(Roles.TRUSTEE.toString(), new JsonArray(List.of(ACTIVE_B, INACTIVE_B))))
-          .name("aa", "bb").build();
-  
-  private static User cosAdmin = 
-      new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.COS_ADMIN))
+          .name("aa", "bb")
           .build();
-  
+
+  private static User cosAdmin =
+      new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.COS_ADMIN)).build();
+
   private static Utils utils;
 
   @BeforeAll
@@ -130,8 +135,13 @@ public class UpdateApdTest {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
       connectOptions =
-          new PgConnectOptions().setPort(databasePort).setHost(databaseIP).setDatabase(databaseName)
-              .setUser(databaseUserName).setPassword(databasePassword).setProperties(schemaProp);
+          new PgConnectOptions()
+              .setPort(databasePort)
+              .setHost(databaseIP)
+              .setDatabase(databaseName)
+              .setUser(databaseUserName)
+              .setPassword(databasePassword)
+              .setProperties(schemaProp);
     }
 
     /* Pool options */
@@ -141,34 +151,43 @@ public class UpdateApdTest {
 
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
 
-    JsonObject options = new JsonObject().put(CONFIG_COS_URL, dbConfig.getString(CONFIG_COS_URL));
-    
     utils = new Utils(pool);
 
-    Future<Void> create = utils.createFakeApd(ACTIVE_A, trusteeAUser, ApdStatus.ACTIVE)
-        .compose(res -> utils.createFakeApd(ACTIVE_B, trusteeBUser, ApdStatus.ACTIVE))
-        .compose(res -> utils.createFakeApd(INACTIVE_A, trusteeAUser, ApdStatus.INACTIVE))
-        .compose(res -> utils.createFakeApd(INACTIVE_B, trusteeBUser, ApdStatus.INACTIVE))
-        .compose(res -> utils.createFakeUser(normalUser, false, false));
+    Future<Void> create =
+        utils
+            .createFakeApd(ACTIVE_A, trusteeAUser, ApdStatus.ACTIVE)
+            .compose(res -> utils.createFakeApd(ACTIVE_B, trusteeBUser, ApdStatus.ACTIVE))
+            .compose(res -> utils.createFakeApd(INACTIVE_A, trusteeAUser, ApdStatus.INACTIVE))
+            .compose(res -> utils.createFakeApd(INACTIVE_B, trusteeBUser, ApdStatus.INACTIVE))
+            .compose(res -> utils.createFakeUser(normalUser, false, false));
 
-    create.onSuccess(x -> {
-      apdService = new ApdServiceImpl(pool, apdWebClient, registrationService, tokenService, options);
-      testContext.completeNow();
-    }).onFailure(x -> {
-      testContext.failNow("Failed");
-    });
+    create
+        .onSuccess(
+            x -> {
+              apdService =
+                  new ApdServiceImpl(pool, apdWebClient, registrationService, tokenService);
+              testContext.completeNow();
+            })
+        .onFailure(
+            x -> {
+              testContext.failNow("Failed");
+            });
   }
 
   @AfterAll
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing....");
-    utils.deleteFakeApd().compose(res -> utils.deleteFakeUser())
-        .compose(res -> utils.deleteFakeResourceServer()).onComplete(x -> {
-          if (x.failed()) {
-            LOGGER.warn(x.cause().getMessage());
-          }
-          vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
-        });
+    utils
+        .deleteFakeApd()
+        .compose(res -> utils.deleteFakeUser())
+        .compose(res -> utils.deleteFakeResourceServer())
+        .onComplete(
+            x -> {
+              if (x.failed()) {
+                LOGGER.warn(x.cause().getMessage());
+              }
+              vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
+            });
   }
 
   /*
@@ -183,31 +202,45 @@ public class UpdateApdTest {
   void invalidRoles(VertxTestContext testContext) {
     Checkpoint trusteeNotAllowed = testContext.checkpoint();
     Checkpoint adminProvConsNotAllowed = testContext.checkpoint();
-    
-      User provConsAdminUser = new User(normalUser.toJson());
-      provConsAdminUser.setRoles(List.of(Roles.CONSUMER, Roles.PROVIDER, Roles.ADMIN));
-      provConsAdminUser.setRolesToRsMapping(
-          Map.of(Roles.CONSUMER.toString(), new JsonArray().add("some-url.com"),
-              Roles.PROVIDER.toString(), new JsonArray().add("some-url.com"),
-              Roles.ADMIN.toString(), new JsonArray().add("some-url.com")));
 
-    apdService.updateApd(List.of(), provConsAdminUser,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getInteger("status"), 401);
-          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-          assertEquals(ERR_TITLE_NO_COS_ADMIN_ROLE, response.getString("title"));
-          assertEquals(ERR_DETAIL_NO_COS_ADMIN_ROLE, response.getString("detail"));
-          adminProvConsNotAllowed.flag();
-        })));
-    
-    apdService.updateApd(List.of(), trusteeAUser,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getInteger("status"), 401);
-          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-          assertEquals(ERR_TITLE_NO_COS_ADMIN_ROLE, response.getString("title"));
-          assertEquals(ERR_DETAIL_NO_COS_ADMIN_ROLE, response.getString("detail"));
-          trusteeNotAllowed.flag();
-        })));
+    User provConsAdminUser = new User(normalUser.toJson());
+    provConsAdminUser.setRoles(List.of(Roles.CONSUMER, Roles.PROVIDER, Roles.ADMIN));
+    provConsAdminUser.setRolesToRsMapping(
+        Map.of(
+            Roles.CONSUMER.toString(),
+            new JsonArray().add("some-url.com"),
+            Roles.PROVIDER.toString(),
+            new JsonArray().add("some-url.com"),
+            Roles.ADMIN.toString(),
+            new JsonArray().add("some-url.com")));
+
+    apdService.updateApd(
+        List.of(),
+        provConsAdminUser,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(response.getInteger("status"), 401);
+                      assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                      assertEquals(ERR_TITLE_NO_COS_ADMIN_ROLE, response.getString("title"));
+                      assertEquals(ERR_DETAIL_NO_COS_ADMIN_ROLE, response.getString("detail"));
+                      adminProvConsNotAllowed.flag();
+                    })));
+
+    apdService.updateApd(
+        List.of(),
+        trusteeAUser,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(response.getInteger("status"), 401);
+                      assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                      assertEquals(ERR_TITLE_NO_COS_ADMIN_ROLE, response.getString("title"));
+                      assertEquals(ERR_DETAIL_NO_COS_ADMIN_ROLE, response.getString("detail"));
+                      trusteeNotAllowed.flag();
+                    })));
   }
 
   @Order(2)
@@ -217,20 +250,26 @@ public class UpdateApdTest {
 
     String randUuid = UUID.randomUUID().toString();
     String activeAId = utils.apdMap.get(ACTIVE_A).toString();
-    
-    JsonArray req = new JsonArray()
-        .add(new JsonObject().put("id", activeAId).put("status", "inactive"))
-        .add(new JsonObject().put("id", randUuid).put("status", "active"));
+
+    JsonArray req =
+        new JsonArray()
+            .add(new JsonObject().put("id", activeAId).put("status", "inactive"))
+            .add(new JsonObject().put("id", randUuid).put("status", "active"));
     List<ApdUpdateRequest> request = ApdUpdateRequest.jsonArrayToList(req);
 
-    apdService.updateApd(request, cosAdmin,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getInteger("status"), 400);
-          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-          assertEquals(ERR_TITLE_INVALID_APDID, response.getString("title"));
-          assertEquals(randUuid, response.getString("detail"));
-          testContext.completeNow();
-        })));
+    apdService.updateApd(
+        request,
+        cosAdmin,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(response.getInteger("status"), 400);
+                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                      assertEquals(ERR_TITLE_INVALID_APDID, response.getString("title"));
+                      assertEquals(randUuid, response.getString("detail"));
+                      testContext.completeNow();
+                    })));
   }
 
   @Order(3)
@@ -239,19 +278,25 @@ public class UpdateApdTest {
   void duplicateApdIds(VertxTestContext testContext) {
 
     String inActiveAId = utils.apdMap.get(INACTIVE_A).toString();
-    JsonArray req = new JsonArray()
-        .add(new JsonObject().put("id", inActiveAId).put("status", "active"))
-        .add(new JsonObject().put("id", inActiveAId).put("status", "inactive"));
+    JsonArray req =
+        new JsonArray()
+            .add(new JsonObject().put("id", inActiveAId).put("status", "active"))
+            .add(new JsonObject().put("id", inActiveAId).put("status", "inactive"));
     List<ApdUpdateRequest> request = ApdUpdateRequest.jsonArrayToList(req);
 
-    apdService.updateApd(request, cosAdmin,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getInteger("status"), 400);
-          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-          assertEquals(ERR_TITLE_DUPLICATE_REQ, response.getString("title"));
-          assertEquals(inActiveAId, response.getString("detail"));
-          testContext.completeNow();
-        })));
+    apdService.updateApd(
+        request,
+        cosAdmin,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(response.getInteger("status"), 400);
+                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                      assertEquals(ERR_TITLE_DUPLICATE_REQ, response.getString("title"));
+                      assertEquals(inActiveAId, response.getString("detail"));
+                      testContext.completeNow();
+                    })));
   }
 
   @Order(4)
@@ -261,19 +306,25 @@ public class UpdateApdTest {
 
     String activeBId = utils.apdMap.get(ACTIVE_B).toString();
     String inActiveBId = utils.apdMap.get(INACTIVE_B).toString();
-    JsonArray req = new JsonArray()
-        .add(new JsonObject().put("id", activeBId).put("status", "active"))
-        .add(new JsonObject().put("id", inActiveBId).put("status", "active"));
+    JsonArray req =
+        new JsonArray()
+            .add(new JsonObject().put("id", activeBId).put("status", "active"))
+            .add(new JsonObject().put("id", inActiveBId).put("status", "active"));
     List<ApdUpdateRequest> request = ApdUpdateRequest.jsonArrayToList(req);
 
-    apdService.updateApd(request, cosAdmin,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getInteger("status"), 403);
-          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-          assertEquals(ERR_TITLE_CANT_CHANGE_APD_STATUS, response.getString("title"));
-          assertEquals(activeBId, response.getString("detail"));
-          testContext.completeNow();
-        })));
+    apdService.updateApd(
+        request,
+        cosAdmin,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(response.getInteger("status"), 403);
+                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                      assertEquals(ERR_TITLE_CANT_CHANGE_APD_STATUS, response.getString("title"));
+                      assertEquals(activeBId, response.getString("detail"));
+                      testContext.completeNow();
+                    })));
   }
 
   @Order(5)
@@ -283,20 +334,26 @@ public class UpdateApdTest {
 
     String activeBId = utils.apdMap.get(ACTIVE_B).toString();
     String inActiveBId = utils.apdMap.get(INACTIVE_B).toString();
-    
-    JsonArray req = new JsonArray()
-        .add(new JsonObject().put("id", activeBId).put("status", "inactive"))
-        .add(new JsonObject().put("id", inActiveBId).put("status", "inactive"));
+
+    JsonArray req =
+        new JsonArray()
+            .add(new JsonObject().put("id", activeBId).put("status", "inactive"))
+            .add(new JsonObject().put("id", inActiveBId).put("status", "inactive"));
     List<ApdUpdateRequest> request = ApdUpdateRequest.jsonArrayToList(req);
 
-    apdService.updateApd(request, cosAdmin,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getInteger("status"), 403);
-          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-          assertEquals(ERR_TITLE_CANT_CHANGE_APD_STATUS, response.getString("title"));
-          assertEquals(inActiveBId, response.getString("detail"));
-          testContext.completeNow();
-        })));
+    apdService.updateApd(
+        request,
+        cosAdmin,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(response.getInteger("status"), 403);
+                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                      assertEquals(ERR_TITLE_CANT_CHANGE_APD_STATUS, response.getString("title"));
+                      assertEquals(inActiveBId, response.getString("detail"));
+                      testContext.completeNow();
+                    })));
   }
 
   @Order(6)
@@ -305,64 +362,80 @@ public class UpdateApdTest {
   void adminInactiveToActive(VertxTestContext testContext) {
 
     String inActiveAId = utils.apdMap.get(INACTIVE_A).toString();
-    JsonArray req = new JsonArray()
-        .add(new JsonObject().put("id",inActiveAId ).put("status", "active"));
+    JsonArray req =
+        new JsonArray().add(new JsonObject().put("id", inActiveAId).put("status", "active"));
     List<ApdUpdateRequest> request = ApdUpdateRequest.jsonArrayToList(req);
 
-    apdService.updateApd(request, cosAdmin,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getInteger("status"), 200);
-          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-          assertEquals(SUCC_TITLE_UPDATED_APD, response.getString("title"));
-          JsonObject result = response.getJsonArray("results").getJsonObject(0);
-          assertEquals(INACTIVE_A + "name", result.getString(RESP_APD_NAME));
-          assertEquals(INACTIVE_A, result.getString(RESP_APD_URL));
-          assertEquals(ApdStatus.ACTIVE.toString().toLowerCase(), result.getString(RESP_APD_STATUS));
-          assertTrue(result.containsKey(RESP_APD_ID));
+    apdService.updateApd(
+        request,
+        cosAdmin,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(response.getInteger("status"), 200);
+                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                      assertEquals(SUCC_TITLE_UPDATED_APD, response.getString("title"));
+                      JsonObject result = response.getJsonArray("results").getJsonObject(0);
+                      assertEquals(INACTIVE_A + "name", result.getString(RESP_APD_NAME));
+                      assertEquals(INACTIVE_A, result.getString(RESP_APD_URL));
+                      assertEquals(
+                          ApdStatus.ACTIVE.toString().toLowerCase(),
+                          result.getString(RESP_APD_STATUS));
+                      assertTrue(result.containsKey(RESP_APD_ID));
 
-          testContext.completeNow();
-        })));
+                      testContext.completeNow();
+                    })));
   }
 
   @Order(7)
   @Test
-  @DisplayName("Multiple requests - Test success admin setting active -> inactive, inactive -> active")
+  @DisplayName(
+      "Multiple requests - Test success admin setting active -> inactive, inactive -> active")
   void mutipleReqSuccess(VertxTestContext testContext) {
 
     String activeAId = utils.apdMap.get(ACTIVE_A).toString();
     String inActiveBId = utils.apdMap.get(INACTIVE_B).toString();
-    JsonArray req = new JsonArray()
-        .add(new JsonObject().put("id", activeAId).put("status", "inactive"))
-        .add(new JsonObject().put("id", inActiveBId).put("status", "active"));
+    JsonArray req =
+        new JsonArray()
+            .add(new JsonObject().put("id", activeAId).put("status", "inactive"))
+            .add(new JsonObject().put("id", inActiveBId).put("status", "active"));
     List<ApdUpdateRequest> request = ApdUpdateRequest.jsonArrayToList(req);
 
-    apdService.updateApd(request, cosAdmin,
-        testContext.succeeding(response -> testContext.verify(() -> {
+    apdService.updateApd(
+        request,
+        cosAdmin,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(response.getInteger("status"), 200);
+                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                      assertEquals(SUCC_TITLE_UPDATED_APD, response.getString("title"));
 
-          assertEquals(response.getInteger("status"), 200);
-          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-          assertEquals(SUCC_TITLE_UPDATED_APD, response.getString("title"));
+                      JsonObject resultA = response.getJsonArray("results").getJsonObject(0);
+                      JsonObject resultB = response.getJsonArray("results").getJsonObject(1);
 
-          JsonObject resultA = response.getJsonArray("results").getJsonObject(0);
-          JsonObject resultB = response.getJsonArray("results").getJsonObject(1);
+                      if (!resultA.getString(RESP_APD_URL).equals(ACTIVE_A)) {
+                        resultA = response.getJsonArray("results").getJsonObject(1);
+                        resultB = response.getJsonArray("results").getJsonObject(0);
+                      }
 
-          if (!resultA.getString(RESP_APD_URL).equals(ACTIVE_A)) {
-            resultA = response.getJsonArray("results").getJsonObject(1);
-            resultB = response.getJsonArray("results").getJsonObject(0);
-          }
+                      assertEquals(ACTIVE_A + "name", resultA.getString(RESP_APD_NAME));
+                      assertEquals(ACTIVE_A, resultA.getString(RESP_APD_URL));
+                      assertEquals(
+                          ApdStatus.INACTIVE.toString().toLowerCase(),
+                          resultA.getString(RESP_APD_STATUS));
+                      assertTrue(resultA.containsKey(RESP_APD_ID));
 
-          assertEquals(ACTIVE_A + "name", resultA.getString(RESP_APD_NAME));
-          assertEquals(ACTIVE_A, resultA.getString(RESP_APD_URL));
-          assertEquals(ApdStatus.INACTIVE.toString().toLowerCase(), resultA.getString(RESP_APD_STATUS));
-          assertTrue(resultA.containsKey(RESP_APD_ID));
+                      assertEquals(INACTIVE_B + "name", resultB.getString(RESP_APD_NAME));
+                      assertEquals(INACTIVE_B, resultB.getString(RESP_APD_URL));
+                      assertEquals(
+                          ApdStatus.ACTIVE.toString().toLowerCase(),
+                          resultB.getString(RESP_APD_STATUS));
+                      assertTrue(resultB.containsKey(RESP_APD_ID));
 
-          assertEquals(INACTIVE_B + "name", resultB.getString(RESP_APD_NAME));
-          assertEquals(INACTIVE_B, resultB.getString(RESP_APD_URL));
-          assertEquals(ApdStatus.ACTIVE.toString().toLowerCase(), resultB.getString(RESP_APD_STATUS));
-          assertTrue(resultB.containsKey(RESP_APD_ID));
-
-          testContext.completeNow();
-        })));
+                      testContext.completeNow();
+                    })));
   }
-
 }

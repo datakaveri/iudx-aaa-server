@@ -1,6 +1,7 @@
 package iudx.aaa.server.apd;
 
-import static iudx.aaa.server.apd.Constants.CONFIG_COS_URL;
+import static iudx.aaa.server.admin.Constants.DB_RECONNECT_ATTEMPTS;
+import static iudx.aaa.server.admin.Constants.DB_RECONNECT_INTERVAL_MS;
 import static iudx.aaa.server.apd.Constants.CONFIG_WEBCLI_TIMEOUTMS;
 import static iudx.aaa.server.apd.Constants.DATABASE_IP;
 import static iudx.aaa.server.apd.Constants.DATABASE_NAME;
@@ -10,8 +11,6 @@ import static iudx.aaa.server.apd.Constants.DATABASE_PORT;
 import static iudx.aaa.server.apd.Constants.DATABASE_SCHEMA;
 import static iudx.aaa.server.apd.Constants.DATABASE_USERNAME;
 import static iudx.aaa.server.apd.Constants.DB_CONNECT_TIMEOUT;
-import static iudx.aaa.server.admin.Constants.DB_RECONNECT_ATTEMPTS;
-import static iudx.aaa.server.admin.Constants.DB_RECONNECT_INTERVAL_MS;
 import static iudx.aaa.server.apd.Constants.REGISTRATION_SERVICE_ADDRESS;
 import static iudx.aaa.server.apd.Constants.TOKEN_SERVICE_ADDRESS;
 
@@ -24,7 +23,6 @@ import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.serviceproxy.ServiceBinder;
 import io.vertx.sqlclient.PoolOptions;
-import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.token.TokenService;
 import java.util.Map;
@@ -33,16 +31,15 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * The Apd Verticle.
+ *
  * <h1>Apd Verticle</h1>
- * <p>
- * The Apd Verticle implementation in the the IUDX AAA Server exposes the
- * {@link iudx.aaa.server.apd.ApdService} over the Vert.x Event Bus.
- * </p>
+ *
+ * <p>The Apd Verticle implementation in the the IUDX AAA Server exposes the {@link
+ * iudx.aaa.server.apd.ApdService} over the Vert.x Event Bus.
  *
  * @version 1.0
  * @since 2020-12-15
  */
-
 public class ApdVerticle extends AbstractVerticle {
 
   /* Database Properties */
@@ -53,14 +50,11 @@ public class ApdVerticle extends AbstractVerticle {
   private String databaseUserName;
   private String databasePassword;
   private int poolSize;
-  
-  private int webClientTimeout;
 
   private PgPool pool;
   private PoolOptions poolOptions;
   private PgConnectOptions connectOptions;
   private static final String APD_SERVICE_ADDRESS = "iudx.aaa.apd.service";
-  private static JsonObject apdServiceOptions;
   private static JsonObject apdWebCliConfig;
   private WebClient webClient;
   private WebClientOptions webClientOptions;
@@ -82,7 +76,7 @@ public class ApdVerticle extends AbstractVerticle {
   public void start() throws Exception {
 
     /* Read the configuration and set the postgres client properties. */
-    LOGGER.debug("Info : " + LOGGER.getName() + " : Reading config file");
+    LOGGER.debug("Info : {} : Reading config file", LOGGER.getName());
 
     databaseIP = config().getString(DATABASE_IP);
     databasePort = Integer.parseInt(config().getString(DATABASE_PORT));
@@ -91,11 +85,6 @@ public class ApdVerticle extends AbstractVerticle {
     databaseUserName = config().getString(DATABASE_USERNAME);
     databasePassword = config().getString(DATABASE_PASSWORD);
     poolSize = Integer.parseInt(config().getString(DATABASE_POOLSIZE));
-
-    /*
-     * Pass an `options` JSON object to the serviceImpl with a key:val being the cosDomain
-     */
-    apdServiceOptions = new JsonObject().put(CONFIG_COS_URL, config().getString(CONFIG_COS_URL));
 
     /*
      * Pass an `options` JSON object to the webClient with a key:val being the default timeout
@@ -107,11 +96,17 @@ public class ApdVerticle extends AbstractVerticle {
     if (connectOptions == null) {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
-      connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
-          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
-          .setConnectTimeout(DB_CONNECT_TIMEOUT).setProperties(schemaProp)
-          .setReconnectAttempts(DB_RECONNECT_ATTEMPTS)
-          .setReconnectInterval(DB_RECONNECT_INTERVAL_MS);
+      connectOptions =
+          new PgConnectOptions()
+              .setPort(databasePort)
+              .setHost(databaseIP)
+              .setDatabase(databaseName)
+              .setUser(databaseUserName)
+              .setPassword(databasePassword)
+              .setConnectTimeout(DB_CONNECT_TIMEOUT)
+              .setProperties(schemaProp)
+              .setReconnectAttempts(DB_RECONNECT_ATTEMPTS)
+              .setReconnectInterval(DB_RECONNECT_INTERVAL_MS);
     }
 
     /* Pool options */
@@ -123,19 +118,22 @@ public class ApdVerticle extends AbstractVerticle {
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
 
     /* Create the APD web client */
-    webClientOptions = new WebClientOptions().setSsl(true).setVerifyHost(true).setTrustAll(true)
-        .setFollowRedirects(false);
+    webClientOptions =
+        new WebClientOptions()
+            .setSsl(true)
+            .setVerifyHost(true)
+            .setTrustAll(true)
+            .setFollowRedirects(false);
     webClient = WebClient.create(vertx, webClientOptions);
     apdWebClient = new ApdWebClient(webClient, apdWebCliConfig);
 
     registrationService = RegistrationService.createProxy(vertx, REGISTRATION_SERVICE_ADDRESS);
     tokenService = TokenService.createProxy(vertx, TOKEN_SERVICE_ADDRESS);
-    apdService = new ApdServiceImpl(pool, apdWebClient, registrationService, tokenService,
-        apdServiceOptions);
+    apdService = new ApdServiceImpl(pool, apdWebClient, registrationService, tokenService);
     binder = new ServiceBinder(vertx);
     consumer = binder.setAddress(APD_SERVICE_ADDRESS).register(ApdService.class, apdService);
 
-    LOGGER.debug("Info : " + LOGGER.getName() + " : Started");
+    LOGGER.debug("Info : {} : Started", LOGGER.getName());
   }
 
   @Override

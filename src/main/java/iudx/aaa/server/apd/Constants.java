@@ -1,15 +1,15 @@
 package iudx.aaa.server.apd;
 
+/** Constants and SQL queries associated with {@link ApdService}. */
 public class Constants {
 
   public static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
   public static final String TOKEN_SERVICE_ADDRESS = "iudx.aaa.token.service";
 
   public static final String UUID_REGEX =
-          "^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$";
+      "^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$";
 
   /* Config related */
-  public static final String CONFIG_COS_URL = "cosDomain";
   public static final String CONFIG_WEBCLI_TIMEOUTMS = "webClientTimeoutMs";
   public static final String DATABASE_IP = "databaseIP";
   public static final String DATABASE_PORT = "databasePort";
@@ -62,14 +62,14 @@ public class Constants {
   public static final String ERR_TITLE_CANT_CHANGE_APD_STATUS =
       "Not allowed to change status for APD ID";
 
-  public static final String ERR_TITLE_NO_COS_ADMIN_ROLE = "Invalid roles to call API - not COS Admin";
-  public static final String ERR_DETAIL_NO_COS_ADMIN_ROLE =
-      "Only COS Admin may call the API";
+  public static final String ERR_TITLE_NO_COS_ADMIN_ROLE =
+      "Invalid roles to call API - not COS Admin";
+  public static final String ERR_DETAIL_NO_COS_ADMIN_ROLE = "Only COS Admin may call the API";
 
-  public static final String ERR_TITLE_INVALID_REQUEST =  "Invalid request";
-  public static final String ERR_TITLE_INVALID_REQUEST_ID  =  "APD not present";
+  public static final String ERR_TITLE_INVALID_REQUEST = "Invalid request";
+  public static final String ERR_TITLE_INVALID_REQUEST_ID = "APD not present";
 
-  public static final String ERR_TITLE_APD_NOT_REGISTERED =  "APD URL not registered on COS";
+  public static final String ERR_TITLE_APD_NOT_REGISTERED = "APD URL not registered on COS";
   public static final String ERR_DETAIL_APD_NOT_REGISTERED =
       "The APD belonging to the item has not been registered to this COS";
 
@@ -86,7 +86,7 @@ public class Constants {
 
   public static final String SQL_UPDATE_APD_STATUS =
       "UPDATE apds SET status = $1::apd_status_enum, updated_at = NOW() WHERE id = $2::uuid";
-  
+
   public static final String SQL_GET_APD_URL_STATUS =
       "SELECT url, status FROM apds WHERE url = $1::text";
 
@@ -94,20 +94,20 @@ public class Constants {
   public static final String APD_VERIFY_API = "/verify";
   public static final String APD_VERIFY_AUTH_HEADER = "Authorization";
   public static final String APD_VERIFY_BEARER = "Bearer ";
-  
+
   /* Allowed APD URNs */
   public static final String APD_URN_ALLOW = "urn:apd:Allow";
   public static final String APD_URN_DENY = "urn:apd:Deny";
   public static final String APD_URN_DENY_NEEDS_INT = "urn:apd:DenyNeedsInteraction";
   public static final String APD_URN_REGEX =
       "^(" + APD_URN_ALLOW + "|" + APD_URN_DENY + "|" + APD_URN_DENY_NEEDS_INT + ")$";
-  
+
   /* APD JSON request keys */
   public static final String APD_REQ_USER = "user";
   public static final String APD_REQ_OWNER = "owner";
-  public static final String APD_REQ_ITEM =  "item";
+  public static final String APD_REQ_ITEM = "item";
   public static final String APD_REQ_CONTEXT = "context";
-  
+
   /* APD JSON response keys */
   public static final String APD_RESP_TYPE = "type";
   public static final String APD_RESP_TITLE = "title";
@@ -115,7 +115,7 @@ public class Constants {
   public static final String APD_RESP_SESSIONID = "sessionId";
   public static final String APD_RESP_LINK = "link";
   public static final String APD_CONSTRAINTS = "apdConstraints";
-  
+
   /* create token service JSON key/values */
   public static final String CREATE_TOKEN_URL = "url";
   public static final String CREATE_TOKEN_CONSTRAINTS = "constraints";
@@ -125,12 +125,17 @@ public class Constants {
   public static final String CREATE_TOKEN_STATUS = "status";
   public static final String CREATE_TOKEN_SUCCESS = "success";
   public static final String CREATE_TOKEN_APD_INTERAC = "apd-interaction";
-  
-  public static final String APD_NOT_ACTIVE = " (NOTE: The APD is currently not in an active state.)";
+
+  public static final String APD_NOT_ACTIVE =
+      " (NOTE: The APD is currently not in an active state.)";
   public static final String ERR_TITLE_APD_EVAL_FAILED = "APD evaluation failed";
 
-  public static final String GET_APDINFO_ID = "SELECT id,name,url,owner_id AS \"ownerId\",status FROM apds where id = ANY($1::uuid[])";
-  public static final String GET_APDINFO_URL = "SELECT id,name,url,owner_id AS \"ownerId\",status FROM apds where url = ANY($1::text[])";
-  public static final String LIST_AUTH_QUERY = "SELECT id FROM apds where status = $1::apd_status_enum or status = $2::apd_status_enum";
-  public static final String LIST_USER_QUERY = "SELECT id FROM apds WHERE status = $1::apd_status_enum  ";
+  public static final String GET_APDINFO_ID =
+      "SELECT id,name,url,owner_id AS \"ownerId\",status FROM apds where id = ANY($1::uuid[])";
+  public static final String GET_APDINFO_URL =
+      "SELECT id,name,url,owner_id AS \"ownerId\",status FROM apds where url = ANY($1::text[])";
+  public static final String LIST_AUTH_QUERY =
+      "SELECT id FROM apds where status = $1::apd_status_enum or status = $2::apd_status_enum";
+  public static final String LIST_USER_QUERY =
+      "SELECT id FROM apds WHERE status = $1::apd_status_enum  ";
 }
