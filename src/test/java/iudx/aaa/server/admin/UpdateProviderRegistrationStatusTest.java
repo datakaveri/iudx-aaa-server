@@ -1,12 +1,12 @@
 package iudx.aaa.server.admin;
 
-import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.admin.Constants.ERR_DETAIL_NOT_ADMIN;
 import static iudx.aaa.server.admin.Constants.ERR_TITLE_DUPLICATE_REQ;
 import static iudx.aaa.server.admin.Constants.ERR_TITLE_INVALID_PROV_REG_ID;
 import static iudx.aaa.server.admin.Constants.ERR_TITLE_NOT_ADMIN;
 import static iudx.aaa.server.admin.Constants.RESP_STATUS;
 import static iudx.aaa.server.admin.Constants.SUCC_TITLE_PROV_STATUS_UPDATE;
+import static iudx.aaa.server.apiserver.util.Urn.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -44,6 +44,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 
+/** Unit tests for update provider registration. */
 @ExtendWith({VertxExtension.class})
 public class UpdateProviderRegistrationStatusTest {
   private static Logger LOGGER = LogManager.getLogger(UpdateProviderRegistrationStatusTest.class);
@@ -93,8 +94,13 @@ public class UpdateProviderRegistrationStatusTest {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
       connectOptions =
-          new PgConnectOptions().setPort(databasePort).setHost(databaseIP).setDatabase(databaseName)
-              .setUser(databaseUserName).setPassword(databasePassword).setProperties(schemaProp);
+          new PgConnectOptions()
+              .setPort(databasePort)
+              .setHost(databaseIP)
+              .setDatabase(databaseName)
+              .setUser(databaseUserName)
+              .setPassword(databasePassword)
+              .setProperties(schemaProp);
     }
 
     /* Pool options */
@@ -113,13 +119,16 @@ public class UpdateProviderRegistrationStatusTest {
   @AfterAll
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing....");
-    utils.deleteFakeResourceServer().compose(res -> utils.deleteFakeResourceServer())
-        .onComplete(x -> {
-          if (x.failed()) {
-            LOGGER.warn(x.cause().getMessage());
-          }
-          vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
-        });
+    utils
+        .deleteFakeResourceServer()
+        .compose(res -> utils.deleteFakeResourceServer())
+        .onComplete(
+            x -> {
+              if (x.failed()) {
+                LOGGER.warn(x.cause().getMessage());
+              }
+              vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
+            });
   }
 
   @Test
@@ -135,14 +144,19 @@ public class UpdateProviderRegistrationStatusTest {
 
     List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-    adminService.updateProviderRegistrationStatus(request, user,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getInteger("status"), 401);
-          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-          assertEquals(ERR_TITLE_NOT_ADMIN, response.getString("title"));
-          assertEquals(ERR_DETAIL_NOT_ADMIN, response.getString("detail"));
-          testContext.completeNow();
-        })));
+    adminService.updateProviderRegistrationStatus(
+        request,
+        user,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(response.getInteger("status"), 401);
+                      assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                      assertEquals(ERR_TITLE_NOT_ADMIN, response.getString("title"));
+                      assertEquals(ERR_DETAIL_NOT_ADMIN, response.getString("detail"));
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
@@ -152,26 +166,35 @@ public class UpdateProviderRegistrationStatusTest {
     // using fake user of a non-existent RS and fake IDs for this test
     User fakeAdminUser = new UserBuilder().userId(UUID.randomUUID()).build();
     fakeAdminUser.setRoles(List.of(Roles.ADMIN));
-    fakeAdminUser.setRolesToRsMapping(Map.of(Roles.ADMIN.toString(),
-        new JsonArray().add(RandomStringUtils.randomAlphabetic(10) + ".com")));
+    fakeAdminUser.setRolesToRsMapping(
+        Map.of(
+            Roles.ADMIN.toString(),
+            new JsonArray().add(RandomStringUtils.randomAlphabetic(10) + ".com")));
 
     UUID duplicateId = UUID.randomUUID();
 
-    JsonArray req = new JsonArray()
-        .add(new JsonObject().put("id", duplicateId.toString()).put("status", "approved"))
-        .add(new JsonObject().put("id", duplicateId.toString()).put("status", "rejected"))
-        .add(new JsonObject().put("id", UUID.randomUUID().toString()).put("status", "rejected"));
+    JsonArray req =
+        new JsonArray()
+            .add(new JsonObject().put("id", duplicateId.toString()).put("status", "approved"))
+            .add(new JsonObject().put("id", duplicateId.toString()).put("status", "rejected"))
+            .add(
+                new JsonObject().put("id", UUID.randomUUID().toString()).put("status", "rejected"));
 
     List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-    adminService.updateProviderRegistrationStatus(request, fakeAdminUser,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(response.getInteger("status"), 400);
-          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-          assertEquals(ERR_TITLE_DUPLICATE_REQ, response.getString("title"));
-          assertEquals(duplicateId.toString(), response.getString("detail"));
-          testContext.completeNow();
-        })));
+    adminService.updateProviderRegistrationStatus(
+        request,
+        fakeAdminUser,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(response.getInteger("status"), 400);
+                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                      assertEquals(ERR_TITLE_DUPLICATE_REQ, response.getString("title"));
+                      assertEquals(duplicateId.toString(), response.getString("detail"));
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
@@ -187,38 +210,55 @@ public class UpdateProviderRegistrationStatusTest {
 
     UUID providerAPendingId = UUID.randomUUID();
 
-    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL, adminUser)
-        .compose(res -> utils.createFakeUser(providerA, false, true)).compose(res -> utils
-            .addProviderStatusRole(providerA, SERVER_URL, RoleStatus.PENDING, providerAPendingId));
+    Future<Void> setup =
+        utils
+            .createFakeResourceServer(SERVER_URL, adminUser)
+            .compose(res -> utils.createFakeUser(providerA, false, true))
+            .compose(
+                res ->
+                    utils.addProviderStatusRole(
+                        providerA, SERVER_URL, RoleStatus.PENDING, providerAPendingId));
 
-    setup.onSuccess(succ -> {
+    setup.onSuccess(
+        succ -> {
+          Map<String, JsonObject> mockKcResp =
+              Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
+          Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
 
-      Map<String, JsonObject> mockKcResp =
-          Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
-      Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
+          JsonArray req =
+              new JsonArray()
+                  .add(
+                      new JsonObject()
+                          .put("id", providerAPendingId.toString())
+                          .put("status", "approved"));
+          List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-      JsonArray req = new JsonArray()
-          .add(new JsonObject().put("id", providerAPendingId.toString()).put("status", "approved"));
-      List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
+          adminService.updateProviderRegistrationStatus(
+              request,
+              adminUser,
+              testContext.succeeding(
+                  response ->
+                      testContext.verify(
+                          () -> {
+                            assertEquals(response.getInteger("status"), 200);
+                            assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                            assertEquals(
+                                response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
+                            JsonArray res = response.getJsonArray("results");
+                            assertTrue(res.size() == 1);
 
-      adminService.updateProviderRegistrationStatus(request, adminUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(response.getInteger("status"), 200);
-            assertEquals(response.getString("type"), URN_SUCCESS.toString());
-            assertEquals(response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
-            JsonArray res = response.getJsonArray("results");
-            assertTrue(res.size() == 1);
+                            JsonObject j = res.getJsonObject(0);
+                            assertEquals(j.getString("id"), providerAPendingId.toString());
+                            assertEquals(
+                                j.getString(RESP_STATUS), RoleStatus.APPROVED.name().toLowerCase());
 
-            JsonObject j = res.getJsonObject(0);
-            assertEquals(j.getString("id"), providerAPendingId.toString());
-            assertEquals(j.getString(RESP_STATUS), RoleStatus.APPROVED.name().toLowerCase());
-
-            assertEquals(j.getString("email"), utils.getDetails(providerA).email);
-            assertEquals(j.getString("userId"), providerA.getUserId());
-            assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
-            testContext.completeNow();
-          })));
-    });
+                            assertEquals(j.getString("email"), utils.getDetails(providerA).email);
+                            assertEquals(j.getString("userId"), providerA.getUserId());
+                            assertEquals(
+                                j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
+                            testContext.completeNow();
+                          })));
+        });
   }
 
   @Test
@@ -234,38 +274,55 @@ public class UpdateProviderRegistrationStatusTest {
 
     UUID providerAPendingId = UUID.randomUUID();
 
-    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL, adminUser)
-        .compose(res -> utils.createFakeUser(providerA, false, true)).compose(res -> utils
-            .addProviderStatusRole(providerA, SERVER_URL, RoleStatus.PENDING, providerAPendingId));
+    Future<Void> setup =
+        utils
+            .createFakeResourceServer(SERVER_URL, adminUser)
+            .compose(res -> utils.createFakeUser(providerA, false, true))
+            .compose(
+                res ->
+                    utils.addProviderStatusRole(
+                        providerA, SERVER_URL, RoleStatus.PENDING, providerAPendingId));
 
-    setup.onSuccess(succ -> {
+    setup.onSuccess(
+        succ -> {
+          Map<String, JsonObject> mockKcResp =
+              Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
+          Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
 
-      Map<String, JsonObject> mockKcResp =
-          Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
-      Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
+          JsonArray req =
+              new JsonArray()
+                  .add(
+                      new JsonObject()
+                          .put("id", providerAPendingId.toString())
+                          .put("status", "rejected"));
+          List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-      JsonArray req = new JsonArray()
-          .add(new JsonObject().put("id", providerAPendingId.toString()).put("status", "rejected"));
-      List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
+          adminService.updateProviderRegistrationStatus(
+              request,
+              adminUser,
+              testContext.succeeding(
+                  response ->
+                      testContext.verify(
+                          () -> {
+                            assertEquals(response.getInteger("status"), 200);
+                            assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                            assertEquals(
+                                response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
+                            JsonArray res = response.getJsonArray("results");
+                            assertTrue(res.size() == 1);
 
-      adminService.updateProviderRegistrationStatus(request, adminUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(response.getInteger("status"), 200);
-            assertEquals(response.getString("type"), URN_SUCCESS.toString());
-            assertEquals(response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
-            JsonArray res = response.getJsonArray("results");
-            assertTrue(res.size() == 1);
+                            JsonObject j = res.getJsonObject(0);
+                            assertEquals(j.getString("id"), providerAPendingId.toString());
+                            assertEquals(
+                                j.getString(RESP_STATUS), RoleStatus.REJECTED.name().toLowerCase());
 
-            JsonObject j = res.getJsonObject(0);
-            assertEquals(j.getString("id"), providerAPendingId.toString());
-            assertEquals(j.getString(RESP_STATUS), RoleStatus.REJECTED.name().toLowerCase());
-
-            assertEquals(j.getString("email"), utils.getDetails(providerA).email);
-            assertEquals(j.getString("userId"), providerA.getUserId());
-            assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
-            testContext.completeNow();
-          })));
-    });
+                            assertEquals(j.getString("email"), utils.getDetails(providerA).email);
+                            assertEquals(j.getString("userId"), providerA.getUserId());
+                            assertEquals(
+                                j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
+                            testContext.completeNow();
+                          })));
+        });
   }
 
   @Test
@@ -281,32 +338,50 @@ public class UpdateProviderRegistrationStatusTest {
 
     UUID providerAPendingId = UUID.randomUUID();
 
-    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL, adminUser)
-        .compose(res -> utils.createFakeUser(providerA, false, true)).compose(res -> utils
-            .addProviderStatusRole(providerA, SERVER_URL, RoleStatus.PENDING, providerAPendingId));
+    Future<Void> setup =
+        utils
+            .createFakeResourceServer(SERVER_URL, adminUser)
+            .compose(res -> utils.createFakeUser(providerA, false, true))
+            .compose(
+                res ->
+                    utils.addProviderStatusRole(
+                        providerA, SERVER_URL, RoleStatus.PENDING, providerAPendingId));
 
     UUID nonExistentId = UUID.randomUUID();
 
-    setup.onSuccess(succ -> {
+    setup.onSuccess(
+        succ -> {
+          Map<String, JsonObject> mockKcResp =
+              Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
+          Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
 
-      Map<String, JsonObject> mockKcResp =
-          Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
-      Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
+          JsonArray req =
+              new JsonArray()
+                  .add(
+                      new JsonObject()
+                          .put("id", providerAPendingId.toString())
+                          .put("status", "approved"))
+                  .add(
+                      new JsonObject()
+                          .put("id", nonExistentId.toString())
+                          .put("status", "approved"));
+          List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-      JsonArray req = new JsonArray()
-          .add(new JsonObject().put("id", providerAPendingId.toString()).put("status", "approved"))
-          .add(new JsonObject().put("id", nonExistentId.toString()).put("status", "approved"));
-      List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
-
-      adminService.updateProviderRegistrationStatus(request, adminUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(response.getInteger("status"), 400);
-            assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
-            assertEquals(response.getString("title"), ERR_TITLE_INVALID_PROV_REG_ID);
-            assertEquals(response.getString("detail"), nonExistentId.toString());
-            testContext.completeNow();
-          })));
-    });
+          adminService.updateProviderRegistrationStatus(
+              request,
+              adminUser,
+              testContext.succeeding(
+                  response ->
+                      testContext.verify(
+                          () -> {
+                            assertEquals(response.getInteger("status"), 400);
+                            assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
+                            assertEquals(
+                                response.getString("title"), ERR_TITLE_INVALID_PROV_REG_ID);
+                            assertEquals(response.getString("detail"), nonExistentId.toString());
+                            testContext.completeNow();
+                          })));
+        });
   }
 
   @Test
@@ -317,49 +392,70 @@ public class UpdateProviderRegistrationStatusTest {
 
     User adminOfOne = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
     adminOfOne.setRoles(List.of(Roles.ADMIN));
-    adminOfOne
-        .setRolesToRsMapping(Map.of(Roles.ADMIN.toString(), new JsonArray().add(SERVER_URL_ONE)));
+    adminOfOne.setRolesToRsMapping(
+        Map.of(Roles.ADMIN.toString(), new JsonArray().add(SERVER_URL_ONE)));
 
     User providerA = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
 
     UUID providerAPendingIdOnOne = UUID.randomUUID();
     UUID providerAPendingIdOnTwo = UUID.randomUUID();
 
-    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL_ONE, adminOfOne)
-        .compose(res -> utils.createFakeResourceServer(SERVER_URL_TWO,
-            new UserBuilder().userId(UUID.randomUUID()).build()))
-        .compose(res -> utils.createFakeUser(providerA, false, true))
-        .compose(res -> utils.addProviderStatusRole(providerA, SERVER_URL_ONE, RoleStatus.PENDING,
-            providerAPendingIdOnOne))
-        .compose(res -> utils.addProviderStatusRole(providerA, SERVER_URL_TWO, RoleStatus.PENDING,
-            providerAPendingIdOnTwo));
+    Future<Void> setup =
+        utils
+            .createFakeResourceServer(SERVER_URL_ONE, adminOfOne)
+            .compose(
+                res ->
+                    utils.createFakeResourceServer(
+                        SERVER_URL_TWO, new UserBuilder().userId(UUID.randomUUID()).build()))
+            .compose(res -> utils.createFakeUser(providerA, false, true))
+            .compose(
+                res ->
+                    utils.addProviderStatusRole(
+                        providerA, SERVER_URL_ONE, RoleStatus.PENDING, providerAPendingIdOnOne))
+            .compose(
+                res ->
+                    utils.addProviderStatusRole(
+                        providerA, SERVER_URL_TWO, RoleStatus.PENDING, providerAPendingIdOnTwo));
 
-    setup.onSuccess(succ -> {
+    setup.onSuccess(
+        succ -> {
+          Map<String, JsonObject> mockKcResp =
+              Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
+          Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
 
-      Map<String, JsonObject> mockKcResp =
-          Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
-      Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
+          JsonArray req =
+              new JsonArray()
+                  .add(
+                      new JsonObject()
+                          .put("id", providerAPendingIdOnOne.toString())
+                          .put("status", "rejected"))
+                  .add(
+                      new JsonObject()
+                          .put("id", providerAPendingIdOnTwo.toString())
+                          .put("status", "rejected"));
+          List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-      JsonArray req = new JsonArray()
-          .add(new JsonObject().put("id", providerAPendingIdOnOne.toString()).put("status",
-              "rejected"))
-          .add(new JsonObject().put("id", providerAPendingIdOnTwo.toString()).put("status",
-              "rejected"));
-      List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
-
-      adminService.updateProviderRegistrationStatus(request, adminOfOne,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(response.getInteger("status"), 400);
-            assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
-            assertEquals(response.getString("title"), ERR_TITLE_INVALID_PROV_REG_ID);
-            assertEquals(response.getString("detail"), providerAPendingIdOnTwo.toString());
-            testContext.completeNow();
-          })));
-    });
+          adminService.updateProviderRegistrationStatus(
+              request,
+              adminOfOne,
+              testContext.succeeding(
+                  response ->
+                      testContext.verify(
+                          () -> {
+                            assertEquals(response.getInteger("status"), 400);
+                            assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
+                            assertEquals(
+                                response.getString("title"), ERR_TITLE_INVALID_PROV_REG_ID);
+                            assertEquals(
+                                response.getString("detail"), providerAPendingIdOnTwo.toString());
+                            testContext.completeNow();
+                          })));
+        });
   }
 
   @Test
-  @DisplayName("Test both approve and reject in same request for different servers owned by the admin")
+  @DisplayName(
+      "Test both approve and reject in same request for different servers owned by the admin")
   void approveAndRejectTogetherOnDifferentServers(VertxTestContext testContext) {
     String SERVER_URL_ONE = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
     String SERVER_URL_TWO = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
@@ -375,64 +471,96 @@ public class UpdateProviderRegistrationStatusTest {
     UUID providerAPendingIdOnOne = UUID.randomUUID();
     UUID providerBPendingIdOnTwo = UUID.randomUUID();
 
-    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL_ONE, adminUser)
-        .compose(res -> utils.createFakeResourceServer(SERVER_URL_TWO, adminUser))
-        .compose(res -> utils.createFakeUser(providerA, false, true))
-        .compose(res -> utils.createFakeUser(providerB, false, true))
-        .compose(res -> utils.addProviderStatusRole(providerA, SERVER_URL_ONE, RoleStatus.PENDING,
-            providerAPendingIdOnOne))
-        .compose(res -> utils.addProviderStatusRole(providerB, SERVER_URL_TWO, RoleStatus.PENDING,
-            providerBPendingIdOnTwo));
+    Future<Void> setup =
+        utils
+            .createFakeResourceServer(SERVER_URL_ONE, adminUser)
+            .compose(res -> utils.createFakeResourceServer(SERVER_URL_TWO, adminUser))
+            .compose(res -> utils.createFakeUser(providerA, false, true))
+            .compose(res -> utils.createFakeUser(providerB, false, true))
+            .compose(
+                res ->
+                    utils.addProviderStatusRole(
+                        providerA, SERVER_URL_ONE, RoleStatus.PENDING, providerAPendingIdOnOne))
+            .compose(
+                res ->
+                    utils.addProviderStatusRole(
+                        providerB, SERVER_URL_TWO, RoleStatus.PENDING, providerBPendingIdOnTwo));
 
     Checkpoint sawProviderA = testContext.checkpoint();
     Checkpoint sawProviderB = testContext.checkpoint();
 
-    setup.onSuccess(succ -> {
+    setup.onSuccess(
+        succ -> {
+          Map<String, JsonObject> mockKcResp =
+              Map.of(
+                  providerA.getUserId(),
+                  utils.getKcAdminJson(providerA),
+                  providerB.getUserId(),
+                  utils.getKcAdminJson(providerB));
+          Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
 
-      Map<String, JsonObject> mockKcResp = Map.of(providerA.getUserId(),
-          utils.getKcAdminJson(providerA), providerB.getUserId(), utils.getKcAdminJson(providerB));
-      Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
+          JsonArray req =
+              new JsonArray()
+                  .add(
+                      new JsonObject()
+                          .put("id", providerAPendingIdOnOne.toString())
+                          .put("status", "approved"))
+                  .add(
+                      new JsonObject()
+                          .put("id", providerBPendingIdOnTwo.toString())
+                          .put("status", "rejected"));
+          List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-      JsonArray req = new JsonArray()
-          .add(new JsonObject().put("id", providerAPendingIdOnOne.toString()).put("status",
-              "approved"))
-          .add(new JsonObject().put("id", providerBPendingIdOnTwo.toString()).put("status",
-              "rejected"));
-      List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
+          adminService.updateProviderRegistrationStatus(
+              request,
+              adminUser,
+              testContext.succeeding(
+                  response ->
+                      testContext.verify(
+                          () -> {
+                            assertEquals(response.getInteger("status"), 200);
+                            assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                            assertEquals(
+                                response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
+                            JsonArray res = response.getJsonArray("results");
+                            assertTrue(res.size() == 2);
 
-      adminService.updateProviderRegistrationStatus(request, adminUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(response.getInteger("status"), 200);
-            assertEquals(response.getString("type"), URN_SUCCESS.toString());
-            assertEquals(response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
-            JsonArray res = response.getJsonArray("results");
-            assertTrue(res.size() == 2);
+                            res.forEach(
+                                i -> {
+                                  JsonObject j = (JsonObject) i;
 
-            res.forEach(i -> {
-              JsonObject j = (JsonObject) i;
+                                  if (j.getString("id")
+                                      .equals(providerAPendingIdOnOne.toString())) {
+                                    assertEquals(
+                                        j.getString(Constants.RESP_STATUS),
+                                        RoleStatus.APPROVED.name().toLowerCase());
+                                    assertEquals(j.getString("rsUrl"), SERVER_URL_ONE);
+                                    assertEquals(
+                                        j.getString("email"), utils.getDetails(providerA).email);
+                                    assertEquals(j.getString("userId"), providerA.getUserId());
+                                    assertEquals(
+                                        j.getJsonObject("userInfo"),
+                                        utils.getDetails(providerA).userInfo);
+                                    sawProviderA.flag();
+                                  }
 
-              if (j.getString("id").equals(providerAPendingIdOnOne.toString())) {
-                assertEquals(j.getString(Constants.RESP_STATUS),
-                    RoleStatus.APPROVED.name().toLowerCase());
-                assertEquals(j.getString("rsUrl"), SERVER_URL_ONE);
-                assertEquals(j.getString("email"), utils.getDetails(providerA).email);
-                assertEquals(j.getString("userId"), providerA.getUserId());
-                assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
-                sawProviderA.flag();
-              }
-
-              if (j.getString("id").equals(providerBPendingIdOnTwo.toString())) {
-                assertEquals(j.getString(Constants.RESP_STATUS),
-                    RoleStatus.REJECTED.name().toLowerCase());
-                assertEquals(j.getString("rsUrl"), SERVER_URL_TWO);
-                assertEquals(j.getString("email"), utils.getDetails(providerB).email);
-                assertEquals(j.getString("userId"), providerB.getUserId());
-                assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerB).userInfo);
-                sawProviderB.flag();
-              }
-            });
-          })));
-    });
+                                  if (j.getString("id")
+                                      .equals(providerBPendingIdOnTwo.toString())) {
+                                    assertEquals(
+                                        j.getString(Constants.RESP_STATUS),
+                                        RoleStatus.REJECTED.name().toLowerCase());
+                                    assertEquals(j.getString("rsUrl"), SERVER_URL_TWO);
+                                    assertEquals(
+                                        j.getString("email"), utils.getDetails(providerB).email);
+                                    assertEquals(j.getString("userId"), providerB.getUserId());
+                                    assertEquals(
+                                        j.getJsonObject("userInfo"),
+                                        utils.getDetails(providerB).userInfo);
+                                    sawProviderB.flag();
+                                  }
+                                });
+                          })));
+        });
   }
 
   @Test
@@ -448,56 +576,89 @@ public class UpdateProviderRegistrationStatusTest {
 
     UUID providerAPendingId = UUID.randomUUID();
 
-    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL, adminUser)
-        .compose(res -> utils.createFakeUser(providerA, false, true)).compose(res -> utils
-            .addProviderStatusRole(providerA, SERVER_URL, RoleStatus.PENDING, providerAPendingId));
+    Future<Void> setup =
+        utils
+            .createFakeResourceServer(SERVER_URL, adminUser)
+            .compose(res -> utils.createFakeUser(providerA, false, true))
+            .compose(
+                res ->
+                    utils.addProviderStatusRole(
+                        providerA, SERVER_URL, RoleStatus.PENDING, providerAPendingId));
 
     Checkpoint approveSuccessfully = testContext.checkpoint();
     Checkpoint failApprove = testContext.checkpoint();
 
-    setup.onSuccess(succ -> {
+    setup.onSuccess(
+        succ -> {
+          Map<String, JsonObject> mockKcResp =
+              Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
+          Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
 
-      Map<String, JsonObject> mockKcResp =
-          Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
-      Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
+          JsonArray req =
+              new JsonArray()
+                  .add(
+                      new JsonObject()
+                          .put("id", providerAPendingId.toString())
+                          .put("status", "approved"));
+          List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-      JsonArray req = new JsonArray()
-          .add(new JsonObject().put("id", providerAPendingId.toString()).put("status", "approved"));
-      List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
+          adminService.updateProviderRegistrationStatus(
+              request,
+              adminUser,
+              testContext.succeeding(
+                  response ->
+                      testContext.verify(
+                          () -> {
+                            assertEquals(response.getInteger("status"), 200);
+                            assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                            assertEquals(
+                                response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
+                            JsonArray res = response.getJsonArray("results");
+                            assertTrue(res.size() == 1);
 
-      adminService.updateProviderRegistrationStatus(request, adminUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(response.getInteger("status"), 200);
-            assertEquals(response.getString("type"), URN_SUCCESS.toString());
-            assertEquals(response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
-            JsonArray res = response.getJsonArray("results");
-            assertTrue(res.size() == 1);
+                            JsonObject j = res.getJsonObject(0);
+                            assertEquals(j.getString("id"), providerAPendingId.toString());
+                            assertEquals(
+                                j.getString(RESP_STATUS), RoleStatus.APPROVED.name().toLowerCase());
 
-            JsonObject j = res.getJsonObject(0);
-            assertEquals(j.getString("id"), providerAPendingId.toString());
-            assertEquals(j.getString(RESP_STATUS), RoleStatus.APPROVED.name().toLowerCase());
+                            assertEquals(j.getString("email"), utils.getDetails(providerA).email);
+                            assertEquals(j.getString("userId"), providerA.getUserId());
+                            assertEquals(
+                                j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
 
-            assertEquals(j.getString("email"), utils.getDetails(providerA).email);
-            assertEquals(j.getString("userId"), providerA.getUserId());
-            assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
+                            approveSuccessfully.flag();
 
-            approveSuccessfully.flag();
+                            JsonArray badReq =
+                                new JsonArray()
+                                    .add(
+                                        new JsonObject()
+                                            .put("id", providerAPendingId.toString())
+                                            .put("status", "approved"));
+                            List<ProviderUpdateRequest> badRequest =
+                                ProviderUpdateRequest.jsonArrayToList(badReq);
 
-            JsonArray badReq = new JsonArray().add(new JsonObject()
-                .put("id", providerAPendingId.toString()).put("status", "approved"));
-            List<ProviderUpdateRequest> badRequest = ProviderUpdateRequest.jsonArrayToList(badReq);
+                            adminService.updateProviderRegistrationStatus(
+                                badRequest,
+                                adminUser,
+                                testContext.succeeding(
+                                    resp ->
+                                        testContext.verify(
+                                            () -> {
+                                              assertEquals(resp.getInteger("status"), 400);
+                                              assertEquals(
+                                                  resp.getString("type"),
+                                                  URN_INVALID_INPUT.toString());
+                                              assertEquals(
+                                                  resp.getString("title"),
+                                                  ERR_TITLE_INVALID_PROV_REG_ID);
+                                              assertEquals(
+                                                  resp.getString("detail"),
+                                                  providerAPendingId.toString());
 
-            adminService.updateProviderRegistrationStatus(badRequest, adminUser,
-                testContext.succeeding(resp -> testContext.verify(() -> {
-                  assertEquals(resp.getInteger("status"), 400);
-                  assertEquals(resp.getString("type"), URN_INVALID_INPUT.toString());
-                  assertEquals(resp.getString("title"), ERR_TITLE_INVALID_PROV_REG_ID);
-                  assertEquals(resp.getString("detail"), providerAPendingId.toString());
-
-                  failApprove.flag();
-                })));
-          })));
-    });
+                                              failApprove.flag();
+                                            })));
+                          })));
+        });
   }
 
   @Test
@@ -513,56 +674,89 @@ public class UpdateProviderRegistrationStatusTest {
 
     UUID providerAPendingId = UUID.randomUUID();
 
-    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL, adminUser)
-        .compose(res -> utils.createFakeUser(providerA, false, true)).compose(res -> utils
-            .addProviderStatusRole(providerA, SERVER_URL, RoleStatus.PENDING, providerAPendingId));
+    Future<Void> setup =
+        utils
+            .createFakeResourceServer(SERVER_URL, adminUser)
+            .compose(res -> utils.createFakeUser(providerA, false, true))
+            .compose(
+                res ->
+                    utils.addProviderStatusRole(
+                        providerA, SERVER_URL, RoleStatus.PENDING, providerAPendingId));
 
     Checkpoint rejectSuccessfully = testContext.checkpoint();
     Checkpoint failApprove = testContext.checkpoint();
 
-    setup.onSuccess(succ -> {
+    setup.onSuccess(
+        succ -> {
+          Map<String, JsonObject> mockKcResp =
+              Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
+          Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
 
-      Map<String, JsonObject> mockKcResp =
-          Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
-      Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
+          JsonArray req =
+              new JsonArray()
+                  .add(
+                      new JsonObject()
+                          .put("id", providerAPendingId.toString())
+                          .put("status", "rejected"));
+          List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-      JsonArray req = new JsonArray()
-          .add(new JsonObject().put("id", providerAPendingId.toString()).put("status", "rejected"));
-      List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
+          adminService.updateProviderRegistrationStatus(
+              request,
+              adminUser,
+              testContext.succeeding(
+                  response ->
+                      testContext.verify(
+                          () -> {
+                            assertEquals(response.getInteger("status"), 200);
+                            assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                            assertEquals(
+                                response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
+                            JsonArray res = response.getJsonArray("results");
+                            assertTrue(res.size() == 1);
 
-      adminService.updateProviderRegistrationStatus(request, adminUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(response.getInteger("status"), 200);
-            assertEquals(response.getString("type"), URN_SUCCESS.toString());
-            assertEquals(response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
-            JsonArray res = response.getJsonArray("results");
-            assertTrue(res.size() == 1);
+                            JsonObject j = res.getJsonObject(0);
+                            assertEquals(j.getString("id"), providerAPendingId.toString());
+                            assertEquals(
+                                j.getString(RESP_STATUS), RoleStatus.REJECTED.name().toLowerCase());
 
-            JsonObject j = res.getJsonObject(0);
-            assertEquals(j.getString("id"), providerAPendingId.toString());
-            assertEquals(j.getString(RESP_STATUS), RoleStatus.REJECTED.name().toLowerCase());
+                            assertEquals(j.getString("email"), utils.getDetails(providerA).email);
+                            assertEquals(j.getString("userId"), providerA.getUserId());
+                            assertEquals(
+                                j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
 
-            assertEquals(j.getString("email"), utils.getDetails(providerA).email);
-            assertEquals(j.getString("userId"), providerA.getUserId());
-            assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
+                            rejectSuccessfully.flag();
 
-            rejectSuccessfully.flag();
+                            JsonArray badReq =
+                                new JsonArray()
+                                    .add(
+                                        new JsonObject()
+                                            .put("id", providerAPendingId.toString())
+                                            .put("status", "approved"));
+                            List<ProviderUpdateRequest> badRequest =
+                                ProviderUpdateRequest.jsonArrayToList(badReq);
 
-            JsonArray badReq = new JsonArray().add(new JsonObject()
-                .put("id", providerAPendingId.toString()).put("status", "approved"));
-            List<ProviderUpdateRequest> badRequest = ProviderUpdateRequest.jsonArrayToList(badReq);
+                            adminService.updateProviderRegistrationStatus(
+                                badRequest,
+                                adminUser,
+                                testContext.succeeding(
+                                    resp ->
+                                        testContext.verify(
+                                            () -> {
+                                              assertEquals(resp.getInteger("status"), 400);
+                                              assertEquals(
+                                                  resp.getString("type"),
+                                                  URN_INVALID_INPUT.toString());
+                                              assertEquals(
+                                                  resp.getString("title"),
+                                                  ERR_TITLE_INVALID_PROV_REG_ID);
+                                              assertEquals(
+                                                  resp.getString("detail"),
+                                                  providerAPendingId.toString());
 
-            adminService.updateProviderRegistrationStatus(badRequest, adminUser,
-                testContext.succeeding(resp -> testContext.verify(() -> {
-                  assertEquals(resp.getInteger("status"), 400);
-                  assertEquals(resp.getString("type"), URN_INVALID_INPUT.toString());
-                  assertEquals(resp.getString("title"), ERR_TITLE_INVALID_PROV_REG_ID);
-                  assertEquals(resp.getString("detail"), providerAPendingId.toString());
-
-                  failApprove.flag();
-                })));
-          })));
-    });
+                                              failApprove.flag();
+                                            })));
+                          })));
+        });
   }
 
   @Test
@@ -578,51 +772,84 @@ public class UpdateProviderRegistrationStatusTest {
 
     UUID providerAPendingId = UUID.randomUUID();
 
-    Future<Void> setup = utils.createFakeResourceServer(SERVER_URL, adminUser)
-        .compose(res -> utils.createFakeUser(providerA, false, true)).compose(res -> utils
-            .addProviderStatusRole(providerA, SERVER_URL, RoleStatus.PENDING, providerAPendingId));
+    Future<Void> setup =
+        utils
+            .createFakeResourceServer(SERVER_URL, adminUser)
+            .compose(res -> utils.createFakeUser(providerA, false, true))
+            .compose(
+                res ->
+                    utils.addProviderStatusRole(
+                        providerA, SERVER_URL, RoleStatus.PENDING, providerAPendingId));
 
     Checkpoint keycloakFailed = testContext.checkpoint();
     Checkpoint rollBackSuccess = testContext.checkpoint();
 
-    setup.onSuccess(succ -> {
+    setup.onSuccess(
+        succ -> {
 
-      // bad KC behaviour
-      Mockito.when(kc.getDetails(any())).thenReturn(Future.failedFuture("fail"));
+          // bad KC behaviour
+          Mockito.when(kc.getDetails(any())).thenReturn(Future.failedFuture("fail"));
 
-      JsonArray req = new JsonArray()
-          .add(new JsonObject().put("id", providerAPendingId.toString()).put("status", "approved"));
-      List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
+          JsonArray req =
+              new JsonArray()
+                  .add(
+                      new JsonObject()
+                          .put("id", providerAPendingId.toString())
+                          .put("status", "approved"));
+          List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-      adminService.updateProviderRegistrationStatus(request, adminUser,
-          testContext.failing(err -> testContext.verify(() -> {
-            keycloakFailed.flag();
+          adminService.updateProviderRegistrationStatus(
+              request,
+              adminUser,
+              testContext.failing(
+                  err ->
+                      testContext.verify(
+                          () -> {
+                            keycloakFailed.flag();
 
-            // mock correct KC behaviour
-            Map<String, JsonObject> mockKcResp =
-                Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
-            Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
+                            // mock correct KC behaviour
+                            Map<String, JsonObject> mockKcResp =
+                                Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
+                            Mockito.when(kc.getDetails(any()))
+                                .thenReturn(Future.succeededFuture(mockKcResp));
 
-            // request should succeed because of rollback
-            adminService.updateProviderRegistrationStatus(request, adminUser,
-                testContext.succeeding(response -> testContext.verify(() -> {
-                  assertEquals(response.getInteger("status"), 200);
-                  assertEquals(response.getString("type"), URN_SUCCESS.toString());
-                  assertEquals(response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
-                  JsonArray res = response.getJsonArray("results");
-                  assertTrue(res.size() == 1);
+                            // request should succeed because of rollback
+                            adminService.updateProviderRegistrationStatus(
+                                request,
+                                adminUser,
+                                testContext.succeeding(
+                                    response ->
+                                        testContext.verify(
+                                            () -> {
+                                              assertEquals(response.getInteger("status"), 200);
+                                              assertEquals(
+                                                  response.getString("type"),
+                                                  URN_SUCCESS.toString());
+                                              assertEquals(
+                                                  response.getString("title"),
+                                                  SUCC_TITLE_PROV_STATUS_UPDATE);
+                                              JsonArray res = response.getJsonArray("results");
+                                              assertTrue(res.size() == 1);
 
-                  JsonObject j = res.getJsonObject(0);
-                  assertEquals(j.getString("id"), providerAPendingId.toString());
-                  assertEquals(j.getString(RESP_STATUS), RoleStatus.APPROVED.name().toLowerCase());
+                                              JsonObject j = res.getJsonObject(0);
+                                              assertEquals(
+                                                  j.getString("id"), providerAPendingId.toString());
+                                              assertEquals(
+                                                  j.getString(RESP_STATUS),
+                                                  RoleStatus.APPROVED.name().toLowerCase());
 
-                  assertEquals(j.getString("email"), utils.getDetails(providerA).email);
-                  assertEquals(j.getString("userId"), providerA.getUserId());
-                  assertEquals(j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
-                  
-                  rollBackSuccess.flag();
-                })));
-          })));
-    });
+                                              assertEquals(
+                                                  j.getString("email"),
+                                                  utils.getDetails(providerA).email);
+                                              assertEquals(
+                                                  j.getString("userId"), providerA.getUserId());
+                                              assertEquals(
+                                                  j.getJsonObject("userInfo"),
+                                                  utils.getDetails(providerA).userInfo);
+
+                                              rollBackSuccess.flag();
+                                            })));
+                          })));
+        });
   }
 }
