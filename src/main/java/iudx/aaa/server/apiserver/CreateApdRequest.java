@@ -6,7 +6,6 @@ import io.vertx.core.json.JsonObject;
 /**
  * Data object for create Access Policy Domain (APD) API. The validations performed for url are
  * minimal as the Guava library validates the domain sufficiently.
- *
  */
 @DataObject(generateConverter = true)
 public class CreateApdRequest {

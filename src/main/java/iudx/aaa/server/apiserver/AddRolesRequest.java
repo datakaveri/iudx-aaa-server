@@ -7,9 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Vert.x data object for the createUser API in Registration service.
- */
+/** Vert.x data object for the add roles API in Registration service. */
 @DataObject(generateConverter = true)
 public class AddRolesRequest {
 
@@ -71,5 +69,4 @@ public class AddRolesRequest {
 
     return roles;
   }
-
 }

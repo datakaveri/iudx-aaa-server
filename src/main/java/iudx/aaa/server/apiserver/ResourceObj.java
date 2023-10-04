@@ -2,10 +2,7 @@ package iudx.aaa.server.apiserver;
 
 import java.util.UUID;
 
-/**
- * Class to represent a resource group/resource item.
- *
- */
+/** Class to represent a resource group/resource item. */
 public class ResourceObj {
 
   ItemType itemType;
@@ -16,8 +13,14 @@ public class ResourceObj {
   String apdUrl;
   private String accessType;
 
-  public ResourceObj(ItemType itemType, UUID id, UUID ownerId, String resServerUrl, UUID resGrpId,
-      String apdUrl, String accessType) {
+  public ResourceObj(
+      ItemType itemType,
+      UUID id,
+      UUID ownerId,
+      String resServerUrl,
+      UUID resGrpId,
+      String apdUrl,
+      String accessType) {
     this.itemType = itemType;
     this.id = id;
     this.ownerId = ownerId;
@@ -34,6 +37,7 @@ public class ResourceObj {
   public UUID getId() {
     return id;
   }
+
   public UUID getOwnerId() {
     return ownerId;
   }
@@ -41,19 +45,20 @@ public class ResourceObj {
   public String getResServerUrl() {
     return resServerUrl;
   }
+
   public UUID getResGrpId() {
     return resGrpId;
   }
+
   public String getApdUrl() {
     return apdUrl;
   }
 
   public Boolean isPii() {
-    return accessType.equals("PII");
+    return "PII".equals(accessType);
   }
 
-  public static class ResourceObjBuilder
-  {
+  public static class ResourceObjBuilder {
     private ItemType itemType;
     private UUID id;
     private UUID ownerId;
@@ -98,9 +103,14 @@ public class ResourceObj {
     }
 
     public ResourceObj build() {
-      return new ResourceObj(this.itemType, this.id, this.ownerId, this.resServerUrl,
-          this.resGrpId, this.apdUrl, this.accessType);
+      return new ResourceObj(
+          this.itemType,
+          this.id,
+          this.ownerId,
+          this.resServerUrl,
+          this.resGrpId,
+          this.apdUrl,
+          this.accessType);
     }
   }
-
 }

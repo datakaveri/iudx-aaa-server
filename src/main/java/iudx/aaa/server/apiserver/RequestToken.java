@@ -3,6 +3,7 @@ package iudx.aaa.server.apiserver;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
+/** Vert.x data object for the create token API. */
 @DataObject(generateConverter = true)
 public class RequestToken {
 
@@ -59,5 +60,4 @@ public class RequestToken {
   public void setContext(JsonObject context) {
     this.context = context;
   }
-
 }

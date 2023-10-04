@@ -11,9 +11,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/**
- * User object.
- */
+/** User object. */
 @DataObject(generateConverter = true)
 public class User {
 
@@ -43,7 +41,7 @@ public class User {
   /**
    * Used when the User object needs to be sent in the response, so that roles are changed to
    * lowercase.
-   * 
+   *
    * @return JsonObject the User object in JSON
    */
   public JsonObject toJsonResponse() {
@@ -90,8 +88,9 @@ public class User {
 
   @SuppressWarnings("unchecked")
   public void setRolesToRsMapping(Map<String, JsonArray> rolesToRsMapping) {
-    this.rolesToRsMapping = rolesToRsMapping.entrySet().stream()
-        .collect(Collectors.toMap(i -> i.getKey().toLowerCase(), i -> i.getValue().getList()));
+    this.rolesToRsMapping =
+        rolesToRsMapping.entrySet().stream()
+            .collect(Collectors.toMap(i -> i.getKey().toLowerCase(), i -> i.getValue().getList()));
   }
 
   public static class UserBuilder {
@@ -126,8 +125,10 @@ public class User {
 
     @SuppressWarnings("unchecked")
     public UserBuilder rolesToRsMapping(Map<String, JsonArray> rolesToRsMapping) {
-      this.rolesToRsMapping = rolesToRsMapping.entrySet().stream()
-          .collect(Collectors.toMap(i -> i.getKey().toLowerCase(), i -> i.getValue().getList()));
+      this.rolesToRsMapping =
+          rolesToRsMapping.entrySet().stream()
+              .collect(
+                  Collectors.toMap(i -> i.getKey().toLowerCase(), i -> i.getValue().getList()));
       return this;
     }
 
