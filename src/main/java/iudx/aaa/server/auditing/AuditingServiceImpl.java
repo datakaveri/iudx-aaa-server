@@ -2,10 +2,10 @@ package iudx.aaa.server.auditing;
 
 import static iudx.aaa.server.auditing.util.Constants.BODY;
 import static iudx.aaa.server.auditing.util.Constants.BODY_COLUMN_INDEX;
+import static iudx.aaa.server.auditing.util.Constants.DATABASE_TABLE_NAME;
 import static iudx.aaa.server.auditing.util.Constants.EMPTY_RESPONSE;
 import static iudx.aaa.server.auditing.util.Constants.ENDPOINT;
 import static iudx.aaa.server.auditing.util.Constants.ENDPOINT_COLUMN_INDEX;
-import static iudx.aaa.server.auditing.util.Constants.DATABASE_TABLE_NAME;
 import static iudx.aaa.server.auditing.util.Constants.ERROR;
 import static iudx.aaa.server.auditing.util.Constants.FAILED;
 import static iudx.aaa.server.auditing.util.Constants.MESSAGE;

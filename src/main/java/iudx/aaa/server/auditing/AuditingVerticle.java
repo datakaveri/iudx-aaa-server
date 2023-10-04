@@ -30,7 +30,7 @@ public class AuditingVerticle extends AbstractVerticle {
     databaseName = config().getString("auditingDatabaseName");
     databaseUserName = config().getString("auditingDatabaseUserName");
     databasePassword = config().getString("auditingDatabasePassword");
-    databaseTableName= config().getString("auditingDatabaseTableName");
+    databaseTableName = config().getString("auditingDatabaseTableName");
     poolSize = config().getInteger("auditingPoolSize");
 
     JsonObject propObj = new JsonObject();
@@ -39,7 +39,7 @@ public class AuditingVerticle extends AbstractVerticle {
     propObj.put("auditingDatabaseName", databaseName);
     propObj.put("auditingDatabaseUserName", databaseUserName);
     propObj.put("auditingDatabasePassword", databasePassword);
-    propObj.put("auditingDatabaseTableName",databaseTableName);
+    propObj.put("auditingDatabaseTableName", databaseTableName);
     propObj.put("auditingPoolSize", poolSize);
 
     binder = new ServiceBinder(vertx);

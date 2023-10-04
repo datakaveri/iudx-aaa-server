@@ -15,6 +15,7 @@ import static iudx.aaa.server.auditing.util.Constants.USERID_NOT_FOUND;
 import static iudx.aaa.server.auditing.util.Constants.USER_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+/** Unit tests for auditing service. */
 @ExtendWith({VertxExtension.class})
 public class AuditingServiceTest {
   private static AuditingService auditingService;
@@ -52,7 +54,7 @@ public class AuditingServiceTest {
     databaseUserName = dbConfig.getString("auditingDatabaseUserName");
     databasePassword = dbConfig.getString("auditingDatabasePassword");
     databasePoolSize = dbConfig.getInteger("auditingPoolSize");
-    databaseTableName= dbConfig.getString("auditingDatabaseTableName");
+    databaseTableName = dbConfig.getString("auditingDatabaseTableName");
     auditingService = new AuditingServiceImpl(dbConfig, vertxObj);
     vertxTestContext.completeNow();
   }
@@ -180,18 +182,23 @@ public class AuditingServiceTest {
     Promise<JsonObject> promise = Promise.promise();
     auditingService.executeWriteQuery(dataToWrite, promise);
 
-    promise.future().onComplete(written -> {
-      // create readRequest here so that query endTime is 
-      // only after the write is done 
-      JsonObject jsonObject = readRequest();
-      auditingService.executeReadQuery(jsonObject,
-          vertxTestContext.succeeding(response -> vertxTestContext.verify(() -> {
-            
-            assertTrue(response.getString("title").equals("Success"));
-            vertxTestContext.completeNow();
-
-          })));
-    });
+    promise
+        .future()
+        .onComplete(
+            written -> {
+              // create readRequest here so that query endTime is
+              // only after the write is done
+              JsonObject jsonObject = readRequest();
+              auditingService.executeReadQuery(
+                  jsonObject,
+                  vertxTestContext.succeeding(
+                      response ->
+                          vertxTestContext.verify(
+                              () -> {
+                                assertTrue(response.getString("title").equals("Success"));
+                                vertxTestContext.completeNow();
+                              })));
+            });
   }
 
   @Test
