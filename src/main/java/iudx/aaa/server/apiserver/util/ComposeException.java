@@ -22,7 +22,7 @@ public class ComposeException extends ServiceException {
   /**
    * Create a new ComposeException using a Response object (preferably representing an error). The
    * title field of the Response object is used as the message for the Exception.
-   * 
+   *
    * @param response The Response object
    */
   public ComposeException(Response response) {
@@ -33,7 +33,7 @@ public class ComposeException extends ServiceException {
   /**
    * Create a new ComposeException with the parameters needed to create an Response object
    * representing an error. The title field is used as the Exception message.
-   * 
+   *
    * @param status The HTTP status code
    * @param type The appropriate URN
    * @param title The appropriate title
@@ -45,8 +45,7 @@ public class ComposeException extends ServiceException {
         new ResponseBuilder().status(status).type(type).title(title).detail(detail).build();
   }
 
-
-    /**
+  /**
    * Create a new ComposeException with the parameters needed to create an Response object
    * representing an error. The title field is used as the Exception message.
    *
@@ -58,12 +57,10 @@ public class ComposeException extends ServiceException {
   public ComposeException(int status, Urn type, String title, String detail) {
     super(COMPOSE_FUTURE_ERROR, detail);
     this.response =
-            new ResponseBuilder().status(status).type(type).title(title).detail(detail).build();
+        new ResponseBuilder().status(status).type(type).title(title).detail(detail).build();
   }
 
   public Response getResponse() {
     return response;
   }
-
-
 }

@@ -9,7 +9,6 @@ import io.vertx.core.json.JsonObject;
  * and encode ComposeException accross the event bus. This is especially necessary for clustered
  * vert.x. {@link iudx.aaa.server.deploy.Deployer} and {@link iudx.aaa.server.DeployerDev} add this
  * message codec to the vertx object.
- *
  */
 public class ComposeExceptionMessageCodec
     implements MessageCodec<ComposeException, ComposeException> {
@@ -45,8 +44,11 @@ public class ComposeExceptionMessageCodec
 
     // We can finally create custom message object
     /* TODO: change this so that we use Response.fromJson() or something */
-    return new ComposeException(contentJson.getInteger("status"), contentJson.getString("type"),
-        contentJson.getString("title"), contentJson.getString("detail"));
+    return new ComposeException(
+        contentJson.getInteger("status"),
+        contentJson.getString("type"),
+        contentJson.getString("title"),
+        contentJson.getString("detail"));
   }
 
   @Override
