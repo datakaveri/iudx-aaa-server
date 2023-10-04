@@ -67,6 +67,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+/** Unit tests for verify resource access. */
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
 public class VerifyResourceAccessTest {
   private static final Logger LOGGER = LogManager.getLogger(VerifyResourceAccessTest.class);
@@ -90,9 +91,11 @@ public class VerifyResourceAccessTest {
   private static CatalogueClient catalogueClient = Mockito.mock(CatalogueClient.class);
 
   private static Vertx vertxObj;
-  
-  private static final String DUMMY_COS_URL = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
-  private static final String DUMMY_SERVER = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
+
+  private static final String DUMMY_COS_URL =
+      RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
+  private static final String DUMMY_SERVER =
+      RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
 
   @BeforeAll
   @DisplayName("Deploying Verticle")
@@ -148,23 +151,31 @@ public class VerifyResourceAccessTest {
   @DisplayName("COS Admin, admin cannot get resource token")
   void cosAdminAndAdminNoGetResToken(VertxTestContext testContext) {
     User dummyUser =
-        new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.COS_ADMIN, Roles.ADMIN))
-            .rolesToRsMapping(Map.of(Roles.COS_ADMIN.toString(), new JsonArray().add(DUMMY_COS_URL),
-                Roles.ADMIN.toString(), new JsonArray().add(DUMMY_SERVER)))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.COS_ADMIN, Roles.ADMIN))
+            .rolesToRsMapping(
+                Map.of(
+                    Roles.COS_ADMIN.toString(),
+                    new JsonArray().add(DUMMY_COS_URL),
+                    Roles.ADMIN.toString(),
+                    new JsonArray().add(DUMMY_SERVER)))
             .build();
-    
+
     Checkpoint adminFail = testContext.checkpoint();
     Checkpoint cosAdminFail = testContext.checkpoint();
-    
-  JsonObject cosAdminJsonReq =
-          new JsonObject()
-                  .put("itemId",
-                          UUID.randomUUID().toString())
-                  .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
-                  .put("role", Roles.COS_ADMIN.toString().toLowerCase());
+
+    JsonObject cosAdminJsonReq =
+        new JsonObject()
+            .put("itemId", UUID.randomUUID().toString())
+            .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
+            .put("role", Roles.COS_ADMIN.toString().toLowerCase());
     RequestToken cosAdminReq = new RequestToken(cosAdminJsonReq);
 
-    policyService.verifyResourceAccess(cosAdminReq, null, dummyUser, 
+    policyService.verifyResourceAccess(
+        cosAdminReq,
+        null,
+        dummyUser,
         testContext.failing(
             fail ->
                 testContext.verify(
@@ -178,16 +189,18 @@ public class VerifyResourceAccessTest {
                       assertEquals(resp.getDetail(), INVALID_ROLE);
                       cosAdminFail.flag();
                     })));
-    
-  JsonObject adminJsonReq =
-          new JsonObject()
-                  .put("itemId",
-                          UUID.randomUUID().toString())
-                  .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
-                  .put("role", Roles.ADMIN.toString().toLowerCase());
+
+    JsonObject adminJsonReq =
+        new JsonObject()
+            .put("itemId", UUID.randomUUID().toString())
+            .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
+            .put("role", Roles.ADMIN.toString().toLowerCase());
     RequestToken adminReq = new RequestToken(adminJsonReq);
 
-    policyService.verifyResourceAccess(adminReq, null, dummyUser, 
+    policyService.verifyResourceAccess(
+        adminReq,
+        null,
+        dummyUser,
         testContext.failing(
             fail ->
                 testContext.verify(
@@ -207,340 +220,430 @@ public class VerifyResourceAccessTest {
   @DisplayName("Invalid item ID - not a UUID")
   void itemNotUuid(VertxTestContext testContext) {
     User dummyUser =
-        new UserBuilder().userId(UUID.randomUUID())
+        new UserBuilder()
+            .userId(UUID.randomUUID())
             .roles(List.of(Roles.CONSUMER, Roles.DELEGATE, Roles.PROVIDER))
-            .rolesToRsMapping(Map.of(Roles.PROVIDER.toString(), new JsonArray().add(DUMMY_SERVER),
-                Roles.DELEGATE.toString(), new JsonArray().add(DUMMY_SERVER),
-                Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER)))
+            .rolesToRsMapping(
+                Map.of(
+                    Roles.PROVIDER.toString(),
+                    new JsonArray().add(DUMMY_SERVER),
+                    Roles.DELEGATE.toString(),
+                    new JsonArray().add(DUMMY_SERVER),
+                    Roles.CONSUMER.toString(),
+                    new JsonArray().add(DUMMY_SERVER)))
             .build();
-    
+
     List<Roles> rolesExceptDelegate = List.of(Roles.PROVIDER, Roles.CONSUMER);
-    Map<Roles, Checkpoint> checkpoints = rolesExceptDelegate.stream()
-        .collect(Collectors.toMap(role -> role, role -> testContext.checkpoint()));
-    
+    Map<Roles, Checkpoint> checkpoints =
+        rolesExceptDelegate.stream()
+            .collect(Collectors.toMap(role -> role, role -> testContext.checkpoint()));
+
     Checkpoint consDelegCheck = testContext.checkpoint();
     Checkpoint provDelegCheck = testContext.checkpoint();
-    
-    rolesExceptDelegate.forEach(role -> {  
-      JsonObject jsonReq =
-          new JsonObject()
-          .put("itemId",
-              RandomStringUtils.randomAlphanumeric(10))
-          .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
-          .put("role", role.toString().toLowerCase());
-      RequestToken req = new RequestToken(jsonReq);
 
-      policyService.verifyResourceAccess(req, null, dummyUser, 
-          testContext.failing(
-              fail ->
-              testContext.verify(
-                  () -> {
-                    assertTrue(fail instanceof ComposeException);
-                    ComposeException exp = (ComposeException) fail;
-                    Response resp = exp.getResponse();
-                    assertEquals(resp.getStatus(), 400);
-                    assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                    assertEquals(resp.getTitle(), INVALID_INPUT);
-                    assertEquals(resp.getDetail(), INCORRECT_ITEM_ID);
-                    checkpoints.get(role).flag();
-                  })));
-    });
+    rolesExceptDelegate.forEach(
+        role -> {
+          JsonObject jsonReq =
+              new JsonObject()
+                  .put("itemId", RandomStringUtils.randomAlphanumeric(10))
+                  .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
+                  .put("role", role.toString().toLowerCase());
+          RequestToken req = new RequestToken(jsonReq);
+
+          policyService.verifyResourceAccess(
+              req,
+              null,
+              dummyUser,
+              testContext.failing(
+                  fail ->
+                      testContext.verify(
+                          () -> {
+                            assertTrue(fail instanceof ComposeException);
+                            ComposeException exp = (ComposeException) fail;
+                            Response resp = exp.getResponse();
+                            assertEquals(resp.getStatus(), 400);
+                            assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                            assertEquals(resp.getTitle(), INVALID_INPUT);
+                            assertEquals(resp.getDetail(), INCORRECT_ITEM_ID);
+                            checkpoints.get(role).flag();
+                          })));
+        });
 
     JsonObject delegateJsonReq =
         new JsonObject()
-        .put("itemId",
-            RandomStringUtils.randomAlphanumeric(10))
-        .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
-        .put("role", Roles.DELEGATE.toString().toLowerCase());
+            .put("itemId", RandomStringUtils.randomAlphanumeric(10))
+            .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
+            .put("role", Roles.DELEGATE.toString().toLowerCase());
     RequestToken delegateReq = new RequestToken(delegateJsonReq);
 
-    DelegationInformation consDelegInfo = new DelegationInformation(UUID.randomUUID(),
-        UUID.randomUUID(), Roles.CONSUMER, DUMMY_SERVER);
-    
-    DelegationInformation provDelegInfo = new DelegationInformation(UUID.randomUUID(),
-        UUID.randomUUID(), Roles.PROVIDER, DUMMY_SERVER);
+    DelegationInformation consDelegInfo =
+        new DelegationInformation(
+            UUID.randomUUID(), UUID.randomUUID(), Roles.CONSUMER, DUMMY_SERVER);
 
-    policyService.verifyResourceAccess(delegateReq, consDelegInfo, dummyUser, 
+    DelegationInformation provDelegInfo =
+        new DelegationInformation(
+            UUID.randomUUID(), UUID.randomUUID(), Roles.PROVIDER, DUMMY_SERVER);
+
+    policyService.verifyResourceAccess(
+        delegateReq,
+        consDelegInfo,
+        dummyUser,
         testContext.failing(
             fail ->
-            testContext.verify(
-                () -> {
-                  assertTrue(fail instanceof ComposeException);
-                  ComposeException exp = (ComposeException) fail;
-                  Response resp = exp.getResponse();
-                  assertEquals(resp.getStatus(), 400);
-                  assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                  assertEquals(resp.getTitle(), INVALID_INPUT);
-                  assertEquals(resp.getDetail(), INCORRECT_ITEM_ID);
-                  consDelegCheck.flag();
-                })));
+                testContext.verify(
+                    () -> {
+                      assertTrue(fail instanceof ComposeException);
+                      ComposeException exp = (ComposeException) fail;
+                      Response resp = exp.getResponse();
+                      assertEquals(resp.getStatus(), 400);
+                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                      assertEquals(resp.getTitle(), INVALID_INPUT);
+                      assertEquals(resp.getDetail(), INCORRECT_ITEM_ID);
+                      consDelegCheck.flag();
+                    })));
 
-    policyService.verifyResourceAccess(delegateReq, provDelegInfo, dummyUser, 
+    policyService.verifyResourceAccess(
+        delegateReq,
+        provDelegInfo,
+        dummyUser,
         testContext.failing(
             fail ->
-            testContext.verify(
-                () -> {
-                  assertTrue(fail instanceof ComposeException);
-                  ComposeException exp = (ComposeException) fail;
-                  Response resp = exp.getResponse();
-                  assertEquals(resp.getStatus(), 400);
-                  assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                  assertEquals(resp.getTitle(), INVALID_INPUT);
-                  assertEquals(resp.getDetail(), INCORRECT_ITEM_ID);
-                  provDelegCheck.flag();
-                })));
+                testContext.verify(
+                    () -> {
+                      assertTrue(fail instanceof ComposeException);
+                      ComposeException exp = (ComposeException) fail;
+                      Response resp = exp.getResponse();
+                      assertEquals(resp.getStatus(), 400);
+                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                      assertEquals(resp.getTitle(), INVALID_INPUT);
+                      assertEquals(resp.getDetail(), INCORRECT_ITEM_ID);
+                      provDelegCheck.flag();
+                    })));
   }
-  
+
   @Test
   @DisplayName("Invalid item ID - Catalogue client validation fails w/ ComposeException")
   void catClientValidationForItemFails(VertxTestContext testContext) {
     User dummyUser =
-        new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.CONSUMER, Roles.DELEGATE, Roles.PROVIDER))
-            .rolesToRsMapping(Map.of(Roles.PROVIDER.toString(), new JsonArray().add(DUMMY_SERVER),
-                Roles.DELEGATE.toString(), new JsonArray().add(DUMMY_SERVER),
-                Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER)))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.CONSUMER, Roles.DELEGATE, Roles.PROVIDER))
+            .rolesToRsMapping(
+                Map.of(
+                    Roles.PROVIDER.toString(),
+                    new JsonArray().add(DUMMY_SERVER),
+                    Roles.DELEGATE.toString(),
+                    new JsonArray().add(DUMMY_SERVER),
+                    Roles.CONSUMER.toString(),
+                    new JsonArray().add(DUMMY_SERVER)))
             .build();
-    
+
     UUID badResId = UUID.randomUUID();
-    
-    Mockito.when(catalogueClient.getResourceDetails(badResId)).thenReturn(
-        Future.failedFuture(new ComposeException(400, Urn.URN_INVALID_INPUT, "Fail", "Fail")));
-    
+
+    Mockito.when(catalogueClient.getResourceDetails(badResId))
+        .thenReturn(
+            Future.failedFuture(new ComposeException(400, Urn.URN_INVALID_INPUT, "Fail", "Fail")));
+
     List<Roles> rolesExceptDelegate = List.of(Roles.PROVIDER, Roles.CONSUMER);
-    Map<Roles, Checkpoint> checkpoints = rolesExceptDelegate.stream()
-        .collect(Collectors.toMap(role -> role, role -> testContext.checkpoint()));
-    
+    Map<Roles, Checkpoint> checkpoints =
+        rolesExceptDelegate.stream()
+            .collect(Collectors.toMap(role -> role, role -> testContext.checkpoint()));
+
     Checkpoint consDelegCheck = testContext.checkpoint();
     Checkpoint provDelegCheck = testContext.checkpoint();
-    
-    rolesExceptDelegate.forEach(role -> {  
-      JsonObject jsonReq =
-          new JsonObject()
-          .put("itemId", badResId.toString())
-          .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
-          .put("role", role.toString().toLowerCase());
-      RequestToken req = new RequestToken(jsonReq);
 
-      policyService.verifyResourceAccess(req, null, dummyUser, 
-          testContext.failing(
-              fail ->
-              testContext.verify(
-                  () -> {
-                    assertTrue(fail instanceof ComposeException);
-                    ComposeException exp = (ComposeException) fail;
-                    Response resp = exp.getResponse();
-                    assertEquals(resp.getStatus(), 400);
-                    assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                    assertEquals(resp.getTitle(), "Fail");
-                    assertEquals(resp.getDetail(), "Fail");
-                    checkpoints.get(role).flag();
-                  })));
-    });
+    rolesExceptDelegate.forEach(
+        role -> {
+          JsonObject jsonReq =
+              new JsonObject()
+                  .put("itemId", badResId.toString())
+                  .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
+                  .put("role", role.toString().toLowerCase());
+          RequestToken req = new RequestToken(jsonReq);
+
+          policyService.verifyResourceAccess(
+              req,
+              null,
+              dummyUser,
+              testContext.failing(
+                  fail ->
+                      testContext.verify(
+                          () -> {
+                            assertTrue(fail instanceof ComposeException);
+                            ComposeException exp = (ComposeException) fail;
+                            Response resp = exp.getResponse();
+                            assertEquals(resp.getStatus(), 400);
+                            assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                            assertEquals(resp.getTitle(), "Fail");
+                            assertEquals(resp.getDetail(), "Fail");
+                            checkpoints.get(role).flag();
+                          })));
+        });
 
     JsonObject delegateJsonReq =
         new JsonObject()
-        .put("itemId", badResId.toString())
-        .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
-        .put("role", Roles.DELEGATE.toString().toLowerCase());
-    
+            .put("itemId", badResId.toString())
+            .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
+            .put("role", Roles.DELEGATE.toString().toLowerCase());
+
     RequestToken delegateReq = new RequestToken(delegateJsonReq);
 
-    DelegationInformation consDelegInfo = new DelegationInformation(UUID.randomUUID(),
-        UUID.randomUUID(), Roles.CONSUMER, DUMMY_SERVER);
-    
-    DelegationInformation provDelegInfo = new DelegationInformation(UUID.randomUUID(),
-        UUID.randomUUID(), Roles.PROVIDER, DUMMY_SERVER);
+    DelegationInformation consDelegInfo =
+        new DelegationInformation(
+            UUID.randomUUID(), UUID.randomUUID(), Roles.CONSUMER, DUMMY_SERVER);
 
-    policyService.verifyResourceAccess(delegateReq, consDelegInfo, dummyUser, 
+    DelegationInformation provDelegInfo =
+        new DelegationInformation(
+            UUID.randomUUID(), UUID.randomUUID(), Roles.PROVIDER, DUMMY_SERVER);
+
+    policyService.verifyResourceAccess(
+        delegateReq,
+        consDelegInfo,
+        dummyUser,
         testContext.failing(
             fail ->
-            testContext.verify(
-                () -> {
-                  assertTrue(fail instanceof ComposeException);
-                  ComposeException exp = (ComposeException) fail;
-                  Response resp = exp.getResponse();
-                  assertEquals(resp.getStatus(), 400);
-                  assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                  assertEquals(resp.getTitle(), "Fail");
-                  assertEquals(resp.getDetail(), "Fail");
-                  consDelegCheck.flag();
-                })));
-    
-    policyService.verifyResourceAccess(delegateReq, provDelegInfo, dummyUser, 
+                testContext.verify(
+                    () -> {
+                      assertTrue(fail instanceof ComposeException);
+                      ComposeException exp = (ComposeException) fail;
+                      Response resp = exp.getResponse();
+                      assertEquals(resp.getStatus(), 400);
+                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                      assertEquals(resp.getTitle(), "Fail");
+                      assertEquals(resp.getDetail(), "Fail");
+                      consDelegCheck.flag();
+                    })));
+
+    policyService.verifyResourceAccess(
+        delegateReq,
+        provDelegInfo,
+        dummyUser,
         testContext.failing(
             fail ->
-            testContext.verify(
-                () -> {
-                  assertTrue(fail instanceof ComposeException);
-                  ComposeException exp = (ComposeException) fail;
-                  Response resp = exp.getResponse();
-                  assertEquals(resp.getStatus(), 400);
-                  assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                  assertEquals(resp.getTitle(), "Fail");
-                  assertEquals(resp.getDetail(), "Fail");
-                  provDelegCheck.flag();
-                })));
+                testContext.verify(
+                    () -> {
+                      assertTrue(fail instanceof ComposeException);
+                      ComposeException exp = (ComposeException) fail;
+                      Response resp = exp.getResponse();
+                      assertEquals(resp.getStatus(), 400);
+                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                      assertEquals(resp.getTitle(), "Fail");
+                      assertEquals(resp.getDetail(), "Fail");
+                      provDelegCheck.flag();
+                    })));
   }
 
   @Test
   @DisplayName("Consumer/Provider do not have role for resource server of requested resource item")
   void consumerProviderDontHaveRoleForItemRs(VertxTestContext testContext) {
     User dummyUser =
-        new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.CONSUMER, Roles.PROVIDER))
-            .rolesToRsMapping(Map.of(Roles.PROVIDER.toString(), new JsonArray().add(DUMMY_SERVER),
-                Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER)))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.CONSUMER, Roles.PROVIDER))
+            .rolesToRsMapping(
+                Map.of(
+                    Roles.PROVIDER.toString(),
+                    new JsonArray().add(DUMMY_SERVER),
+                    Roles.CONSUMER.toString(),
+                    new JsonArray().add(DUMMY_SERVER)))
             .build();
-    
-    UUID resId = UUID.randomUUID(); 
+
+    UUID resId = UUID.randomUUID();
     String RANDOM_SERVER = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
-    
+
     Mockito.when(catalogueClient.getResourceDetails(resId))
-        .thenReturn(Future.succeededFuture(new ResourceObj(ItemType.RESOURCE, resId,
-            UUID.randomUUID(), RANDOM_SERVER, UUID.randomUUID(),
-            RandomStringUtils.randomAlphabetic(10).toLowerCase(), "SECURE")));
-    
+        .thenReturn(
+            Future.succeededFuture(
+                new ResourceObj(
+                    ItemType.RESOURCE,
+                    resId,
+                    UUID.randomUUID(),
+                    RANDOM_SERVER,
+                    UUID.randomUUID(),
+                    RandomStringUtils.randomAlphabetic(10).toLowerCase(),
+                    "SECURE")));
+
     Checkpoint consumerFails = testContext.checkpoint();
     Checkpoint providerFails = testContext.checkpoint();
-    
+
     JsonObject consJsonReq =
         new JsonObject()
-        .put("itemId", resId.toString())
-        .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
-        .put("role", Roles.CONSUMER.toString().toLowerCase());
+            .put("itemId", resId.toString())
+            .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
+            .put("role", Roles.CONSUMER.toString().toLowerCase());
     RequestToken consReq = new RequestToken(consJsonReq);
 
-    policyService.verifyResourceAccess(consReq, null, dummyUser, 
+    policyService.verifyResourceAccess(
+        consReq,
+        null,
+        dummyUser,
         testContext.failing(
             fail ->
-            testContext.verify(
-                () -> {
-                  assertTrue(fail instanceof ComposeException);
-                  ComposeException exp = (ComposeException) fail;
-                  Response resp = exp.getResponse();
-                  assertEquals(resp.getStatus(), 403);
-                  assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                  assertEquals(resp.getTitle(), ACCESS_DENIED);
-                  assertEquals(resp.getDetail(), ERR_DETAIL_CONSUMER_DOESNT_HAVE_RS_ROLE);
-                  consumerFails.flag();
-                })));
+                testContext.verify(
+                    () -> {
+                      assertTrue(fail instanceof ComposeException);
+                      ComposeException exp = (ComposeException) fail;
+                      Response resp = exp.getResponse();
+                      assertEquals(resp.getStatus(), 403);
+                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                      assertEquals(resp.getTitle(), ACCESS_DENIED);
+                      assertEquals(resp.getDetail(), ERR_DETAIL_CONSUMER_DOESNT_HAVE_RS_ROLE);
+                      consumerFails.flag();
+                    })));
 
     JsonObject provJsonReq =
         new JsonObject()
-        .put("itemId", resId.toString())
-        .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
-        .put("role", Roles.PROVIDER.toString().toLowerCase());
+            .put("itemId", resId.toString())
+            .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
+            .put("role", Roles.PROVIDER.toString().toLowerCase());
     RequestToken provReq = new RequestToken(provJsonReq);
 
-    policyService.verifyResourceAccess(provReq, null, dummyUser, 
+    policyService.verifyResourceAccess(
+        provReq,
+        null,
+        dummyUser,
         testContext.failing(
             fail ->
-            testContext.verify(
-                () -> {
-                  assertTrue(fail instanceof ComposeException);
-                  ComposeException exp = (ComposeException) fail;
-                  Response resp = exp.getResponse();
-                  assertEquals(resp.getStatus(), 403);
-                  assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                  assertEquals(resp.getTitle(), ACCESS_DENIED);
-                  assertEquals(resp.getDetail(), ERR_DETAIL_PROVIDER_DOESNT_HAVE_RS_ROLE);
-                  providerFails.flag();
-                })));
+                testContext.verify(
+                    () -> {
+                      assertTrue(fail instanceof ComposeException);
+                      ComposeException exp = (ComposeException) fail;
+                      Response resp = exp.getResponse();
+                      assertEquals(resp.getStatus(), 403);
+                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                      assertEquals(resp.getTitle(), ACCESS_DENIED);
+                      assertEquals(resp.getDetail(), ERR_DETAIL_PROVIDER_DOESNT_HAVE_RS_ROLE);
+                      providerFails.flag();
+                    })));
   }
-  
+
   @Test
-  @DisplayName("Delegate - Delegated RS URL does not match the resource server of requested resource item")
+  @DisplayName(
+      "Delegate - Delegated RS URL does not match the resource server of requested resource item")
   void delegatedRsUrlNotMatchItemRs(VertxTestContext testContext) {
-    
+
     String SERVER_OF_RES = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".com";
-    UUID resId = UUID.randomUUID(); 
+    UUID resId = UUID.randomUUID();
 
     Mockito.when(catalogueClient.getResourceDetails(resId))
-        .thenReturn(Future.succeededFuture(new ResourceObj(ItemType.RESOURCE, resId,
-            UUID.randomUUID(), SERVER_OF_RES, UUID.randomUUID(),
-            RandomStringUtils.randomAlphabetic(10).toLowerCase(), "SECURE")));
+        .thenReturn(
+            Future.succeededFuture(
+                new ResourceObj(
+                    ItemType.RESOURCE,
+                    resId,
+                    UUID.randomUUID(),
+                    SERVER_OF_RES,
+                    UUID.randomUUID(),
+                    RandomStringUtils.randomAlphabetic(10).toLowerCase(),
+                    "SECURE")));
 
-    // note that the delegate has role for both SERVER_OF_RES and DUMMY_SERVER, but the delegation is for DUMMY_SERVER
+    // note that the delegate has role for both SERVER_OF_RES and DUMMY_SERVER, but the delegation
+    // is for DUMMY_SERVER
     User dummyUser =
-        new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.DELEGATE))
-            .rolesToRsMapping(Map.of(Roles.DELEGATE.toString(), new JsonArray(List.of(SERVER_OF_RES, DUMMY_SERVER))))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.DELEGATE))
+            .rolesToRsMapping(
+                Map.of(
+                    Roles.DELEGATE.toString(), new JsonArray(List.of(SERVER_OF_RES, DUMMY_SERVER))))
             .build();
 
-    DelegationInformation consDelegInfo = new DelegationInformation(UUID.randomUUID(),
-        UUID.randomUUID(), Roles.CONSUMER, DUMMY_SERVER);
-    DelegationInformation provDelegInfo = new DelegationInformation(UUID.randomUUID(),
-        UUID.randomUUID(), Roles.PROVIDER, DUMMY_SERVER);
-    
+    DelegationInformation consDelegInfo =
+        new DelegationInformation(
+            UUID.randomUUID(), UUID.randomUUID(), Roles.CONSUMER, DUMMY_SERVER);
+    DelegationInformation provDelegInfo =
+        new DelegationInformation(
+            UUID.randomUUID(), UUID.randomUUID(), Roles.PROVIDER, DUMMY_SERVER);
+
     Checkpoint consDelegateFail = testContext.checkpoint();
     Checkpoint provDelegateFail = testContext.checkpoint();
-    
+
     JsonObject jsonReq =
         new JsonObject()
-        .put("itemId", resId.toString())
-        .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
-        .put("role", Roles.DELEGATE.toString().toLowerCase());
-    
+            .put("itemId", resId.toString())
+            .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
+            .put("role", Roles.DELEGATE.toString().toLowerCase());
+
     RequestToken req = new RequestToken(jsonReq);
 
-    policyService.verifyResourceAccess(req, consDelegInfo, dummyUser, 
+    policyService.verifyResourceAccess(
+        req,
+        consDelegInfo,
+        dummyUser,
         testContext.failing(
             fail ->
-            testContext.verify(
-                () -> {
-                  assertTrue(fail instanceof ComposeException);
-                  ComposeException exp = (ComposeException) fail;
-                  Response resp = exp.getResponse();
-                  assertEquals(resp.getStatus(), 403);
-                  assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                  assertEquals(resp.getTitle(), ACCESS_DENIED);
-                  assertEquals(resp.getDetail(), ERR_DETAIL_DELEGATED_RS_URL_NOT_MATCH_ITEM_RS);
-                  consDelegateFail.flag();
-                })));
-    
-    policyService.verifyResourceAccess(req, provDelegInfo, dummyUser, 
-        testContext.failing(
-            fail ->
-            testContext.verify(
-                () -> {
-                  assertTrue(fail instanceof ComposeException);
-                  ComposeException exp = (ComposeException) fail;
-                  Response resp = exp.getResponse();
-                  assertEquals(resp.getStatus(), 403);
-                  assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                  assertEquals(resp.getTitle(), ACCESS_DENIED);
-                  assertEquals(resp.getDetail(), ERR_DETAIL_DELEGATED_RS_URL_NOT_MATCH_ITEM_RS);
-                  provDelegateFail.flag();
-                })));
+                testContext.verify(
+                    () -> {
+                      assertTrue(fail instanceof ComposeException);
+                      ComposeException exp = (ComposeException) fail;
+                      Response resp = exp.getResponse();
+                      assertEquals(resp.getStatus(), 403);
+                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                      assertEquals(resp.getTitle(), ACCESS_DENIED);
+                      assertEquals(resp.getDetail(), ERR_DETAIL_DELEGATED_RS_URL_NOT_MATCH_ITEM_RS);
+                      consDelegateFail.flag();
+                    })));
 
+    policyService.verifyResourceAccess(
+        req,
+        provDelegInfo,
+        dummyUser,
+        testContext.failing(
+            fail ->
+                testContext.verify(
+                    () -> {
+                      assertTrue(fail instanceof ComposeException);
+                      ComposeException exp = (ComposeException) fail;
+                      Response resp = exp.getResponse();
+                      assertEquals(resp.getStatus(), 403);
+                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                      assertEquals(resp.getTitle(), ACCESS_DENIED);
+                      assertEquals(resp.getDetail(), ERR_DETAIL_DELEGATED_RS_URL_NOT_MATCH_ITEM_RS);
+                      provDelegateFail.flag();
+                    })));
   }
-  
+
   @Test
   @DisplayName("Provider does not own item")
   void providerDoesntOwnItem(VertxTestContext testContext) {
-    
-    UUID resId = UUID.randomUUID(); 
-    UUID resGroupId = UUID.randomUUID(); 
+
+    UUID resId = UUID.randomUUID();
+    UUID resGroupId = UUID.randomUUID();
     UUID itemOwnerUserId = UUID.randomUUID();
     String apdUrl = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".apd.com";
 
     User providerUser =
-        new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.PROVIDER))
-            .rolesToRsMapping(Map.of(Roles.PROVIDER.toString(), new JsonArray(List.of(DUMMY_SERVER))))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.PROVIDER))
+            .rolesToRsMapping(
+                Map.of(Roles.PROVIDER.toString(), new JsonArray(List.of(DUMMY_SERVER))))
             .build();
-    
+
     Mockito.when(catalogueClient.getResourceDetails(resId))
-        .thenReturn(Future.succeededFuture(new ResourceObj(ItemType.RESOURCE, resId,
-            itemOwnerUserId, DUMMY_SERVER, resGroupId,
-            apdUrl, "SECURE")));
+        .thenReturn(
+            Future.succeededFuture(
+                new ResourceObj(
+                    ItemType.RESOURCE,
+                    resId,
+                    itemOwnerUserId,
+                    DUMMY_SERVER,
+                    resGroupId,
+                    apdUrl,
+                    "SECURE")));
 
     JsonObject jsonReq =
         new JsonObject()
-        .put("itemId", resId.toString())
-        .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
-        .put("role", Roles.PROVIDER.toString().toLowerCase());
-    
+            .put("itemId", resId.toString())
+            .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
+            .put("role", Roles.PROVIDER.toString().toLowerCase());
+
     RequestToken req = new RequestToken(jsonReq);
-    
-    policyService.verifyResourceAccess(req, null, providerUser, 
+
+    policyService.verifyResourceAccess(
+        req,
+        null,
+        providerUser,
         testContext.failing(
             fail ->
                 testContext.verify(
@@ -555,35 +658,48 @@ public class VerifyResourceAccessTest {
                       testContext.completeNow();
                     })));
   }
-  
+
   @Test
   @DisplayName("Provider owns item, but item is PII resource")
   void providerCannotAccessPiiResource(VertxTestContext testContext) {
-    
+
     User providerUser =
-        new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.PROVIDER))
-            .rolesToRsMapping(Map.of(Roles.PROVIDER.toString(), new JsonArray(List.of(DUMMY_SERVER))))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.PROVIDER))
+            .rolesToRsMapping(
+                Map.of(Roles.PROVIDER.toString(), new JsonArray(List.of(DUMMY_SERVER))))
             .build();
-    
-    UUID resId = UUID.randomUUID(); 
-    UUID resGroupId = UUID.randomUUID(); 
+
+    UUID resId = UUID.randomUUID();
+    UUID resGroupId = UUID.randomUUID();
     UUID itemOwnerUserId = UUID.fromString(providerUser.getUserId());
     String apdUrl = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".apd.com";
 
     Mockito.when(catalogueClient.getResourceDetails(resId))
-        .thenReturn(Future.succeededFuture(new ResourceObj(ItemType.RESOURCE, resId,
-            itemOwnerUserId, DUMMY_SERVER, resGroupId,
-            apdUrl, "PII")));
+        .thenReturn(
+            Future.succeededFuture(
+                new ResourceObj(
+                    ItemType.RESOURCE,
+                    resId,
+                    itemOwnerUserId,
+                    DUMMY_SERVER,
+                    resGroupId,
+                    apdUrl,
+                    "PII")));
 
     JsonObject jsonReq =
         new JsonObject()
-        .put("itemId", resId.toString())
-        .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
-        .put("role", Roles.PROVIDER.toString().toLowerCase());
-    
+            .put("itemId", resId.toString())
+            .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
+            .put("role", Roles.PROVIDER.toString().toLowerCase());
+
     RequestToken req = new RequestToken(jsonReq);
-    
-    policyService.verifyResourceAccess(req, null, providerUser, 
+
+    policyService.verifyResourceAccess(
+        req,
+        null,
+        providerUser,
         testContext.failing(
             fail ->
                 testContext.verify(
@@ -598,41 +714,55 @@ public class VerifyResourceAccessTest {
                       testContext.completeNow();
                     })));
   }
-  
+
   @Test
   @DisplayName("Provider-delegate's delegator does not own item")
   void providerDelegateDoesntOwnItem(VertxTestContext testContext) {
-    
+
     // User ID of the provider user who made the delegation a.k.a delegator
     UUID providerDelegatorUserId = UUID.randomUUID();
-    
+
     User delegateUser =
-        new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.DELEGATE))
-            .rolesToRsMapping(Map.of(Roles.DELEGATE.toString(), new JsonArray(List.of(DUMMY_SERVER))))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.DELEGATE))
+            .rolesToRsMapping(
+                Map.of(Roles.DELEGATE.toString(), new JsonArray(List.of(DUMMY_SERVER))))
             .build();
-    
-    UUID resId = UUID.randomUUID(); 
-    UUID resGroupId = UUID.randomUUID(); 
+
+    UUID resId = UUID.randomUUID();
+    UUID resGroupId = UUID.randomUUID();
     UUID itemOwnerUserId = UUID.randomUUID();
     String apdUrl = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".apd.com";
 
     Mockito.when(catalogueClient.getResourceDetails(resId))
-        .thenReturn(Future.succeededFuture(new ResourceObj(ItemType.RESOURCE, resId,
-            itemOwnerUserId, DUMMY_SERVER, resGroupId,
-            apdUrl, "SECURE")));
+        .thenReturn(
+            Future.succeededFuture(
+                new ResourceObj(
+                    ItemType.RESOURCE,
+                    resId,
+                    itemOwnerUserId,
+                    DUMMY_SERVER,
+                    resGroupId,
+                    apdUrl,
+                    "SECURE")));
 
     JsonObject jsonReq =
         new JsonObject()
-        .put("itemId", resId.toString())
-        .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
-        .put("role", Roles.DELEGATE.toString().toLowerCase());
-    
+            .put("itemId", resId.toString())
+            .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
+            .put("role", Roles.DELEGATE.toString().toLowerCase());
+
     RequestToken req = new RequestToken(jsonReq);
-    
-    DelegationInformation provDelegInfo = new DelegationInformation(UUID.randomUUID(),
-        providerDelegatorUserId, Roles.PROVIDER, DUMMY_SERVER);
-    
-    policyService.verifyResourceAccess(req, provDelegInfo, delegateUser, 
+
+    DelegationInformation provDelegInfo =
+        new DelegationInformation(
+            UUID.randomUUID(), providerDelegatorUserId, Roles.PROVIDER, DUMMY_SERVER);
+
+    policyService.verifyResourceAccess(
+        req,
+        provDelegInfo,
+        delegateUser,
         testContext.failing(
             fail ->
                 testContext.verify(
@@ -647,41 +777,55 @@ public class VerifyResourceAccessTest {
                       testContext.completeNow();
                     })));
   }
-  
+
   @Test
   @DisplayName("Provider-delegate's delegator owns item, but item is PII resource")
   void providerDelegateCannotAccessPiiResource(VertxTestContext testContext) {
-    
+
     // User ID of the provider user who made the delegation a.k.a delegator
     UUID providerDelegatorUserId = UUID.randomUUID();
-    
+
     User delegateUser =
-        new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.DELEGATE))
-            .rolesToRsMapping(Map.of(Roles.DELEGATE.toString(), new JsonArray(List.of(DUMMY_SERVER))))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.DELEGATE))
+            .rolesToRsMapping(
+                Map.of(Roles.DELEGATE.toString(), new JsonArray(List.of(DUMMY_SERVER))))
             .build();
-    
-    UUID resId = UUID.randomUUID(); 
-    UUID resGroupId = UUID.randomUUID(); 
+
+    UUID resId = UUID.randomUUID();
+    UUID resGroupId = UUID.randomUUID();
     UUID itemOwnerUserId = providerDelegatorUserId;
     String apdUrl = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".apd.com";
 
     Mockito.when(catalogueClient.getResourceDetails(resId))
-        .thenReturn(Future.succeededFuture(new ResourceObj(ItemType.RESOURCE, resId,
-            itemOwnerUserId, DUMMY_SERVER, resGroupId,
-            apdUrl, "PII")));
+        .thenReturn(
+            Future.succeededFuture(
+                new ResourceObj(
+                    ItemType.RESOURCE,
+                    resId,
+                    itemOwnerUserId,
+                    DUMMY_SERVER,
+                    resGroupId,
+                    apdUrl,
+                    "PII")));
 
     JsonObject jsonReq =
         new JsonObject()
-        .put("itemId", resId.toString())
-        .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
-        .put("role", Roles.DELEGATE.toString().toLowerCase());
-    
+            .put("itemId", resId.toString())
+            .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
+            .put("role", Roles.DELEGATE.toString().toLowerCase());
+
     RequestToken req = new RequestToken(jsonReq);
-    
-    DelegationInformation provDelegInfo = new DelegationInformation(UUID.randomUUID(),
-        providerDelegatorUserId, Roles.PROVIDER, DUMMY_SERVER);
-    
-    policyService.verifyResourceAccess(req, provDelegInfo, delegateUser, 
+
+    DelegationInformation provDelegInfo =
+        new DelegationInformation(
+            UUID.randomUUID(), providerDelegatorUserId, Roles.PROVIDER, DUMMY_SERVER);
+
+    policyService.verifyResourceAccess(
+        req,
+        provDelegInfo,
+        delegateUser,
         testContext.failing(
             fail ->
                 testContext.verify(
@@ -700,31 +844,44 @@ public class VerifyResourceAccessTest {
   @Test
   @DisplayName("Provider success")
   void providerSuccess(VertxTestContext testContext) {
-    
+
     User providerUser =
-        new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.PROVIDER))
-            .rolesToRsMapping(Map.of(Roles.PROVIDER.toString(), new JsonArray(List.of(DUMMY_SERVER))))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.PROVIDER))
+            .rolesToRsMapping(
+                Map.of(Roles.PROVIDER.toString(), new JsonArray(List.of(DUMMY_SERVER))))
             .build();
-    
-    UUID resId = UUID.randomUUID(); 
-    UUID resGroupId = UUID.randomUUID(); 
+
+    UUID resId = UUID.randomUUID();
+    UUID resGroupId = UUID.randomUUID();
     UUID itemOwnerUserId = UUID.fromString(providerUser.getUserId());
     String apdUrl = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".apd.com";
 
     Mockito.when(catalogueClient.getResourceDetails(resId))
-        .thenReturn(Future.succeededFuture(new ResourceObj(ItemType.RESOURCE, resId,
-            itemOwnerUserId, DUMMY_SERVER, resGroupId,
-            apdUrl, "SECURE")));
+        .thenReturn(
+            Future.succeededFuture(
+                new ResourceObj(
+                    ItemType.RESOURCE,
+                    resId,
+                    itemOwnerUserId,
+                    DUMMY_SERVER,
+                    resGroupId,
+                    apdUrl,
+                    "SECURE")));
 
     JsonObject jsonReq =
         new JsonObject()
-        .put("itemId", resId.toString())
-        .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
-        .put("role", Roles.PROVIDER.toString().toLowerCase());
-    
+            .put("itemId", resId.toString())
+            .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
+            .put("role", Roles.PROVIDER.toString().toLowerCase());
+
     RequestToken req = new RequestToken(jsonReq);
-    
-    policyService.verifyResourceAccess(req, null, providerUser, 
+
+    policyService.verifyResourceAccess(
+        req,
+        null,
+        providerUser,
         testContext.succeeding(
             response ->
                 testContext.verify(
@@ -740,37 +897,51 @@ public class VerifyResourceAccessTest {
   @Test
   @DisplayName("Provider-delegate success")
   void providerDelegateSuccess(VertxTestContext testContext) {
-    
+
     // User ID of the provider user who made the delegation a.k.a delegator
     UUID providerDelegatorUserId = UUID.randomUUID();
-    
+
     User delegateUser =
-        new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.DELEGATE))
-            .rolesToRsMapping(Map.of(Roles.DELEGATE.toString(), new JsonArray(List.of(DUMMY_SERVER))))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.DELEGATE))
+            .rolesToRsMapping(
+                Map.of(Roles.DELEGATE.toString(), new JsonArray(List.of(DUMMY_SERVER))))
             .build();
-    
-    UUID resId = UUID.randomUUID(); 
-    UUID resGroupId = UUID.randomUUID(); 
+
+    UUID resId = UUID.randomUUID();
+    UUID resGroupId = UUID.randomUUID();
     UUID itemOwnerUserId = providerDelegatorUserId;
     String apdUrl = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".apd.com";
 
     Mockito.when(catalogueClient.getResourceDetails(resId))
-        .thenReturn(Future.succeededFuture(new ResourceObj(ItemType.RESOURCE, resId,
-            itemOwnerUserId, DUMMY_SERVER, resGroupId,
-            apdUrl, "SECURE")));
+        .thenReturn(
+            Future.succeededFuture(
+                new ResourceObj(
+                    ItemType.RESOURCE,
+                    resId,
+                    itemOwnerUserId,
+                    DUMMY_SERVER,
+                    resGroupId,
+                    apdUrl,
+                    "SECURE")));
 
     JsonObject jsonReq =
         new JsonObject()
-        .put("itemId", resId.toString())
-        .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
-        .put("role", Roles.DELEGATE.toString().toLowerCase());
-    
+            .put("itemId", resId.toString())
+            .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
+            .put("role", Roles.DELEGATE.toString().toLowerCase());
+
     RequestToken req = new RequestToken(jsonReq);
-    
-    DelegationInformation provDelegInfo = new DelegationInformation(UUID.randomUUID(),
-        providerDelegatorUserId, Roles.PROVIDER, DUMMY_SERVER);
-    
-    policyService.verifyResourceAccess(req, provDelegInfo, delegateUser, 
+
+    DelegationInformation provDelegInfo =
+        new DelegationInformation(
+            UUID.randomUUID(), providerDelegatorUserId, Roles.PROVIDER, DUMMY_SERVER);
+
+    policyService.verifyResourceAccess(
+        req,
+        provDelegInfo,
+        delegateUser,
         testContext.succeeding(
             response ->
                 testContext.verify(
@@ -779,59 +950,81 @@ public class VerifyResourceAccessTest {
                       assertEquals(response.getString(CAT_ID), resId.toString());
                       assertEquals(response.getString(CREATE_TOKEN_RG), resGroupId.toString());
                       assertEquals(response.getString(URL), DUMMY_SERVER);
-                      
-                      assertEquals(response.getString(CREATE_TOKEN_DID), providerDelegatorUserId.toString());
+
+                      assertEquals(
+                          response.getString(CREATE_TOKEN_DID), providerDelegatorUserId.toString());
                       assertEquals(response.getString(CREATE_TOKEN_DRL), Roles.PROVIDER.toString());
                       testContext.completeNow();
                     })));
   }
+
   @Test
   @DisplayName("Consumer success")
   void consumerSuccess(VertxTestContext testContext) {
-    
-    UUID resId = UUID.randomUUID(); 
-    UUID resGroupId = UUID.randomUUID(); 
+
+    UUID resId = UUID.randomUUID();
+    UUID resGroupId = UUID.randomUUID();
     UUID itemOwnerUserId = UUID.randomUUID();
     String apdUrl = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".apd.com";
 
     User consumerUser =
-        new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.CONSUMER))
-            .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray(List.of(DUMMY_SERVER))))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.CONSUMER))
+            .rolesToRsMapping(
+                Map.of(Roles.CONSUMER.toString(), new JsonArray(List.of(DUMMY_SERVER))))
             .build();
-    
+
     Mockito.when(catalogueClient.getResourceDetails(resId))
-        .thenReturn(Future.succeededFuture(new ResourceObj(ItemType.RESOURCE, resId,
-            itemOwnerUserId, DUMMY_SERVER, resGroupId,
-            apdUrl, "SECURE")));
+        .thenReturn(
+            Future.succeededFuture(
+                new ResourceObj(
+                    ItemType.RESOURCE,
+                    resId,
+                    itemOwnerUserId,
+                    DUMMY_SERVER,
+                    resGroupId,
+                    apdUrl,
+                    "SECURE")));
 
     JsonObject tokenReqcontext = new JsonObject().put("access", 1);
-    
-    JsonObject apdContext = new JsonObject().put(CALL_APD_APDURL, apdUrl)
-        .put(CALL_APD_ITEM_ID, resId.toString())
-        .put(CALL_APD_ITEM_TYPE, ItemType.RESOURCE.toString().toLowerCase())
-        .put(CALL_APD_OWNERID, itemOwnerUserId.toString()).put(CALL_APD_RES_SER_URL, DUMMY_SERVER)
-        .put(CALL_APD_USERID, consumerUser.getUserId()).put(CALL_APD_CONTEXT, tokenReqcontext);
-    
+
+    JsonObject apdContext =
+        new JsonObject()
+            .put(CALL_APD_APDURL, apdUrl)
+            .put(CALL_APD_ITEM_ID, resId.toString())
+            .put(CALL_APD_ITEM_TYPE, ItemType.RESOURCE.toString().toLowerCase())
+            .put(CALL_APD_OWNERID, itemOwnerUserId.toString())
+            .put(CALL_APD_RES_SER_URL, DUMMY_SERVER)
+            .put(CALL_APD_USERID, consumerUser.getUserId())
+            .put(CALL_APD_CONTEXT, tokenReqcontext);
+
     /*
      * Since verifyPolicy does not check the response of callApd, we just send an empty JSON object
      * as the mocked response for callApd here.
      */
-    Mockito.doAnswer(i -> { 
-      Promise<JsonObject> promise = i.getArgument(1);
-      promise.complete(new JsonObject());
-      return i.getMock();
-    }).when(apdService).callApd(eq(apdContext), any());
-    
+    Mockito.doAnswer(
+            i -> {
+              Promise<JsonObject> promise = i.getArgument(1);
+              promise.complete(new JsonObject());
+              return i.getMock();
+            })
+        .when(apdService)
+        .callApd(eq(apdContext), any());
+
     JsonObject jsonReq =
         new JsonObject()
-        .put("itemId", resId.toString())
-        .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
-        .put("role", Roles.CONSUMER.toString().toLowerCase())
-        .put("context", tokenReqcontext);
-    
+            .put("itemId", resId.toString())
+            .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
+            .put("role", Roles.CONSUMER.toString().toLowerCase())
+            .put("context", tokenReqcontext);
+
     RequestToken req = new RequestToken(jsonReq);
-    
-    policyService.verifyResourceAccess(req, null, consumerUser, 
+
+    policyService.verifyResourceAccess(
+        req,
+        null,
+        consumerUser,
         testContext.succeeding(
             response ->
                 testContext.verify(
@@ -840,66 +1033,88 @@ public class VerifyResourceAccessTest {
                       testContext.completeNow();
                     })));
   }
-  
+
   @Test
   @DisplayName("Consumer-delegate success")
   void consumerDelegateSuccess(VertxTestContext testContext) {
-    
+
     // User ID of the consumer user who made the delegation a.k.a delegator
     UUID consumerDelegatorUserId = UUID.randomUUID();
-    
-    UUID resId = UUID.randomUUID(); 
-    UUID resGroupId = UUID.randomUUID(); 
+
+    UUID resId = UUID.randomUUID();
+    UUID resGroupId = UUID.randomUUID();
     UUID itemOwnerUserId = UUID.randomUUID();
     String apdUrl = RandomStringUtils.randomAlphabetic(10).toLowerCase() + ".apd.com";
 
     User delegateUser =
-        new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.DELEGATE))
-            .rolesToRsMapping(Map.of(Roles.DELEGATE.toString(), new JsonArray(List.of(DUMMY_SERVER))))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.DELEGATE))
+            .rolesToRsMapping(
+                Map.of(Roles.DELEGATE.toString(), new JsonArray(List.of(DUMMY_SERVER))))
             .build();
-    
+
     Mockito.when(catalogueClient.getResourceDetails(resId))
-        .thenReturn(Future.succeededFuture(new ResourceObj(ItemType.RESOURCE, resId,
-            itemOwnerUserId, DUMMY_SERVER, resGroupId,
-            apdUrl, "SECURE")));
+        .thenReturn(
+            Future.succeededFuture(
+                new ResourceObj(
+                    ItemType.RESOURCE,
+                    resId,
+                    itemOwnerUserId,
+                    DUMMY_SERVER,
+                    resGroupId,
+                    apdUrl,
+                    "SECURE")));
 
     JsonObject tokenReqcontext = new JsonObject().put("access", 1);
-    
-    JsonObject apdContext = new JsonObject().put(CALL_APD_APDURL, apdUrl)
-        .put(CALL_APD_ITEM_ID, resId.toString())
-        .put(CALL_APD_ITEM_TYPE, ItemType.RESOURCE.toString().toLowerCase())
-        .put(CALL_APD_OWNERID, itemOwnerUserId.toString()).put(CALL_APD_RES_SER_URL, DUMMY_SERVER)
-        .put(CALL_APD_USERID, consumerDelegatorUserId.toString()).put(CALL_APD_CONTEXT, tokenReqcontext);
-    
+
+    JsonObject apdContext =
+        new JsonObject()
+            .put(CALL_APD_APDURL, apdUrl)
+            .put(CALL_APD_ITEM_ID, resId.toString())
+            .put(CALL_APD_ITEM_TYPE, ItemType.RESOURCE.toString().toLowerCase())
+            .put(CALL_APD_OWNERID, itemOwnerUserId.toString())
+            .put(CALL_APD_RES_SER_URL, DUMMY_SERVER)
+            .put(CALL_APD_USERID, consumerDelegatorUserId.toString())
+            .put(CALL_APD_CONTEXT, tokenReqcontext);
+
     /*
      * Since verifyResourceAccess does not check the response of callApd, we just send an empty JSON object
      * as the mocked response for callApd here.
      */
-    Mockito.doAnswer(i -> { 
-      Promise<JsonObject> promise = i.getArgument(1);
-      promise.complete(new JsonObject());
-      return i.getMock();
-    }).when(apdService).callApd(eq(apdContext), any());
-    
+    Mockito.doAnswer(
+            i -> {
+              Promise<JsonObject> promise = i.getArgument(1);
+              promise.complete(new JsonObject());
+              return i.getMock();
+            })
+        .when(apdService)
+        .callApd(eq(apdContext), any());
+
     JsonObject jsonReq =
         new JsonObject()
-        .put("itemId", resId.toString())
-        .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
-        .put("role", Roles.DELEGATE.toString().toLowerCase())
-        .put("context", tokenReqcontext);
-    
+            .put("itemId", resId.toString())
+            .put("itemType", ItemType.RESOURCE.toString().toLowerCase())
+            .put("role", Roles.DELEGATE.toString().toLowerCase())
+            .put("context", tokenReqcontext);
+
     RequestToken req = new RequestToken(jsonReq);
-    
-    DelegationInformation consDelegInfo = new DelegationInformation(UUID.randomUUID(),
-        consumerDelegatorUserId, Roles.CONSUMER, DUMMY_SERVER);
-    
-    policyService.verifyResourceAccess(req, consDelegInfo, delegateUser, 
+
+    DelegationInformation consDelegInfo =
+        new DelegationInformation(
+            UUID.randomUUID(), consumerDelegatorUserId, Roles.CONSUMER, DUMMY_SERVER);
+
+    policyService.verifyResourceAccess(
+        req,
+        consDelegInfo,
+        delegateUser,
         testContext.succeeding(
             response ->
                 testContext.verify(
                     () -> {
                       assertEquals(response.getString(CREATE_TOKEN_RG), resGroupId.toString());
-                      assertEquals(response.getString(CREATE_TOKEN_DID), consumerDelegatorUserId.toString());
+                      assertEquals(
+                          response.getString(CREATE_TOKEN_DID), consumerDelegatorUserId.toString());
                       assertEquals(response.getString(CREATE_TOKEN_DRL), Roles.CONSUMER.toString());
                       testContext.completeNow();
                     })));

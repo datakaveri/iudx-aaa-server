@@ -47,6 +47,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+/** Unit tests for delegation creation. */
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
 public class CreateDelegationTest {
 
@@ -98,8 +99,13 @@ public class CreateDelegationTest {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
       connectOptions =
-          new PgConnectOptions().setPort(databasePort).setHost(databaseIP).setDatabase(databaseName)
-              .setUser(databaseUserName).setPassword(databasePassword).setProperties(schemaProp);
+          new PgConnectOptions()
+              .setPort(databasePort)
+              .setHost(databaseIP)
+              .setDatabase(databaseName)
+              .setUser(databaseUserName)
+              .setPassword(databasePassword)
+              .setProperties(schemaProp);
     }
 
     // Pool options
@@ -114,22 +120,27 @@ public class CreateDelegationTest {
 
     utils = new Utils(pgclient);
 
-    policyService = new PolicyServiceImpl(pgclient, registrationService, apdService,
-        catalogueClient);
+    policyService =
+        new PolicyServiceImpl(pgclient, registrationService, apdService, catalogueClient);
     testContext.completeNow();
   }
 
   @AfterAll
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing....");
-    utils.deleteFakeResourceServer().compose(res -> utils.deleteFakeUser()).onComplete(x -> {
-      if (x.failed()) {
-        LOGGER.warn(x.cause().getMessage());
-        LOGGER.error("Data is NOT deleted after this test since policy table"
-            + " does not allow deletes and therefore cascade delete fails");
-      }
-      vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
-    });
+    utils
+        .deleteFakeResourceServer()
+        .compose(res -> utils.deleteFakeUser())
+        .onComplete(
+            x -> {
+              if (x.failed()) {
+                LOGGER.warn(x.cause().getMessage());
+                LOGGER.error(
+                    "Data is NOT deleted after this test since policy table"
+                        + " does not allow deletes and therefore cascade delete fails");
+              }
+              vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
+            });
   }
 
   @Test
@@ -139,22 +150,34 @@ public class CreateDelegationTest {
     final String DUMMY_SERVER =
         "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
 
-    User dummyUser = new UserBuilder().userId(UUID.randomUUID())
-        .roles(List.of(Roles.ADMIN, Roles.COS_ADMIN, Roles.TRUSTEE, Roles.DELEGATE))
-        .rolesToRsMapping(Map.of(Roles.DELEGATE.toString(), new JsonArray().add(DUMMY_SERVER),
-            Roles.TRUSTEE.toString(), new JsonArray().add("some-apd.url"), Roles.ADMIN.toString(),
-            new JsonArray().add(DUMMY_SERVER)))
-        .build();
+    User dummyUser =
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.ADMIN, Roles.COS_ADMIN, Roles.TRUSTEE, Roles.DELEGATE))
+            .rolesToRsMapping(
+                Map.of(
+                    Roles.DELEGATE.toString(),
+                    new JsonArray().add(DUMMY_SERVER),
+                    Roles.TRUSTEE.toString(),
+                    new JsonArray().add("some-apd.url"),
+                    Roles.ADMIN.toString(),
+                    new JsonArray().add(DUMMY_SERVER)))
+            .build();
 
     List<CreateDelegationRequest> req = new ArrayList<>();
-    policyService.createDelegation(req, dummyUser,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-          assertEquals(ERR_TITLE_INVALID_ROLES, response.getString("title"));
-          assertEquals(ERR_DETAIL_CREATE_DELEGATE_ROLES, response.getString("detail"));
-          assertEquals(401, response.getInteger("status"));
-          testContext.completeNow();
-        })));
+    policyService.createDelegation(
+        req,
+        dummyUser,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                      assertEquals(ERR_TITLE_INVALID_ROLES, response.getString("title"));
+                      assertEquals(ERR_DETAIL_CREATE_DELEGATE_ROLES, response.getString("detail"));
+                      assertEquals(401, response.getInteger("status"));
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
@@ -167,35 +190,59 @@ public class CreateDelegationTest {
         "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
 
     User consumerUser =
-        new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(List.of(Roles.CONSUMER))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.CONSUMER))
             .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER)))
             .build();
 
     String delegateEmail = RandomStringUtils.randomAlphabetic(10).toLowerCase() + "@gmail.com";
 
-    Future<Void> create = utils
-        .createFakeResourceServer(DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
-        .compose(res -> utils.createFakeUser(consumerUser, false, false));
+    Future<Void> create =
+        utils
+            .createFakeResourceServer(
+                DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
+            .compose(res -> utils.createFakeUser(consumerUser, false, false));
 
-    create.onSuccess(succ -> {
-      JsonObject obj = new JsonObject().put("userEmail", delegateEmail)
-          .put("role", Roles.CONSUMER.toString().toLowerCase()).put("resSerUrl", FAKE_SERVER);
+    create
+        .onSuccess(
+            succ -> {
+              JsonObject obj =
+                  new JsonObject()
+                      .put("userEmail", delegateEmail)
+                      .put("role", Roles.CONSUMER.toString().toLowerCase())
+                      .put("resSerUrl", FAKE_SERVER);
 
-      List<CreateDelegationRequest> req =
-          CreateDelegationRequest.jsonArrayToList(new JsonArray().add(obj));
+              List<CreateDelegationRequest> req =
+                  CreateDelegationRequest.jsonArrayToList(new JsonArray().add(obj));
 
-      policyService.createDelegation(req, consumerUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-            assertEquals(ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE, response.getString("title"));
-            assertEquals(ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
-                response.getString("detail"));
-            assertEquals(new JsonArray(List.of(FAKE_SERVER)), response.getJsonObject("context")
-                .getJsonArray(ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE));
-            assertEquals(400, response.getInteger("status"));
-            testContext.completeNow();
-          })));
-    }).onFailure(fail -> testContext.failNow(fail.getMessage()));
+              policyService.createDelegation(
+                  req,
+                  consumerUser,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(
+                                    URN_INVALID_INPUT.toString(), response.getString("type"));
+                                assertEquals(
+                                    ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
+                                    response.getString("title"));
+                                assertEquals(
+                                    ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
+                                    response.getString("detail"));
+                                assertEquals(
+                                    new JsonArray(List.of(FAKE_SERVER)),
+                                    response
+                                        .getJsonObject("context")
+                                        .getJsonArray(
+                                            ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE));
+                                assertEquals(400, response.getInteger("status"));
+                                testContext.completeNow();
+                              })));
+            })
+        .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
 
   @Test
@@ -205,12 +252,18 @@ public class CreateDelegationTest {
         "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
 
     User consumerUser =
-        new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(List.of(Roles.CONSUMER))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.CONSUMER))
             .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER)))
             .build();
 
     User providerUser =
-        new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(List.of(Roles.PROVIDER))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.PROVIDER))
             .rolesToRsMapping(Map.of(Roles.PROVIDER.toString(), new JsonArray().add(DUMMY_SERVER)))
             .build();
 
@@ -219,49 +272,85 @@ public class CreateDelegationTest {
     Checkpoint providerDelegByConsFails = testContext.checkpoint();
     Checkpoint consumerDelegByProvFails = testContext.checkpoint();
 
-    Future<Void> create = utils
-        .createFakeResourceServer(DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
-        .compose(res -> utils.createFakeUser(consumerUser, false, false))
-        .compose(res -> utils.createFakeUser(providerUser, false, false));
+    Future<Void> create =
+        utils
+            .createFakeResourceServer(
+                DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
+            .compose(res -> utils.createFakeUser(consumerUser, false, false))
+            .compose(res -> utils.createFakeUser(providerUser, false, false));
 
-    create.onSuccess(succ -> {
+    create
+        .onSuccess(
+            succ -> {
+              JsonObject providerDelegObj =
+                  new JsonObject()
+                      .put("userEmail", delegateEmail)
+                      .put("role", Roles.PROVIDER.toString().toLowerCase())
+                      .put("resSerUrl", DUMMY_SERVER);
 
-      JsonObject providerDelegObj = new JsonObject().put("userEmail", delegateEmail)
-          .put("role", Roles.PROVIDER.toString().toLowerCase()).put("resSerUrl", DUMMY_SERVER);
+              List<CreateDelegationRequest> providerDelegReq =
+                  CreateDelegationRequest.jsonArrayToList(new JsonArray().add(providerDelegObj));
 
-      List<CreateDelegationRequest> providerDelegReq =
-          CreateDelegationRequest.jsonArrayToList(new JsonArray().add(providerDelegObj));
+              policyService.createDelegation(
+                  providerDelegReq,
+                  consumerUser,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(
+                                    URN_INVALID_INPUT.toString(), response.getString("type"));
+                                assertEquals(
+                                    ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
+                                    response.getString("title"));
+                                assertEquals(
+                                    ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
+                                    response.getString("detail"));
+                                assertEquals(
+                                    new JsonArray(List.of(DUMMY_SERVER)),
+                                    response
+                                        .getJsonObject("context")
+                                        .getJsonArray(
+                                            ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE));
+                                assertEquals(400, response.getInteger("status"));
+                                providerDelegByConsFails.flag();
+                              })));
 
-      policyService.createDelegation(providerDelegReq, consumerUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-            assertEquals(ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE, response.getString("title"));
-            assertEquals(ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
-                response.getString("detail"));
-            assertEquals(new JsonArray(List.of(DUMMY_SERVER)), response.getJsonObject("context")
-                .getJsonArray(ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE));
-            assertEquals(400, response.getInteger("status"));
-            providerDelegByConsFails.flag();
-          })));
+              JsonObject consumerDelegObj =
+                  new JsonObject()
+                      .put("userEmail", delegateEmail)
+                      .put("role", Roles.CONSUMER.toString().toLowerCase())
+                      .put("resSerUrl", DUMMY_SERVER);
 
-      JsonObject consumerDelegObj = new JsonObject().put("userEmail", delegateEmail)
-          .put("role", Roles.CONSUMER.toString().toLowerCase()).put("resSerUrl", DUMMY_SERVER);
+              List<CreateDelegationRequest> consumerDelegReq =
+                  CreateDelegationRequest.jsonArrayToList(new JsonArray().add(consumerDelegObj));
 
-      List<CreateDelegationRequest> consumerDelegReq =
-          CreateDelegationRequest.jsonArrayToList(new JsonArray().add(consumerDelegObj));
-
-      policyService.createDelegation(consumerDelegReq, providerUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-            assertEquals(ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE, response.getString("title"));
-            assertEquals(ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
-                response.getString("detail"));
-            assertEquals(new JsonArray(List.of(DUMMY_SERVER)), response.getJsonObject("context")
-                .getJsonArray(ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE));
-            assertEquals(400, response.getInteger("status"));
-            consumerDelegByProvFails.flag();
-          })));
-    }).onFailure(fail -> testContext.failNow(fail.getMessage()));
+              policyService.createDelegation(
+                  consumerDelegReq,
+                  providerUser,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(
+                                    URN_INVALID_INPUT.toString(), response.getString("type"));
+                                assertEquals(
+                                    ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
+                                    response.getString("title"));
+                                assertEquals(
+                                    ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
+                                    response.getString("detail"));
+                                assertEquals(
+                                    new JsonArray(List.of(DUMMY_SERVER)),
+                                    response
+                                        .getJsonObject("context")
+                                        .getJsonArray(
+                                            ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE));
+                                assertEquals(400, response.getInteger("status"));
+                                consumerDelegByProvFails.flag();
+                              })));
+            })
+        .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
 
   @Test
@@ -273,67 +362,112 @@ public class CreateDelegationTest {
     final String DUMMY_SERVER_TWO =
         "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
 
-    User consumerUser = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb")
-        .roles(List.of(Roles.CONSUMER))
-        .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER_ONE)))
-        .build();
+    User consumerUser =
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.CONSUMER))
+            .rolesToRsMapping(
+                Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER_ONE)))
+            .build();
 
-    User providerUser = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb")
-        .roles(List.of(Roles.PROVIDER))
-        .rolesToRsMapping(Map.of(Roles.PROVIDER.toString(), new JsonArray().add(DUMMY_SERVER_ONE)))
-        .build();
+    User providerUser =
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.PROVIDER))
+            .rolesToRsMapping(
+                Map.of(Roles.PROVIDER.toString(), new JsonArray().add(DUMMY_SERVER_ONE)))
+            .build();
 
     String delegateEmail = RandomStringUtils.randomAlphabetic(10).toLowerCase() + "@gmail.com";
 
     Checkpoint providerDelegFails = testContext.checkpoint();
     Checkpoint consumerDelegFails = testContext.checkpoint();
 
-    Future<Void> create = utils
-        .createFakeResourceServer(DUMMY_SERVER_ONE,
-            new UserBuilder().userId(UUID.randomUUID()).build())
-        .compose(res -> utils.createFakeResourceServer(DUMMY_SERVER_TWO,
-            new UserBuilder().userId(UUID.randomUUID()).build()))
-        .compose(res -> utils.createFakeUser(consumerUser, false, false))
-        .compose(res -> utils.createFakeUser(providerUser, false, false));
+    Future<Void> create =
+        utils
+            .createFakeResourceServer(
+                DUMMY_SERVER_ONE, new UserBuilder().userId(UUID.randomUUID()).build())
+            .compose(
+                res ->
+                    utils.createFakeResourceServer(
+                        DUMMY_SERVER_TWO, new UserBuilder().userId(UUID.randomUUID()).build()))
+            .compose(res -> utils.createFakeUser(consumerUser, false, false))
+            .compose(res -> utils.createFakeUser(providerUser, false, false));
 
-    create.onSuccess(succ -> {
+    create
+        .onSuccess(
+            succ -> {
+              JsonObject providerDelegObj =
+                  new JsonObject()
+                      .put("userEmail", delegateEmail)
+                      .put("role", Roles.PROVIDER.toString().toLowerCase())
+                      .put("resSerUrl", DUMMY_SERVER_TWO);
 
-      JsonObject providerDelegObj = new JsonObject().put("userEmail", delegateEmail)
-          .put("role", Roles.PROVIDER.toString().toLowerCase()).put("resSerUrl", DUMMY_SERVER_TWO);
+              List<CreateDelegationRequest> providerDelegReq =
+                  CreateDelegationRequest.jsonArrayToList(new JsonArray().add(providerDelegObj));
 
-      List<CreateDelegationRequest> providerDelegReq =
-          CreateDelegationRequest.jsonArrayToList(new JsonArray().add(providerDelegObj));
+              policyService.createDelegation(
+                  providerDelegReq,
+                  providerUser,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(
+                                    URN_INVALID_INPUT.toString(), response.getString("type"));
+                                assertEquals(
+                                    ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
+                                    response.getString("title"));
+                                assertEquals(
+                                    ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
+                                    response.getString("detail"));
+                                assertEquals(
+                                    new JsonArray(List.of(DUMMY_SERVER_TWO)),
+                                    response
+                                        .getJsonObject("context")
+                                        .getJsonArray(
+                                            ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE));
+                                assertEquals(400, response.getInteger("status"));
+                                providerDelegFails.flag();
+                              })));
 
-      policyService.createDelegation(providerDelegReq, providerUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-            assertEquals(ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE, response.getString("title"));
-            assertEquals(ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
-                response.getString("detail"));
-            assertEquals(new JsonArray(List.of(DUMMY_SERVER_TWO)), response.getJsonObject("context")
-                .getJsonArray(ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE));
-            assertEquals(400, response.getInteger("status"));
-            providerDelegFails.flag();
-          })));
+              JsonObject consumerDelegObj =
+                  new JsonObject()
+                      .put("userEmail", delegateEmail)
+                      .put("role", Roles.CONSUMER.toString().toLowerCase())
+                      .put("resSerUrl", DUMMY_SERVER_TWO);
 
-      JsonObject consumerDelegObj = new JsonObject().put("userEmail", delegateEmail)
-          .put("role", Roles.CONSUMER.toString().toLowerCase()).put("resSerUrl", DUMMY_SERVER_TWO);
+              List<CreateDelegationRequest> consumerDelegReq =
+                  CreateDelegationRequest.jsonArrayToList(new JsonArray().add(consumerDelegObj));
 
-      List<CreateDelegationRequest> consumerDelegReq =
-          CreateDelegationRequest.jsonArrayToList(new JsonArray().add(consumerDelegObj));
-
-      policyService.createDelegation(consumerDelegReq, consumerUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-            assertEquals(ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE, response.getString("title"));
-            assertEquals(ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
-                response.getString("detail"));
-            assertEquals(new JsonArray(List.of(DUMMY_SERVER_TWO)), response.getJsonObject("context")
-                .getJsonArray(ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE));
-            assertEquals(400, response.getInteger("status"));
-            consumerDelegFails.flag();
-          })));
-    }).onFailure(fail -> testContext.failNow(fail.getMessage()));
+              policyService.createDelegation(
+                  consumerDelegReq,
+                  consumerUser,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(
+                                    URN_INVALID_INPUT.toString(), response.getString("type"));
+                                assertEquals(
+                                    ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
+                                    response.getString("title"));
+                                assertEquals(
+                                    ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
+                                    response.getString("detail"));
+                                assertEquals(
+                                    new JsonArray(List.of(DUMMY_SERVER_TWO)),
+                                    response
+                                        .getJsonObject("context")
+                                        .getJsonArray(
+                                            ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE));
+                                assertEquals(400, response.getInteger("status"));
+                                consumerDelegFails.flag();
+                              })));
+            })
+        .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
 
   @Test
@@ -343,42 +477,60 @@ public class CreateDelegationTest {
         "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
 
     User providerUser =
-        new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(List.of(Roles.PROVIDER))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.PROVIDER))
             .rolesToRsMapping(Map.of(Roles.PROVIDER.toString(), new JsonArray().add(DUMMY_SERVER)))
             .build();
 
     String notFoundEmail = RandomStringUtils.randomAlphabetic(10).toLowerCase() + "@gmail.com";
 
-    Future<Void> create = utils
-        .createFakeResourceServer(DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
-        .compose(res -> utils.createFakeUser(providerUser, false, false));
+    Future<Void> create =
+        utils
+            .createFakeResourceServer(
+                DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
+            .compose(res -> utils.createFakeUser(providerUser, false, false));
 
-    create.onSuccess(succ -> {
+    create
+        .onSuccess(
+            succ -> {
+              Mockito.doAnswer(
+                      i -> {
+                        Promise<JsonObject> p = i.getArgument(1);
+                        Set<String> emails = i.getArgument(0);
+                        p.fail(
+                            new ComposeException(
+                                400, Urn.URN_INVALID_INPUT, "Email not exist", emails.toString()));
+                        return i.getMock();
+                      })
+                  .when(registrationService)
+                  .findUserByEmail(Mockito.eq(Set.of(notFoundEmail)), Mockito.any());
 
-      Mockito.doAnswer(i -> {
-        Promise<JsonObject> p = i.getArgument(1);
-        Set<String> emails = i.getArgument(0);
-        p.fail(
-            new ComposeException(400, Urn.URN_INVALID_INPUT, "Email not exist", emails.toString()));
-        return i.getMock();
-      }).when(registrationService).findUserByEmail(Mockito.eq(Set.of(notFoundEmail)),
-          Mockito.any());
+              JsonObject providerDelegObj =
+                  new JsonObject()
+                      .put("userEmail", notFoundEmail)
+                      .put("role", Roles.PROVIDER.toString().toLowerCase())
+                      .put("resSerUrl", DUMMY_SERVER);
 
-      JsonObject providerDelegObj = new JsonObject().put("userEmail", notFoundEmail)
-          .put("role", Roles.PROVIDER.toString().toLowerCase()).put("resSerUrl", DUMMY_SERVER);
+              List<CreateDelegationRequest> providerDelegReq =
+                  CreateDelegationRequest.jsonArrayToList(new JsonArray().add(providerDelegObj));
 
-      List<CreateDelegationRequest> providerDelegReq =
-          CreateDelegationRequest.jsonArrayToList(new JsonArray().add(providerDelegObj));
-
-      policyService.createDelegation(providerDelegReq, providerUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(response.getInteger("status"), 400);
-            assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
-            testContext.completeNow();
-          })));
-    }).onFailure(fail -> testContext.failNow(fail.getMessage()));
+              policyService.createDelegation(
+                  providerDelegReq,
+                  providerUser,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(response.getInteger("status"), 400);
+                                assertEquals(
+                                    response.getString("type"), URN_INVALID_INPUT.toString());
+                                testContext.completeNow();
+                              })));
+            })
+        .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
-
 
   @Test
   @DisplayName("Success provider delegation")
@@ -387,46 +539,64 @@ public class CreateDelegationTest {
         "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
 
     User providerUser =
-        new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(List.of(Roles.PROVIDER))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.PROVIDER))
             .rolesToRsMapping(Map.of(Roles.PROVIDER.toString(), new JsonArray().add(DUMMY_SERVER)))
             .build();
 
     User delegateUser = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
 
-    Future<Void> create = utils
-        .createFakeResourceServer(DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
-        .compose(res -> utils.createFakeUser(providerUser, false, false))
-        .compose(res -> utils.createFakeUser(delegateUser, false, false));
+    Future<Void> create =
+        utils
+            .createFakeResourceServer(
+                DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
+            .compose(res -> utils.createFakeUser(providerUser, false, false))
+            .compose(res -> utils.createFakeUser(delegateUser, false, false));
 
-    create.onSuccess(succ -> {
+    create
+        .onSuccess(
+            succ -> {
+              Mockito.doAnswer(
+                      i -> {
+                        Promise<JsonObject> p = i.getArgument(1);
+                        Set<String> emails = i.getArgument(0);
 
-      Mockito.doAnswer(i -> {
-        Promise<JsonObject> p = i.getArgument(1);
-        Set<String> emails = i.getArgument(0);
+                        String delegateEmail = new ArrayList<String>(emails).get(0);
 
-        String delegateEmail = new ArrayList<String>(emails).get(0);
+                        JsonObject resp = utils.getKcAdminJson(delegateUser);
 
-        JsonObject resp = utils.getKcAdminJson(delegateUser);
+                        p.complete(new JsonObject().put(delegateEmail, resp));
+                        return i.getMock();
+                      })
+                  .when(registrationService)
+                  .findUserByEmail(
+                      Mockito.eq(Set.of(utils.getDetails(delegateUser).email)), Mockito.any());
 
-        p.complete(new JsonObject().put(delegateEmail, resp));
-        return i.getMock();
-      }).when(registrationService)
-          .findUserByEmail(Mockito.eq(Set.of(utils.getDetails(delegateUser).email)), Mockito.any());
+              JsonObject providerDelegObj =
+                  new JsonObject()
+                      .put("userEmail", utils.getDetails(delegateUser).email)
+                      .put("role", Roles.PROVIDER.toString().toLowerCase())
+                      .put("resSerUrl", DUMMY_SERVER);
 
-      JsonObject providerDelegObj =
-          new JsonObject().put("userEmail", utils.getDetails(delegateUser).email)
-              .put("role", Roles.PROVIDER.toString().toLowerCase()).put("resSerUrl", DUMMY_SERVER);
+              List<CreateDelegationRequest> providerDelegReq =
+                  CreateDelegationRequest.jsonArrayToList(new JsonArray().add(providerDelegObj));
 
-      List<CreateDelegationRequest> providerDelegReq =
-          CreateDelegationRequest.jsonArrayToList(new JsonArray().add(providerDelegObj));
-
-      policyService.createDelegation(providerDelegReq, providerUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(Urn.URN_SUCCESS.toString(), response.getString("type"));
-            assertEquals(201, response.getInteger("status"));
-            testContext.completeNow();
-          })));
-    }).onFailure(fail -> testContext.failNow(fail.getMessage()));
+              policyService.createDelegation(
+                  providerDelegReq,
+                  providerUser,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(
+                                    Urn.URN_SUCCESS.toString(), response.getString("type"));
+                                assertEquals(201, response.getInteger("status"));
+                                testContext.completeNow();
+                              })));
+            })
+        .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
 
   @Test
@@ -436,46 +606,64 @@ public class CreateDelegationTest {
         "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
 
     User consumerUser =
-        new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(List.of(Roles.CONSUMER))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.CONSUMER))
             .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER)))
             .build();
 
     User delegateUser = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
 
-    Future<Void> create = utils
-        .createFakeResourceServer(DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
-        .compose(res -> utils.createFakeUser(consumerUser, false, false))
-        .compose(res -> utils.createFakeUser(delegateUser, false, false));
+    Future<Void> create =
+        utils
+            .createFakeResourceServer(
+                DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
+            .compose(res -> utils.createFakeUser(consumerUser, false, false))
+            .compose(res -> utils.createFakeUser(delegateUser, false, false));
 
-    create.onSuccess(succ -> {
+    create
+        .onSuccess(
+            succ -> {
+              Mockito.doAnswer(
+                      i -> {
+                        Promise<JsonObject> p = i.getArgument(1);
+                        Set<String> emails = i.getArgument(0);
 
-      Mockito.doAnswer(i -> {
-        Promise<JsonObject> p = i.getArgument(1);
-        Set<String> emails = i.getArgument(0);
+                        String delegateEmail = new ArrayList<String>(emails).get(0);
 
-        String delegateEmail = new ArrayList<String>(emails).get(0);
+                        JsonObject resp = utils.getKcAdminJson(delegateUser);
 
-        JsonObject resp = utils.getKcAdminJson(delegateUser);
+                        p.complete(new JsonObject().put(delegateEmail, resp));
+                        return i.getMock();
+                      })
+                  .when(registrationService)
+                  .findUserByEmail(
+                      Mockito.eq(Set.of(utils.getDetails(delegateUser).email)), Mockito.any());
 
-        p.complete(new JsonObject().put(delegateEmail, resp));
-        return i.getMock();
-      }).when(registrationService)
-          .findUserByEmail(Mockito.eq(Set.of(utils.getDetails(delegateUser).email)), Mockito.any());
+              JsonObject consumerDelegObj =
+                  new JsonObject()
+                      .put("userEmail", utils.getDetails(delegateUser).email)
+                      .put("role", Roles.CONSUMER.toString().toLowerCase())
+                      .put("resSerUrl", DUMMY_SERVER);
 
-      JsonObject consumerDelegObj =
-          new JsonObject().put("userEmail", utils.getDetails(delegateUser).email)
-              .put("role", Roles.CONSUMER.toString().toLowerCase()).put("resSerUrl", DUMMY_SERVER);
+              List<CreateDelegationRequest> consumerDelegReq =
+                  CreateDelegationRequest.jsonArrayToList(new JsonArray().add(consumerDelegObj));
 
-      List<CreateDelegationRequest> consumerDelegReq =
-          CreateDelegationRequest.jsonArrayToList(new JsonArray().add(consumerDelegObj));
-
-      policyService.createDelegation(consumerDelegReq, consumerUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(Urn.URN_SUCCESS.toString(), response.getString("type"));
-            assertEquals(201, response.getInteger("status"));
-            testContext.completeNow();
-          })));
-    }).onFailure(fail -> testContext.failNow(fail.getMessage()));
+              policyService.createDelegation(
+                  consumerDelegReq,
+                  consumerUser,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(
+                                    Urn.URN_SUCCESS.toString(), response.getString("type"));
+                                assertEquals(201, response.getInteger("status"));
+                                testContext.completeNow();
+                              })));
+            })
+        .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
 
   @Test
@@ -485,57 +673,84 @@ public class CreateDelegationTest {
         "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
 
     User consumerUser =
-        new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(List.of(Roles.CONSUMER))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.CONSUMER))
             .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER)))
             .build();
 
     User delegateUser = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
 
-    Future<Void> create = utils
-        .createFakeResourceServer(DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
-        .compose(res -> utils.createFakeUser(consumerUser, false, false))
-        .compose(res -> utils.createFakeUser(delegateUser, false, false));
+    Future<Void> create =
+        utils
+            .createFakeResourceServer(
+                DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
+            .compose(res -> utils.createFakeUser(consumerUser, false, false))
+            .compose(res -> utils.createFakeUser(delegateUser, false, false));
 
     Checkpoint created = testContext.checkpoint();
     Checkpoint alreadyExists = testContext.checkpoint();
 
-    create.onSuccess(succ -> {
+    create
+        .onSuccess(
+            succ -> {
+              Mockito.doAnswer(
+                      i -> {
+                        Promise<JsonObject> p = i.getArgument(1);
+                        Set<String> emails = i.getArgument(0);
 
-      Mockito.doAnswer(i -> {
-        Promise<JsonObject> p = i.getArgument(1);
-        Set<String> emails = i.getArgument(0);
+                        String delegateEmail = new ArrayList<String>(emails).get(0);
 
-        String delegateEmail = new ArrayList<String>(emails).get(0);
+                        JsonObject resp = utils.getKcAdminJson(delegateUser);
 
-        JsonObject resp = utils.getKcAdminJson(delegateUser);
+                        p.complete(new JsonObject().put(delegateEmail, resp));
+                        return i.getMock();
+                      })
+                  .when(registrationService)
+                  .findUserByEmail(
+                      Mockito.eq(Set.of(utils.getDetails(delegateUser).email)), Mockito.any());
 
-        p.complete(new JsonObject().put(delegateEmail, resp));
-        return i.getMock();
-      }).when(registrationService)
-          .findUserByEmail(Mockito.eq(Set.of(utils.getDetails(delegateUser).email)), Mockito.any());
+              JsonObject consumerDelegObj =
+                  new JsonObject()
+                      .put("userEmail", utils.getDetails(delegateUser).email)
+                      .put("role", Roles.CONSUMER.toString().toLowerCase())
+                      .put("resSerUrl", DUMMY_SERVER);
 
-      JsonObject consumerDelegObj =
-          new JsonObject().put("userEmail", utils.getDetails(delegateUser).email)
-              .put("role", Roles.CONSUMER.toString().toLowerCase()).put("resSerUrl", DUMMY_SERVER);
+              List<CreateDelegationRequest> consumerDelegReq =
+                  CreateDelegationRequest.jsonArrayToList(new JsonArray().add(consumerDelegObj));
 
-      List<CreateDelegationRequest> consumerDelegReq =
-          CreateDelegationRequest.jsonArrayToList(new JsonArray().add(consumerDelegObj));
+              policyService.createDelegation(
+                  consumerDelegReq,
+                  consumerUser,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(
+                                    Urn.URN_SUCCESS.toString(), response.getString("type"));
+                                assertEquals(201, response.getInteger("status"));
+                                created.flag();
 
-      policyService.createDelegation(consumerDelegReq, consumerUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(Urn.URN_SUCCESS.toString(), response.getString("type"));
-            assertEquals(201, response.getInteger("status"));
-            created.flag();
-
-            policyService.createDelegation(consumerDelegReq, consumerUser,
-                testContext.succeeding(resp -> testContext.verify(() -> {
-                  assertEquals(Urn.URN_ALREADY_EXISTS.toString(), resp.getString("type"));
-                  assertEquals(DUPLICATE_DELEGATION, resp.getString("title"));
-                  assertEquals(409, resp.getInteger("status"));
-                  alreadyExists.flag();
-                })));
-          })));
-    }).onFailure(fail -> testContext.failNow(fail.getMessage()));
+                                policyService.createDelegation(
+                                    consumerDelegReq,
+                                    consumerUser,
+                                    testContext.succeeding(
+                                        resp ->
+                                            testContext.verify(
+                                                () -> {
+                                                  assertEquals(
+                                                      Urn.URN_ALREADY_EXISTS.toString(),
+                                                      resp.getString("type"));
+                                                  assertEquals(
+                                                      DUPLICATE_DELEGATION,
+                                                      resp.getString("title"));
+                                                  assertEquals(409, resp.getInteger("status"));
+                                                  alreadyExists.flag();
+                                                })));
+                              })));
+            })
+        .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
 
   @Test
@@ -547,59 +762,91 @@ public class CreateDelegationTest {
     final String DUMMY_SERVER_TWO =
         "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
 
-    User consProvUser = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb")
-        .roles(List.of(Roles.CONSUMER, Roles.PROVIDER))
-        .rolesToRsMapping(Map.of(Roles.PROVIDER.toString(), new JsonArray().add(DUMMY_SERVER_ONE),
-            Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER_TWO)))
-        .build();
+    User consProvUser =
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.CONSUMER, Roles.PROVIDER))
+            .rolesToRsMapping(
+                Map.of(
+                    Roles.PROVIDER.toString(),
+                    new JsonArray().add(DUMMY_SERVER_ONE),
+                    Roles.CONSUMER.toString(),
+                    new JsonArray().add(DUMMY_SERVER_TWO)))
+            .build();
 
     User consumerDelegateUser =
         new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
     User providerDelegateUser =
         new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
 
-    Future<Void> create = utils
-        .createFakeResourceServer(DUMMY_SERVER_ONE,
-            new UserBuilder().userId(UUID.randomUUID()).build())
-        .compose(res -> utils.createFakeResourceServer(DUMMY_SERVER_TWO,
-            new UserBuilder().userId(UUID.randomUUID()).build()))
-        .compose(res -> utils.createFakeUser(consProvUser, false, false))
-        .compose(res -> utils.createFakeUser(consumerDelegateUser, false, false))
-        .compose(res -> utils.createFakeUser(providerDelegateUser, false, false));
+    Future<Void> create =
+        utils
+            .createFakeResourceServer(
+                DUMMY_SERVER_ONE, new UserBuilder().userId(UUID.randomUUID()).build())
+            .compose(
+                res ->
+                    utils.createFakeResourceServer(
+                        DUMMY_SERVER_TWO, new UserBuilder().userId(UUID.randomUUID()).build()))
+            .compose(res -> utils.createFakeUser(consProvUser, false, false))
+            .compose(res -> utils.createFakeUser(consumerDelegateUser, false, false))
+            .compose(res -> utils.createFakeUser(providerDelegateUser, false, false));
 
-    create.onSuccess(succ -> {
+    create
+        .onSuccess(
+            succ -> {
+              Mockito.doAnswer(
+                      i -> {
+                        Promise<JsonObject> p = i.getArgument(1);
 
-      Mockito.doAnswer(i -> {
-        Promise<JsonObject> p = i.getArgument(1);
+                        p.complete(
+                            new JsonObject()
+                                .put(
+                                    utils.getDetails(providerDelegateUser).email,
+                                    utils.getKcAdminJson(providerDelegateUser))
+                                .put(
+                                    utils.getDetails(consumerDelegateUser).email,
+                                    utils.getKcAdminJson(consumerDelegateUser)));
 
-        p.complete(new JsonObject()
-            .put(utils.getDetails(providerDelegateUser).email,
-                utils.getKcAdminJson(providerDelegateUser))
-            .put(utils.getDetails(consumerDelegateUser).email,
-                utils.getKcAdminJson(consumerDelegateUser)));
+                        return i.getMock();
+                      })
+                  .when(registrationService)
+                  .findUserByEmail(
+                      Mockito.eq(
+                          Set.of(
+                              utils.getDetails(providerDelegateUser).email,
+                              utils.getDetails(consumerDelegateUser).email)),
+                      Mockito.any());
 
-        return i.getMock();
-      }).when(registrationService)
-          .findUserByEmail(Mockito.eq(Set.of(utils.getDetails(providerDelegateUser).email,
-              utils.getDetails(consumerDelegateUser).email)), Mockito.any());
+              JsonObject providerDelegObj =
+                  new JsonObject()
+                      .put("userEmail", utils.getDetails(providerDelegateUser).email)
+                      .put("role", Roles.PROVIDER.toString().toLowerCase())
+                      .put("resSerUrl", DUMMY_SERVER_ONE);
 
-      JsonObject providerDelegObj = new JsonObject()
-          .put("userEmail", utils.getDetails(providerDelegateUser).email)
-          .put("role", Roles.PROVIDER.toString().toLowerCase()).put("resSerUrl", DUMMY_SERVER_ONE);
+              JsonObject consumerDelegObj =
+                  new JsonObject()
+                      .put("userEmail", utils.getDetails(consumerDelegateUser).email)
+                      .put("role", Roles.CONSUMER.toString().toLowerCase())
+                      .put("resSerUrl", DUMMY_SERVER_TWO);
 
-      JsonObject consumerDelegObj = new JsonObject()
-          .put("userEmail", utils.getDetails(consumerDelegateUser).email)
-          .put("role", Roles.CONSUMER.toString().toLowerCase()).put("resSerUrl", DUMMY_SERVER_TWO);
+              List<CreateDelegationRequest> req =
+                  CreateDelegationRequest.jsonArrayToList(
+                      new JsonArray().add(providerDelegObj).add(consumerDelegObj));
 
-      List<CreateDelegationRequest> req = CreateDelegationRequest
-          .jsonArrayToList(new JsonArray().add(providerDelegObj).add(consumerDelegObj));
-
-      policyService.createDelegation(req, consProvUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(Urn.URN_SUCCESS.toString(), response.getString("type"));
-            assertEquals(201, response.getInteger("status"));
-            testContext.completeNow();
-          })));
-    }).onFailure(fail -> testContext.failNow(fail.getMessage()));
+              policyService.createDelegation(
+                  req,
+                  consProvUser,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(
+                                    Urn.URN_SUCCESS.toString(), response.getString("type"));
+                                assertEquals(201, response.getInteger("status"));
+                                testContext.completeNow();
+                              })));
+            })
+        .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
 }

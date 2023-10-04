@@ -39,15 +39,13 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+/** Unit tests for delegation deletion. */
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
-@TestMethodOrder(OrderAnnotation.class)
 public class DeleteDelegationTest {
   private static Logger LOGGER =
       LogManager.getLogger(iudx.aaa.server.policy.DeleteDelegationTest.class);
@@ -99,8 +97,13 @@ public class DeleteDelegationTest {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
       connectOptions =
-          new PgConnectOptions().setPort(databasePort).setHost(databaseIP).setDatabase(databaseName)
-              .setUser(databaseUserName).setPassword(databasePassword).setProperties(schemaProp);
+          new PgConnectOptions()
+              .setPort(databasePort)
+              .setHost(databaseIP)
+              .setDatabase(databaseName)
+              .setUser(databaseUserName)
+              .setPassword(databasePassword)
+              .setProperties(schemaProp);
     }
 
     // Pool options
@@ -121,12 +124,16 @@ public class DeleteDelegationTest {
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing....");
 
-    utils.deleteFakeResourceServer().compose(res -> utils.deleteFakeUser()).onComplete(x -> {
-      if (x.failed()) {
-        LOGGER.warn(x.cause().getMessage());
-      }
-      vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
-    });
+    utils
+        .deleteFakeResourceServer()
+        .compose(res -> utils.deleteFakeUser())
+        .onComplete(
+            x -> {
+              if (x.failed()) {
+                LOGGER.warn(x.cause().getMessage());
+              }
+              vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
+            });
   }
 
   @Test
@@ -136,23 +143,35 @@ public class DeleteDelegationTest {
     final String DUMMY_SERVER =
         "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
 
-    User dummyUser = new UserBuilder().userId(UUID.randomUUID())
-        .roles(List.of(Roles.ADMIN, Roles.COS_ADMIN, Roles.TRUSTEE, Roles.DELEGATE))
-        .rolesToRsMapping(Map.of(Roles.DELEGATE.toString(), new JsonArray().add(DUMMY_SERVER),
-            Roles.TRUSTEE.toString(), new JsonArray().add("some-apd.url"), Roles.ADMIN.toString(),
-            new JsonArray().add(DUMMY_SERVER)))
-        .build();
+    User dummyUser =
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.ADMIN, Roles.COS_ADMIN, Roles.TRUSTEE, Roles.DELEGATE))
+            .rolesToRsMapping(
+                Map.of(
+                    Roles.DELEGATE.toString(),
+                    new JsonArray().add(DUMMY_SERVER),
+                    Roles.TRUSTEE.toString(),
+                    new JsonArray().add("some-apd.url"),
+                    Roles.ADMIN.toString(),
+                    new JsonArray().add(DUMMY_SERVER)))
+            .build();
 
     List<DeleteDelegationRequest> req = new ArrayList<DeleteDelegationRequest>();
 
-    policyService.deleteDelegation(req, dummyUser,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-          assertEquals(ERR_TITLE_INVALID_ROLES, response.getString("title"));
-          assertEquals(ERR_DETAIL_DEL_DELEGATE_ROLES, response.getString("detail"));
-          assertEquals(401, response.getInteger("status"));
-          testContext.completeNow();
-        })));
+    policyService.deleteDelegation(
+        req,
+        dummyUser,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                      assertEquals(ERR_TITLE_INVALID_ROLES, response.getString("title"));
+                      assertEquals(ERR_DETAIL_DEL_DELEGATE_ROLES, response.getString("detail"));
+                      assertEquals(401, response.getInteger("status"));
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
@@ -163,35 +182,58 @@ public class DeleteDelegationTest {
         "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
 
     User consumerUser =
-        new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(List.of(Roles.CONSUMER))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.CONSUMER))
             .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER)))
             .build();
 
     UUID validDelegationId = UUID.randomUUID();
 
-    Future<Void> create = utils
-        .createFakeResourceServer(DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
-        .compose(res -> utils.createFakeUser(consumerUser, false, false))
-        .compose(res -> utils.createFakeDelegation(validDelegationId, consumerUser,
-            new UserBuilder().userId(UUID.randomUUID()).build(), DUMMY_SERVER, Roles.CONSUMER,
-            DelegationStatus.ACTIVE));
+    Future<Void> create =
+        utils
+            .createFakeResourceServer(
+                DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
+            .compose(res -> utils.createFakeUser(consumerUser, false, false))
+            .compose(
+                res ->
+                    utils.createFakeDelegation(
+                        validDelegationId,
+                        consumerUser,
+                        new UserBuilder().userId(UUID.randomUUID()).build(),
+                        DUMMY_SERVER,
+                        Roles.CONSUMER,
+                        DelegationStatus.ACTIVE));
 
-    create.onSuccess(res -> {
-      UUID inValidDelegationId = UUID.randomUUID();
+    create
+        .onSuccess(
+            res -> {
+              UUID inValidDelegationId = UUID.randomUUID();
 
-      JsonArray req = new JsonArray().add(new JsonObject().put("id", validDelegationId.toString()))
-          .add(new JsonObject().put("id", inValidDelegationId.toString()));
-      List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(req);
+              JsonArray req =
+                  new JsonArray()
+                      .add(new JsonObject().put("id", validDelegationId.toString()))
+                      .add(new JsonObject().put("id", inValidDelegationId.toString()));
+              List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(req);
 
-      policyService.deleteDelegation(request, consumerUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-            assertEquals(ERR_TITLE_INVALID_ID, response.getString("title"));
-            assertEquals(inValidDelegationId.toString(), response.getString("detail"));
-            assertEquals(400, response.getInteger("status"));
-            testContext.completeNow();
-          })));
-    }).onFailure(fail -> testContext.failNow(fail.getMessage()));
+              policyService.deleteDelegation(
+                  request,
+                  consumerUser,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(
+                                    URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                                assertEquals(ERR_TITLE_INVALID_ID, response.getString("title"));
+                                assertEquals(
+                                    inValidDelegationId.toString(), response.getString("detail"));
+                                assertEquals(400, response.getInteger("status"));
+                                testContext.completeNow();
+                              })));
+            })
+        .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
 
   @Test
@@ -201,37 +243,66 @@ public class DeleteDelegationTest {
         "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
 
     User consumerUser =
-        new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(List.of(Roles.CONSUMER))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.CONSUMER))
             .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER)))
             .build();
 
     UUID activeDelegationId = UUID.randomUUID();
     UUID deletedDelegationId = UUID.randomUUID();
 
-    Future<Void> create = utils
-        .createFakeResourceServer(DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
-        .compose(res -> utils.createFakeUser(consumerUser, false, false))
-        .compose(res -> utils.createFakeDelegation(activeDelegationId, consumerUser,
-            new UserBuilder().userId(UUID.randomUUID()).build(), DUMMY_SERVER, Roles.CONSUMER,
-            DelegationStatus.ACTIVE))
-        .compose(res -> utils.createFakeDelegation(deletedDelegationId, consumerUser,
-            new UserBuilder().userId(UUID.randomUUID()).build(), DUMMY_SERVER, Roles.CONSUMER,
-            DelegationStatus.DELETED));
+    Future<Void> create =
+        utils
+            .createFakeResourceServer(
+                DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
+            .compose(res -> utils.createFakeUser(consumerUser, false, false))
+            .compose(
+                res ->
+                    utils.createFakeDelegation(
+                        activeDelegationId,
+                        consumerUser,
+                        new UserBuilder().userId(UUID.randomUUID()).build(),
+                        DUMMY_SERVER,
+                        Roles.CONSUMER,
+                        DelegationStatus.ACTIVE))
+            .compose(
+                res ->
+                    utils.createFakeDelegation(
+                        deletedDelegationId,
+                        consumerUser,
+                        new UserBuilder().userId(UUID.randomUUID()).build(),
+                        DUMMY_SERVER,
+                        Roles.CONSUMER,
+                        DelegationStatus.DELETED));
 
-    create.onSuccess(res -> {
-      JsonArray req = new JsonArray().add(new JsonObject().put("id", activeDelegationId.toString()))
-          .add(new JsonObject().put("id", deletedDelegationId.toString()));
-      List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(req);
+    create
+        .onSuccess(
+            res -> {
+              JsonArray req =
+                  new JsonArray()
+                      .add(new JsonObject().put("id", activeDelegationId.toString()))
+                      .add(new JsonObject().put("id", deletedDelegationId.toString()));
+              List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(req);
 
-      policyService.deleteDelegation(request, consumerUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-            assertEquals(ERR_TITLE_INVALID_ID, response.getString("title"));
-            assertEquals(deletedDelegationId.toString(), response.getString("detail"));
-            assertEquals(400, response.getInteger("status"));
-            testContext.completeNow();
-          })));
-    }).onFailure(fail -> testContext.failNow(fail.getMessage()));
+              policyService.deleteDelegation(
+                  request,
+                  consumerUser,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(
+                                    URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                                assertEquals(ERR_TITLE_INVALID_ID, response.getString("title"));
+                                assertEquals(
+                                    deletedDelegationId.toString(), response.getString("detail"));
+                                assertEquals(400, response.getInteger("status"));
+                                testContext.completeNow();
+                              })));
+            })
+        .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
 
   @Test
@@ -241,32 +312,51 @@ public class DeleteDelegationTest {
         "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
 
     User consumerUser =
-        new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(List.of(Roles.CONSUMER))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.CONSUMER))
             .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER)))
             .build();
 
     UUID consumersDelegationId = UUID.randomUUID();
 
-    Future<Void> create = utils
-        .createFakeResourceServer(DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
-        .compose(res -> utils.createFakeUser(consumerUser, false, false))
-        .compose(res -> utils.createFakeDelegation(consumersDelegationId, consumerUser,
-            new UserBuilder().userId(UUID.randomUUID()).build(), DUMMY_SERVER, Roles.CONSUMER,
-            DelegationStatus.ACTIVE));
+    Future<Void> create =
+        utils
+            .createFakeResourceServer(
+                DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
+            .compose(res -> utils.createFakeUser(consumerUser, false, false))
+            .compose(
+                res ->
+                    utils.createFakeDelegation(
+                        consumersDelegationId,
+                        consumerUser,
+                        new UserBuilder().userId(UUID.randomUUID()).build(),
+                        DUMMY_SERVER,
+                        Roles.CONSUMER,
+                        DelegationStatus.ACTIVE));
 
-    create.onSuccess(res -> {
-      JsonArray req =
-          new JsonArray().add(new JsonObject().put("id", consumersDelegationId.toString()));
-      List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(req);
+    create
+        .onSuccess(
+            res -> {
+              JsonArray req =
+                  new JsonArray().add(new JsonObject().put("id", consumersDelegationId.toString()));
+              List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(req);
 
-      policyService.deleteDelegation(request, consumerUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-            assertEquals(SUCC_TITLE_DELETE_DELE, response.getString("title"));
-            assertEquals(200, response.getInteger("status"));
-            testContext.completeNow();
-          })));
-    }).onFailure(fail -> testContext.failNow(fail.getMessage()));
+              policyService.deleteDelegation(
+                  request,
+                  consumerUser,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                                assertEquals(SUCC_TITLE_DELETE_DELE, response.getString("title"));
+                                assertEquals(200, response.getInteger("status"));
+                                testContext.completeNow();
+                              })));
+            })
+        .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
 
   @Test
@@ -276,32 +366,51 @@ public class DeleteDelegationTest {
         "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
 
     User providerUser =
-        new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(List.of(Roles.PROVIDER))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.PROVIDER))
             .rolesToRsMapping(Map.of(Roles.PROVIDER.toString(), new JsonArray().add(DUMMY_SERVER)))
             .build();
 
     UUID providersDelegationId = UUID.randomUUID();
 
-    Future<Void> create = utils
-        .createFakeResourceServer(DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
-        .compose(res -> utils.createFakeUser(providerUser, false, false))
-        .compose(res -> utils.createFakeDelegation(providersDelegationId, providerUser,
-            new UserBuilder().userId(UUID.randomUUID()).build(), DUMMY_SERVER, Roles.PROVIDER,
-            DelegationStatus.ACTIVE));
+    Future<Void> create =
+        utils
+            .createFakeResourceServer(
+                DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
+            .compose(res -> utils.createFakeUser(providerUser, false, false))
+            .compose(
+                res ->
+                    utils.createFakeDelegation(
+                        providersDelegationId,
+                        providerUser,
+                        new UserBuilder().userId(UUID.randomUUID()).build(),
+                        DUMMY_SERVER,
+                        Roles.PROVIDER,
+                        DelegationStatus.ACTIVE));
 
-    create.onSuccess(res -> {
-      JsonArray req =
-          new JsonArray().add(new JsonObject().put("id", providersDelegationId.toString()));
-      List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(req);
+    create
+        .onSuccess(
+            res -> {
+              JsonArray req =
+                  new JsonArray().add(new JsonObject().put("id", providersDelegationId.toString()));
+              List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(req);
 
-      policyService.deleteDelegation(request, providerUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-            assertEquals(SUCC_TITLE_DELETE_DELE, response.getString("title"));
-            assertEquals(200, response.getInteger("status"));
-            testContext.completeNow();
-          })));
-    }).onFailure(fail -> testContext.failNow(fail.getMessage()));
+              policyService.deleteDelegation(
+                  request,
+                  providerUser,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                                assertEquals(SUCC_TITLE_DELETE_DELE, response.getString("title"));
+                                assertEquals(200, response.getInteger("status"));
+                                testContext.completeNow();
+                              })));
+            })
+        .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
 
   @Test
@@ -311,7 +420,10 @@ public class DeleteDelegationTest {
         "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
 
     User providerUser =
-        new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(List.of(Roles.PROVIDER))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.PROVIDER))
             .rolesToRsMapping(Map.of(Roles.PROVIDER.toString(), new JsonArray().add(DUMMY_SERVER)))
             .build();
 
@@ -320,35 +432,62 @@ public class DeleteDelegationTest {
     Checkpoint deleted = testContext.checkpoint();
     Checkpoint cannotDelete = testContext.checkpoint();
 
-    Future<Void> create = utils
-        .createFakeResourceServer(DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
-        .compose(res -> utils.createFakeUser(providerUser, false, false))
-        .compose(res -> utils.createFakeDelegation(providersDelegationId, providerUser,
-            new UserBuilder().userId(UUID.randomUUID()).build(), DUMMY_SERVER, Roles.PROVIDER,
-            DelegationStatus.ACTIVE));
+    Future<Void> create =
+        utils
+            .createFakeResourceServer(
+                DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
+            .compose(res -> utils.createFakeUser(providerUser, false, false))
+            .compose(
+                res ->
+                    utils.createFakeDelegation(
+                        providersDelegationId,
+                        providerUser,
+                        new UserBuilder().userId(UUID.randomUUID()).build(),
+                        DUMMY_SERVER,
+                        Roles.PROVIDER,
+                        DelegationStatus.ACTIVE));
 
-    create.onSuccess(res -> {
-      JsonArray req =
-          new JsonArray().add(new JsonObject().put("id", providersDelegationId.toString()));
-      List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(req);
+    create
+        .onSuccess(
+            res -> {
+              JsonArray req =
+                  new JsonArray().add(new JsonObject().put("id", providersDelegationId.toString()));
+              List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(req);
 
-      policyService.deleteDelegation(request, providerUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-            assertEquals(SUCC_TITLE_DELETE_DELE, response.getString("title"));
-            assertEquals(200, response.getInteger("status"));
-            deleted.flag();
+              policyService.deleteDelegation(
+                  request,
+                  providerUser,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                                assertEquals(SUCC_TITLE_DELETE_DELE, response.getString("title"));
+                                assertEquals(200, response.getInteger("status"));
+                                deleted.flag();
 
-            policyService.deleteDelegation(request, providerUser,
-                testContext.succeeding(resp -> testContext.verify(() -> {
-                  assertEquals(URN_INVALID_INPUT.toString(), resp.getString(TYPE));
-                  assertEquals(ERR_TITLE_INVALID_ID, resp.getString("title"));
-                  assertEquals(providersDelegationId.toString(), resp.getString("detail"));
-                  assertEquals(400, resp.getInteger("status"));
-                  cannotDelete.flag();
-                })));
-          })));
-    }).onFailure(fail -> testContext.failNow(fail.getMessage()));
+                                policyService.deleteDelegation(
+                                    request,
+                                    providerUser,
+                                    testContext.succeeding(
+                                        resp ->
+                                            testContext.verify(
+                                                () -> {
+                                                  assertEquals(
+                                                      URN_INVALID_INPUT.toString(),
+                                                      resp.getString(TYPE));
+                                                  assertEquals(
+                                                      ERR_TITLE_INVALID_ID,
+                                                      resp.getString("title"));
+                                                  assertEquals(
+                                                      providersDelegationId.toString(),
+                                                      resp.getString("detail"));
+                                                  assertEquals(400, resp.getInteger("status"));
+                                                  cannotDelete.flag();
+                                                })));
+                              })));
+            })
+        .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
 
   @Test
@@ -360,42 +499,72 @@ public class DeleteDelegationTest {
     final String DUMMY_SERVER_TWO =
         "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
 
-    User consProvUser = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb")
-        .roles(List.of(Roles.CONSUMER, Roles.PROVIDER))
-        .rolesToRsMapping(Map.of(Roles.PROVIDER.toString(), new JsonArray().add(DUMMY_SERVER_ONE),
-            Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER_TWO)))
-        .build();
+    User consProvUser =
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.CONSUMER, Roles.PROVIDER))
+            .rolesToRsMapping(
+                Map.of(
+                    Roles.PROVIDER.toString(),
+                    new JsonArray().add(DUMMY_SERVER_ONE),
+                    Roles.CONSUMER.toString(),
+                    new JsonArray().add(DUMMY_SERVER_TWO)))
+            .build();
 
     UUID providerDelegationId = UUID.randomUUID();
     UUID consumerDelegationId = UUID.randomUUID();
 
-    Future<Void> create = utils
-        .createFakeResourceServer(DUMMY_SERVER_ONE,
-            new UserBuilder().userId(UUID.randomUUID()).build())
-        .compose(res -> utils.createFakeResourceServer(DUMMY_SERVER_TWO,
-            new UserBuilder().userId(UUID.randomUUID()).build()))
-        .compose(res -> utils.createFakeUser(consProvUser, false, false))
-        .compose(res -> utils.createFakeDelegation(providerDelegationId, consProvUser,
-            new UserBuilder().userId(UUID.randomUUID()).build(), DUMMY_SERVER_ONE, Roles.PROVIDER,
-            DelegationStatus.ACTIVE))
-        .compose(res -> utils.createFakeDelegation(consumerDelegationId, consProvUser,
-            new UserBuilder().userId(UUID.randomUUID()).build(), DUMMY_SERVER_TWO, Roles.CONSUMER,
-            DelegationStatus.ACTIVE));
+    Future<Void> create =
+        utils
+            .createFakeResourceServer(
+                DUMMY_SERVER_ONE, new UserBuilder().userId(UUID.randomUUID()).build())
+            .compose(
+                res ->
+                    utils.createFakeResourceServer(
+                        DUMMY_SERVER_TWO, new UserBuilder().userId(UUID.randomUUID()).build()))
+            .compose(res -> utils.createFakeUser(consProvUser, false, false))
+            .compose(
+                res ->
+                    utils.createFakeDelegation(
+                        providerDelegationId,
+                        consProvUser,
+                        new UserBuilder().userId(UUID.randomUUID()).build(),
+                        DUMMY_SERVER_ONE,
+                        Roles.PROVIDER,
+                        DelegationStatus.ACTIVE))
+            .compose(
+                res ->
+                    utils.createFakeDelegation(
+                        consumerDelegationId,
+                        consProvUser,
+                        new UserBuilder().userId(UUID.randomUUID()).build(),
+                        DUMMY_SERVER_TWO,
+                        Roles.CONSUMER,
+                        DelegationStatus.ACTIVE));
 
-    create.onSuccess(res -> {
-      JsonArray req =
-          new JsonArray().add(new JsonObject().put("id", consumerDelegationId.toString()))
-              .add(new JsonObject().put("id", providerDelegationId.toString()));
-      List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(req);
+    create
+        .onSuccess(
+            res -> {
+              JsonArray req =
+                  new JsonArray()
+                      .add(new JsonObject().put("id", consumerDelegationId.toString()))
+                      .add(new JsonObject().put("id", providerDelegationId.toString()));
+              List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(req);
 
-      policyService.deleteDelegation(request, consProvUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-            assertEquals(SUCC_TITLE_DELETE_DELE, response.getString("title"));
-            assertEquals(200, response.getInteger("status"));
-            testContext.completeNow();
-          })));
-    }).onFailure(fail -> testContext.failNow(fail.getMessage()));
+              policyService.deleteDelegation(
+                  request,
+                  consProvUser,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                                assertEquals(SUCC_TITLE_DELETE_DELE, response.getString("title"));
+                                assertEquals(200, response.getInteger("status"));
+                                testContext.completeNow();
+                              })));
+            })
+        .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
 }
-
