@@ -6,10 +6,11 @@ import io.vertx.core.file.FileSystem;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.deploy.ConfigResolve;
+import java.io.File;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import java.io.File;
 
+/** Class used for setting up config during unit tests. */
 public class Configuration {
 
   private static FileSystem fileSystem;
@@ -18,7 +19,7 @@ public class Configuration {
 
   /**
    * This is to read the config.json file from fileSystem to load configuration.
-   * 
+   *
    * @param moduleIndex
    * @param vertx
    * @return module JsonObject
@@ -36,9 +37,7 @@ public class Configuration {
       JsonObject config = buff.toJsonObject();
       try {
         ConfigResolve.resolve(config);
-      }
-      catch(IllegalStateException e)
-      {
+      } catch (IllegalStateException e) {
         LOGGER.fatal("Invalid option passed in config" + e.getMessage());
         return moduleConf;
       }
@@ -51,5 +50,4 @@ public class Configuration {
 
     return moduleConf;
   }
-
 }
