@@ -16,18 +16,17 @@ import iudx.aaa.server.apiserver.User;
 
 /**
  * The Token Service.
+ *
  * <h1>Token Service</h1>
- * <p>
- * The Token Service in the IUDX AAA Server defines the operations to be performed for creation,
+ *
+ * <p>The Token Service in the IUDX AAA Server defines the operations to be performed for creation,
  * list, read, update, delete tokens.
- * </p>
  *
  * @version 1.0
  * @see io.vertx.codegen.annotations.ProxyGen
  * @see io.vertx.codegen.annotations.VertxGen
  * @since 2020-12-15
  */
-
 @VertxGen
 @ProxyGen
 public interface TokenService {
@@ -39,7 +38,6 @@ public interface TokenService {
    * @param address which is the proxy address
    * @return TokenServiceVertxEBProxy which is a service proxy
    */
-
   @GenIgnore
   static TokenService createProxy(Vertx vertx, String address) {
     return new TokenServiceVertxEBProxy(vertx, address);
@@ -47,48 +45,49 @@ public interface TokenService {
 
   /**
    * The createToken implements the token creation operation.
-   * 
+   *
    * @param requestToken which is a RequestToken
    * @param delegationInfo which contains info if delegate called the API, else is null
    * @param user which is User Object
    * @param handler which is a Request Handler
    * @return TokenService which is a Service
    */
-
   @Fluent
-  TokenService createToken(RequestToken requestToken, DelegationInformation delegationInfo,
-      User user, Handler<AsyncResult<JsonObject>> handler);
+  TokenService createToken(
+      RequestToken requestToken,
+      DelegationInformation delegationInfo,
+      User user,
+      Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * The revokeToken implements the token revocation operation.
-   * 
+   *
    * @param revokeToken which is a RevokeToken Object
    * @param user which is User Object
    * @param handler which is a Request Handler
    * @return TokenService which is a Service
    */
-  
   @Fluent
-  TokenService revokeToken(RevokeToken revokeToken, User user, Handler<AsyncResult<JsonObject>> handler);
-
+  TokenService revokeToken(
+      RevokeToken revokeToken, User user, Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * The validateToken implements the token validation / introspect operation with the database.
-   * 
+   *
    * @param introspectToken which is a IntrospectToken object
    * @param handler which is a Request Handler
    * @return TokenService which is a Service
    */
-
   @Fluent
-  TokenService validateToken(IntrospectToken introspectToken, Handler<AsyncResult<JsonObject>> handler);
+  TokenService validateToken(
+      IntrospectToken introspectToken, Handler<AsyncResult<JsonObject>> handler);
 
   /**
-   * Get an auth server JWT token. This token is used by the Auth server when calling other servers to
-   * authenticate itself.
-   * 
-   * @param audienceUrl the URL of the server to be called. The <i>aud</i> field in the token will contain
-   * this URL.
+   * Get an auth server JWT token. This token is used by the Auth server when calling other servers
+   * to authenticate itself.
+   *
+   * @param audienceUrl the URL of the server to be called. The <i>aud</i> field in the token will
+   *     contain this URL.
    * @param handler which is a Request Handler
    * @return TokenService which is a Service
    */
