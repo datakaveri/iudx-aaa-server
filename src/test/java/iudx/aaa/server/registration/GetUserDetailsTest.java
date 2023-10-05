@@ -7,9 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -19,8 +17,6 @@ import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
-import io.vertx.sqlclient.Tuple;
-import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
@@ -43,6 +39,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 
+/** Unit tests for getting user details. */
 @ExtendWith(VertxExtension.class)
 public class GetUserDetailsTest {
   private static Logger LOGGER = LogManager.getLogger(GetUserDetailsTest.class);
@@ -69,26 +66,44 @@ public class GetUserDetailsTest {
 
   private static final String DUMMY_SERVER =
       "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
-  
-  static User userOne = new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.CONSUMER, Roles.PROVIDER))
-          .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER),
-              Roles.PROVIDER.toString(), new JsonArray().add(DUMMY_SERVER)))
-          .name("aa", "bb").build();
-  
-  static User userTwo = new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.CONSUMER, Roles.PROVIDER))
-          .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER),
-              Roles.PROVIDER.toString(), new JsonArray().add(DUMMY_SERVER)))
-          .name("bb", "cc").build();
-  
+
+  static User userOne =
+      new UserBuilder()
+          .userId(UUID.randomUUID())
+          .roles(List.of(Roles.CONSUMER, Roles.PROVIDER))
+          .rolesToRsMapping(
+              Map.of(
+                  Roles.CONSUMER.toString(),
+                  new JsonArray().add(DUMMY_SERVER),
+                  Roles.PROVIDER.toString(),
+                  new JsonArray().add(DUMMY_SERVER)))
+          .name("aa", "bb")
+          .build();
+
+  static User userTwo =
+      new UserBuilder()
+          .userId(UUID.randomUUID())
+          .roles(List.of(Roles.CONSUMER, Roles.PROVIDER))
+          .rolesToRsMapping(
+              Map.of(
+                  Roles.CONSUMER.toString(),
+                  new JsonArray().add(DUMMY_SERVER),
+                  Roles.PROVIDER.toString(),
+                  new JsonArray().add(DUMMY_SERVER)))
+          .name("bb", "cc")
+          .build();
+
   private static Utils utils;
 
   /*
    * for converting getUserDetails's JsonObject output to a Map to make it easier to assert values
    */
-  Function<JsonObject, Map<String, JsonObject>> jsonObjectToMap = (obj) -> {
-    return obj.stream().collect(
-        Collectors.toMap(val -> (String) val.getKey(), val -> (JsonObject) val.getValue()));
-  };
+  Function<JsonObject, Map<String, JsonObject>> jsonObjectToMap =
+      (obj) -> {
+        return obj.stream()
+            .collect(
+                Collectors.toMap(val -> (String) val.getKey(), val -> (JsonObject) val.getValue()));
+      };
 
   @BeforeAll
   @DisplayName("Deploying Verticle")
@@ -112,9 +127,14 @@ public class GetUserDetailsTest {
     if (connectOptions == null) {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
-      connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
-          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
-          .setProperties(schemaProp);
+      connectOptions =
+          new PgConnectOptions()
+              .setPort(databasePort)
+              .setHost(databaseIP)
+              .setDatabase(databaseName)
+              .setUser(databaseUserName)
+              .setPassword(databasePassword)
+              .setProperties(schemaProp);
     }
 
     if (poolOptions == null) {
@@ -122,30 +142,38 @@ public class GetUserDetailsTest {
     }
 
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
-    
-    options.put(CONFIG_COS_URL, dbConfig.getString(CONFIG_COS_URL)).put(CONFIG_OMITTED_SERVERS,
-        dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS));
-    
+
+    options
+        .put(CONFIG_COS_URL, dbConfig.getString(CONFIG_COS_URL))
+        .put(CONFIG_OMITTED_SERVERS, dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS));
+
     utils = new Utils(pool);
-    
+
     utils
         .createFakeResourceServer(DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
         .compose(res -> utils.createFakeUser(userOne, false, false))
-        .compose(sss -> utils.createFakeUser(userTwo, false, false)).onSuccess(res -> {
-          registrationService = new RegistrationServiceImpl(pool, kc, tokenService, options);
-          testContext.completeNow();
-        }).onFailure(err -> testContext.failNow(err.getMessage()));
+        .compose(sss -> utils.createFakeUser(userTwo, false, false))
+        .onSuccess(
+            res -> {
+              registrationService = new RegistrationServiceImpl(pool, kc, tokenService, options);
+              testContext.completeNow();
+            })
+        .onFailure(err -> testContext.failNow(err.getMessage()));
   }
 
   @AfterAll
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing and resetting DB");
-    utils.deleteFakeUser().compose(res -> utils.deleteFakeResourceServer()).onComplete(x -> {
-      if (x.failed()) {
-        LOGGER.warn(x.cause().getMessage());
-      }
-      vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
-    });
+    utils
+        .deleteFakeUser()
+        .compose(res -> utils.deleteFakeResourceServer())
+        .onComplete(
+            x -> {
+              if (x.failed()) {
+                LOGGER.warn(x.cause().getMessage());
+              }
+              vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
+            });
   }
 
   @Test
@@ -161,21 +189,29 @@ public class GetUserDetailsTest {
     resp.put(userOneDetails.getString("keycloakId"), userOneDetails);
     Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
 
-    registrationService.getUserDetails(List.of("12345678"),
-        testContext.failing(response -> testContext.verify(() -> {
-          assertEquals("Invalid UUID", response.getMessage());
-          string.flag();
-        })));
+    registrationService.getUserDetails(
+        List.of("12345678"),
+        testContext.failing(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals("Invalid UUID", response.getMessage());
+                      string.flag();
+                    })));
 
     List<String> list = new ArrayList<String>();
     list.add(null);
     list.add(userOne.getUserId());
 
-    registrationService.getUserDetails(list,
-        testContext.failing(response -> testContext.verify(() -> {
-          assertEquals("Invalid UUID", response.getMessage());
-          nulls.flag();
-        })));
+    registrationService.getUserDetails(
+        list,
+        testContext.failing(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals("Invalid UUID", response.getMessage());
+                      nulls.flag();
+                    })));
   }
 
   @Test
@@ -186,32 +222,40 @@ public class GetUserDetailsTest {
     resp.put(userOneDetails.getString("keycloakId"), userOneDetails);
     Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
 
-    registrationService.getUserDetails(new ArrayList<String>(),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertTrue(response.isEmpty());
-          testContext.completeNow();
-        })));
+    registrationService.getUserDetails(
+        new ArrayList<String>(),
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertTrue(response.isEmpty());
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
   @DisplayName("Test user does not exist on Keycloak")
   void nonExistentUser(VertxTestContext testContext) {
-    
+
     String nonExistentUserId = UUID.randomUUID().toString();
-    
+
     // kc.getDetails returns empty JSON object if a user is not found on KC
     Map<String, JsonObject> resp = new HashMap<String, JsonObject>();
     resp.put(nonExistentUserId, new JsonObject());
-    
+
     Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
 
-    registrationService.getUserDetails(List.of(UUID.randomUUID().toString()),
-        testContext.succeeding(jsonResult -> testContext.verify(() -> {
-          Map<String, JsonObject> response = jsonObjectToMap.apply(jsonResult);
+    registrationService.getUserDetails(
+        List.of(UUID.randomUUID().toString()),
+        testContext.succeeding(
+            jsonResult ->
+                testContext.verify(
+                    () -> {
+                      Map<String, JsonObject> response = jsonObjectToMap.apply(jsonResult);
 
-          assertTrue(response.get(nonExistentUserId).isEmpty());
-          testContext.completeNow();
-        })));
+                      assertTrue(response.get(nonExistentUserId).isEmpty());
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
@@ -219,18 +263,22 @@ public class GetUserDetailsTest {
   void userEmailFail(VertxTestContext testContext) {
     Mockito.when(kc.getDetails(any())).thenReturn(Future.failedFuture("fail"));
 
-    registrationService.getUserDetails(List.of(userOne.getUserId()),
-        testContext.failing(response -> testContext.verify(() -> {
-          assertEquals("Internal error", response.getMessage());
-          testContext.completeNow();
-        })));
+    registrationService.getUserDetails(
+        List.of(userOne.getUserId()),
+        testContext.failing(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals("Internal error", response.getMessage());
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
   @DisplayName("Test successful get")
   void successfulGet(VertxTestContext testContext) {
     Map<String, JsonObject> resp = new HashMap<String, JsonObject>();
-    
+
     JsonObject userOneDetails = utils.getKcAdminJson(userOne);
     resp.put(userOneDetails.getString("keycloakId"), userOneDetails);
 
@@ -241,27 +289,31 @@ public class GetUserDetailsTest {
 
     registrationService.getUserDetails(
         List.of(userOne.getUserId(), userTwo.getUserId()),
-        testContext.succeeding(jsonResult -> testContext.verify(() -> {
-          
-          Map<String, JsonObject> response = jsonObjectToMap.apply(jsonResult);
-          
-          JsonObject one = response.get(userOne.getUserId());
-          assertNotNull(one);
-          assertEquals(one.getString("email"), userOneDetails.getString("email"));
-          JsonObject name1 = one.getJsonObject("name");
-          assertNotNull(name1);
-          assertEquals(name1.getString("firstName"), userOne.getName().get("firstName"));
-          assertEquals(name1.getString("lastName"), userOne.getName().get("lastName"));
+        testContext.succeeding(
+            jsonResult ->
+                testContext.verify(
+                    () -> {
+                      Map<String, JsonObject> response = jsonObjectToMap.apply(jsonResult);
 
-          JsonObject two = response.get(userTwo.getUserId());
-          assertNotNull(two);
-          assertEquals(two.getString("email"), userTwoDetails.getString("email"));
-          JsonObject name2 = two.getJsonObject("name");
-          assertNotNull(name2);
-          assertEquals(name2.getString("firstName"), userTwo.getName().get("firstName"));
-          assertEquals(name2.getString("lastName"), userTwo.getName().get("lastName"));
-          testContext.completeNow();
-        })));
+                      JsonObject one = response.get(userOne.getUserId());
+                      assertNotNull(one);
+                      assertEquals(one.getString("email"), userOneDetails.getString("email"));
+                      JsonObject name1 = one.getJsonObject("name");
+                      assertNotNull(name1);
+                      assertEquals(
+                          name1.getString("firstName"), userOne.getName().get("firstName"));
+                      assertEquals(name1.getString("lastName"), userOne.getName().get("lastName"));
+
+                      JsonObject two = response.get(userTwo.getUserId());
+                      assertNotNull(two);
+                      assertEquals(two.getString("email"), userTwoDetails.getString("email"));
+                      JsonObject name2 = two.getJsonObject("name");
+                      assertNotNull(name2);
+                      assertEquals(
+                          name2.getString("firstName"), userTwo.getName().get("firstName"));
+                      assertEquals(name2.getString("lastName"), userTwo.getName().get("lastName"));
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
@@ -274,20 +326,22 @@ public class GetUserDetailsTest {
 
     registrationService.getUserDetails(
         List.of(userOne.getUserId(), userOne.getUserId()),
-        testContext.succeeding(jsonResult -> testContext.verify(() -> {
-          
-          Map<String, JsonObject> response = jsonObjectToMap.apply(jsonResult);
-          
-          assertTrue(response.size() == 1);
-          JsonObject obj = response.get(userOne.getUserId());
-          assertNotNull(obj);
-          assertEquals(obj.getString("email"), userOneDetails.getString("email"));
-          JsonObject name = obj.getJsonObject("name");
-          assertNotNull(name);
-          assertEquals(name.getString("firstName"), userOne.getName().get("firstName"));
-          assertEquals(name.getString("lastName"), userOne.getName().get("lastName"));
+        testContext.succeeding(
+            jsonResult ->
+                testContext.verify(
+                    () -> {
+                      Map<String, JsonObject> response = jsonObjectToMap.apply(jsonResult);
 
-          testContext.completeNow();
-        })));
+                      assertTrue(response.size() == 1);
+                      JsonObject obj = response.get(userOne.getUserId());
+                      assertNotNull(obj);
+                      assertEquals(obj.getString("email"), userOneDetails.getString("email"));
+                      JsonObject name = obj.getJsonObject("name");
+                      assertNotNull(name);
+                      assertEquals(name.getString("firstName"), userOne.getName().get("firstName"));
+                      assertEquals(name.getString("lastName"), userOne.getName().get("lastName"));
+
+                      testContext.completeNow();
+                    })));
   }
 }

@@ -1,8 +1,9 @@
 package iudx.aaa.server.registration;
 
+import static iudx.aaa.server.registration.Constants.NIL_PHONE;
+
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.apiserver.Roles;
-import static iudx.aaa.server.registration.Constants.NIL_PHONE;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -10,7 +11,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 
 /**
  * Class to hold user information that is created when the fake user is added to the DB w/ roles.
- *
+ * Used in unit tests.
  */
 public class FakeUserDetails {
   public String phone = NIL_PHONE;

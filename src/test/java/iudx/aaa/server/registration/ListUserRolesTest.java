@@ -17,9 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -28,15 +26,12 @@ import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
-import io.vertx.sqlclient.Tuple;
-import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.configuration.Configuration;
 import iudx.aaa.server.token.TokenService;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +48,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 
+/** Unit tests for listing user roles. */
 @ExtendWith(VertxExtension.class)
 public class ListUserRolesTest {
   private static Logger LOGGER = LogManager.getLogger(ListUserRolesTest.class);
@@ -105,8 +101,13 @@ public class ListUserRolesTest {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
       connectOptions =
-          new PgConnectOptions().setPort(databasePort).setHost(databaseIP).setDatabase(databaseName)
-              .setUser(databaseUserName).setPassword(databasePassword).setProperties(schemaProp);
+          new PgConnectOptions()
+              .setPort(databasePort)
+              .setHost(databaseIP)
+              .setDatabase(databaseName)
+              .setUser(databaseUserName)
+              .setPassword(databasePassword)
+              .setProperties(schemaProp);
     }
 
     if (poolOptions == null) {
@@ -117,28 +118,37 @@ public class ListUserRolesTest {
 
     utils = new Utils(pool);
 
-    options.put(CONFIG_COS_URL, dbConfig.getString(CONFIG_COS_URL)).put(CONFIG_OMITTED_SERVERS,
-        dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS));
+    options
+        .put(CONFIG_COS_URL, dbConfig.getString(CONFIG_COS_URL))
+        .put(CONFIG_OMITTED_SERVERS, dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS));
 
-    Future<Void> create = utils.createFakeResourceServer(DUMMY_SERVER,
-        new UserBuilder().userId(UUID.randomUUID()).build());
+    Future<Void> create =
+        utils.createFakeResourceServer(
+            DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build());
 
-    create.onSuccess(res -> {
-      registrationService = new RegistrationServiceImpl(pool, kc, tokenService, options);
-      testContext.completeNow();
-    }).onFailure(err -> testContext.failNow(err.getMessage()));
+    create
+        .onSuccess(
+            res -> {
+              registrationService = new RegistrationServiceImpl(pool, kc, tokenService, options);
+              testContext.completeNow();
+            })
+        .onFailure(err -> testContext.failNow(err.getMessage()));
   }
 
   @AfterAll
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing and resetting DB");
 
-    utils.deleteFakeResourceServer().compose(res -> utils.deleteFakeUser()).onComplete(x -> {
-      if (x.failed()) {
-        LOGGER.warn(x.cause().getMessage());
-      }
-      vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
-    });
+    utils
+        .deleteFakeResourceServer()
+        .compose(res -> utils.deleteFakeUser())
+        .onComplete(
+            x -> {
+              if (x.failed()) {
+                LOGGER.warn(x.cause().getMessage());
+              }
+              vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
+            });
   }
 
   @Test
@@ -147,13 +157,17 @@ public class ListUserRolesTest {
 
     User noRolesUser = new UserBuilder().userId(UUID.randomUUID()).build();
 
-    registrationService.listUser(noRolesUser,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(404, response.getInteger("status"));
-          assertEquals(ERR_TITLE_NO_APPROVED_ROLES, response.getString("title"));
-          assertEquals(ERR_DETAIL_NO_APPROVED_ROLES, response.getString("detail"));
-          testContext.completeNow();
-        })));
+    registrationService.listUser(
+        noRolesUser,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(404, response.getInteger("status"));
+                      assertEquals(ERR_TITLE_NO_APPROVED_ROLES, response.getString("title"));
+                      assertEquals(ERR_DETAIL_NO_APPROVED_ROLES, response.getString("detail"));
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
@@ -164,16 +178,22 @@ public class ListUserRolesTest {
     user.setRoles(List.of(Roles.CONSUMER));
     user.setRolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER)));
 
-    utils.createFakeUser(user, true, true).compose(res -> utils.createClientCreds(user))
-        .onSuccess(succ -> {
-          
-          Mockito.when(kc.getEmailId(any())).thenReturn(Future.failedFuture("fail"));
+    utils
+        .createFakeUser(user, true, true)
+        .compose(res -> utils.createClientCreds(user))
+        .onSuccess(
+            succ -> {
+              Mockito.when(kc.getEmailId(any())).thenReturn(Future.failedFuture("fail"));
 
-          registrationService.listUser(user,
-              testContext.failing(response -> testContext.verify(() -> {
-                testContext.completeNow();
-              })));
-        });
+              registrationService.listUser(
+                  user,
+                  testContext.failing(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                testContext.completeNow();
+                              })));
+            });
   }
 
   @Test
@@ -184,19 +204,25 @@ public class ListUserRolesTest {
     user.setRoles(List.of(Roles.CONSUMER));
     user.setRolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER)));
 
-    utils.createFakeUser(user, true, true).compose(res -> utils.createClientCreds(user))
-        .onSuccess(succ -> {
-          
-          Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(""));
+    utils
+        .createFakeUser(user, true, true)
+        .compose(res -> utils.createClientCreds(user))
+        .onSuccess(
+            succ -> {
+              Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(""));
 
-          registrationService.listUser(user,
-              testContext.succeeding(response -> testContext.verify(() -> {
-                assertEquals(400, response.getInteger("status"));
-                assertEquals(ERR_TITLE_USER_NOT_KC, response.getString("title"));
-                assertEquals(ERR_DETAIL_USER_NOT_KC, response.getString("detail"));
-                testContext.completeNow();
-              })));
-        });
+              registrationService.listUser(
+                  user,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(400, response.getInteger("status"));
+                                assertEquals(ERR_TITLE_USER_NOT_KC, response.getString("title"));
+                                assertEquals(ERR_DETAIL_USER_NOT_KC, response.getString("detail"));
+                                testContext.completeNow();
+                              })));
+            });
   }
 
   @Test
@@ -204,53 +230,72 @@ public class ListUserRolesTest {
   void listWithPhoneAndClientCreds(VertxTestContext testContext) {
 
     User user =
-        new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(List.of(Roles.CONSUMER))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.CONSUMER))
             .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER)))
             .build();
 
-    utils.createFakeUser(user, true, true).compose(res -> utils.createClientCreds(user))
-        .onSuccess(succ -> {
+    utils
+        .createFakeUser(user, true, true)
+        .compose(res -> utils.createClientCreds(user))
+        .onSuccess(
+            succ -> {
+              Mockito.when(kc.getEmailId(any()))
+                  .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
 
-          Mockito.when(kc.getEmailId(any()))
-              .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
+              registrationService.listUser(
+                  user,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(200, response.getInteger("status"));
+                                assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
+                                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-          registrationService.listUser(user,
-              testContext.succeeding(response -> testContext.verify(() -> {
-                assertEquals(200, response.getInteger("status"));
-                assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
-                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                                JsonObject result = response.getJsonObject("results");
 
-                JsonObject result = response.getJsonObject("results");
+                                JsonObject name = result.getJsonObject("name");
+                                assertEquals(
+                                    name.getString("firstName"), user.getName().get("firstName"));
+                                assertEquals(
+                                    name.getString("lastName"), user.getName().get("lastName"));
 
-                JsonObject name = result.getJsonObject("name");
-                assertEquals(name.getString("firstName"), user.getName().get("firstName"));
-                assertEquals(name.getString("lastName"), user.getName().get("lastName"));
+                                @SuppressWarnings("unchecked")
+                                List<String> returnedRoles = result.getJsonArray("roles").getList();
+                                assertTrue(
+                                    returnedRoles.containsAll(
+                                        List.of(Roles.CONSUMER.toString().toLowerCase())));
 
-                @SuppressWarnings("unchecked")
-                List<String> returnedRoles = result.getJsonArray("roles").getList();
-                assertTrue(
-                    returnedRoles.containsAll(List.of(Roles.CONSUMER.toString().toLowerCase())));
+                                assertTrue(
+                                    result
+                                        .getJsonObject("rolesToRsMapping")
+                                        .containsKey(Roles.CONSUMER.toString().toLowerCase()));
+                                JsonArray rsUrls =
+                                    result
+                                        .getJsonObject("rolesToRsMapping")
+                                        .getJsonArray(Roles.CONSUMER.toString().toLowerCase());
+                                assertTrue(rsUrls.contains(DUMMY_SERVER));
 
-                assertTrue(result.getJsonObject("rolesToRsMapping")
-                    .containsKey(Roles.CONSUMER.toString().toLowerCase()));
-                JsonArray rsUrls = result.getJsonObject("rolesToRsMapping")
-                    .getJsonArray(Roles.CONSUMER.toString().toLowerCase());
-                assertTrue(rsUrls.contains(DUMMY_SERVER));
+                                assertTrue(result.containsKey(RESP_CLIENT_ARR));
+                                JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
+                                JsonObject defaultClient = clients.getJsonObject(0);
+                                assertTrue(clients.size() > 0);
+                                assertEquals(
+                                    defaultClient.getString(RESP_CLIENT_ID),
+                                    utils.getDetails(user).clientId);
 
-                assertTrue(result.containsKey(RESP_CLIENT_ARR));
-                JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
-                JsonObject defaultClient = clients.getJsonObject(0);
-                assertTrue(clients.size() > 0);
-                assertEquals(defaultClient.getString(RESP_CLIENT_ID),
-                    utils.getDetails(user).clientId);
+                                assertEquals(
+                                    result.getString(RESP_PHONE), utils.getDetails(user).phone);
+                                assertEquals(
+                                    result.getString(RESP_EMAIL), utils.getDetails(user).email);
+                                assertEquals(result.getString("userId"), user.getUserId());
 
-                assertEquals(result.getString(RESP_PHONE), utils.getDetails(user).phone);
-                assertEquals(result.getString(RESP_EMAIL), utils.getDetails(user).email);
-                assertEquals(result.getString("userId"), user.getUserId());
-
-                testContext.completeNow();
-              })));
-        });
+                                testContext.completeNow();
+                              })));
+            });
   }
 
   @Test
@@ -258,46 +303,64 @@ public class ListUserRolesTest {
   void listWithNoPhoneNoClientCreds(VertxTestContext testContext) {
 
     User user =
-        new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(List.of(Roles.CONSUMER))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.CONSUMER))
             .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER)))
             .build();
 
-    utils.createFakeUser(user, false, false).onSuccess(succ -> {
+    utils
+        .createFakeUser(user, false, false)
+        .onSuccess(
+            succ -> {
+              Mockito.when(kc.getEmailId(any()))
+                  .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
 
-      Mockito.when(kc.getEmailId(any()))
-          .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
+              registrationService.listUser(
+                  user,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(200, response.getInteger("status"));
+                                assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
+                                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-      registrationService.listUser(user,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(200, response.getInteger("status"));
-            assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
-            assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                                JsonObject result = response.getJsonObject("results");
 
-            JsonObject result = response.getJsonObject("results");
+                                JsonObject name = result.getJsonObject("name");
+                                assertEquals(
+                                    name.getString("firstName"), user.getName().get("firstName"));
+                                assertEquals(
+                                    name.getString("lastName"), user.getName().get("lastName"));
 
-            JsonObject name = result.getJsonObject("name");
-            assertEquals(name.getString("firstName"), user.getName().get("firstName"));
-            assertEquals(name.getString("lastName"), user.getName().get("lastName"));
+                                @SuppressWarnings("unchecked")
+                                List<String> returnedRoles = result.getJsonArray("roles").getList();
+                                assertTrue(
+                                    returnedRoles.containsAll(
+                                        List.of(Roles.CONSUMER.toString().toLowerCase())));
 
-            @SuppressWarnings("unchecked")
-            List<String> returnedRoles = result.getJsonArray("roles").getList();
-            assertTrue(returnedRoles.containsAll(List.of(Roles.CONSUMER.toString().toLowerCase())));
+                                assertTrue(
+                                    result
+                                        .getJsonObject("rolesToRsMapping")
+                                        .containsKey(Roles.CONSUMER.toString().toLowerCase()));
+                                JsonArray rsUrls =
+                                    result
+                                        .getJsonObject("rolesToRsMapping")
+                                        .getJsonArray(Roles.CONSUMER.toString().toLowerCase());
+                                assertTrue(rsUrls.contains(DUMMY_SERVER));
 
-            assertTrue(result.getJsonObject("rolesToRsMapping")
-                .containsKey(Roles.CONSUMER.toString().toLowerCase()));
-            JsonArray rsUrls = result.getJsonObject("rolesToRsMapping")
-                .getJsonArray(Roles.CONSUMER.toString().toLowerCase());
-            assertTrue(rsUrls.contains(DUMMY_SERVER));
+                                assertFalse(result.containsKey(RESP_CLIENT_ARR));
+                                assertFalse(result.containsKey(RESP_PHONE));
 
-            assertFalse(result.containsKey(RESP_CLIENT_ARR));
-            assertFalse(result.containsKey(RESP_PHONE));
+                                assertEquals(
+                                    result.getString(RESP_EMAIL), utils.getDetails(user).email);
+                                assertEquals(result.getString("userId"), user.getUserId());
 
-            assertEquals(result.getString(RESP_EMAIL), utils.getDetails(user).email);
-            assertEquals(result.getString("userId"), user.getUserId());
-
-            testContext.completeNow();
-          })));
-    });
+                                testContext.completeNow();
+                              })));
+            });
   }
 
   @Test
@@ -305,96 +368,129 @@ public class ListUserRolesTest {
   void userConsumer(VertxTestContext testContext) {
 
     List<Roles> allRoles = new ArrayList<Roles>(Roles.allRoles);
-    Map<String, JsonArray> roleToRsMap = allRoles.stream()
-        .collect(Collectors.toMap(role -> role.toString(), i -> new JsonArray().add(DUMMY_SERVER)));
+    Map<String, JsonArray> roleToRsMap =
+        allRoles.stream()
+            .collect(
+                Collectors.toMap(role -> role.toString(), i -> new JsonArray().add(DUMMY_SERVER)));
     // remove COS_ADMIN from role-rs map as that never happens
     roleToRsMap.remove(Roles.COS_ADMIN.toString());
 
-    User user = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(allRoles)
-        .rolesToRsMapping(roleToRsMap).build();
+    User user =
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(allRoles)
+            .rolesToRsMapping(roleToRsMap)
+            .build();
 
-    utils.createFakeUser(user, false, false).onSuccess(succ -> {
+    utils
+        .createFakeUser(user, false, false)
+        .onSuccess(
+            succ -> {
+              Mockito.when(kc.getEmailId(any()))
+                  .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
 
-      Mockito.when(kc.getEmailId(any()))
-          .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
+              registrationService.listUser(
+                  user,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(200, response.getInteger("status"));
+                                assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
+                                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-      registrationService.listUser(user,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(200, response.getInteger("status"));
-            assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
-            assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                                JsonObject result = response.getJsonObject("results");
 
-            JsonObject result = response.getJsonObject("results");
+                                JsonObject name = result.getJsonObject("name");
+                                assertEquals(
+                                    name.getString("firstName"), user.getName().get("firstName"));
+                                assertEquals(
+                                    name.getString("lastName"), user.getName().get("lastName"));
 
-            JsonObject name = result.getJsonObject("name");
-            assertEquals(name.getString("firstName"), user.getName().get("firstName"));
-            assertEquals(name.getString("lastName"), user.getName().get("lastName"));
+                                @SuppressWarnings("unchecked")
+                                List<String> returnedRoles = result.getJsonArray("roles").getList();
+                                assertTrue(
+                                    returnedRoles.containsAll(
+                                        Roles.allRoles.stream()
+                                            .map(i -> i.toString().toLowerCase())
+                                            .collect(Collectors.toList())));
 
-            @SuppressWarnings("unchecked")
-            List<String> returnedRoles = result.getJsonArray("roles").getList();
-            assertTrue(returnedRoles.containsAll(Roles.allRoles.stream()
-                .map(i -> i.toString().toLowerCase()).collect(Collectors.toList())));
+                                assertTrue(result.containsKey("rolesToRsMapping"));
+                                JsonObject rolesToRs = result.getJsonObject("rolesToRsMapping");
 
-            assertTrue(result.containsKey("rolesToRsMapping"));
-            JsonObject rolesToRs = result.getJsonObject("rolesToRsMapping");
+                                Set<Roles> rolesThatHaveMapping =
+                                    new HashSet<Roles>(Roles.allRoles);
+                                rolesThatHaveMapping.remove(Roles.COS_ADMIN);
 
-            Set<Roles> rolesThatHaveMapping = new HashSet<Roles>(Roles.allRoles);
-            rolesThatHaveMapping.remove(Roles.COS_ADMIN);
+                                rolesThatHaveMapping.forEach(
+                                    role -> {
+                                      assertTrue(
+                                          rolesToRs
+                                              .getJsonArray(role.toString().toLowerCase())
+                                              .contains(DUMMY_SERVER));
+                                    });
 
-            rolesThatHaveMapping.forEach(role -> {
-              assertTrue(
-                  rolesToRs.getJsonArray(role.toString().toLowerCase()).contains(DUMMY_SERVER));
+                                assertFalse(result.containsKey(RESP_CLIENT_ARR));
+                                assertFalse(result.containsKey(RESP_PHONE));
+
+                                assertEquals(
+                                    result.getString(RESP_EMAIL), utils.getDetails(user).email);
+                                assertEquals(result.getString("userId"), user.getUserId());
+
+                                testContext.completeNow();
+                              })));
             });
-
-            assertFalse(result.containsKey(RESP_CLIENT_ARR));
-            assertFalse(result.containsKey(RESP_PHONE));
-
-            assertEquals(result.getString(RESP_EMAIL), utils.getDetails(user).email);
-            assertEquals(result.getString("userId"), user.getUserId());
-
-            testContext.completeNow();
-          })));
-    });
   }
-  
+
   @Test
   @DisplayName("Test COS Admin may not have an entry in DB, but can still call lisy")
   void listCosAdmin(VertxTestContext testContext) {
 
     User cosAdminUser =
-        new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(List.of(Roles.COS_ADMIN))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.COS_ADMIN))
             .build();
-    
+
     String cosAdminEmail = RandomStringUtils.randomAlphabetic(10) + "@gmail.com";
 
-      Mockito.when(kc.getEmailId(any()))
-          .thenReturn(Future.succeededFuture(cosAdminEmail));
+    Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(cosAdminEmail));
 
-      registrationService.listUser(cosAdminUser,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(200, response.getInteger("status"));
-            assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
-            assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+    registrationService.listUser(
+        cosAdminUser,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(200, response.getInteger("status"));
+                      assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
+                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-            JsonObject result = response.getJsonObject("results");
+                      JsonObject result = response.getJsonObject("results");
 
-            JsonObject name = result.getJsonObject("name");
-            assertEquals(name.getString("firstName"), cosAdminUser.getName().get("firstName"));
-            assertEquals(name.getString("lastName"), cosAdminUser.getName().get("lastName"));
+                      JsonObject name = result.getJsonObject("name");
+                      assertEquals(
+                          name.getString("firstName"), cosAdminUser.getName().get("firstName"));
+                      assertEquals(
+                          name.getString("lastName"), cosAdminUser.getName().get("lastName"));
 
-            @SuppressWarnings("unchecked")
-            List<String> returnedRoles = result.getJsonArray("roles").getList();
-            assertTrue(returnedRoles.containsAll(List.of(Roles.COS_ADMIN.toString().toLowerCase())));
+                      @SuppressWarnings("unchecked")
+                      List<String> returnedRoles = result.getJsonArray("roles").getList();
+                      assertTrue(
+                          returnedRoles.containsAll(
+                              List.of(Roles.COS_ADMIN.toString().toLowerCase())));
 
-            assertTrue(result.getJsonObject("rolesToRsMapping").isEmpty());
+                      assertTrue(result.getJsonObject("rolesToRsMapping").isEmpty());
 
-            assertFalse(result.containsKey(RESP_CLIENT_ARR));
-            assertFalse(result.containsKey(RESP_PHONE));
+                      assertFalse(result.containsKey(RESP_CLIENT_ARR));
+                      assertFalse(result.containsKey(RESP_PHONE));
 
-            assertEquals(result.getString(RESP_EMAIL), cosAdminEmail);
-            assertEquals(result.getString("userId"), cosAdminUser.getUserId());
+                      assertEquals(result.getString(RESP_EMAIL), cosAdminEmail);
+                      assertEquals(result.getString("userId"), cosAdminUser.getUserId());
 
-            testContext.completeNow();
-          })));
+                      testContext.completeNow();
+                    })));
   }
 }

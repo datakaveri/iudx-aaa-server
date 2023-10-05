@@ -2,8 +2,8 @@ package iudx.aaa.server.registration;
 
 import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.registration.Constants.CLIENT_SECRET_BYTES;
-import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
 import static iudx.aaa.server.registration.Constants.CONFIG_COS_URL;
+import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_INVALID_CLI_ID;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_APPROVED_ROLES;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_INVALID_CLI_ID;
@@ -48,6 +48,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 
+/** Unit tests for resetting client credentials. */
 @ExtendWith(VertxExtension.class)
 public class ResetClientSecretTest {
   private static Logger LOGGER = LogManager.getLogger(ResetClientSecretTest.class);
@@ -71,7 +72,7 @@ public class ResetClientSecretTest {
   private static KcAdmin kc = Mockito.mock(KcAdmin.class);
   private static TokenService tokenService = Mockito.mock(TokenService.class);
   private static JsonObject options = new JsonObject();
-  
+
   private static Utils utils;
 
   private static final String DUMMY_SERVER_1 =
@@ -103,38 +104,51 @@ public class ResetClientSecretTest {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
       connectOptions =
-          new PgConnectOptions().setPort(databasePort).setHost(databaseIP).setDatabase(databaseName)
-              .setUser(databaseUserName).setPassword(databasePassword).setProperties(schemaProp);
+          new PgConnectOptions()
+              .setPort(databasePort)
+              .setHost(databaseIP)
+              .setDatabase(databaseName)
+              .setUser(databaseUserName)
+              .setPassword(databasePassword)
+              .setProperties(schemaProp);
     }
 
     if (poolOptions == null) {
       poolOptions = new PoolOptions().setMaxSize(poolSize);
     }
 
-    options.put(CONFIG_OMITTED_SERVERS, dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS))
+    options
+        .put(CONFIG_OMITTED_SERVERS, dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS))
         .put(CONFIG_COS_URL, dbConfig.getString(CONFIG_COS_URL));
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
-    
+
     utils = new Utils(pool);
 
-    utils.createFakeResourceServer(DUMMY_SERVER_1, new UserBuilder().userId(UUID.randomUUID()).build())
-    .onSuccess(res -> {
-      registrationService =
-          new RegistrationServiceImpl(pool, kc, tokenService, options);
-      testContext.completeNow();
-    }).onFailure(err -> testContext.failNow(err.getMessage()));
+    utils
+        .createFakeResourceServer(
+            DUMMY_SERVER_1, new UserBuilder().userId(UUID.randomUUID()).build())
+        .onSuccess(
+            res -> {
+              registrationService = new RegistrationServiceImpl(pool, kc, tokenService, options);
+              testContext.completeNow();
+            })
+        .onFailure(err -> testContext.failNow(err.getMessage()));
   }
 
   @AfterAll
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing and resetting DB");
 
-        utils.deleteFakeResourceServer().compose(res -> utils.deleteFakeUser()).onComplete(x -> {
-          if (x.failed()) {
-            LOGGER.warn(x.cause().getMessage());
-          }
-          vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
-        });
+    utils
+        .deleteFakeResourceServer()
+        .compose(res -> utils.deleteFakeUser())
+        .onComplete(
+            x -> {
+              if (x.failed()) {
+                LOGGER.warn(x.cause().getMessage());
+              }
+              vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
+            });
   }
 
   @Test
@@ -148,204 +162,271 @@ public class ResetClientSecretTest {
 
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture("email@gmail.com"));
 
-    registrationService.resetClientSecret(request, user,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(404, response.getInteger("status"));
-          assertEquals(ERR_TITLE_NO_APPROVED_ROLES, response.getString("title"));
-          assertEquals(ERR_DETAIL_NO_APPROVED_ROLES, response.getString("detail"));
-          testContext.completeNow();
-        })));
+    registrationService.resetClientSecret(
+        request,
+        user,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(404, response.getInteger("status"));
+                      assertEquals(ERR_TITLE_NO_APPROVED_ROLES, response.getString("title"));
+                      assertEquals(ERR_DETAIL_NO_APPROVED_ROLES, response.getString("detail"));
+                      testContext.completeNow();
+                    })));
   }
-
 
   @Test
   @DisplayName("[Regen Client Secret] Successfully regen client secret")
   void clientRegenSuccess(VertxTestContext testContext) {
 
-    User user = new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.CONSUMER))
-        .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER_1)))
-        .name("aa", "bb").build();
+    User user =
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.CONSUMER))
+            .rolesToRsMapping(
+                Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER_1)))
+            .name("aa", "bb")
+            .build();
     Future<Void> created =
         utils.createFakeUser(user, false, false).compose(res -> utils.createClientCreds(user));
 
-    created.onSuccess(userJson -> {
-      JsonObject req = new JsonObject().put("clientId", utils.getDetails(user).clientId);
+    created.onSuccess(
+        userJson -> {
+          JsonObject req = new JsonObject().put("clientId", utils.getDetails(user).clientId);
 
-      ResetClientSecretRequest request = new ResetClientSecretRequest(req);
+          ResetClientSecretRequest request = new ResetClientSecretRequest(req);
 
-      Mockito.when(kc.getEmailId(any()))
-          .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
+          Mockito.when(kc.getEmailId(any()))
+              .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
 
-      Mockito.doAnswer(i -> {
-        Promise<JsonObject> p = i.getArgument(2);
-        p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
-        return i.getMock();
-      }).when(tokenService).revokeToken(any(), any(), any());
+          Mockito.doAnswer(
+                  i -> {
+                    Promise<JsonObject> p = i.getArgument(2);
+                    p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
+                    return i.getMock();
+                  })
+              .when(tokenService)
+              .revokeToken(any(), any(), any());
 
-      registrationService.resetClientSecret(request, user,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(200, response.getInteger("status"));
-            assertEquals(SUCC_TITLE_REGEN_CLIENT_SECRET, response.getString("title"));
-            assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+          registrationService.resetClientSecret(
+              request,
+              user,
+              testContext.succeeding(
+                  response ->
+                      testContext.verify(
+                          () -> {
+                            assertEquals(200, response.getInteger("status"));
+                            assertEquals(
+                                SUCC_TITLE_REGEN_CLIENT_SECRET, response.getString("title"));
+                            assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-            JsonObject result = response.getJsonObject("results");
+                            JsonObject result = response.getJsonObject("results");
 
-            JsonObject name = result.getJsonObject("name");
-            assertEquals(name.getString("firstName"), user.getName().get("firstName"));
-            assertEquals(name.getString("lastName"), user.getName().get("lastName"));
+                            JsonObject name = result.getJsonObject("name");
+                            assertEquals(
+                                name.getString("firstName"), user.getName().get("firstName"));
+                            assertEquals(
+                                name.getString("lastName"), user.getName().get("lastName"));
 
-            @SuppressWarnings("unchecked")
-            List<String> returnedRoles = result.getJsonArray("roles").getList();
-            List<String> rolesString = List.of(Roles.CONSUMER.name().toLowerCase());
-            assertTrue(
-                returnedRoles.containsAll(rolesString) && rolesString.containsAll(returnedRoles));
+                            @SuppressWarnings("unchecked")
+                            List<String> returnedRoles = result.getJsonArray("roles").getList();
+                            List<String> rolesString = List.of(Roles.CONSUMER.name().toLowerCase());
+                            assertTrue(
+                                returnedRoles.containsAll(rolesString)
+                                    && rolesString.containsAll(returnedRoles));
 
-            JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
-            JsonObject defaultClient = clients.getJsonObject(0);
-            assertTrue(clients.size() > 0);
-            assertEquals(defaultClient.getString(RESP_CLIENT_ID), utils.getDetails(user).clientId);
-            assertTrue(defaultClient.containsKey(RESP_CLIENT_SC));
-            String newClientSec = defaultClient.getString(RESP_CLIENT_SC);
-            assertTrue(newClientSec.matches(CLIENT_SECRET_REGEX));
-            String oldClientSec = utils.getDetails(user).clientSecret;
-            assertFalse(oldClientSec.equals(newClientSec));
+                            JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
+                            JsonObject defaultClient = clients.getJsonObject(0);
+                            assertTrue(clients.size() > 0);
+                            assertEquals(
+                                defaultClient.getString(RESP_CLIENT_ID),
+                                utils.getDetails(user).clientId);
+                            assertTrue(defaultClient.containsKey(RESP_CLIENT_SC));
+                            String newClientSec = defaultClient.getString(RESP_CLIENT_SC);
+                            assertTrue(newClientSec.matches(CLIENT_SECRET_REGEX));
+                            String oldClientSec = utils.getDetails(user).clientSecret;
+                            assertFalse(oldClientSec.equals(newClientSec));
 
-            assertEquals(result.getString(RESP_EMAIL), utils.getDetails(user).email);
-            assertEquals(result.getString("userId"), user.getUserId());
+                            assertEquals(
+                                result.getString(RESP_EMAIL), utils.getDetails(user).email);
+                            assertEquals(result.getString("userId"), user.getUserId());
 
-            testContext.completeNow();
-          })));
-    });
+                            testContext.completeNow();
+                          })));
+        });
   }
 
   @Test
   @DisplayName("[Regen Client Secret] Success when some token revoke to a server fails")
   void clientRegenSuccess2(VertxTestContext testContext) {
 
-    User user = new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.CONSUMER))
-        .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER_1)))
-        .name("aa", "bb").build();
+    User user =
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.CONSUMER))
+            .rolesToRsMapping(
+                Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER_1)))
+            .name("aa", "bb")
+            .build();
     Future<Void> created =
         utils.createFakeUser(user, false, false).compose(res -> utils.createClientCreds(user));
 
-    created.onSuccess(userJson -> {
-      JsonObject req = new JsonObject().put("clientId", utils.getDetails(user).clientId);
+    created.onSuccess(
+        userJson -> {
+          JsonObject req = new JsonObject().put("clientId", utils.getDetails(user).clientId);
 
-      ResetClientSecretRequest request = new ResetClientSecretRequest(req);
+          ResetClientSecretRequest request = new ResetClientSecretRequest(req);
 
-      Mockito.when(kc.getEmailId(any()))
-          .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
+          Mockito.when(kc.getEmailId(any()))
+              .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
 
-      Mockito.doAnswer(i -> {
-        Promise<JsonObject> p = i.getArgument(2);
-        RevokeToken r = i.getArgument(0);
-        if (r.getRsUrl().equals(DUMMY_SERVER_1)) {
-          p.complete(new JsonObject().put("type", URN_INVALID_INPUT.toString()));
-        } else {
-          p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
-        }
-        return i.getMock();
-      }).when(tokenService).revokeToken(any(), any(), any());
+          Mockito.doAnswer(
+                  i -> {
+                    Promise<JsonObject> p = i.getArgument(2);
+                    RevokeToken r = i.getArgument(0);
+                    if (r.getRsUrl().equals(DUMMY_SERVER_1)) {
+                      p.complete(new JsonObject().put("type", URN_INVALID_INPUT.toString()));
+                    } else {
+                      p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
+                    }
+                    return i.getMock();
+                  })
+              .when(tokenService)
+              .revokeToken(any(), any(), any());
 
-      registrationService.resetClientSecret(request, user,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(200, response.getInteger("status"));
-            assertEquals(SUCC_TITLE_REGEN_CLIENT_SECRET, response.getString("title"));
-            assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+          registrationService.resetClientSecret(
+              request,
+              user,
+              testContext.succeeding(
+                  response ->
+                      testContext.verify(
+                          () -> {
+                            assertEquals(200, response.getInteger("status"));
+                            assertEquals(
+                                SUCC_TITLE_REGEN_CLIENT_SECRET, response.getString("title"));
+                            assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-            JsonObject result = response.getJsonObject("results");
+                            JsonObject result = response.getJsonObject("results");
 
-            JsonObject name = result.getJsonObject("name");
-            assertEquals(name.getString("firstName"), user.getName().get("firstName"));
-            assertEquals(name.getString("lastName"), user.getName().get("lastName"));
+                            JsonObject name = result.getJsonObject("name");
+                            assertEquals(
+                                name.getString("firstName"), user.getName().get("firstName"));
+                            assertEquals(
+                                name.getString("lastName"), user.getName().get("lastName"));
 
-            @SuppressWarnings("unchecked")
-            List<String> returnedRoles = result.getJsonArray("roles").getList();
-            List<String> rolesString = List.of(Roles.CONSUMER.name().toLowerCase());
-            assertTrue(
-                returnedRoles.containsAll(rolesString) && rolesString.containsAll(returnedRoles));
+                            @SuppressWarnings("unchecked")
+                            List<String> returnedRoles = result.getJsonArray("roles").getList();
+                            List<String> rolesString = List.of(Roles.CONSUMER.name().toLowerCase());
+                            assertTrue(
+                                returnedRoles.containsAll(rolesString)
+                                    && rolesString.containsAll(returnedRoles));
 
-            JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
-            JsonObject defaultClient = clients.getJsonObject(0);
-            assertTrue(clients.size() > 0);
-            assertEquals(defaultClient.getString(RESP_CLIENT_ID), utils.getDetails(user).clientId);
-            assertTrue(defaultClient.containsKey(RESP_CLIENT_SC));
-            String newClientSec = defaultClient.getString(RESP_CLIENT_SC);
-            assertTrue(newClientSec.matches(CLIENT_SECRET_REGEX));
-            String oldClientSec = utils.getDetails(user).clientSecret;
-            assertFalse(oldClientSec.equals(newClientSec));
+                            JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
+                            JsonObject defaultClient = clients.getJsonObject(0);
+                            assertTrue(clients.size() > 0);
+                            assertEquals(
+                                defaultClient.getString(RESP_CLIENT_ID),
+                                utils.getDetails(user).clientId);
+                            assertTrue(defaultClient.containsKey(RESP_CLIENT_SC));
+                            String newClientSec = defaultClient.getString(RESP_CLIENT_SC);
+                            assertTrue(newClientSec.matches(CLIENT_SECRET_REGEX));
+                            String oldClientSec = utils.getDetails(user).clientSecret;
+                            assertFalse(oldClientSec.equals(newClientSec));
 
-            assertEquals(result.getString(RESP_EMAIL), utils.getDetails(user).email);
-            assertEquals(result.getString("userId"), user.getUserId());
+                            assertEquals(
+                                result.getString(RESP_EMAIL), utils.getDetails(user).email);
+                            assertEquals(result.getString("userId"), user.getUserId());
 
-            testContext.completeNow();
-          })));
-    });
+                            testContext.completeNow();
+                          })));
+        });
   }
 
   @Test
   @DisplayName("[Regen Client Secret] Fail when token revoke fails due to internal error")
   void clientRegenFail(VertxTestContext testContext) {
 
-    User user = new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.CONSUMER))
-        .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER_1)))
-        .name("aa", "bb").build();
+    User user =
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.CONSUMER))
+            .rolesToRsMapping(
+                Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER_1)))
+            .name("aa", "bb")
+            .build();
     Future<Void> created =
         utils.createFakeUser(user, false, false).compose(res -> utils.createClientCreds(user));
 
-    created.onSuccess(userJson -> {
-      JsonObject req = new JsonObject().put("clientId", utils.getDetails(user).clientId);
+    created.onSuccess(
+        userJson -> {
+          JsonObject req = new JsonObject().put("clientId", utils.getDetails(user).clientId);
 
-      ResetClientSecretRequest request = new ResetClientSecretRequest(req);
+          ResetClientSecretRequest request = new ResetClientSecretRequest(req);
 
-      Mockito.when(kc.getEmailId(any()))
-          .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
+          Mockito.when(kc.getEmailId(any()))
+              .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
 
-      /* Revocation to DUMMY_SERVER_1 fails with an internal error */
-      Mockito.doAnswer(i -> {
-        Promise<JsonObject> p = i.getArgument(2);
-        RevokeToken r = i.getArgument(0);
-        if (r.getRsUrl().equals(DUMMY_SERVER_1)) {
-          p.fail("Internal error");
-        } else {
-          p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
-        }
-        return i.getMock();
-      }).when(tokenService).revokeToken(any(), any(), any());
+          /* Revocation to DUMMY_SERVER_1 fails with an internal error */
+          Mockito.doAnswer(
+                  i -> {
+                    Promise<JsonObject> p = i.getArgument(2);
+                    RevokeToken r = i.getArgument(0);
+                    if (r.getRsUrl().equals(DUMMY_SERVER_1)) {
+                      p.fail("Internal error");
+                    } else {
+                      p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
+                    }
+                    return i.getMock();
+                  })
+              .when(tokenService)
+              .revokeToken(any(), any(), any());
 
-      registrationService.resetClientSecret(request, user,
-          testContext.failing(response -> testContext.verify(() -> testContext.completeNow())));
-    });
+          registrationService.resetClientSecret(
+              request,
+              user,
+              testContext.failing(response -> testContext.verify(() -> testContext.completeNow())));
+        });
   }
 
   @Test
   @DisplayName("[Regen Client Secret] Client ID not found")
   void clientSecretRegenClientIdNotFound(VertxTestContext testContext) {
-    
-    User user = new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.CONSUMER))
-        .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER_1)))
-        .name("aa", "bb").build();
-    
+
+    User user =
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.CONSUMER))
+            .rolesToRsMapping(
+                Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER_1)))
+            .name("aa", "bb")
+            .build();
+
     Future<Void> created =
         utils.createFakeUser(user, false, false).compose(res -> utils.createClientCreds(user));
-    
-    created.onSuccess(userJson -> {
 
-      Mockito.when(kc.getEmailId(any()))
-          .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
+    created.onSuccess(
+        userJson -> {
+          Mockito.when(kc.getEmailId(any()))
+              .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
 
-      JsonObject req = new JsonObject().put("clientId", UUID.randomUUID().toString());
+          JsonObject req = new JsonObject().put("clientId", UUID.randomUUID().toString());
 
-      ResetClientSecretRequest request = new ResetClientSecretRequest(req);
+          ResetClientSecretRequest request = new ResetClientSecretRequest(req);
 
-      registrationService.resetClientSecret(request, user,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(404, response.getInteger("status"));
-            assertEquals(ERR_TITLE_INVALID_CLI_ID, response.getString("title"));
-            assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-            assertEquals(ERR_DETAIL_INVALID_CLI_ID, response.getString("detail"));
-            testContext.completeNow();
-          })));
-    });
+          registrationService.resetClientSecret(
+              request,
+              user,
+              testContext.succeeding(
+                  response ->
+                      testContext.verify(
+                          () -> {
+                            assertEquals(404, response.getInteger("status"));
+                            assertEquals(ERR_TITLE_INVALID_CLI_ID, response.getString("title"));
+                            assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                            assertEquals(ERR_DETAIL_INVALID_CLI_ID, response.getString("detail"));
+                            testContext.completeNow();
+                          })));
+        });
   }
 }
