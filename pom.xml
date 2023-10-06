@@ -315,7 +315,7 @@
                             <version>1.12.0</version>
                         </plugin>
                     </plugins>
-                    <maxAllowedViolations>117</maxAllowedViolations>
+                    <maxAllowedViolations>63</maxAllowedViolations>
                     <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
                 </configuration>
             </plugin>
@@ -348,7 +348,7 @@
                     <failsOnError>true</failsOnError>
                     <configLocation>google_checks.xml</configLocation>
                     <violationSeverity>warning</violationSeverity>
-                    <maxAllowedViolations>1384</maxAllowedViolations>
+                    <maxAllowedViolations>183</maxAllowedViolations>
                     <sourceDirectories>
                         <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
                         <!-- <sourceDirectory>${project.build.testSourceDirectory}</sourceDirectory> -->
@@ -368,7 +368,7 @@
                         <ruleset>/category/java/errorprone.xml</ruleset>
                     </rulesets>
                     <printFailingErrors>true</printFailingErrors>
-                    <maxAllowedViolations>622</maxAllowedViolations>
+                    <maxAllowedViolations>333</maxAllowedViolations>
                     <excludeRoots>
                         <excludeRoot>target/generated-sources</excludeRoot>
                     </excludeRoots>
