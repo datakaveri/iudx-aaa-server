@@ -1365,8 +1365,11 @@ public class DelegationsIT {
           .then()
           .statusCode(409)
           .body("type", equalTo(Urn.URN_ALREADY_EXISTS.toString()))
-          .body("title", equalTo(DUPLICATE_DELEGATION))
-          .body("detail", containsString(consDelegIdAliceAlpha));
+          .body("title", equalTo(ERR_TITLE_DUPLICATE_DELEGATION))
+          .body("detail", equalTo(ERR_DETAIL_DUPLICATE_DELEGATION))
+          .body(
+              "context." + ERR_CONTEXT_EXISTING_DELEGATION_IDS,
+              containsInAnyOrder(consDelegIdAliceAlpha));
     }
 
     @Test
@@ -1416,8 +1419,11 @@ public class DelegationsIT {
           .then()
           .statusCode(409)
           .body("type", equalTo(Urn.URN_ALREADY_EXISTS.toString()))
-          .body("title", equalTo(DUPLICATE_DELEGATION))
-          .body("detail", containsString(provDelegIdAliceAlpha));
+          .body("title", equalTo(ERR_TITLE_DUPLICATE_DELEGATION))
+          .body("detail", equalTo(ERR_DETAIL_DUPLICATE_DELEGATION))
+          .body(
+              "context." + ERR_CONTEXT_EXISTING_DELEGATION_IDS,
+              containsInAnyOrder(provDelegIdAliceAlpha));
     }
 
     @Test

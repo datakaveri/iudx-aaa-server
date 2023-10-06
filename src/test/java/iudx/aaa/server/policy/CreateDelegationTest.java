@@ -2,10 +2,11 @@ package iudx.aaa.server.policy;
 
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
-import static iudx.aaa.server.policy.Constants.DUPLICATE_DELEGATION;
 import static iudx.aaa.server.policy.Constants.ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_CREATE_DELEGATE_ROLES;
+import static iudx.aaa.server.policy.Constants.ERR_DETAIL_DUPLICATE_DELEGATION;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE;
+import static iudx.aaa.server.policy.Constants.ERR_TITLE_DUPLICATE_DELEGATION;
 import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ROLES;
 import static iudx.aaa.server.policy.Constants.ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -743,8 +744,11 @@ public class CreateDelegationTest {
                                                       Urn.URN_ALREADY_EXISTS.toString(),
                                                       resp.getString("type"));
                                                   assertEquals(
-                                                      DUPLICATE_DELEGATION,
+                                                      ERR_TITLE_DUPLICATE_DELEGATION,
                                                       resp.getString("title"));
+                                                  assertEquals(
+                                                      ERR_DETAIL_DUPLICATE_DELEGATION,
+                                                      resp.getString("detail"));
                                                   assertEquals(409, resp.getInteger("status"));
                                                   alreadyExists.flag();
                                                 })));

@@ -2604,13 +2604,16 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Unauthorized'  
+                $ref: '#/components/schemas/ErrorResponse'  
               examples:
-                Does not have role:
+                Delegation already exists:
                   value:
                     type: urn:dx:as:AlreadyExists
                     title: Delegation already exists
-                    detail: "[dc31e990-3dec-40be-837c-dc8457e74853]"
+                    detail: A delegation already exists for a requested user + role + resource server
+                    context:
+                      existingDelegationIds:
+                        - dc31e990-3dec-40be-837c-dc8457e74853
       description: |
         Allow consumers and providers to create consumer-delegates or provider delegates respectively for a particular resource server. The delegates will be allowed to perform operations on behalf of the consumer or provider on the resource server or on entities belonging to the resource server.
 

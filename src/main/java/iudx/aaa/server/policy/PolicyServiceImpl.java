@@ -17,16 +17,18 @@ import static iudx.aaa.server.policy.Constants.CREATE_TOKEN_DID;
 import static iudx.aaa.server.policy.Constants.CREATE_TOKEN_DRL;
 import static iudx.aaa.server.policy.Constants.CREATE_TOKEN_RG;
 import static iudx.aaa.server.policy.Constants.DELETE_DELEGATIONS;
-import static iudx.aaa.server.policy.Constants.DUPLICATE_DELEGATION;
+import static iudx.aaa.server.policy.Constants.ERR_CONTEXT_EXISTING_DELEGATION_IDS;
 import static iudx.aaa.server.policy.Constants.ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_CONSUMER_DOESNT_HAVE_RS_ROLE;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_CREATE_DELEGATE_ROLES;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_DELEGATED_RS_URL_NOT_MATCH_ITEM_RS;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_DEL_DELEGATE_ROLES;
+import static iudx.aaa.server.policy.Constants.ERR_DETAIL_DUPLICATE_DELEGATION;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_LIST_DELEGATE_ROLES;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_PROVIDER_CANNOT_ACCESS_PII_RES;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_PROVIDER_DOESNT_HAVE_RS_ROLE;
 import static iudx.aaa.server.policy.Constants.ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE;
+import static iudx.aaa.server.policy.Constants.ERR_TITLE_DUPLICATE_DELEGATION;
 import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ID;
 import static iudx.aaa.server.policy.Constants.ERR_TITLE_INVALID_ROLES;
 import static iudx.aaa.server.policy.Constants.ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE;
@@ -642,12 +644,23 @@ public class PolicyServiceImpl implements PolicyService {
                                   rows = rows.next();
                                 }
                                 if (!ids.isEmpty()) {
-                                  return Future.failedFuture(
-                                      new ComposeException(
-                                          409,
-                                          URN_ALREADY_EXISTS,
-                                          DUPLICATE_DELEGATION,
-                                          ids.toString()));
+                                  Response r =
+                                      new Response.ResponseBuilder()
+                                          .type(URN_ALREADY_EXISTS)
+                                          .title(ERR_TITLE_DUPLICATE_DELEGATION)
+                                          .detail(ERR_DETAIL_DUPLICATE_DELEGATION)
+                                          .errorContext(
+                                              new JsonObject()
+                                                  .put(
+                                                      ERR_CONTEXT_EXISTING_DELEGATION_IDS,
+                                                      new JsonArray(
+                                                          ids.stream()
+                                                              .map(x -> x.toString())
+                                                              .collect(Collectors.toList()))))
+                                          .status(409)
+                                          .build();
+
+                                  return Future.failedFuture(new ComposeException(r));
                                 }
                                 return Future.succeededFuture(tuples);
                               })
@@ -674,7 +687,10 @@ public class PolicyServiceImpl implements PolicyService {
               if (obj instanceof ComposeException) {
                 ComposeException e = (ComposeException) obj;
                 handler.handle(Future.succeededFuture(e.getResponse().toJson()));
-              } else handler.handle(Future.failedFuture(INTERNALERROR));
+                return;
+              }
+
+              handler.handle(Future.failedFuture(INTERNALERROR));
             });
 
     return this;

@@ -69,7 +69,10 @@ public class Constants {
   // future failure messages
   public static final String INCORRECT_ITEM_TYPE = "incorrect item type";
   public static final String INCORRECT_ITEM_ID = "Item ID is not a valid UUID";
-  public static final String DUPLICATE_DELEGATION = "Delegation already exists";
+  public static final String ERR_TITLE_DUPLICATE_DELEGATION = "Delegation already exists";
+  public static final String ERR_DETAIL_DUPLICATE_DELEGATION =
+      "A delegation already exists for a requested user + role + resource server";
+  public static final String ERR_CONTEXT_EXISTING_DELEGATION_IDS = "existingDelegationIds";
   public static final String NOT_RES_OWNER = "Provider does not own the resource";
 
   public static final String ERR_DETAIL_PROVIDER_DOESNT_HAVE_RS_ROLE =
