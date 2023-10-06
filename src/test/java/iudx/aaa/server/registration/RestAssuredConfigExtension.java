@@ -5,9 +5,17 @@ import static io.restassured.RestAssured.baseURI;
 import static io.restassured.RestAssured.enableLoggingOfRequestAndResponseIfValidationFails;
 import static io.restassured.RestAssured.port;
 import static io.restassured.RestAssured.proxy;
+
+import io.restassured.RestAssured;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
+/**
+ * JUnit5 extension to allow {@link RestAssured} configuration to be injected into all integration
+ * tests using {@link ExtendWith}. Java properties can be passed in arguments when running the
+ * integration tests to configure a host (<code>intTestHost</code>), port (<code>intTestPort</code>
+ * ), proxy host (<code>intTestProxyHost</code>) and proxy port (<code>intTestProxyPort</code>).
+ */
 public class RestAssuredConfigExtension implements BeforeAllCallback {
 
   @Override
@@ -25,7 +33,6 @@ public class RestAssuredConfigExtension implements BeforeAllCallback {
     if (testPort != null) {
       port = Integer.parseInt(testPort);
     } else {
-
       port = 8443;
     }
 

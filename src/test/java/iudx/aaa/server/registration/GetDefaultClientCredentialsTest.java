@@ -48,6 +48,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 
+/** Unit tests for getting default client credentials. */
 @ExtendWith(VertxExtension.class)
 public class GetDefaultClientCredentialsTest {
   private static Logger LOGGER = LogManager.getLogger(GetDefaultClientCredentialsTest.class);
@@ -103,37 +104,51 @@ public class GetDefaultClientCredentialsTest {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
       connectOptions =
-          new PgConnectOptions().setPort(databasePort).setHost(databaseIP).setDatabase(databaseName)
-              .setUser(databaseUserName).setPassword(databasePassword).setProperties(schemaProp);
+          new PgConnectOptions()
+              .setPort(databasePort)
+              .setHost(databaseIP)
+              .setDatabase(databaseName)
+              .setUser(databaseUserName)
+              .setPassword(databasePassword)
+              .setProperties(schemaProp);
     }
 
     if (poolOptions == null) {
       poolOptions = new PoolOptions().setMaxSize(poolSize);
     }
 
-    options.put(CONFIG_OMITTED_SERVERS, dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS))
+    options
+        .put(CONFIG_OMITTED_SERVERS, dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS))
         .put(CONFIG_COS_URL, dbConfig.getString(CONFIG_COS_URL));
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
 
     utils = new Utils(pool);
 
-    utils.createFakeResourceServer(DUMMY_SERVER_1,
-        new UserBuilder().userId(UUID.randomUUID()).build()).onSuccess(res -> {
-          registrationService = new RegistrationServiceImpl(pool, kc, tokenService, options);
-          testContext.completeNow();
-        }).onFailure(err -> testContext.failNow(err.getMessage()));
+    utils
+        .createFakeResourceServer(
+            DUMMY_SERVER_1, new UserBuilder().userId(UUID.randomUUID()).build())
+        .onSuccess(
+            res -> {
+              registrationService = new RegistrationServiceImpl(pool, kc, tokenService, options);
+              testContext.completeNow();
+            })
+        .onFailure(err -> testContext.failNow(err.getMessage()));
   }
 
   @AfterAll
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing and resetting DB");
 
-    utils.deleteFakeResourceServer().compose(res -> utils.deleteFakeUser()).onComplete(x -> {
-      if (x.failed()) {
-        LOGGER.warn(x.cause().getMessage());
-      }
-      vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
-    });
+    utils
+        .deleteFakeResourceServer()
+        .compose(res -> utils.deleteFakeUser())
+        .onComplete(
+            x -> {
+              if (x.failed()) {
+                LOGGER.warn(x.cause().getMessage());
+              }
+              vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
+            });
   }
 
   @Test
@@ -143,157 +158,223 @@ public class GetDefaultClientCredentialsTest {
 
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture("email@gmail.com"));
 
-    registrationService.getDefaultClientCredentials(user,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(404, response.getInteger("status"));
-          assertEquals(ERR_TITLE_NO_APPROVED_ROLES, response.getString("title"));
-          assertEquals(ERR_DETAIL_NO_APPROVED_ROLES, response.getString("detail"));
-          testContext.completeNow();
-        })));
+    registrationService.getDefaultClientCredentials(
+        user,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(404, response.getInteger("status"));
+                      assertEquals(ERR_TITLE_NO_APPROVED_ROLES, response.getString("title"));
+                      assertEquals(ERR_DETAIL_NO_APPROVED_ROLES, response.getString("detail"));
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
   @DisplayName("Successfully get default client creds")
   void clientRegenSuccess(VertxTestContext testContext) {
 
-    User user = new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.CONSUMER))
-        .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER_1)))
-        .name("aa", "bb").build();
+    User user =
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.CONSUMER))
+            .rolesToRsMapping(
+                Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER_1)))
+            .name("aa", "bb")
+            .build();
 
     Future<Void> created = utils.createFakeUser(user, false, false);
 
-    created.onSuccess(userJson -> {
-      Mockito.when(kc.getEmailId(any()))
-          .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
+    created.onSuccess(
+        userJson -> {
+          Mockito.when(kc.getEmailId(any()))
+              .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
 
-      registrationService.getDefaultClientCredentials(user,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(201, response.getInteger("status"));
-            assertEquals(SUCC_TITLE_CREATED_DEFAULT_CLIENT, response.getString("title"));
-            assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+          registrationService.getDefaultClientCredentials(
+              user,
+              testContext.succeeding(
+                  response ->
+                      testContext.verify(
+                          () -> {
+                            assertEquals(201, response.getInteger("status"));
+                            assertEquals(
+                                SUCC_TITLE_CREATED_DEFAULT_CLIENT, response.getString("title"));
+                            assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-            JsonObject result = response.getJsonObject("results");
+                            JsonObject result = response.getJsonObject("results");
 
-            assertTrue(result.containsKey(RESP_CLIENT_NAME));
-            assertTrue(result.getString(RESP_CLIENT_NAME).equals(DEFAULT_CLIENT));
-            assertTrue(result.containsKey(RESP_CLIENT_ID));
-            String clientId = result.getString(RESP_CLIENT_ID);
-            assertTrue(clientId.matches(UUID_REGEX));
+                            assertTrue(result.containsKey(RESP_CLIENT_NAME));
+                            assertTrue(result.getString(RESP_CLIENT_NAME).equals(DEFAULT_CLIENT));
+                            assertTrue(result.containsKey(RESP_CLIENT_ID));
+                            String clientId = result.getString(RESP_CLIENT_ID);
+                            assertTrue(clientId.matches(UUID_REGEX));
 
-            assertTrue(result.containsKey(RESP_CLIENT_SC));
-            String clientSec = result.getString(RESP_CLIENT_SC);
-            assertTrue(clientSec.matches(CLIENT_SECRET_REGEX));
+                            assertTrue(result.containsKey(RESP_CLIENT_SC));
+                            String clientSec = result.getString(RESP_CLIENT_SC);
+                            assertTrue(clientSec.matches(CLIENT_SECRET_REGEX));
 
-            testContext.completeNow();
-          })));
-    });
+                            testContext.completeNow();
+                          })));
+        });
   }
 
   @Test
   @DisplayName("Cannot get default credentials if already obtained")
   void alreadyGotDefaultClientCreds(VertxTestContext testContext) {
 
-    User user = new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.CONSUMER))
-        .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER_1)))
-        .name("aa", "bb").build();
+    User user =
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.CONSUMER))
+            .rolesToRsMapping(
+                Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER_1)))
+            .name("aa", "bb")
+            .build();
 
     Future<Void> created = utils.createFakeUser(user, false, false);
 
-    created.onSuccess(userJson -> {
-      Mockito.when(kc.getEmailId(any()))
-          .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
+    created.onSuccess(
+        userJson -> {
+          Mockito.when(kc.getEmailId(any()))
+              .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
 
-      registrationService.getDefaultClientCredentials(user,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(201, response.getInteger("status"));
-            assertEquals(SUCC_TITLE_CREATED_DEFAULT_CLIENT, response.getString("title"));
-            assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+          registrationService.getDefaultClientCredentials(
+              user,
+              testContext.succeeding(
+                  response ->
+                      testContext.verify(
+                          () -> {
+                            assertEquals(201, response.getInteger("status"));
+                            assertEquals(
+                                SUCC_TITLE_CREATED_DEFAULT_CLIENT, response.getString("title"));
+                            assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-            JsonObject result = response.getJsonObject("results");
+                            JsonObject result = response.getJsonObject("results");
 
-            assertTrue(result.containsKey(RESP_CLIENT_NAME));
-            assertTrue(result.getString(RESP_CLIENT_NAME).equals(DEFAULT_CLIENT));
-            assertTrue(result.containsKey(RESP_CLIENT_ID));
-            String clientId = result.getString(RESP_CLIENT_ID);
-            assertTrue(clientId.matches(UUID_REGEX));
+                            assertTrue(result.containsKey(RESP_CLIENT_NAME));
+                            assertTrue(result.getString(RESP_CLIENT_NAME).equals(DEFAULT_CLIENT));
+                            assertTrue(result.containsKey(RESP_CLIENT_ID));
+                            String clientId = result.getString(RESP_CLIENT_ID);
+                            assertTrue(clientId.matches(UUID_REGEX));
 
-            assertTrue(result.containsKey(RESP_CLIENT_SC));
-            String clientSec = result.getString(RESP_CLIENT_SC);
-            assertTrue(clientSec.matches(CLIENT_SECRET_REGEX));
+                            assertTrue(result.containsKey(RESP_CLIENT_SC));
+                            String clientSec = result.getString(RESP_CLIENT_SC);
+                            assertTrue(clientSec.matches(CLIENT_SECRET_REGEX));
 
-            registrationService.getDefaultClientCredentials(user,
-                testContext.succeeding(failResponse -> testContext.verify(() -> {
+                            registrationService.getDefaultClientCredentials(
+                                user,
+                                testContext.succeeding(
+                                    failResponse ->
+                                        testContext.verify(
+                                            () -> {
+                                              assertEquals(409, failResponse.getInteger("status"));
+                                              assertEquals(
+                                                  ERR_TITLE_DEFAULT_CLIENT_EXISTS,
+                                                  failResponse.getString("title"));
+                                              assertEquals(
+                                                  ERR_DETAIL_DEFAULT_CLIENT_EXISTS,
+                                                  failResponse.getString("detail"));
+                                              assertEquals(
+                                                  URN_ALREADY_EXISTS.toString(),
+                                                  failResponse.getString("type"));
 
-                  assertEquals(409, failResponse.getInteger("status"));
-                  assertEquals(ERR_TITLE_DEFAULT_CLIENT_EXISTS, failResponse.getString("title"));
-                  assertEquals(ERR_DETAIL_DEFAULT_CLIENT_EXISTS, failResponse.getString("detail"));
-                  assertEquals(URN_ALREADY_EXISTS.toString(), failResponse.getString("type"));
-
-                  assertTrue(failResponse.containsKey("context"));
-                  JsonObject context = failResponse.getJsonObject("context");
-                  assertTrue(context.getString(RESP_CLIENT_ID).equals(clientId));
-                  testContext.completeNow();
-                })));
-          })));
-    });
+                                              assertTrue(failResponse.containsKey("context"));
+                                              JsonObject context =
+                                                  failResponse.getJsonObject("context");
+                                              assertTrue(
+                                                  context
+                                                      .getString(RESP_CLIENT_ID)
+                                                      .equals(clientId));
+                                              testContext.completeNow();
+                                            })));
+                          })));
+        });
   }
 
   @Test
-  @DisplayName("Check if COS admin is added to user table in DB when getting creds if not inserted before")
+  @DisplayName(
+      "Check if COS admin is added to user table in DB when getting creds if not inserted before")
   void cosAdminEdgeCase(VertxTestContext testContext) {
 
-    User cosAdminUser = new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.COS_ADMIN))
-        .name("aa", "bb").build();
+    User cosAdminUser =
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.COS_ADMIN))
+            .name("aa", "bb")
+            .build();
 
     String cosAdminEmail = RandomStringUtils.randomAlphabetic(10) + "@gmail.com";
 
     Mockito.when(kc.findUserByEmail(cosAdminEmail))
-        .thenReturn(Future.succeededFuture(
-            new JsonObject().put("keycloakId", cosAdminUser.getUserId()).put("email", cosAdminEmail)
-                .put("name", new JsonObject().put("firstName", "cos").put("lastName", "admin"))));
+        .thenReturn(
+            Future.succeededFuture(
+                new JsonObject()
+                    .put("keycloakId", cosAdminUser.getUserId())
+                    .put("email", cosAdminEmail)
+                    .put(
+                        "name",
+                        new JsonObject().put("firstName", "cos").put("lastName", "admin"))));
 
     Checkpoint cosAdminNotInDb = testContext.checkpoint();
     Checkpoint clientCreated = testContext.checkpoint();
     Checkpoint entryMadeInDb = testContext.checkpoint();
 
-    pool.withConnection(conn -> conn.preparedQuery("SELECT id FROM users WHERE id = $1::UUID")
-        .execute(Tuple.of(cosAdminUser.getUserId()))).compose(row -> {
-          if (row.rowCount() == 0) {
-            cosAdminNotInDb.flag();
-          } else {
-            testContext.failNow("failed");
-          }
-          return Future.succeededFuture();
-        }).map(next ->
+    pool.withConnection(
+            conn ->
+                conn.preparedQuery("SELECT id FROM users WHERE id = $1::UUID")
+                    .execute(Tuple.of(cosAdminUser.getUserId())))
+        .compose(
+            row -> {
+              if (row.rowCount() == 0) {
+                cosAdminNotInDb.flag();
+              } else {
+                testContext.failNow("failed");
+              }
+              return Future.succeededFuture();
+            })
+        .map(
+            next ->
+                registrationService.getDefaultClientCredentials(
+                    cosAdminUser,
+                    testContext.succeeding(
+                        response ->
+                            testContext.verify(
+                                () -> {
+                                  assertEquals(201, response.getInteger("status"));
+                                  assertEquals(
+                                      SUCC_TITLE_CREATED_DEFAULT_CLIENT,
+                                      response.getString("title"));
+                                  assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-    registrationService.getDefaultClientCredentials(cosAdminUser,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(201, response.getInteger("status"));
-          assertEquals(SUCC_TITLE_CREATED_DEFAULT_CLIENT, response.getString("title"));
-          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                                  JsonObject result = response.getJsonObject("results");
 
-          JsonObject result = response.getJsonObject("results");
+                                  assertTrue(result.containsKey(RESP_CLIENT_NAME));
+                                  assertTrue(
+                                      result.getString(RESP_CLIENT_NAME).equals(DEFAULT_CLIENT));
+                                  assertTrue(result.containsKey(RESP_CLIENT_ID));
+                                  String clientId = result.getString(RESP_CLIENT_ID);
+                                  assertTrue(clientId.matches(UUID_REGEX));
 
-          assertTrue(result.containsKey(RESP_CLIENT_NAME));
-          assertTrue(result.getString(RESP_CLIENT_NAME).equals(DEFAULT_CLIENT));
-          assertTrue(result.containsKey(RESP_CLIENT_ID));
-          String clientId = result.getString(RESP_CLIENT_ID);
-          assertTrue(clientId.matches(UUID_REGEX));
+                                  assertTrue(result.containsKey(RESP_CLIENT_SC));
+                                  String clientSec = result.getString(RESP_CLIENT_SC);
+                                  assertTrue(clientSec.matches(CLIENT_SECRET_REGEX));
 
-          assertTrue(result.containsKey(RESP_CLIENT_SC));
-          String clientSec = result.getString(RESP_CLIENT_SC);
-          assertTrue(clientSec.matches(CLIENT_SECRET_REGEX));
-
-          clientCreated.flag();
-          pool.withConnection(conn -> conn.preparedQuery("SELECT id FROM users WHERE id = $1::UUID")
-              .execute(Tuple.of(cosAdminUser.getUserId()))).onSuccess(rows -> {
-                if (rows.rowCount() == 1) {
-                  entryMadeInDb.flag();
-                } else {
-                  testContext.failNow("failed");
-                }
-              }).onFailure(fail -> testContext.failNow(fail.getMessage()));
-        }))));
-
+                                  clientCreated.flag();
+                                  pool.withConnection(
+                                          conn ->
+                                              conn.preparedQuery(
+                                                      "SELECT id FROM users WHERE id = $1::UUID")
+                                                  .execute(Tuple.of(cosAdminUser.getUserId())))
+                                      .onSuccess(
+                                          rows -> {
+                                            if (rows.rowCount() == 1) {
+                                              entryMadeInDb.flag();
+                                            } else {
+                                              testContext.failNow("failed");
+                                            }
+                                          })
+                                      .onFailure(fail -> testContext.failNow(fail.getMessage()));
+                                }))));
   }
 }

@@ -42,6 +42,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+/** Unit tests for listing delegations. */
 @ExtendWith({VertxExtension.class, MockitoExtension.class})
 public class ListDelegationTest {
   private static Logger LOGGER =
@@ -74,17 +75,26 @@ public class ListDelegationTest {
       "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
 
   private static User consumerUser =
-      new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(List.of(Roles.CONSUMER))
+      new UserBuilder()
+          .userId(UUID.randomUUID())
+          .name("aa", "bb")
+          .roles(List.of(Roles.CONSUMER))
           .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER)))
           .build();
 
   private static User delegateUser =
-      new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(List.of(Roles.DELEGATE))
+      new UserBuilder()
+          .userId(UUID.randomUUID())
+          .name("aa", "bb")
+          .roles(List.of(Roles.DELEGATE))
           .rolesToRsMapping(Map.of(Roles.DELEGATE.toString(), new JsonArray().add(DUMMY_SERVER)))
           .build();
 
   private static User providerUser =
-      new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(List.of(Roles.PROVIDER))
+      new UserBuilder()
+          .userId(UUID.randomUUID())
+          .name("aa", "bb")
+          .roles(List.of(Roles.PROVIDER))
           .rolesToRsMapping(Map.of(Roles.PROVIDER.toString(), new JsonArray().add(DUMMY_SERVER)))
           .build();
 
@@ -117,8 +127,13 @@ public class ListDelegationTest {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
       connectOptions =
-          new PgConnectOptions().setPort(databasePort).setHost(databaseIP).setDatabase(databaseName)
-              .setUser(databaseUserName).setPassword(databasePassword).setProperties(schemaProp);
+          new PgConnectOptions()
+              .setPort(databasePort)
+              .setHost(databaseIP)
+              .setDatabase(databaseName)
+              .setUser(databaseUserName)
+              .setPassword(databasePassword)
+              .setProperties(schemaProp);
     }
 
     // Pool options
@@ -132,36 +147,74 @@ public class ListDelegationTest {
     utils = new Utils(pool);
 
     // create 1 active consumer and provider delegation each, and one inactive each
-    Future<Void> create = utils
-        .createFakeResourceServer(DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
-        .compose(res -> utils.createFakeUser(consumerUser, false, false))
-        .compose(res -> utils.createFakeUser(providerUser, false, false))
-        .compose(res -> utils.createFakeDelegation(CONSUMER_DELEGATION_ID, consumerUser,
-            delegateUser, DUMMY_SERVER, Roles.CONSUMER, DelegationStatus.ACTIVE))
-        .compose(res -> utils.createFakeDelegation(PROVIDER_DELEGATION_ID, providerUser,
-            delegateUser, DUMMY_SERVER, Roles.PROVIDER, DelegationStatus.ACTIVE))
-        .compose(res -> utils.createFakeDelegation(UUID.randomUUID(), consumerUser, delegateUser,
-            DUMMY_SERVER, Roles.CONSUMER, DelegationStatus.DELETED))
-        .compose(res -> utils.createFakeDelegation(UUID.randomUUID(), providerUser, delegateUser,
-            DUMMY_SERVER, Roles.PROVIDER, DelegationStatus.DELETED));
+    Future<Void> create =
+        utils
+            .createFakeResourceServer(
+                DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
+            .compose(res -> utils.createFakeUser(consumerUser, false, false))
+            .compose(res -> utils.createFakeUser(providerUser, false, false))
+            .compose(
+                res ->
+                    utils.createFakeDelegation(
+                        CONSUMER_DELEGATION_ID,
+                        consumerUser,
+                        delegateUser,
+                        DUMMY_SERVER,
+                        Roles.CONSUMER,
+                        DelegationStatus.ACTIVE))
+            .compose(
+                res ->
+                    utils.createFakeDelegation(
+                        PROVIDER_DELEGATION_ID,
+                        providerUser,
+                        delegateUser,
+                        DUMMY_SERVER,
+                        Roles.PROVIDER,
+                        DelegationStatus.ACTIVE))
+            .compose(
+                res ->
+                    utils.createFakeDelegation(
+                        UUID.randomUUID(),
+                        consumerUser,
+                        delegateUser,
+                        DUMMY_SERVER,
+                        Roles.CONSUMER,
+                        DelegationStatus.DELETED))
+            .compose(
+                res ->
+                    utils.createFakeDelegation(
+                        UUID.randomUUID(),
+                        providerUser,
+                        delegateUser,
+                        DUMMY_SERVER,
+                        Roles.PROVIDER,
+                        DelegationStatus.DELETED));
 
-    create.onSuccess(r -> {
-      registrationService = mockRegistrationFactory.getInstance();
-      policyService = new PolicyServiceImpl(pool, registrationService, apdService, catalogueClient);
-      testContext.completeNow();
-    }).onFailure(err -> testContext.failNow(err.getMessage()));
+    create
+        .onSuccess(
+            r -> {
+              registrationService = mockRegistrationFactory.getInstance();
+              policyService =
+                  new PolicyServiceImpl(pool, registrationService, apdService, catalogueClient);
+              testContext.completeNow();
+            })
+        .onFailure(err -> testContext.failNow(err.getMessage()));
   }
 
   @AfterAll
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing....");
-    utils.deleteFakeResourceServer().compose(res -> utils.deleteFakeDelegation())
-        .compose(res -> utils.deleteFakeUser()).onComplete(x -> {
-          if (x.failed()) {
-            LOGGER.warn(x.cause().getMessage());
-          }
-          vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
-        });
+    utils
+        .deleteFakeResourceServer()
+        .compose(res -> utils.deleteFakeDelegation())
+        .compose(res -> utils.deleteFakeUser())
+        .onComplete(
+            x -> {
+              if (x.failed()) {
+                LOGGER.warn(x.cause().getMessage());
+              }
+              vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
+            });
   }
 
   @Test
@@ -169,33 +222,46 @@ public class ListDelegationTest {
   void listDelegationAsProvider(VertxTestContext testContext) {
 
     JsonObject regServiceResponse =
-        new JsonObject().put(providerUser.getUserId(), utils.getKcAdminJson(providerUser))
+        new JsonObject()
+            .put(providerUser.getUserId(), utils.getKcAdminJson(providerUser))
             .put(delegateUser.getUserId(), utils.getKcAdminJson(delegateUser));
 
     mockRegistrationFactory.setResponse(regServiceResponse);
 
-    policyService.listDelegation(providerUser,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-          assertEquals(SUCC_TITLE_LIST_DELEGS, response.getString("title"));
-          assertEquals(200, response.getInteger("status"));
-          JsonArray resp = response.getJsonArray(RESULTS);
+    policyService.listDelegation(
+        providerUser,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                      assertEquals(SUCC_TITLE_LIST_DELEGS, response.getString("title"));
+                      assertEquals(200, response.getInteger("status"));
+                      JsonArray resp = response.getJsonArray(RESULTS);
 
-          assertTrue(resp.size() == 1);
-          JsonObject j = resp.getJsonObject(0);
+                      assertTrue(resp.size() == 1);
+                      JsonObject j = resp.getJsonObject(0);
 
-          assertTrue(j.getJsonObject("owner").getString("id").equals(providerUser.getUserId()));
-          assertTrue(j.getJsonObject("owner").getString("email")
-              .equals(utils.getDetails(providerUser).email));
+                      assertTrue(
+                          j.getJsonObject("owner")
+                              .getString("id")
+                              .equals(providerUser.getUserId()));
+                      assertTrue(
+                          j.getJsonObject("owner")
+                              .getString("email")
+                              .equals(utils.getDetails(providerUser).email));
 
-          assertTrue(j.getJsonObject("user").getString("id").equals(delegateUser.getUserId()));
-          assertTrue(j.getJsonObject("user").getString("email")
-              .equals(utils.getDetails(delegateUser).email));
+                      assertTrue(
+                          j.getJsonObject("user").getString("id").equals(delegateUser.getUserId()));
+                      assertTrue(
+                          j.getJsonObject("user")
+                              .getString("email")
+                              .equals(utils.getDetails(delegateUser).email));
 
-          assertEquals(j.getString("url"), DUMMY_SERVER);
-          assertEquals(j.getString("role"), Roles.PROVIDER.toString().toLowerCase());
-          testContext.completeNow();
-        })));
+                      assertEquals(j.getString("url"), DUMMY_SERVER);
+                      assertEquals(j.getString("role"), Roles.PROVIDER.toString().toLowerCase());
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
@@ -203,32 +269,45 @@ public class ListDelegationTest {
   void listDelegationAsConsumer(VertxTestContext testContext) {
 
     JsonObject regServiceResponse =
-        new JsonObject().put(consumerUser.getUserId(), utils.getKcAdminJson(consumerUser))
+        new JsonObject()
+            .put(consumerUser.getUserId(), utils.getKcAdminJson(consumerUser))
             .put(delegateUser.getUserId(), utils.getKcAdminJson(delegateUser));
     mockRegistrationFactory.setResponse(regServiceResponse);
 
-    policyService.listDelegation(consumerUser,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-          assertEquals(SUCC_TITLE_LIST_DELEGS, response.getString("title"));
-          assertEquals(200, response.getInteger("status"));
-          JsonArray resp = response.getJsonArray(RESULTS);
+    policyService.listDelegation(
+        consumerUser,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                      assertEquals(SUCC_TITLE_LIST_DELEGS, response.getString("title"));
+                      assertEquals(200, response.getInteger("status"));
+                      JsonArray resp = response.getJsonArray(RESULTS);
 
-          assertTrue(resp.size() == 1);
-          JsonObject j = resp.getJsonObject(0);
+                      assertTrue(resp.size() == 1);
+                      JsonObject j = resp.getJsonObject(0);
 
-          assertTrue(j.getJsonObject("owner").getString("id").equals(consumerUser.getUserId()));
-          assertTrue(j.getJsonObject("owner").getString("email")
-              .equals(utils.getDetails(consumerUser).email));
+                      assertTrue(
+                          j.getJsonObject("owner")
+                              .getString("id")
+                              .equals(consumerUser.getUserId()));
+                      assertTrue(
+                          j.getJsonObject("owner")
+                              .getString("email")
+                              .equals(utils.getDetails(consumerUser).email));
 
-          assertTrue(j.getJsonObject("user").getString("id").equals(delegateUser.getUserId()));
-          assertTrue(j.getJsonObject("user").getString("email")
-              .equals(utils.getDetails(delegateUser).email));
+                      assertTrue(
+                          j.getJsonObject("user").getString("id").equals(delegateUser.getUserId()));
+                      assertTrue(
+                          j.getJsonObject("user")
+                              .getString("email")
+                              .equals(utils.getDetails(delegateUser).email));
 
-          assertEquals(j.getString("url"), DUMMY_SERVER);
-          assertEquals(j.getString("role"), Roles.CONSUMER.toString().toLowerCase());
-          testContext.completeNow();
-        })));
+                      assertEquals(j.getString("url"), DUMMY_SERVER);
+                      assertEquals(j.getString("role"), Roles.CONSUMER.toString().toLowerCase());
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
@@ -236,7 +315,8 @@ public class ListDelegationTest {
   void listDelegationAsDelegate(VertxTestContext testContext) {
 
     JsonObject regServiceResponse =
-        new JsonObject().put(consumerUser.getUserId(), utils.getKcAdminJson(consumerUser))
+        new JsonObject()
+            .put(consumerUser.getUserId(), utils.getKcAdminJson(consumerUser))
             .put(delegateUser.getUserId(), utils.getKcAdminJson(delegateUser))
             .put(providerUser.getUserId(), utils.getKcAdminJson(providerUser));
     mockRegistrationFactory.setResponse(regServiceResponse);
@@ -244,95 +324,151 @@ public class ListDelegationTest {
     Checkpoint sawProviderDelegation = testContext.checkpoint();
     Checkpoint sawConsumerDelegation = testContext.checkpoint();
 
-    policyService.listDelegation(delegateUser,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-          assertEquals(SUCC_TITLE_LIST_DELEGS, response.getString("title"));
-          assertEquals(200, response.getInteger("status"));
-          JsonArray resp = response.getJsonArray(RESULTS);
+    policyService.listDelegation(
+        delegateUser,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                      assertEquals(SUCC_TITLE_LIST_DELEGS, response.getString("title"));
+                      assertEquals(200, response.getInteger("status"));
+                      JsonArray resp = response.getJsonArray(RESULTS);
 
-          assertTrue(resp.size() == 2);
+                      assertTrue(resp.size() == 2);
 
-          resp.forEach(object -> {
-            JsonObject j = (JsonObject) object;
+                      resp.forEach(
+                          object -> {
+                            JsonObject j = (JsonObject) object;
 
-            if (j.getString("id").equals(CONSUMER_DELEGATION_ID.toString())) {
-              assertTrue(j.getJsonObject("owner").getString("id").equals(consumerUser.getUserId()));
-              assertTrue(j.getJsonObject("owner").getString("email")
-                  .equals(utils.getDetails(consumerUser).email));
+                            if (j.getString("id").equals(CONSUMER_DELEGATION_ID.toString())) {
+                              assertTrue(
+                                  j.getJsonObject("owner")
+                                      .getString("id")
+                                      .equals(consumerUser.getUserId()));
+                              assertTrue(
+                                  j.getJsonObject("owner")
+                                      .getString("email")
+                                      .equals(utils.getDetails(consumerUser).email));
 
-              assertTrue(j.getJsonObject("user").getString("id").equals(delegateUser.getUserId()));
-              assertTrue(j.getJsonObject("user").getString("email")
-                  .equals(utils.getDetails(delegateUser).email));
+                              assertTrue(
+                                  j.getJsonObject("user")
+                                      .getString("id")
+                                      .equals(delegateUser.getUserId()));
+                              assertTrue(
+                                  j.getJsonObject("user")
+                                      .getString("email")
+                                      .equals(utils.getDetails(delegateUser).email));
 
-              assertEquals(j.getString("url"), DUMMY_SERVER);
-              assertEquals(j.getString("role"), Roles.CONSUMER.toString().toLowerCase());
-              sawConsumerDelegation.flag();
-            }
+                              assertEquals(j.getString("url"), DUMMY_SERVER);
+                              assertEquals(
+                                  j.getString("role"), Roles.CONSUMER.toString().toLowerCase());
+                              sawConsumerDelegation.flag();
+                            }
 
-            if (j.getString("id").equals(PROVIDER_DELEGATION_ID.toString())) {
-              assertTrue(j.getJsonObject("owner").getString("id").equals(providerUser.getUserId()));
-              assertTrue(j.getJsonObject("owner").getString("email")
-                  .equals(utils.getDetails(providerUser).email));
+                            if (j.getString("id").equals(PROVIDER_DELEGATION_ID.toString())) {
+                              assertTrue(
+                                  j.getJsonObject("owner")
+                                      .getString("id")
+                                      .equals(providerUser.getUserId()));
+                              assertTrue(
+                                  j.getJsonObject("owner")
+                                      .getString("email")
+                                      .equals(utils.getDetails(providerUser).email));
 
-              assertTrue(j.getJsonObject("user").getString("id").equals(delegateUser.getUserId()));
-              assertTrue(j.getJsonObject("user").getString("email")
-                  .equals(utils.getDetails(delegateUser).email));
+                              assertTrue(
+                                  j.getJsonObject("user")
+                                      .getString("id")
+                                      .equals(delegateUser.getUserId()));
+                              assertTrue(
+                                  j.getJsonObject("user")
+                                      .getString("email")
+                                      .equals(utils.getDetails(delegateUser).email));
 
-              assertEquals(j.getString("url"), DUMMY_SERVER);
-              assertEquals(j.getString("role"), Roles.PROVIDER.toString().toLowerCase());
-              sawProviderDelegation.flag();
-            }
-          });
-        })));
+                              assertEquals(j.getString("url"), DUMMY_SERVER);
+                              assertEquals(
+                                  j.getString("role"), Roles.PROVIDER.toString().toLowerCase());
+                              sawProviderDelegation.flag();
+                            }
+                          });
+                    })));
   }
 
   @Test
   @DisplayName("Fail at get delegations as admin/COS admin/trustee/")
   void cannotListWithCertainRoles(VertxTestContext testContext) {
 
-    User dummyUser = new UserBuilder().userId(UUID.randomUUID())
-        .roles(List.of(Roles.ADMIN, Roles.COS_ADMIN, Roles.TRUSTEE))
-        .rolesToRsMapping(Map.of(Roles.DELEGATE.toString(), new JsonArray().add(DUMMY_SERVER),
-            Roles.TRUSTEE.toString(), new JsonArray().add("some-apd.url"), Roles.ADMIN.toString(),
-            new JsonArray().add(DUMMY_SERVER)))
-        .build();
+    User dummyUser =
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .roles(List.of(Roles.ADMIN, Roles.COS_ADMIN, Roles.TRUSTEE))
+            .rolesToRsMapping(
+                Map.of(
+                    Roles.DELEGATE.toString(),
+                    new JsonArray().add(DUMMY_SERVER),
+                    Roles.TRUSTEE.toString(),
+                    new JsonArray().add("some-apd.url"),
+                    Roles.ADMIN.toString(),
+                    new JsonArray().add(DUMMY_SERVER)))
+            .build();
 
-    policyService.listDelegation(dummyUser,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
-          assertEquals(ERR_DETAIL_LIST_DELEGATE_ROLES, response.getString("detail"));
-          assertEquals(ERR_TITLE_INVALID_ROLES, response.getString("title"));
-          assertEquals(401, response.getInteger("status"));
-          testContext.completeNow();
-        })));
+    policyService.listDelegation(
+        dummyUser,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
+                      assertEquals(ERR_DETAIL_LIST_DELEGATE_ROLES, response.getString("detail"));
+                      assertEquals(ERR_TITLE_INVALID_ROLES, response.getString("title"));
+                      assertEquals(401, response.getInteger("status"));
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
-  @DisplayName("User has consumer, provider and delegate roles and can see delegations for them and created by them")
+  @DisplayName(
+      "User has consumer, provider and delegate roles and can see delegations for them and created by them")
   void listDelegationAsAllValidRoles(VertxTestContext testContext) {
     // creating new users for this test instead of using the globally created ones
     User consumer =
-        new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(List.of(Roles.CONSUMER))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.CONSUMER))
             .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER)))
             .build();
 
     User delegate =
-        new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(List.of(Roles.DELEGATE))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.DELEGATE))
             .rolesToRsMapping(Map.of(Roles.DELEGATE.toString(), new JsonArray().add(DUMMY_SERVER)))
             .build();
 
     User provider =
-        new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").roles(List.of(Roles.PROVIDER))
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.PROVIDER))
             .rolesToRsMapping(Map.of(Roles.PROVIDER.toString(), new JsonArray().add(DUMMY_SERVER)))
             .build();
 
-    User allRoles = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb")
-        .roles(List.of(Roles.PROVIDER, Roles.CONSUMER, Roles.DELEGATE))
-        .rolesToRsMapping(Map.of(Roles.PROVIDER.toString(), new JsonArray().add(DUMMY_SERVER),
-            Roles.DELEGATE.toString(), new JsonArray().add(DUMMY_SERVER), Roles.CONSUMER.toString(),
-            new JsonArray().add(DUMMY_SERVER)))
-        .build();
+    User allRoles =
+        new UserBuilder()
+            .userId(UUID.randomUUID())
+            .name("aa", "bb")
+            .roles(List.of(Roles.PROVIDER, Roles.CONSUMER, Roles.DELEGATE))
+            .rolesToRsMapping(
+                Map.of(
+                    Roles.PROVIDER.toString(),
+                    new JsonArray().add(DUMMY_SERVER),
+                    Roles.DELEGATE.toString(),
+                    new JsonArray().add(DUMMY_SERVER),
+                    Roles.CONSUMER.toString(),
+                    new JsonArray().add(DUMMY_SERVER)))
+            .build();
 
     UUID CONSUMER_TO_ALLROLES = UUID.randomUUID();
     UUID PROVIDER_TO_ALLROLES = UUID.randomUUID();
@@ -345,83 +481,152 @@ public class ListDelegationTest {
     Checkpoint sawProviderDelegationBYAllRoles = testContext.checkpoint();
     Checkpoint sawConsumerDelegationBYAllRoles = testContext.checkpoint();
 
-    Future<Void> createData = utils.createFakeUser(consumer, false, false)
-        .compose(res -> utils.createFakeUser(provider, false, false))
-        .compose(res -> utils.createFakeUser(delegate, false, false))
-        .compose(res -> utils.createFakeUser(allRoles, false, false))
-        .compose(res -> utils.createFakeDelegation(CONSUMER_TO_ALLROLES, consumer, allRoles,
-            DUMMY_SERVER, Roles.CONSUMER, DelegationStatus.ACTIVE))
-        .compose(res -> utils.createFakeDelegation(PROVIDER_TO_ALLROLES, provider, allRoles,
-            DUMMY_SERVER, Roles.PROVIDER, DelegationStatus.ACTIVE))
-        .compose(res -> utils.createFakeDelegation(ALLROLES_TO_DELEGATE_CONSUMER, allRoles,
-            delegate, DUMMY_SERVER, Roles.CONSUMER, DelegationStatus.ACTIVE))
-        .compose(res -> utils.createFakeDelegation(ALLROLES_TO_DELEGATE_PROVIDER, allRoles,
-            delegate, DUMMY_SERVER, Roles.PROVIDER, DelegationStatus.ACTIVE));
+    Future<Void> createData =
+        utils
+            .createFakeUser(consumer, false, false)
+            .compose(res -> utils.createFakeUser(provider, false, false))
+            .compose(res -> utils.createFakeUser(delegate, false, false))
+            .compose(res -> utils.createFakeUser(allRoles, false, false))
+            .compose(
+                res ->
+                    utils.createFakeDelegation(
+                        CONSUMER_TO_ALLROLES,
+                        consumer,
+                        allRoles,
+                        DUMMY_SERVER,
+                        Roles.CONSUMER,
+                        DelegationStatus.ACTIVE))
+            .compose(
+                res ->
+                    utils.createFakeDelegation(
+                        PROVIDER_TO_ALLROLES,
+                        provider,
+                        allRoles,
+                        DUMMY_SERVER,
+                        Roles.PROVIDER,
+                        DelegationStatus.ACTIVE))
+            .compose(
+                res ->
+                    utils.createFakeDelegation(
+                        ALLROLES_TO_DELEGATE_CONSUMER,
+                        allRoles,
+                        delegate,
+                        DUMMY_SERVER,
+                        Roles.CONSUMER,
+                        DelegationStatus.ACTIVE))
+            .compose(
+                res ->
+                    utils.createFakeDelegation(
+                        ALLROLES_TO_DELEGATE_PROVIDER,
+                        allRoles,
+                        delegate,
+                        DUMMY_SERVER,
+                        Roles.PROVIDER,
+                        DelegationStatus.ACTIVE));
 
-    createData.onSuccess(succ -> {
+    createData.onSuccess(
+        succ -> {
+          JsonObject regServiceResponse =
+              new JsonObject()
+                  .put(consumer.getUserId(), utils.getKcAdminJson(consumer))
+                  .put(delegate.getUserId(), utils.getKcAdminJson(delegate))
+                  .put(allRoles.getUserId(), utils.getKcAdminJson(allRoles))
+                  .put(provider.getUserId(), utils.getKcAdminJson(provider));
 
-      JsonObject regServiceResponse =
-          new JsonObject().put(consumer.getUserId(), utils.getKcAdminJson(consumer))
-              .put(delegate.getUserId(), utils.getKcAdminJson(delegate))
-              .put(allRoles.getUserId(), utils.getKcAdminJson(allRoles))
-              .put(provider.getUserId(), utils.getKcAdminJson(provider));
+          mockRegistrationFactory.setResponse(regServiceResponse);
 
-      mockRegistrationFactory.setResponse(regServiceResponse);
+          policyService.listDelegation(
+              allRoles,
+              testContext.succeeding(
+                  response ->
+                      testContext.verify(
+                          () -> {
+                            assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                            assertEquals(SUCC_TITLE_LIST_DELEGS, response.getString("title"));
+                            assertEquals(200, response.getInteger("status"));
+                            JsonArray resp = response.getJsonArray(RESULTS);
 
-      policyService.listDelegation(allRoles,
-          testContext.succeeding(response -> testContext.verify(() -> {
-            assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-            assertEquals(SUCC_TITLE_LIST_DELEGS, response.getString("title"));
-            assertEquals(200, response.getInteger("status"));
-            JsonArray resp = response.getJsonArray(RESULTS);
+                            assertTrue(resp.size() == 4);
 
-            assertTrue(resp.size() == 4);
+                            resp.forEach(
+                                object -> {
+                                  JsonObject j = (JsonObject) object;
+                                  assertEquals(j.getString("url"), DUMMY_SERVER);
 
-            resp.forEach(object -> {
-              JsonObject j = (JsonObject) object;
-              assertEquals(j.getString("url"), DUMMY_SERVER);
+                                  if (j.getString("id").equals(CONSUMER_TO_ALLROLES.toString())) {
+                                    assertTrue(
+                                        j.getJsonObject("owner")
+                                            .getString("id")
+                                            .equals(consumer.getUserId()));
 
-              if (j.getString("id").equals(CONSUMER_TO_ALLROLES.toString())) {
-                assertTrue(j.getJsonObject("owner").getString("id").equals(consumer.getUserId()));
+                                    assertTrue(
+                                        j.getJsonObject("user")
+                                            .getString("id")
+                                            .equals(allRoles.getUserId()));
 
-                assertTrue(j.getJsonObject("user").getString("id").equals(allRoles.getUserId()));
+                                    assertEquals(
+                                        j.getString("role"),
+                                        Roles.CONSUMER.toString().toLowerCase());
+                                    sawConsumerDelegationFORAllRoles.flag();
+                                  }
 
-                assertEquals(j.getString("role"), Roles.CONSUMER.toString().toLowerCase());
-                sawConsumerDelegationFORAllRoles.flag();
-              }
+                                  if (j.getString("id").equals(PROVIDER_TO_ALLROLES.toString())) {
+                                    assertTrue(
+                                        j.getJsonObject("owner")
+                                            .getString("id")
+                                            .equals(provider.getUserId()));
 
-              if (j.getString("id").equals(PROVIDER_TO_ALLROLES.toString())) {
-                assertTrue(j.getJsonObject("owner").getString("id").equals(provider.getUserId()));
+                                    assertTrue(
+                                        j.getJsonObject("user")
+                                            .getString("id")
+                                            .equals(allRoles.getUserId()));
 
-                assertTrue(j.getJsonObject("user").getString("id").equals(allRoles.getUserId()));
+                                    assertEquals(j.getString("url"), DUMMY_SERVER);
+                                    assertEquals(
+                                        j.getString("role"),
+                                        Roles.PROVIDER.toString().toLowerCase());
+                                    sawProviderDelegationFORAllRoles.flag();
+                                  }
 
-                assertEquals(j.getString("url"), DUMMY_SERVER);
-                assertEquals(j.getString("role"), Roles.PROVIDER.toString().toLowerCase());
-                sawProviderDelegationFORAllRoles.flag();
-              }
+                                  if (j.getString("id")
+                                      .equals(ALLROLES_TO_DELEGATE_CONSUMER.toString())) {
+                                    assertTrue(
+                                        j.getJsonObject("owner")
+                                            .getString("id")
+                                            .equals(allRoles.getUserId()));
 
-              if (j.getString("id").equals(ALLROLES_TO_DELEGATE_CONSUMER.toString())) {
-                assertTrue(j.getJsonObject("owner").getString("id").equals(allRoles.getUserId()));
+                                    assertTrue(
+                                        j.getJsonObject("user")
+                                            .getString("id")
+                                            .equals(delegate.getUserId()));
 
-                assertTrue(j.getJsonObject("user").getString("id").equals(delegate.getUserId()));
+                                    assertEquals(j.getString("url"), DUMMY_SERVER);
+                                    assertEquals(
+                                        j.getString("role"),
+                                        Roles.CONSUMER.toString().toLowerCase());
+                                    sawConsumerDelegationBYAllRoles.flag();
+                                  }
 
-                assertEquals(j.getString("url"), DUMMY_SERVER);
-                assertEquals(j.getString("role"), Roles.CONSUMER.toString().toLowerCase());
-                sawConsumerDelegationBYAllRoles.flag();
-              }
+                                  if (j.getString("id")
+                                      .equals(ALLROLES_TO_DELEGATE_PROVIDER.toString())) {
+                                    assertTrue(
+                                        j.getJsonObject("owner")
+                                            .getString("id")
+                                            .equals(allRoles.getUserId()));
 
-              if (j.getString("id").equals(ALLROLES_TO_DELEGATE_PROVIDER.toString())) {
-                assertTrue(j.getJsonObject("owner").getString("id").equals(allRoles.getUserId()));
+                                    assertTrue(
+                                        j.getJsonObject("user")
+                                            .getString("id")
+                                            .equals(delegate.getUserId()));
 
-                assertTrue(j.getJsonObject("user").getString("id").equals(delegate.getUserId()));
-
-                assertEquals(j.getString("url"), DUMMY_SERVER);
-                assertEquals(j.getString("role"), Roles.PROVIDER.toString().toLowerCase());
-                sawProviderDelegationBYAllRoles.flag();
-              }
-            });
-          })));
-    });
+                                    assertEquals(j.getString("url"), DUMMY_SERVER);
+                                    assertEquals(
+                                        j.getString("role"),
+                                        Roles.PROVIDER.toString().toLowerCase());
+                                    sawProviderDelegationBYAllRoles.flag();
+                                  }
+                                });
+                          })));
+        });
   }
 }
-

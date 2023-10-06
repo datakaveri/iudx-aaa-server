@@ -1734,6 +1734,14 @@ paths:
                     type: 'urn:dx:as:InvalidInput'
                     title: Invalid URL
                     detail: The domain is invalid
+                Emails not on UAC:
+                  value:
+                    type: urn:dx:as:InvalidInput
+                    title: Email IDs not found at UAC
+                    detail: Some email IDs have not been registered at UAC
+                    context:
+                      notFoundEmails:
+                        - vtgusrficq@gmail.com
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
@@ -2572,8 +2580,11 @@ paths:
                 Emails not on UAC:
                   value:
                     type: urn:dx:as:InvalidInput
-                    title: Some email IDs have not been registered at UAC
-                    detail: "[vtgusrficq@gmail.com]"        
+                    title: Email IDs not found at UAC
+                    detail: Some email IDs have not been registered at UAC
+                    context:
+                      notFoundEmails:
+                        - vtgusrficq@gmail.com
           headers:
             Content-Type:
               schema:
@@ -2604,13 +2615,16 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Unauthorized'  
+                $ref: '#/components/schemas/ErrorResponse'  
               examples:
-                Does not have role:
+                Delegation already exists:
                   value:
                     type: urn:dx:as:AlreadyExists
                     title: Delegation already exists
-                    detail: "[dc31e990-3dec-40be-837c-dc8457e74853]"
+                    detail: A delegation already exists for a requested user + role + resource server
+                    context:
+                      existingDelegationIds:
+                        - dc31e990-3dec-40be-837c-dc8457e74853
       description: |
         Allow consumers and providers to create consumer-delegates or provider delegates respectively for a particular resource server. The delegates will be allowed to perform operations on behalf of the consumer or provider on the resource server or on entities belonging to the resource server.
 
@@ -3152,6 +3166,14 @@ paths:
                     type: 'urn:dx:as:InvalidInput'
                     title: Invalid URL
                     detail: The URL is invalid
+                Emails not on UAC:
+                  value:
+                    type: urn:dx:as:InvalidInput
+                    title: Email IDs not found at UAC
+                    detail: Some email IDs have not been registered at UAC
+                    context:
+                      notFoundEmails:
+                        - vtgusrficq@gmail.com
         '401':
           description: '- Unauthorized - `token` invalid/expired or not COS Admin'
           content:

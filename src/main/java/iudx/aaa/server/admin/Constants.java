@@ -1,5 +1,6 @@
 package iudx.aaa.server.admin;
 
+/** Constants and SQL queries associated with {@link AdminService}. */
 public class Constants {
 
   public static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
@@ -36,11 +37,12 @@ public class Constants {
   public static final String ERR_TITLE_INVALID_PROV_REG_ID =
       "Invalid provider registration ID/ not a pending provider registration ID";
 
-  public static final String ERR_TITLE_DUPLICATE_REQ = "Duplicate provider registration ID in request";
+  public static final String ERR_TITLE_DUPLICATE_REQ =
+      "Duplicate provider registration ID in request";
 
-  public static final String ERR_TITLE_NO_COS_ADMIN_ROLE = "Invalid roles to call API - not COS Admin";
-  public static final String ERR_DETAIL_NO_COS_ADMIN_ROLE =
-      "Only COS Admin may call the API";
+  public static final String ERR_TITLE_NO_COS_ADMIN_ROLE =
+      "Invalid roles to call API - not COS Admin";
+  public static final String ERR_DETAIL_NO_COS_ADMIN_ROLE = "Only COS Admin may call the API";
 
   public static final String ERR_TITLE_NOT_ADMIN = "User does not have admin role";
   public static final String ERR_DETAIL_NOT_ADMIN =
@@ -62,7 +64,7 @@ public class Constants {
   public static final String SQL_UPDATE_ROLE_STATUS =
       "UPDATE roles SET status = $1::role_status_enum, updated_at = NOW() WHERE id = $2::uuid";
 
-  public static final String SQL_GET_PENDING_PROVIDERS_BY_ID_AND_RS = 
+  public static final String SQL_GET_PENDING_PROVIDERS_BY_ID_AND_RS =
       "SELECT users.id AS \"userId\", roles.id, userinfo AS \"userInfo\""
           + ", resource_server.url AS \"rsUrl\" FROM users"
           + " JOIN roles ON users.id = roles.user_id"
@@ -73,10 +75,10 @@ public class Constants {
   public static final String SQL_CREATE_RS_IF_NOT_EXIST =
       "INSERT INTO resource_server (name, url, owner_id, created_at, updated_at) "
           + "VALUES ($1::text, $2::text, $3::UUID, NOW(), NOW()) ON CONFLICT (url) DO NOTHING RETURNING id";
-  
+
   public static final String SQL_ADD_NEW_RES_SERVER_ROLE_FOR_ANY_CONSUMER =
       " WITH new_roles AS (SELECT DISTINCT(user_id), $1::UUID, 'CONSUMER'::role_enum, 'APPROVED'::role_status_enum"
-      + ", NOW(), NOW() FROM roles WHERE role = 'CONSUMER' AND status = 'APPROVED')"
-      + " INSERT INTO roles (user_id, resource_server_id, role, status, created_at, updated_at)"
-      + " SELECT * FROM new_roles";
+          + ", NOW(), NOW() FROM roles WHERE role = 'CONSUMER' AND status = 'APPROVED')"
+          + " INSERT INTO roles (user_id, resource_server_id, role, status, created_at, updated_at)"
+          + " SELECT * FROM new_roles";
 }

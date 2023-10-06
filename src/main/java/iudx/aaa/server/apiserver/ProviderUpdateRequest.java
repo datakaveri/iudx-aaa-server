@@ -1,12 +1,13 @@
 package iudx.aaa.server.apiserver;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
+/** Vert.x data object for the update provider registration status API. */
 @DataObject(generateConverter = true)
 public class ProviderUpdateRequest {
   UUID id;
@@ -30,9 +31,10 @@ public class ProviderUpdateRequest {
 
   public static List<ProviderUpdateRequest> jsonArrayToList(JsonArray json) {
     List<ProviderUpdateRequest> arr = new ArrayList<ProviderUpdateRequest>();
-    json.forEach(obj -> {
-      arr.add(new ProviderUpdateRequest(statusToUpperCase((JsonObject) obj)));
-    });
+    json.forEach(
+        obj -> {
+          arr.add(new ProviderUpdateRequest(statusToUpperCase((JsonObject) obj)));
+        });
     return arr;
   }
 

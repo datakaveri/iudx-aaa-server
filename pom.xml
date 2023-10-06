@@ -16,7 +16,7 @@
 		<apache-log4j2.version>2.17.1</apache-log4j2.version>
 		<lmax-disruptor.version>3.4.4</lmax-disruptor.version>
 		<jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
-		<guava.version>31.1-jre</guava.version>
+		<guava.version>32.0.0-jre</guava.version>
 		<checkstyle.version>10.7.0</checkstyle.version>
 		<maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
 		<maven-shade-plugin.version>3.3.0</maven-shade-plugin.version>
@@ -315,7 +315,7 @@
                             <version>1.12.0</version>
                         </plugin>
                     </plugins>
-                    <maxAllowedViolations>117</maxAllowedViolations>
+                    <maxAllowedViolations>63</maxAllowedViolations>
                     <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
                 </configuration>
             </plugin>
@@ -348,7 +348,7 @@
                     <failsOnError>true</failsOnError>
                     <configLocation>google_checks.xml</configLocation>
                     <violationSeverity>warning</violationSeverity>
-                    <maxAllowedViolations>1384</maxAllowedViolations>
+                    <maxAllowedViolations>183</maxAllowedViolations>
                     <sourceDirectories>
                         <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
                         <!-- <sourceDirectory>${project.build.testSourceDirectory}</sourceDirectory> -->
@@ -368,10 +368,23 @@
                         <ruleset>/category/java/errorprone.xml</ruleset>
                     </rulesets>
                     <printFailingErrors>true</printFailingErrors>
-                    <maxAllowedViolations>622</maxAllowedViolations>
+                    <maxAllowedViolations>333</maxAllowedViolations>
                     <excludeRoots>
                         <excludeRoot>target/generated-sources</excludeRoot>
                     </excludeRoots>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>2.40.0</version>
+                <configuration>
+                    <java>
+                        <googleJavaFormat>
+                            <version>1.8</version>
+                            <style>GOOGLE</style>
+                        </googleJavaFormat>
+                    </java>
                 </configuration>
             </plugin>
 			<plugin>

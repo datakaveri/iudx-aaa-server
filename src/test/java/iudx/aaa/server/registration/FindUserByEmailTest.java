@@ -2,6 +2,8 @@ package iudx.aaa.server.registration;
 
 import static iudx.aaa.server.registration.Constants.CONFIG_COS_URL;
 import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
+import static iudx.aaa.server.registration.Constants.ERR_CONTEXT_NOT_FOUND_EMAILS;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_EMAILS_NOT_AT_UAC_KEYCLOAK;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_EMAILS_NOT_AT_UAC_KEYCLOAK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -41,6 +43,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 
+/** Unit tests for finding user by email. */
 @ExtendWith(VertxExtension.class)
 public class FindUserByEmailTest {
   private static Logger LOGGER = LogManager.getLogger(FindUserByEmailTest.class);
@@ -69,20 +72,29 @@ public class FindUserByEmailTest {
       "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
 
   static User user =
-      new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.CONSUMER, Roles.PROVIDER))
-          .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER),
-              Roles.PROVIDER.toString(), new JsonArray().add(DUMMY_SERVER)))
-          .name("aa", "bb").build();
+      new UserBuilder()
+          .userId(UUID.randomUUID())
+          .roles(List.of(Roles.CONSUMER, Roles.PROVIDER))
+          .rolesToRsMapping(
+              Map.of(
+                  Roles.CONSUMER.toString(),
+                  new JsonArray().add(DUMMY_SERVER),
+                  Roles.PROVIDER.toString(),
+                  new JsonArray().add(DUMMY_SERVER)))
+          .name("aa", "bb")
+          .build();
 
   private static Utils utils;
 
   /*
    * for converting getUserDetails's JsonObject output to a Map to make it easier to assert values
    */
-  Function<JsonObject, Map<String, JsonObject>> jsonObjectToMap = (obj) -> {
-    return obj.stream().collect(
-        Collectors.toMap(val -> (String) val.getKey(), val -> (JsonObject) val.getValue()));
-  };
+  Function<JsonObject, Map<String, JsonObject>> jsonObjectToMap =
+      (obj) -> {
+        return obj.stream()
+            .collect(
+                Collectors.toMap(val -> (String) val.getKey(), val -> (JsonObject) val.getValue()));
+      };
 
   @BeforeAll
   @DisplayName("Deploying Verticle")
@@ -107,8 +119,13 @@ public class FindUserByEmailTest {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
       connectOptions =
-          new PgConnectOptions().setPort(databasePort).setHost(databaseIP).setDatabase(databaseName)
-              .setUser(databaseUserName).setPassword(databasePassword).setProperties(schemaProp);
+          new PgConnectOptions()
+              .setPort(databasePort)
+              .setHost(databaseIP)
+              .setDatabase(databaseName)
+              .setUser(databaseUserName)
+              .setPassword(databasePassword)
+              .setProperties(schemaProp);
     }
 
     if (poolOptions == null) {
@@ -117,28 +134,36 @@ public class FindUserByEmailTest {
 
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
 
-    options.put(CONFIG_COS_URL, dbConfig.getString(CONFIG_COS_URL)).put(CONFIG_OMITTED_SERVERS,
-        dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS));
+    options
+        .put(CONFIG_COS_URL, dbConfig.getString(CONFIG_COS_URL))
+        .put(CONFIG_OMITTED_SERVERS, dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS));
 
     utils = new Utils(pool);
 
     utils
         .createFakeResourceServer(DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
-        .compose(sss -> utils.createFakeUser(user, false, false)).onSuccess(res -> {
-          registrationService = new RegistrationServiceImpl(pool, kc, tokenService, options);
-          testContext.completeNow();
-        }).onFailure(err -> testContext.failNow(err.getMessage()));
+        .compose(sss -> utils.createFakeUser(user, false, false))
+        .onSuccess(
+            res -> {
+              registrationService = new RegistrationServiceImpl(pool, kc, tokenService, options);
+              testContext.completeNow();
+            })
+        .onFailure(err -> testContext.failNow(err.getMessage()));
   }
 
   @AfterAll
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing and resetting DB");
-    utils.deleteFakeUser().compose(res -> utils.deleteFakeResourceServer()).onComplete(x -> {
-      if (x.failed()) {
-        LOGGER.warn(x.cause().getMessage());
-      }
-      vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
-    });
+    utils
+        .deleteFakeUser()
+        .compose(res -> utils.deleteFakeResourceServer())
+        .onComplete(
+            x -> {
+              if (x.failed()) {
+                LOGGER.warn(x.cause().getMessage());
+              }
+              vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
+            });
   }
 
   @Test
@@ -147,11 +172,15 @@ public class FindUserByEmailTest {
     JsonObject userDetails = utils.getKcAdminJson(user);
     Mockito.when(kc.findUserByEmail(any())).thenReturn(Future.succeededFuture(userDetails));
 
-    registrationService.findUserByEmail(Set.of(),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertTrue(response.isEmpty());
-          testContext.completeNow();
-        })));
+    registrationService.findUserByEmail(
+        Set.of(),
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertTrue(response.isEmpty());
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
@@ -159,26 +188,37 @@ public class FindUserByEmailTest {
   void nonExistentUser(VertxTestContext testContext) {
 
     String notRegdEmail = RandomStringUtils.randomAlphabetic(10) + "@gmail.com";
-    
+
     Mockito.when(kc.findUserByEmail(notRegdEmail))
         .thenReturn(Future.succeededFuture(new JsonObject()));
     Mockito.when(kc.findUserByEmail(utils.getDetails(user).email))
         .thenReturn(Future.succeededFuture(utils.getKcAdminJson(user)));
 
-    registrationService.findUserByEmail(Set.of(utils.getDetails(user).email, notRegdEmail),
-        testContext.failing(err -> testContext.verify(() -> {
+    registrationService.findUserByEmail(
+        Set.of(utils.getDetails(user).email, notRegdEmail),
+        testContext.failing(
+            err ->
+                testContext.verify(
+                    () -> {
+                      assertTrue(err instanceof ComposeException);
+                      ComposeException composeErr = (ComposeException) err;
+                      JsonObject jsonResult = composeErr.getResponse().toJson();
 
-          assertTrue(err instanceof ComposeException);
-          ComposeException composeErr = (ComposeException) err;
-          JsonObject jsonResult = composeErr.getResponse().toJson();
-          
-          assertEquals(jsonResult.getInteger("status"), 400);
-          assertEquals(jsonResult.getString("type"), Urn.URN_INVALID_INPUT.toString());
-          assertEquals(jsonResult.getString("title"), ERR_TITLE_EMAILS_NOT_AT_UAC_KEYCLOAK);
-          assertTrue(jsonResult.getString("detail").contains(notRegdEmail));
+                      assertEquals(jsonResult.getInteger("status"), 400);
+                      assertEquals(jsonResult.getString("type"), Urn.URN_INVALID_INPUT.toString());
+                      assertEquals(
+                          jsonResult.getString("title"), ERR_TITLE_EMAILS_NOT_AT_UAC_KEYCLOAK);
+                      assertEquals(
+                          jsonResult.getString("detail"), ERR_DETAIL_EMAILS_NOT_AT_UAC_KEYCLOAK);
 
-          testContext.completeNow();
-        })));
+                      JsonArray missingEmails =
+                          jsonResult
+                              .getJsonObject("context")
+                              .getJsonArray(ERR_CONTEXT_NOT_FOUND_EMAILS);
+                      assertTrue(missingEmails.contains(notRegdEmail));
+
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
@@ -186,10 +226,14 @@ public class FindUserByEmailTest {
   void userEmailFail(VertxTestContext testContext) {
     Mockito.when(kc.findUserByEmail(any())).thenReturn(Future.failedFuture("fail"));
 
-    registrationService.findUserByEmail(Set.of(utils.getDetails(user).email),
-        testContext.failing(response -> testContext.verify(() -> {
-          testContext.completeNow();
-        })));
+    registrationService.findUserByEmail(
+        Set.of(utils.getDetails(user).email),
+        testContext.failing(
+            response ->
+                testContext.verify(
+                    () -> {
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
@@ -201,27 +245,43 @@ public class FindUserByEmailTest {
     Checkpoint userExistsInDb = testContext.checkpoint();
     Checkpoint dataObtained = testContext.checkpoint();
 
-    pool.withConnection(conn -> conn.preparedQuery("SELECT id FROM users WHERE id = $1::UUID")
-        .execute(Tuple.of(user.getUserId()))).compose(row -> {
-          if (row.rowCount() == 1) {
-            userExistsInDb.flag();
-          } else {
-            testContext.failNow("failed");
-          }
-          return Future.succeededFuture();
-        }).map(next -> registrationService.findUserByEmail(Set.of(utils.getDetails(user).email),
-            testContext.succeeding(response -> testContext.verify(() -> {
-              
-              assertTrue(response.containsKey(utils.getDetails(user).email));
-              JsonObject obj = response.getJsonObject(utils.getDetails(user).email);
+    pool.withConnection(
+            conn ->
+                conn.preparedQuery("SELECT id FROM users WHERE id = $1::UUID")
+                    .execute(Tuple.of(user.getUserId())))
+        .compose(
+            row -> {
+              if (row.rowCount() == 1) {
+                userExistsInDb.flag();
+              } else {
+                testContext.failNow("failed");
+              }
+              return Future.succeededFuture();
+            })
+        .map(
+            next ->
+                registrationService.findUserByEmail(
+                    Set.of(utils.getDetails(user).email),
+                    testContext.succeeding(
+                        response ->
+                            testContext.verify(
+                                () -> {
+                                  assertTrue(response.containsKey(utils.getDetails(user).email));
+                                  JsonObject obj =
+                                      response.getJsonObject(utils.getDetails(user).email);
 
-              assertEquals(obj.getString("email"), utils.getDetails(user).email);
-              assertEquals(obj.getJsonObject("name").getString("firstName"), user.getName().get("firstName"));
-              assertEquals(obj.getJsonObject("name").getString("lastName"), user.getName().get("lastName"));
-              assertEquals(obj.getString("keycloakId"), user.getUserId());
+                                  assertEquals(
+                                      obj.getString("email"), utils.getDetails(user).email);
+                                  assertEquals(
+                                      obj.getJsonObject("name").getString("firstName"),
+                                      user.getName().get("firstName"));
+                                  assertEquals(
+                                      obj.getJsonObject("name").getString("lastName"),
+                                      user.getName().get("lastName"));
+                                  assertEquals(obj.getString("keycloakId"), user.getUserId());
 
-              dataObtained.flag();
-            }))));
+                                  dataObtained.flag();
+                                }))));
   }
 
   @Test
@@ -231,12 +291,20 @@ public class FindUserByEmailTest {
     String newUserId = UUID.randomUUID().toString();
     String newUserFirstName = "aa";
     String newUserLastName = "bb";
-    
+
     String existingUserEmail = utils.getDetails(user).email;
 
-    Mockito.when(kc.findUserByEmail(newUserEmail)).thenReturn(Future.succeededFuture(
-        new JsonObject().put("keycloakId", newUserId).put("email", newUserEmail).put("name",
-            new JsonObject().put("firstName", newUserFirstName).put("lastName", newUserLastName))));
+    Mockito.when(kc.findUserByEmail(newUserEmail))
+        .thenReturn(
+            Future.succeededFuture(
+                new JsonObject()
+                    .put("keycloakId", newUserId)
+                    .put("email", newUserEmail)
+                    .put(
+                        "name",
+                        new JsonObject()
+                            .put("firstName", newUserFirstName)
+                            .put("lastName", newUserLastName))));
 
     Mockito.when(kc.findUserByEmail(existingUserEmail))
         .thenReturn(Future.succeededFuture(utils.getKcAdminJson(user)));
@@ -245,45 +313,64 @@ public class FindUserByEmailTest {
     Checkpoint newUserInDb = testContext.checkpoint();
 
     pool.withConnection(
-        conn -> conn.preparedQuery("SELECT id FROM users WHERE id = $1::UUID OR id = $2::UUID")
-            .execute(Tuple.of(user.getUserId(), newUserId)))
-        .compose(row -> {
-          if (row.rowCount() == 1) {
-            newUserNotInDb.flag();
-          } else {
-            testContext.failNow("failed");
-          }
-          return Future.succeededFuture();
-        })
-        .map(next -> registrationService.findUserByEmail(
-            Set.of(existingUserEmail, newUserEmail),
-            testContext.succeeding(response -> testContext.verify(() -> {
+            conn ->
+                conn.preparedQuery("SELECT id FROM users WHERE id = $1::UUID OR id = $2::UUID")
+                    .execute(Tuple.of(user.getUserId(), newUserId)))
+        .compose(
+            row -> {
+              if (row.rowCount() == 1) {
+                newUserNotInDb.flag();
+              } else {
+                testContext.failNow("failed");
+              }
+              return Future.succeededFuture();
+            })
+        .map(
+            next ->
+                registrationService.findUserByEmail(
+                    Set.of(existingUserEmail, newUserEmail),
+                    testContext.succeeding(
+                        response ->
+                            testContext.verify(
+                                () -> {
+                                  assertTrue(response.containsKey(existingUserEmail));
+                                  JsonObject obj1 = response.getJsonObject(existingUserEmail);
 
-              assertTrue(response.containsKey(existingUserEmail));
-              JsonObject obj1 = response.getJsonObject(existingUserEmail);
+                                  assertEquals(obj1.getString("email"), existingUserEmail);
+                                  assertEquals(
+                                      obj1.getJsonObject("name").getString("firstName"),
+                                      user.getName().get("firstName"));
+                                  assertEquals(
+                                      obj1.getJsonObject("name").getString("lastName"),
+                                      user.getName().get("lastName"));
+                                  assertEquals(obj1.getString("keycloakId"), user.getUserId());
 
-              assertEquals(obj1.getString("email"), existingUserEmail);
-              assertEquals(obj1.getJsonObject("name").getString("firstName"), user.getName().get("firstName"));
-              assertEquals(obj1.getJsonObject("name").getString("lastName"), user.getName().get("lastName"));
-              assertEquals(obj1.getString("keycloakId"), user.getUserId());
-              
-              assertTrue(response.containsKey(newUserEmail));
-              JsonObject obj2 = response.getJsonObject(newUserEmail);
+                                  assertTrue(response.containsKey(newUserEmail));
+                                  JsonObject obj2 = response.getJsonObject(newUserEmail);
 
-              assertEquals(obj2.getString("email"), newUserEmail);
-              assertEquals(obj2.getJsonObject("name").getString("firstName"), newUserFirstName);
-              assertEquals(obj2.getJsonObject("name").getString("lastName"), newUserLastName);
-              assertEquals(obj2.getString("keycloakId"), newUserId);
+                                  assertEquals(obj2.getString("email"), newUserEmail);
+                                  assertEquals(
+                                      obj2.getJsonObject("name").getString("firstName"),
+                                      newUserFirstName);
+                                  assertEquals(
+                                      obj2.getJsonObject("name").getString("lastName"),
+                                      newUserLastName);
+                                  assertEquals(obj2.getString("keycloakId"), newUserId);
 
-              pool.withConnection(conn -> conn
-                  .preparedQuery("SELECT id FROM users WHERE id = $1::UUID OR id = $2::UUID")
-                  .execute(Tuple.of(user.getUserId(), newUserId))).onSuccess(rows -> {
-                if (rows.rowCount() == 2) {
-                  newUserInDb.flag();
-                } else {
-                  testContext.failNow("failed");
-                }
-              }).onFailure(fail -> testContext.failNow(fail.getMessage()));
-            }))));
+                                  pool.withConnection(
+                                          conn ->
+                                              conn.preparedQuery(
+                                                      "SELECT id FROM users WHERE id = $1::UUID OR id = $2::UUID")
+                                                  .execute(Tuple.of(user.getUserId(), newUserId)))
+                                      .onSuccess(
+                                          rows -> {
+                                            if (rows.rowCount() == 2) {
+                                              newUserInDb.flag();
+                                            } else {
+                                              testContext.failNow("failed");
+                                            }
+                                          })
+                                      .onFailure(fail -> testContext.failNow(fail.getMessage()));
+                                }))));
   }
 }

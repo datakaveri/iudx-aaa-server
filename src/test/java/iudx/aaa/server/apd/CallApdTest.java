@@ -9,7 +9,6 @@ import static iudx.aaa.server.apd.Constants.APD_RESP_TYPE;
 import static iudx.aaa.server.apd.Constants.APD_URN_ALLOW;
 import static iudx.aaa.server.apd.Constants.APD_URN_DENY;
 import static iudx.aaa.server.apd.Constants.APD_URN_DENY_NEEDS_INT;
-import static iudx.aaa.server.apd.Constants.CONFIG_COS_URL;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_APD_INTERAC;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_CAT_ID;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_CONSTRAINTS;
@@ -18,11 +17,11 @@ import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_SESSIONID;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_STATUS;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_SUCCESS;
 import static iudx.aaa.server.apd.Constants.CREATE_TOKEN_URL;
-import static iudx.aaa.server.apd.Constants.ERR_DETAIL_APD_NOT_RESPOND;
 import static iudx.aaa.server.apd.Constants.ERR_DETAIL_APD_NOT_REGISTERED;
-import static iudx.aaa.server.apd.Constants.ERR_TITLE_APD_NOT_RESPOND;
+import static iudx.aaa.server.apd.Constants.ERR_DETAIL_APD_NOT_RESPOND;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_APD_EVAL_FAILED;
 import static iudx.aaa.server.apd.Constants.ERR_TITLE_APD_NOT_REGISTERED;
+import static iudx.aaa.server.apd.Constants.ERR_TITLE_APD_NOT_RESPOND;
 import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -37,16 +36,15 @@ import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
-import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.ApdStatus;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
-import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.configuration.Configuration;
+import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.registration.Utils;
 import iudx.aaa.server.token.TokenService;
@@ -63,6 +61,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 
+/** Unit tests for call APD service that {@link PolicyService} calls to verify resource access. */
 @ExtendWith({VertxExtension.class})
 public class CallApdTest {
   private static Logger LOGGER = LogManager.getLogger(CallApdTest.class);
@@ -95,10 +94,13 @@ public class CallApdTest {
       "apd" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
 
   private static User consumer =
-      new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.CONSUMER))
+      new UserBuilder()
+          .userId(UUID.randomUUID())
+          .roles(List.of(Roles.CONSUMER))
           .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray().add(DUMMY_SERVER)))
-          .name("aa", "bb").build();
-  
+          .name("aa", "bb")
+          .build();
+
   private static Utils utils;
 
   @BeforeAll
@@ -124,8 +126,13 @@ public class CallApdTest {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
       connectOptions =
-          new PgConnectOptions().setPort(databasePort).setHost(databaseIP).setDatabase(databaseName)
-              .setUser(databaseUserName).setPassword(databasePassword).setProperties(schemaProp);
+          new PgConnectOptions()
+              .setPort(databasePort)
+              .setHost(databaseIP)
+              .setDatabase(databaseName)
+              .setUser(databaseUserName)
+              .setPassword(databasePassword)
+              .setProperties(schemaProp);
     }
 
     /* Pool options */
@@ -135,35 +142,50 @@ public class CallApdTest {
 
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
 
-    JsonObject options = new JsonObject().put(CONFIG_COS_URL, dbConfig.getString(CONFIG_COS_URL));
-    
     utils = new Utils(pool);
 
-    Future<Void> create = utils
-        .createFakeResourceServer(DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
-        .compose(res -> utils.createFakeUser(consumer, false, false))
-        .compose(res -> utils.createFakeApd(ACTIVE_APD,
-            new UserBuilder().userId(UUID.randomUUID()).build(), ApdStatus.ACTIVE))
-        .compose(res -> utils.createFakeApd(INACTIVE_APD,
-            new UserBuilder().userId(UUID.randomUUID()).build(), ApdStatus.INACTIVE));
-    
-    create.onSuccess(res -> {
-      apdService =
-          new ApdServiceImpl(pool, apdWebClient, registrationService, tokenService, options);
-      testContext.completeNow();
-    }).onFailure(fail -> testContext.failNow(fail.getMessage()));
+    Future<Void> create =
+        utils
+            .createFakeResourceServer(
+                DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
+            .compose(res -> utils.createFakeUser(consumer, false, false))
+            .compose(
+                res ->
+                    utils.createFakeApd(
+                        ACTIVE_APD,
+                        new UserBuilder().userId(UUID.randomUUID()).build(),
+                        ApdStatus.ACTIVE))
+            .compose(
+                res ->
+                    utils.createFakeApd(
+                        INACTIVE_APD,
+                        new UserBuilder().userId(UUID.randomUUID()).build(),
+                        ApdStatus.INACTIVE));
+
+    create
+        .onSuccess(
+            res -> {
+              apdService =
+                  new ApdServiceImpl(pool, apdWebClient, registrationService, tokenService);
+              testContext.completeNow();
+            })
+        .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
 
   @AfterAll
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing....");
-    utils.deleteFakeApd().compose(res -> utils.deleteFakeUser())
-        .compose(res -> utils.deleteFakeResourceServer()).onComplete(x -> {
-          if (x.failed()) {
-            LOGGER.warn(x.cause().getMessage());
-          }
-          vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
-        });
+    utils
+        .deleteFakeApd()
+        .compose(res -> utils.deleteFakeUser())
+        .compose(res -> utils.deleteFakeResourceServer())
+        .onComplete(
+            x -> {
+              if (x.failed()) {
+                LOGGER.warn(x.cause().getMessage());
+              }
+              vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
+            });
   }
 
   @Test
@@ -173,97 +195,138 @@ public class CallApdTest {
     UUID userId = UUID.randomUUID();
     UUID ownerId = UUID.randomUUID();
 
-    JsonObject apdContext = new JsonObject().put("userId", userId.toString())
-        .put("ownerId", ownerId.toString()).put("apdUrl", RandomStringUtils.randomAlphabetic(10) + ".com")
-        .put("itemId", RandomStringUtils.randomAlphabetic(20).toLowerCase())
-        .put("itemType", RandomStringUtils.randomAlphabetic(10).toLowerCase())
-        .put("resSerUrl", RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com")
-        .put("context", new JsonObject());
+    JsonObject apdContext =
+        new JsonObject()
+            .put("userId", userId.toString())
+            .put("ownerId", ownerId.toString())
+            .put("apdUrl", RandomStringUtils.randomAlphabetic(10) + ".com")
+            .put("itemId", RandomStringUtils.randomAlphabetic(20).toLowerCase())
+            .put("itemType", RandomStringUtils.randomAlphabetic(10).toLowerCase())
+            .put("resSerUrl", RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com")
+            .put("context", new JsonObject());
 
-    apdService.callApd(apdContext, testContext.failing(response -> testContext.verify(() -> {
-      ComposeException exp = (ComposeException) response;
-      Response errResp = exp.getResponse();
-      assertEquals(errResp.getType(), URN_INVALID_INPUT.toString());
-      assertEquals(errResp.getTitle(), ERR_TITLE_APD_NOT_REGISTERED);
-      assertEquals(errResp.getDetail(), ERR_DETAIL_APD_NOT_REGISTERED);
-      testContext.completeNow();
-    })));
+    apdService.callApd(
+        apdContext,
+        testContext.failing(
+            response ->
+                testContext.verify(
+                    () -> {
+                      ComposeException exp = (ComposeException) response;
+                      Response errResp = exp.getResponse();
+                      assertEquals(errResp.getType(), URN_INVALID_INPUT.toString());
+                      assertEquals(errResp.getTitle(), ERR_TITLE_APD_NOT_REGISTERED);
+                      assertEquals(errResp.getDetail(), ERR_DETAIL_APD_NOT_REGISTERED);
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
   @DisplayName("Registration service (get user details) failing")
   void regServiceFail(VertxTestContext testContext) {
 
-    Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(1);
-      p.fail("Fail");
-      return i.getMock();
-    }).when(registrationService).getUserDetails(any(), any());
+    Mockito.doAnswer(
+            i -> {
+              Promise<JsonObject> p = i.getArgument(1);
+              p.fail("Fail");
+              return i.getMock();
+            })
+        .when(registrationService)
+        .getUserDetails(any(), any());
 
     UUID userId = UUID.randomUUID();
     UUID ownerId = UUID.randomUUID();
 
-    JsonObject apdContext = new JsonObject().put("userId", userId.toString())
-        .put("ownerId", ownerId.toString()).put("apdUrl", ACTIVE_APD)
-        .put("itemId", RandomStringUtils.randomAlphabetic(20).toLowerCase())
-        .put("itemType", RandomStringUtils.randomAlphabetic(10).toLowerCase())
-        .put("resSerUrl", RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com")
-        .put("context", new JsonObject());
+    JsonObject apdContext =
+        new JsonObject()
+            .put("userId", userId.toString())
+            .put("ownerId", ownerId.toString())
+            .put("apdUrl", ACTIVE_APD)
+            .put("itemId", RandomStringUtils.randomAlphabetic(20).toLowerCase())
+            .put("itemType", RandomStringUtils.randomAlphabetic(10).toLowerCase())
+            .put("resSerUrl", RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com")
+            .put("context", new JsonObject());
 
-    apdService.callApd(apdContext, testContext.failing(response -> testContext.verify(() -> {
-      testContext.completeNow();
-    })));
+    apdService.callApd(
+        apdContext,
+        testContext.failing(
+            response ->
+                testContext.verify(
+                    () -> {
+                      testContext.completeNow();
+                    })));
   }
-
 
   @Test
   @DisplayName("Token service (get auth server token) failing")
   void tokenServiceFail(VertxTestContext testContext) {
 
-    Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(1);
-      p.fail("Fail");
-      return i.getMock();
-    }).when(tokenService).getAuthServerToken(any(), any());
+    Mockito.doAnswer(
+            i -> {
+              Promise<JsonObject> p = i.getArgument(1);
+              p.fail("Fail");
+              return i.getMock();
+            })
+        .when(tokenService)
+        .getAuthServerToken(any(), any());
 
     UUID userId = UUID.randomUUID();
     UUID ownerId = UUID.randomUUID();
 
-    JsonObject apdContext = new JsonObject().put("userId", userId.toString())
-        .put("ownerId", ownerId.toString()).put("apdUrl", ACTIVE_APD)
-        .put("itemId", RandomStringUtils.randomAlphabetic(20).toLowerCase())
-        .put("itemType", RandomStringUtils.randomAlphabetic(10).toLowerCase())
-        .put("resSerUrl", RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com")
-        .put("context", new JsonObject());
+    JsonObject apdContext =
+        new JsonObject()
+            .put("userId", userId.toString())
+            .put("ownerId", ownerId.toString())
+            .put("apdUrl", ACTIVE_APD)
+            .put("itemId", RandomStringUtils.randomAlphabetic(20).toLowerCase())
+            .put("itemType", RandomStringUtils.randomAlphabetic(10).toLowerCase())
+            .put("resSerUrl", RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com")
+            .put("context", new JsonObject());
 
-    apdService.callApd(apdContext, testContext.failing(response -> testContext.verify(() -> {
-      testContext.completeNow();
-    })));
+    apdService.callApd(
+        apdContext,
+        testContext.failing(
+            response ->
+                testContext.verify(
+                    () -> {
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
   @DisplayName("ApdWebClient failing - incorrect/invalid response sent by APD")
   void apdWebClientFails(VertxTestContext testContext) {
-    Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(1);
-      List<String> ids = i.getArgument(0);
-      JsonObject resp = new JsonObject();
-      for (String id : ids) {
-        resp.put(id, new JsonObject());
-      }
-      p.complete(resp);
-      return i.getMock();
-    }).when(registrationService).getUserDetails(any(), any());
+    Mockito.doAnswer(
+            i -> {
+              Promise<JsonObject> p = i.getArgument(1);
+              List<String> ids = i.getArgument(0);
+              JsonObject resp = new JsonObject();
+              for (String id : ids) {
+                resp.put(id, new JsonObject());
+              }
+              p.complete(resp);
+              return i.getMock();
+            })
+        .when(registrationService)
+        .getUserDetails(any(), any());
 
-    Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(1);
-      JsonObject resp = new JsonObject().put("accessToken", RandomStringUtils.randomAlphabetic(30));
-      p.complete(resp);
-      return i.getMock();
-    }).when(tokenService).getAuthServerToken(any(), any());
+    Mockito.doAnswer(
+            i -> {
+              Promise<JsonObject> p = i.getArgument(1);
+              JsonObject resp =
+                  new JsonObject().put("accessToken", RandomStringUtils.randomAlphabetic(30));
+              p.complete(resp);
+              return i.getMock();
+            })
+        .when(tokenService)
+        .getAuthServerToken(any(), any());
 
-    Response failureResponse = new ResponseBuilder().type(URN_INVALID_INPUT)
-        .title(ERR_TITLE_APD_NOT_RESPOND).detail(ERR_DETAIL_APD_NOT_RESPOND).status(400).build();
+    Response failureResponse =
+        new ResponseBuilder()
+            .type(URN_INVALID_INPUT)
+            .title(ERR_TITLE_APD_NOT_RESPOND)
+            .detail(ERR_DETAIL_APD_NOT_RESPOND)
+            .status(400)
+            .build();
 
     Mockito.when(apdWebClient.callVerifyApdEndpoint(any(), any(), any()))
         .thenReturn(Future.failedFuture(new ComposeException(failureResponse)));
@@ -271,43 +334,59 @@ public class CallApdTest {
     UUID userId = UUID.randomUUID();
     UUID ownerId = UUID.randomUUID();
 
-    JsonObject apdContext = new JsonObject().put("userId", userId.toString())
-        .put("ownerId", ownerId.toString()).put("apdUrl", INACTIVE_APD)
-        .put("resource", RandomStringUtils.randomAlphabetic(20).toLowerCase())
-        .put("itemType", RandomStringUtils.randomAlphabetic(10).toLowerCase())
-        .put("resSerUrl", RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com")
-        .put("context", new JsonObject());
+    JsonObject apdContext =
+        new JsonObject()
+            .put("userId", userId.toString())
+            .put("ownerId", ownerId.toString())
+            .put("apdUrl", INACTIVE_APD)
+            .put("resource", RandomStringUtils.randomAlphabetic(20).toLowerCase())
+            .put("itemType", RandomStringUtils.randomAlphabetic(10).toLowerCase())
+            .put("resSerUrl", RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com")
+            .put("context", new JsonObject());
 
-    apdService.callApd(apdContext, testContext.failing(response -> testContext.verify(() -> {
-      ComposeException exp = (ComposeException) response;
-      Response errResp = exp.getResponse();
-      assertEquals(errResp.getType(), URN_INVALID_INPUT.toString());
-      assertEquals(errResp.getTitle(), ERR_TITLE_APD_EVAL_FAILED);
-      assertEquals(errResp.getDetail(), ERR_DETAIL_APD_NOT_RESPOND + APD_NOT_ACTIVE);
-      testContext.completeNow();
-    })));
+    apdService.callApd(
+        apdContext,
+        testContext.failing(
+            response ->
+                testContext.verify(
+                    () -> {
+                      ComposeException exp = (ComposeException) response;
+                      Response errResp = exp.getResponse();
+                      assertEquals(errResp.getType(), URN_INVALID_INPUT.toString());
+                      assertEquals(errResp.getTitle(), ERR_TITLE_APD_EVAL_FAILED);
+                      assertEquals(
+                          errResp.getDetail(), ERR_DETAIL_APD_NOT_RESPOND + APD_NOT_ACTIVE);
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
   @DisplayName("ApdWebClient success - APD allow")
   void apdWebClientSuccessAllow(VertxTestContext testContext) {
-    Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(1);
-      List<String> ids = i.getArgument(0);
-      JsonObject resp = new JsonObject();
-      for (String id : ids) {
-        resp.put(id, new JsonObject());
-      }
-      p.complete(resp);
-      return i.getMock();
-    }).when(registrationService).getUserDetails(any(), any());
+    Mockito.doAnswer(
+            i -> {
+              Promise<JsonObject> p = i.getArgument(1);
+              List<String> ids = i.getArgument(0);
+              JsonObject resp = new JsonObject();
+              for (String id : ids) {
+                resp.put(id, new JsonObject());
+              }
+              p.complete(resp);
+              return i.getMock();
+            })
+        .when(registrationService)
+        .getUserDetails(any(), any());
 
-    Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(1);
-      JsonObject resp = new JsonObject().put("accessToken", RandomStringUtils.randomAlphabetic(30));
-      p.complete(resp);
-      return i.getMock();
-    }).when(tokenService).getAuthServerToken(any(), any());
+    Mockito.doAnswer(
+            i -> {
+              Promise<JsonObject> p = i.getArgument(1);
+              JsonObject resp =
+                  new JsonObject().put("accessToken", RandomStringUtils.randomAlphabetic(30));
+              p.complete(resp);
+              return i.getMock();
+            })
+        .when(tokenService)
+        .getAuthServerToken(any(), any());
 
     JsonObject webClientResp = new JsonObject().put(APD_RESP_TYPE, APD_URN_ALLOW);
 
@@ -320,47 +399,65 @@ public class CallApdTest {
     String itemType = RandomStringUtils.randomAlphabetic(10).toLowerCase();
     String resSerUrl = RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com";
 
-    JsonObject apdContext = new JsonObject().put("userId", userId.toString())
-        .put("ownerId", ownerId.toString()).put("apdUrl", ACTIVE_APD)
-        .put("itemId", itemId)
-        .put("itemType", itemType).put("resSerUrl", resSerUrl).put("context", new JsonObject());
+    JsonObject apdContext =
+        new JsonObject()
+            .put("userId", userId.toString())
+            .put("ownerId", ownerId.toString())
+            .put("apdUrl", ACTIVE_APD)
+            .put("itemId", itemId)
+            .put("itemType", itemType)
+            .put("resSerUrl", resSerUrl)
+            .put("context", new JsonObject());
 
-    apdService.callApd(apdContext, testContext.succeeding(response -> testContext.verify(() -> {
-      assertEquals(response.getString(CREATE_TOKEN_STATUS), CREATE_TOKEN_SUCCESS);
-      assertEquals(response.getString(CREATE_TOKEN_CAT_ID), itemId);
-      assertEquals(response.getString(CREATE_TOKEN_URL), resSerUrl);
-      assertEquals(response.getJsonObject(CREATE_TOKEN_CONSTRAINTS), new JsonObject());
-      testContext.completeNow();
-    })));
+    apdService.callApd(
+        apdContext,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(response.getString(CREATE_TOKEN_STATUS), CREATE_TOKEN_SUCCESS);
+                      assertEquals(response.getString(CREATE_TOKEN_CAT_ID), itemId);
+                      assertEquals(response.getString(CREATE_TOKEN_URL), resSerUrl);
+                      assertEquals(
+                          response.getJsonObject(CREATE_TOKEN_CONSTRAINTS), new JsonObject());
+                      testContext.completeNow();
+                    })));
   }
 
-  //add test  for apd response with constraints
+  // add test  for apd response with constraints
   @Test
   @DisplayName("ApdWebClient success - APD allow with constraints")
   void apdWebClientSuccessAllowWConstraints(VertxTestContext testContext) {
-    
+
     JsonObject apdConstraints = new JsonObject().put("access", true);
-    
-    Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(1);
-      List<String> ids = i.getArgument(0);
-      JsonObject resp = new JsonObject();
-      for (String id : ids) {
-        resp.put(id, new JsonObject());
-      }
-      p.complete(resp);
-      return i.getMock();
-    }).when(registrationService).getUserDetails(any(), any());
 
-    Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(1);
-      JsonObject resp = new JsonObject().put("accessToken", RandomStringUtils.randomAlphabetic(30));
-      p.complete(resp);
-      return i.getMock();
-    }).when(tokenService).getAuthServerToken(any(), any());
+    Mockito.doAnswer(
+            i -> {
+              Promise<JsonObject> p = i.getArgument(1);
+              List<String> ids = i.getArgument(0);
+              JsonObject resp = new JsonObject();
+              for (String id : ids) {
+                resp.put(id, new JsonObject());
+              }
+              p.complete(resp);
+              return i.getMock();
+            })
+        .when(registrationService)
+        .getUserDetails(any(), any());
 
-    JsonObject webClientResp = new JsonObject().put(APD_RESP_TYPE, APD_URN_ALLOW)
-        .put(APD_CONSTRAINTS, apdConstraints);
+    Mockito.doAnswer(
+            i -> {
+              Promise<JsonObject> p = i.getArgument(1);
+              JsonObject resp =
+                  new JsonObject().put("accessToken", RandomStringUtils.randomAlphabetic(30));
+              p.complete(resp);
+              return i.getMock();
+            })
+        .when(tokenService)
+        .getAuthServerToken(any(), any());
+
+    JsonObject webClientResp =
+        new JsonObject().put(APD_RESP_TYPE, APD_URN_ALLOW).put(APD_CONSTRAINTS, apdConstraints);
 
     Mockito.when(apdWebClient.callVerifyApdEndpoint(any(), any(), any()))
         .thenReturn(Future.succeededFuture(webClientResp));
@@ -371,41 +468,59 @@ public class CallApdTest {
     String itemType = RandomStringUtils.randomAlphabetic(10).toLowerCase();
     String resSerUrl = RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com";
 
-    JsonObject apdContext = new JsonObject().put("userId", userId.toString())
-        .put("ownerId", ownerId.toString()).put("apdUrl", ACTIVE_APD)
-        .put("itemType", itemType)
-        .put("itemId", itemId)
-        .put("itemType", itemType).put("resSerUrl", resSerUrl).put("context", new JsonObject());
+    JsonObject apdContext =
+        new JsonObject()
+            .put("userId", userId.toString())
+            .put("ownerId", ownerId.toString())
+            .put("apdUrl", ACTIVE_APD)
+            .put("itemType", itemType)
+            .put("itemId", itemId)
+            .put("itemType", itemType)
+            .put("resSerUrl", resSerUrl)
+            .put("context", new JsonObject());
 
-    apdService.callApd(apdContext, testContext.succeeding(response -> testContext.verify(() -> {
-      assertEquals(response.getString(CREATE_TOKEN_STATUS), CREATE_TOKEN_SUCCESS);
-      assertEquals(response.getString(CREATE_TOKEN_CAT_ID), itemId);
-      assertEquals(response.getString(CREATE_TOKEN_URL), resSerUrl);
-      assertEquals(response.getJsonObject(CREATE_TOKEN_CONSTRAINTS), apdConstraints);
-      testContext.completeNow();
-    })));
+    apdService.callApd(
+        apdContext,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(response.getString(CREATE_TOKEN_STATUS), CREATE_TOKEN_SUCCESS);
+                      assertEquals(response.getString(CREATE_TOKEN_CAT_ID), itemId);
+                      assertEquals(response.getString(CREATE_TOKEN_URL), resSerUrl);
+                      assertEquals(
+                          response.getJsonObject(CREATE_TOKEN_CONSTRAINTS), apdConstraints);
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
   @DisplayName("ApdWebClient success - APD deny")
   void apdWebClientSuccessDeny(VertxTestContext testContext) {
-    Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(1);
-      List<String> ids = i.getArgument(0);
-      JsonObject resp = new JsonObject();
-      for (String id : ids) {
-        resp.put(id, new JsonObject());
-      }
-      p.complete(resp);
-      return i.getMock();
-    }).when(registrationService).getUserDetails(any(), any());
+    Mockito.doAnswer(
+            i -> {
+              Promise<JsonObject> p = i.getArgument(1);
+              List<String> ids = i.getArgument(0);
+              JsonObject resp = new JsonObject();
+              for (String id : ids) {
+                resp.put(id, new JsonObject());
+              }
+              p.complete(resp);
+              return i.getMock();
+            })
+        .when(registrationService)
+        .getUserDetails(any(), any());
 
-    Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(1);
-      JsonObject resp = new JsonObject().put("accessToken", RandomStringUtils.randomAlphabetic(30));
-      p.complete(resp);
-      return i.getMock();
-    }).when(tokenService).getAuthServerToken(any(), any());
+    Mockito.doAnswer(
+            i -> {
+              Promise<JsonObject> p = i.getArgument(1);
+              JsonObject resp =
+                  new JsonObject().put("accessToken", RandomStringUtils.randomAlphabetic(30));
+              p.complete(resp);
+              return i.getMock();
+            })
+        .when(tokenService)
+        .getAuthServerToken(any(), any());
 
     JsonObject webClientResp =
         new JsonObject().put(APD_RESP_TYPE, APD_URN_DENY).put(APD_RESP_DETAIL, "Not allowed");
@@ -419,46 +534,66 @@ public class CallApdTest {
     String itemType = RandomStringUtils.randomAlphabetic(10).toLowerCase();
     String resSerUrl = RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com";
 
-    JsonObject apdContext = new JsonObject().put("userId", userId.toString())
-        .put("ownerId", ownerId.toString()).put("apdUrl", ACTIVE_APD)
-        .put("itemId", itemId)
-        .put("itemType", itemType).put("resSerUrl", resSerUrl).put("context", new JsonObject());
+    JsonObject apdContext =
+        new JsonObject()
+            .put("userId", userId.toString())
+            .put("ownerId", ownerId.toString())
+            .put("apdUrl", ACTIVE_APD)
+            .put("itemId", itemId)
+            .put("itemType", itemType)
+            .put("resSerUrl", resSerUrl)
+            .put("context", new JsonObject());
 
-    apdService.callApd(apdContext, testContext.failing(response -> testContext.verify(() -> {
-      ComposeException exp = (ComposeException) response;
-      Response errResp = exp.getResponse();
-      assertEquals(errResp.getType(), URN_INVALID_INPUT.toString());
-      assertEquals(errResp.getTitle(), ERR_TITLE_APD_EVAL_FAILED);
-      assertEquals(errResp.getDetail(), "Not allowed");
-      testContext.completeNow();
-    })));
+    apdService.callApd(
+        apdContext,
+        testContext.failing(
+            response ->
+                testContext.verify(
+                    () -> {
+                      ComposeException exp = (ComposeException) response;
+                      Response errResp = exp.getResponse();
+                      assertEquals(errResp.getType(), URN_INVALID_INPUT.toString());
+                      assertEquals(errResp.getTitle(), ERR_TITLE_APD_EVAL_FAILED);
+                      assertEquals(errResp.getDetail(), "Not allowed");
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
   @DisplayName("ApdWebClient success - APD deny and needs interaction")
   void apdWebClientSuccessDenySessionId(VertxTestContext testContext) {
-    Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(1);
-      List<String> ids = i.getArgument(0);
-      JsonObject resp = new JsonObject();
-      for (String id : ids) {
-        resp.put(id, new JsonObject());
-      }
-      p.complete(resp);
-      return i.getMock();
-    }).when(registrationService).getUserDetails(any(), any());
+    Mockito.doAnswer(
+            i -> {
+              Promise<JsonObject> p = i.getArgument(1);
+              List<String> ids = i.getArgument(0);
+              JsonObject resp = new JsonObject();
+              for (String id : ids) {
+                resp.put(id, new JsonObject());
+              }
+              p.complete(resp);
+              return i.getMock();
+            })
+        .when(registrationService)
+        .getUserDetails(any(), any());
 
-    Mockito.doAnswer(i -> {
-      Promise<JsonObject> p = i.getArgument(1);
-      JsonObject resp = new JsonObject().put("accessToken", RandomStringUtils.randomAlphabetic(30));
-      p.complete(resp);
-      return i.getMock();
-    }).when(tokenService).getAuthServerToken(any(), any());
+    Mockito.doAnswer(
+            i -> {
+              Promise<JsonObject> p = i.getArgument(1);
+              JsonObject resp =
+                  new JsonObject().put("accessToken", RandomStringUtils.randomAlphabetic(30));
+              p.complete(resp);
+              return i.getMock();
+            })
+        .when(tokenService)
+        .getAuthServerToken(any(), any());
 
     String sessionId = UUID.randomUUID().toString();
     JsonObject webClientResp =
-        new JsonObject().put(APD_RESP_TYPE, APD_URN_DENY_NEEDS_INT).put(APD_RESP_DETAIL, "Needs interaction")
-            .put(APD_RESP_SESSIONID, sessionId).put(APD_RESP_LINK, ACTIVE_APD + "/apd");
+        new JsonObject()
+            .put(APD_RESP_TYPE, APD_URN_DENY_NEEDS_INT)
+            .put(APD_RESP_DETAIL, "Needs interaction")
+            .put(APD_RESP_SESSIONID, sessionId)
+            .put(APD_RESP_LINK, ACTIVE_APD + "/apd");
 
     Mockito.when(apdWebClient.callVerifyApdEndpoint(any(), any(), any()))
         .thenReturn(Future.succeededFuture(webClientResp));
@@ -469,17 +604,28 @@ public class CallApdTest {
     String itemType = RandomStringUtils.randomAlphabetic(10).toLowerCase();
     String resSerUrl = RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".com";
 
-    JsonObject apdContext = new JsonObject().put("userId", userId.toString())
-        .put("ownerId", ownerId.toString()).put("apdUrl", ACTIVE_APD)
-        .put("itemId", itemId)
-        .put("itemType", itemType).put("resSerUrl", resSerUrl).put("context", new JsonObject());
+    JsonObject apdContext =
+        new JsonObject()
+            .put("userId", userId.toString())
+            .put("ownerId", ownerId.toString())
+            .put("apdUrl", ACTIVE_APD)
+            .put("itemId", itemId)
+            .put("itemType", itemType)
+            .put("resSerUrl", resSerUrl)
+            .put("context", new JsonObject());
 
-    apdService.callApd(apdContext, testContext.succeeding(response -> testContext.verify(() -> {
-      assertEquals(response.getString(CREATE_TOKEN_STATUS), CREATE_TOKEN_APD_INTERAC);
-      assertEquals(response.getString(CREATE_TOKEN_LINK), ACTIVE_APD + "/apd");
-      assertEquals(response.getString(CREATE_TOKEN_SESSIONID), sessionId);
-      assertEquals(response.getString(CREATE_TOKEN_URL), ACTIVE_APD);
-      testContext.completeNow();
-    })));
+    apdService.callApd(
+        apdContext,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(
+                          response.getString(CREATE_TOKEN_STATUS), CREATE_TOKEN_APD_INTERAC);
+                      assertEquals(response.getString(CREATE_TOKEN_LINK), ACTIVE_APD + "/apd");
+                      assertEquals(response.getString(CREATE_TOKEN_SESSIONID), sessionId);
+                      assertEquals(response.getString(CREATE_TOKEN_URL), ACTIVE_APD);
+                      testContext.completeNow();
+                    })));
   }
 }

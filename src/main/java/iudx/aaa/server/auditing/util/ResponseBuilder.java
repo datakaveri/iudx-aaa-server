@@ -10,6 +10,7 @@ import static iudx.aaa.server.auditing.util.Constants.TITLE;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
+/** Response builder for auditing service. */
 public class ResponseBuilder {
   private String actionStatus;
   private JsonObject response;

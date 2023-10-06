@@ -1,12 +1,12 @@
 package iudx.aaa.server.apiserver;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import java.util.ArrayList;
+import java.util.List;
 
+/** Vert.x data object for the create delegation API. */
 @DataObject(generateConverter = true)
 public class CreateDelegationRequest {
   private String userEmail;
@@ -50,9 +50,10 @@ public class CreateDelegationRequest {
 
   public static List<CreateDelegationRequest> jsonArrayToList(JsonArray json) {
     List<CreateDelegationRequest> reg = new ArrayList<>();
-    json.forEach(obj -> {
-      reg.add(new CreateDelegationRequest((JsonObject) obj));
-    });
+    json.forEach(
+        obj -> {
+          reg.add(new CreateDelegationRequest((JsonObject) obj));
+        });
     return reg;
   }
 }

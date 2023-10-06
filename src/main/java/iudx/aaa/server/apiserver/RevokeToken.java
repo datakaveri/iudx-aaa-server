@@ -3,6 +3,7 @@ package iudx.aaa.server.apiserver;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
+/** Vert.x data object for the revoke token API. */
 @DataObject(generateConverter = true)
 public class RevokeToken {
 
@@ -27,5 +28,4 @@ public class RevokeToken {
   public void setRsUrl(String rsUrl) {
     this.rsUrl = rsUrl.toLowerCase();
   }
-
 }

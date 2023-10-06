@@ -1,15 +1,13 @@
 package iudx.aaa.server.apiserver.util;
 
-import static iudx.aaa.server.apiserver.util.Urn.*;
 import static iudx.aaa.server.apiserver.util.Constants.ERR_TITLE_BAD_REQUEST;
 import static iudx.aaa.server.apiserver.util.Constants.HEADER_CONTENT_TYPE;
 import static iudx.aaa.server.apiserver.util.Constants.INVALID_JSON;
 import static iudx.aaa.server.apiserver.util.Constants.JSON_TIMEOUT;
 import static iudx.aaa.server.apiserver.util.Constants.MIME_APPLICATION_JSON;
 import static iudx.aaa.server.apiserver.util.Constants.STATUS;
-import java.time.format.DateTimeParseException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import static iudx.aaa.server.apiserver.util.Urn.*;
+
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpServerResponse;
@@ -21,6 +19,9 @@ import io.vertx.ext.web.validation.ParameterProcessorException;
 import io.vertx.ext.web.validation.RequestPredicateException;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
+import java.time.format.DateTimeParseException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class FailureHandler implements Handler<RoutingContext> {
 
@@ -33,12 +34,12 @@ public class FailureHandler implements Handler<RoutingContext> {
 
     /* If timeout handler is triggered */
     if (context.failure() == null && context.statusCode() == 503) {
-      LOGGER.error("Fail: Handling unexpected error: Timeout for " + context.normalizedPath());
+      LOGGER.error("Fail: Handling unexpected error: Timeout for {}", context.normalizedPath());
       response.setStatusCode(503).end(JSON_TIMEOUT);
       return;
     }
 
-    LOGGER.error("Fail: Handling unexpected error: " + context.failure().getLocalizedMessage());
+    LOGGER.error("Fail: Handling unexpected error: {}", context.failure().getLocalizedMessage());
     Throwable failure = context.failure();
 
     if (failure instanceof DecodeException) {
@@ -50,13 +51,13 @@ public class FailureHandler implements Handler<RoutingContext> {
       return;
     } else if (failure instanceof ParameterProcessorException) {
       processResponse(response, failure.getLocalizedMessage());
-      
+
     } else if (failure instanceof BodyProcessorException) {
       processResponse(response, failure.getLocalizedMessage());
-      
+
     } else if (failure instanceof RequestPredicateException) {
       processResponse(response, failure.getLocalizedMessage());
-      
+
     } else if (failure instanceof DateTimeParseException) {
       processResponse(response, failure.getLocalizedMessage());
 
@@ -80,8 +81,12 @@ public class FailureHandler implements Handler<RoutingContext> {
 
   /* Using this function for 400 Bad Request */
   private Future<Void> processResponse(HttpServerResponse response, String detail) {
-    Response rs = new ResponseBuilder().type(URN_INVALID_INPUT).title(ERR_TITLE_BAD_REQUEST)
-        .detail(detail).build();
+    Response rs =
+        new ResponseBuilder()
+            .type(URN_INVALID_INPUT)
+            .title(ERR_TITLE_BAD_REQUEST)
+            .detail(detail)
+            .build();
     return response.setStatusCode(400).end(rs.toJson().toString());
   }
 }

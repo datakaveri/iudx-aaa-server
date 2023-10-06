@@ -41,9 +41,8 @@ import org.apache.logging.log4j.Logger;
  * Note that this class does not implement {@link Handler} of {@link RoutingContext} type since the
  * roles to be searched for needed to be passed as a parameter. The {@link Handler}.handle method
  * does not allow passing parameters.
- *
  */
-public class FetchRoles  {
+public class FetchRoles {
 
   private PgPool pgPool;
   private JsonObject config;
@@ -55,7 +54,8 @@ public class FetchRoles  {
   }
 
   private static Collector<Row, ?, Map<String, JsonArray>> roleToRsCollector =
-      Collectors.toMap(row -> row.getString("role"),
+      Collectors.toMap(
+          row -> row.getString("role"),
           row -> new JsonArray(Arrays.asList(row.getArrayOfStrings("rs_urls"))));
 
   /**
@@ -63,17 +63,17 @@ public class FetchRoles  {
    * context. Also fetch the resource servers for which the roles are applicable. The fetched roles
    * and resource servers are used to make a {@link User} object along with the user ID. This object
    * is then added to the routing context with the key <i>user</i>.
-   * 
+   *
    * @param ctx the routing context. Should contain the user ID of the user (and name information if
-   *        applicable). The {@link User} object with role information is added to the routing
-   *        context after fetching the requested roles.
+   *     applicable). The {@link User} object with role information is added to the routing context
+   *     after fetching the requested roles.
    * @param requestedRoles a set of roles to be obtained (if the user has them)
    */
   public void fetch(RoutingContext ctx, Set<Roles> requestedRoles) {
     UUID userId = UUID.fromString(ctx.get(OBTAINED_USER_ID));
     String firstName = ctx.get(KC_GIVEN_NAME, "");
     String lastName = ctx.get(KC_FAMILY_NAME, "");
-    
+
     User.UserBuilder userBuilder = new UserBuilder();
 
     userBuilder.userId(userId);
@@ -87,14 +87,14 @@ public class FetchRoles  {
     }
 
     List<String> queries = new ArrayList<String>();
-    
+
     if (requestedRoles.contains(Roles.COS_ADMIN)) {
       if (config.getString("cosAdminUserId").equals(userId.toString())) {
         ownedRoles.add(Roles.COS_ADMIN);
       }
-      
-      if(requestedRoles.size() == 1) { // only COS admin being checked, skip querying
-        userBuilder.roles(ownedRoles); 
+
+      if (requestedRoles.size() == 1) { // only COS admin being checked, skip querying
+        userBuilder.roles(ownedRoles);
         ctx.put(USER, userBuilder.build());
         ctx.next();
         return;
@@ -108,9 +108,9 @@ public class FetchRoles  {
     if (requestedRoles.contains(Roles.DELEGATE)) {
       queries.add(SQL_GET_DELEGATE_ROLE);
     }
-    
+
     // if trustee role present, gets added to User.roles and User.rolesToRsMapping
-    // EVEN THOUGH APD is not an RS 
+    // EVEN THOUGH APD is not an RS
     if (requestedRoles.contains(Roles.TRUSTEE)) {
       queries.add(SQL_GET_TRUSTEE_ROLE);
     }
@@ -118,7 +118,7 @@ public class FetchRoles  {
     if (requestedRoles.contains(Roles.ADMIN)) {
       queries.add(SQL_GET_ADMIN_ROLE);
     }
-    
+
     if (queries.isEmpty()) {
       LOGGER.error("Queries array for fetch roles empty for endpoint {}", ctx.request().path());
       throw new IllegalStateException(
@@ -127,24 +127,39 @@ public class FetchRoles  {
 
     String finalQuery = String.join(SQL_UNION, queries);
 
-    pgPool.withConnection(conn -> conn.preparedQuery(finalQuery).collecting(roleToRsCollector)
-        .execute(Tuple.of(userId)).map(res -> res.value())).compose(roleToRsMap -> {
-          
-          userBuilder.rolesToRsMapping(roleToRsMap);
-          
-          ownedRoles.addAll(roleToRsMap.keySet().stream().map(role -> Roles.valueOf(role))
-              .collect(Collectors.toList()));
-          userBuilder.roles(ownedRoles);
+    pgPool
+        .withConnection(
+            conn ->
+                conn.preparedQuery(finalQuery)
+                    .collecting(roleToRsCollector)
+                    .execute(Tuple.of(userId))
+                    .map(res -> res.value()))
+        .compose(
+            roleToRsMap -> {
+              userBuilder.rolesToRsMapping(roleToRsMap);
 
-          ctx.put(USER, userBuilder.build());
-          
-          return Future.succeededFuture();
-        }).onSuccess(userObj -> ctx.next()).onFailure(fail -> {
-          LOGGER.error("Fail: Fetch roles: {} ", fail.getMessage());
+              ownedRoles.addAll(
+                  roleToRsMap.keySet().stream()
+                      .map(role -> Roles.valueOf(role))
+                      .collect(Collectors.toList()));
+              userBuilder.roles(ownedRoles);
 
-          Response rs = new ResponseBuilder().status(500).title(INTERNAL_SVR_ERR)
-              .detail(INTERNAL_SVR_ERR).build();
-          ctx.fail(new Throwable(rs.toJsonString()));
-        });
+              ctx.put(USER, userBuilder.build());
+
+              return Future.succeededFuture();
+            })
+        .onSuccess(userObj -> ctx.next())
+        .onFailure(
+            fail -> {
+              LOGGER.error("Fail: Fetch roles: {} ", fail.getMessage());
+
+              Response rs =
+                  new ResponseBuilder()
+                      .status(500)
+                      .title(INTERNAL_SVR_ERR)
+                      .detail(INTERNAL_SVR_ERR)
+                      .build();
+              ctx.fail(new Throwable(rs.toJsonString()));
+            });
   }
 }

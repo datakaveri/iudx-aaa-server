@@ -1,10 +1,13 @@
 package iudx.aaa.server.apiserver.util;
 
+import static iudx.aaa.server.apiserver.util.Urn.*;
+
+import iudx.aaa.server.apiserver.ApiServerVerticle;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import static iudx.aaa.server.apiserver.util.Urn.*;
 
+/** Constants for {@link ApiServerVerticle} and files in util package. */
 public class Constants {
   // Header params
   public static final String HEADER_AUTHORIZATION = "Authorization";
@@ -57,7 +60,7 @@ public class Constants {
 
   /* API Server Operations/Routes */
   public static final String CREATE_TOKEN = "post-auth-v1-token";
-  public static final String TIP_TOKEN = "post-auth-v1-introspect"; 
+  public static final String TIP_TOKEN = "post-auth-v1-introspect";
   public static final String REVOKE_TOKEN = "post-auth-v1-revoke";
   public static final String ADD_ROLES = "post-auth-v1-user-roles";
   public static final String GET_USER_ROLES = "get-auth-v1-user-roles";
@@ -99,7 +102,8 @@ public class Constants {
   public static final String ERR_DETAIL_SEARCH_MISSING_PARAMS =
       "Both `email` and `userId` query params are missing - either must be present";
   public static final String INVALID_CLIENT = "Invalid clientId";
-  public static final String LOG_FAILED_DISCOVERY = "Fail: Unable to discover keycloak instance; ";
+  public static final String LOG_FAILED_DISCOVERY =
+      "Fail: Unable to discover keycloak instance; {}";
   public static final String ERR_TIMEOUT = "Service unavailable";
   public static final String ERR_TITLE_NO_SUCH_API = "No such API/method";
   public static final String ERR_DETAIL_NO_SUCH_API =
@@ -108,23 +112,36 @@ public class Constants {
   public static final String ERR_PROVDERID = "General request- Delegate";
   public static final String INVALID_DELEGATION_ID = "Invalid delegationId";
   public static final String ERR_DELEGATE = "Invalid delegate request";
-  public static final String ERR_DETAIL_SEARCH_USR = "Require both 'email' and 'role' header for search user";
+  public static final String ERR_DETAIL_SEARCH_USR =
+      "Require both 'email' and 'role' header for search user";
   public static final String ERR_TITLE_SEARCH_USR = "Invalid search user request";
   public static final String SUCC_AUDIT_UPDATE = "Info: Audit log successfully processed";
   public static final String ERR_AUDIT_UPDATE = "Fail: Error in processing audit log";
 
   /* Static JSON responses */
-  public static final String JSON_TIMEOUT = "{\"type\":\"" + URN_MISSING_INFO + "\", \"title\":\""
-      + ERR_TIMEOUT + "\", \"detail\":\"" + ERR_TIMEOUT + "\"}";
+  public static final String JSON_TIMEOUT =
+      "{\"type\":\""
+          + URN_MISSING_INFO
+          + "\", \"title\":\""
+          + ERR_TIMEOUT
+          + "\", \"detail\":\""
+          + ERR_TIMEOUT
+          + "\"}";
 
   public static final String JSON_NOT_FOUND =
-      "{\"type\":\"" + URN_INVALID_INPUT + "\", \"title\":\"" + ERR_TITLE_NO_SUCH_API
-          + "\", \"detail\":\"" + ERR_DETAIL_NO_SUCH_API + "\"}";
+      "{\"type\":\""
+          + URN_INVALID_INPUT
+          + "\", \"title\":\""
+          + ERR_TITLE_NO_SUCH_API
+          + "\", \"detail\":\""
+          + ERR_DETAIL_NO_SUCH_API
+          + "\"}";
 
   /* General */
   public static final String KC_GIVEN_NAME = "given_name";
   public static final String KC_FAMILY_NAME = "family_name";
-  public static final String OBTAINED_USER_ID = "user_id_from_keycloak_token_or_from_client_cred_validation";
+  public static final String OBTAINED_USER_ID =
+      "user_id_from_keycloak_token_or_from_client_cred_validation";
   public static final String SUB = "sub";
   public static final String ID = "id";
   public static final String ROLES = "roles";
@@ -150,29 +167,28 @@ public class Constants {
 
   /* Compose failure due to invalid token */
   public static final String INVALID_TOKEN_FAILED_COMPOSE = "INVALID_TOKEN";
-  
+
   /* HashSet to Match success status */
   public static final Set<Integer> successStatus =
       new HashSet<Integer>(Arrays.asList(200, 201, 202));
 
-
   /* SQL Queries */
-  
-  public static final String SQL_UNION = " UNION ";
-  
-  // casting roles as text since the DB only recognizes PROVIDER, CONSUMER but Roles 
-  // has other values. (UNION of the role_enum with text does not work.) 
-  public static final String SQL_GET_PROVIDER_CONSUMER_ROLES = 
-      "SELECT roles.role::text, array_agg(url) AS rs_urls FROM roles JOIN resource_server "
-      + " ON roles.resource_server_id = resource_server.id"
-      + " WHERE roles.user_id = $1::uuid AND roles.status = 'APPROVED'"
-      + " GROUP BY roles.role";
 
-  public static final String SQL_GET_DELEGATE_ROLE = 
+  public static final String SQL_UNION = " UNION ";
+
+  // casting roles as text since the DB only recognizes PROVIDER, CONSUMER but Roles
+  // has other values. (UNION of the role_enum with text does not work.)
+  public static final String SQL_GET_PROVIDER_CONSUMER_ROLES =
+      "SELECT roles.role::text, array_agg(url) AS rs_urls FROM roles JOIN resource_server "
+          + " ON roles.resource_server_id = resource_server.id"
+          + " WHERE roles.user_id = $1::uuid AND roles.status = 'APPROVED'"
+          + " GROUP BY roles.role";
+
+  public static final String SQL_GET_DELEGATE_ROLE =
       "SELECT 'DELEGATE'::text AS role, array_agg(url) AS rs_urls FROM delegations"
-      + " JOIN roles ON delegations.role_id = roles.id"
-      + " JOIN resource_server on roles.resource_server_id = resource_server.id"
-      + " WHERE delegations.user_id = $1::uuid AND delegations.status = 'ACTIVE' HAVING array_agg(url) <> '{}'";
+          + " JOIN roles ON delegations.role_id = roles.id"
+          + " JOIN resource_server on roles.resource_server_id = resource_server.id"
+          + " WHERE delegations.user_id = $1::uuid AND delegations.status = 'ACTIVE' HAVING array_agg(url) <> '{}'";
 
   public static final String SQL_GET_ADMIN_ROLE =
       "SELECT 'ADMIN'::text AS role, array_agg(url) AS rs_urls"
@@ -181,10 +197,10 @@ public class Constants {
   public static final String SQL_GET_TRUSTEE_ROLE =
       "SELECT 'TRUSTEE'::text AS role, array_agg(url) AS rs_urls"
           + " FROM apds WHERE owner_id = $1::uuid AND status = 'ACTIVE' HAVING array_agg(url) <> '{}'";
-  
+
   public static final String SQL_GET_DETAILS_BY_CLIENT_ID =
       "SELECT user_id, client_secret FROM user_clients where client_id = $1::uuid";
-  
+
   public static final String SQL_GET_DELEGATION_BY_USER_AND_DELEG_ID =
       "SELECT delegations.id AS \"delegationId\", role AS \"delegatedRole\""
           + ", roles.user_id AS \"delegatorUserId\""

@@ -3,8 +3,6 @@ package iudx.aaa.server.apiserver.util;
 import static iudx.aaa.server.apiserver.util.Constants.*;
 import static iudx.aaa.server.apiserver.util.Urn.*;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpHeaders;
@@ -20,6 +18,8 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.AuthenticationHandler;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Handles Keycloak token authentication. Validates that the token is valid and not expired. If
@@ -39,10 +39,10 @@ public class OIDCAuthentication implements AuthenticationHandler {
     this.keycloakOptions = keycloakOptions;
     keyCloackAuth();
   }
-  
+
   @Override
   public void handle(RoutingContext routingContext) {
-    
+
     final HttpServerRequest request = routingContext.request();
     final String authorization = request.headers().get(HttpHeaders.AUTHORIZATION);
     String tokenPath = request.path();
@@ -64,58 +64,82 @@ public class OIDCAuthentication implements AuthenticationHandler {
      * chain and prevents all the onFailure blocks from being triggered */
     if (token != null && !token.isBlank()) {
       TokenCredentials credentials = new TokenCredentials().setToken(token);
-      keycloak.authenticate(credentials).onFailure(authHandler -> {
-        Response rs = new ResponseBuilder().status(401).type(URN_INVALID_AUTH_TOKEN)
-            .title(TOKEN_FAILED).detail(authHandler.getLocalizedMessage()).build();
-        routingContext.fail(new Throwable(rs.toJsonString()));
+      keycloak
+          .authenticate(credentials)
+          .onFailure(
+              authHandler -> {
+                Response rs =
+                    new ResponseBuilder()
+                        .status(401)
+                        .type(URN_INVALID_AUTH_TOKEN)
+                        .title(TOKEN_FAILED)
+                        .detail(authHandler.getLocalizedMessage())
+                        .build();
+                routingContext.fail(new Throwable(rs.toJsonString()));
+              })
+          .compose(
+              mapper -> {
+                User cred = User.create(new JsonObject().put("access_token", token));
+                return keycloak.userInfo(cred);
+                /*
+                 * Add extra onFailure as userinfo may not respect leeway. Token may pass authentication,
+                 * but may fail userinfo auth
+                 */
+              })
+          .onFailure(
+              authHandler -> {
+                Response rs =
+                    new ResponseBuilder()
+                        .status(401)
+                        .type(URN_INVALID_AUTH_TOKEN)
+                        .title(TOKEN_FAILED)
+                        .detail(authHandler.getLocalizedMessage())
+                        .build();
+                /*
+                 * since there are multiple failure blocks in this compose chain, check to see if
+                 * routingContext has already failed, to avoid an IllegalStateException
+                 */
+                if (!routingContext.failed()) {
+                  routingContext.fail(new Throwable(rs.toJsonString()));
+                }
+              })
+          .compose(
+              mapper -> {
+                LOGGER.debug("Info: JWT authenticated; UserInfo fetched");
+                String kId = mapper.getString(SUB);
+                routingContext.put(OBTAINED_USER_ID, kId);
 
-      }).compose(mapper -> {
-        User cred = User.create(new JsonObject().put("access_token", token));
-        return keycloak.userInfo(cred);
-        /*
-         * Add extra onFailure as userinfo may not respect leeway. Token may pass authentication,
-         * but may fail userinfo auth
-         */
-      }).onFailure(authHandler -> {
-        Response rs = new ResponseBuilder().status(401).type(URN_INVALID_AUTH_TOKEN)
-            .title(TOKEN_FAILED).detail(authHandler.getLocalizedMessage()).build();
-        /*
-         * since there are multiple failure blocks in this compose chain, check to see if
-         * routingContext has already failed, to avoid an IllegalStateException
-         */
-        if (!routingContext.failed()) {
-          routingContext.fail(new Throwable(rs.toJsonString()));
-        }
-      }).compose(mapper -> {
-        LOGGER.debug("Info: JWT authenticated; UserInfo fetched");
-        String kId = mapper.getString(SUB);
-        routingContext.put(OBTAINED_USER_ID, kId);
+                String firstName = mapper.getString(KC_GIVEN_NAME, " ");
+                String lastName = mapper.getString(KC_FAMILY_NAME, " ");
+                routingContext.put(KC_GIVEN_NAME, firstName);
+                routingContext.put(KC_FAMILY_NAME, lastName);
 
-        String firstName = mapper.getString(KC_GIVEN_NAME, " ");
-        String lastName = mapper.getString(KC_FAMILY_NAME, " ");
-        routingContext.put(KC_GIVEN_NAME, firstName);
-        routingContext.put(KC_FAMILY_NAME, lastName);
-        
-        return Future.succeededFuture();
+                return Future.succeededFuture();
+              })
+          .onComplete(
+              kcHandler -> {
+                if (kcHandler.succeeded()) {
 
-      }).onComplete(kcHandler -> {
-        if (kcHandler.succeeded()) {
-          
-          routingContext.next();
-          
-        } else if (kcHandler.failed()) {
-          LOGGER.error("Fail: Request validation and authentication; " + kcHandler.cause());
-          Response rs = new ResponseBuilder().status(500).title(INTERNAL_SVR_ERR)
-              .detail(INTERNAL_SVR_ERR).build();
-          /*
-           * since there are multiple failure blocks in this compose chain, check to see if
-           * routingContext has already failed, to avoid an IllegalStateException
-           */
-          if (!routingContext.failed()) {
-            routingContext.fail(new Throwable(rs.toJsonString()));
-          }
-        }
-      });
+                  routingContext.next();
+
+                } else if (kcHandler.failed()) {
+                  LOGGER.error(
+                      "Fail: Request validation and authentication; {}", kcHandler.cause());
+                  Response rs =
+                      new ResponseBuilder()
+                          .status(500)
+                          .title(INTERNAL_SVR_ERR)
+                          .detail(INTERNAL_SVR_ERR)
+                          .build();
+                  /*
+                   * since there are multiple failure blocks in this compose chain, check to see if
+                   * routingContext has already failed, to avoid an IllegalStateException
+                   */
+                  if (!routingContext.failed()) {
+                    routingContext.fail(new Throwable(rs.toJsonString()));
+                  }
+                }
+              });
 
       /* Handles ClientId Flow */
     } else {
@@ -125,16 +149,20 @@ public class OIDCAuthentication implements AuthenticationHandler {
       }
 
       LOGGER.error("Fail: {}; {}", MISSING_TOKEN_CLIENT, "null clientId/token");
-      Response rs = new ResponseBuilder().status(401).type(URN_MISSING_AUTH_TOKEN)
-          .title(MISSING_TOKEN_CLIENT).detail(MISSING_TOKEN_CLIENT).build();
+      Response rs =
+          new ResponseBuilder()
+              .status(401)
+              .type(URN_MISSING_AUTH_TOKEN)
+              .title(MISSING_TOKEN_CLIENT)
+              .detail(MISSING_TOKEN_CLIENT)
+              .build();
       routingContext.fail(new Throwable(rs.toJsonString()));
     }
   }
 
   /**
-   * Creates KeyCloack provider using configurations.
-   * keycloakOptions is a JSON object containing the required
-   * keys. (It is actually the full config verticle config object)
+   * Creates KeyCloack provider using configurations. keycloakOptions is a JSON object containing
+   * the required keys. (It is actually the full config verticle config object)
    */
   public void keyCloackAuth() {
     String url = keycloakOptions.getString(KEYCLOAK_URL);
@@ -142,21 +170,27 @@ public class OIDCAuthentication implements AuthenticationHandler {
     String site = url + "/realms/" + realm;
 
     /* Options for OAuth2, KeyCloack. */
-    OAuth2Options options = new OAuth2Options()
-        .setClientId(keycloakOptions.getString(KEYCLOAK_ADMIN_CLIENT_ID))
-        .setClientSecret(keycloakOptions.getString(KEYCLOAK_ADMIN_CLIENT_SECRET))
-        .setTenant(realm).setSite(site)
-        .setJWTOptions(new JWTOptions().setLeeway(keycloakOptions.getInteger(KEYCLOAK_JWT_LEEWAY)));
+    OAuth2Options options =
+        new OAuth2Options()
+            .setClientId(keycloakOptions.getString(KEYCLOAK_ADMIN_CLIENT_ID))
+            .setClientSecret(keycloakOptions.getString(KEYCLOAK_ADMIN_CLIENT_SECRET))
+            .setTenant(realm)
+            .setSite(site)
+            .setJWTOptions(
+                new JWTOptions().setLeeway(keycloakOptions.getInteger(KEYCLOAK_JWT_LEEWAY)));
 
     options.getHttpClientOptions().setSsl(true).setVerifyHost(false).setTrustAll(true);
 
     /* Discovers the keycloack instance */
-    KeycloakAuth.discover(vertx, options, discover -> {
-      if (discover.succeeded()) {
-        keycloak = discover.result();
-      } else {
-        LOGGER.error(LOG_FAILED_DISCOVERY + discover.cause());
-      }
-    });
+    KeycloakAuth.discover(
+        vertx,
+        options,
+        discover -> {
+          if (discover.succeeded()) {
+            keycloak = discover.result();
+          } else {
+            LOGGER.error(LOG_FAILED_DISCOVERY, discover.cause());
+          }
+        });
   }
 }

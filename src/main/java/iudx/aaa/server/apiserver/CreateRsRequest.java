@@ -5,12 +5,10 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Data object for create resource server API. The validations performed for url are minimal as the
  * Guava library validates the domain sufficiently.
- *
  */
 @DataObject(generateConverter = true)
 public class CreateRsRequest {
@@ -54,7 +52,7 @@ public class CreateRsRequest {
 
   /**
    * Creates list of data objects from JsonArray
-   * 
+   *
    * @param json a JsonArray
    * @return List of CreateRsRequest objects
    */

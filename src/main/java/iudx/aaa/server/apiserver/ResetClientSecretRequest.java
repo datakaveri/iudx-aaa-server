@@ -4,9 +4,7 @@ import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 import java.util.UUID;
 
-/**
- * Vert.x data object for the resetClientSecret API in Registration service.
- */
+/** Vert.x data object for the resetClientSecret API in Registration service. */
 @DataObject(generateConverter = true)
 public class ResetClientSecretRequest {
 

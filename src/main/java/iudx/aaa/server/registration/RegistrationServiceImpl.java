@@ -6,22 +6,24 @@ import static iudx.aaa.server.registration.Constants.CONFIG_COS_URL;
 import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
 import static iudx.aaa.server.registration.Constants.DEFAULT_CLIENT;
 import static iudx.aaa.server.registration.Constants.ERR_CONTEXT_EXISTING_ROLE_FOR_RS;
+import static iudx.aaa.server.registration.Constants.ERR_CONTEXT_NOT_FOUND_EMAILS;
 import static iudx.aaa.server.registration.Constants.ERR_CONTEXT_NOT_FOUND_RS_URLS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_CONSUMER_FOR_RS_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_DEFAULT_CLIENT_EXISTS;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_EMAILS_NOT_AT_UAC_KEYCLOAK;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_INVALID_CLI_ID;
-import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_APPROVED_ROLES;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NOT_TRUSTEE;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_APPROVED_ROLES;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_PENDING_REJECTED_PROVIDER_RS_REG_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_PROVIDER_FOR_RS_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_RS_NO_EXIST;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_FOUND;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_KC;
-import static iudx.aaa.server.registration.Constants.ERR_TITLE_EMAILS_NOT_AT_UAC_KEYCLOAK;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_DEFAULT_CLIENT_EXISTS;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_EMAILS_NOT_AT_UAC_KEYCLOAK;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_INVALID_CLI_ID;
-import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_APPROVED_ROLES;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_NOT_TRUSTEE;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_APPROVED_ROLES;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_PENDING_REJECTED_PROVIDER_RS_REG_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_ROLE_FOR_RS_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_RS_NO_EXIST;
@@ -45,8 +47,8 @@ import static iudx.aaa.server.registration.Constants.SQL_CREATE_USER_IF_NOT_EXIS
 import static iudx.aaa.server.registration.Constants.SQL_GET_ALL_RS;
 import static iudx.aaa.server.registration.Constants.SQL_GET_CLIENTS_FORMATTED;
 import static iudx.aaa.server.registration.Constants.SQL_GET_PHONE;
-import static iudx.aaa.server.registration.Constants.SQL_GET_RS_IDS_BY_URL;
 import static iudx.aaa.server.registration.Constants.SQL_GET_RS_AND_APDS_FOR_REVOKE;
+import static iudx.aaa.server.registration.Constants.SQL_GET_RS_IDS_BY_URL;
 import static iudx.aaa.server.registration.Constants.SQL_UPDATE_CLIENT_SECRET;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_ADDED_ROLES;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_CREATED_DEFAULT_CLIENT;
@@ -68,12 +70,12 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.AddRolesRequest;
+import iudx.aaa.server.apiserver.ResetClientSecretRequest;
 import iudx.aaa.server.apiserver.Response;
 import iudx.aaa.server.apiserver.Response.ResponseBuilder;
 import iudx.aaa.server.apiserver.RevokeToken;
 import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
-import iudx.aaa.server.apiserver.ResetClientSecretRequest;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
 import iudx.aaa.server.apiserver.util.ComposeException;
@@ -97,14 +99,12 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * The Registration Service Implementation.
+ *
  * <h1>Registration Service Implementation</h1>
- * <p>
- * The Registration Service implementation in the IUDX AAA Server implements the definitions of the
- * {@link iudx.aaa.server.registration.RegistrationService}.
- * </p>
- * 
+ *
+ * <p>The Registration Service implementation in the IUDX AAA Server implements the definitions of
+ * the {@link iudx.aaa.server.registration.RegistrationService}.
  */
-
 public class RegistrationServiceImpl implements RegistrationService {
 
   private static final Logger LOGGER = LogManager.getLogger(RegistrationServiceImpl.class);
@@ -112,28 +112,30 @@ public class RegistrationServiceImpl implements RegistrationService {
   private PgPool pool;
   private KcAdmin kc;
   private TokenService tokenService;
-  public static String COS_URL = "";
-  public static List<String> SERVERS_OMITTED_FROM_TOKEN_REVOKE = new ArrayList<String>();
-  
+  private static String COS_URL = "";
+  private static List<String> SERVERS_OMITTED_FROM_TOKEN_REVOKE = new ArrayList<String>();
+
   private SecureRandom randomSource;
 
-  public RegistrationServiceImpl(PgPool pool, KcAdmin kc, TokenService tokenService,
-      JsonObject options) {
+  public RegistrationServiceImpl(
+      PgPool pool, KcAdmin kc, TokenService tokenService, JsonObject options) {
     this.pool = pool;
     this.kc = kc;
     this.tokenService = tokenService;
     COS_URL = options.getString(CONFIG_COS_URL);
-    SERVERS_OMITTED_FROM_TOKEN_REVOKE = options.getJsonArray(CONFIG_OMITTED_SERVERS).stream()
-        .map(x -> (String) x).collect(Collectors.toList());
-    
+    SERVERS_OMITTED_FROM_TOKEN_REVOKE =
+        options.getJsonArray(CONFIG_OMITTED_SERVERS).stream()
+            .map(x -> (String) x)
+            .collect(Collectors.toList());
+
     randomSource = new SecureRandom();
   }
 
   @Override
-  public RegistrationService addRoles(AddRolesRequest request, User user,
-      Handler<AsyncResult<JsonObject>> handler) {
+  public RegistrationService addRoles(
+      AddRolesRequest request, User user, Handler<AsyncResult<JsonObject>> handler) {
 
-    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+    LOGGER.debug("Info : {} : Request received", LOGGER.getName());
 
     List<Roles> requestedRoles = request.getRolesToRegister();
     final String phoneInReq = request.getPhone();
@@ -150,15 +152,21 @@ public class RegistrationServiceImpl implements RegistrationService {
             .collect(Collectors.toSet());
 
     if (requestedRoles.contains(Roles.PROVIDER)) {
-      List<String> duplicateProviderRs = ownedRsForProviderRole.stream()
-          .filter(rs -> requestedRsForProviderRole.contains(rs)).collect(Collectors.toList());
+      List<String> duplicateProviderRs =
+          ownedRsForProviderRole.stream()
+              .filter(rs -> requestedRsForProviderRole.contains(rs))
+              .collect(Collectors.toList());
 
       if (!duplicateProviderRs.isEmpty()) {
         Response r =
             new ResponseBuilder()
-                .status(409).type(URN_ALREADY_EXISTS).title(ERR_TITLE_ROLE_FOR_RS_EXISTS)
-                .detail(ERR_DETAIL_PROVIDER_FOR_RS_EXISTS).errorContext(new JsonObject()
-                    .put(ERR_CONTEXT_EXISTING_ROLE_FOR_RS, new JsonArray(duplicateProviderRs)))
+                .status(409)
+                .type(URN_ALREADY_EXISTS)
+                .title(ERR_TITLE_ROLE_FOR_RS_EXISTS)
+                .detail(ERR_DETAIL_PROVIDER_FOR_RS_EXISTS)
+                .errorContext(
+                    new JsonObject()
+                        .put(ERR_CONTEXT_EXISTING_ROLE_FOR_RS, new JsonArray(duplicateProviderRs)))
                 .build();
         handler.handle(Future.succeededFuture(r.toJson()));
         return this;
@@ -166,15 +174,21 @@ public class RegistrationServiceImpl implements RegistrationService {
     }
 
     if (requestedRoles.contains(Roles.CONSUMER)) {
-      List<String> duplicateConsumerRs = ownedRsForConsumerRole.stream()
-          .filter(rs -> requestedRsForConsumerRole.contains(rs)).collect(Collectors.toList());
+      List<String> duplicateConsumerRs =
+          ownedRsForConsumerRole.stream()
+              .filter(rs -> requestedRsForConsumerRole.contains(rs))
+              .collect(Collectors.toList());
 
       if (!duplicateConsumerRs.isEmpty()) {
         Response r =
             new ResponseBuilder()
-                .status(409).type(URN_ALREADY_EXISTS).title(ERR_TITLE_ROLE_FOR_RS_EXISTS)
-                .detail(ERR_DETAIL_CONSUMER_FOR_RS_EXISTS).errorContext(new JsonObject()
-                    .put(ERR_CONTEXT_EXISTING_ROLE_FOR_RS, new JsonArray(duplicateConsumerRs)))
+                .status(409)
+                .type(URN_ALREADY_EXISTS)
+                .title(ERR_TITLE_ROLE_FOR_RS_EXISTS)
+                .detail(ERR_DETAIL_CONSUMER_FOR_RS_EXISTS)
+                .errorContext(
+                    new JsonObject()
+                        .put(ERR_CONTEXT_EXISTING_ROLE_FOR_RS, new JsonArray(duplicateConsumerRs)))
                 .build();
         handler.handle(Future.succeededFuture(r.toJson()));
         return this;
@@ -185,198 +199,285 @@ public class RegistrationServiceImpl implements RegistrationService {
     Collector<Row, ?, Map<String, UUID>> rsCollector =
         Collectors.toMap(row -> row.getString("url"), row -> row.getUUID("id"));
 
-    Future<Map<String, UUID>> getRequestedRs = pool
-        .withConnection(conn -> conn.preparedQuery(SQL_GET_RS_IDS_BY_URL).collecting(rsCollector)
-            .execute(Tuple.of(allRequestedRs.toArray(String[]::new))).map(res -> res.value()));
+    Future<Map<String, UUID>> getRequestedRs =
+        pool.withConnection(
+            conn ->
+                conn.preparedQuery(SQL_GET_RS_IDS_BY_URL)
+                    .collecting(rsCollector)
+                    .execute(Tuple.of(allRequestedRs.toArray(String[]::new)))
+                    .map(res -> res.value()));
 
     Future<Void> checkEmailAndResourceServerUrls =
-        CompositeFuture.all(email, getRequestedRs).compose(arr -> {
+        CompositeFuture.all(email, getRequestedRs)
+            .compose(
+                arr -> {
+                  String emailId = arr.resultAt(0);
+                  Map<String, UUID> rsDetails = arr.resultAt(1);
 
-          String emailId = arr.resultAt(0);
-          Map<String, UUID> rsDetails = arr.resultAt(1);
+                  if (emailId.length() == 0) {
+                    return Future.failedFuture(
+                        new ComposeException(
+                            400, URN_INVALID_INPUT, ERR_TITLE_USER_NOT_KC, ERR_DETAIL_USER_NOT_KC));
+                  }
 
-          if (emailId.length() == 0) {
-            return Future.failedFuture(new ComposeException(400, URN_INVALID_INPUT,
-                ERR_TITLE_USER_NOT_KC, ERR_DETAIL_USER_NOT_KC));
-          }
+                  List<String> missingRs =
+                      allRequestedRs.stream()
+                          .filter(rs -> !rsDetails.containsKey(rs))
+                          .collect(Collectors.toList());
 
-          List<String> missingRs = allRequestedRs.stream().filter(rs -> !rsDetails.containsKey(rs))
-              .collect(Collectors.toList());
+                  if (!missingRs.isEmpty()) {
+                    Response resp =
+                        new ResponseBuilder()
+                            .type(Urn.URN_INVALID_INPUT)
+                            .status(400)
+                            .title(ERR_TITLE_RS_NO_EXIST)
+                            .detail(ERR_DETAIL_RS_NO_EXIST)
+                            .errorContext(
+                                new JsonObject()
+                                    .put(ERR_CONTEXT_NOT_FOUND_RS_URLS, new JsonArray(missingRs)))
+                            .build();
+                    return Future.failedFuture(new ComposeException(resp));
+                  }
 
-          if (!missingRs.isEmpty()) {
-            Response resp = new ResponseBuilder().type(Urn.URN_INVALID_INPUT).status(400)
-                .title(ERR_TITLE_RS_NO_EXIST).detail(ERR_DETAIL_RS_NO_EXIST)
-                .errorContext(
-                    new JsonObject().put(ERR_CONTEXT_NOT_FOUND_RS_URLS, new JsonArray(missingRs)))
-                .build();
-            return Future.failedFuture(new ComposeException(resp));
-          }
-
-          return Future.succeededFuture();
-        });
+                  return Future.succeededFuture();
+                });
 
     Future<Void> checkForProviderRejectedPendingRegs =
-        checkEmailAndResourceServerUrls.compose(roleListTup -> {
-          if (!requestedRoles.contains(Roles.PROVIDER)) {
-            return Future.succeededFuture(roleListTup);
-          }
+        checkEmailAndResourceServerUrls.compose(
+            roleListTup -> {
+              if (!requestedRoles.contains(Roles.PROVIDER)) {
+                return Future.succeededFuture(roleListTup);
+              }
 
-          Map<UUID, String> requestedRsIdsToUrl = requestedRsForProviderRole.stream()
-              .collect(Collectors.toMap(url -> getRequestedRs.result().get(url), url -> url));
-          
-          Collector<Row, ?, Map<String, List<String>>> pendingRejectedUrlsCollector=
-              Collectors.groupingBy(row -> row.getString("status").toLowerCase(),
-                  Collectors.mapping(
-                      row -> requestedRsIdsToUrl.get(row.getUUID("resource_server_id")),
-                      Collectors.toList()));
+              Map<UUID, String> requestedRsIdsToUrl =
+                  requestedRsForProviderRole.stream()
+                      .collect(
+                          Collectors.toMap(url -> getRequestedRs.result().get(url), url -> url));
 
-          UUID[] requestedRsIds = requestedRsIdsToUrl.keySet().toArray(UUID[]::new);
+              Collector<Row, ?, Map<String, List<String>>> pendingRejectedUrlsCollector =
+                  Collectors.groupingBy(
+                      row -> row.getString("status").toLowerCase(),
+                      Collectors.mapping(
+                          row -> requestedRsIdsToUrl.get(row.getUUID("resource_server_id")),
+                          Collectors.toList()));
 
-          return pool
-              .withConnection(conn -> conn.preparedQuery(SQL_CHECK_PENDING_REJECTED_PROVIDER_ROLES)
-                  .collecting(pendingRejectedUrlsCollector)
-                  .execute(Tuple.of(requestedRsIds, user.getUserId())).map(succ -> succ.value())
-                  .compose(map -> {
-                    if (map.isEmpty()) {
-                      return Future.succeededFuture();
-                    } 
-                    
-                    JsonObject offendingRs = new JsonObject();
-                    map.forEach((status, urls) -> offendingRs.put(status, new JsonArray(urls)));
-                    
-                    Response resp = new ResponseBuilder().type(Urn.URN_INVALID_INPUT).status(403)
-                        .title(ERR_TITLE_PENDING_REJECTED_PROVIDER_RS_REG_EXISTS)
-                        .detail(ERR_DETAIL_PENDING_REJECTED_PROVIDER_RS_REG_EXISTS)
-                        .errorContext(offendingRs).build();
-                    return Future.failedFuture(new ComposeException(resp));
-                  }));
-        });
-    
+              UUID[] requestedRsIds = requestedRsIdsToUrl.keySet().toArray(UUID[]::new);
+
+              return pool.withConnection(
+                  conn ->
+                      conn.preparedQuery(SQL_CHECK_PENDING_REJECTED_PROVIDER_ROLES)
+                          .collecting(pendingRejectedUrlsCollector)
+                          .execute(Tuple.of(requestedRsIds, user.getUserId()))
+                          .map(succ -> succ.value())
+                          .compose(
+                              map -> {
+                                if (map.isEmpty()) {
+                                  return Future.succeededFuture();
+                                }
+
+                                JsonObject offendingRs = new JsonObject();
+                                map.forEach(
+                                    (status, urls) -> offendingRs.put(status, new JsonArray(urls)));
+
+                                Response resp =
+                                    new ResponseBuilder()
+                                        .type(Urn.URN_INVALID_INPUT)
+                                        .status(403)
+                                        .title(ERR_TITLE_PENDING_REJECTED_PROVIDER_RS_REG_EXISTS)
+                                        .detail(ERR_DETAIL_PENDING_REJECTED_PROVIDER_RS_REG_EXISTS)
+                                        .errorContext(offendingRs)
+                                        .build();
+                                return Future.failedFuture(new ComposeException(resp));
+                              }));
+            });
+
     /* get phone number if available, else return empty string */
-    Future<JsonObject> phoneDetails = checkForProviderRejectedPendingRegs.compose(i ->pool.withConnection(
-        conn -> conn.preparedQuery(SQL_GET_PHONE).execute(Tuple.of(user.getUserId()))
-            .map(rows -> rows.iterator().hasNext() ? rows.iterator().next().toJson()
-                : new JsonObject().put(RESP_PHONE, "")))); 
+    Future<JsonObject> phoneDetails =
+        checkForProviderRejectedPendingRegs.compose(
+            i ->
+                pool.withConnection(
+                    conn ->
+                        conn.preparedQuery(SQL_GET_PHONE)
+                            .execute(Tuple.of(user.getUserId()))
+                            .map(
+                                rows ->
+                                    rows.iterator().hasNext()
+                                        ? rows.iterator().next().toJson()
+                                        : new JsonObject().put(RESP_PHONE, ""))));
 
     Collector<Row, ?, List<JsonObject>> clientCollector =
         Collectors.mapping(row -> row.toJson(), Collectors.toList());
 
     /* get clients if available */
     Future<List<JsonObject>> clientDetails =
-        checkForProviderRejectedPendingRegs.compose(i -> pool.withConnection(
-            conn -> conn.preparedQuery(SQL_GET_CLIENTS_FORMATTED).collecting(clientCollector)
-                .execute(Tuple.of(user.getUserId())).map(res -> res.value())));
+        checkForProviderRejectedPendingRegs.compose(
+            i ->
+                pool.withConnection(
+                    conn ->
+                        conn.preparedQuery(SQL_GET_CLIENTS_FORMATTED)
+                            .collecting(clientCollector)
+                            .execute(Tuple.of(user.getUserId()))
+                            .map(res -> res.value())));
 
     Future<List<Tuple>> createRoleTuple =
-        CompositeFuture.all(phoneDetails, clientDetails).compose(res -> {
-          List<Tuple> roleTupList = new ArrayList<Tuple>();
-          Map<String, UUID> rsDetails = getRequestedRs.result();
-
-          List<Tuple> consumerTup = requestedRsForConsumerRole.stream().map(url -> Tuple
-              .of(user.getUserId(), Roles.CONSUMER, rsDetails.get(url), RoleStatus.APPROVED))
-              .collect(Collectors.toList());
-          roleTupList.addAll(consumerTup);
-
-          List<Tuple> providerTup = requestedRsForProviderRole.stream().map(url -> Tuple
-              .of(user.getUserId(), Roles.PROVIDER, rsDetails.get(url), RoleStatus.PENDING))
-              .collect(Collectors.toList());
-          roleTupList.addAll(providerTup);
-
-          return Future.succeededFuture(roleTupList);
-        });
-    
-    /* Insertion into users, roles tables */
-    Future<Void> insertUserAndRoles = createRoleTuple.compose(rolesListTuple -> pool
-        .withTransaction(conn -> conn.preparedQuery(SQL_CREATE_USER_IF_NOT_EXISTS)
-            .execute(Tuple.of(user.getUserId(), phoneInReq, userInfo))
+        CompositeFuture.all(phoneDetails, clientDetails)
             .compose(
-                userCreated -> conn.preparedQuery(SQL_CREATE_ROLE).executeBatch(rolesListTuple).mapEmpty())));
+                res -> {
+                  List<Tuple> roleTupList = new ArrayList<Tuple>();
+                  Map<String, UUID> rsDetails = getRequestedRs.result();
 
-    insertUserAndRoles.onSuccess(inserted -> {
-      List<Roles> existingRoles = user.getRoles();
-      Map<String, JsonArray> existingRolesToRsMap = user.getRolesToRsMapping();
+                  List<Tuple> consumerTup =
+                      requestedRsForConsumerRole.stream()
+                          .map(
+                              url ->
+                                  Tuple.of(
+                                      user.getUserId(),
+                                      Roles.CONSUMER,
+                                      rsDetails.get(url),
+                                      RoleStatus.APPROVED))
+                          .collect(Collectors.toList());
+                  roleTupList.addAll(consumerTup);
 
-      if (requestedRoles.contains(Roles.CONSUMER)) {
-        if (existingRoles.contains(Roles.CONSUMER)) {
-          List<String> oldAndNewRsForConsumer = new ArrayList<String>();
-          
-          oldAndNewRsForConsumer.addAll(ownedRsForConsumerRole);
-          oldAndNewRsForConsumer.addAll(requestedRsForConsumerRole);
-          
-          // the role name NEEDS to be in lower case, since that's how
-          // it's in the map. If kept as uppercase, the key `consumer`
-          // will not get reset and a duplicate key error WILL occur.
-          existingRolesToRsMap.put(Roles.CONSUMER.toString().toLowerCase(),
-              new JsonArray(oldAndNewRsForConsumer));
-        } else {
-          existingRoles.add(Roles.CONSUMER);
-          existingRolesToRsMap.put(Roles.CONSUMER.toString().toLowerCase(),
-              new JsonArray(requestedRsForConsumerRole));
-        }
-      }
+                  List<Tuple> providerTup =
+                      requestedRsForProviderRole.stream()
+                          .map(
+                              url ->
+                                  Tuple.of(
+                                      user.getUserId(),
+                                      Roles.PROVIDER,
+                                      rsDetails.get(url),
+                                      RoleStatus.PENDING))
+                          .collect(Collectors.toList());
+                  roleTupList.addAll(providerTup);
 
-      User u =
-          new UserBuilder().name(user.getName().get("firstName"), user.getName().get("lastName"))
-              .roles(existingRoles).rolesToRsMapping(existingRolesToRsMap).userId(user.getUserId())
-              .build();
+                  return Future.succeededFuture(roleTupList);
+                });
 
-      JsonObject payload =
-          u.toJsonResponse().put(RESP_EMAIL, email.result());
+    /* Insertion into users, roles tables */
+    Future<Void> insertUserAndRoles =
+        createRoleTuple.compose(
+            rolesListTuple ->
+                pool.withTransaction(
+                    conn ->
+                        conn.preparedQuery(SQL_CREATE_USER_IF_NOT_EXISTS)
+                            .execute(Tuple.of(user.getUserId(), phoneInReq, userInfo))
+                            .compose(
+                                userCreated ->
+                                    conn.preparedQuery(SQL_CREATE_ROLE)
+                                        .executeBatch(rolesListTuple)
+                                        .mapEmpty())));
 
-      String phoneInDb = phoneDetails.result().getString(RESP_PHONE);
-      
-      // if phoneInDb is NIL_PHONE - user did not enter number first time and cannot update it
-      // if phoneInDb is blank - user is coming first time, so use phoneInReq if it's not NIL_PHONE
-      if (!phoneInDb.equals(NIL_PHONE) && !phoneInDb.isBlank()) {
-        payload.put(RESP_PHONE, phoneInDb);
-      } else if (phoneInDb.isBlank() && !phoneInReq.equals(NIL_PHONE)) {
-        payload.put(RESP_PHONE, phoneInReq);
-      }
-      
-      if(!clientDetails.result().isEmpty()) {
-        payload.put(RESP_CLIENT_ARR, new JsonArray(clientDetails.result()));
-      }
-      
-      String title = SUCC_TITLE_ADDED_ROLES;
-      if (requestedRoles.contains(Roles.PROVIDER)) {
-        title = title + PROVIDER_PENDING_MESG;
-      }
+    insertUserAndRoles
+        .onSuccess(
+            inserted -> {
+              List<Roles> existingRoles = user.getRoles();
+              Map<String, JsonArray> existingRolesToRsMap = user.getRolesToRsMapping();
 
-      Response r = new ResponseBuilder().type(URN_SUCCESS).title(title).status(200)
-          .objectResults(payload).build();
-      handler.handle(Future.succeededFuture(r.toJson()));
+              if (requestedRoles.contains(Roles.CONSUMER)) {
+                if (existingRoles.contains(Roles.CONSUMER)) {
+                  List<String> oldAndNewRsForConsumer = new ArrayList<String>();
 
-      LOGGER.info("Added roles {} for {}", requestedRoles, user.getUserId());
-    }).onFailure(e -> {
-      if (e instanceof ComposeException) {
-        ComposeException exp = (ComposeException) e;
-        handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
-        return;
-      }
+                  oldAndNewRsForConsumer.addAll(ownedRsForConsumerRole);
+                  oldAndNewRsForConsumer.addAll(requestedRsForConsumerRole);
 
-      LOGGER.error(e.getMessage());
-      handler.handle(Future.failedFuture("Internal error"));
-    });
+                  // the role name NEEDS to be in lower case, since that's how
+                  // it's in the map. If kept as uppercase, the key `consumer`
+                  // will not get reset and a duplicate key error WILL occur.
+                  existingRolesToRsMap.put(
+                      Roles.CONSUMER.toString().toLowerCase(),
+                      new JsonArray(oldAndNewRsForConsumer));
+                } else {
+                  existingRoles.add(Roles.CONSUMER);
+                  existingRolesToRsMap.put(
+                      Roles.CONSUMER.toString().toLowerCase(),
+                      new JsonArray(requestedRsForConsumerRole));
+                }
+              }
+
+              User u =
+                  new UserBuilder()
+                      .name(user.getName().get("firstName"), user.getName().get("lastName"))
+                      .roles(existingRoles)
+                      .rolesToRsMapping(existingRolesToRsMap)
+                      .userId(user.getUserId())
+                      .build();
+
+              JsonObject payload = u.toJsonResponse().put(RESP_EMAIL, email.result());
+
+              String phoneInDb = phoneDetails.result().getString(RESP_PHONE);
+
+              // if phoneInDb is NIL_PHONE - user did not enter number first time and cannot update
+              // it
+              // if phoneInDb is blank - user is coming first time, so use phoneInReq if it's not
+              // NIL_PHONE
+              if (!phoneInDb.equals(NIL_PHONE) && !phoneInDb.isBlank()) {
+                payload.put(RESP_PHONE, phoneInDb);
+              } else if (phoneInDb.isBlank() && !phoneInReq.equals(NIL_PHONE)) {
+                payload.put(RESP_PHONE, phoneInReq);
+              }
+
+              if (!clientDetails.result().isEmpty()) {
+                payload.put(RESP_CLIENT_ARR, new JsonArray(clientDetails.result()));
+              }
+
+              String title = SUCC_TITLE_ADDED_ROLES;
+              if (requestedRoles.contains(Roles.PROVIDER)) {
+                title = title + PROVIDER_PENDING_MESG;
+              }
+
+              Response r =
+                  new ResponseBuilder()
+                      .type(URN_SUCCESS)
+                      .title(title)
+                      .status(200)
+                      .objectResults(payload)
+                      .build();
+              handler.handle(Future.succeededFuture(r.toJson()));
+
+              LOGGER.info("Added roles {} for {}", requestedRoles, user.getUserId());
+            })
+        .onFailure(
+            e -> {
+              if (e instanceof ComposeException) {
+                ComposeException exp = (ComposeException) e;
+                handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                return;
+              }
+
+              LOGGER.error(e.getMessage());
+              handler.handle(Future.failedFuture("Internal error"));
+            });
 
     return this;
   }
 
   @Override
   public RegistrationService listUser(User user, Handler<AsyncResult<JsonObject>> handler) {
-    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
-    
+    LOGGER.debug("Info : {} : Request received", LOGGER.getName());
+
     if (user.getRoles().isEmpty()) {
-      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
-          .title(ERR_TITLE_NO_APPROVED_ROLES).detail(ERR_DETAIL_NO_APPROVED_ROLES).build();
+      Response r =
+          new ResponseBuilder()
+              .status(404)
+              .type(URN_MISSING_INFO)
+              .title(ERR_TITLE_NO_APPROVED_ROLES)
+              .detail(ERR_DETAIL_NO_APPROVED_ROLES)
+              .build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
-    
+
     // cos admin may not have entry in DB, so if row count = 0, return phone w/ NIL_PHONE number
-    Future<JsonObject> phoneDetails = pool.withConnection(
-        conn -> conn.preparedQuery(SQL_GET_PHONE).execute(Tuple.of(user.getUserId()))
-            .map(rows -> rows.iterator().hasNext() ? rows.iterator().next().toJson()
-                : new JsonObject().put(RESP_PHONE, NIL_PHONE))); 
+    Future<JsonObject> phoneDetails =
+        pool.withConnection(
+            conn ->
+                conn.preparedQuery(SQL_GET_PHONE)
+                    .execute(Tuple.of(user.getUserId()))
+                    .map(
+                        rows ->
+                            rows.iterator().hasNext()
+                                ? rows.iterator().next().toJson()
+                                : new JsonObject().put(RESP_PHONE, NIL_PHONE)));
 
     Future<String> email = kc.getEmailId(user.getUserId());
 
@@ -384,60 +485,82 @@ public class RegistrationServiceImpl implements RegistrationService {
         Collectors.mapping(row -> row.toJson(), Collectors.toList());
 
     Future<List<JsonObject>> clientQuery =
-        pool.withConnection(conn -> conn.preparedQuery(SQL_GET_CLIENTS_FORMATTED)
-            .collecting(clientDetails).execute(Tuple.of(user.getUserId())).map(res -> res.value()));
+        pool.withConnection(
+            conn ->
+                conn.preparedQuery(SQL_GET_CLIENTS_FORMATTED)
+                    .collecting(clientDetails)
+                    .execute(Tuple.of(user.getUserId()))
+                    .map(res -> res.value()));
 
-    CompositeFuture.all(phoneDetails, clientQuery, email).onSuccess(obj -> {
+    CompositeFuture.all(phoneDetails, clientQuery, email)
+        .onSuccess(
+            obj -> {
+              JsonObject details = (JsonObject) obj.list().get(0);
+              @SuppressWarnings("unchecked")
+              List<JsonObject> clients = (List<JsonObject>) obj.list().get(1);
+              String emailId = (String) obj.list().get(2);
 
-      JsonObject details = (JsonObject) obj.list().get(0);
-      @SuppressWarnings("unchecked")
-      List<JsonObject> clients = (List<JsonObject>) obj.list().get(1);
-      String emailId = (String) obj.list().get(2);
+              if (emailId.length() == 0) {
+                Response r =
+                    new ResponseBuilder()
+                        .status(400)
+                        .type(URN_INVALID_INPUT)
+                        .title(ERR_TITLE_USER_NOT_KC)
+                        .detail(ERR_DETAIL_USER_NOT_KC)
+                        .build();
+                handler.handle(Future.succeededFuture(r.toJson()));
+                return;
+              }
 
-      if (emailId.length() == 0) {
-        Response r = new ResponseBuilder().status(400).type(URN_INVALID_INPUT)
-            .title(ERR_TITLE_USER_NOT_KC).detail(ERR_DETAIL_USER_NOT_KC).build();
-        handler.handle(Future.succeededFuture(r.toJson()));
-        return;
-      }
+              JsonObject response = user.toJsonResponse();
+              response.put(RESP_EMAIL, emailId);
 
-      JsonObject response = user.toJsonResponse();
-      response.put(RESP_EMAIL, emailId);
+              String phone = (String) details.remove("phone");
+              if (!phone.equals(NIL_PHONE)) {
+                response.put(RESP_PHONE, phone);
+              }
 
-      String phone = (String) details.remove("phone");
-      if (!phone.equals(NIL_PHONE)) {
-        response.put(RESP_PHONE, phone);
-      }
-      
-      if(!clients.isEmpty()) {
-        response.put(RESP_CLIENT_ARR, new JsonArray(clients));
-      }
+              if (!clients.isEmpty()) {
+                response.put(RESP_CLIENT_ARR, new JsonArray(clients));
+              }
 
-      Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_USER_READ).status(200)
-          .objectResults(response).build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-    }).onFailure(e -> {
-      if (e instanceof ComposeException) {
-        ComposeException exp = (ComposeException) e;
-        handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
-        return;
-      }
+              Response r =
+                  new ResponseBuilder()
+                      .type(URN_SUCCESS)
+                      .title(SUCC_TITLE_USER_READ)
+                      .status(200)
+                      .objectResults(response)
+                      .build();
+              handler.handle(Future.succeededFuture(r.toJson()));
+            })
+        .onFailure(
+            e -> {
+              if (e instanceof ComposeException) {
+                ComposeException exp = (ComposeException) e;
+                handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                return;
+              }
 
-      LOGGER.error(e.getMessage());
-      handler.handle(Future.failedFuture("Internal error"));
-    });
+              LOGGER.error(e.getMessage());
+              handler.handle(Future.failedFuture("Internal error"));
+            });
 
     return this;
   }
 
   @Override
-  public RegistrationService resetClientSecret(ResetClientSecretRequest request, User user,
-      Handler<AsyncResult<JsonObject>> handler) {
-    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+  public RegistrationService resetClientSecret(
+      ResetClientSecretRequest request, User user, Handler<AsyncResult<JsonObject>> handler) {
+    LOGGER.debug("Info : {} : Request received", LOGGER.getName());
 
     if (user.getRoles().isEmpty()) {
-      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
-          .title(ERR_TITLE_NO_APPROVED_ROLES).detail(ERR_DETAIL_NO_APPROVED_ROLES).build();
+      Response r =
+          new ResponseBuilder()
+              .status(404)
+              .type(URN_MISSING_INFO)
+              .title(ERR_TITLE_NO_APPROVED_ROLES)
+              .detail(ERR_DETAIL_NO_APPROVED_ROLES)
+              .build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
@@ -450,125 +573,164 @@ public class RegistrationServiceImpl implements RegistrationService {
     Future<JsonObject> modified = modification.future();
 
     Future<JsonObject> phoneDetails =
-        modified.compose(x -> pool.withConnection(conn -> conn.preparedQuery(SQL_GET_PHONE)
-            .execute(Tuple.of(user.getUserId())).map(rows -> rows.iterator().next().toJson())));
+        modified.compose(
+            x ->
+                pool.withConnection(
+                    conn ->
+                        conn.preparedQuery(SQL_GET_PHONE)
+                            .execute(Tuple.of(user.getUserId()))
+                            .map(rows -> rows.iterator().next().toJson())));
 
     Collector<Row, ?, List<JsonObject>> clientDetails =
         Collectors.mapping(row -> row.toJson(), Collectors.toList());
 
-    Future<List<JsonObject>> clientQuery = modified.compose(x -> pool.withConnection(
-        conn -> conn.preparedQuery(SQL_GET_CLIENTS_FORMATTED).collecting(clientDetails)
-            .execute(Tuple.of(user.getUserId())).map(res -> res.value())));
+    Future<List<JsonObject>> clientQuery =
+        modified.compose(
+            x ->
+                pool.withConnection(
+                    conn ->
+                        conn.preparedQuery(SQL_GET_CLIENTS_FORMATTED)
+                            .collecting(clientDetails)
+                            .execute(Tuple.of(user.getUserId()))
+                            .map(res -> res.value())));
 
     /* TODO: kc.getEmailId is slow, already being performed at addRole. Consider using once only */
     Future<String> getEmail = modified.compose(x -> kc.getEmailId(user.getUserId()));
 
-    CompositeFuture.all(phoneDetails, clientQuery, getEmail).onSuccess(obj -> {
-      JsonObject details = (JsonObject) obj.list().get(0);
-      @SuppressWarnings("unchecked")
-      List<JsonObject> clients = (List<JsonObject>) obj.list().get(1);
-      String email = (String) obj.list().get(2);
+    CompositeFuture.all(phoneDetails, clientQuery, getEmail)
+        .onSuccess(
+            obj -> {
+              JsonObject details = (JsonObject) obj.list().get(0);
+              @SuppressWarnings("unchecked")
+              List<JsonObject> clients = (List<JsonObject>) obj.list().get(1);
+              String email = (String) obj.list().get(2);
 
-      List<Roles> approvedRoles = new ArrayList<Roles>();
-      approvedRoles.addAll(user.getRoles());
+              List<Roles> approvedRoles = new ArrayList<Roles>();
+              approvedRoles.addAll(user.getRoles());
 
-      JsonObject modifiedInfo = modified.result();
-      String title = "";
+              JsonObject modifiedInfo = modified.result();
 
-      String updatedClientId = modifiedInfo.getString(RESP_CLIENT_ID);
-      String clientSecret = modifiedInfo.getString(RESP_CLIENT_SC);
+              String updatedClientId = modifiedInfo.getString(RESP_CLIENT_ID);
+              String clientSecret = modifiedInfo.getString(RESP_CLIENT_SC);
 
-      for (int i = 0; i < clients.size(); i++) {
-        JsonObject cli = clients.get(i);
-        if (cli.getString(RESP_CLIENT_ID).equals(updatedClientId)) {
-          clients.set(i, cli.put(RESP_CLIENT_SC, clientSecret));
-        }
-      }
-      
-      title = SUCC_TITLE_REGEN_CLIENT_SECRET;
+              for (int i = 0; i < clients.size(); i++) {
+                JsonObject cli = clients.get(i);
+                if (cli.getString(RESP_CLIENT_ID).equals(updatedClientId)) {
+                  clients.set(i, cli.put(RESP_CLIENT_SC, clientSecret));
+                }
+              }
 
-      User u = new UserBuilder()
-          .name(user.getName().get("firstName"), user.getName().get("lastName"))
-          .roles(approvedRoles).userId(user.getUserId()).build();
+              User u =
+                  new UserBuilder()
+                      .name(user.getName().get("firstName"), user.getName().get("lastName"))
+                      .roles(approvedRoles)
+                      .userId(user.getUserId())
+                      .build();
 
-      JsonObject response = u.toJsonResponse();
-      response.put(RESP_EMAIL, email);
-      response.put(RESP_CLIENT_ARR, new JsonArray(clients));
+              JsonObject response = u.toJsonResponse();
+              response.put(RESP_EMAIL, email);
+              response.put(RESP_CLIENT_ARR, new JsonArray(clients));
 
-      String phone = (String) details.remove("phone");
-      if (!phone.equals(NIL_PHONE)) {
-        response.put(RESP_PHONE, phone);
-      }
+              String phone = (String) details.remove("phone");
+              if (!phone.equals(NIL_PHONE)) {
+                response.put(RESP_PHONE, phone);
+              }
 
-      LOGGER.info("Reset client secret for user {} for client ID {}", u.getUserId().toString(),
-          request.getClientId());
+              LOGGER.info(
+                  "Reset client secret for user {} for client ID {}",
+                  u.getUserId(),
+                  request.getClientId());
 
-      Response r = new ResponseBuilder().type(URN_SUCCESS).title(title).status(200)
-          .objectResults(response).build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-    }).onFailure(e -> {
-
-      if (e instanceof ComposeException) {
-        ComposeException exp = (ComposeException) e;
-        handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
-        return;
-      }
-      LOGGER.error(e.getMessage());
-      handler.handle(Future.failedFuture("Internal error"));
-    });
+              Response r =
+                  new ResponseBuilder()
+                      .type(URN_SUCCESS)
+                      .title(SUCC_TITLE_REGEN_CLIENT_SECRET)
+                      .status(200)
+                      .objectResults(response)
+                      .build();
+              handler.handle(Future.succeededFuture(r.toJson()));
+            })
+        .onFailure(
+            e -> {
+              if (e instanceof ComposeException) {
+                ComposeException exp = (ComposeException) e;
+                handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                return;
+              }
+              LOGGER.error(e.getMessage());
+              handler.handle(Future.failedFuture("Internal error"));
+            });
 
     return this;
   }
 
   @Override
   public RegistrationService listResourceServer(Handler<AsyncResult<JsonObject>> handler) {
-    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+    LOGGER.debug("Info : {} : Request received", LOGGER.getName());
 
     Collector<Row, ?, List<JsonObject>> orgCollect =
         Collectors.mapping(row -> row.toJson(), Collectors.toList());
 
-    Future<List<JsonObject>> rsFuture = pool.withConnection(conn -> conn
-        .preparedQuery(SQL_GET_ALL_RS).collecting(orgCollect).execute().map(rows -> rows.value()));
+    Future<List<JsonObject>> rsFuture =
+        pool.withConnection(
+            conn ->
+                conn.preparedQuery(SQL_GET_ALL_RS)
+                    .collecting(orgCollect)
+                    .execute()
+                    .map(rows -> rows.value()));
 
-    Future<JsonObject> ownerFuture = rsFuture.compose(res -> {
-      Promise<JsonObject> promise = Promise.promise();
-      List<String> ownerIds =
-          res.stream().map(obj -> obj.getString("owner_id")).collect(Collectors.toList());
+    Future<JsonObject> ownerFuture =
+        rsFuture.compose(
+            res -> {
+              Promise<JsonObject> promise = Promise.promise();
+              List<String> ownerIds =
+                  res.stream().map(obj -> obj.getString("owner_id")).collect(Collectors.toList());
 
-      getUserDetails(ownerIds, promise);
-      return promise.future();
-    });
+              getUserDetails(ownerIds, promise);
+              return promise.future();
+            });
 
-    Future<JsonArray> result = ownerFuture.compose(ownerDetails -> {
-      List<JsonObject> rsDetails = rsFuture.result();
-      JsonArray arr = new JsonArray();
+    Future<JsonArray> result =
+        ownerFuture.compose(
+            ownerDetails -> {
+              List<JsonObject> rsDetails = rsFuture.result();
+              JsonArray arr = new JsonArray();
 
-      rsDetails.forEach(rs -> {
-        JsonObject ownerBlock = ownerDetails.getJsonObject(rs.getString("owner_id"));
-        ownerBlock.put("id", rs.remove("owner_id"));
-        rs.put("owner", ownerBlock);
-        arr.add(rs);
-      });
-      return Future.succeededFuture(arr);
-    });
+              rsDetails.forEach(
+                  rs -> {
+                    JsonObject ownerBlock = ownerDetails.getJsonObject(rs.getString("owner_id"));
+                    ownerBlock.put("id", rs.remove("owner_id"));
+                    rs.put("owner", ownerBlock);
+                    arr.add(rs);
+                  });
+              return Future.succeededFuture(arr);
+            });
 
-    result.onSuccess(res -> {
-      Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_RS_READ).status(200)
-          .arrayResults(res).build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-    }).onFailure(e -> {
-      LOGGER.error(e.getMessage());
-      e.printStackTrace();
-      handler.handle(Future.failedFuture("Internal error"));
-    });
+    result
+        .onSuccess(
+            res -> {
+              Response r =
+                  new ResponseBuilder()
+                      .type(URN_SUCCESS)
+                      .title(SUCC_TITLE_RS_READ)
+                      .status(200)
+                      .arrayResults(res)
+                      .build();
+              handler.handle(Future.succeededFuture(r.toJson()));
+            })
+        .onFailure(
+            e -> {
+              LOGGER.error(e.getMessage());
+              handler.handle(Future.failedFuture("Internal error"));
+            });
 
     return this;
   }
 
   @Override
-  public RegistrationService getUserDetails(List<String> userIds,
-      Handler<AsyncResult<JsonObject>> handler) {
-    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+  public RegistrationService getUserDetails(
+      List<String> userIds, Handler<AsyncResult<JsonObject>> handler) {
+    LOGGER.debug("Info : {} : Request received", LOGGER.getName());
     if (userIds.isEmpty()) {
       handler.handle(Future.succeededFuture(new JsonObject()));
       return this;
@@ -588,19 +750,23 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     Future<Map<String, JsonObject>> details = kc.getDetails(ids);
 
-    details.onSuccess(idToDetails -> {
-      JsonObject userDetails = new JsonObject();
+    details
+        .onSuccess(
+            idToDetails -> {
+              JsonObject userDetails = new JsonObject();
 
-      idToDetails.forEach((uid, jsonDet) -> userDetails.put(uid, jsonDet));
-      handler.handle(Future.succeededFuture(userDetails));
-    }).onFailure(e -> {
-      if (e instanceof ComposeException) {
-        handler.handle(Future.failedFuture(e.getMessage()));
-        return;
-      }
-      LOGGER.error(e.getMessage());
-      handler.handle(Future.failedFuture("Internal error"));
-    });
+              idToDetails.forEach((uid, jsonDet) -> userDetails.put(uid, jsonDet));
+              handler.handle(Future.succeededFuture(userDetails));
+            })
+        .onFailure(
+            e -> {
+              if (e instanceof ComposeException) {
+                handler.handle(Future.failedFuture(e.getMessage()));
+                return;
+              }
+              LOGGER.error(e.getMessage());
+              handler.handle(Future.failedFuture("Internal error"));
+            });
 
     return this;
   }
@@ -610,86 +776,116 @@ public class RegistrationServiceImpl implements RegistrationService {
    * JSON object containing the client ID <i>clientId</i> and the regenerated client secret
    * <i>clientSecret</i>. The promise argument fails with a ComposeException in case of an expected
    * error.
-   * 
+   *
    * @param user The User object for the user who wants to reset client secret
    * @param request The UpdateProfileRequest object containing the client ID
    * @param promise A Promise indicating the success/failure of the operation
    */
-  public void resetClientSecret(User user, ResetClientSecretRequest request,
-      Promise<JsonObject> promise) {
+  public void resetClientSecret(
+      User user, ResetClientSecretRequest request, Promise<JsonObject> promise) {
     UUID userId = UUID.fromString(user.getUserId());
     UUID clientId = UUID.fromString(request.getClientId());
 
     Tuple tuple = Tuple.of(clientId, userId);
     Future<Void> checkClientId =
-        pool.withConnection(conn -> conn.preparedQuery(SQL_CHECK_CLIENT_ID_EXISTS).execute(tuple)
-            .map(row -> row.iterator().next().getBoolean(0))).compose(res -> {
-              if (!res) {
-                Response r = new ResponseBuilder().status(404).type(URN_INVALID_INPUT)
-                    .title(ERR_TITLE_INVALID_CLI_ID).detail(ERR_DETAIL_INVALID_CLI_ID).build();
-                return Future.failedFuture(new ComposeException(r));
-              }
-              return Future.succeededFuture();
+        pool.withConnection(
+                conn ->
+                    conn.preparedQuery(SQL_CHECK_CLIENT_ID_EXISTS)
+                        .execute(tuple)
+                        .map(row -> row.iterator().next().getBoolean(0)))
+            .compose(
+                res -> {
+                  if (!res) {
+                    Response r =
+                        new ResponseBuilder()
+                            .status(404)
+                            .type(URN_INVALID_INPUT)
+                            .title(ERR_TITLE_INVALID_CLI_ID)
+                            .detail(ERR_DETAIL_INVALID_CLI_ID)
+                            .build();
+                    return Future.failedFuture(new ComposeException(r));
+                  }
+                  return Future.succeededFuture();
+                });
+
+    Future<List<RevokeToken>> tokenRevokeReq =
+        checkClientId.compose(
+            success -> {
+              /* Collector to create list of TokenRevoke requests from list of resource_server urls */
+              Collector<Row, ?, List<RevokeToken>> getTokenRevokeReqList =
+                  Collectors.mapping(
+                      row -> {
+                        JsonObject revokeReq = new JsonObject().put("rsUrl", row.getString("url"));
+                        return new RevokeToken(revokeReq);
+                      },
+                      Collectors.toList());
+
+              /*
+               * We can choose to omit some servers from the revocation required during client secret regen
+               * by adding them to the config. (Currently no server needs to be revoked since we don't
+               * bother if a revocation succeeds (HTTP 200) or fails (any other status code, DNS error))
+               */
+              List<String> omittedServers = SERVERS_OMITTED_FROM_TOKEN_REVOKE;
+              omittedServers.add(COS_URL);
+
+              return pool.withConnection(
+                  conn ->
+                      conn.preparedQuery(SQL_GET_RS_AND_APDS_FOR_REVOKE)
+                          .collecting(getTokenRevokeReqList)
+                          .execute(Tuple.of(omittedServers.toArray(String[]::new)))
+                          .map(res -> res.value()));
             });
 
-    Future<List<RevokeToken>> tokenRevokeReq = checkClientId.compose(success -> {
-      /* Collector to create list of TokenRevoke requests from list of resource_server urls */
-      Collector<Row, ?, List<RevokeToken>> getTokenRevokeReqList = Collectors.mapping(row -> {
-        JsonObject revokeReq = new JsonObject().put("rsUrl", row.getString("url"));
-        return new RevokeToken(revokeReq);
-      }, Collectors.toList());
+    Future<CompositeFuture> tokenRevokeResult =
+        tokenRevokeReq.compose(
+            revReq -> {
+              @SuppressWarnings("rawtypes")
+              List<Future> futures =
+                  revReq.stream()
+                      .map(req -> callTokenRevoke(user, req))
+                      .collect(Collectors.toList());
+              return CompositeFuture.all(futures);
+            });
 
-      /*
-       * We can choose to omit some servers from the revocation required during client secret regen
-       * by adding them to the config. (Currently no server needs to be revoked since we don't
-       * bother if a revocation succeeds (HTTP 200) or fails (any other status code, DNS error))
-       */
-      List<String> omittedServers = SERVERS_OMITTED_FROM_TOKEN_REVOKE;
-      omittedServers.add(COS_URL);
+    tokenRevokeResult
+        .compose(
+            revokedAll -> {
+              /*
+               * TODO: callTokenRevoke only fails in case there's an internal error from the tokenRevoke
+               * service. It returns all succeeded futures of Boolean type, true if 200 OK, false if not. We
+               * currently do not check if the bool is true or false, we only know that the future has
+               * succeeded. Later on, we need to act on instances where the bool = false, i.e. the token
+               * revoke call to that particular server has failed. retry logic?, store info about revoke and
+               * expose an API to servers?
+               */
+              byte[] randBytes = new byte[CLIENT_SECRET_BYTES];
+              randomSource.nextBytes(randBytes);
+              String clientSecret = Hex.encodeHexString(randBytes);
+              String hashedClientSecret = DigestUtils.sha512Hex(clientSecret);
+              Tuple tup = Tuple.of(hashedClientSecret, clientId, userId);
 
-      return pool.withConnection(
-          conn -> conn.preparedQuery(SQL_GET_RS_AND_APDS_FOR_REVOKE).collecting(getTokenRevokeReqList)
-              .execute(Tuple.of(omittedServers.toArray(String[]::new))).map(res -> res.value()));
-    });
+              return pool.withConnection(
+                  conn ->
+                      conn.preparedQuery(SQL_UPDATE_CLIENT_SECRET).execute(tup).map(clientSecret));
+            })
+        .onSuccess(
+            cliSec -> {
+              JsonObject clientDets =
+                  new JsonObject()
+                      .put(RESP_CLIENT_ID, clientId.toString())
+                      .put(RESP_CLIENT_SC, cliSec);
+              promise.complete(clientDets);
+            })
+        .onFailure(
+            e -> {
+              if (e instanceof ComposeException) {
+                promise.fail(e);
+                return;
+              }
 
-    Future<CompositeFuture> tokenRevokeResult = tokenRevokeReq.compose(revReq -> {
-      @SuppressWarnings("rawtypes")
-      List<Future> futures = new ArrayList<Future>();
-      futures = revReq.stream().map(req -> callTokenRevoke(user, req)).collect(Collectors.toList());
-      return CompositeFuture.all(futures);
-    });
-
-    tokenRevokeResult.compose(revokedAll -> {
-      /*
-       * TODO: callTokenRevoke only fails in case there's an internal error from the tokenRevoke
-       * service. It returns all succeeded futures of Boolean type, true if 200 OK, false if not. We
-       * currently do not check if the bool is true or false, we only know that the future has
-       * succeeded. Later on, we need to act on instances where the bool = false, i.e. the token
-       * revoke call to that particular server has failed. retry logic?, store info about revoke and
-       * expose an API to servers?
-       */
-      byte[] randBytes = new byte[CLIENT_SECRET_BYTES];
-      randomSource.nextBytes(randBytes);
-      String clientSecret = Hex.encodeHexString(randBytes);
-      String hashedClientSecret = DigestUtils.sha512Hex(clientSecret);
-      Tuple tup = Tuple.of(hashedClientSecret, clientId, userId);
-
-      return pool.withConnection(
-          conn -> conn.preparedQuery(SQL_UPDATE_CLIENT_SECRET).execute(tup).map(clientSecret));
-    }).onSuccess(cliSec -> {
-      JsonObject clientDets =
-          new JsonObject().put(RESP_CLIENT_ID, clientId.toString()).put(RESP_CLIENT_SC, cliSec);
-      promise.complete(clientDets);
-
-    }).onFailure(e -> {
-      if (e instanceof ComposeException) {
-        promise.fail(e);
-        return;
-      }
-
-      LOGGER.error(e.getMessage());
-      promise.fail("Internal error");
-    });
+              LOGGER.error(e.getMessage());
+              promise.fail("Internal error");
+            });
     return;
   }
 
@@ -699,7 +895,7 @@ public class RegistrationServiceImpl implements RegistrationService {
    * <i>false</i> is returned if the revocation fails due to expected errors e.g. server not
    * reachable, responded incorrectly etc. <b>A failed future is returned if the revocation fails
    * unexpected like e.g. due to an internal error.</b>
-   * 
+   *
    * @param user The User object for the user for whom the tokens must be revoked
    * @param request A RevokeToken request object containing the server URL to be revoked
    * @return a Boolean future
@@ -709,25 +905,29 @@ public class RegistrationServiceImpl implements RegistrationService {
     Promise<JsonObject> promise = Promise.promise();
 
     tokenService.revokeToken(request, user, promise);
-    promise.future().onSuccess(resp -> {
-      if (resp.getString("type").equals(URN_SUCCESS.toString())) {
-        response.complete(true);
-      } else {
-        response.complete(false);
-        LOGGER.error("Failed to revoke tokens on " + request.getRsUrl());
-      }
-
-    }).onFailure(err -> {
-      response.fail("Future failed - Failed to revoke tokens on " + request.getRsUrl());
-      LOGGER.error(err.getLocalizedMessage());
-    });
+    promise
+        .future()
+        .onSuccess(
+            resp -> {
+              if (resp.getString("type").equals(URN_SUCCESS.toString())) {
+                response.complete(true);
+              } else {
+                response.complete(false);
+                LOGGER.error("Failed to revoke tokens on {}", request.getRsUrl());
+              }
+            })
+        .onFailure(
+            err -> {
+              response.fail("Future failed - Failed to revoke tokens on " + request.getRsUrl());
+              LOGGER.error(err.getLocalizedMessage());
+            });
     return response.future();
   }
 
   @Override
-  public RegistrationService findUserByEmail(Set<String> emailIds,
-      Handler<AsyncResult<JsonObject>> handler) {
-    
+  public RegistrationService findUserByEmail(
+      Set<String> emailIds, Handler<AsyncResult<JsonObject>> handler) {
+
     if (emailIds.isEmpty()) {
       handler.handle(Future.succeededFuture(new JsonObject()));
       return this;
@@ -739,70 +939,103 @@ public class RegistrationServiceImpl implements RegistrationService {
     @SuppressWarnings("rawtypes")
     List<Future> kcFutures = new ArrayList<Future>(kcInfoMap.values());
 
-    Future<Void> checkAllEmailsExist = CompositeFuture.all(kcFutures).compose(res -> {
-      List<String> missingEmails =
-          kcInfoMap.entrySet().stream().filter(i -> i.getValue().result().isEmpty())
-              .map(i -> i.getKey()).collect(Collectors.toList());
-      
-      if (!missingEmails.isEmpty()) {
-        return Future.failedFuture(new ComposeException(400, Urn.URN_INVALID_INPUT,
-            ERR_TITLE_EMAILS_NOT_AT_UAC_KEYCLOAK, missingEmails.toString()));
-      }
+    Future<Void> checkAllEmailsExist =
+        CompositeFuture.all(kcFutures)
+            .compose(
+                res -> {
+                  List<String> missingEmails =
+                      kcInfoMap.entrySet().stream()
+                          .filter(i -> i.getValue().result().isEmpty())
+                          .map(i -> i.getKey())
+                          .collect(Collectors.toList());
 
-      return Future.succeededFuture();
-    });
+                  if (!missingEmails.isEmpty()) {
+                    Response resp =
+                        new ResponseBuilder()
+                            .type(Urn.URN_INVALID_INPUT)
+                            .status(400)
+                            .title(ERR_TITLE_EMAILS_NOT_AT_UAC_KEYCLOAK)
+                            .detail(ERR_DETAIL_EMAILS_NOT_AT_UAC_KEYCLOAK)
+                            .errorContext(
+                                new JsonObject()
+                                    .put(
+                                        ERR_CONTEXT_NOT_FOUND_EMAILS, new JsonArray(missingEmails)))
+                            .build();
+                    return Future.failedFuture(new ComposeException(resp));
+                  }
 
-    Future<Void> insertIfNotExists = checkAllEmailsExist.compose(res -> {
-      List<Tuple> tups = new ArrayList<Tuple>();
+                  return Future.succeededFuture();
+                });
 
-      kcInfoMap.forEach((emailId, fut) -> {
-        UUID userId = UUID.fromString(fut.result().getString("keycloakId"));
-        JsonObject emptyUserInfo = new JsonObject();
-        Tuple tup = Tuple.of(userId, NIL_PHONE, emptyUserInfo);
-        tups.add(tup);
-      });
+    Future<Void> insertIfNotExists =
+        checkAllEmailsExist.compose(
+            res -> {
+              List<Tuple> tups = new ArrayList<Tuple>();
 
-      Future<RowSet<Row>> inserting = pool.withTransaction(
-          conn -> conn.preparedQuery(SQL_CREATE_USER_IF_NOT_EXISTS).executeBatch(tups));
+              kcInfoMap.forEach(
+                  (emailId, fut) -> {
+                    UUID userId = UUID.fromString(fut.result().getString("keycloakId"));
+                    JsonObject emptyUserInfo = new JsonObject();
+                    Tuple tup = Tuple.of(userId, NIL_PHONE, emptyUserInfo);
+                    tups.add(tup);
+                  });
 
-      Future<Void> logIfInserted = inserting.compose(batchRows -> {
-        // need to get row result like this when using `executeBatch`
-        RowSet<Row> rows = batchRows;
-        while (rows != null) {
-          rows.iterator().forEachRemaining(row -> {
-            LOGGER.info("Added new user to COS with user ID {}", row.getUUID("id"));
-          });
-          rows = rows.next();
-        }
-        return Future.succeededFuture();
-      });
+              Future<RowSet<Row>> inserting =
+                  pool.withTransaction(
+                      conn -> conn.preparedQuery(SQL_CREATE_USER_IF_NOT_EXISTS).executeBatch(tups));
 
-      return logIfInserted;
-    });
+              Future<Void> logIfInserted =
+                  inserting.compose(
+                      batchRows -> {
+                        // need to get row result like this when using `executeBatch`
+                        RowSet<Row> rows = batchRows;
+                        while (rows != null) {
+                          rows.iterator()
+                              .forEachRemaining(
+                                  row -> {
+                                    LOGGER.info(
+                                        "Added new user to COS with user ID {}", row.getUUID("id"));
+                                  });
+                          rows = rows.next();
+                        }
+                        return Future.succeededFuture();
+                      });
 
-    insertIfNotExists.onSuccess(res -> {
-      JsonObject result = new JsonObject();
-      
-      kcInfoMap.forEach((emailId, fut) -> {
-        result.put(emailId, fut.result());
-      });
-      handler.handle(Future.succeededFuture(result));
-      
-    }).onFailure(err -> {
-      handler.handle(Future.failedFuture(err));
-    });
+              return logIfInserted;
+            });
+
+    insertIfNotExists
+        .onSuccess(
+            res -> {
+              JsonObject result = new JsonObject();
+
+              kcInfoMap.forEach(
+                  (emailId, fut) -> {
+                    result.put(emailId, fut.result());
+                  });
+              handler.handle(Future.succeededFuture(result));
+            })
+        .onFailure(
+            err -> {
+              handler.handle(Future.failedFuture(err));
+            });
 
     return this;
   }
 
   @Override
-  public RegistrationService getDefaultClientCredentials(User user,
-      Handler<AsyncResult<JsonObject>> handler) {
-    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
-    
+  public RegistrationService getDefaultClientCredentials(
+      User user, Handler<AsyncResult<JsonObject>> handler) {
+    LOGGER.debug("Info : {} : Request received", LOGGER.getName());
+
     if (user.getRoles().isEmpty()) {
-      Response r = new ResponseBuilder().status(404).type(URN_MISSING_INFO)
-          .title(ERR_TITLE_NO_APPROVED_ROLES).detail(ERR_DETAIL_NO_APPROVED_ROLES).build();
+      Response r =
+          new ResponseBuilder()
+              .status(404)
+              .type(URN_MISSING_INFO)
+              .title(ERR_TITLE_NO_APPROVED_ROLES)
+              .detail(ERR_DETAIL_NO_APPROVED_ROLES)
+              .build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
@@ -810,159 +1043,220 @@ public class RegistrationServiceImpl implements RegistrationService {
     UUID userId = UUID.fromString(user.getUserId());
     Tuple tuple = Tuple.of(userId);
 
-    Collector<Row, ?, List<UUID>> clientIdCollector=
+    Collector<Row, ?, List<UUID>> clientIdCollector =
         Collectors.mapping(row -> row.getUUID("client_id"), Collectors.toList());
 
-    Future<Void> checkDefaultClientId = pool
-        .withConnection(conn -> conn.preparedQuery(SQL_CHECK_DEFAULT_CLIENT_EXISTS)
-            .collecting(clientIdCollector).execute(tuple).map(res -> res.value()))
-        .compose(cidList -> {
-          if (!cidList.isEmpty()) {
-            Response r = new ResponseBuilder().status(409).type(URN_ALREADY_EXISTS)
-                .title(ERR_TITLE_DEFAULT_CLIENT_EXISTS).detail(ERR_DETAIL_DEFAULT_CLIENT_EXISTS)
-                .errorContext(new JsonObject().put("clientId", cidList.get(0).toString())).build();
-            return Future.failedFuture(new ComposeException(r));
-          }
-          return Future.succeededFuture();
-        });
+    Future<Void> checkDefaultClientId =
+        pool.withConnection(
+                conn ->
+                    conn.preparedQuery(SQL_CHECK_DEFAULT_CLIENT_EXISTS)
+                        .collecting(clientIdCollector)
+                        .execute(tuple)
+                        .map(res -> res.value()))
+            .compose(
+                cidList -> {
+                  if (!cidList.isEmpty()) {
+                    Response r =
+                        new ResponseBuilder()
+                            .status(409)
+                            .type(URN_ALREADY_EXISTS)
+                            .title(ERR_TITLE_DEFAULT_CLIENT_EXISTS)
+                            .detail(ERR_DETAIL_DEFAULT_CLIENT_EXISTS)
+                            .errorContext(
+                                new JsonObject().put("clientId", cidList.get(0).toString()))
+                            .build();
+                    return Future.failedFuture(new ComposeException(r));
+                  }
+                  return Future.succeededFuture();
+                });
     /*
      * In case a COS admin wants to get client creds, they **may** not have an entry in the `users`
      * table - since COS admins just need to be registered on Keycloak and are identified by their
      * user ID in the config. Inserting into the `user_clients` table will throw an error due to
      * foreign key constrains.
-     * 
+     *
      * Hence to avoid this edge case we try to insert the COS admin as a user into the table.
      */
-    Future<Void> cosAdminEdgeCase = checkDefaultClientId.compose(res -> {
-      List<Roles> roles = user.getRoles();
+    Future<Void> cosAdminEdgeCase =
+        checkDefaultClientId.compose(
+            res -> {
+              List<Roles> roles = user.getRoles();
 
-      if (!(roles.contains(Roles.COS_ADMIN) && roles.size() == 1)) {
-        return Future.succeededFuture();
-      }
+              if (!(roles.contains(Roles.COS_ADMIN) && roles.size() == 1)) {
+                return Future.succeededFuture();
+              }
 
-      JsonObject emptyUserInfo = new JsonObject();
-      
-      return pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_USER_IF_NOT_EXISTS)
-          .execute(Tuple.of(userId, NIL_PHONE, emptyUserInfo)).mapEmpty());
-    });
-    
-    Future<JsonObject> createClientCreds = cosAdminEdgeCase.compose(res -> {
-      UUID clientId = UUID.randomUUID();
-      
-      byte[] randBytes = new byte[CLIENT_SECRET_BYTES];
-      randomSource.nextBytes(randBytes);
-      String clientSecret = Hex.encodeHexString(randBytes);
-      String hashedClientSecret = DigestUtils.sha512Hex(clientSecret);
+              JsonObject emptyUserInfo = new JsonObject();
 
-      Tuple clientTuple = Tuple.of(userId, clientId, hashedClientSecret, DEFAULT_CLIENT);
+              return pool.withConnection(
+                  conn ->
+                      conn.preparedQuery(SQL_CREATE_USER_IF_NOT_EXISTS)
+                          .execute(Tuple.of(userId, NIL_PHONE, emptyUserInfo))
+                          .mapEmpty());
+            });
 
-      JsonObject clientDetails = new JsonObject().put(RESP_CLIENT_NAME, DEFAULT_CLIENT)
-          .put(RESP_CLIENT_ID, clientId.toString()).put(RESP_CLIENT_SC, clientSecret);
-      
-      return pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_CLIENT).execute(clientTuple))
-          .compose(succ -> Future.succeededFuture(clientDetails));
-    });
-    
-    createClientCreds.onSuccess(creds -> {
-      Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_CREATED_DEFAULT_CLIENT)
-          .status(201).objectResults(creds).build();
-      handler.handle(Future.succeededFuture(r.toJson()));
+    Future<JsonObject> createClientCreds =
+        cosAdminEdgeCase.compose(
+            res -> {
+              UUID clientId = UUID.randomUUID();
 
-      LOGGER.info("Created default client credentials for {}", userId);
-    }).onFailure(e -> {
-      if (e instanceof ComposeException) {
-        ComposeException exp = (ComposeException) e;
-        handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
-        return;
-      }
+              byte[] randBytes = new byte[CLIENT_SECRET_BYTES];
+              randomSource.nextBytes(randBytes);
+              String clientSecret = Hex.encodeHexString(randBytes);
+              String hashedClientSecret = DigestUtils.sha512Hex(clientSecret);
 
-      LOGGER.error(e.getMessage());
-      handler.handle(Future.failedFuture("Internal error"));
-    });
-    
+              Tuple clientTuple = Tuple.of(userId, clientId, hashedClientSecret, DEFAULT_CLIENT);
+
+              JsonObject clientDetails =
+                  new JsonObject()
+                      .put(RESP_CLIENT_NAME, DEFAULT_CLIENT)
+                      .put(RESP_CLIENT_ID, clientId.toString())
+                      .put(RESP_CLIENT_SC, clientSecret);
+
+              return pool.withConnection(
+                      conn -> conn.preparedQuery(SQL_CREATE_CLIENT).execute(clientTuple))
+                  .compose(succ -> Future.succeededFuture(clientDetails));
+            });
+
+    createClientCreds
+        .onSuccess(
+            creds -> {
+              Response r =
+                  new ResponseBuilder()
+                      .type(URN_SUCCESS)
+                      .title(SUCC_TITLE_CREATED_DEFAULT_CLIENT)
+                      .status(201)
+                      .objectResults(creds)
+                      .build();
+              handler.handle(Future.succeededFuture(r.toJson()));
+
+              LOGGER.info("Created default client credentials for {}", userId);
+            })
+        .onFailure(
+            e -> {
+              if (e instanceof ComposeException) {
+                ComposeException exp = (ComposeException) e;
+                handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                return;
+              }
+
+              LOGGER.error(e.getMessage());
+              handler.handle(Future.failedFuture("Internal error"));
+            });
+
     return this;
   }
-  
+
   @Override
-  public RegistrationService searchUser(User user, String searchString, Roles role,
-      String resourceServerUrl, Handler<AsyncResult<JsonObject>> handler) {
-    LOGGER.debug("Info : " + LOGGER.getName() + " : Request received");
+  public RegistrationService searchUser(
+      User user,
+      String searchString,
+      Roles role,
+      String resourceServerUrl,
+      Handler<AsyncResult<JsonObject>> handler) {
+    LOGGER.debug("Info : {} : Request received", LOGGER.getName());
 
     if (!user.getRoles().contains(Roles.TRUSTEE)) {
-      Response r = new ResponseBuilder().status(401).type(URN_INVALID_ROLE)
-          .title(ERR_TITLE_NOT_TRUSTEE).detail(ERR_DETAIL_NOT_TRUSTEE).build();
+      Response r =
+          new ResponseBuilder()
+              .status(401)
+              .type(URN_INVALID_ROLE)
+              .title(ERR_TITLE_NOT_TRUSTEE)
+              .detail(ERR_DETAIL_NOT_TRUSTEE)
+              .build();
       handler.handle(Future.succeededFuture(r.toJson()));
       return this;
     }
-    
+
     /* Create error denoting email / userID + role does not exist */
-    Supplier<Response> getSearchErr = () -> {
-      return new ResponseBuilder().type(URN_INVALID_INPUT).title(ERR_TITLE_USER_NOT_FOUND)
-          .status(404).detail(ERR_DETAIL_USER_NOT_FOUND).build();
-    };
+    Supplier<Response> getSearchErr =
+        () -> {
+          return new ResponseBuilder()
+              .type(URN_INVALID_INPUT)
+              .title(ERR_TITLE_USER_NOT_FOUND)
+              .status(404)
+              .detail(ERR_DETAIL_USER_NOT_FOUND)
+              .build();
+        };
 
     Future<JsonObject> foundUser;
     Boolean searchByUserId = searchString.matches(UUID_REGEX);
 
     if (searchByUserId) {
-      foundUser = kc.getDetails(List.of(searchString))
-          .compose(res -> Future.succeededFuture(res.get(searchString)));
+      foundUser =
+          kc.getDetails(List.of(searchString))
+              .compose(res -> Future.succeededFuture(res.get(searchString)));
     } else { // search by email
       foundUser = kc.findUserByEmail(searchString);
     }
 
-    Future<UUID> existsReturnUserId = foundUser.compose(res -> {
-      if (res.isEmpty()) {
-        return Future.failedFuture(new ComposeException(getSearchErr.get()));
-      }
-      
-      if (searchByUserId) {
-        return Future.succeededFuture(UUID.fromString(searchString));
-      } else {
-        // userId same as keycloakId
-        return Future.succeededFuture(UUID.fromString(res.getString("keycloakId")));
-      }
-    });
+    Future<UUID> existsReturnUserId =
+        foundUser.compose(
+            res -> {
+              if (res.isEmpty()) {
+                return Future.failedFuture(new ComposeException(getSearchErr.get()));
+              }
 
-    /* 
+              if (searchByUserId) {
+                return Future.succeededFuture(UUID.fromString(searchString));
+              } else {
+                // userId same as keycloakId
+                return Future.succeededFuture(UUID.fromString(res.getString("keycloakId")));
+              }
+            });
+
+    /*
      * Since you can only search by CONSUMER and PROVIDER roles, we don't
      * need to check the users table for existence and only check if roles.user_id
      * is present */
-    Future<Boolean> checkHasRole = existsReturnUserId.compose(keycloakId -> pool
-        .withConnection(conn -> conn.preparedQuery(SQL_CHECK_USER_HAS_PROV_CONS_ROLE_FOR_RS)
-            .execute(Tuple.of(keycloakId, role, resourceServerUrl))
-            .map(row -> row.iterator().next().getBoolean("exists"))));
+    Future<Boolean> checkHasRole =
+        existsReturnUserId.compose(
+            keycloakId ->
+                pool.withConnection(
+                    conn ->
+                        conn.preparedQuery(SQL_CHECK_USER_HAS_PROV_CONS_ROLE_FOR_RS)
+                            .execute(Tuple.of(keycloakId, role, resourceServerUrl))
+                            .map(row -> row.iterator().next().getBoolean("exists"))));
 
-    checkHasRole.compose(hasRole -> {
-      if(!hasRole) {
-        return Future.failedFuture(new ComposeException(getSearchErr.get()));
-      }
-      
-      JsonObject response = new JsonObject();
-      
-      JsonObject userDetails = foundUser.result();
-      
-      response.put(RESP_EMAIL, userDetails.getString("email"));
-      response.put("userId", existsReturnUserId.result().toString());
-      response.put("name", userDetails.getJsonObject("name"));
-      
-      return Future.succeededFuture(response);
-    }).onSuccess(res -> {
+    checkHasRole
+        .compose(
+            hasRole -> {
+              if (!hasRole) {
+                return Future.failedFuture(new ComposeException(getSearchErr.get()));
+              }
 
-      Response r = new ResponseBuilder().type(URN_SUCCESS).title(SUCC_TITLE_USER_FOUND).status(200)
-          .objectResults(res).build();
+              JsonObject response = new JsonObject();
 
-      handler.handle(Future.succeededFuture(r.toJson()));
-    }).onFailure(e -> {
-      if (e instanceof ComposeException) {
-        ComposeException exp = (ComposeException) e;
-        handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
-        return;
-      }
-      e.printStackTrace();
-      LOGGER.error(e.getMessage());
-      handler.handle(Future.failedFuture("Internal error"));
-    });
+              JsonObject userDetails = foundUser.result();
+
+              response.put(RESP_EMAIL, userDetails.getString("email"));
+              response.put("userId", existsReturnUserId.result().toString());
+              response.put("name", userDetails.getJsonObject("name"));
+
+              return Future.succeededFuture(response);
+            })
+        .onSuccess(
+            res -> {
+              Response r =
+                  new ResponseBuilder()
+                      .type(URN_SUCCESS)
+                      .title(SUCC_TITLE_USER_FOUND)
+                      .status(200)
+                      .objectResults(res)
+                      .build();
+
+              handler.handle(Future.succeededFuture(r.toJson()));
+            })
+        .onFailure(
+            e -> {
+              if (e instanceof ComposeException) {
+                ComposeException exp = (ComposeException) e;
+                handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                return;
+              }
+              LOGGER.error(e.getMessage());
+              handler.handle(Future.failedFuture("Internal error"));
+            });
 
     return this;
   }
