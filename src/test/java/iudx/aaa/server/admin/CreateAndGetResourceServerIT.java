@@ -400,7 +400,9 @@ public class CreateAndGetResourceServerIT {
         .statusCode(400)
         .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()))
         .body("title", equalTo(ERR_TITLE_EMAILS_NOT_AT_UAC_KEYCLOAK))
-        .body("detail", stringContainsInOrder(badEmail.toLowerCase()));
+        .body("detail", equalTo(ERR_DETAIL_EMAILS_NOT_AT_UAC_KEYCLOAK))
+        .body(
+            "context." + ERR_CONTEXT_NOT_FOUND_EMAILS, containsInAnyOrder(badEmail.toLowerCase()));
   }
 
   @Nested

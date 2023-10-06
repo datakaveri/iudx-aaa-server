@@ -2,6 +2,8 @@ package iudx.aaa.server.registration;
 
 import static iudx.aaa.server.registration.Constants.CONFIG_COS_URL;
 import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
+import static iudx.aaa.server.registration.Constants.ERR_CONTEXT_NOT_FOUND_EMAILS;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_EMAILS_NOT_AT_UAC_KEYCLOAK;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_EMAILS_NOT_AT_UAC_KEYCLOAK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -206,7 +208,14 @@ public class FindUserByEmailTest {
                       assertEquals(jsonResult.getString("type"), Urn.URN_INVALID_INPUT.toString());
                       assertEquals(
                           jsonResult.getString("title"), ERR_TITLE_EMAILS_NOT_AT_UAC_KEYCLOAK);
-                      assertTrue(jsonResult.getString("detail").contains(notRegdEmail));
+                      assertEquals(
+                          jsonResult.getString("detail"), ERR_DETAIL_EMAILS_NOT_AT_UAC_KEYCLOAK);
+
+                      JsonArray missingEmails =
+                          jsonResult
+                              .getJsonObject("context")
+                              .getJsonArray(ERR_CONTEXT_NOT_FOUND_EMAILS);
+                      assertTrue(missingEmails.contains(notRegdEmail));
 
                       testContext.completeNow();
                     })));

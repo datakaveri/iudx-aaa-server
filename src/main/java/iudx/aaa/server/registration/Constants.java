@@ -95,8 +95,10 @@ public class Constants {
       "The default client credentials have already been created. "
           + "If you have forgotten your client secret, please use the regenerate client secret API";
 
-  public static final String ERR_TITLE_EMAILS_NOT_AT_UAC_KEYCLOAK =
+  public static final String ERR_TITLE_EMAILS_NOT_AT_UAC_KEYCLOAK = "Email IDs not found at UAC";
+  public static final String ERR_DETAIL_EMAILS_NOT_AT_UAC_KEYCLOAK =
       "Some email IDs have not been registered at UAC";
+  public static final String ERR_CONTEXT_NOT_FOUND_EMAILS = "notFoundEmails";
 
   /* SQL queries */
   public static final String SQL_CREATE_ROLE =

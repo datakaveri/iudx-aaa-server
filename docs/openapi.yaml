@@ -1734,6 +1734,14 @@ paths:
                     type: 'urn:dx:as:InvalidInput'
                     title: Invalid URL
                     detail: The domain is invalid
+                Emails not on UAC:
+                  value:
+                    type: urn:dx:as:InvalidInput
+                    title: Email IDs not found at UAC
+                    detail: Some email IDs have not been registered at UAC
+                    context:
+                      notFoundEmails:
+                        - vtgusrficq@gmail.com
         '401':
           description: |-
             - Unauthorized - `token` invalid/expired
@@ -2572,8 +2580,11 @@ paths:
                 Emails not on UAC:
                   value:
                     type: urn:dx:as:InvalidInput
-                    title: Some email IDs have not been registered at UAC
-                    detail: "[vtgusrficq@gmail.com]"        
+                    title: Email IDs not found at UAC
+                    detail: Some email IDs have not been registered at UAC
+                    context:
+                      notFoundEmails:
+                        - vtgusrficq@gmail.com
           headers:
             Content-Type:
               schema:
@@ -3155,6 +3166,14 @@ paths:
                     type: 'urn:dx:as:InvalidInput'
                     title: Invalid URL
                     detail: The URL is invalid
+                Emails not on UAC:
+                  value:
+                    type: urn:dx:as:InvalidInput
+                    title: Email IDs not found at UAC
+                    detail: Some email IDs have not been registered at UAC
+                    context:
+                      notFoundEmails:
+                        - vtgusrficq@gmail.com
         '401':
           description: '- Unauthorized - `token` invalid/expired or not COS Admin'
           content:

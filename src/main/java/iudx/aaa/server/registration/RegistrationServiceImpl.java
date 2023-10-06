@@ -6,9 +6,11 @@ import static iudx.aaa.server.registration.Constants.CONFIG_COS_URL;
 import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
 import static iudx.aaa.server.registration.Constants.DEFAULT_CLIENT;
 import static iudx.aaa.server.registration.Constants.ERR_CONTEXT_EXISTING_ROLE_FOR_RS;
+import static iudx.aaa.server.registration.Constants.ERR_CONTEXT_NOT_FOUND_EMAILS;
 import static iudx.aaa.server.registration.Constants.ERR_CONTEXT_NOT_FOUND_RS_URLS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_CONSUMER_FOR_RS_EXISTS;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_DEFAULT_CLIENT_EXISTS;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_EMAILS_NOT_AT_UAC_KEYCLOAK;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_INVALID_CLI_ID;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NOT_TRUSTEE;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_APPROVED_ROLES;
@@ -948,12 +950,18 @@ public class RegistrationServiceImpl implements RegistrationService {
                           .collect(Collectors.toList());
 
                   if (!missingEmails.isEmpty()) {
-                    return Future.failedFuture(
-                        new ComposeException(
-                            400,
-                            Urn.URN_INVALID_INPUT,
-                            ERR_TITLE_EMAILS_NOT_AT_UAC_KEYCLOAK,
-                            missingEmails.toString()));
+                    Response resp =
+                        new ResponseBuilder()
+                            .type(Urn.URN_INVALID_INPUT)
+                            .status(400)
+                            .title(ERR_TITLE_EMAILS_NOT_AT_UAC_KEYCLOAK)
+                            .detail(ERR_DETAIL_EMAILS_NOT_AT_UAC_KEYCLOAK)
+                            .errorContext(
+                                new JsonObject()
+                                    .put(
+                                        ERR_CONTEXT_NOT_FOUND_EMAILS, new JsonArray(missingEmails)))
+                            .build();
+                    return Future.failedFuture(new ComposeException(resp));
                   }
 
                   return Future.succeededFuture();

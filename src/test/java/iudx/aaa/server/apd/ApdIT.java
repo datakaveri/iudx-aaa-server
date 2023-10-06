@@ -2,6 +2,8 @@ package iudx.aaa.server.apd;
 
 import static io.restassured.RestAssured.*;
 import static iudx.aaa.server.apd.Constants.*;
+import static iudx.aaa.server.registration.Constants.ERR_CONTEXT_NOT_FOUND_EMAILS;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_EMAILS_NOT_AT_UAC_KEYCLOAK;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NOT_TRUSTEE;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_EMAILS_NOT_AT_UAC_KEYCLOAK;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_NOT_TRUSTEE;
@@ -189,7 +191,6 @@ public class ApdIT {
         .post("/apd")
         .then()
         .statusCode(401)
-        .and()
         .body("type", equalTo(Urn.URN_MISSING_AUTH_TOKEN.toString()));
   }
 
@@ -211,11 +212,8 @@ public class ApdIT {
         .post("/apd")
         .then()
         .statusCode(401)
-        .and()
         .body("type", equalTo(Urn.URN_INVALID_ROLE.toString()))
-        .and()
         .body("title", equalTo(ERR_TITLE_NO_COS_ADMIN_ROLE))
-        .and()
         .body("detail", equalTo(ERR_DETAIL_NO_COS_ADMIN_ROLE));
   }
 
@@ -238,11 +236,8 @@ public class ApdIT {
         .post("/apd")
         .then()
         .statusCode(401)
-        .and()
         .body("type", equalTo(Urn.URN_INVALID_ROLE.toString()))
-        .and()
         .body("title", equalTo(ERR_TITLE_NO_COS_ADMIN_ROLE))
-        .and()
         .body("detail", equalTo(ERR_DETAIL_NO_COS_ADMIN_ROLE));
   }
 
@@ -258,7 +253,6 @@ public class ApdIT {
         .post("/apd")
         .then()
         .statusCode(400)
-        .and()
         .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
   }
 
@@ -288,7 +282,6 @@ public class ApdIT {
         .post("/apd")
         .then()
         .statusCode(400)
-        .and()
         .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
 
     given()
@@ -300,7 +293,6 @@ public class ApdIT {
         .post("/apd")
         .then()
         .statusCode(400)
-        .and()
         .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
 
     given()
@@ -312,7 +304,6 @@ public class ApdIT {
         .post("/apd")
         .then()
         .statusCode(400)
-        .and()
         .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
   }
 
@@ -335,7 +326,6 @@ public class ApdIT {
         .post("/apd")
         .then()
         .statusCode(400)
-        .and()
         .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
   }
 
@@ -364,7 +354,6 @@ public class ApdIT {
               .post("/apd")
               .then()
               .statusCode(400)
-              .and()
               .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()));
         });
   }
@@ -394,11 +383,8 @@ public class ApdIT {
               .post("/apd")
               .then()
               .statusCode(400)
-              .and()
               .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()))
-              .and()
               .body("title", equalTo(ERR_TITLE_INVALID_DOMAIN))
-              .and()
               .body("detail", equalTo(ERR_DETAIL_INVALID_DOMAIN));
         });
   }
@@ -420,12 +406,11 @@ public class ApdIT {
         .post("/apd")
         .then()
         .statusCode(400)
-        .and()
         .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()))
-        .and()
         .body("title", equalTo(ERR_TITLE_EMAILS_NOT_AT_UAC_KEYCLOAK))
-        .and()
-        .body("detail", stringContainsInOrder(badEmail.toLowerCase()));
+        .body("detail", equalTo(ERR_DETAIL_EMAILS_NOT_AT_UAC_KEYCLOAK))
+        .body(
+            "context." + ERR_CONTEXT_NOT_FOUND_EMAILS, containsInAnyOrder(badEmail.toLowerCase()));
   }
 
   @Test
@@ -449,28 +434,18 @@ public class ApdIT {
         .post("/apd")
         .then()
         .statusCode(201)
-        .and()
         .body("type", equalTo(Urn.URN_SUCCESS.toString()))
-        .and()
         .body("title", equalTo(SUCC_TITLE_REGISTERED_APD))
-        .and()
         .body("results", hasKey("id"))
         .body("results", hasKey("owner"))
         .rootPath("results")
         .body("name", equalTo(serverName))
-        .and()
         .body("url", equalTo(serverUrl.toLowerCase()))
-        .and()
         .body("status", equalTo(ApdStatus.ACTIVE.toString().toLowerCase()))
-        .and()
         .body("owner", hasKey("id"))
-        .and()
         .body("owner", hasKey("name"))
-        .and()
         .body("owner.name", hasKey("firstName"))
-        .and()
         .body("owner.name", hasKey("lastName"))
-        .and()
         .body("owner.email", equalTo(email.toLowerCase()));
   }
 
@@ -495,9 +470,7 @@ public class ApdIT {
         .post("/apd")
         .then()
         .statusCode(201)
-        .and()
         .body("type", equalTo(Urn.URN_SUCCESS.toString()))
-        .and()
         .body("title", equalTo(SUCC_TITLE_REGISTERED_APD));
 
     given()
@@ -509,11 +482,8 @@ public class ApdIT {
         .post("/apd")
         .then()
         .statusCode(409)
-        .and()
         .body("type", equalTo(Urn.URN_ALREADY_EXISTS.toString()))
-        .and()
         .body("title", equalTo(ERR_TITLE_EXISTING_DOMAIN))
-        .and()
         .body("detail", equalTo(ERR_DETAIL_EXISTING_DOMAIN));
   }
 
@@ -525,7 +495,6 @@ public class ApdIT {
         .get("/apd")
         .then()
         .statusCode(401)
-        .and()
         .body("type", equalTo(Urn.URN_MISSING_AUTH_TOKEN.toString()));
   }
 
@@ -1043,11 +1012,8 @@ public class ApdIT {
           .put("/apd")
           .then()
           .statusCode(200)
-          .and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString()))
-          .and()
           .body("title", equalTo(SUCC_TITLE_UPDATED_APD))
-          .and()
           .body(
               "results.find {it.id == '%s'}.url",
               withArgs(serverIdAlpha), equalTo(serverUrlAlpha.toLowerCase()))
@@ -1225,9 +1191,7 @@ public class ApdIT {
           .get("/user/search")
           .then()
           .statusCode(401)
-          .and()
           .body("type", equalTo(Urn.URN_INVALID_ROLE.toString()))
-          .and()
           .body("title", equalTo(ERR_TITLE_NOT_TRUSTEE))
           .body("detail", equalTo(ERR_DETAIL_NOT_TRUSTEE));
 
@@ -1245,9 +1209,7 @@ public class ApdIT {
           .get("/delegations/emails")
           .then()
           .statusCode(401)
-          .and()
           .body("type", equalTo(Urn.URN_INVALID_ROLE.toString()))
-          .and()
           .body("title", equalTo(ERR_TITLE_NOT_TRUSTEE))
           .body("detail", equalTo(ERR_DETAIL_NOT_TRUSTEE));
     }
@@ -1264,9 +1226,7 @@ public class ApdIT {
           .get("/user/roles")
           .then()
           .statusCode(200)
-          .and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString()))
-          .and()
           .body("results.roles", not(hasItem(Roles.TRUSTEE.toString().toLowerCase())))
           .body("results.rolesToRsMapping.trustee", is(nullValue()));
     }
@@ -1339,9 +1299,7 @@ public class ApdIT {
           .get("/user/roles")
           .then()
           .statusCode(200)
-          .and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString()))
-          .and()
           .body("results.roles", hasItem(Roles.TRUSTEE.toString().toLowerCase()))
           .body("results.rolesToRsMapping.trustee", containsInAnyOrder(serverUrl.toLowerCase()));
     }
@@ -1392,9 +1350,7 @@ public class ApdIT {
           .get("/user/search")
           .then()
           .statusCode(401)
-          .and()
           .body("type", equalTo(Urn.URN_INVALID_ROLE.toString()))
-          .and()
           .body("title", equalTo(ERR_TITLE_NOT_TRUSTEE))
           .body("detail", equalTo(ERR_DETAIL_NOT_TRUSTEE));
 
@@ -1412,9 +1368,7 @@ public class ApdIT {
           .get("/delegations/emails")
           .then()
           .statusCode(401)
-          .and()
           .body("type", equalTo(Urn.URN_INVALID_ROLE.toString()))
-          .and()
           .body("title", equalTo(ERR_TITLE_NOT_TRUSTEE))
           .body("detail", equalTo(ERR_DETAIL_NOT_TRUSTEE));
     }
@@ -1430,9 +1384,7 @@ public class ApdIT {
           .get("/user/roles")
           .then()
           .statusCode(200)
-          .and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString()))
-          .and()
           .body("results.roles", not(hasItem(Roles.TRUSTEE.toString().toLowerCase())))
           .body("results.rolesToRsMapping.trustee", is(nullValue()));
     }
@@ -1504,9 +1456,7 @@ public class ApdIT {
           .get("/user/roles")
           .then()
           .statusCode(200)
-          .and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString()))
-          .and()
           .body("results.roles", hasItem(Roles.TRUSTEE.toString().toLowerCase()))
           .body("results.rolesToRsMapping.trustee", hasItem(serverUrl.toLowerCase()));
     }
@@ -1541,9 +1491,7 @@ public class ApdIT {
           .get("/apd")
           .then()
           .statusCode(200)
-          .and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString()))
-          .and()
           .body("title", equalTo(SUCC_TITLE_APD_READ))
           .body("results", hasSize(greaterThan(0)))
           .body("results.find { it.url == '%s' }", withArgs(serverUrl), is(nullValue()));
@@ -1556,9 +1504,7 @@ public class ApdIT {
           .get("/apd")
           .then()
           .statusCode(200)
-          .and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString()))
-          .and()
           .body("title", equalTo(SUCC_TITLE_APD_READ))
           .body("results.find { it.url == '%s' }", withArgs(serverUrl), is(nullValue()));
     }
@@ -1597,29 +1543,19 @@ public class ApdIT {
           .get("/apd")
           .then()
           .statusCode(200)
-          .and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString()))
-          .and()
           .body("title", equalTo(SUCC_TITLE_APD_READ))
           .body("results", hasSize(greaterThan(0)))
           .rootPath("results.find { it.id == '%s' }", withArgs(serverId))
           .body("", hasKey("id"))
           .body("name", equalTo(serverName))
-          .and()
           .body("url", equalTo(serverUrl.toLowerCase()))
-          .and()
           .body("status", equalTo(ApdStatus.ACTIVE.toString().toLowerCase()))
-          .and()
           .body("", hasKey("owner"))
-          .and()
           .body("owner", hasKey("id"))
-          .and()
           .body("owner", hasKey("name"))
-          .and()
           .body("owner.name", hasKey("firstName"))
-          .and()
           .body("owner.name", hasKey("lastName"))
-          .and()
           .body("owner.email", equalTo(email.toLowerCase()));
     }
 
@@ -1635,29 +1571,19 @@ public class ApdIT {
           .get("/apd")
           .then()
           .statusCode(200)
-          .and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString()))
-          .and()
           .body("title", equalTo(SUCC_TITLE_APD_READ))
           .body("results", hasSize(greaterThan(0)))
           .rootPath("results.find { it.id == '%s' }", withArgs(serverId))
           .body("", hasKey("id"))
           .body("name", equalTo(serverName))
-          .and()
           .body("url", equalTo(serverUrl.toLowerCase()))
-          .and()
           .body("", hasKey("owner"))
-          .and()
           .body("status", equalTo(ApdStatus.ACTIVE.toString().toLowerCase()))
-          .and()
           .body("owner", hasKey("id"))
-          .and()
           .body("owner", hasKey("name"))
-          .and()
           .body("owner.name", hasKey("firstName"))
-          .and()
           .body("owner.name", hasKey("lastName"))
-          .and()
           .body("owner.email", equalTo(email.toLowerCase()));
     }
 
@@ -1699,19 +1625,14 @@ public class ApdIT {
           .get("/apd")
           .then()
           .statusCode(200)
-          .and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString()))
-          .and()
           .body("title", equalTo(SUCC_TITLE_APD_READ))
           .body("results", hasSize(greaterThan(0)))
           .rootPath("results.find { it.id == '%s' }", withArgs(serverId))
           .body("", hasKey("id"))
           .body("name", equalTo(serverName))
-          .and()
           .body("status", equalTo(ApdStatus.INACTIVE.toString().toLowerCase()))
-          .and()
           .body("url", equalTo(serverUrl.toLowerCase()))
-          .and()
           .body("", hasKey("owner"));
     }
 
@@ -1727,9 +1648,7 @@ public class ApdIT {
           .get("/apd")
           .then()
           .statusCode(200)
-          .and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString()))
-          .and()
           .body("title", equalTo(SUCC_TITLE_APD_READ))
           .body("results.find { it.id == '%s' }", withArgs(serverId), is(nullValue()));
     }
@@ -1772,19 +1691,14 @@ public class ApdIT {
           .get("/apd")
           .then()
           .statusCode(200)
-          .and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString()))
-          .and()
           .body("title", equalTo(SUCC_TITLE_APD_READ))
           .body("results", hasSize(greaterThan(0)))
           .rootPath("results.find { it.id == '%s' }", withArgs(serverId))
           .body("", hasKey("id"))
           .body("name", equalTo(serverName))
-          .and()
           .body("url", equalTo(serverUrl.toLowerCase()))
-          .and()
           .body("", hasKey("owner"))
-          .and()
           .body("status", equalTo(ApdStatus.ACTIVE.toString().toLowerCase()));
 
       given()
@@ -1795,19 +1709,14 @@ public class ApdIT {
           .get("/apd")
           .then()
           .statusCode(200)
-          .and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString()))
-          .and()
           .body("title", equalTo(SUCC_TITLE_APD_READ))
           .body("results", hasSize(greaterThan(0)))
           .rootPath("results.find { it.id == '%s' }", withArgs(serverId))
           .body("", hasKey("id"))
           .body("name", equalTo(serverName))
-          .and()
           .body("url", equalTo(serverUrl.toLowerCase()))
-          .and()
           .body("", hasKey("owner"))
-          .and()
           .body("status", equalTo(ApdStatus.ACTIVE.toString().toLowerCase()));
     }
   }

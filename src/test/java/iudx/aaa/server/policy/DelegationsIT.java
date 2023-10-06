@@ -727,10 +727,10 @@ public class DelegationsIT {
         .then()
         .statusCode(400)
         .body("type", equalTo(Urn.URN_INVALID_INPUT.toString()))
-        .and()
         .body("title", equalTo(ERR_TITLE_EMAILS_NOT_AT_UAC_KEYCLOAK))
-        .and()
-        .body("detail", stringContainsInOrder(badEmail.toLowerCase()));
+        .body("detail", equalTo(ERR_DETAIL_EMAILS_NOT_AT_UAC_KEYCLOAK))
+        .body(
+            "context." + ERR_CONTEXT_NOT_FOUND_EMAILS, containsInAnyOrder(badEmail.toLowerCase()));
   }
 
   @Test
@@ -2153,9 +2153,7 @@ public class DelegationsIT {
           .get("/user/roles")
           .then()
           .statusCode(200)
-          .and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString()))
-          .and()
           .body("results.roles", hasItem(Roles.DELEGATE.toString().toLowerCase()))
           .body(
               "results.rolesToRsMapping.delegate", containsInAnyOrder(ALPHA_SERVER, BRAVO_SERVER));
@@ -2167,9 +2165,7 @@ public class DelegationsIT {
           .get("/user/roles")
           .then()
           .statusCode(200)
-          .and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString()))
-          .and()
           .body("results.roles", hasItem(Roles.DELEGATE.toString().toLowerCase()))
           .body(
               "results.rolesToRsMapping.delegate", containsInAnyOrder(ALPHA_SERVER, BRAVO_SERVER));
@@ -2376,7 +2372,6 @@ public class DelegationsIT {
           .get("/delegations/emails")
           .then()
           .statusCode(200)
-          .and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString()))
           .body("title", equalTo(SUCC_TITLE_DELEG_EMAILS))
           .body("results.delegateEmails", containsInAnyOrder(delegateAliceEmail, delegateBobEmail));
@@ -2388,7 +2383,6 @@ public class DelegationsIT {
           .get("/delegations/emails")
           .then()
           .statusCode(200)
-          .and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString()))
           .body("title", equalTo(SUCC_TITLE_DELEG_EMAILS))
           .body("results.delegateEmails", containsInAnyOrder(delegateAliceEmail, delegateBobEmail));
@@ -2556,7 +2550,6 @@ public class DelegationsIT {
           .get("/delegations/emails")
           .then()
           .statusCode(200)
-          .and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString()))
           .body("title", equalTo(SUCC_TITLE_DELEG_EMAILS))
           .body("results.delegateEmails", hasSize(0));
@@ -2568,7 +2561,6 @@ public class DelegationsIT {
           .get("/delegations/emails")
           .then()
           .statusCode(200)
-          .and()
           .body("type", equalTo(Urn.URN_SUCCESS.toString()))
           .body("title", equalTo(SUCC_TITLE_DELEG_EMAILS))
           .body("results.delegateEmails", containsInAnyOrder(delegateAliceEmail));
