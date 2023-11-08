@@ -1,35 +1,18 @@
 package iudx.aaa.server.apiserver;
 
-import java.util.UUID;
-import javax.annotation.Nullable;
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
-import static iudx.aaa.server.apiserver.util.Constants.*;
 
+/** Vert.x data object for the create token API. */
 @DataObject(generateConverter = true)
-@JsonIgnoreProperties(ignoreUnknown = true)
-//@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class RequestToken {
 
-  @JsonAlias({"clientId"})
-  private UUID clientId = UUID.fromString(NIL_UUID);
+  private Roles role;
 
-  @JsonAlias("role")
-  private String role;
+  private ItemType itemType;
 
-  @JsonAlias("itemType")
-  private String itemType;
-
-  @JsonAlias("itemId")
   private String itemId;
 
-  @JsonAlias("context")
   private JsonObject context = new JsonObject();
 
   public JsonObject toJson() {
@@ -39,32 +22,26 @@ public class RequestToken {
   }
 
   public RequestToken(JsonObject request) {
+    request.put("role", request.getString("role").toUpperCase());
+    request.put("itemType", request.getString("itemType").toUpperCase());
     RequestTokenConverter.fromJson(request, this);
   }
 
   public RequestToken() {}
 
-  public String getClientId() {
-    return clientId.toString();
-  }
-
-  public void setClientId(String clientId) {
-    this.clientId = UUID.fromString(clientId);
-  }
-
-  public String getRole() {
+  public Roles getRole() {
     return role;
   }
 
-  public void setRole(String role) {
+  public void setRole(Roles role) {
     this.role = role;
   }
 
-  public String getItemType() {
+  public ItemType getItemType() {
     return itemType;
   }
 
-  public void setItemType(String itemType) {
+  public void setItemType(ItemType itemType) {
     this.itemType = itemType;
   }
 
@@ -73,7 +50,7 @@ public class RequestToken {
   }
 
   public void setItemId(String itemId) {
-    this.itemId = itemId;
+    this.itemId = itemId.toLowerCase();
   }
 
   public JsonObject getContext() {
@@ -83,5 +60,4 @@ public class RequestToken {
   public void setContext(JsonObject context) {
     this.context = context;
   }
-
 }

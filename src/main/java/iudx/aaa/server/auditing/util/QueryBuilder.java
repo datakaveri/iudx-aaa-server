@@ -31,6 +31,7 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/** Class to help building queries to insert data to or read data from the auditing database. */
 public class QueryBuilder {
 
   private static final Logger LOGGER = LogManager.getLogger(QueryBuilder.class);
@@ -52,12 +53,12 @@ public class QueryBuilder {
     ZonedDateTime zst = ZonedDateTime.now();
     long time = getEpochTime(zst);
     String userId = request.getString(USER_ID);
-    String databaseTableName= request.getString(DATABASE_TABLE_NAME);
+    String databaseTableName = request.getString(DATABASE_TABLE_NAME);
 
     StringBuilder query =
         new StringBuilder(
             WRITE_QUERY
-                .replace("$0",databaseTableName)
+                .replace("$0", databaseTableName)
                 .replace("$1", primaryKey)
                 .replace("$2", body)
                 .replace("$3", endPoint)
@@ -81,7 +82,7 @@ public class QueryBuilder {
     String endTime = request.getString(END_TIME);
     String method = request.getString(METHOD);
     String endPoint = request.getString(ENDPOINT);
-    String databaseTableName= request.getString(DATABASE_TABLE_NAME);
+    String databaseTableName = request.getString(DATABASE_TABLE_NAME);
 
     long fromTime = 0;
     long toTime = 0;
@@ -132,7 +133,8 @@ public class QueryBuilder {
 
     LOGGER.debug("Epoch fromTime: " + fromTime);
     LOGGER.debug("Epoch toTime: " + toTime);
-    StringBuilder userIdQuery = new StringBuilder(READ_QUERY.replace("$0",databaseTableName).replace("$1", userId));
+    StringBuilder userIdQuery =
+        new StringBuilder(READ_QUERY.replace("$0", databaseTableName).replace("$1", userId));
     LOGGER.debug("Info: QUERY " + userIdQuery);
 
     if (request.containsKey(START_TIME) && request.containsKey(END_TIME)) {

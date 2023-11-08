@@ -1,44 +1,33 @@
 package iudx.aaa.server.registration;
 
-import static iudx.aaa.server.apiserver.util.Urn.*;
-import static iudx.aaa.server.registration.Constants.CONFIG_AUTH_URL;
+import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_INPUT;
+import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
+import static iudx.aaa.server.apiserver.util.Urn.URN_SUCCESS;
+import static iudx.aaa.server.registration.Constants.CONFIG_COS_URL;
 import static iudx.aaa.server.registration.Constants.CONFIG_OMITTED_SERVERS;
-import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_USER_PROFILE;
-import static iudx.aaa.server.registration.Constants.ERR_DETAIL_SEARCH_USR_INVALID_ROLE;
+import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NOT_TRUSTEE;
 import static iudx.aaa.server.registration.Constants.ERR_DETAIL_USER_NOT_FOUND;
-import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_USER_PROFILE;
-import static iudx.aaa.server.registration.Constants.ERR_TITLE_SEARCH_USR_INVALID_ROLE;
+import static iudx.aaa.server.registration.Constants.ERR_TITLE_NOT_TRUSTEE;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_USER_NOT_FOUND;
-import static iudx.aaa.server.registration.Constants.RESP_ORG;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_USER_FOUND;
-import static iudx.aaa.server.policy.Constants.NO_AUTH_POLICY;
-import static iudx.aaa.server.policy.Constants.NO_AUTH_ADMIN_POLICY;
-import static iudx.aaa.server.registration.Utils.SQL_CREATE_ORG;
-import static iudx.aaa.server.registration.Utils.SQL_DELETE_ORG;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
-import io.vertx.sqlclient.Tuple;
 import iudx.aaa.server.apiserver.RoleStatus;
 import iudx.aaa.server.apiserver.Roles;
 import iudx.aaa.server.apiserver.User;
 import iudx.aaa.server.apiserver.User.UserBuilder;
-import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.configuration.Configuration;
-import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.token.TokenService;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -52,6 +41,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 
+/** Unit tests for searching for user by trustee. */
 @ExtendWith(VertxExtension.class)
 public class SearchUserTest {
   private static Logger LOGGER = LogManager.getLogger(SearchUserTest.class);
@@ -74,20 +64,43 @@ public class SearchUserTest {
 
   private static KcAdmin kc = Mockito.mock(KcAdmin.class);
   private static TokenService tokenService = Mockito.mock(TokenService.class);
-  private static PolicyService policyService = Mockito.mock(PolicyService.class);
   private static JsonObject options = new JsonObject();
-  
-  private static final String UUID_REGEX =
-      "^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$";
 
-  static String name = RandomStringUtils.randomAlphabetic(10).toLowerCase();
-  static String url = name + ".com";
-  static Promise<UUID> orgId;
+  private static final String DUMMY_SERVER =
+      "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
 
-  static Future<JsonObject> providerDeleg;
-  static Future<JsonObject> consumerAdmin;
-  static Future<JsonObject> trustee;
-  static Future<UUID> orgIdFut;
+  private static final String DUMMY_SERVER_THAT_NO_ONE_HAS_ROLES_FOR =
+      "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
+
+  // no need to register both APD and trustee user
+  private static final String DUMMY_APD =
+      "dummy" + RandomStringUtils.randomAlphabetic(5).toLowerCase() + ".iudx.io";
+
+  private static User trusteeUser =
+      new UserBuilder()
+          .userId(UUID.randomUUID())
+          .roles(List.of(Roles.TRUSTEE))
+          .rolesToRsMapping(Map.of(Roles.TRUSTEE.toString(), new JsonArray(List.of(DUMMY_APD))))
+          .name("aa", "bb")
+          .build();
+
+  private static User providerUser =
+      new UserBuilder()
+          .userId(UUID.randomUUID())
+          .roles(List.of(Roles.PROVIDER))
+          .rolesToRsMapping(Map.of(Roles.PROVIDER.toString(), new JsonArray(List.of(DUMMY_SERVER))))
+          .name("aa", "bb")
+          .build();
+
+  private static User consumerUser =
+      new UserBuilder()
+          .userId(UUID.randomUUID())
+          .roles(List.of(Roles.CONSUMER))
+          .rolesToRsMapping(Map.of(Roles.CONSUMER.toString(), new JsonArray(List.of(DUMMY_SERVER))))
+          .name("aa", "bb")
+          .build();
+
+  private static Utils utils;
 
   @BeforeAll
   @DisplayName("Deploying Verticle")
@@ -111,9 +124,14 @@ public class SearchUserTest {
     if (connectOptions == null) {
       Map<String, String> schemaProp = Map.of("search_path", databaseSchema);
 
-      connectOptions = new PgConnectOptions().setPort(databasePort).setHost(databaseIP)
-          .setDatabase(databaseName).setUser(databaseUserName).setPassword(databasePassword)
-          .setProperties(schemaProp);
+      connectOptions =
+          new PgConnectOptions()
+              .setPort(databasePort)
+              .setHost(databaseIP)
+              .setDatabase(databaseName)
+              .setUser(databaseUserName)
+              .setPassword(databasePassword)
+              .setProperties(schemaProp);
     }
 
     if (poolOptions == null) {
@@ -122,428 +140,600 @@ public class SearchUserTest {
 
     pool = PgPool.pool(vertx, connectOptions, poolOptions);
 
-    options.put(CONFIG_AUTH_URL, dbConfig.getString(CONFIG_AUTH_URL)).put(CONFIG_OMITTED_SERVERS,
-        dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS));
-    /*
-     * create fake organization, and create 3 mock users. One user has an organization + phone
-     * number other does not
-     */
+    options
+        .put(CONFIG_COS_URL, dbConfig.getString(CONFIG_COS_URL))
+        .put(CONFIG_OMITTED_SERVERS, dbConfig.getJsonArray(CONFIG_OMITTED_SERVERS));
 
-    orgIdFut = pool.withConnection(conn -> conn.preparedQuery(SQL_CREATE_ORG)
-        .execute(Tuple.of(name, url)).map(row -> row.iterator().next().getUUID("id")));
+    utils = new Utils(pool);
 
-    Map<Roles, RoleStatus> rolesA = new HashMap<Roles, RoleStatus>();
-    rolesA.put(Roles.DELEGATE, RoleStatus.APPROVED);
-    rolesA.put(Roles.PROVIDER, RoleStatus.APPROVED);
+    Future<Void> create =
+        utils
+            .createFakeResourceServer(
+                DUMMY_SERVER, new UserBuilder().userId(UUID.randomUUID()).build())
+            .compose(
+                res ->
+                    utils.createFakeResourceServer(
+                        DUMMY_SERVER_THAT_NO_ONE_HAS_ROLES_FOR,
+                        new UserBuilder().userId(UUID.randomUUID()).build()))
+            .compose(res -> utils.createFakeUser(consumerUser, false, false))
+            .compose(res -> utils.createFakeUser(providerUser, false, false));
 
-    Map<Roles, RoleStatus> rolesB = new HashMap<Roles, RoleStatus>();
-    rolesB.put(Roles.CONSUMER, RoleStatus.APPROVED);
-    rolesB.put(Roles.ADMIN, RoleStatus.APPROVED);
-
-    Map<Roles, RoleStatus> rolesC = new HashMap<Roles, RoleStatus>();
-    rolesC.put(Roles.TRUSTEE, RoleStatus.APPROVED);
-
-    providerDeleg =
-        orgIdFut.compose(id -> Utils.createFakeUser(pool, id.toString(), url, rolesA, true));
-    consumerAdmin = Utils.createFakeUser(pool, Constants.NIL_UUID, "", rolesB, false);
-    trustee = Utils.createFakeUser(pool, Constants.NIL_UUID, "", rolesC, false);
-
-    CompositeFuture.all(providerDeleg, consumerAdmin, trustee).onSuccess(res -> {
-      registrationService =
-          new RegistrationServiceImpl(pool, kc, tokenService, policyService, options);
-      testContext.completeNow();
-    }).onFailure(err -> testContext.failNow(err.getMessage()));
+    create
+        .onSuccess(
+            res -> {
+              registrationService = new RegistrationServiceImpl(pool, kc, tokenService, options);
+              testContext.completeNow();
+            })
+        .onFailure(err -> testContext.failNow(err.getMessage()));
   }
 
   @AfterAll
   public static void finish(VertxTestContext testContext) {
     LOGGER.info("Finishing and resetting DB");
 
-    Utils
-        .deleteFakeUser(pool,
-            List.of(consumerAdmin.result(), providerDeleg.result(), trustee.result()))
-        .compose(success -> pool.withConnection(
-            conn -> conn.preparedQuery(SQL_DELETE_ORG).execute(Tuple.of(orgIdFut.result()))))
-        .onComplete(x -> {
-          if (x.failed()) {
-            LOGGER.warn(x.cause().getMessage());
-          }
-          vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
-        });
+    utils
+        .deleteFakeResourceServer()
+        .compose(res -> utils.deleteFakeUser())
+        .onComplete(
+            x -> {
+              if (x.failed()) {
+                LOGGER.warn(x.cause().getMessage());
+              }
+              vertxObj.close(testContext.succeeding(response -> testContext.completeNow()));
+            });
   }
 
   @Test
-  @DisplayName("Test user not registered")
-  void userDoesNotExist(VertxTestContext testContext) {
+  @DisplayName("Test user does not have trustee role")
+  void userDoesNothaveTrusteeRole(VertxTestContext testContext) {
 
-    JsonObject userJson = providerDeleg.result();
-
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
-
-    Mockito.when(kc.getEmailId(any()))
-        .thenReturn(Future.succeededFuture(userJson.getString("email")));
-
-    registrationService.listUser(user, new JsonObject(), new JsonObject(),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(404, response.getInteger("status"));
-          assertEquals(ERR_TITLE_NO_USER_PROFILE, response.getString("title"));
-          assertEquals(ERR_DETAIL_NO_USER_PROFILE, response.getString("detail"));
-          testContext.completeNow();
-        })));
+    registrationService.searchUser(
+        consumerUser,
+        UUID.randomUUID().toString(),
+        Roles.CONSUMER,
+        DUMMY_SERVER,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(401, response.getInteger("status"));
+                      assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                      assertEquals(ERR_TITLE_NOT_TRUSTEE, response.getString("title"));
+                      assertEquals(ERR_DETAIL_NOT_TRUSTEE, response.getString("detail"));
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
-  @DisplayName("Test search for the consumer as provider")
-  void searchConsumerAsProvider(VertxTestContext testContext) {
-    JsonObject userJson = providerDeleg.result();
-    List<Roles> roles = List.of(Roles.DELEGATE, Roles.PROVIDER);
+  @DisplayName("Search by email - Successful search for consumer")
+  void searchByEmailForConsumerSuccess(VertxTestContext testContext) {
 
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(roles)
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+    String consumerUserEmail = utils.getDetails(consumerUser).email;
 
-    JsonObject consumerUser = consumerAdmin.result();
-    JsonObject kcResult = new JsonObject().put("keycloakId", consumerUser.getString("keycloakId"))
-        .put("email", consumerUser.getString("email"))
-        .put("name", new JsonObject().put("firstName", consumerUser.getString("firstName"))
-            .put("lastName", consumerUser.getString("lastName")));
+    Mockito.when(kc.findUserByEmail(consumerUserEmail))
+        .thenReturn(Future.succeededFuture(utils.getKcAdminJson(consumerUser)));
 
-    Mockito.when(kc.findUserByEmail(consumerUser.getString("email")))
-        .thenReturn(Future.succeededFuture(kcResult));
+    registrationService.searchUser(
+        trusteeUser,
+        consumerUserEmail,
+        Roles.CONSUMER,
+        DUMMY_SERVER,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(200, response.getInteger("status"));
+                      assertEquals(SUCC_TITLE_USER_FOUND, response.getString("title"));
+                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-    JsonObject searchUser = new JsonObject().put("email", consumerUser.getString("email"))
-        .put("role", Roles.CONSUMER.toString().toLowerCase());
+                      JsonObject result = response.getJsonObject("results");
 
-    registrationService.listUser(user, searchUser, new JsonObject(),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(200, response.getInteger("status"));
-          assertEquals(SUCC_TITLE_USER_FOUND, response.getString("title"));
-          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                      JsonObject name = result.getJsonObject("name");
+                      assertEquals(
+                          name.getString("firstName"), consumerUser.getName().get("firstName"));
+                      assertEquals(
+                          name.getString("lastName"), consumerUser.getName().get("lastName"));
 
-          JsonObject result = response.getJsonObject("results");
+                      assertEquals(result.getString("userId"), consumerUser.getUserId());
+                      assertEquals(result.getString("email"), consumerUserEmail);
 
-          JsonObject name = result.getJsonObject("name");
-          assertEquals(name.getString("firstName"), consumerUser.getString("firstName"));
-          assertEquals(name.getString("lastName"), consumerUser.getString("lastName"));
-
-          assertTrue(result.getJsonObject(RESP_ORG) == null);
-          assertEquals(result.getString("userId"), consumerUser.getString("userId"));
-
-          testContext.completeNow();
-        })));
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
-  @DisplayName("Test search for the delegate as admin")
-  void searchDelegateAsAdmin(VertxTestContext testContext) {
-    JsonObject userJson = consumerAdmin.result();
-    List<Roles> roles = List.of(Roles.CONSUMER, Roles.ADMIN);
+  @DisplayName("Search by email - Successful search for provider")
+  void searchByEmailForProviderSuccess(VertxTestContext testContext) {
 
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(roles)
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+    String providerUserEmail = utils.getDetails(providerUser).email;
 
-    JsonObject delegateUser = providerDeleg.result();
-    JsonObject kcResult = new JsonObject().put("keycloakId", delegateUser.getString("keycloakId"))
-        .put("email", delegateUser.getString("email"))
-        .put("name", new JsonObject().put("firstName", delegateUser.getString("firstName"))
-            .put("lastName", delegateUser.getString("lastName")));
+    Mockito.when(kc.findUserByEmail(providerUserEmail))
+        .thenReturn(Future.succeededFuture(utils.getKcAdminJson(providerUser)));
 
-    Mockito.when(kc.findUserByEmail(delegateUser.getString("email")))
-        .thenReturn(Future.succeededFuture(kcResult));
+    registrationService.searchUser(
+        trusteeUser,
+        providerUserEmail,
+        Roles.PROVIDER,
+        DUMMY_SERVER,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(200, response.getInteger("status"));
+                      assertEquals(SUCC_TITLE_USER_FOUND, response.getString("title"));
+                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-    JsonObject searchUser = new JsonObject().put("email", delegateUser.getString("email"))
-        .put("role", Roles.DELEGATE.toString().toLowerCase());
+                      JsonObject result = response.getJsonObject("results");
 
-    registrationService.listUser(user, searchUser, new JsonObject(),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(200, response.getInteger("status"));
-          assertEquals(SUCC_TITLE_USER_FOUND, response.getString("title"));
-          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                      JsonObject name = result.getJsonObject("name");
+                      assertEquals(
+                          name.getString("firstName"), providerUser.getName().get("firstName"));
+                      assertEquals(
+                          name.getString("lastName"), providerUser.getName().get("lastName"));
 
-          JsonObject result = response.getJsonObject("results");
+                      assertEquals(result.getString("userId"), providerUser.getUserId());
+                      assertEquals(result.getString("email"), providerUserEmail);
 
-          JsonObject name = result.getJsonObject("name");
-          assertEquals(name.getString("firstName"), delegateUser.getString("firstName"));
-          assertEquals(name.getString("lastName"), delegateUser.getString("lastName"));
-
-          JsonObject org = result.getJsonObject(RESP_ORG);
-          assertEquals(org.getString("url"), delegateUser.getString("url"));
-          assertEquals(result.getString("userId"), delegateUser.getString("userId"));
-
-          testContext.completeNow();
-        })));
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
-  @DisplayName("Test search for the consumer as auth delegate")
-  void searchConsumerAsDelegate(VertxTestContext testContext) {
-    JsonObject userJson = providerDeleg.result();
+  @DisplayName("Search by email - User exists on Keycloak, but does not have role")
+  void searchByEmailUserDoesNotHaveRole(VertxTestContext testContext) {
 
-    /*
-     * NOTE We explicitly omit the Provider role from the User object to tes out the auth Delegate
-     * flow. Also note that the user is not really an auth delegate. We simply add the
-     * authDelegateDetails object with a providerId (the same user's ID itself since they have both
-     * provider and delegate roles) in it as we do not check the content of the object in the
-     * method, we only see if it's not empty and if user has delegate role.
-     */
-    List<Roles> roles = List.of(Roles.DELEGATE);
+    String providerUserEmail = utils.getDetails(providerUser).email;
 
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(roles)
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+    Mockito.when(kc.findUserByEmail(providerUserEmail))
+        .thenReturn(Future.succeededFuture(utils.getKcAdminJson(providerUser)));
 
-    JsonObject consumerUser = consumerAdmin.result();
-    JsonObject kcResult = new JsonObject().put("keycloakId", consumerUser.getString("keycloakId"))
-        .put("email", consumerUser.getString("email"))
-        .put("name", new JsonObject().put("firstName", consumerUser.getString("firstName"))
-            .put("lastName", consumerUser.getString("lastName")));
-
-    Mockito.when(kc.findUserByEmail(any())).thenReturn(Future.succeededFuture(kcResult));
-
-    JsonObject searchUser = new JsonObject().put("email", consumerUser.getString("email"))
-        .put("role", Roles.CONSUMER.toString().toLowerCase());
-
-    JsonObject authDelegateDetails =
-        new JsonObject().put("providerId", userJson.getString("userId"));
-
-    registrationService.listUser(user, searchUser, authDelegateDetails,
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(200, response.getInteger("status"));
-          assertEquals(SUCC_TITLE_USER_FOUND, response.getString("title"));
-          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-
-          JsonObject result = response.getJsonObject("results");
-
-          JsonObject name = result.getJsonObject("name");
-          assertEquals(name.getString("firstName"), consumerUser.getString("firstName"));
-          assertEquals(name.getString("lastName"), consumerUser.getString("lastName"));
-
-          assertTrue(result.getJsonObject(RESP_ORG) == null);
-          assertEquals(result.getString("userId"), consumerUser.getString("userId"));
-
-          testContext.completeNow();
-        })));
+    registrationService.searchUser(
+        trusteeUser,
+        providerUserEmail,
+        Roles.CONSUMER,
+        DUMMY_SERVER,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(404, response.getInteger("status"));
+                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
-  @DisplayName("Test search as not auth delegate")
-  void searchNotAuthDeleg(VertxTestContext testContext) {
-    JsonObject userJson = providerDeleg.result();
-    /* We omit provider role again. */
+  @DisplayName("Search by email - User exists on Keycloak but not registered on COS")
+  void searchByEmailUserExistOnKeycloakNotRegdOnCos(VertxTestContext testContext) {
 
-    List<Roles> roles = List.of(Roles.DELEGATE);
+    String randUserEmail = RandomStringUtils.randomAlphabetic(10) + "@gmail.com";
 
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(roles)
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+    Mockito.when(kc.findUserByEmail(randUserEmail))
+        .thenReturn(
+            Future.succeededFuture(
+                new JsonObject()
+                    .put("keycloakId", UUID.randomUUID().toString())
+                    .put("email", randUserEmail)
+                    .put(
+                        "name",
+                        new JsonObject().put("firstName", "rand").put("lastName", "rand"))));
 
-    JsonObject consumerUser = consumerAdmin.result();
-    JsonObject searchUser = new JsonObject().put("email", consumerUser.getString("email"))
-        .put("role", Roles.CONSUMER.toString().toLowerCase());
-
-    registrationService.listUser(user, searchUser, new JsonObject(),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(401, response.getInteger("status"));
-          assertEquals(ERR_TITLE_SEARCH_USR_INVALID_ROLE, response.getString("title"));
-          assertEquals(ERR_DETAIL_SEARCH_USR_INVALID_ROLE, response.getString("detail"));
-          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-          testContext.completeNow();
-        })));
+    registrationService.searchUser(
+        trusteeUser,
+        randUserEmail,
+        Roles.CONSUMER,
+        DUMMY_SERVER,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(404, response.getInteger("status"));
+                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
-  @DisplayName("Test search as consumer")
-  void searchAsConsumer(VertxTestContext testContext) {
+  @DisplayName("Search by email - User exists on Keycloak, has role but not for requested RS")
+  void searchByEmailUserDoesNotHaveRoleForRs(VertxTestContext testContext) {
 
-    JsonObject userJson = consumerAdmin.result();
-    /* We omit the admin role. */
-    List<Roles> roles = List.of(Roles.CONSUMER);
+    String providerUserEmail = utils.getDetails(providerUser).email;
 
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(roles)
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+    Mockito.when(kc.findUserByEmail(providerUserEmail))
+        .thenReturn(Future.succeededFuture(utils.getKcAdminJson(providerUser)));
 
-    JsonObject delegateUser = providerDeleg.result();
-    JsonObject searchUser = new JsonObject().put("email", delegateUser.getString("email"))
-        .put("role", Roles.DELEGATE.toString().toLowerCase());
-
-    registrationService.listUser(user, searchUser, new JsonObject(),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(401, response.getInteger("status"));
-          assertEquals(ERR_TITLE_SEARCH_USR_INVALID_ROLE, response.getString("title"));
-          assertEquals(ERR_DETAIL_SEARCH_USR_INVALID_ROLE, response.getString("detail"));
-          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-          testContext.completeNow();
-        })));
+    registrationService.searchUser(
+        trusteeUser,
+        providerUserEmail,
+        Roles.PROVIDER,
+        DUMMY_SERVER_THAT_NO_ONE_HAS_ROLES_FOR,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(404, response.getInteger("status"));
+                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
-  @DisplayName("Test search - user not on keycloak")
-  void searchNotOnKc(VertxTestContext testContext) {
-    JsonObject userJson = providerDeleg.result();
-    List<Roles> roles = List.of(Roles.DELEGATE, Roles.PROVIDER);
+  @DisplayName("Search by email - User exists on Keycloak, but RS does not exist")
+  void searchByEmailUserRsDoesNotExist(VertxTestContext testContext) {
 
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(roles)
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+    String providerUserEmail = utils.getDetails(providerUser).email;
 
-    String email = "email@email.com";
-    Mockito.when(kc.findUserByEmail(email)).thenReturn(Future.succeededFuture(new JsonObject()));
+    Mockito.when(kc.findUserByEmail(providerUserEmail))
+        .thenReturn(Future.succeededFuture(utils.getKcAdminJson(providerUser)));
 
-    JsonObject searchUser =
-        new JsonObject().put("email", email).put("role", Roles.CONSUMER.toString().toLowerCase());
-
-    registrationService.listUser(user, searchUser, new JsonObject(),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(404, response.getInteger("status"));
-          assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
-          assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
-          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-          testContext.completeNow();
-        })));
+    registrationService.searchUser(
+        trusteeUser,
+        providerUserEmail,
+        Roles.PROVIDER,
+        RandomStringUtils.randomAlphabetic(10) + ".com",
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(404, response.getInteger("status"));
+                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
-  @DisplayName("Test search - user does not have a user profile")
-  void searchNoUserProfile(VertxTestContext testContext) {
-    JsonObject userJson = providerDeleg.result();
-    List<Roles> roles = List.of(Roles.DELEGATE, Roles.PROVIDER);
+  @DisplayName("Search by email - User does not exist on Keycloak")
+  void searchByEmailUserNotOnKeycloak(VertxTestContext testContext) {
 
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(roles)
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+    String providerUserEmail = utils.getDetails(providerUser).email;
 
-    String email = "email@email.com";
-    JsonObject kcResult = new JsonObject().put("keycloakId", UUID.randomUUID().toString())
-        .put("email", email).put("name",
-            new JsonObject().put("firstName", RandomStringUtils.randomAlphabetic(10).toLowerCase())
-                .put("lastName", RandomStringUtils.randomAlphabetic(10).toLowerCase()));
+    Mockito.when(kc.findUserByEmail(providerUserEmail))
+        .thenReturn(Future.succeededFuture(new JsonObject()));
 
-    Mockito.when(kc.findUserByEmail(email)).thenReturn(Future.succeededFuture(kcResult));
-
-    JsonObject searchUser =
-        new JsonObject().put("email", email).put("role", Roles.CONSUMER.toString().toLowerCase());
-
-    registrationService.listUser(user, searchUser, new JsonObject(),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(404, response.getInteger("status"));
-          assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
-          assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
-          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-          testContext.completeNow();
-        })));
+    registrationService.searchUser(
+        trusteeUser,
+        providerUserEmail,
+        Roles.PROVIDER,
+        DUMMY_SERVER,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(404, response.getInteger("status"));
+                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
-  @DisplayName("Test search - user does not have requested role")
-  void searchNoRole(VertxTestContext testContext) {
-    JsonObject userJson = providerDeleg.result();
-    List<Roles> roles = List.of(Roles.DELEGATE, Roles.PROVIDER);
+  @DisplayName("Search by UUID - Successful search for consumer")
+  void searchByUuidForConsumerSuccess(VertxTestContext testContext) {
 
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(roles)
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+    String consumerUserId = consumerUser.getUserId();
 
-    JsonObject consumerUser = consumerAdmin.result();
-    JsonObject kcResult = new JsonObject().put("keycloakId", consumerUser.getString("keycloakId"))
-        .put("email", consumerUser.getString("email"))
-        .put("name", new JsonObject().put("firstName", consumerUser.getString("firstName"))
-            .put("lastName", consumerUser.getString("lastName")));
+    Mockito.when(kc.getDetails(List.of(consumerUserId)))
+        .thenReturn(
+            Future.succeededFuture(Map.of(consumerUserId, utils.getKcAdminJson(consumerUser))));
 
-    Mockito.when(kc.findUserByEmail(consumerUser.getString("email")))
-        .thenReturn(Future.succeededFuture(kcResult));
+    registrationService.searchUser(
+        trusteeUser,
+        consumerUserId,
+        Roles.CONSUMER,
+        DUMMY_SERVER,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(200, response.getInteger("status"));
+                      assertEquals(SUCC_TITLE_USER_FOUND, response.getString("title"));
+                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-    JsonObject searchUser = new JsonObject().put("email", consumerUser.getString("email"))
-        .put("role", Roles.DELEGATE.toString().toLowerCase());
+                      JsonObject result = response.getJsonObject("results");
 
-    registrationService.listUser(user, searchUser, new JsonObject(),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(404, response.getInteger("status"));
-          assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
-          assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
-          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-          testContext.completeNow();
-        })));
+                      JsonObject name = result.getJsonObject("name");
+                      assertEquals(
+                          name.getString("firstName"), consumerUser.getName().get("firstName"));
+                      assertEquals(
+                          name.getString("lastName"), consumerUser.getName().get("lastName"));
+
+                      assertEquals(result.getString("userId"), consumerUserId);
+                      assertEquals(result.getString("email"), utils.getDetails(consumerUser).email);
+
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
-  @DisplayName("Test search - trustee does not have auth admin policy")
-  void searchTrusteeNoAuthAdminPolicy(VertxTestContext testContext) {
-    JsonObject userJson = trustee.result();
-    List<Roles> roles = List.of(Roles.TRUSTEE);
+  @DisplayName("Search by UUID - Successful search for provider")
+  void searchByUuidForProviderSuccess(VertxTestContext testContext) {
 
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(roles)
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+    String providerUserId = providerUser.getUserId();
 
-    Mockito.doAnswer(i -> {
-      Promise<Void> p = i.getArgument(1);
-      p.fail(new ComposeException(403, URN_INVALID_INPUT, NO_AUTH_POLICY, NO_AUTH_ADMIN_POLICY));
-      return i.getMock();
-    }).when(policyService).checkAuthPolicy(Mockito.eq(userJson.getString("userId")), any());
+    Mockito.when(kc.getDetails(List.of(providerUserId)))
+        .thenReturn(
+            Future.succeededFuture(Map.of(providerUserId, utils.getKcAdminJson(providerUser))));
 
-    JsonObject consumerUser = consumerAdmin.result();
+    registrationService.searchUser(
+        trusteeUser,
+        providerUserId,
+        Roles.PROVIDER,
+        DUMMY_SERVER,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(200, response.getInteger("status"));
+                      assertEquals(SUCC_TITLE_USER_FOUND, response.getString("title"));
+                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-    JsonObject searchUser = new JsonObject().put("email", consumerUser.getString("email"))
-        .put("role", Roles.CONSUMER.toString().toLowerCase());
-    
-    registrationService.listUser(user, searchUser, new JsonObject(),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(403, response.getInteger("status"));
-          assertEquals(NO_AUTH_POLICY, response.getString("title"));
-          assertEquals(NO_AUTH_ADMIN_POLICY, response.getString("detail"));
-          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-          testContext.completeNow();
-        })));
+                      JsonObject result = response.getJsonObject("results");
+
+                      JsonObject name = result.getJsonObject("name");
+                      assertEquals(
+                          name.getString("firstName"), providerUser.getName().get("firstName"));
+                      assertEquals(
+                          name.getString("lastName"), providerUser.getName().get("lastName"));
+
+                      assertEquals(result.getString("userId"), providerUserId);
+                      assertEquals(result.getString("email"), utils.getDetails(providerUser).email);
+
+                      testContext.completeNow();
+                    })));
   }
 
   @Test
-  @DisplayName("Test search - trustee finds consumer successfully")
-  void searchTrusteeFindConsumer(VertxTestContext testContext) {
-    JsonObject userJson = trustee.result();
-    List<Roles> roles = List.of(Roles.TRUSTEE);
+  @DisplayName("Search by UUID - User exists on Keycloak but not registered on COS")
+  void searchByUuidUserExistOnKeycloakNotRegdOnCos(VertxTestContext testContext) {
 
-    User user = new UserBuilder().keycloakId(userJson.getString("keycloakId"))
-        .userId(userJson.getString("userId")).roles(roles)
-        .name(userJson.getString("firstName"), userJson.getString("lastName")).build();
+    String randUserId = UUID.randomUUID().toString();
 
-    JsonObject consumerUser = consumerAdmin.result();
+    Mockito.when(kc.getDetails(List.of(randUserId)))
+        .thenReturn(
+            Future.succeededFuture(
+                Map.of(
+                    randUserId,
+                    new JsonObject()
+                        .put("keycloakId", randUserId)
+                        .put("email", RandomStringUtils.randomAlphabetic(10) + "@gmail.com")
+                        .put(
+                            "name",
+                            new JsonObject().put("firstName", "rand").put("lastName", "rand")))));
 
-    Mockito.doAnswer(i -> {
-      Promise<Void> p = i.getArgument(1);
-      p.complete();
-      return i.getMock();
-    }).when(policyService).checkAuthPolicy(Mockito.eq(userJson.getString("userId")), any());
+    registrationService.searchUser(
+        trusteeUser,
+        randUserId,
+        Roles.CONSUMER,
+        DUMMY_SERVER,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(404, response.getInteger("status"));
+                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                      testContext.completeNow();
+                    })));
+  }
 
-    JsonObject kcResult = new JsonObject().put("keycloakId", consumerUser.getString("keycloakId"))
-        .put("email", consumerUser.getString("email"))
-        .put("name", new JsonObject().put("firstName", consumerUser.getString("firstName"))
-            .put("lastName", consumerUser.getString("lastName")));
+  @Test
+  @DisplayName("Search by UUID - User exists on Keycloak, but does not have role")
+  void searchByUuidUserDoesNotHaveRole(VertxTestContext testContext) {
 
-    Mockito.when(kc.findUserByEmail(consumerUser.getString("email")))
-        .thenReturn(Future.succeededFuture(kcResult));
+    String providerUserId = providerUser.getUserId();
 
-    JsonObject searchUser = new JsonObject().put("email", consumerUser.getString("email"))
-        .put("role", Roles.CONSUMER.toString().toLowerCase());
-    
-    registrationService.listUser(user, searchUser, new JsonObject(),
-        testContext.succeeding(response -> testContext.verify(() -> {
-          assertEquals(200, response.getInteger("status"));
-          assertEquals(SUCC_TITLE_USER_FOUND, response.getString("title"));
-          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+    Mockito.when(kc.getDetails(List.of(providerUserId)))
+        .thenReturn(
+            Future.succeededFuture(Map.of(providerUserId, utils.getKcAdminJson(providerUser))));
 
-          JsonObject result = response.getJsonObject("results");
+    registrationService.searchUser(
+        trusteeUser,
+        providerUserId,
+        Roles.CONSUMER,
+        DUMMY_SERVER,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(404, response.getInteger("status"));
+                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                      testContext.completeNow();
+                    })));
+  }
 
-          JsonObject name = result.getJsonObject("name");
-          assertEquals(name.getString("firstName"), consumerUser.getString("firstName"));
-          assertEquals(name.getString("lastName"), consumerUser.getString("lastName"));
+  @Test
+  @DisplayName("Search by UUID - User exists on Keycloak, has role but not for requested RS")
+  void searchByUuidUserDoesNotHaveRoleForRs(VertxTestContext testContext) {
 
-          assertTrue(result.getJsonObject(RESP_ORG) == null);
-          assertEquals(result.getString("userId"), consumerUser.getString("userId"));
+    String providerUserId = providerUser.getUserId();
 
-          testContext.completeNow();
-        })));
+    Mockito.when(kc.getDetails(List.of(providerUserId)))
+        .thenReturn(
+            Future.succeededFuture(Map.of(providerUserId, utils.getKcAdminJson(providerUser))));
+
+    registrationService.searchUser(
+        trusteeUser,
+        providerUserId,
+        Roles.PROVIDER,
+        DUMMY_SERVER_THAT_NO_ONE_HAS_ROLES_FOR,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(404, response.getInteger("status"));
+                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                      testContext.completeNow();
+                    })));
+  }
+
+  @Test
+  @DisplayName("Search by UUID - User exists on Keycloak, but RS does not exist")
+  void searchByUuidUserRsDoesNotExist(VertxTestContext testContext) {
+
+    String providerUserId = providerUser.getUserId();
+
+    Mockito.when(kc.getDetails(List.of(providerUserId)))
+        .thenReturn(
+            Future.succeededFuture(Map.of(providerUserId, utils.getKcAdminJson(providerUser))));
+
+    registrationService.searchUser(
+        trusteeUser,
+        providerUserId,
+        Roles.PROVIDER,
+        RandomStringUtils.randomAlphabetic(10) + ".com",
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(404, response.getInteger("status"));
+                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                      testContext.completeNow();
+                    })));
+  }
+
+  @Test
+  @DisplayName("Search by UUID - User does not exist on Keycloak")
+  void searchByUuidUserNotOnKeycloak(VertxTestContext testContext) {
+
+    String providerUserId = providerUser.getUserId();
+
+    Mockito.when(kc.getDetails(List.of(providerUserId)))
+        .thenReturn(Future.succeededFuture(Map.of(providerUserId, new JsonObject())));
+
+    registrationService.searchUser(
+        trusteeUser,
+        providerUserId,
+        Roles.PROVIDER,
+        DUMMY_SERVER,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(404, response.getInteger("status"));
+                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                      testContext.completeNow();
+                    })));
+  }
+
+  @Test
+  @DisplayName("When searchString does not match UUID regex, test if email search done by default")
+  void emailSearchDoneIfSearchStringNotUuid(VertxTestContext testContext) {
+
+    String notAUuid = RandomStringUtils.randomAlphanumeric(20);
+
+    // this is called only if the email flow is taken
+    Mockito.when(kc.findUserByEmail(notAUuid)).thenReturn(Future.succeededFuture(new JsonObject()));
+
+    registrationService.searchUser(
+        trusteeUser,
+        notAUuid,
+        Roles.PROVIDER,
+        DUMMY_SERVER,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(404, response.getInteger("status"));
+                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                      testContext.completeNow();
+                    })));
+  }
+
+  @Test
+  @DisplayName("Pending or rejected providers cannot be found")
+  void pendingOrRejectedProvidersCannotBeFound(VertxTestContext testContext) {
+
+    Checkpoint pendingProviderNotFound = testContext.checkpoint();
+    Checkpoint rejectedProviderNotFound = testContext.checkpoint();
+
+    String pendingUserId = UUID.randomUUID().toString();
+    User pendingUser = new UserBuilder().userId(pendingUserId).name("aa", "bb").build();
+
+    utils
+        .createFakeUser(pendingUser, false, false)
+        .compose(
+            res ->
+                utils.addProviderStatusRole(
+                    pendingUser, DUMMY_SERVER, RoleStatus.PENDING, UUID.randomUUID()))
+        .onSuccess(
+            res -> {
+              Mockito.when(kc.getDetails(List.of(pendingUserId)))
+                  .thenReturn(
+                      Future.succeededFuture(
+                          Map.of(pendingUserId, utils.getKcAdminJson(pendingUser))));
+
+              registrationService.searchUser(
+                  trusteeUser,
+                  pendingUserId,
+                  Roles.PROVIDER,
+                  DUMMY_SERVER,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(404, response.getInteger("status"));
+                                assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                                assertEquals(
+                                    ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                                assertEquals(
+                                    URN_INVALID_INPUT.toString(), response.getString("type"));
+                                pendingProviderNotFound.flag();
+                              })));
+            });
+
+    String rejectedUserId = UUID.randomUUID().toString();
+    User rejectedUser = new UserBuilder().userId(rejectedUserId).name("aa", "bb").build();
+
+    utils
+        .createFakeUser(rejectedUser, false, false)
+        .compose(
+            res ->
+                utils.addProviderStatusRole(
+                    rejectedUser, DUMMY_SERVER, RoleStatus.REJECTED, UUID.randomUUID()))
+        .onSuccess(
+            res -> {
+              Mockito.when(kc.getDetails(List.of(rejectedUserId)))
+                  .thenReturn(
+                      Future.succeededFuture(
+                          Map.of(rejectedUserId, utils.getKcAdminJson(pendingUser))));
+
+              registrationService.searchUser(
+                  trusteeUser,
+                  rejectedUserId,
+                  Roles.PROVIDER,
+                  DUMMY_SERVER,
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(404, response.getInteger("status"));
+                                assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                                assertEquals(
+                                    ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                                assertEquals(
+                                    URN_INVALID_INPUT.toString(), response.getString("type"));
+                                rejectedProviderNotFound.flag();
+                              })));
+            });
   }
 }

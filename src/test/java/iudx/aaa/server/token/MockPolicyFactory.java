@@ -1,20 +1,23 @@
 package iudx.aaa.server.token;
 
-import org.mockito.Mockito;
-import org.mockito.stubbing.Answer;
+import static iudx.aaa.server.apiserver.util.Urn.*;
+
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.apiserver.util.ComposeException;
-import static iudx.aaa.server.apiserver.util.Urn.*;
-import java.util.UUID;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.policy.PolicyServiceImpl;
+import java.util.UUID;
+import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 
 /**
- * Mocks, stubs the PolicyService.
- * Implements the verifyPolicy method.
+ * Mocks, stubs the PolicyService. Implements the {@link
+ * PolicyService#verifyResourceAccess(iudx.aaa.server.apiserver.RequestToken,
+ * iudx.aaa.server.apiserver.DelegationInformation, iudx.aaa.server.apiserver.User, Handler)}
+ * method.
  */
 public class MockPolicyFactory {
 
@@ -28,10 +31,14 @@ public class MockPolicyFactory {
     }
 
     asyncResult = Mockito.mock(AsyncResult.class);
-    Mockito.doAnswer((Answer<AsyncResult<JsonObject>>) arguments -> {
-      ((Handler<AsyncResult<JsonObject>>) arguments.getArgument(1)).handle(asyncResult);
-      return null;
-    }).when(policyService).verifyPolicy(Mockito.any(), Mockito.any());
+    Mockito.doAnswer(
+            (Answer<AsyncResult<JsonObject>>)
+                arguments -> {
+                  ((Handler<AsyncResult<JsonObject>>) arguments.getArgument(3)).handle(asyncResult);
+                  return null;
+                })
+        .when(policyService)
+        .verifyResourceAccess(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
   }
 
   public PolicyService getInstance() {
@@ -40,7 +47,7 @@ public class MockPolicyFactory {
 
   /**
    * Response for PolicyService mock.
-   * 
+   *
    * @param status
    */
   public void setResponse(String status) {
@@ -62,14 +69,14 @@ public class MockPolicyFactory {
 
   /**
    * Mock success response of verifyPolicy
-   * 
+   *
    * @param status if it is a valid/apd-interaction call
    * @param item the cat ID of the item
    * @param url the url of the server
    */
   public void setResponse(String status, String itemorApdLink, String url) {
     if ("valid".equals(status)) {
-    JsonObject response = new JsonObject();
+      JsonObject response = new JsonObject();
       response.put("status", "success");
       response.put("cat_id", itemorApdLink);
       response.put("url", url);
@@ -77,9 +84,8 @@ public class MockPolicyFactory {
       Mockito.when(asyncResult.result()).thenReturn(response);
       Mockito.when(asyncResult.failed()).thenReturn(false);
       Mockito.when(asyncResult.succeeded()).thenReturn(true);
-    }
-    else if ("apd-interaction".equals(status)) {
-    JsonObject response = new JsonObject();
+    } else if ("apd-interaction".equals(status)) {
+      JsonObject response = new JsonObject();
       response.put("status", "apd-interaction");
       response.put("sessionId", UUID.randomUUID().toString());
       response.put("link", itemorApdLink);
@@ -88,5 +94,11 @@ public class MockPolicyFactory {
       Mockito.when(asyncResult.failed()).thenReturn(false);
       Mockito.when(asyncResult.succeeded()).thenReturn(true);
     }
+  }
+
+  public void setResponse(JsonObject response) {
+    Mockito.when(asyncResult.result()).thenReturn(response);
+    Mockito.when(asyncResult.failed()).thenReturn(false);
+    Mockito.when(asyncResult.succeeded()).thenReturn(true);
   }
 }

@@ -1,23 +1,24 @@
 package iudx.aaa.server.apiserver;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
+/** Vert.x data object for the update APD status API. */
 @DataObject(generateConverter = true)
 public class ApdUpdateRequest {
-  UUID apdId;
+  UUID id;
   ApdStatus status;
 
-  public String getApdId() {
-    return apdId.toString();
+  public String getId() {
+    return id.toString();
   }
 
-  public void setApdId(String apdId) {
-    this.apdId = UUID.fromString(apdId);
+  public void setId(String id) {
+    this.id = UUID.fromString(id);
   }
 
   public ApdStatus getStatus() {
@@ -30,9 +31,10 @@ public class ApdUpdateRequest {
 
   public static List<ApdUpdateRequest> jsonArrayToList(JsonArray json) {
     List<ApdUpdateRequest> arr = new ArrayList<ApdUpdateRequest>();
-    json.forEach(obj -> {
-      arr.add(new ApdUpdateRequest(statusToUpperCase((JsonObject) obj)));
-    });
+    json.forEach(
+        obj -> {
+          arr.add(new ApdUpdateRequest(statusToUpperCase((JsonObject) obj)));
+        });
     return arr;
   }
 

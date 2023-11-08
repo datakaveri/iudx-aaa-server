@@ -4,11 +4,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Enum that defines valid status a role can be in.
- */
+/** Enum that defines valid status a role can be in. */
 public enum RoleStatus {
-  PENDING, APPROVED, REJECTED;
+  PENDING,
+  APPROVED,
+  REJECTED;
 
   static List<String> roleStatusAsStrings =
       Arrays.stream(RoleStatus.values()).map(r -> r.name()).collect(Collectors.toList());

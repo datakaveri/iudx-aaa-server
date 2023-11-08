@@ -1,16 +1,12 @@
 package iudx.aaa.server.apiserver;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
+/** Vert.x data object for the introspect token API. */
 @DataObject(generateConverter = true)
-//@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class IntrospectToken {
 
-  @JsonAlias("accessToken")
   private String accessToken;
 
   public JsonObject toJson() {

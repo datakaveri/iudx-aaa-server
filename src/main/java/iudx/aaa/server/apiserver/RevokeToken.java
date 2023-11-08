@@ -1,18 +1,13 @@
 package iudx.aaa.server.apiserver;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
+/** Vert.x data object for the revoke token API. */
 @DataObject(generateConverter = true)
-//@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class RevokeToken {
 
-  @JsonAlias("rsUrl")
   private String rsUrl;
-
 
   public JsonObject toJson() {
     JsonObject request = new JsonObject();
@@ -31,7 +26,6 @@ public class RevokeToken {
   }
 
   public void setRsUrl(String rsUrl) {
-    this.rsUrl = rsUrl;
+    this.rsUrl = rsUrl.toLowerCase();
   }
-
 }

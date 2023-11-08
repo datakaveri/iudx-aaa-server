@@ -36,7 +36,7 @@ public class Constants {
       "INSERT INTO $0 (id,body,endpoint,method,time,userid) VALUES ('$1','$2','$3','$4',$5,'$6')";
 
   public static final String MESSAGE = "message";
-  public static final String DATABASE_TABLE_NAME= "databaseTableName";
+  public static final String DATABASE_TABLE_NAME = "databaseTableName";
   public static final String READ_QUERY =
       "SELECT body,endpoint,method,time,userid from $0 where userid='$1'";
   public static final String START_TIME_QUERY = " and time>=$2";

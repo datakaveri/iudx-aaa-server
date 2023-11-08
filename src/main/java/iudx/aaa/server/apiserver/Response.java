@@ -17,7 +17,7 @@ public class Response {
   private JsonObject objectResults;
   private String detail;
   private JsonObject errorContext;
-  
+
   public JsonObject getErrorContext() {
     return errorContext;
   }
@@ -78,7 +78,7 @@ public class Response {
 
   /**
    * Convert Response object to JSON object.
-   * 
+   *
    * @return a JSON object with type, title, status and detail/results
    */
   public JsonObject toJson() {
@@ -88,17 +88,17 @@ public class Response {
     if (this.arrayResults != null) {
       j.put("results", this.arrayResults.copy());
     }
-    
+
     if (this.objectResults != null) {
       j.put("results", this.objectResults.copy());
     }
-    
+
     if (this.detail != null) {
       j.put("detail", this.detail);
     }
-    
-    if(this.status != 0) {
-      j.put("status", this.status); 
+
+    if (this.status != 0) {
+      j.put("status", this.status);
     }
 
     if (this.errorContext != null) {
@@ -107,7 +107,7 @@ public class Response {
 
     return j;
   }
-  
+
   public String toJsonString() {
     return toJson().encode();
   }
@@ -125,17 +125,17 @@ public class Response {
   public static class ResponseBuilder {
     private String type;
     private String title;
-    private JsonArray arrayResults = null;
-    private JsonObject objectResults = null;
-    private String detail = null;
-    private JsonObject errorContext = null;
+    private JsonArray arrayResults;
+    private JsonObject objectResults;
+    private String detail;
+    private JsonObject errorContext;
     private int status;
 
     public ResponseBuilder type(String type) {
       this.type = type;
       return this;
     }
-    
+
     public ResponseBuilder type(Urn type) {
       this.type = type.toString();
       return this;
@@ -152,13 +152,11 @@ public class Response {
     }
 
     public ResponseBuilder arrayResults(JsonArray arrayResults) {
-      this.arrayResults = new JsonArray();
       this.arrayResults = arrayResults.copy();
       return this;
     }
 
     public ResponseBuilder objectResults(JsonObject objectResults) {
-      this.objectResults = new JsonObject();
       this.objectResults = objectResults.copy();
       return this;
     }
@@ -169,7 +167,6 @@ public class Response {
     }
 
     public ResponseBuilder errorContext(JsonObject context) {
-      this.errorContext = new JsonObject();
       this.errorContext = context.copy();
       return this;
     }

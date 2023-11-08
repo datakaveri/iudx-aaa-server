@@ -1,12 +1,11 @@
 package iudx.aaa.server.admin;
 
+/** Constants and SQL queries associated with {@link AdminService}. */
 public class Constants {
 
-  public static final String NIL_UUID = "00000000-0000-0000-0000-000000000000";
-  public static final String POLICY_SERVICE_ADDRESS = "iudx.aaa.policy.service";
+  public static final String REGISTRATION_SERVICE_ADDRESS = "iudx.aaa.registration.service";
 
   /* Config related */
-  public static final String CONFIG_AUTH_URL = "authServerDomain";
   public static final String DATABASE_IP = "databaseIP";
   public static final String DATABASE_PORT = "databasePort";
   public static final String DATABASE_NAME = "databaseName";
@@ -25,53 +24,61 @@ public class Constants {
   public static final String KC_ADMIN_POOLSIZE = "keycloakAdminPoolSize";
 
   /* Response fields */
-  public static final String RESP_USERID = "userId";
   public static final String RESP_STATUS = "status";
-  public static final String RESP_ORG = "organization";
 
   /* Response title and details */
-  public static final String SUCC_TITLE_CREATED_ORG = "Organization has been created";
+  public static final String SUCC_TITLE_CREATED_RS = "Resource Server has been created";
   public static final String SUCC_TITLE_PROVIDER_REGS = "Provider registrations";
   public static final String SUCC_TITLE_PROV_STATUS_UPDATE = "Provider status updated";
 
   public static final String ERR_TITLE_INVALID_DOMAIN = "Invalid URL";
   public static final String ERR_DETAIL_INVALID_DOMAIN = "The domain is invalid";
 
-  public static final String ERR_TITLE_INVALID_USER =
-      "Invalid User ID, not a provider/pending provider";
+  public static final String ERR_TITLE_INVALID_PROV_REG_ID =
+      "Invalid provider registration ID/ not a pending provider registration ID";
 
-  public static final String ERR_TITLE_DUPLICATE_REQ = "Duplicate user ID in request";
+  public static final String ERR_TITLE_DUPLICATE_REQ =
+      "Duplicate provider registration ID in request";
 
-  public static final String ERR_TITLE_NO_USER_PROFILE = "User profile does not exist";
-  public static final String ERR_DETAIL_NO_USER_PROFILE = "Please register to create user profile";
+  public static final String ERR_TITLE_NO_COS_ADMIN_ROLE =
+      "Invalid roles to call API - not COS Admin";
+  public static final String ERR_DETAIL_NO_COS_ADMIN_ROLE = "Only COS Admin may call the API";
 
-  public static final String ERR_TITLE_NOT_AUTH_ADMIN = "Not admin of auth server";
-  public static final String ERR_DETAIL_NOT_AUTH_ADMIN = "You are not an admin of the auth server";
+  public static final String ERR_TITLE_NOT_ADMIN = "User does not have admin role";
+  public static final String ERR_DETAIL_NOT_ADMIN =
+      "You are not an admin of any registered resource server";
 
   public static final String ERR_TITLE_DOMAIN_EXISTS = "Domains exists";
   public static final String ERR_DETAIL_DOMAIN_EXISTS =
-      "An organization exists with the given domain";
+      "A resource server exists with the given domain";
 
   /* SQL */
-  public static final String SQL_CREATE_ORG_IF_NOT_EXIST =
-      "INSERT INTO organizations (name, url, created_at, updated_at) "
-          + "VALUES ($1::text, $2::text, NOW(), NOW()) ON CONFLICT (url) DO NOTHING RETURNING id";
-
-  public static final String SQL_CHECK_ADMIN_OF_SERVER = "SELECT id FROM " 
-      + "resource_server WHERE owner_id = $1::uuid AND url = $2::text";
-
-  public static final String SQL_GET_PROVIDERS_BY_STATUS =
-      "SELECT users.id, keycloak_id, organization_id FROM users JOIN "
-          + "roles ON users.id = roles.user_id "
-          + "WHERE roles.role = 'PROVIDER' AND roles.status = $1::role_status_enum";
-
-  public static final String SQL_GET_ORG_DETAILS =
-      "SELECT id, name, url FROM organizations WHERE id = ANY($1::uuid[])";
+  public static final String SQL_GET_PROVIDERS_FOR_RS_BY_STATUS =
+      "SELECT roles.id, users.id AS \"userId\", lower(status::text) AS status"
+          + ", userinfo AS \"userInfo\", resource_server.url AS \"rsUrl\" FROM users"
+          + " JOIN roles ON users.id = roles.user_id"
+          + " JOIN resource_server ON roles.resource_server_id = resource_server.id"
+          + " WHERE roles.role = 'PROVIDER' AND roles.status = $1::role_status_enum"
+          + " AND resource_server.url = ANY($2::text[])";
 
   public static final String SQL_UPDATE_ROLE_STATUS =
-      "UPDATE roles SET status = $1::role_status_enum, updated_at = NOW() WHERE user_id = $2::uuid";
+      "UPDATE roles SET status = $1::role_status_enum, updated_at = NOW() WHERE id = $2::uuid";
 
-  public static final String SQL_GET_PENDING_PROVIDERS = "SELECT users.id, keycloak_id FROM "
-      + "users JOIN roles ON users.id = roles.user_id "
-      + "WHERE role = 'PROVIDER' AND status = 'PENDING' AND user_id = ANY ($1::uuid[])";
+  public static final String SQL_GET_PENDING_PROVIDERS_BY_ID_AND_RS =
+      "SELECT users.id AS \"userId\", roles.id, userinfo AS \"userInfo\""
+          + ", resource_server.url AS \"rsUrl\" FROM users"
+          + " JOIN roles ON users.id = roles.user_id"
+          + " JOIN resource_server ON roles.resource_server_id = resource_server.id"
+          + " WHERE roles.role = 'PROVIDER' AND roles.status = 'PENDING' AND roles.id = ANY($1::uuid[])"
+          + " AND resource_server.url = ANY($2::text[])";
+
+  public static final String SQL_CREATE_RS_IF_NOT_EXIST =
+      "INSERT INTO resource_server (name, url, owner_id, created_at, updated_at) "
+          + "VALUES ($1::text, $2::text, $3::UUID, NOW(), NOW()) ON CONFLICT (url) DO NOTHING RETURNING id";
+
+  public static final String SQL_ADD_NEW_RES_SERVER_ROLE_FOR_ANY_CONSUMER =
+      " WITH new_roles AS (SELECT DISTINCT(user_id), $1::UUID, 'CONSUMER'::role_enum, 'APPROVED'::role_status_enum"
+          + ", NOW(), NOW() FROM roles WHERE role = 'CONSUMER' AND status = 'APPROVED')"
+          + " INSERT INTO roles (user_id, resource_server_id, role, status, created_at, updated_at)"
+          + " SELECT * FROM new_roles";
 }

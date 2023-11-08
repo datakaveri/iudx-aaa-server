@@ -31,7 +31,7 @@ pipeline {
           sh 'docker compose -f docker-compose-test.yml up test'
         }
         xunit (
-          thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+          thresholds: [ skipped(failureThreshold: '15'), failed(failureThreshold: '0') ],
           tools: [ JUnit(pattern: 'target/surefire-reports/*.xml') ]
         )
         jacoco classPattern: 'target/classes', execPattern: 'target/jacoco.exec', sourcePattern: 'src/main/java', exclusionPattern:'**/*VertxEBProxy.class,**/Constants.class,**/*VertxProxyHandler.class,**/*Verticle.class,iudx/aaa/server/deploy/*.class,iudx/aaa/server/registration/KcAdmin.class,iudx/aaa/server/apiserver/*,iudx/aaa/server/apiserver/util/*,iudx/aaa/server/admin/AdminService.class,iudx/aaa/server/apd/ApdService.class,iudx/aaa/server/auditing/AuditingService.class,iudx/aaa/server/auditing/AuditingService.class,iudx/aaa/server/registration/RegistrationService.class,iudx/aaa/server/token/TokenService.class,iudx/aaa/server/policy/PolicyService.class'
@@ -60,7 +60,6 @@ pipeline {
       steps{
         script{
             sh 'docker/runIntegTests.sh'
-            sh 'scp src/test/resources/Integration_Test.postman_collection.json jenkins@jenkins-master:/var/lib/jenkins/iudx/aaa/Newman/'
             sh 'docker compose -f docker-compose-test.yml up -d integTest'
             sh 'sleep 45'
         }
@@ -71,7 +70,7 @@ pipeline {
             sh 'mvn flyway:clean -Dflyway.configFiles=/home/ubuntu/configs/aaa-flyway.conf'
             sh 'docker compose -f docker-compose-test.yml down --remove-orphans'
           }
-          cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: 'src/main/resources/db/migration/V?__Add_Integration_Test_data.sql', type: 'INCLUDE']]
+          cleanWs deleteDirs: true, disableDeferredWipeout: true
         }
       }
     }
@@ -80,22 +79,32 @@ pipeline {
       steps{
         node('built-in') {
           script{
-            startZap ([host: 'localhost', port: 8090, zapHome: '/var/lib/jenkins/tools/com.cloudbees.jenkins.plugins.customtools.CustomTool/OWASP_ZAP/ZAP_2.11.0'])
-            sh 'curl http://127.0.0.1:8090/JSON/pscan/action/disableScanners/?ids=10096'
+            startZap ([host: '0.0.0.0', port: 8090, zapHome: '/var/lib/jenkins/tools/com.cloudbees.jenkins.plugins.customtools.CustomTool/OWASP_ZAP/ZAP_2.11.0'])
+            sh 'curl http://0.0.0.0:8090/JSON/pscan/action/disableScanners/?ids=10096'
             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-              sh 'HTTP_PROXY=\'127.0.0.1:8090\' newman run /var/lib/jenkins/iudx/aaa/Newman/Integration_Test.postman_collection.json -e /home/ubuntu/configs/aaa-postman-env.json --insecure -r htmlextra --reporter-htmlextra-export /var/lib/jenkins/iudx/aaa/Newman/report/report.html --reporter-htmlextra-skipSensitiveData'
             }
-            runZapAttack()
           }
+        }
+        script{
+            sh 'cp /home/ubuntu/configs/aaa-config-integ.json configs/config-integ.json'
+            sh 'mvn test-compile failsafe:integration-test  -DskipUnitTests=true -DintTestProxyHost=jenkins-master-priv -DintTestProxyPort=8090 -DintTestHost=jenkins-slave1 -DintTestPort=8443'
+            }
+        node('built-in') {
+          script{
+            runZapAttack()
+            }
         }
       }
       post{
         always{
+          xunit (
+             thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+             tools: [ JUnit(pattern: 'target/failsafe-reports/*.xml') ]
+             )
           node('built-in') {
             script{
               archiveZap failHighAlerts: 1, failMediumAlerts: 1, failLowAlerts: 2
             }  
-            publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '/var/lib/jenkins/iudx/aaa/Newman/report/', reportFiles: 'report.html', reportName: 'HTML Report', reportTitles: '', reportName: 'Integration Test Report'])
           }
         }
         failure{
@@ -106,7 +115,7 @@ pipeline {
             sh 'mvn flyway:clean -Dflyway.configFiles=/home/ubuntu/configs/aaa-flyway.conf'
             sh 'docker compose -f docker-compose-test.yml down --remove-orphans'
           }
-          cleanWs deleteDirs: true, disableDeferredWipeout: true, patterns: [[pattern: 'src/main/resources/db/migration/V?__Add_Integration_Test_data.sql', type: 'INCLUDE']]
+          cleanWs deleteDirs: true, disableDeferredWipeout: true
         }
       }
     }

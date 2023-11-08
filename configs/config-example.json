@@ -14,20 +14,15 @@
         "databasePassword": "iudx@123"
       },
       "commonOptions":{
-        "authServerDomain":"auth.test.com"
+        "cosDomain":"auth.test.com",
+        "cosAdminUserId": "a74792c1-a86d-48e4-b4f0-544585981718"
       },
       "keycloakOptions":{
-        "keycloakHost": "identitydev.iudx.io",
-        "keycloakPort": 8443,
         "keycloakRealm": "some-realm",
-        "keycloakSite": "{{protocol}}://{{keycloakHost}}:{{keycloakPort}}/auth/realms/{{keycloakRealm}}",
         "keycloakUrl": "{{protocol}}://{{keycloakHost}}:{{keycloakPort}}/auth",
-        "keycloakTokenUri": "/auth/realms/{{keycloakRealm}}/protocol/openid-connect/token",
         "keycloakAdminClientId": "some-admin-client-id",
         "keycloakAdminClientSecret": "f5800be0-258a-4cd2-820f-8128818ed70a",
         "keycloakAdminPoolSize": "10",
-        "keycloakAaaClientId": "auth.iudx.org.in",
-        "keycloakAaaClientSecret": "6ba618a0-06c6-49a0-a824-d5dfc6d025f3",
         "keycloakJwtLeeway": 90
       },
       "jwtKeystoreOptions":{
@@ -41,33 +36,10 @@
       "verticleInstances": 1,
       "required":["postgresOptions", "commonOptions"],
       "poolSize": "5",
-      "domain" : "iudx.io",
       "catalogueOptions": {
         "catServerHost": "api.catalogue.iudx.io",
         "catServerPort": "443",
-        "catServerItemPath": "/iudx/cat/v1/item"
-      },
-      "authOptions": {
-        "policyExpiry" : "12",
-        "adminPolicyExpiry" : "60"
-      },
-      "catOptions": {
-        "catURL" : "catalogue.iudx.io",
-        "catItem" : "catalogue/crud"
-      },
-      "resOptions" : {
-        "resURL" : "rs.iudx.io"
-      },
-      "emailOptions": {
-        "emailHostName": "localhost",
-        "emailPort" : 2587,
-        "emailUserName":"UserName",
-        "emailPassword": "Password",
-        "emailSender" : "example@xyz.org",
-        "emailSupport" : "support@xyz.org",
-        "publisherPanelUrl": "www.abc.com",
-        "notifyByEmail" : true,
-        "senderName" : "ABCD"
+        "catServerBasePath": "/iudx/cat/v1"
       }
     },
     {
@@ -80,7 +52,7 @@
     {
       "id": "iudx.aaa.server.token.TokenVerticle",
       "verticleInstances": 1,
-      "required":["postgresOptions", "commonOptions", "keycloakOptions", "jwtKeystoreOptions"],
+      "required":["postgresOptions", "commonOptions", "jwtKeystoreOptions"],
       "poolSize": "5"
     },
     {

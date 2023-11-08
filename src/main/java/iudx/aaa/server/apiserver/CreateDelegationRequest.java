@@ -1,58 +1,59 @@
 package iudx.aaa.server.apiserver;
 
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import java.util.ArrayList;
+import java.util.List;
 
+/** Vert.x data object for the create delegation API. */
 @DataObject(generateConverter = true)
 public class CreateDelegationRequest {
-    private UUID userId;
-    private String resSerId;
+  private String userEmail;
+  private String resSerUrl;
+  private Roles role;
 
-    public String getUserId() {
-        return userId.toString();
-    }
+  public String getUserEmail() {
+    return userEmail.toString();
+  }
 
-    public void setUserId(String userId) {
-        this.userId = UUID.fromString(userId);
-    }
+  public void setUserEmail(String userEmail) {
+    this.userEmail = userEmail.toLowerCase();
+  }
 
+  public String getResSerUrl() {
+    return resSerUrl;
+  }
 
-    public String getResSerId() {
-        return resSerId;
-    }
+  public void setResSerUrl(String resSerUrl) {
+    this.resSerUrl = resSerUrl.toLowerCase();
+  }
 
-    public void setResSerId(String resSerId) {
-        this.resSerId = resSerId;
-    }
+  public Roles getRole() {
+    return role;
+  }
 
-    public CreateDelegationRequest(JsonObject json) {
-        CreateDelegationRequestConverter.fromJson(json, this);
-    }
+  public void setRole(Roles role) {
+    this.role = role;
+  }
 
-    public JsonObject toJson() {
-        JsonObject obj = new JsonObject();
-        CreateDelegationRequestConverter.toJson(this, obj);
-        return obj;
-    }
+  public CreateDelegationRequest(JsonObject json) {
+    json.put("role", json.getString("role").toUpperCase());
+    CreateDelegationRequestConverter.fromJson(json, this);
+  }
 
-    public static List<CreateDelegationRequest> jsonArrayToList(JsonArray json) {
-        List<CreateDelegationRequest> reg = new ArrayList<>();
-        json.forEach(obj -> {
-            reg.add(new CreateDelegationRequest((JsonObject) obj));
+  public JsonObject toJson() {
+    JsonObject obj = new JsonObject();
+    CreateDelegationRequestConverter.toJson(this, obj);
+    return obj;
+  }
+
+  public static List<CreateDelegationRequest> jsonArrayToList(JsonArray json) {
+    List<CreateDelegationRequest> reg = new ArrayList<>();
+    json.forEach(
+        obj -> {
+          reg.add(new CreateDelegationRequest((JsonObject) obj));
         });
-        return reg;
-    }
-
-    @Override
-    public String toString() {
-        return "CreateDelegationRequest{" +
-                "userId=" + userId +
-                ", resSerId='" + resSerId + '\'' +
-                '}';
-    }
+    return reg;
+  }
 }
