@@ -9,7 +9,7 @@ info:
     name: For support contact IUDX Team at
     email: support@iudx.org.in
 servers:
-  - url: 'https://authorization.iudx.org.in'
+  - url: 'https://cos.iudx.org.in'
     description: Production
   - url: 'https://authvertx.iudx.io'
     description: Development
