@@ -3063,6 +3063,16 @@ paths:
         Returns registered APDs. 
         - If called by the COS Admin, returns all APD registrations
         - If called by a user with any other roles, returns all APDs in the **active** state
+      parameters:
+        - schema:
+            type: string
+            maxLength: 4000
+            minLength: 1
+            example: Bearer <JWT>
+          in: header
+          name: Authorization
+          description: Keycloak Issued token
+          required: true
       security:
         - authorization: []
       tags:
@@ -3211,6 +3221,16 @@ paths:
 
       security:
         - authorization: []
+      parameters:
+        - schema:
+            type: string
+            maxLength: 4000
+            minLength: 1
+            example: Bearer <JWT>
+          in: header
+          name: Authorization
+          description: Keycloak Issued token
+          required: true
       requestBody:
         content:
           application/json:
@@ -3396,7 +3416,16 @@ paths:
         The COS Admin may change status :
         - from **active** to **inactive**, in case the APD is not responsive or has been compromised
         - from **inactive** to **active**
-
+      parameters:
+        - schema:
+            type: string
+            maxLength: 4000
+            minLength: 1
+            example: Bearer <JWT>
+          in: header
+          name: Authorization
+          description: Keycloak Issued token
+          required: true
       requestBody:
         required: true
         content:
