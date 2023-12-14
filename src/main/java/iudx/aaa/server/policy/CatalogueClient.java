@@ -89,7 +89,10 @@ public class CatalogueClient {
                             .build();
                     return Future.failedFuture(new ComposeException(r));
                   } else {
-                    LOGGER.error("failed fetchItem: " + res);
+                    LOGGER.error(
+                        "Failed Catalogue item check : {} {}",
+                        res.statusCode(),
+                        res.bodyAsString());
                     return Future.failedFuture(INTERNALERROR);
                   }
                 });
