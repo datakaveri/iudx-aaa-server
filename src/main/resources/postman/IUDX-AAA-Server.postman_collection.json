@@ -1065,15 +1065,6 @@
 							]
 						},
 						"method": "POST",
-						"header": [
-							{
-								"key": "providerId",
-								"value": "",
-								"description": "Provider's User ID in case of auth delegate",
-								"type": "text",
-								"disabled": true
-							}
-						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"request\": [\n        {\n            \"userEmail\": \"email@email.com\",\n            \"resSerUrl\": \"rs.iudx.io\",\n            \"role\": \"provider\"\n        }\n    ]\n}",
@@ -1280,15 +1271,6 @@
 							]
 						},
 						"method": "DELETE",
-						"header": [
-							{
-								"key": "providerId",
-								"value": "",
-								"description": "Provider's User ID in case of auth delegate",
-								"type": "text",
-								"disabled": true
-							}
-						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"request\": [\n        {\n            \"id\": \"5882036e-a731-42fe-a77c-ecf3f3148999\"\n        }\n    ]\n}",
