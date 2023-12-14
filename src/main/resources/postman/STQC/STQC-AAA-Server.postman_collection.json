@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "a5dc8580-7c17-4a9d-a7a9-5b7453d4d9c2",
-		"name": "IUDX-AAA-Server",
+		"name": "STQC-AAA-Server",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "14598828"
 	},
@@ -292,112 +292,6 @@
 								"v1",
 								"user",
 								"roles"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Search User By Email + Role + Resource Server",
-					"request": {
-						"auth": {
-							"type": "noauth"
-						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "clientId",
-								"value": "",
-								"type": "text",
-								"description": "Client ID (UUID)"
-							},
-							{
-								"key": "clientSecret",
-								"value": "",
-								"type": "text",
-								"description": "Client secret (40 chars in hexadecimal)"
-							}
-						],
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/search?email=email@email.com&role=consumer&resourceServer=rs.iudx.io",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"user",
-								"search"
-							],
-							"query": [
-								{
-									"key": "email",
-									"value": "email@email.com",
-									"description": "Email of user to search for"
-								},
-								{
-									"key": "role",
-									"value": "consumer",
-									"description": "Role of user to search for"
-								},
-								{
-									"key": "resourceServer",
-									"value": "rs.iudx.io",
-									"description": "Resource server for which role is applicable"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Search User By User ID + Role + Resource Server",
-					"request": {
-						"auth": {
-							"type": "noauth"
-						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "clientId",
-								"value": "",
-								"type": "text",
-								"description": "Client ID (UUID)"
-							},
-							{
-								"key": "clientSecret",
-								"value": "",
-								"type": "text",
-								"description": "Client secret (40 chars in hexadecimal)"
-							}
-						],
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/user/search?userId=93cd6409-d0a5-4c3a-ba86-b4da145519bc&role=consumer&resourceServer=rs.iudx.io",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"user",
-								"search"
-							],
-							"query": [
-								{
-									"key": "userId",
-									"value": "93cd6409-d0a5-4c3a-ba86-b4da145519bc",
-									"description": "User ID of user to search for"
-								},
-								{
-									"key": "role",
-									"value": "consumer",
-									"description": "Role of user to search for"
-								},
-								{
-									"key": "resourceServer",
-									"value": "rs.iudx.io",
-									"description": "Resource server for which role is applicable"
-								}
 							]
 						}
 					},
@@ -1293,463 +1187,12 @@
 						}
 					},
 					"response": []
-				},
-				{
-					"name": "Get delegate emails",
-					"request": {
-						"auth": {
-							"type": "noauth"
-						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "clientId",
-								"value": "",
-								"type": "text",
-								"description": "Client ID (UUID)"
-							},
-							{
-								"key": "clientSecret",
-								"value": "",
-								"type": "text",
-								"description": "Client secret (40 chars in hexadecimal)"
-							}
-						],
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/delegations/emails?userId=93cd6409-d0a5-4c3a-ba86-b4da145519bc&role=consumer&resourceServer=rs.iudx.io",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"delegations",
-								"emails"
-							],
-							"query": [
-								{
-									"key": "userId",
-									"value": "93cd6409-d0a5-4c3a-ba86-b4da145519bc",
-									"description": "User ID of user to check delegate emails"
-								},
-								{
-									"key": "role",
-									"value": "consumer",
-									"description": "The delegated role"
-								},
-								{
-									"key": "resourceServer",
-									"value": "rs.iudx.io",
-									"description": "The delegated resource server URL"
-								}
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Admin APIs",
-			"item": [
-				{
-					"name": "COS Admin - Create Resource Server",
-					"request": {
-						"auth": {
-							"type": "oauth2",
-							"oauth2": [
-								{
-									"key": "state",
-									"value": "{{$randomAlphaNumeric}}",
-									"type": "string"
-								},
-								{
-									"key": "authUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
-									"type": "string"
-								},
-								{
-									"key": "accessTokenUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
-									"type": "string"
-								},
-								{
-									"key": "redirect_uri",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
-									"type": "string"
-								},
-								{
-									"key": "tokenName",
-									"value": "Token",
-									"type": "string"
-								},
-								{
-									"key": "useBrowser",
-									"value": false,
-									"type": "boolean"
-								},
-								{
-									"key": "scope",
-									"value": "email openid",
-									"type": "string"
-								},
-								{
-									"key": "clientSecret",
-									"value": "",
-									"type": "string"
-								},
-								{
-									"key": "clientId",
-									"value": "account",
-									"type": "string"
-								},
-								{
-									"key": "grant_type",
-									"value": "authorization_code",
-									"type": "string"
-								},
-								{
-									"key": "password",
-									"value": "{{provider_password}}",
-									"type": "string"
-								},
-								{
-									"key": "username",
-									"value": "{{provider_username}}",
-									"type": "string"
-								},
-								{
-									"key": "addTokenTo",
-									"value": "header",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"DX Resource Server\",\n  \"url\": \"rs.iudx.io\",\n  \"owner\": \"admin@iudx.io\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/admin/resourceservers",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"admin",
-								"resourceservers"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "RS Admin - get provider registrations",
-					"request": {
-						"auth": {
-							"type": "oauth2",
-							"oauth2": [
-								{
-									"key": "state",
-									"value": "{{$randomAlphaNumeric}}",
-									"type": "string"
-								},
-								{
-									"key": "authUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
-									"type": "string"
-								},
-								{
-									"key": "accessTokenUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
-									"type": "string"
-								},
-								{
-									"key": "redirect_uri",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
-									"type": "string"
-								},
-								{
-									"key": "tokenName",
-									"value": "Token",
-									"type": "string"
-								},
-								{
-									"key": "useBrowser",
-									"value": false,
-									"type": "boolean"
-								},
-								{
-									"key": "scope",
-									"value": "email openid",
-									"type": "string"
-								},
-								{
-									"key": "clientSecret",
-									"value": "",
-									"type": "string"
-								},
-								{
-									"key": "clientId",
-									"value": "account",
-									"type": "string"
-								},
-								{
-									"key": "grant_type",
-									"value": "authorization_code",
-									"type": "string"
-								},
-								{
-									"key": "password",
-									"value": "{{provider_password}}",
-									"type": "string"
-								},
-								{
-									"key": "username",
-									"value": "{{provider_username}}",
-									"type": "string"
-								},
-								{
-									"key": "addTokenTo",
-									"value": "header",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/admin/provider/registrations?filter=pending",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"admin",
-								"provider",
-								"registrations"
-							],
-							"query": [
-								{
-									"key": "filter",
-									"value": "pending"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "RS Admin - update provider registrations",
-					"request": {
-						"auth": {
-							"type": "oauth2",
-							"oauth2": [
-								{
-									"key": "state",
-									"value": "{{$randomAlphaNumeric}}",
-									"type": "string"
-								},
-								{
-									"key": "authUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
-									"type": "string"
-								},
-								{
-									"key": "accessTokenUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
-									"type": "string"
-								},
-								{
-									"key": "redirect_uri",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
-									"type": "string"
-								},
-								{
-									"key": "tokenName",
-									"value": "Token",
-									"type": "string"
-								},
-								{
-									"key": "useBrowser",
-									"value": false,
-									"type": "boolean"
-								},
-								{
-									"key": "scope",
-									"value": "email openid",
-									"type": "string"
-								},
-								{
-									"key": "clientSecret",
-									"value": "",
-									"type": "string"
-								},
-								{
-									"key": "clientId",
-									"value": "account",
-									"type": "string"
-								},
-								{
-									"key": "grant_type",
-									"value": "authorization_code",
-									"type": "string"
-								},
-								{
-									"key": "password",
-									"value": "{{provider_password}}",
-									"type": "string"
-								},
-								{
-									"key": "username",
-									"value": "{{provider_username}}",
-									"type": "string"
-								},
-								{
-									"key": "addTokenTo",
-									"value": "header",
-									"type": "string"
-								}
-							]
-						},
-						"method": "PUT",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"id\": \"3f08e1ba-f4c0-4ed0-86da-edf7092d6333\",\n            \"status\": \"approved\"\n        }\n    ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/admin/provider/registrations",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"admin",
-								"provider",
-								"registrations"
-							]
-						}
-					},
-					"response": []
 				}
 			]
 		},
 		{
 			"name": "Access Policy Domain (APD) APIs",
 			"item": [
-				{
-					"name": "COS Admin - Create an Access Policy Domain",
-					"request": {
-						"auth": {
-							"type": "oauth2",
-							"oauth2": [
-								{
-									"key": "state",
-									"value": "{{$randomAlphaNumeric}}",
-									"type": "string"
-								},
-								{
-									"key": "authUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
-									"type": "string"
-								},
-								{
-									"key": "accessTokenUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
-									"type": "string"
-								},
-								{
-									"key": "redirect_uri",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
-									"type": "string"
-								},
-								{
-									"key": "tokenName",
-									"value": "Token",
-									"type": "string"
-								},
-								{
-									"key": "useBrowser",
-									"value": false,
-									"type": "boolean"
-								},
-								{
-									"key": "scope",
-									"value": "email openid",
-									"type": "string"
-								},
-								{
-									"key": "clientSecret",
-									"value": "",
-									"type": "string"
-								},
-								{
-									"key": "clientId",
-									"value": "account",
-									"type": "string"
-								},
-								{
-									"key": "grant_type",
-									"value": "authorization_code",
-									"type": "string"
-								},
-								{
-									"key": "password",
-									"value": "{{provider_password}}",
-									"type": "string"
-								},
-								{
-									"key": "username",
-									"value": "{{provider_username}}",
-									"type": "string"
-								},
-								{
-									"key": "addTokenTo",
-									"value": "header",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"DX APD\",\n    \"url\": \"apd.iudx.io\",\n    \"owner\": \"admin@iudx.io\"\n}",							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/apd",
-							"host": [
-								"{{AUTH_ENDPOINT}}"
-							],
-							"path": [
-								"auth",
-								"v1",
-								"apd"
-							]
-						}
-					},
-					"response": []
-				},
 				{
 					"name": "List Access Policy Domains",
 					"request": {
@@ -1838,100 +1281,51 @@
 						}
 					},
 					"response": []
-				},
+				}
+			]
+		},
+		{
+			"name": "JWT Certificate APIs",
+			"item": [
 				{
-					"name": "COS Admin - Update status of Access Policy Domains",
+					"name": "Get JWT public key certificate",
 					"request": {
 						"auth": {
-							"type": "oauth2",
-							"oauth2": [
-								{
-									"key": "state",
-									"value": "{{$randomAlphaNumeric}}",
-									"type": "string"
-								},
-								{
-									"key": "authUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/auth",
-									"type": "string"
-								},
-								{
-									"key": "accessTokenUrl",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/protocol/openid-connect/token",
-									"type": "string"
-								},
-								{
-									"key": "redirect_uri",
-									"value": "{{KEYCLOAK_ENDPOINT}}/auth/realms/{{KEYCLOAK_REALM}}/account/callback",
-									"type": "string"
-								},
-								{
-									"key": "tokenName",
-									"value": "Token",
-									"type": "string"
-								},
-								{
-									"key": "useBrowser",
-									"value": false,
-									"type": "boolean"
-								},
-								{
-									"key": "scope",
-									"value": "email openid",
-									"type": "string"
-								},
-								{
-									"key": "clientSecret",
-									"value": "",
-									"type": "string"
-								},
-								{
-									"key": "clientId",
-									"value": "account",
-									"type": "string"
-								},
-								{
-									"key": "grant_type",
-									"value": "authorization_code",
-									"type": "string"
-								},
-								{
-									"key": "password",
-									"value": "{{provider_password}}",
-									"type": "string"
-								},
-								{
-									"key": "username",
-									"value": "{{provider_username}}",
-									"type": "string"
-								},
-								{
-									"key": "addTokenTo",
-									"value": "header",
-									"type": "string"
-								}
-							]
+							"type": "noauth"
 						},
-						"method": "PUT",
+						"method": "GET",
 						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"request\": [\n        {\n            \"id\": \"3f08e1ba-f4c0-4ed0-86da-edf7092d6333\",\n            \"status\": \"active\"\n        }\n    ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
 						"url": {
-							"raw": "{{AUTH_ENDPOINT}}/auth/v1/apd",
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/cert",
 							"host": [
 								"{{AUTH_ENDPOINT}}"
 							],
 							"path": [
 								"auth",
 								"v1",
-								"apd"
+								"cert"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get JWT public key certificate in JWKS format",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{AUTH_ENDPOINT}}/auth/v1/jwks",
+							"host": [
+								"{{AUTH_ENDPOINT}}"
+							],
+							"path": [
+								"auth",
+								"v1",
+								"jwks"
 							]
 						}
 					},
