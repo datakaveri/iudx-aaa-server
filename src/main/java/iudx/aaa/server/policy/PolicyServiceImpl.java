@@ -697,6 +697,7 @@ public class PolicyServiceImpl implements PolicyService {
                 return;
               }
 
+              LOGGER.error("Create delegation failed : {}", obj.getMessage());
               handler.handle(Future.failedFuture(INTERNALERROR));
             });
 
