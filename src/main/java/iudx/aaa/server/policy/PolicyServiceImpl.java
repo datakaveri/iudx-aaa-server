@@ -404,6 +404,10 @@ public class PolicyServiceImpl implements PolicyService {
     Future<JsonObject> userInfo =
         data.compose(
             result -> {
+              
+              LOGGER.debug("User : {}", user.toJsonResponse());
+              LOGGER.debug("Delegates before getting userInfo : {}", result);
+              
               Set<String> ss = new HashSet<String>();
               result.forEach(
                   obj -> {
@@ -421,6 +425,9 @@ public class PolicyServiceImpl implements PolicyService {
             results -> {
               List<JsonObject> deleRes = data.result();
               Map<String, JsonObject> details = jsonObjectToMap.apply(results);
+              
+              LOGGER.debug("Delegates : {}", deleRes);
+              LOGGER.debug("User details : {}", details);
 
               deleRes.forEach(
                   obj -> {
