@@ -520,7 +520,7 @@ paths:
                 accessToken:
                   type: string
                   minLength: 1
-                  maxLength: 640
+                  maxLength: 1000
                   example: JWT
               required:
                 - accessToken
