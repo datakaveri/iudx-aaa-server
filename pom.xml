@@ -13,7 +13,7 @@
 		<curator.version>5.6.0</curator.version>
 		<apache-commons-lang3.version>3.14.0</apache-commons-lang3.version>
 		<junit-jupiter-engine.version>5.10.2</junit-jupiter-engine.version>
-		<apache-log4j2.version>2.17.1</apache-log4j2.version>
+		<apache-log4j2.version>2.23.0</apache-log4j2.version>
 		<lmax-disruptor.version>3.4.4</lmax-disruptor.version>
 		<jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
 		<guava.version>32.0.0-jre</guava.version>
@@ -205,15 +205,18 @@
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
+			<version>${apache-log4j2.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-api</artifactId>
+			<version>${apache-log4j2.version}</version>
 		</dependency>
 		<!-- slf4j to log4j2 bridge adapter, needed for 'io.netty' logs -->
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-slf4j-impl</artifactId>
+			<artifactId>log4j-slf4j2-impl</artifactId>
+			<version>${apache-log4j2.version}</version>
 		</dependency>
 		<!--LMAX Disruptor for enabling Asynchronous log4j2 Logging  -->
 		<dependency>
