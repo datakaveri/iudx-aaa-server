@@ -25,7 +25,7 @@
 		<maven-pmd-plugin.version>3.20.0</maven-pmd-plugin.version>
 		<maven-checkstyle-plugin-google.version>3.1.2</maven-checkstyle-plugin-google.version>
 		<maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>
-		<restassured.version>5.3.2</restassured.version>
+		<restassured.version>5.4.0</restassured.version>
 		<openjdk.version>11</openjdk.version>
 		<keycloak.version>22.0.1</keycloak.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
