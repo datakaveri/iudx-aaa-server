@@ -7,7 +7,7 @@
 	<version>0.0.1-SNAPSHOT</version>
 
 	<properties>
-		<vertx.version>4.3.2</vertx.version>
+		<vertx.version>4.5.4</vertx.version>
 		<hazelcast.version>4.0.2</hazelcast.version>
 		<micrometer.version>1.12.3</micrometer.version>
 		<curator.version>5.6.0</curator.version>
@@ -212,6 +212,7 @@
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
 			<version>${apache-log4j2.version}</version>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
