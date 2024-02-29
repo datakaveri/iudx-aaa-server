@@ -121,7 +121,7 @@
     <dependency>
       <groupId>com.nimbusds</groupId>
       <artifactId>nimbus-jose-jwt</artifactId>
-      <version>9.25.6</version>
+      <version>9.38-rc3</version>
     </dependency>
     <!-- need bouncy castle for EC key parsing by nimbus-jose-jwt -->
     <dependency>
