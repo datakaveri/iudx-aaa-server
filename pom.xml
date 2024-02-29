@@ -126,8 +126,8 @@
     <!-- need bouncy castle for EC key parsing by nimbus-jose-jwt -->
     <dependency>
       <groupId>org.bouncycastle</groupId>
-      <artifactId>bcpkix-jdk15on</artifactId>
-      <version>1.58</version>
+      <artifactId>bcpkix-jdk18on</artifactId>
+      <version>1.77</version>
     </dependency>
 		<dependency>
 			<groupId>io.vertx</groupId>
