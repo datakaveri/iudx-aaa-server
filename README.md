@@ -174,4 +174,4 @@ Postman collection and enviroment files can be found at [src/main/resources/post
 For contribution guidelines, see [CONTRIBUTING](./CONTRIBUTING.md).
 
 ## License
-[MIT](./LICENSE)
+[View License](./LICENSE)
