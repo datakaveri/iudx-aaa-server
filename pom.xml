@@ -118,12 +118,12 @@
 			<groupId>org.keycloak</groupId>
 			<version>${keycloak.version}</version>
 		</dependency>
+		<!-- need bouncy castle for EC key parsing by nimbus-jose-jwt -->
     <dependency>
       <groupId>com.nimbusds</groupId>
       <artifactId>nimbus-jose-jwt</artifactId>
-      <version>9.38-rc3</version>
+      <version>9.37.3</version>
     </dependency>
-    <!-- need bouncy castle for EC key parsing by nimbus-jose-jwt -->
     <dependency>
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcpkix-jdk18on</artifactId>
@@ -544,6 +544,7 @@
 				</configuration>
 			</plugin>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>${maven-compiler-plugin.version}</version>
 				<configuration>
