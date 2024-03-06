@@ -395,6 +395,7 @@ public class TokenServiceTest {
 
     Map<Roles, Checkpoint> checks =
         roles.stream().collect(Collectors.toMap(role -> role, role -> testContext.checkpoint()));
+      Checkpoint delegateCheck = testContext.checkpoint();
     roles.forEach(
         role -> {
           JsonObject jsonReq =
@@ -438,7 +439,6 @@ public class TokenServiceTest {
             .put("itemType", "resource_group")
             .put("role", "delegate");
 
-    Checkpoint delegateCheck = testContext.checkpoint();
 
     RequestToken request = new RequestToken(jsonReq);
     tokenService.createToken(
@@ -694,6 +694,7 @@ public class TokenServiceTest {
 
     Map<Roles, Checkpoint> checks =
         roles.stream().collect(Collectors.toMap(role -> role, role -> testContext.checkpoint()));
+      Checkpoint delegateCheck = testContext.checkpoint();
     roles.forEach(
         role -> {
           JsonObject jsonReq =
@@ -738,8 +739,6 @@ public class TokenServiceTest {
             .put("itemId", DUMMY_COS_URL)
             .put("itemType", "cos")
             .put("role", "delegate");
-
-    Checkpoint delegateCheck = testContext.checkpoint();
 
     RequestToken request = new RequestToken(jsonReq);
     tokenService.createToken(
