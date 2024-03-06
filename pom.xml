@@ -148,6 +148,15 @@
 			<artifactId>postgresql</artifactId>
 			<version>42.7.2</version>
 		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.flywaydb/flyway-database-postgresql
+		 Needed to add this dependency in order to upgrade flyway-maven-plugin
+		 to latest version-->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-postgresql</artifactId>
+			<version>10.9.0</version>
+		</dependency>
 		<!-- Packages for Vertx metrics through micrometer  -->
 		<dependency>
 			<groupId>io.vertx</groupId>
@@ -400,7 +409,7 @@
 			<plugin>
 				<groupId>org.flywaydb</groupId>
 				<artifactId>flyway-maven-plugin</artifactId>
-				<version>8.5.13</version>
+				<version>10.9.0</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
