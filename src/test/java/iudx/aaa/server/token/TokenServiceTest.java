@@ -96,7 +96,6 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -376,95 +375,87 @@ public class TokenServiceTest {
                     })));
   }
 
-    @Test
-    @DisplayName("Create Token - Request for Resource Group token fails for admin, cos_admin, provider, consumer, delegate")
-    void createTokenRsGrpFails(VertxTestContext testContext) {
+  @Test
+  @DisplayName(
+      "Create Token - Request for Resource Group token fails for admin, cos_admin, provider, consumer, delegate")
+  void createTokenRsGrpFails(VertxTestContext testContext) {
 
-        List<Roles> roles = List.of(Roles.ADMIN, Roles.COS_ADMIN, Roles.PROVIDER, Roles.CONSUMER);
+    List<Roles> roles = List.of(Roles.ADMIN, Roles.COS_ADMIN, Roles.PROVIDER, Roles.CONSUMER);
 
-        User user = new User(normalUser.toJson());
-        user.setRoles(roles);
-        user.setRolesToRsMapping(
-                Map.of(
-                        Roles.CONSUMER.toString(),
-                        new JsonArray().add("some-rs.url"),
-                        Roles.PROVIDER.toString(),
-                        new JsonArray().add("some-rs.url"),
-                        Roles.ADMIN.toString(),
-                        new JsonArray().add("some-rs.url")));
+    User user = new User(normalUser.toJson());
+    user.setRoles(roles);
+    user.setRolesToRsMapping(
+        Map.of(
+            Roles.CONSUMER.toString(),
+            new JsonArray().add("some-rs.url"),
+            Roles.PROVIDER.toString(),
+            new JsonArray().add("some-rs.url"),
+            Roles.ADMIN.toString(),
+            new JsonArray().add("some-rs.url")));
 
-        Map<Roles, Checkpoint> checks =
-                roles.stream().collect(Collectors.toMap(role -> role, role -> testContext.checkpoint()));
+    Map<Roles, Checkpoint> checks =
+        roles.stream().collect(Collectors.toMap(role -> role, role -> testContext.checkpoint()));
+    roles.forEach(
+        role -> {
+          JsonObject jsonReq =
+              new JsonObject()
+                  .put("itemId", RESOURCE_GROUP)
+                  .put("itemType", "resource_group")
+                  .put("role", role.toString().toLowerCase());
 
-        AtomicInteger completedOperations = new AtomicInteger(0); // Track completed operations
+          RequestToken request = new RequestToken(jsonReq);
+          tokenService.createToken(
+              request,
+              null,
+              user,
+              testContext.succeeding(
+                  response ->
+                      testContext.verify(
+                          () -> {
+                            assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                            assertEquals(ERR_TITLE_NO_RES_GRP_TOKEN, response.getString("title"));
+                            assertEquals(ERR_DETAIL_NO_RES_GRP_TOKEN, response.getString("detail"));
+                            assertEquals(403, response.getInteger("status"));
+                            checks.get(role).flag();
+                          })));
+        });
 
-        for (Roles role : roles) {
-            JsonObject jsonReq = new JsonObject()
-                    .put("itemId", RESOURCE_GROUP)
-                    .put("itemType", "resource_group")
-                    .put("role", role.toString().toLowerCase());
+    User delegateUser = new User(normalUser.toJson());
+    delegateUser.setRoles(List.of(Roles.DELEGATE));
+    delegateUser.setRolesToRsMapping(
+        Map.of(Roles.DELEGATE.toString(), new JsonArray().add("some-rs.url")));
 
-            RequestToken request = new RequestToken(jsonReq);
-            tokenService.createToken(
-                    request,
-                    null,
-                    user,
-                    testContext.succeeding(
-                            response -> {
-                                testContext.verify(() -> {
-                                    assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                                    assertEquals(ERR_TITLE_NO_RES_GRP_TOKEN, response.getString("title"));
-                                    assertEquals(ERR_DETAIL_NO_RES_GRP_TOKEN, response.getString("detail"));
-                                    assertEquals(403, response.getInteger("status"));
-                                    checks.get(role).flag();
-                                });
+    DelegationInformation delegConsInfo =
+        new DelegationInformation(
+            UUID.randomUUID(),
+            UUID.fromString(normalUser.getUserId()),
+            Roles.CONSUMER,
+            DUMMY_SERVER);
 
-                                // Increment completed operations counter
-                                if (completedOperations.incrementAndGet() == roles.size()) {
-                                    testContext.completeNow(); // Complete the test context when all operations are completed
-                                }
-                            }));
-        }
+    JsonObject jsonReq =
+        new JsonObject()
+            .put("itemId", RESOURCE_GROUP)
+            .put("itemType", "resource_group")
+            .put("role", "delegate");
 
-        // For delegate
-        User delegateUser = new User(normalUser.toJson());
-        delegateUser.setRoles(List.of(Roles.DELEGATE));
-        delegateUser.setRolesToRsMapping(
-                Map.of(Roles.DELEGATE.toString(), new JsonArray().add("some-rs.url")));
+    Checkpoint delegateCheck = testContext.checkpoint();
 
-        DelegationInformation delegConsInfo =
-                new DelegationInformation(
-                        UUID.randomUUID(),
-                        UUID.fromString(normalUser.getUserId()),
-                        Roles.CONSUMER,
-                        DUMMY_SERVER);
-
-        JsonObject jsonReq =
-                new JsonObject()
-                        .put("itemId", RESOURCE_GROUP)
-                        .put("itemType", "resource_group")
-                        .put("role", "delegate");
-
-        RequestToken request = new RequestToken(jsonReq);
-        tokenService.createToken(
-                request,
-                delegConsInfo,
-                delegateUser,
-                testContext.succeeding(
-                        response -> {
-                            testContext.verify(() -> {
-                                assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                                assertEquals(ERR_TITLE_NO_RES_GRP_TOKEN, response.getString("title"));
-                                assertEquals(ERR_DETAIL_NO_RES_GRP_TOKEN, response.getString("detail"));
-                                assertEquals(403, response.getInteger("status"));
-                            });
-                            // Increment completed operations counter
-                            if (completedOperations.incrementAndGet() == roles.size() + 1) {
-                                testContext.completeNow(); // Complete the test context when all operations are completed
-                            }
-                        }));
-    }
-
+    RequestToken request = new RequestToken(jsonReq);
+    tokenService.createToken(
+        request,
+        delegConsInfo,
+        delegateUser,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                      assertEquals(ERR_TITLE_NO_RES_GRP_TOKEN, response.getString("title"));
+                      assertEquals(ERR_DETAIL_NO_RES_GRP_TOKEN, response.getString("detail"));
+                      assertEquals(403, response.getInteger("status"));
+                      delegateCheck.flag();
+                    })));
+  }
 
   @Test
   @DisplayName("Consumer getting Resource token - Success")
@@ -684,92 +675,90 @@ public class TokenServiceTest {
                     })));
   }
 
-    @Test
-    @DisplayName("Create Token - Request for COS token fails for admin, provider, consumer, delegate")
-    void createTokenCosTokenFailsWrongRole(VertxTestContext testContext) {
-        List<Roles> roles = List.of(Roles.ADMIN, Roles.PROVIDER, Roles.CONSUMER);
+  @Test
+  @DisplayName("Create Token - Request for COS token fails for admin, provider, consumer, delegate")
+  void createTokenCosTokenFailsWrongRole(VertxTestContext testContext) {
 
-        User user = new User(normalUser.toJson());
-        user.setRoles(roles);
-        user.setRolesToRsMapping(
-                Map.of(
-                        Roles.CONSUMER.toString(),
-                        new JsonArray().add("some-rs.url"),
-                        Roles.PROVIDER.toString(),
-                        new JsonArray().add("some-rs.url"),
-                        Roles.ADMIN.toString(),
-                        new JsonArray().add("some-rs.url")));
+    List<Roles> roles = List.of(Roles.ADMIN, Roles.PROVIDER, Roles.CONSUMER);
 
-        Map<Roles, Checkpoint> checks =
-                roles.stream().collect(Collectors.toMap(role -> role, role -> testContext.checkpoint()));
-        AtomicInteger count = new AtomicInteger(roles.size() + 1); // One for each role and one for delegate
+    User user = new User(normalUser.toJson());
+    user.setRoles(roles);
+    user.setRolesToRsMapping(
+        Map.of(
+            Roles.CONSUMER.toString(),
+            new JsonArray().add("some-rs.url"),
+            Roles.PROVIDER.toString(),
+            new JsonArray().add("some-rs.url"),
+            Roles.ADMIN.toString(),
+            new JsonArray().add("some-rs.url")));
 
-        roles.forEach(
-                role -> {
-                    JsonObject jsonReq = new JsonObject()
-                            .put("itemId", DUMMY_COS_URL)
-                            .put("itemType", "cos")
-                            .put("role", role.toString().toLowerCase());
+    Map<Roles, Checkpoint> checks =
+        roles.stream().collect(Collectors.toMap(role -> role, role -> testContext.checkpoint()));
+    roles.forEach(
+        role -> {
+          JsonObject jsonReq =
+              new JsonObject()
+                  .put("itemId", DUMMY_COS_URL)
+                  .put("itemType", "cos")
+                  .put("role", role.toString().toLowerCase());
 
-                    RequestToken request = new RequestToken(jsonReq);
-                    tokenService.createToken(
-                            request,
-                            null,
-                            user,
-                            testContext.succeeding(
-                                    response ->
-                                            testContext.verify(
-                                                    () -> {
-                                                        assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
-                                                        assertEquals(ERR_TITLE_INVALID_ROLE_FOR_COS, response.getString("title"));
-                                                        assertEquals(ERR_DETAIL_INVALID_ROLE_FOR_COS, response.getString("detail"));
-                                                        assertEquals(403, response.getInteger("status"));
-                                                        checks.get(role).flag();
-                                                        if (count.decrementAndGet() == 0) {
-                                                            testContext.completeNow();
-                                                        }
-                                                    })));
-                });
+          RequestToken request = new RequestToken(jsonReq);
+          tokenService.createToken(
+              request,
+              null,
+              user,
+              testContext.succeeding(
+                  response ->
+                      testContext.verify(
+                          () -> {
+                            assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
+                            assertEquals(
+                                ERR_TITLE_INVALID_ROLE_FOR_COS, response.getString("title"));
+                            assertEquals(
+                                ERR_DETAIL_INVALID_ROLE_FOR_COS, response.getString("detail"));
+                            assertEquals(403, response.getInteger("status"));
+                            checks.get(role).flag();
+                          })));
+        });
 
-        User delegateUser = new User(normalUser.toJson());
-        delegateUser.setRoles(List.of(Roles.DELEGATE));
-        delegateUser.setRolesToRsMapping(
-                Map.of(Roles.DELEGATE.toString(), new JsonArray().add("some-rs.url")));
+    User delegateUser = new User(normalUser.toJson());
+    delegateUser.setRoles(List.of(Roles.DELEGATE));
+    delegateUser.setRolesToRsMapping(
+        Map.of(Roles.DELEGATE.toString(), new JsonArray().add("some-rs.url")));
 
-        DelegationInformation delegConsInfo =
-                new DelegationInformation(
-                        UUID.randomUUID(),
-                        UUID.fromString(normalUser.getUserId()),
-                        Roles.CONSUMER,
-                        DUMMY_SERVER);
+    DelegationInformation delegConsInfo =
+        new DelegationInformation(
+            UUID.randomUUID(),
+            UUID.fromString(normalUser.getUserId()),
+            Roles.CONSUMER,
+            DUMMY_SERVER);
 
-        JsonObject jsonReq =
-                new JsonObject()
-                        .put("itemId", DUMMY_COS_URL)
-                        .put("itemType", "cos")
-                        .put("role", "delegate");
+    JsonObject jsonReq =
+        new JsonObject()
+            .put("itemId", DUMMY_COS_URL)
+            .put("itemType", "cos")
+            .put("role", "delegate");
 
-        RequestToken request = new RequestToken(jsonReq);
-        tokenService.createToken(
-                request,
-                delegConsInfo,
-                delegateUser,
-                testContext.succeeding(
-                        response ->
-                                testContext.verify(
-                                        () -> {
-                                            assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
-                                            assertEquals(ERR_TITLE_INVALID_ROLE_FOR_COS, response.getString("title"));
-                                            assertEquals(ERR_DETAIL_INVALID_ROLE_FOR_COS, response.getString("detail"));
-                                            assertEquals(403, response.getInteger("status"));
-                                            if (count.decrementAndGet() == 0) {
-                                                testContext.completeNow();
-                                            }
-                                        })));
-    }
+    Checkpoint delegateCheck = testContext.checkpoint();
 
+    RequestToken request = new RequestToken(jsonReq);
+    tokenService.createToken(
+        request,
+        delegConsInfo,
+        delegateUser,
+        testContext.succeeding(
+            response ->
+                testContext.verify(
+                    () -> {
+                      assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
+                      assertEquals(ERR_TITLE_INVALID_ROLE_FOR_COS, response.getString("title"));
+                      assertEquals(ERR_DETAIL_INVALID_ROLE_FOR_COS, response.getString("detail"));
+                      assertEquals(403, response.getInteger("status"));
+                      delegateCheck.flag();
+                    })));
+  }
 
-    @Test
+  @Test
   @DisplayName("Create Token - Request for COS token invalid COS URL")
   void createTokenCosTokenFailsInvalidCosUrl(VertxTestContext testContext) {
 
