@@ -56,12 +56,12 @@ SNo    Software Name<groupID:artifactID>                                License 
 54     googleJavaFormat                                                 Apache 2.0                                            None
 
 External Servers:
-SNo     Software Name     License Information            Modification Description
-1       PostgresQL        PostgreSQL Licence             None
-3       ImmuDB            Business Source License 1.1    None
-4       RabbitMQ          Apache 2.0                     None
-5       Zookeeper         Apache 2.0                     None
-6       Keycloak          Apache 2.0                     None
+SNo     Software Name     License Information                                   Modification Description
+1       PostgresQL        PostgreSQL Licence                                    None
+3       ImmuDB            Business Source License 1.1                           None
+4       RabbitMQ          Apache 2.0                                            None
+5       Zookeeper         Hazelcast Community License Agreement, Version 1.0    None
+6       Keycloak          Apache 2.0                                            None
 
 Internal Servers:
 SNo     Software Name            License Information    Modification Description
