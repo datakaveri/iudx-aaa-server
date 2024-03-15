@@ -53,7 +53,7 @@ SNo    Software Name<groupID:artifactID>                                License 
 51     com.nimbusds: nimbus-jose-jwt                                    Apache 2.0                                            None
 52     org.bouncycastle: bcpkix-jdk15on--> bcpkix-jdk18on               BouncyCastle                                          None
 53     com.ongres.scram:client                                          BSD 2-clause                                          None
-54     googleJavaFormat                                                 Apache 2.0                                            None
+54     com.google.googleJavaFormat                                                 Apache 2.0                                            None
 
 External Servers:
 SNo     Software Name     License Information                                   Modification Description
