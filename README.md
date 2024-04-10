@@ -1,8 +1,8 @@
 # Build Status
 [![Build Status](https://img.shields.io/jenkins/build?jobUrl=https%3A%2F%2Fjenkins.iudx.io%2Fview%2Fiudx-v5.5.0%2Fjob%2Fiudx%2520aaa-server%2520%28v5.5.0%29%2520pipeline%2F)](https://jenkins.iudx.io/view/iudx-v5.5.0/job/iudx%20aaa-server%20(v5.5.0)%20pipeline/lastBuild/)
-[![Jenkins Coverage](https://img.shields.io/jenkins/coverage/jacoco?jobUrl=https%3A%2F%2Fjenkins.iudx.io%2Fjob%2Fiudx%2520aaa-server%2520%28master%29%2520pipeline%2F)](https://jenkins.iudx.io/job/iudx%20aaa-server%20(master)%20pipeline/lastBuild/jacoco/)
-[![Unit and Integration Tests](https://img.shields.io/jenkins/tests?jobUrl=https%3A%2F%2Fjenkins.iudx.io%2Fjob%2Fiudx%2520aaa-server%2520%28master%29%2520pipeline%2F&label=unit%20and%20integration%20tests)](https://jenkins.iudx.io/job/iudx%20aaa-server%20(master)%20pipeline/lastBuild/testReport/)
-[![Security Tests](https://img.shields.io/jenkins/build?jobUrl=https%3A%2F%2Fjenkins.iudx.io%2Fjob%2Fiudx%2520aaa-server%2520%28master%29%2520pipeline%2F&label=security%20tests)](https://jenkins.iudx.io/job/iudx%20aaa-server%20(master)%20pipeline/lastBuild/zap/)
+[![Jenkins Coverage](https://img.shields.io/jenkins/coverage/jacoco?jobUrl=https%3A%2F%2Fjenkins.iudx.io%2Fview%2Fiudx-v5.5.0%2Fjob%2Fiudx%2520aaa-server%2520%28v5.5.0%29%2520pipeline%2F)](https://jenkins.iudx.io/view/iudx-v5.5.0/job/iudx%20aaa-server%20(v5.5.0)%20pipeline/lastBuild/jacoco/)
+[![Unit and Integration Tests](https://img.shields.io/jenkins/tests?jobUrl=https%3A%2F%2Fjenkins.iudx.io%2Fview%2Fiudx-v5.5.0%2Fjob%2Fiudx%2520aaa-server%2520%28v5.5.0%29%2520pipeline%2F&label=unit%20and%20integration%20tests)](https://jenkins.iudx.io/view/iudx-v5.5.0/job/iudx%20aaa-server%20(v5.5.0)%20pipeline/lastBuild/testReport/)
+[![Security Tests](https://img.shields.io/jenkins/build?jobUrl=https%3A%2F%2Fjenkins.iudx.io%2Fview%2Fiudx-v5.5.0%2Fjob%2Fiudx%2520aaa-server%2520%28v5.5.0%29%2520pipeline%2F&label=security%20tests)](https://jenkins.iudx.io/view/iudx-v5.5.0/job/iudx%20aaa-server%20(v5.5.0)%20pipeline/lastBuild/zap/)
 [![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/6743/badge)](https://bestpractices.coreinfrastructure.org/projects/6743)
 
 
