@@ -23,7 +23,7 @@ public class RestAssuredConfigExtension implements BeforeAllCallback {
     String testHost = System.getProperty("intTestHost");
 
     if (testHost != null) {
-      baseURI = "http://" + testHost;
+      baseURI = testHost;
     } else {
       baseURI = "http://localhost";
     }
