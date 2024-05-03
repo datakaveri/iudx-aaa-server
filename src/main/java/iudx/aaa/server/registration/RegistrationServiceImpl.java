@@ -950,7 +950,6 @@ public class RegistrationServiceImpl implements RegistrationService {
                           .collect(Collectors.toList());
 
                   if (!missingEmails.isEmpty()) {
-                    LOGGER.debug("Missing emails : {}", missingEmails);  
                     Response resp =
                         new ResponseBuilder()
                             .type(Urn.URN_INVALID_INPUT)
@@ -962,7 +961,6 @@ public class RegistrationServiceImpl implements RegistrationService {
                                     .put(
                                         ERR_CONTEXT_NOT_FOUND_EMAILS, new JsonArray(missingEmails)))
                             .build();
-                    LOGGER.debug("Missing emails log again! {}", resp.toJsonString());
                     return Future.failedFuture(new ComposeException(resp));
                   }
 
