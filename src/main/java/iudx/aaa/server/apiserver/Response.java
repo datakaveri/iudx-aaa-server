@@ -2,6 +2,7 @@ package iudx.aaa.server.apiserver;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import iudx.aaa.server.apiserver.util.ComposeExceptionMessageCodec;
 import iudx.aaa.server.apiserver.util.Urn;
 
 /**
@@ -106,6 +107,46 @@ public class Response {
     }
 
     return j;
+  }
+
+  /**
+   * Convert JSON to Response object. Used for {@link ComposeExceptionMessageCodec} to form the
+   * {@link ComposeException} once it's sent on the wire.
+   *
+   * @return a {@link Response} object
+   */
+  public static Response fromJson(JsonObject j) {
+    ResponseBuilder builder = new ResponseBuilder();
+    
+    builder.type(j.getString("type"));
+    builder.title(j.getString("title"));
+    
+    Object results = j.getValue("results");
+
+    if (results != null && results instanceof JsonArray) {
+      builder.arrayResults((JsonArray) results);
+    }
+    
+    if (results != null && results instanceof JsonObject) {
+      builder.objectResults((JsonObject) results);
+    }
+
+    String detail = j.getString("detail");
+    if (detail != null) {
+      builder.detail(detail);
+    }
+
+    int status = j.getInteger("status");
+    if (status != 0) {
+      builder.status(status);
+    }
+
+    JsonObject errorContext = j.getJsonObject("context");
+    if (errorContext != null) {
+      builder.errorContext(errorContext);
+    }
+
+    return builder.build();
   }
 
   public String toJsonString() {
