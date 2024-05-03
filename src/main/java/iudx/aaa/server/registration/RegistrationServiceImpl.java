@@ -962,6 +962,7 @@ public class RegistrationServiceImpl implements RegistrationService {
                                     .put(
                                         ERR_CONTEXT_NOT_FOUND_EMAILS, new JsonArray(missingEmails)))
                             .build();
+                    LOGGER.debug("Missing emails log again! {}", resp.toJsonString());
                     return Future.failedFuture(new ComposeException(resp));
                   }
 

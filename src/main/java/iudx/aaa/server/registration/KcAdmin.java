@@ -157,6 +157,7 @@ public class KcAdmin {
    * @return
    */
   public Future<JsonObject> findUserByEmail(String email) {
+    System.out.println("KC-ADMIN : Trying to find user with email " + email);  
     Promise<JsonObject> p = Promise.promise();
     RealmResource realmResource;
     UsersResource usersResource;
@@ -183,16 +184,19 @@ public class KcAdmin {
     List<UserRepresentation> users = usersResource.search(email, true);
 
     if (users.isEmpty()) {
+      System.out.println("KC-ADMIN : Can't find user " + email);  
       p.complete(res);
       return p.future();
     }
 
     UserRepresentation u = users.get(0);
+    System.out.println("KC-ADMIN : Found user " + email);  
     res.put("keycloakId", u.getId());
     res.put("email", u.getEmail());
     res.put(
         "name",
         new JsonObject().put("firstName", u.getFirstName()).put("lastName", u.getLastName()));
+    System.out.println("KC-ADMIN : Found user's details" + res.encode());  
     p.complete(res);
     return p.future();
   }
