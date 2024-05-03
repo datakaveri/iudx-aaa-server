@@ -950,6 +950,7 @@ public class RegistrationServiceImpl implements RegistrationService {
                           .collect(Collectors.toList());
 
                   if (!missingEmails.isEmpty()) {
+                    LOGGER.debug("Missing emails : {}", missingEmails);  
                     Response resp =
                         new ResponseBuilder()
                             .type(Urn.URN_INVALID_INPUT)
