@@ -1,6 +1,6 @@
-# This GitHub workflow will automatically update docker image tags of aaa-depl in the datakaveri/iudx-deployment repository files, whenever a docker image is pushed to ghcr.io/datakaveri/aaa-depl. It will update the master/latest branch if the tag is 5.6.0-alpha.
+# This GitHub workflow will automatically update docker image tags of aaa-depl in the datakaveri/iudx-deployment repository files, whenever a docker image is pushed to ghcr.io/datakaveri/aaa-depl. It will update the 5.5.0 stable branch if the tag is 5.5.0.
 
-name: Update AAA docker image tags
+name: Update AAA docker image tags (Release 5.5.0)
 
 # This trigger will run the workflow whenever a new package is published to the registry
 on:
@@ -29,25 +29,25 @@ jobs:
       env: 
         GH_TOKEN: ${{ secrets.JENKINS_UPDATE}}
       run: | 
-        # Get the latest version of 5.6.0-alpha tags from the container registry using GitHub API
-        export newtag5_6_0=`(head -n 1 <(curl -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/orgs/datakaveri/packages/container/aaa-depl/versions | jq ' .[].metadata.container.tags[0]'  | grep 5.6.0-alpha | sed -e 's/^"//' -e 's/"$//'))`
+        # Get the latest version of 5.5.0 tags from the container registry using GitHub API
+        export newtag5_5_0=`(head -n 1 <(curl -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/orgs/datakaveri/packages/container/aaa-depl/versions | jq ' .[].metadata.container.tags[0]'  | grep 5.5.0 | grep -v alpha | sed -e 's/^"//' -e 's/"$//'))`
         
         # Get the old tags from the YAML files
-        export oldtag5_6_0=`yq -r .services.auth.image Docker-Swarm-deployment/single-node/auth/auth-stack.yaml | cut -d : -f 2`
+        export oldtag5_5_0=`yq -r .services.auth.image Docker-Swarm-deployment/single-node/auth/auth-stack.yaml | cut -d : -f 2`
         
-        git checkout master
+        git checkout 5.5.0
         
         # Set Git user
         git config --global user.name 'jenkins-datakaveri'
         git config --global user.email "96175780+jenkins-datakaveri@users.noreply.github.com"
         
         # Update the YAML files and create a new branch for each tag update
-        if [ "$newtag5_6_0" != "$oldtag5_6_0" ]
+        if [ "$newtag5_5_0" != "$oldtag5_5_0" ]
         then
-         git checkout -b aaa-automatic-updates/$newtag5_6_0
+         git checkout -b aaa-5.5.0-automatic-updates/$newtag5_5_0
 
-         # Uses sed to find and replace $oldtag5_6_0 with $newtag5_6_0 in Docker-Swarm-deployment/single-node/auth/auth-stack.yaml file
-         sed -i s/$oldtag5_6_0/$newtag5_6_0/g Docker-Swarm-deployment/single-node/auth/auth-stack.yaml
+         # Uses sed to find and replace $oldtag5_5_0 with $newtag5_5_0 in Docker-Swarm-deployment/single-node/auth/auth-stack.yaml file
+         sed -i s/$oldtag5_5_0/$newtag5_5_0/g Docker-Swarm-deployment/single-node/auth/auth-stack.yaml
          
          # Exports the current version of the application from K8s-deployment/Charts/auth-server/Chart.yaml file
          export oldappversion=`yq -r .version K8s-deployment/Charts/auth-server/Chart.yaml`
@@ -57,11 +57,6 @@ jobs:
          
          # Uses sed to find and replace $oldappversion with $newappversion in K8s-deployment/Charts/auth-server/Chart.yaml and K8s-deployment/Charts/auth-server/values.yaml files
          sed -i s/$oldappversion/$newappversion/g K8s-deployment/Charts/auth-server/Chart.yaml
-         sed -i s/$oldtag5_6_0/$newtag5_6_0/g K8s-deployment/Charts/auth-server/values.yaml
+         sed -i s/$oldtag5_5_0/$newtag5_5_0/g K8s-deployment/Charts/auth-server/values.yaml
          git add Docker-Swarm-deployment/single-node/auth/auth-stack.yaml K8s-deployment/Charts/auth-server/values.yaml K8s-deployment/Charts/auth-server/Chart.yaml
-         git commit --allow-empty -m "updated AAA docker image tag to $newtag5_6_0"
-         git push --set-upstream origin aaa-automatic-updates/$newtag5_6_0
-         
-         # Creates a new pull request on the datakaveri/iudx-deployment repository with the base branch master
-         gh pr create -R datakaveri/iudx-deployment --base master --fill 
-        fi
+         git commit --allow-empty -m
