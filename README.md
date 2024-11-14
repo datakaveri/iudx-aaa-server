@@ -6,13 +6,22 @@
 
 
 ![IUDX](./readme/images/iudx.png)
-# India Urban Data eXchange (IUDX) Authentication, Authorization, and Accounting (AAA) Server
+# DX Authentication, Authorization, and Accounting (AAA) Server
 
-IUDX-AAA is the Authentication, Authorization, and Accounting server for accessing [IUDX](https://www.iudx.org.in) services.
+DX-AAA is the Authentication, Authorization, and Accounting server for accessing [DX](https://www.iudx.org.in) services.
 
 <p align="center">
-<img src="./readme/images/aaa_overview.png">
+<img src="./readme/images/cdpg.png">
 </p>
+
+## Features
+
+- Register for [roles](./readme/terms.md#roles)
+- Get [DX access tokens](./readme/terms.md#tokens) to consume resources
+- Manage [client credentials](./readme/terms.md#client-credentials) 
+- Manage [delegations](./readme/terms.md#delegations)
+- Register [resource servers](./readme/terms.md#resource-servers) and manage [APDs](./readme/terms.md#apds)
+- Search for users registered on the DX
 
 ## Get Started
 
