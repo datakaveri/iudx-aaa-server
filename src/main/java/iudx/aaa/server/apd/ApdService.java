@@ -1,11 +1,9 @@
 package iudx.aaa.server.apd;
 
-import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.ProxyGen;
 import io.vertx.codegen.annotations.VertxGen;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.apiserver.ApdUpdateRequest;
@@ -35,7 +33,7 @@ public interface ApdService {
    *
    * @param vertx which is the vertx instance
    * @param address which is the proxy address
-   * @return ApdServiceVertxEBProxy which is a service proxy
+   * @return Future of type JsonObject
    */
   @GenIgnore
   static ApdService createProxy(Vertx vertx, String address) {
@@ -52,11 +50,9 @@ public interface ApdService {
    * </ul>
    *
    * @param user which is the User object
-   * @param handler which is a Request Handler
-   * @return ApdService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  ApdService listApd(User user, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> listApd(User user);
 
   /**
    * The updateApd implements the operation to update Access Policy Domain status.
@@ -70,12 +66,9 @@ public interface ApdService {
    *
    * @param request which is a List of ApdUpdateRequest data objects
    * @param user which is the User object
-   * @param handler which is a Request Handler
-   * @return ApdService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  ApdService updateApd(
-      List<ApdUpdateRequest> request, User user, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> updateApd(List<ApdUpdateRequest> request, User user);
 
   /**
    * The createApd implements the operation to create an Access Policy Domain for a user who has the
@@ -83,12 +76,9 @@ public interface ApdService {
    *
    * @param request CreateApdRequest data object
    * @param user the User object
-   * @param handler which is a request handler
-   * @return ApdService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  ApdService createApd(
-      CreateApdRequest request, User user, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> createApd(CreateApdRequest request, User user);
 
   /**
    * The callApd implements the operation to call an APD to verify if a user can access a resource
@@ -106,21 +96,16 @@ public interface ApdService {
    *       <li><em>constraints</em> : JSON object containing constraints set for the APD policy
    *     </ul>
    *
-   * @param handler which is a request handler
-   * @return ApdService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  ApdService callApd(JsonObject apdContext, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> callApd(JsonObject apdContext);
 
   /**
    * The getApdDetails implements the operation to get details of Access Policy Domains.
    *
    * @param apdUrl a list of valid APD urls
    * @param apdIds a list of valid APD IDs
-   * @param handler which is a request handler
-   * @return ApdService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  ApdService getApdDetails(
-      List<String> apdUrl, List<String> apdIds, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> getApdDetails(List<String> apdUrl, List<String> apdIds);
 }

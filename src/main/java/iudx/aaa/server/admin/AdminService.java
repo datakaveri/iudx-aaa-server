@@ -1,11 +1,9 @@
 package iudx.aaa.server.admin;
 
-import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.ProxyGen;
 import io.vertx.codegen.annotations.VertxGen;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.apiserver.CreateRsRequest;
@@ -36,7 +34,7 @@ public interface AdminService {
    *
    * @param vertx which is the vertx instance
    * @param address which is the proxy address
-   * @return AdminServiceVertxEBProxy which is a service proxy
+   * @return Future of type JsonObject
    */
   @GenIgnore
   static AdminService createProxy(Vertx vertx, String address) {
@@ -48,12 +46,9 @@ public interface AdminService {
    *
    * @param filter which is an instance of RoleStatus
    * @param user which is the User object
-   * @param handler which is a Request Handler
-   * @return AdminService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  AdminService getProviderRegistrations(
-      RoleStatus filter, User user, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> getProviderRegistrations(RoleStatus filter, User user);
 
   /**
    * The updateProviderRegistrations implements the operation to approve/reject Provider
@@ -61,22 +56,17 @@ public interface AdminService {
    *
    * @param request which is a List of ProviderUpdateRequest data objects
    * @param user which is the User object
-   * @param handler which is a Request Handler
-   * @return AdminService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  AdminService updateProviderRegistrationStatus(
-      List<ProviderUpdateRequest> request, User user, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> updateProviderRegistrationStatus(
+      List<ProviderUpdateRequest> request, User user);
 
   /**
    * The createResourceServer implements the ResourceServer creation operation.
    *
    * @param request CreateRsRequest data object
    * @param user the User object
-   * @param handler which is a request handler
-   * @return AdminService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  AdminService createResourceServer(
-      CreateRsRequest request, User user, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> createResourceServer(CreateRsRequest request, User user);
 }

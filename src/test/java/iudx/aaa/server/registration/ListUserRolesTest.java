@@ -157,17 +157,18 @@ public class ListUserRolesTest {
 
     User noRolesUser = new UserBuilder().userId(UUID.randomUUID()).build();
 
-    registrationService.listUser(
-        noRolesUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(404, response.getInteger("status"));
-                      assertEquals(ERR_TITLE_NO_APPROVED_ROLES, response.getString("title"));
-                      assertEquals(ERR_DETAIL_NO_APPROVED_ROLES, response.getString("detail"));
-                      testContext.completeNow();
-                    })));
+    registrationService
+        .listUser(noRolesUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(404, response.getInteger("status"));
+                          assertEquals(ERR_TITLE_NO_APPROVED_ROLES, response.getString("title"));
+                          assertEquals(ERR_DETAIL_NO_APPROVED_ROLES, response.getString("detail"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -185,14 +186,15 @@ public class ListUserRolesTest {
             succ -> {
               Mockito.when(kc.getEmailId(any())).thenReturn(Future.failedFuture("fail"));
 
-              registrationService.listUser(
-                  user,
-                  testContext.failing(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                testContext.completeNow();
-                              })));
+              registrationService
+                  .listUser(user)
+                  .onComplete(
+                      testContext.failing(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    testContext.completeNow();
+                                  })));
             });
   }
 
@@ -211,17 +213,20 @@ public class ListUserRolesTest {
             succ -> {
               Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(""));
 
-              registrationService.listUser(
-                  user,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(400, response.getInteger("status"));
-                                assertEquals(ERR_TITLE_USER_NOT_KC, response.getString("title"));
-                                assertEquals(ERR_DETAIL_USER_NOT_KC, response.getString("detail"));
-                                testContext.completeNow();
-                              })));
+              registrationService
+                  .listUser(user)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(400, response.getInteger("status"));
+                                    assertEquals(
+                                        ERR_TITLE_USER_NOT_KC, response.getString("title"));
+                                    assertEquals(
+                                        ERR_DETAIL_USER_NOT_KC, response.getString("detail"));
+                                    testContext.completeNow();
+                                  })));
             });
   }
 
@@ -245,56 +250,60 @@ public class ListUserRolesTest {
               Mockito.when(kc.getEmailId(any()))
                   .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
 
-              registrationService.listUser(
-                  user,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(200, response.getInteger("status"));
-                                assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
-                                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+              registrationService
+                  .listUser(user)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(200, response.getInteger("status"));
+                                    assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
+                                    assertEquals(
+                                        URN_SUCCESS.toString(), response.getString("type"));
 
-                                JsonObject result = response.getJsonObject("results");
+                                    JsonObject result = response.getJsonObject("results");
 
-                                JsonObject name = result.getJsonObject("name");
-                                assertEquals(
-                                    name.getString("firstName"), user.getName().get("firstName"));
-                                assertEquals(
-                                    name.getString("lastName"), user.getName().get("lastName"));
+                                    JsonObject name = result.getJsonObject("name");
+                                    assertEquals(
+                                        name.getString("firstName"),
+                                        user.getName().get("firstName"));
+                                    assertEquals(
+                                        name.getString("lastName"), user.getName().get("lastName"));
 
-                                @SuppressWarnings("unchecked")
-                                List<String> returnedRoles = result.getJsonArray("roles").getList();
-                                assertTrue(
-                                    returnedRoles.containsAll(
-                                        List.of(Roles.CONSUMER.toString().toLowerCase())));
+                                    @SuppressWarnings("unchecked")
+                                    List<String> returnedRoles =
+                                        result.getJsonArray("roles").getList();
+                                    assertTrue(
+                                        returnedRoles.containsAll(
+                                            List.of(Roles.CONSUMER.toString().toLowerCase())));
 
-                                assertTrue(
-                                    result
-                                        .getJsonObject("rolesToRsMapping")
-                                        .containsKey(Roles.CONSUMER.toString().toLowerCase()));
-                                JsonArray rsUrls =
-                                    result
-                                        .getJsonObject("rolesToRsMapping")
-                                        .getJsonArray(Roles.CONSUMER.toString().toLowerCase());
-                                assertTrue(rsUrls.contains(DUMMY_SERVER));
+                                    assertTrue(
+                                        result
+                                            .getJsonObject("rolesToRsMapping")
+                                            .containsKey(Roles.CONSUMER.toString().toLowerCase()));
+                                    JsonArray rsUrls =
+                                        result
+                                            .getJsonObject("rolesToRsMapping")
+                                            .getJsonArray(Roles.CONSUMER.toString().toLowerCase());
+                                    assertTrue(rsUrls.contains(DUMMY_SERVER));
 
-                                assertTrue(result.containsKey(RESP_CLIENT_ARR));
-                                JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
-                                JsonObject defaultClient = clients.getJsonObject(0);
-                                assertTrue(clients.size() > 0);
-                                assertEquals(
-                                    defaultClient.getString(RESP_CLIENT_ID),
-                                    utils.getDetails(user).clientId);
+                                    assertTrue(result.containsKey(RESP_CLIENT_ARR));
+                                    JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
+                                    JsonObject defaultClient = clients.getJsonObject(0);
+                                    assertTrue(clients.size() > 0);
+                                    assertEquals(
+                                        defaultClient.getString(RESP_CLIENT_ID),
+                                        utils.getDetails(user).clientId);
 
-                                assertEquals(
-                                    result.getString(RESP_PHONE), utils.getDetails(user).phone);
-                                assertEquals(
-                                    result.getString(RESP_EMAIL), utils.getDetails(user).email);
-                                assertEquals(result.getString("userId"), user.getUserId());
+                                    assertEquals(
+                                        result.getString(RESP_PHONE), utils.getDetails(user).phone);
+                                    assertEquals(
+                                        result.getString(RESP_EMAIL), utils.getDetails(user).email);
+                                    assertEquals(result.getString("userId"), user.getUserId());
 
-                                testContext.completeNow();
-                              })));
+                                    testContext.completeNow();
+                                  })));
             });
   }
 
@@ -317,49 +326,53 @@ public class ListUserRolesTest {
               Mockito.when(kc.getEmailId(any()))
                   .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
 
-              registrationService.listUser(
-                  user,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(200, response.getInteger("status"));
-                                assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
-                                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+              registrationService
+                  .listUser(user)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(200, response.getInteger("status"));
+                                    assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
+                                    assertEquals(
+                                        URN_SUCCESS.toString(), response.getString("type"));
 
-                                JsonObject result = response.getJsonObject("results");
+                                    JsonObject result = response.getJsonObject("results");
 
-                                JsonObject name = result.getJsonObject("name");
-                                assertEquals(
-                                    name.getString("firstName"), user.getName().get("firstName"));
-                                assertEquals(
-                                    name.getString("lastName"), user.getName().get("lastName"));
+                                    JsonObject name = result.getJsonObject("name");
+                                    assertEquals(
+                                        name.getString("firstName"),
+                                        user.getName().get("firstName"));
+                                    assertEquals(
+                                        name.getString("lastName"), user.getName().get("lastName"));
 
-                                @SuppressWarnings("unchecked")
-                                List<String> returnedRoles = result.getJsonArray("roles").getList();
-                                assertTrue(
-                                    returnedRoles.containsAll(
-                                        List.of(Roles.CONSUMER.toString().toLowerCase())));
+                                    @SuppressWarnings("unchecked")
+                                    List<String> returnedRoles =
+                                        result.getJsonArray("roles").getList();
+                                    assertTrue(
+                                        returnedRoles.containsAll(
+                                            List.of(Roles.CONSUMER.toString().toLowerCase())));
 
-                                assertTrue(
-                                    result
-                                        .getJsonObject("rolesToRsMapping")
-                                        .containsKey(Roles.CONSUMER.toString().toLowerCase()));
-                                JsonArray rsUrls =
-                                    result
-                                        .getJsonObject("rolesToRsMapping")
-                                        .getJsonArray(Roles.CONSUMER.toString().toLowerCase());
-                                assertTrue(rsUrls.contains(DUMMY_SERVER));
+                                    assertTrue(
+                                        result
+                                            .getJsonObject("rolesToRsMapping")
+                                            .containsKey(Roles.CONSUMER.toString().toLowerCase()));
+                                    JsonArray rsUrls =
+                                        result
+                                            .getJsonObject("rolesToRsMapping")
+                                            .getJsonArray(Roles.CONSUMER.toString().toLowerCase());
+                                    assertTrue(rsUrls.contains(DUMMY_SERVER));
 
-                                assertFalse(result.containsKey(RESP_CLIENT_ARR));
-                                assertFalse(result.containsKey(RESP_PHONE));
+                                    assertFalse(result.containsKey(RESP_CLIENT_ARR));
+                                    assertFalse(result.containsKey(RESP_PHONE));
 
-                                assertEquals(
-                                    result.getString(RESP_EMAIL), utils.getDetails(user).email);
-                                assertEquals(result.getString("userId"), user.getUserId());
+                                    assertEquals(
+                                        result.getString(RESP_EMAIL), utils.getDetails(user).email);
+                                    assertEquals(result.getString("userId"), user.getUserId());
 
-                                testContext.completeNow();
-                              })));
+                                    testContext.completeNow();
+                                  })));
             });
   }
 
@@ -390,56 +403,60 @@ public class ListUserRolesTest {
               Mockito.when(kc.getEmailId(any()))
                   .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
 
-              registrationService.listUser(
-                  user,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(200, response.getInteger("status"));
-                                assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
-                                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+              registrationService
+                  .listUser(user)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(200, response.getInteger("status"));
+                                    assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
+                                    assertEquals(
+                                        URN_SUCCESS.toString(), response.getString("type"));
 
-                                JsonObject result = response.getJsonObject("results");
+                                    JsonObject result = response.getJsonObject("results");
 
-                                JsonObject name = result.getJsonObject("name");
-                                assertEquals(
-                                    name.getString("firstName"), user.getName().get("firstName"));
-                                assertEquals(
-                                    name.getString("lastName"), user.getName().get("lastName"));
+                                    JsonObject name = result.getJsonObject("name");
+                                    assertEquals(
+                                        name.getString("firstName"),
+                                        user.getName().get("firstName"));
+                                    assertEquals(
+                                        name.getString("lastName"), user.getName().get("lastName"));
 
-                                @SuppressWarnings("unchecked")
-                                List<String> returnedRoles = result.getJsonArray("roles").getList();
-                                assertTrue(
-                                    returnedRoles.containsAll(
-                                        Roles.allRoles.stream()
-                                            .map(i -> i.toString().toLowerCase())
-                                            .collect(Collectors.toList())));
+                                    @SuppressWarnings("unchecked")
+                                    List<String> returnedRoles =
+                                        result.getJsonArray("roles").getList();
+                                    assertTrue(
+                                        returnedRoles.containsAll(
+                                            Roles.allRoles.stream()
+                                                .map(i -> i.toString().toLowerCase())
+                                                .collect(Collectors.toList())));
 
-                                assertTrue(result.containsKey("rolesToRsMapping"));
-                                JsonObject rolesToRs = result.getJsonObject("rolesToRsMapping");
+                                    assertTrue(result.containsKey("rolesToRsMapping"));
+                                    JsonObject rolesToRs = result.getJsonObject("rolesToRsMapping");
 
-                                Set<Roles> rolesThatHaveMapping =
-                                    new HashSet<Roles>(Roles.allRoles);
-                                rolesThatHaveMapping.remove(Roles.COS_ADMIN);
+                                    Set<Roles> rolesThatHaveMapping =
+                                        new HashSet<Roles>(Roles.allRoles);
+                                    rolesThatHaveMapping.remove(Roles.COS_ADMIN);
 
-                                rolesThatHaveMapping.forEach(
-                                    role -> {
-                                      assertTrue(
-                                          rolesToRs
-                                              .getJsonArray(role.toString().toLowerCase())
-                                              .contains(DUMMY_SERVER));
-                                    });
+                                    rolesThatHaveMapping.forEach(
+                                        role -> {
+                                          assertTrue(
+                                              rolesToRs
+                                                  .getJsonArray(role.toString().toLowerCase())
+                                                  .contains(DUMMY_SERVER));
+                                        });
 
-                                assertFalse(result.containsKey(RESP_CLIENT_ARR));
-                                assertFalse(result.containsKey(RESP_PHONE));
+                                    assertFalse(result.containsKey(RESP_CLIENT_ARR));
+                                    assertFalse(result.containsKey(RESP_PHONE));
 
-                                assertEquals(
-                                    result.getString(RESP_EMAIL), utils.getDetails(user).email);
-                                assertEquals(result.getString("userId"), user.getUserId());
+                                    assertEquals(
+                                        result.getString(RESP_EMAIL), utils.getDetails(user).email);
+                                    assertEquals(result.getString("userId"), user.getUserId());
 
-                                testContext.completeNow();
-                              })));
+                                    testContext.completeNow();
+                                  })));
             });
   }
 
@@ -458,39 +475,40 @@ public class ListUserRolesTest {
 
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture(cosAdminEmail));
 
-    registrationService.listUser(
-        cosAdminUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(200, response.getInteger("status"));
-                      assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+    registrationService
+        .listUser(cosAdminUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(200, response.getInteger("status"));
+                          assertEquals(SUCC_TITLE_USER_READ, response.getString("title"));
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-                      JsonObject result = response.getJsonObject("results");
+                          JsonObject result = response.getJsonObject("results");
 
-                      JsonObject name = result.getJsonObject("name");
-                      assertEquals(
-                          name.getString("firstName"), cosAdminUser.getName().get("firstName"));
-                      assertEquals(
-                          name.getString("lastName"), cosAdminUser.getName().get("lastName"));
+                          JsonObject name = result.getJsonObject("name");
+                          assertEquals(
+                              name.getString("firstName"), cosAdminUser.getName().get("firstName"));
+                          assertEquals(
+                              name.getString("lastName"), cosAdminUser.getName().get("lastName"));
 
-                      @SuppressWarnings("unchecked")
-                      List<String> returnedRoles = result.getJsonArray("roles").getList();
-                      assertTrue(
-                          returnedRoles.containsAll(
-                              List.of(Roles.COS_ADMIN.toString().toLowerCase())));
+                          @SuppressWarnings("unchecked")
+                          List<String> returnedRoles = result.getJsonArray("roles").getList();
+                          assertTrue(
+                              returnedRoles.containsAll(
+                                  List.of(Roles.COS_ADMIN.toString().toLowerCase())));
 
-                      assertTrue(result.getJsonObject("rolesToRsMapping").isEmpty());
+                          assertTrue(result.getJsonObject("rolesToRsMapping").isEmpty());
 
-                      assertFalse(result.containsKey(RESP_CLIENT_ARR));
-                      assertFalse(result.containsKey(RESP_PHONE));
+                          assertFalse(result.containsKey(RESP_CLIENT_ARR));
+                          assertFalse(result.containsKey(RESP_PHONE));
 
-                      assertEquals(result.getString(RESP_EMAIL), cosAdminEmail);
-                      assertEquals(result.getString("userId"), cosAdminUser.getUserId());
+                          assertEquals(result.getString(RESP_EMAIL), cosAdminEmail);
+                          assertEquals(result.getString("userId"), cosAdminUser.getUserId());
 
-                      testContext.completeNow();
-                    })));
+                          testContext.completeNow();
+                        })));
   }
 }

@@ -11,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -188,18 +187,18 @@ public class ListApdTest {
   void noApd(VertxTestContext testContext) {
 
     String randUuid = UUID.randomUUID().toString();
-    apdService.getApdDetails(
-        List.of(),
-        List.of(randUuid),
-        testContext.succeeding(
-            response -> {
-              testContext.verify(
-                  () -> {
-                    assertEquals(response.getInteger("status"), 400);
-                    assertEquals(response.getString("title"), "Invalid request");
-                    testContext.completeNow();
-                  });
-            }));
+    apdService
+        .getApdDetails(List.of(), List.of(randUuid))
+        .onComplete(
+            testContext.succeeding(
+                response -> {
+                  testContext.verify(
+                      () -> {
+                        assertEquals(response.getInteger("status"), 400);
+                        assertEquals(response.getString("title"), "Invalid request");
+                        testContext.completeNow();
+                      });
+                }));
   }
 
   @Test
@@ -207,22 +206,22 @@ public class ListApdTest {
   void noUrl(VertxTestContext testContext) {
 
     String randString = RandomStringUtils.randomAlphabetic(7).toLowerCase();
-    apdService.getApdDetails(
-        List.of(randString),
-        List.of(),
-        testContext.failing(
-            response -> {
-              testContext.verify(
-                  () -> {
-                    if (response instanceof ComposeException) {
-                      ComposeException e = (ComposeException) response;
-                      JsonObject result = e.getResponse().toJson();
-                      assertEquals(result.getInteger("status"), 400);
-                      assertEquals(result.getString("title"), ERR_TITLE_INVALID_REQUEST_ID);
-                    }
-                    testContext.completeNow();
-                  });
-            }));
+    apdService
+        .getApdDetails(List.of(randString), List.of())
+        .onComplete(
+            testContext.failing(
+                response -> {
+                  testContext.verify(
+                      () -> {
+                        if (response instanceof ComposeException) {
+                          ComposeException e = (ComposeException) response;
+                          JsonObject result = e.getResponse().toJson();
+                          assertEquals(result.getInteger("status"), 400);
+                          assertEquals(result.getString("title"), ERR_TITLE_INVALID_REQUEST_ID);
+                        }
+                        testContext.completeNow();
+                      });
+                }));
   }
 
   @Test
@@ -231,34 +230,34 @@ public class ListApdTest {
 
     String randUuid = UUID.randomUUID().toString();
     String randString = RandomStringUtils.randomAlphabetic(7).toLowerCase();
-    apdService.getApdDetails(
-        List.of(randString),
-        List.of(randUuid),
-        testContext.failing(
-            response -> {
-              testContext.verify(
-                  () -> {
-                    assertEquals(response.getMessage(), "internal server error");
-                    testContext.completeNow();
-                  });
-            }));
+    apdService
+        .getApdDetails(List.of(randString), List.of(randUuid))
+        .onComplete(
+            testContext.failing(
+                response -> {
+                  testContext.verify(
+                      () -> {
+                        assertEquals(response.getMessage(), "internal server error");
+                        testContext.completeNow();
+                      });
+                }));
   }
 
   @Test
   @DisplayName("Test incorrect input both apdUrl and apdID empty")
   void emptyInput(VertxTestContext testContext) {
 
-    apdService.getApdDetails(
-        List.of(),
-        List.of(),
-        testContext.failing(
-            response -> {
-              testContext.verify(
-                  () -> {
-                    assertEquals(response.getMessage(), "internal server error");
-                    testContext.completeNow();
-                  });
-            }));
+    apdService
+        .getApdDetails(List.of(), List.of())
+        .onComplete(
+            testContext.failing(
+                response -> {
+                  testContext.verify(
+                      () -> {
+                        assertEquals(response.getMessage(), "internal server error");
+                        testContext.completeNow();
+                      });
+                }));
   }
 
   @Test
@@ -275,43 +274,43 @@ public class ListApdTest {
 
     Mockito.doAnswer(
             i -> {
-              Promise<JsonObject> p = i.getArgument(1);
+              JsonObject response = new JsonObject();
 
-              p.complete(
-                  new JsonObject()
-                      .put(trusteeAUser.getUserId(), utils.getKcAdminJson(trusteeAUser))
-                      .put(trusteeBUser.getUserId(), utils.getKcAdminJson(trusteeBUser)));
-              return i.getMock();
+              response
+                  .put(trusteeAUser.getUserId(), utils.getKcAdminJson(trusteeAUser))
+                  .put(trusteeBUser.getUserId(), utils.getKcAdminJson(trusteeBUser));
+
+              return Future.succeededFuture(response);
             })
         .when(registrationService)
-        .getUserDetails(Mockito.any(), Mockito.any());
+        .getUserDetails(Mockito.any());
 
-    apdService.getApdDetails(
-        List.of(),
-        request,
-        testContext.succeeding(
-            response -> {
-              testContext.verify(
-                  () -> {
-                    JsonObject respOne = response.getJsonObject(activeApdAId);
-                    JsonObject respTwo = response.getJsonObject(inActiveApdBId);
+    apdService
+        .getApdDetails(List.of(), request)
+        .onComplete(
+            testContext.succeeding(
+                response -> {
+                  testContext.verify(
+                      () -> {
+                        JsonObject respOne = response.getJsonObject(activeApdAId);
+                        JsonObject respTwo = response.getJsonObject(inActiveApdBId);
 
-                    assertEquals(
-                        respOne.getString(RESP_APD_STATUS),
-                        ApdStatus.ACTIVE.toString().toLowerCase());
-                    assertEquals(
-                        respTwo.getString(RESP_APD_STATUS),
-                        ApdStatus.INACTIVE.toString().toLowerCase());
+                        assertEquals(
+                            respOne.getString(RESP_APD_STATUS),
+                            ApdStatus.ACTIVE.toString().toLowerCase());
+                        assertEquals(
+                            respTwo.getString(RESP_APD_STATUS),
+                            ApdStatus.INACTIVE.toString().toLowerCase());
 
-                    assertEquals(
-                        respOne.getJsonObject(RESP_APD_OWNER).getString("email"),
-                        utils.getDetails(trusteeAUser).email);
-                    assertEquals(
-                        respTwo.getJsonObject(RESP_APD_OWNER).getString("email"),
-                        utils.getDetails(trusteeBUser).email);
-                    testContext.completeNow();
-                  });
-            }));
+                        assertEquals(
+                            respOne.getJsonObject(RESP_APD_OWNER).getString("email"),
+                            utils.getDetails(trusteeAUser).email);
+                        assertEquals(
+                            respTwo.getJsonObject(RESP_APD_OWNER).getString("email"),
+                            utils.getDetails(trusteeBUser).email);
+                        testContext.completeNow();
+                      });
+                }));
   }
 
   @Test
@@ -325,43 +324,43 @@ public class ListApdTest {
 
     Mockito.doAnswer(
             i -> {
-              Promise<JsonObject> p = i.getArgument(1);
+              JsonObject response = new JsonObject();
 
-              p.complete(
-                  new JsonObject()
-                      .put(trusteeAUser.getUserId(), utils.getKcAdminJson(trusteeAUser))
-                      .put(trusteeBUser.getUserId(), utils.getKcAdminJson(trusteeBUser)));
-              return i.getMock();
+              response
+                  .put(trusteeAUser.getUserId(), utils.getKcAdminJson(trusteeAUser))
+                  .put(trusteeBUser.getUserId(), utils.getKcAdminJson(trusteeBUser));
+
+              return Future.succeededFuture(response);
             })
         .when(registrationService)
-        .getUserDetails(Mockito.any(), Mockito.any());
+        .getUserDetails(Mockito.any());
 
-    apdService.getApdDetails(
-        request,
-        List.of(),
-        testContext.succeeding(
-            response -> {
-              testContext.verify(
-                  () -> {
-                    JsonObject respOne = response.getJsonObject(ACTIVE_A);
-                    JsonObject respTwo = response.getJsonObject(INACTIVE_B);
+    apdService
+        .getApdDetails(request, List.of())
+        .onComplete(
+            testContext.succeeding(
+                response -> {
+                  testContext.verify(
+                      () -> {
+                        JsonObject respOne = response.getJsonObject(ACTIVE_A);
+                        JsonObject respTwo = response.getJsonObject(INACTIVE_B);
 
-                    assertEquals(
-                        respOne.getString(RESP_APD_STATUS),
-                        ApdStatus.ACTIVE.toString().toLowerCase());
-                    assertEquals(
-                        respTwo.getString(RESP_APD_STATUS),
-                        ApdStatus.INACTIVE.toString().toLowerCase());
+                        assertEquals(
+                            respOne.getString(RESP_APD_STATUS),
+                            ApdStatus.ACTIVE.toString().toLowerCase());
+                        assertEquals(
+                            respTwo.getString(RESP_APD_STATUS),
+                            ApdStatus.INACTIVE.toString().toLowerCase());
 
-                    assertEquals(
-                        respOne.getJsonObject(RESP_APD_OWNER).getString("email"),
-                        utils.getDetails(trusteeAUser).email);
-                    assertEquals(
-                        respTwo.getJsonObject(RESP_APD_OWNER).getString("email"),
-                        utils.getDetails(trusteeBUser).email);
-                    testContext.completeNow();
-                  });
-            }));
+                        assertEquals(
+                            respOne.getJsonObject(RESP_APD_OWNER).getString("email"),
+                            utils.getDetails(trusteeAUser).email);
+                        assertEquals(
+                            respTwo.getJsonObject(RESP_APD_OWNER).getString("email"),
+                            utils.getDetails(trusteeBUser).email);
+                        testContext.completeNow();
+                      });
+                }));
   }
 
   @Test
@@ -371,16 +370,17 @@ public class ListApdTest {
     UUID uid1 = UUID.randomUUID();
     User user = new UserBuilder().userId(uid1).build();
 
-    apdService.listApd(
-        user,
-        testContext.succeeding(
-            response -> {
-              testContext.verify(
-                  () -> {
-                    assertEquals(response.getString("title"), ERR_TITLE_NO_APPROVED_ROLES);
-                    testContext.completeNow();
-                  });
-            }));
+    apdService
+        .listApd(user)
+        .onComplete(
+            testContext.succeeding(
+                response -> {
+                  testContext.verify(
+                      () -> {
+                        assertEquals(response.getString("title"), ERR_TITLE_NO_APPROVED_ROLES);
+                        testContext.completeNow();
+                      });
+                }));
   }
 
   @Test
@@ -394,7 +394,6 @@ public class ListApdTest {
 
     Mockito.doAnswer(
             i -> {
-              Promise<JsonObject> p = i.getArgument(1);
               List<String> userIds = i.getArgument(0);
               JsonObject response = new JsonObject();
 
@@ -407,86 +406,86 @@ public class ListApdTest {
                   .put(trusteeAUser.getUserId(), utils.getKcAdminJson(trusteeAUser))
                   .put(trusteeBUser.getUserId(), utils.getKcAdminJson(trusteeBUser));
 
-              p.complete(response);
-              return i.getMock();
+              return Future.succeededFuture(response);
             })
         .when(registrationService)
-        .getUserDetails(Mockito.any(), Mockito.any());
+        .getUserDetails(Mockito.any());
 
     Checkpoint checkActiveA = testContext.checkpoint();
     Checkpoint checkActiveB = testContext.checkpoint();
     Checkpoint checkInActiveA = testContext.checkpoint();
     Checkpoint checkInActiveB = testContext.checkpoint();
 
-    apdService.listApd(
-        cosAdmin,
-        testContext.succeeding(
-            response -> {
-              testContext.verify(
-                  () -> {
-                    JsonArray responseArr = response.getJsonArray("results");
+    apdService
+        .listApd(cosAdmin)
+        .onComplete(
+            testContext.succeeding(
+                response -> {
+                  testContext.verify(
+                      () -> {
+                        JsonArray responseArr = response.getJsonArray("results");
 
-                    for (int i = 0; i < responseArr.size(); i++) {
-                      JsonObject obj = responseArr.getJsonObject(i);
+                        for (int i = 0; i < responseArr.size(); i++) {
+                          JsonObject obj = responseArr.getJsonObject(i);
 
-                      if (obj.getString(RESP_APD_URL).equals(ACTIVE_A.toLowerCase())) {
-                        assertEquals(
-                            obj.getString(RESP_APD_STATUS),
-                            ApdStatus.ACTIVE.toString().toLowerCase());
-                        assertEquals(obj.getString(RESP_APD_ID), activeApdAId);
-                        assertEquals(obj.getString(RESP_APD_NAME), ACTIVE_A + "name");
-                        JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
+                          if (obj.getString(RESP_APD_URL).equals(ACTIVE_A.toLowerCase())) {
+                            assertEquals(
+                                obj.getString(RESP_APD_STATUS),
+                                ApdStatus.ACTIVE.toString().toLowerCase());
+                            assertEquals(obj.getString(RESP_APD_ID), activeApdAId);
+                            assertEquals(obj.getString(RESP_APD_NAME), ACTIVE_A + "name");
+                            JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
 
-                        assertEquals(owner.getString("id"), trusteeAUser.getUserId());
-                        assertEquals(
-                            owner.getString("email"), utils.getDetails(trusteeAUser).email);
-                        checkActiveA.flag();
-                      }
+                            assertEquals(owner.getString("id"), trusteeAUser.getUserId());
+                            assertEquals(
+                                owner.getString("email"), utils.getDetails(trusteeAUser).email);
+                            checkActiveA.flag();
+                          }
 
-                      if (obj.getString(RESP_APD_URL).equals(ACTIVE_B.toLowerCase())) {
-                        assertEquals(
-                            obj.getString(RESP_APD_STATUS),
-                            ApdStatus.ACTIVE.toString().toLowerCase());
-                        assertEquals(obj.getString(RESP_APD_ID), activeApdBId);
-                        assertEquals(obj.getString(RESP_APD_NAME), ACTIVE_B + "name");
-                        JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
+                          if (obj.getString(RESP_APD_URL).equals(ACTIVE_B.toLowerCase())) {
+                            assertEquals(
+                                obj.getString(RESP_APD_STATUS),
+                                ApdStatus.ACTIVE.toString().toLowerCase());
+                            assertEquals(obj.getString(RESP_APD_ID), activeApdBId);
+                            assertEquals(obj.getString(RESP_APD_NAME), ACTIVE_B + "name");
+                            JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
 
-                        assertEquals(owner.getString("id"), trusteeBUser.getUserId());
-                        assertEquals(
-                            owner.getString("email"), utils.getDetails(trusteeBUser).email);
-                        checkActiveB.flag();
-                      }
+                            assertEquals(owner.getString("id"), trusteeBUser.getUserId());
+                            assertEquals(
+                                owner.getString("email"), utils.getDetails(trusteeBUser).email);
+                            checkActiveB.flag();
+                          }
 
-                      if (obj.getString(RESP_APD_URL).equals(INACTIVE_A.toLowerCase())) {
-                        assertEquals(
-                            obj.getString(RESP_APD_STATUS),
-                            ApdStatus.INACTIVE.toString().toLowerCase());
-                        assertEquals(obj.getString(RESP_APD_ID), inActiveApdAId);
-                        assertEquals(obj.getString(RESP_APD_NAME), INACTIVE_A + "name");
-                        JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
+                          if (obj.getString(RESP_APD_URL).equals(INACTIVE_A.toLowerCase())) {
+                            assertEquals(
+                                obj.getString(RESP_APD_STATUS),
+                                ApdStatus.INACTIVE.toString().toLowerCase());
+                            assertEquals(obj.getString(RESP_APD_ID), inActiveApdAId);
+                            assertEquals(obj.getString(RESP_APD_NAME), INACTIVE_A + "name");
+                            JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
 
-                        assertEquals(owner.getString("id"), trusteeAUser.getUserId());
-                        assertEquals(
-                            owner.getString("email"), utils.getDetails(trusteeAUser).email);
-                        checkInActiveA.flag();
-                      }
+                            assertEquals(owner.getString("id"), trusteeAUser.getUserId());
+                            assertEquals(
+                                owner.getString("email"), utils.getDetails(trusteeAUser).email);
+                            checkInActiveA.flag();
+                          }
 
-                      if (obj.getString(RESP_APD_URL).equals(INACTIVE_B.toLowerCase())) {
-                        assertEquals(
-                            obj.getString(RESP_APD_STATUS),
-                            ApdStatus.INACTIVE.toString().toLowerCase());
-                        assertEquals(obj.getString(RESP_APD_ID), inActiveApdBId);
-                        assertEquals(obj.getString(RESP_APD_NAME), INACTIVE_B + "name");
-                        JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
+                          if (obj.getString(RESP_APD_URL).equals(INACTIVE_B.toLowerCase())) {
+                            assertEquals(
+                                obj.getString(RESP_APD_STATUS),
+                                ApdStatus.INACTIVE.toString().toLowerCase());
+                            assertEquals(obj.getString(RESP_APD_ID), inActiveApdBId);
+                            assertEquals(obj.getString(RESP_APD_NAME), INACTIVE_B + "name");
+                            JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
 
-                        assertEquals(owner.getString("id"), trusteeBUser.getUserId());
-                        assertEquals(
-                            owner.getString("email"), utils.getDetails(trusteeBUser).email);
-                        checkInActiveB.flag();
-                      }
-                    }
-                  });
-            }));
+                            assertEquals(owner.getString("id"), trusteeBUser.getUserId());
+                            assertEquals(
+                                owner.getString("email"), utils.getDetails(trusteeBUser).email);
+                            checkInActiveB.flag();
+                          }
+                        }
+                      });
+                }));
   }
 
   @Test
@@ -509,7 +508,6 @@ public class ListApdTest {
 
     Mockito.doAnswer(
             i -> {
-              Promise<JsonObject> p = i.getArgument(1);
               List<String> userIds = i.getArgument(0);
               JsonObject response = new JsonObject();
 
@@ -522,64 +520,64 @@ public class ListApdTest {
                   .put(trusteeAUser.getUserId(), utils.getKcAdminJson(trusteeAUser))
                   .put(trusteeBUser.getUserId(), utils.getKcAdminJson(trusteeBUser));
 
-              p.complete(response);
-              return i.getMock();
+              return Future.succeededFuture(response);
             })
         .when(registrationService)
-        .getUserDetails(Mockito.any(), Mockito.any());
+        .getUserDetails(Mockito.any());
 
     Checkpoint checkActiveA = testContext.checkpoint();
     Checkpoint checkActiveB = testContext.checkpoint();
 
-    apdService.listApd(
-        provConsAdminUser,
-        testContext.succeeding(
-            response -> {
-              testContext.verify(
-                  () -> {
-                    JsonArray responseArr = response.getJsonArray("results");
+    apdService
+        .listApd(provConsAdminUser)
+        .onComplete(
+            testContext.succeeding(
+                response -> {
+                  testContext.verify(
+                      () -> {
+                        JsonArray responseArr = response.getJsonArray("results");
 
-                    for (int i = 0; i < responseArr.size(); i++) {
-                      JsonObject obj = responseArr.getJsonObject(i);
+                        for (int i = 0; i < responseArr.size(); i++) {
+                          JsonObject obj = responseArr.getJsonObject(i);
 
-                      assertTrue(
-                          !obj.getString(RESP_APD_STATUS)
-                              .equals(ApdStatus.INACTIVE.toString().toLowerCase()));
+                          assertTrue(
+                              !obj.getString(RESP_APD_STATUS)
+                                  .equals(ApdStatus.INACTIVE.toString().toLowerCase()));
 
-                      assertTrue(
-                          !(obj.getString(RESP_APD_URL).equals(INACTIVE_A)
-                              && obj.getString(RESP_APD_URL).equals(INACTIVE_B)));
+                          assertTrue(
+                              !(obj.getString(RESP_APD_URL).equals(INACTIVE_A)
+                                  && obj.getString(RESP_APD_URL).equals(INACTIVE_B)));
 
-                      if (obj.getString(RESP_APD_URL).equals(ACTIVE_A.toLowerCase())) {
-                        assertEquals(
-                            obj.getString(RESP_APD_STATUS),
-                            ApdStatus.ACTIVE.toString().toLowerCase());
-                        assertEquals(obj.getString(RESP_APD_ID), activeApdAId);
-                        assertEquals(obj.getString(RESP_APD_NAME), ACTIVE_A + "name");
-                        JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
+                          if (obj.getString(RESP_APD_URL).equals(ACTIVE_A.toLowerCase())) {
+                            assertEquals(
+                                obj.getString(RESP_APD_STATUS),
+                                ApdStatus.ACTIVE.toString().toLowerCase());
+                            assertEquals(obj.getString(RESP_APD_ID), activeApdAId);
+                            assertEquals(obj.getString(RESP_APD_NAME), ACTIVE_A + "name");
+                            JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
 
-                        assertEquals(owner.getString("id"), trusteeAUser.getUserId());
-                        assertEquals(
-                            owner.getString("email"), utils.getDetails(trusteeAUser).email);
-                        checkActiveA.flag();
-                      }
+                            assertEquals(owner.getString("id"), trusteeAUser.getUserId());
+                            assertEquals(
+                                owner.getString("email"), utils.getDetails(trusteeAUser).email);
+                            checkActiveA.flag();
+                          }
 
-                      if (obj.getString(RESP_APD_URL).equals(ACTIVE_B.toLowerCase())) {
-                        assertEquals(
-                            obj.getString(RESP_APD_STATUS),
-                            ApdStatus.ACTIVE.toString().toLowerCase());
-                        assertEquals(obj.getString(RESP_APD_ID), activeApdBId);
-                        assertEquals(obj.getString(RESP_APD_NAME), ACTIVE_B + "name");
-                        JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
+                          if (obj.getString(RESP_APD_URL).equals(ACTIVE_B.toLowerCase())) {
+                            assertEquals(
+                                obj.getString(RESP_APD_STATUS),
+                                ApdStatus.ACTIVE.toString().toLowerCase());
+                            assertEquals(obj.getString(RESP_APD_ID), activeApdBId);
+                            assertEquals(obj.getString(RESP_APD_NAME), ACTIVE_B + "name");
+                            JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
 
-                        assertEquals(owner.getString("id"), trusteeBUser.getUserId());
-                        assertEquals(
-                            owner.getString("email"), utils.getDetails(trusteeBUser).email);
-                        checkActiveB.flag();
-                      }
-                    }
-                  });
-            }));
+                            assertEquals(owner.getString("id"), trusteeBUser.getUserId());
+                            assertEquals(
+                                owner.getString("email"), utils.getDetails(trusteeBUser).email);
+                            checkActiveB.flag();
+                          }
+                        }
+                      });
+                }));
   }
 
   @Test
@@ -591,7 +589,6 @@ public class ListApdTest {
 
     Mockito.doAnswer(
             i -> {
-              Promise<JsonObject> p = i.getArgument(1);
               List<String> userIds = i.getArgument(0);
               JsonObject response = new JsonObject();
 
@@ -604,62 +601,62 @@ public class ListApdTest {
                   .put(trusteeAUser.getUserId(), utils.getKcAdminJson(trusteeAUser))
                   .put(trusteeBUser.getUserId(), utils.getKcAdminJson(trusteeBUser));
 
-              p.complete(response);
-              return i.getMock();
+              return Future.succeededFuture(response);
             })
         .when(registrationService)
-        .getUserDetails(Mockito.any(), Mockito.any());
+        .getUserDetails(Mockito.any());
 
     Checkpoint checkActiveA = testContext.checkpoint();
     Checkpoint checkActiveB = testContext.checkpoint();
 
-    apdService.listApd(
-        trusteeAUser,
-        testContext.succeeding(
-            response -> {
-              testContext.verify(
-                  () -> {
-                    JsonArray responseArr = response.getJsonArray("results");
+    apdService
+        .listApd(trusteeAUser)
+        .onComplete(
+            testContext.succeeding(
+                response -> {
+                  testContext.verify(
+                      () -> {
+                        JsonArray responseArr = response.getJsonArray("results");
 
-                    for (int i = 0; i < responseArr.size(); i++) {
-                      JsonObject obj = responseArr.getJsonObject(i);
+                        for (int i = 0; i < responseArr.size(); i++) {
+                          JsonObject obj = responseArr.getJsonObject(i);
 
-                      assertTrue(
-                          !obj.getString(RESP_APD_STATUS)
-                              .equals(ApdStatus.INACTIVE.toString().toLowerCase()));
-                      assertTrue(
-                          !(obj.getString(RESP_APD_URL).equals(INACTIVE_A)
-                              && obj.getString(RESP_APD_URL).equals(INACTIVE_B)));
+                          assertTrue(
+                              !obj.getString(RESP_APD_STATUS)
+                                  .equals(ApdStatus.INACTIVE.toString().toLowerCase()));
+                          assertTrue(
+                              !(obj.getString(RESP_APD_URL).equals(INACTIVE_A)
+                                  && obj.getString(RESP_APD_URL).equals(INACTIVE_B)));
 
-                      if (obj.getString(RESP_APD_URL).equals(ACTIVE_A.toLowerCase())) {
-                        assertEquals(
-                            obj.getString(RESP_APD_STATUS),
-                            ApdStatus.ACTIVE.toString().toLowerCase());
-                        assertEquals(obj.getString(RESP_APD_ID), activeApdAId);
-                        assertEquals(obj.getString(RESP_APD_NAME), ACTIVE_A + "name");
-                        JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
+                          if (obj.getString(RESP_APD_URL).equals(ACTIVE_A.toLowerCase())) {
+                            assertEquals(
+                                obj.getString(RESP_APD_STATUS),
+                                ApdStatus.ACTIVE.toString().toLowerCase());
+                            assertEquals(obj.getString(RESP_APD_ID), activeApdAId);
+                            assertEquals(obj.getString(RESP_APD_NAME), ACTIVE_A + "name");
+                            JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
 
-                        assertEquals(owner.getString("id"), trusteeAUser.getUserId());
-                        assertEquals(
-                            owner.getString("email"), utils.getDetails(trusteeAUser).email);
-                        checkActiveA.flag();
-                      }
+                            assertEquals(owner.getString("id"), trusteeAUser.getUserId());
+                            assertEquals(
+                                owner.getString("email"), utils.getDetails(trusteeAUser).email);
+                            checkActiveA.flag();
+                          }
 
-                      if (obj.getString(RESP_APD_URL).equals(ACTIVE_B.toLowerCase())) {
-                        assertEquals(
-                            obj.getString(RESP_APD_STATUS),
-                            ApdStatus.ACTIVE.toString().toLowerCase());
-                        assertEquals(obj.getString(RESP_APD_ID), activeApdBId);
-                        assertEquals(obj.getString(RESP_APD_NAME), ACTIVE_B + "name");
-                        JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
+                          if (obj.getString(RESP_APD_URL).equals(ACTIVE_B.toLowerCase())) {
+                            assertEquals(
+                                obj.getString(RESP_APD_STATUS),
+                                ApdStatus.ACTIVE.toString().toLowerCase());
+                            assertEquals(obj.getString(RESP_APD_ID), activeApdBId);
+                            assertEquals(obj.getString(RESP_APD_NAME), ACTIVE_B + "name");
+                            JsonObject owner = obj.getJsonObject(RESP_APD_OWNER);
 
-                        assertEquals(owner.getString("id"), trusteeBUser.getUserId());
-                        assertEquals(
-                            owner.getString("email"), utils.getDetails(trusteeBUser).email);
-                        checkActiveB.flag();
-                      }
-                    }
-                  });
-            }));
+                            assertEquals(owner.getString("id"), trusteeBUser.getUserId());
+                            assertEquals(
+                                owner.getString("email"), utils.getDetails(trusteeBUser).email);
+                            checkActiveB.flag();
+                          }
+                        }
+                      });
+                }));
   }
 }

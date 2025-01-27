@@ -19,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -162,18 +161,18 @@ public class ResetClientSecretTest {
 
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture("email@gmail.com"));
 
-    registrationService.resetClientSecret(
-        request,
-        user,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(404, response.getInteger("status"));
-                      assertEquals(ERR_TITLE_NO_APPROVED_ROLES, response.getString("title"));
-                      assertEquals(ERR_DETAIL_NO_APPROVED_ROLES, response.getString("detail"));
-                      testContext.completeNow();
-                    })));
+    registrationService
+        .resetClientSecret(request, user)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(404, response.getInteger("status"));
+                          assertEquals(ERR_TITLE_NO_APPROVED_ROLES, response.getString("title"));
+                          assertEquals(ERR_DETAIL_NO_APPROVED_ROLES, response.getString("detail"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -200,60 +199,57 @@ public class ResetClientSecretTest {
           Mockito.when(kc.getEmailId(any()))
               .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
 
-          Mockito.doAnswer(
-                  i -> {
-                    Promise<JsonObject> p = i.getArgument(2);
-                    p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
-                    return i.getMock();
-                  })
+          Mockito.doReturn(
+                  Future.succeededFuture(new JsonObject().put("type", URN_SUCCESS.toString())))
               .when(tokenService)
-              .revokeToken(any(), any(), any());
+              .revokeToken(any(), any());
 
-          registrationService.resetClientSecret(
-              request,
-              user,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(200, response.getInteger("status"));
-                            assertEquals(
-                                SUCC_TITLE_REGEN_CLIENT_SECRET, response.getString("title"));
-                            assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+          registrationService
+              .resetClientSecret(request, user)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(200, response.getInteger("status"));
+                                assertEquals(
+                                    SUCC_TITLE_REGEN_CLIENT_SECRET, response.getString("title"));
+                                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-                            JsonObject result = response.getJsonObject("results");
+                                JsonObject result = response.getJsonObject("results");
 
-                            JsonObject name = result.getJsonObject("name");
-                            assertEquals(
-                                name.getString("firstName"), user.getName().get("firstName"));
-                            assertEquals(
-                                name.getString("lastName"), user.getName().get("lastName"));
+                                JsonObject name = result.getJsonObject("name");
+                                assertEquals(
+                                    name.getString("firstName"), user.getName().get("firstName"));
+                                assertEquals(
+                                    name.getString("lastName"), user.getName().get("lastName"));
 
-                            @SuppressWarnings("unchecked")
-                            List<String> returnedRoles = result.getJsonArray("roles").getList();
-                            List<String> rolesString = List.of(Roles.CONSUMER.name().toLowerCase());
-                            assertTrue(
-                                returnedRoles.containsAll(rolesString)
-                                    && rolesString.containsAll(returnedRoles));
+                                @SuppressWarnings("unchecked")
+                                List<String> returnedRoles = result.getJsonArray("roles").getList();
+                                List<String> rolesString =
+                                    List.of(Roles.CONSUMER.name().toLowerCase());
+                                assertTrue(
+                                    returnedRoles.containsAll(rolesString)
+                                        && rolesString.containsAll(returnedRoles));
 
-                            JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
-                            JsonObject defaultClient = clients.getJsonObject(0);
-                            assertTrue(clients.size() > 0);
-                            assertEquals(
-                                defaultClient.getString(RESP_CLIENT_ID),
-                                utils.getDetails(user).clientId);
-                            assertTrue(defaultClient.containsKey(RESP_CLIENT_SC));
-                            String newClientSec = defaultClient.getString(RESP_CLIENT_SC);
-                            assertTrue(newClientSec.matches(CLIENT_SECRET_REGEX));
-                            String oldClientSec = utils.getDetails(user).clientSecret;
-                            assertFalse(oldClientSec.equals(newClientSec));
+                                JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
+                                JsonObject defaultClient = clients.getJsonObject(0);
+                                assertTrue(clients.size() > 0);
+                                assertEquals(
+                                    defaultClient.getString(RESP_CLIENT_ID),
+                                    utils.getDetails(user).clientId);
+                                assertTrue(defaultClient.containsKey(RESP_CLIENT_SC));
+                                String newClientSec = defaultClient.getString(RESP_CLIENT_SC);
+                                assertTrue(newClientSec.matches(CLIENT_SECRET_REGEX));
+                                String oldClientSec = utils.getDetails(user).clientSecret;
+                                assertFalse(oldClientSec.equals(newClientSec));
 
-                            assertEquals(
-                                result.getString(RESP_EMAIL), utils.getDetails(user).email);
-                            assertEquals(result.getString("userId"), user.getUserId());
+                                assertEquals(
+                                    result.getString(RESP_EMAIL), utils.getDetails(user).email);
+                                assertEquals(result.getString("userId"), user.getUserId());
 
-                            testContext.completeNow();
-                          })));
+                                testContext.completeNow();
+                              })));
         });
   }
 
@@ -283,63 +279,64 @@ public class ResetClientSecretTest {
 
           Mockito.doAnswer(
                   i -> {
-                    Promise<JsonObject> p = i.getArgument(2);
                     RevokeToken r = i.getArgument(0);
                     if (r.getRsUrl().equals(DUMMY_SERVER_1)) {
-                      p.complete(new JsonObject().put("type", URN_INVALID_INPUT.toString()));
+                      return Future.succeededFuture(
+                          new JsonObject().put("type", URN_INVALID_INPUT.toString()));
                     } else {
-                      p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
+                      return Future.succeededFuture(
+                          new JsonObject().put("type", URN_SUCCESS.toString()));
                     }
-                    return i.getMock();
                   })
               .when(tokenService)
-              .revokeToken(any(), any(), any());
+              .revokeToken(any(), any());
 
-          registrationService.resetClientSecret(
-              request,
-              user,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(200, response.getInteger("status"));
-                            assertEquals(
-                                SUCC_TITLE_REGEN_CLIENT_SECRET, response.getString("title"));
-                            assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+          registrationService
+              .resetClientSecret(request, user)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(200, response.getInteger("status"));
+                                assertEquals(
+                                    SUCC_TITLE_REGEN_CLIENT_SECRET, response.getString("title"));
+                                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-                            JsonObject result = response.getJsonObject("results");
+                                JsonObject result = response.getJsonObject("results");
 
-                            JsonObject name = result.getJsonObject("name");
-                            assertEquals(
-                                name.getString("firstName"), user.getName().get("firstName"));
-                            assertEquals(
-                                name.getString("lastName"), user.getName().get("lastName"));
+                                JsonObject name = result.getJsonObject("name");
+                                assertEquals(
+                                    name.getString("firstName"), user.getName().get("firstName"));
+                                assertEquals(
+                                    name.getString("lastName"), user.getName().get("lastName"));
 
-                            @SuppressWarnings("unchecked")
-                            List<String> returnedRoles = result.getJsonArray("roles").getList();
-                            List<String> rolesString = List.of(Roles.CONSUMER.name().toLowerCase());
-                            assertTrue(
-                                returnedRoles.containsAll(rolesString)
-                                    && rolesString.containsAll(returnedRoles));
+                                @SuppressWarnings("unchecked")
+                                List<String> returnedRoles = result.getJsonArray("roles").getList();
+                                List<String> rolesString =
+                                    List.of(Roles.CONSUMER.name().toLowerCase());
+                                assertTrue(
+                                    returnedRoles.containsAll(rolesString)
+                                        && rolesString.containsAll(returnedRoles));
 
-                            JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
-                            JsonObject defaultClient = clients.getJsonObject(0);
-                            assertTrue(clients.size() > 0);
-                            assertEquals(
-                                defaultClient.getString(RESP_CLIENT_ID),
-                                utils.getDetails(user).clientId);
-                            assertTrue(defaultClient.containsKey(RESP_CLIENT_SC));
-                            String newClientSec = defaultClient.getString(RESP_CLIENT_SC);
-                            assertTrue(newClientSec.matches(CLIENT_SECRET_REGEX));
-                            String oldClientSec = utils.getDetails(user).clientSecret;
-                            assertFalse(oldClientSec.equals(newClientSec));
+                                JsonArray clients = result.getJsonArray(RESP_CLIENT_ARR);
+                                JsonObject defaultClient = clients.getJsonObject(0);
+                                assertTrue(clients.size() > 0);
+                                assertEquals(
+                                    defaultClient.getString(RESP_CLIENT_ID),
+                                    utils.getDetails(user).clientId);
+                                assertTrue(defaultClient.containsKey(RESP_CLIENT_SC));
+                                String newClientSec = defaultClient.getString(RESP_CLIENT_SC);
+                                assertTrue(newClientSec.matches(CLIENT_SECRET_REGEX));
+                                String oldClientSec = utils.getDetails(user).clientSecret;
+                                assertFalse(oldClientSec.equals(newClientSec));
 
-                            assertEquals(
-                                result.getString(RESP_EMAIL), utils.getDetails(user).email);
-                            assertEquals(result.getString("userId"), user.getUserId());
+                                assertEquals(
+                                    result.getString(RESP_EMAIL), utils.getDetails(user).email);
+                                assertEquals(result.getString("userId"), user.getUserId());
 
-                            testContext.completeNow();
-                          })));
+                                testContext.completeNow();
+                              })));
         });
   }
 
@@ -370,22 +367,22 @@ public class ResetClientSecretTest {
           /* Revocation to DUMMY_SERVER_1 fails with an internal error */
           Mockito.doAnswer(
                   i -> {
-                    Promise<JsonObject> p = i.getArgument(2);
                     RevokeToken r = i.getArgument(0);
                     if (r.getRsUrl().equals(DUMMY_SERVER_1)) {
-                      p.fail("Internal error");
+                      return Future.failedFuture("Internal error");
                     } else {
-                      p.complete(new JsonObject().put("type", URN_SUCCESS.toString()));
+                      return Future.succeededFuture(
+                          new JsonObject().put("type", URN_SUCCESS.toString()));
                     }
-                    return i.getMock();
                   })
               .when(tokenService)
-              .revokeToken(any(), any(), any());
+              .revokeToken(any(), any());
 
-          registrationService.resetClientSecret(
-              request,
-              user,
-              testContext.failing(response -> testContext.verify(() -> testContext.completeNow())));
+          registrationService
+              .resetClientSecret(request, user)
+              .onComplete(
+                  testContext.failing(
+                      response -> testContext.verify(() -> testContext.completeNow())));
         });
   }
 
@@ -414,19 +411,21 @@ public class ResetClientSecretTest {
 
           ResetClientSecretRequest request = new ResetClientSecretRequest(req);
 
-          registrationService.resetClientSecret(
-              request,
-              user,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(404, response.getInteger("status"));
-                            assertEquals(ERR_TITLE_INVALID_CLI_ID, response.getString("title"));
-                            assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                            assertEquals(ERR_DETAIL_INVALID_CLI_ID, response.getString("detail"));
-                            testContext.completeNow();
-                          })));
+          registrationService
+              .resetClientSecret(request, user)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(404, response.getInteger("status"));
+                                assertEquals(ERR_TITLE_INVALID_CLI_ID, response.getString("title"));
+                                assertEquals(
+                                    URN_INVALID_INPUT.toString(), response.getString("type"));
+                                assertEquals(
+                                    ERR_DETAIL_INVALID_CLI_ID, response.getString("detail"));
+                                testContext.completeNow();
+                              })));
         });
   }
 }

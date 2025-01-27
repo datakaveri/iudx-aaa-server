@@ -2,9 +2,7 @@ package iudx.aaa.server.token;
 
 import static iudx.aaa.server.token.Constants.*;
 
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
@@ -39,13 +37,12 @@ public class TokenRevokeService {
    *
    * @param request is a JSON object containing the user ID and URL of server to revoke at
    * @param adminToken is the admin token to be presented at the server
-   * @param handler to handle asynchronously
-   * @return an instance of TokenRevokeService
+   * @return Future of type JsonObject
    */
-  TokenRevokeService httpRevokeRequest(
-      JsonObject request, String adminToken, Handler<AsyncResult<JsonObject>> handler) {
+  Future<JsonObject> httpRevokeRequest(JsonObject request, String adminToken) {
 
     LOGGER.info("Info : Processing token revocation");
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     JsonObject rsPayload = new JsonObject();
     rsPayload.put(RS_REVOKE_BODY_SUB, request.getString(USER_ID));
@@ -55,14 +52,14 @@ public class TokenRevokeService {
     httpPostAsync(request, adminToken)
         .onSuccess(
             reqHandler -> {
-              handler.handle(Future.succeededFuture(new JsonObject()));
+              promiseHandler.complete(new JsonObject());
             })
         .onFailure(
             reqHandler -> {
-              handler.handle(Future.failedFuture(reqHandler.getMessage()));
+              promiseHandler.fail(reqHandler.getMessage());
             });
 
-    return this;
+    return promiseHandler.future();
   }
 
   /**

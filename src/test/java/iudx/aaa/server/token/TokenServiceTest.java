@@ -292,20 +292,19 @@ public class TokenServiceTest {
             .put("role", "consumer");
     RequestToken request = new RequestToken(jsonReq);
 
-    tokenService.createToken(
-        request,
-        null,
-        normalUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_MISSING_INFO.toString(), response.getString(TYPE));
-                      assertEquals(ERR_TITLE_NO_APPROVED_ROLES, response.getString("title"));
-                      assertEquals(ERR_DETAIL_NO_APPROVED_ROLES, response.getString("detail"));
-                      assertEquals(404, response.getInteger("status"));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .createToken(request, null, normalUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_MISSING_INFO.toString(), response.getString(TYPE));
+                          assertEquals(ERR_TITLE_NO_APPROVED_ROLES, response.getString("title"));
+                          assertEquals(ERR_DETAIL_NO_APPROVED_ROLES, response.getString("detail"));
+                          assertEquals(404, response.getInteger("status"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -325,21 +324,21 @@ public class TokenServiceTest {
 
     RequestToken request = new RequestToken(jsonReq);
     mockPolicy.setResponse("valid");
-    tokenService.createToken(
-        request,
-        null,
-        consumerUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_MISSING_INFO.toString(), response.getString(TYPE));
-                      assertEquals(ERR_TITLE_DELEGATION_INFO_MISSING, response.getString("title"));
-                      assertEquals(
-                          ERR_DETAIL_DELEGATION_INFO_MISSING, response.getString("detail"));
-                      assertEquals(400, response.getInteger("status"));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .createToken(request, null, consumerUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_MISSING_INFO.toString(), response.getString(TYPE));
+                          assertEquals(
+                              ERR_TITLE_DELEGATION_INFO_MISSING, response.getString("title"));
+                          assertEquals(
+                              ERR_DETAIL_DELEGATION_INFO_MISSING, response.getString("detail"));
+                          assertEquals(400, response.getInteger("status"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -359,20 +358,19 @@ public class TokenServiceTest {
 
     RequestToken request = new RequestToken(jsonReq);
     mockPolicy.setResponse("valid");
-    tokenService.createToken(
-        request,
-        null,
-        consumerUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
-                      assertEquals(ERR_TITLE_ROLE_NOT_OWNED, response.getString("title"));
-                      assertEquals(ERR_DETAIL_ROLE_NOT_OWNED, response.getString("detail"));
-                      assertEquals(403, response.getInteger("status"));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .createToken(request, null, consumerUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
+                          assertEquals(ERR_TITLE_ROLE_NOT_OWNED, response.getString("title"));
+                          assertEquals(ERR_DETAIL_ROLE_NOT_OWNED, response.getString("detail"));
+                          assertEquals(403, response.getInteger("status"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -395,7 +393,7 @@ public class TokenServiceTest {
 
     Map<Roles, Checkpoint> checks =
         roles.stream().collect(Collectors.toMap(role -> role, role -> testContext.checkpoint()));
-      Checkpoint delegateCheck = testContext.checkpoint();
+    Checkpoint delegateCheck = testContext.checkpoint();
     roles.forEach(
         role -> {
           JsonObject jsonReq =
@@ -405,20 +403,22 @@ public class TokenServiceTest {
                   .put("role", role.toString().toLowerCase());
 
           RequestToken request = new RequestToken(jsonReq);
-          tokenService.createToken(
-              request,
-              null,
-              user,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                            assertEquals(ERR_TITLE_NO_RES_GRP_TOKEN, response.getString("title"));
-                            assertEquals(ERR_DETAIL_NO_RES_GRP_TOKEN, response.getString("detail"));
-                            assertEquals(403, response.getInteger("status"));
-                            checks.get(role).flag();
-                          })));
+          tokenService
+              .createToken(request, null, user)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(
+                                    URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                                assertEquals(
+                                    ERR_TITLE_NO_RES_GRP_TOKEN, response.getString("title"));
+                                assertEquals(
+                                    ERR_DETAIL_NO_RES_GRP_TOKEN, response.getString("detail"));
+                                assertEquals(403, response.getInteger("status"));
+                                checks.get(role).flag();
+                              })));
         });
 
     User delegateUser = new User(normalUser.toJson());
@@ -439,22 +439,20 @@ public class TokenServiceTest {
             .put("itemType", "resource_group")
             .put("role", "delegate");
 
-
     RequestToken request = new RequestToken(jsonReq);
-    tokenService.createToken(
-        request,
-        delegConsInfo,
-        delegateUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                      assertEquals(ERR_TITLE_NO_RES_GRP_TOKEN, response.getString("title"));
-                      assertEquals(ERR_DETAIL_NO_RES_GRP_TOKEN, response.getString("detail"));
-                      assertEquals(403, response.getInteger("status"));
-                      delegateCheck.flag();
-                    })));
+    tokenService
+        .createToken(request, delegConsInfo, delegateUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                          assertEquals(ERR_TITLE_NO_RES_GRP_TOKEN, response.getString("title"));
+                          assertEquals(ERR_DETAIL_NO_RES_GRP_TOKEN, response.getString("detail"));
+                          assertEquals(403, response.getInteger("status"));
+                          delegateCheck.flag();
+                        })));
   }
 
   @Test
@@ -482,28 +480,28 @@ public class TokenServiceTest {
             .put(URL, DUMMY_SERVER);
     mockPolicy.setResponse(policyResponse);
 
-    tokenService.createToken(
-        request,
-        null,
-        consumerUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                      JsonObject payload =
-                          getJwtPayload(response.getJsonObject("results").getString(ACCESS_TOKEN));
-                      assertEquals(payload.getString(SUB), consumerUser.getUserId());
-                      assertEquals(payload.getString(ISS), DUMMY_COS_URL);
-                      assertEquals(payload.getString(AUD), DUMMY_SERVER);
-                      assertEquals(payload.getString(IID), "ri:" + RESOURCE_ITEM);
-                      assertEquals(payload.getString(RG), RESOURCE_GROUP);
-                      assertEquals(
-                          payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
-                      assertFalse(payload.getJsonObject(CONS).isEmpty());
-                      assertNotNull(payload.getString(EXP));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .createToken(request, null, consumerUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                          JsonObject payload =
+                              getJwtPayload(
+                                  response.getJsonObject("results").getString(ACCESS_TOKEN));
+                          assertEquals(payload.getString(SUB), consumerUser.getUserId());
+                          assertEquals(payload.getString(ISS), DUMMY_COS_URL);
+                          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+                          assertEquals(payload.getString(IID), "ri:" + RESOURCE_ITEM);
+                          assertEquals(payload.getString(RG), RESOURCE_GROUP);
+                          assertEquals(
+                              payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
+                          assertFalse(payload.getJsonObject(CONS).isEmpty());
+                          assertNotNull(payload.getString(EXP));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -531,28 +529,28 @@ public class TokenServiceTest {
             .put(URL, DUMMY_SERVER);
     mockPolicy.setResponse(policyResponse);
 
-    tokenService.createToken(
-        request,
-        null,
-        providerUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                      JsonObject payload =
-                          getJwtPayload(response.getJsonObject("results").getString(ACCESS_TOKEN));
-                      assertEquals(payload.getString(SUB), providerUser.getUserId());
-                      assertEquals(payload.getString(ISS), DUMMY_COS_URL);
-                      assertEquals(payload.getString(AUD), DUMMY_SERVER);
-                      assertEquals(payload.getString(IID), "ri:" + RESOURCE_ITEM);
-                      assertEquals(payload.getString(RG), RESOURCE_GROUP);
-                      assertEquals(
-                          payload.getString(ROLE), Roles.PROVIDER.toString().toLowerCase());
-                      assertFalse(payload.getJsonObject(CONS).isEmpty());
-                      assertNotNull(payload.getString(EXP));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .createToken(request, null, providerUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                          JsonObject payload =
+                              getJwtPayload(
+                                  response.getJsonObject("results").getString(ACCESS_TOKEN));
+                          assertEquals(payload.getString(SUB), providerUser.getUserId());
+                          assertEquals(payload.getString(ISS), DUMMY_COS_URL);
+                          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+                          assertEquals(payload.getString(IID), "ri:" + RESOURCE_ITEM);
+                          assertEquals(payload.getString(RG), RESOURCE_GROUP);
+                          assertEquals(
+                              payload.getString(ROLE), Roles.PROVIDER.toString().toLowerCase());
+                          assertFalse(payload.getJsonObject(CONS).isEmpty());
+                          assertNotNull(payload.getString(EXP));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -589,30 +587,31 @@ public class TokenServiceTest {
             .put(URL, DUMMY_SERVER);
     mockPolicy.setResponse(policyResponse);
 
-    tokenService.createToken(
-        request,
-        delegConsInfo,
-        delegateUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                      JsonObject payload =
-                          getJwtPayload(response.getJsonObject("results").getString(ACCESS_TOKEN));
-                      assertEquals(payload.getString(SUB), delegateUser.getUserId());
-                      assertEquals(payload.getString(ISS), DUMMY_COS_URL);
-                      assertEquals(payload.getString(AUD), DUMMY_SERVER);
-                      assertEquals(payload.getString(IID), "ri:" + RESOURCE_ITEM);
-                      assertEquals(payload.getString(RG), RESOURCE_GROUP);
-                      assertEquals(
-                          payload.getString(ROLE), Roles.DELEGATE.toString().toLowerCase());
-                      assertEquals(payload.getString(DID), normalUser.getUserId());
-                      assertEquals(payload.getString(DRL), Roles.CONSUMER.toString().toLowerCase());
-                      assertFalse(payload.getJsonObject(CONS).isEmpty());
-                      assertNotNull(payload.getString(EXP));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .createToken(request, delegConsInfo, delegateUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                          JsonObject payload =
+                              getJwtPayload(
+                                  response.getJsonObject("results").getString(ACCESS_TOKEN));
+                          assertEquals(payload.getString(SUB), delegateUser.getUserId());
+                          assertEquals(payload.getString(ISS), DUMMY_COS_URL);
+                          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+                          assertEquals(payload.getString(IID), "ri:" + RESOURCE_ITEM);
+                          assertEquals(payload.getString(RG), RESOURCE_GROUP);
+                          assertEquals(
+                              payload.getString(ROLE), Roles.DELEGATE.toString().toLowerCase());
+                          assertEquals(payload.getString(DID), normalUser.getUserId());
+                          assertEquals(
+                              payload.getString(DRL), Roles.CONSUMER.toString().toLowerCase());
+                          assertFalse(payload.getJsonObject(CONS).isEmpty());
+                          assertNotNull(payload.getString(EXP));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -649,30 +648,31 @@ public class TokenServiceTest {
             .put(URL, DUMMY_SERVER);
     mockPolicy.setResponse(policyResponse);
 
-    tokenService.createToken(
-        request,
-        delegProvInfo,
-        delegateUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                      JsonObject payload =
-                          getJwtPayload(response.getJsonObject("results").getString(ACCESS_TOKEN));
-                      assertEquals(payload.getString(SUB), delegateUser.getUserId());
-                      assertEquals(payload.getString(ISS), DUMMY_COS_URL);
-                      assertEquals(payload.getString(AUD), DUMMY_SERVER);
-                      assertEquals(payload.getString(IID), "ri:" + RESOURCE_ITEM);
-                      assertEquals(payload.getString(RG), RESOURCE_GROUP);
-                      assertEquals(
-                          payload.getString(ROLE), Roles.DELEGATE.toString().toLowerCase());
-                      assertEquals(payload.getString(DID), normalUser.getUserId());
-                      assertEquals(payload.getString(DRL), Roles.PROVIDER.toString().toLowerCase());
-                      assertTrue(payload.getJsonObject(CONS).isEmpty());
-                      assertNotNull(payload.getString(EXP));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .createToken(request, delegProvInfo, delegateUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                          JsonObject payload =
+                              getJwtPayload(
+                                  response.getJsonObject("results").getString(ACCESS_TOKEN));
+                          assertEquals(payload.getString(SUB), delegateUser.getUserId());
+                          assertEquals(payload.getString(ISS), DUMMY_COS_URL);
+                          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+                          assertEquals(payload.getString(IID), "ri:" + RESOURCE_ITEM);
+                          assertEquals(payload.getString(RG), RESOURCE_GROUP);
+                          assertEquals(
+                              payload.getString(ROLE), Roles.DELEGATE.toString().toLowerCase());
+                          assertEquals(payload.getString(DID), normalUser.getUserId());
+                          assertEquals(
+                              payload.getString(DRL), Roles.PROVIDER.toString().toLowerCase());
+                          assertTrue(payload.getJsonObject(CONS).isEmpty());
+                          assertNotNull(payload.getString(EXP));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -694,7 +694,7 @@ public class TokenServiceTest {
 
     Map<Roles, Checkpoint> checks =
         roles.stream().collect(Collectors.toMap(role -> role, role -> testContext.checkpoint()));
-      Checkpoint delegateCheck = testContext.checkpoint();
+    Checkpoint delegateCheck = testContext.checkpoint();
     roles.forEach(
         role -> {
           JsonObject jsonReq =
@@ -704,22 +704,21 @@ public class TokenServiceTest {
                   .put("role", role.toString().toLowerCase());
 
           RequestToken request = new RequestToken(jsonReq);
-          tokenService.createToken(
-              request,
-              null,
-              user,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
-                            assertEquals(
-                                ERR_TITLE_INVALID_ROLE_FOR_COS, response.getString("title"));
-                            assertEquals(
-                                ERR_DETAIL_INVALID_ROLE_FOR_COS, response.getString("detail"));
-                            assertEquals(403, response.getInteger("status"));
-                            checks.get(role).flag();
-                          })));
+          tokenService
+              .createToken(request, null, user)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
+                                assertEquals(
+                                    ERR_TITLE_INVALID_ROLE_FOR_COS, response.getString("title"));
+                                assertEquals(
+                                    ERR_DETAIL_INVALID_ROLE_FOR_COS, response.getString("detail"));
+                                assertEquals(403, response.getInteger("status"));
+                                checks.get(role).flag();
+                              })));
         });
 
     User delegateUser = new User(normalUser.toJson());
@@ -741,20 +740,20 @@ public class TokenServiceTest {
             .put("role", "delegate");
 
     RequestToken request = new RequestToken(jsonReq);
-    tokenService.createToken(
-        request,
-        delegConsInfo,
-        delegateUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
-                      assertEquals(ERR_TITLE_INVALID_ROLE_FOR_COS, response.getString("title"));
-                      assertEquals(ERR_DETAIL_INVALID_ROLE_FOR_COS, response.getString("detail"));
-                      assertEquals(403, response.getInteger("status"));
-                      delegateCheck.flag();
-                    })));
+    tokenService
+        .createToken(request, delegConsInfo, delegateUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_INVALID_ROLE.toString(), response.getString(TYPE));
+                          assertEquals(ERR_TITLE_INVALID_ROLE_FOR_COS, response.getString("title"));
+                          assertEquals(
+                              ERR_DETAIL_INVALID_ROLE_FOR_COS, response.getString("detail"));
+                          assertEquals(403, response.getInteger("status"));
+                          delegateCheck.flag();
+                        })));
   }
 
   @Test
@@ -771,20 +770,19 @@ public class TokenServiceTest {
             .put("role", "cos_admin");
 
     RequestToken request = new RequestToken(jsonReq);
-    tokenService.createToken(
-        request,
-        null,
-        cosAdminUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                      assertEquals(ERR_TITLE_INVALID_COS_URL, response.getString("title"));
-                      assertEquals(ERR_DETAIL_INVALID_COS_URL, response.getString("detail"));
-                      assertEquals(403, response.getInteger("status"));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .createToken(request, null, cosAdminUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                          assertEquals(ERR_TITLE_INVALID_COS_URL, response.getString("title"));
+                          assertEquals(ERR_DETAIL_INVALID_COS_URL, response.getString("detail"));
+                          assertEquals(403, response.getInteger("status"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -801,27 +799,27 @@ public class TokenServiceTest {
             .put("role", "cos_admin");
     RequestToken request = new RequestToken(jsonReq);
 
-    tokenService.createToken(
-        request,
-        null,
-        cosAdminUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                      JsonObject payload =
-                          getJwtPayload(response.getJsonObject("results").getString(ACCESS_TOKEN));
-                      assertEquals(payload.getString(SUB), cosAdminUser.getUserId());
-                      assertEquals(payload.getString(ISS), DUMMY_COS_URL);
-                      assertEquals(payload.getString(AUD), DUMMY_COS_URL);
-                      assertEquals(payload.getString(IID), "cos:" + DUMMY_COS_URL);
-                      assertEquals(
-                          payload.getString(ROLE), Roles.COS_ADMIN.toString().toLowerCase());
-                      assertTrue(payload.getJsonObject(CONS).isEmpty());
-                      assertNotNull(payload.getString(EXP));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .createToken(request, null, cosAdminUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                          JsonObject payload =
+                              getJwtPayload(
+                                  response.getJsonObject("results").getString(ACCESS_TOKEN));
+                          assertEquals(payload.getString(SUB), cosAdminUser.getUserId());
+                          assertEquals(payload.getString(ISS), DUMMY_COS_URL);
+                          assertEquals(payload.getString(AUD), DUMMY_COS_URL);
+                          assertEquals(payload.getString(IID), "cos:" + DUMMY_COS_URL);
+                          assertEquals(
+                              payload.getString(ROLE), Roles.COS_ADMIN.toString().toLowerCase());
+                          assertTrue(payload.getJsonObject(CONS).isEmpty());
+                          assertNotNull(payload.getString(EXP));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -842,34 +840,34 @@ public class TokenServiceTest {
 
     mockPolicy.setResponse("apd-interaction", DUMMY_SERVER + "/apd-interact", DUMMY_SERVER);
 
-    tokenService.createToken(
-        request,
-        null,
-        consumerUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_MISSING_INFO.toString(), response.getString("type"));
-                      assertEquals(
-                          ERR_TITLE_APD_INTERACT_REQUIRED.toString(), response.getString("title"));
-                      assertEquals(
-                          ERR_DETAIL_APD_INTERACT_REQUIRED.toString(),
-                          response.getString("detail"));
+    tokenService
+        .createToken(request, null, consumerUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_MISSING_INFO.toString(), response.getString("type"));
+                          assertEquals(
+                              ERR_TITLE_APD_INTERACT_REQUIRED.toString(),
+                              response.getString("title"));
+                          assertEquals(
+                              ERR_DETAIL_APD_INTERACT_REQUIRED.toString(),
+                              response.getString("detail"));
 
-                      JsonObject apdToken =
-                          getJwtPayload(response.getJsonObject("context").getString(APD_TOKEN));
-                      assertEquals(apdToken.getString(SUB), consumerUser.getUserId());
-                      assertEquals(apdToken.getString(ISS), DUMMY_COS_URL);
-                      assertEquals(apdToken.getString(AUD), DUMMY_SERVER);
-                      assertTrue(apdToken.containsKey(SID));
-                      assertEquals(apdToken.getString(LINK), DUMMY_SERVER + "/apd-interact");
-                      assertNotNull(apdToken.getString(EXP));
-                      assertEquals(
-                          response.getJsonObject("context").getString(LINK),
-                          DUMMY_SERVER + "/apd-interact");
-                      testContext.completeNow();
-                    })));
+                          JsonObject apdToken =
+                              getJwtPayload(response.getJsonObject("context").getString(APD_TOKEN));
+                          assertEquals(apdToken.getString(SUB), consumerUser.getUserId());
+                          assertEquals(apdToken.getString(ISS), DUMMY_COS_URL);
+                          assertEquals(apdToken.getString(AUD), DUMMY_SERVER);
+                          assertTrue(apdToken.containsKey(SID));
+                          assertEquals(apdToken.getString(LINK), DUMMY_SERVER + "/apd-interact");
+                          assertNotNull(apdToken.getString(EXP));
+                          assertEquals(
+                              response.getJsonObject("context").getString(LINK),
+                              DUMMY_SERVER + "/apd-interact");
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -886,20 +884,19 @@ public class TokenServiceTest {
             .put("role", "cos_admin");
     RequestToken request = new RequestToken(jsonReq);
 
-    tokenService.createToken(
-        request,
-        null,
-        cosAdminUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                      assertEquals(ERR_COS_ADMIN_NO_RS, response.getString("title"));
-                      assertEquals(ERR_COS_ADMIN_NO_RS, response.getString("detail"));
-                      assertEquals(400, response.getInteger("status"));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .createToken(request, null, cosAdminUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                          assertEquals(ERR_COS_ADMIN_NO_RS, response.getString("title"));
+                          assertEquals(ERR_COS_ADMIN_NO_RS, response.getString("detail"));
+                          assertEquals(400, response.getInteger("status"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -918,27 +915,27 @@ public class TokenServiceTest {
             .put("role", "consumer");
     RequestToken request = new RequestToken(jsonReq);
 
-    tokenService.createToken(
-        request,
-        null,
-        consumerUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                      JsonObject payload =
-                          getJwtPayload(response.getJsonObject("results").getString(ACCESS_TOKEN));
-                      assertEquals(payload.getString(SUB), consumerUser.getUserId());
-                      assertEquals(payload.getString(ISS), DUMMY_COS_URL);
-                      assertEquals(payload.getString(AUD), DUMMY_SERVER);
-                      assertEquals(payload.getString(IID), "rs:" + DUMMY_SERVER);
-                      assertEquals(
-                          payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
-                      assertTrue(payload.getJsonObject(CONS).isEmpty());
-                      assertNotNull(payload.getString(EXP));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .createToken(request, null, consumerUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                          JsonObject payload =
+                              getJwtPayload(
+                                  response.getJsonObject("results").getString(ACCESS_TOKEN));
+                          assertEquals(payload.getString(SUB), consumerUser.getUserId());
+                          assertEquals(payload.getString(ISS), DUMMY_COS_URL);
+                          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+                          assertEquals(payload.getString(IID), "rs:" + DUMMY_SERVER);
+                          assertEquals(
+                              payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
+                          assertTrue(payload.getJsonObject(CONS).isEmpty());
+                          assertNotNull(payload.getString(EXP));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -957,27 +954,27 @@ public class TokenServiceTest {
             .put("role", "provider");
     RequestToken request = new RequestToken(jsonReq);
 
-    tokenService.createToken(
-        request,
-        null,
-        providerUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                      JsonObject payload =
-                          getJwtPayload(response.getJsonObject("results").getString(ACCESS_TOKEN));
-                      assertEquals(payload.getString(SUB), providerUser.getUserId());
-                      assertEquals(payload.getString(ISS), DUMMY_COS_URL);
-                      assertEquals(payload.getString(AUD), DUMMY_SERVER);
-                      assertEquals(payload.getString(IID), "rs:" + DUMMY_SERVER);
-                      assertEquals(
-                          payload.getString(ROLE), Roles.PROVIDER.toString().toLowerCase());
-                      assertTrue(payload.getJsonObject(CONS).isEmpty());
-                      assertNotNull(payload.getString(EXP));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .createToken(request, null, providerUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                          JsonObject payload =
+                              getJwtPayload(
+                                  response.getJsonObject("results").getString(ACCESS_TOKEN));
+                          assertEquals(payload.getString(SUB), providerUser.getUserId());
+                          assertEquals(payload.getString(ISS), DUMMY_COS_URL);
+                          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+                          assertEquals(payload.getString(IID), "rs:" + DUMMY_SERVER);
+                          assertEquals(
+                              payload.getString(ROLE), Roles.PROVIDER.toString().toLowerCase());
+                          assertTrue(payload.getJsonObject(CONS).isEmpty());
+                          assertNotNull(payload.getString(EXP));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -996,26 +993,27 @@ public class TokenServiceTest {
             .put("role", "admin");
     RequestToken request = new RequestToken(jsonReq);
 
-    tokenService.createToken(
-        request,
-        null,
-        adminUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                      JsonObject payload =
-                          getJwtPayload(response.getJsonObject("results").getString(ACCESS_TOKEN));
-                      assertEquals(payload.getString(SUB), adminUser.getUserId());
-                      assertEquals(payload.getString(ISS), DUMMY_COS_URL);
-                      assertEquals(payload.getString(AUD), DUMMY_SERVER);
-                      assertEquals(payload.getString(IID), "rs:" + DUMMY_SERVER);
-                      assertEquals(payload.getString(ROLE), Roles.ADMIN.toString().toLowerCase());
-                      assertTrue(payload.getJsonObject(CONS).isEmpty());
-                      assertNotNull(payload.getString(EXP));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .createToken(request, null, adminUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                          JsonObject payload =
+                              getJwtPayload(
+                                  response.getJsonObject("results").getString(ACCESS_TOKEN));
+                          assertEquals(payload.getString(SUB), adminUser.getUserId());
+                          assertEquals(payload.getString(ISS), DUMMY_COS_URL);
+                          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+                          assertEquals(payload.getString(IID), "rs:" + DUMMY_SERVER);
+                          assertEquals(
+                              payload.getString(ROLE), Roles.ADMIN.toString().toLowerCase());
+                          assertTrue(payload.getJsonObject(CONS).isEmpty());
+                          assertNotNull(payload.getString(EXP));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -1051,53 +1049,55 @@ public class TokenServiceTest {
             Roles.PROVIDER,
             DUMMY_SERVER);
 
-    tokenService.createToken(
-        request,
-        delegConsInfo,
-        delegateUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                      JsonObject payload =
-                          getJwtPayload(response.getJsonObject("results").getString(ACCESS_TOKEN));
-                      assertEquals(payload.getString(SUB), delegateUser.getUserId());
-                      assertEquals(payload.getString(ISS), DUMMY_COS_URL);
-                      assertEquals(payload.getString(AUD), DUMMY_SERVER);
-                      assertEquals(payload.getString(IID), "rs:" + DUMMY_SERVER);
-                      assertEquals(
-                          payload.getString(ROLE), Roles.DELEGATE.toString().toLowerCase());
-                      assertEquals(payload.getString(DID), normalUser.getUserId());
-                      assertEquals(payload.getString(DRL), Roles.CONSUMER.toString().toLowerCase());
-                      assertTrue(payload.getJsonObject(CONS).isEmpty());
-                      assertNotNull(payload.getString(EXP));
-                      consumerDelegateRsToken.flag();
-                    })));
+    tokenService
+        .createToken(request, delegConsInfo, delegateUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                          JsonObject payload =
+                              getJwtPayload(
+                                  response.getJsonObject("results").getString(ACCESS_TOKEN));
+                          assertEquals(payload.getString(SUB), delegateUser.getUserId());
+                          assertEquals(payload.getString(ISS), DUMMY_COS_URL);
+                          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+                          assertEquals(payload.getString(IID), "rs:" + DUMMY_SERVER);
+                          assertEquals(
+                              payload.getString(ROLE), Roles.DELEGATE.toString().toLowerCase());
+                          assertEquals(payload.getString(DID), normalUser.getUserId());
+                          assertEquals(
+                              payload.getString(DRL), Roles.CONSUMER.toString().toLowerCase());
+                          assertTrue(payload.getJsonObject(CONS).isEmpty());
+                          assertNotNull(payload.getString(EXP));
+                          consumerDelegateRsToken.flag();
+                        })));
 
-    tokenService.createToken(
-        request,
-        delegProvInfo,
-        delegateUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                      JsonObject payload =
-                          getJwtPayload(response.getJsonObject("results").getString(ACCESS_TOKEN));
-                      assertEquals(payload.getString(SUB), delegateUser.getUserId());
-                      assertEquals(payload.getString(ISS), DUMMY_COS_URL);
-                      assertEquals(payload.getString(AUD), DUMMY_SERVER);
-                      assertEquals(payload.getString(IID), "rs:" + DUMMY_SERVER);
-                      assertEquals(
-                          payload.getString(ROLE), Roles.DELEGATE.toString().toLowerCase());
-                      assertEquals(payload.getString(DID), normalUser.getUserId());
-                      assertEquals(payload.getString(DRL), Roles.PROVIDER.toString().toLowerCase());
-                      assertTrue(payload.getJsonObject(CONS).isEmpty());
-                      assertNotNull(payload.getString(EXP));
-                      providerDelegateRsToken.flag();
-                    })));
+    tokenService
+        .createToken(request, delegProvInfo, delegateUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                          JsonObject payload =
+                              getJwtPayload(
+                                  response.getJsonObject("results").getString(ACCESS_TOKEN));
+                          assertEquals(payload.getString(SUB), delegateUser.getUserId());
+                          assertEquals(payload.getString(ISS), DUMMY_COS_URL);
+                          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+                          assertEquals(payload.getString(IID), "rs:" + DUMMY_SERVER);
+                          assertEquals(
+                              payload.getString(ROLE), Roles.DELEGATE.toString().toLowerCase());
+                          assertEquals(payload.getString(DID), normalUser.getUserId());
+                          assertEquals(
+                              payload.getString(DRL), Roles.PROVIDER.toString().toLowerCase());
+                          assertTrue(payload.getJsonObject(CONS).isEmpty());
+                          assertNotNull(payload.getString(EXP));
+                          providerDelegateRsToken.flag();
+                        })));
   }
 
   @Test
@@ -1130,20 +1130,20 @@ public class TokenServiceTest {
                   .put("role", role.toString().toLowerCase());
 
           RequestToken request = new RequestToken(jsonReq);
-          tokenService.createToken(
-              request,
-              null,
-              user,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                            assertEquals(ERR_TITLE_INVALID_RS, response.getString("title"));
-                            assertEquals(ERR_DETAIL_INVALID_RS, response.getString("detail"));
-                            assertEquals(400, response.getInteger("status"));
-                            checks.get(role).flag();
-                          })));
+          tokenService
+              .createToken(request, null, user)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(
+                                    URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                                assertEquals(ERR_TITLE_INVALID_RS, response.getString("title"));
+                                assertEquals(ERR_DETAIL_INVALID_RS, response.getString("detail"));
+                                assertEquals(400, response.getInteger("status"));
+                                checks.get(role).flag();
+                              })));
         });
   }
 
@@ -1177,21 +1177,21 @@ public class TokenServiceTest {
                   .put("role", role.toString().toLowerCase());
 
           RequestToken request = new RequestToken(jsonReq);
-          tokenService.createToken(
-              request,
-              null,
-              user,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                            assertEquals(ACCESS_DENIED, response.getString("title"));
-                            assertEquals(
-                                ERR_DOES_NOT_HAVE_ROLE_FOR_RS, response.getString("detail"));
-                            assertEquals(403, response.getInteger("status"));
-                            checks.get(role).flag();
-                          })));
+          tokenService
+              .createToken(request, null, user)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(
+                                    URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                                assertEquals(ACCESS_DENIED, response.getString("title"));
+                                assertEquals(
+                                    ERR_DOES_NOT_HAVE_ROLE_FOR_RS, response.getString("detail"));
+                                assertEquals(403, response.getInteger("status"));
+                                checks.get(role).flag();
+                              })));
         });
   }
 
@@ -1236,35 +1236,33 @@ public class TokenServiceTest {
             Roles.PROVIDER,
             delegatedRsUrl);
 
-    tokenService.createToken(
-        request,
-        consDelegInfo,
-        delegateUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                      assertEquals(ACCESS_DENIED, response.getString("title"));
-                      assertEquals(ERR_DOES_NOT_HAVE_ROLE_FOR_RS, response.getString("detail"));
-                      assertEquals(403, response.getInteger("status"));
-                      consDelegFail.flag();
-                    })));
+    tokenService
+        .createToken(request, consDelegInfo, delegateUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                          assertEquals(ACCESS_DENIED, response.getString("title"));
+                          assertEquals(ERR_DOES_NOT_HAVE_ROLE_FOR_RS, response.getString("detail"));
+                          assertEquals(403, response.getInteger("status"));
+                          consDelegFail.flag();
+                        })));
 
-    tokenService.createToken(
-        request,
-        provDelegInfo,
-        delegateUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                      assertEquals(ACCESS_DENIED, response.getString("title"));
-                      assertEquals(ERR_DOES_NOT_HAVE_ROLE_FOR_RS, response.getString("detail"));
-                      assertEquals(403, response.getInteger("status"));
-                      provDelegFail.flag();
-                    })));
+    tokenService
+        .createToken(request, provDelegInfo, delegateUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                          assertEquals(ACCESS_DENIED, response.getString("title"));
+                          assertEquals(ERR_DOES_NOT_HAVE_ROLE_FOR_RS, response.getString("detail"));
+                          assertEquals(403, response.getInteger("status"));
+                          provDelegFail.flag();
+                        })));
   }
 
   @Test
@@ -1301,35 +1299,33 @@ public class TokenServiceTest {
             Roles.PROVIDER,
             DUMMY_SERVER);
 
-    tokenService.createToken(
-        request,
-        consDelegInfo,
-        delegateUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                      assertEquals(ERR_TITLE_INVALID_RS, response.getString("title"));
-                      assertEquals(ERR_DETAIL_INVALID_RS, response.getString("detail"));
-                      assertEquals(400, response.getInteger("status"));
-                      consDelegFail.flag();
-                    })));
+    tokenService
+        .createToken(request, consDelegInfo, delegateUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                          assertEquals(ERR_TITLE_INVALID_RS, response.getString("title"));
+                          assertEquals(ERR_DETAIL_INVALID_RS, response.getString("detail"));
+                          assertEquals(400, response.getInteger("status"));
+                          consDelegFail.flag();
+                        })));
 
-    tokenService.createToken(
-        request,
-        provDelegInfo,
-        delegateUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                      assertEquals(ERR_TITLE_INVALID_RS, response.getString("title"));
-                      assertEquals(ERR_DETAIL_INVALID_RS, response.getString("detail"));
-                      assertEquals(400, response.getInteger("status"));
-                      provDelegFail.flag();
-                    })));
+    tokenService
+        .createToken(request, provDelegInfo, delegateUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                          assertEquals(ERR_TITLE_INVALID_RS, response.getString("title"));
+                          assertEquals(ERR_DETAIL_INVALID_RS, response.getString("detail"));
+                          assertEquals(400, response.getInteger("status"));
+                          provDelegFail.flag();
+                        })));
   }
 
   @Test
@@ -1349,17 +1345,16 @@ public class TokenServiceTest {
     RequestToken request = new RequestToken(jsonReq);
 
     mockPolicy.setResponse("invalid");
-    tokenService.createToken(
-        request,
-        null,
-        consumerUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .createToken(request, null, consumerUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -1373,16 +1368,16 @@ public class TokenServiceTest {
     JsonObject request = new JsonObject().put(RS_URL, DUMMY_SERVER);
 
     mockHttpWebClient.setResponse("valid");
-    tokenService.revokeToken(
-        mapToRevToken(request),
-        consumerUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .revokeToken(mapToRevToken(request), consumerUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -1396,16 +1391,16 @@ public class TokenServiceTest {
     JsonObject request = new JsonObject().put(RS_URL, DUMMY_ACTIVE_APD);
 
     mockHttpWebClient.setResponse("valid");
-    tokenService.revokeToken(
-        mapToRevToken(request),
-        consumerUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .revokeToken(mapToRevToken(request), consumerUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -1419,17 +1414,17 @@ public class TokenServiceTest {
 
     JsonObject request = new JsonObject().put(RS_URL, DUMMY_SERVER);
     mockHttpWebClient.setResponse("invalid");
-    tokenService.revokeToken(
-        mapToRevToken(request),
-        consumerUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                      assertEquals(400, response.getInteger(STATUS));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .revokeToken(mapToRevToken(request), consumerUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                          assertEquals(400, response.getInteger(STATUS));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -1439,19 +1434,19 @@ public class TokenServiceTest {
     mockHttpWebClient.setResponse("valid");
 
     JsonObject request = new JsonObject().put(RS_URL, DUMMY_SERVER);
-    tokenService.revokeToken(
-        mapToRevToken(request),
-        normalUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_MISSING_INFO.toString(), response.getString(TYPE));
-                      assertEquals(ERR_TITLE_NO_APPROVED_ROLES, response.getString("title"));
-                      assertEquals(ERR_DETAIL_NO_APPROVED_ROLES, response.getString("detail"));
-                      assertEquals(404, response.getInteger("status"));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .revokeToken(mapToRevToken(request), normalUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_MISSING_INFO.toString(), response.getString(TYPE));
+                          assertEquals(ERR_TITLE_NO_APPROVED_ROLES, response.getString("title"));
+                          assertEquals(ERR_DETAIL_NO_APPROVED_ROLES, response.getString("detail"));
+                          assertEquals(404, response.getInteger("status"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -1466,16 +1461,16 @@ public class TokenServiceTest {
         new JsonObject().put(RS_URL, RandomStringUtils.randomAlphabetic(10) + ".com");
 
     mockHttpWebClient.setResponse("valid");
-    tokenService.revokeToken(
-        mapToRevToken(request),
-        consumerUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .revokeToken(mapToRevToken(request), consumerUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -1489,16 +1484,16 @@ public class TokenServiceTest {
     JsonObject request = new JsonObject().put(RS_URL, DUMMY_INACTIVE_APD);
 
     mockHttpWebClient.setResponse("valid");
-    tokenService.revokeToken(
-        mapToRevToken(request),
-        consumerUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .revokeToken(mapToRevToken(request), consumerUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -1512,16 +1507,16 @@ public class TokenServiceTest {
     JsonObject request = new JsonObject().put(RS_URL, DUMMY_COS_URL);
 
     mockHttpWebClient.setResponse("valid");
-    tokenService.revokeToken(
-        mapToRevToken(request),
-        consumerUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .revokeToken(mapToRevToken(request), consumerUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -1538,27 +1533,28 @@ public class TokenServiceTest {
     token.remove("expiry");
     token.remove("server");
 
-    tokenService.validateToken(
-        mapToInspctToken(token),
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-                      JsonObject payload = response.getJsonObject("results");
-                      assertEquals(payload.getString(SUB), normalUser.getUserId());
-                      assertEquals(payload.getString(ISS), DUMMY_COS_URL);
-                      assertEquals(payload.getString(SUB), normalUser.getUserId());
-                      assertEquals(payload.getString(AUD), DUMMY_SERVER);
-                      assertEquals(payload.getString(IID), "rg:" + RESOURCE_GROUP);
-                      assertEquals(
-                          payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
-                      assertTrue(payload.getJsonObject(CONS).isEmpty());
-                      assertNotNull(payload.getString(EXP));
+    tokenService
+        .validateToken(mapToInspctToken(token))
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                          JsonObject payload = response.getJsonObject("results");
+                          assertEquals(payload.getString(SUB), normalUser.getUserId());
+                          assertEquals(payload.getString(ISS), DUMMY_COS_URL);
+                          assertEquals(payload.getString(SUB), normalUser.getUserId());
+                          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+                          assertEquals(payload.getString(IID), "rg:" + RESOURCE_GROUP);
+                          assertEquals(
+                              payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
+                          assertTrue(payload.getJsonObject(CONS).isEmpty());
+                          assertNotNull(payload.getString(EXP));
 
-                      assertTrue(!payload.containsKey(INTROSPECT_USERINFO));
-                      testContext.completeNow();
-                    })));
+                          assertTrue(!payload.containsKey(INTROSPECT_USERINFO));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -1579,28 +1575,31 @@ public class TokenServiceTest {
     token.remove("expiry");
     token.remove("server");
 
-    tokenService.validateToken(
-        mapToInspctToken(token),
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-                      JsonObject payload = response.getJsonObject("results");
-                      assertEquals(payload.getString(SUB), normalUser.getUserId());
-                      assertEquals(payload.getString(ISS), DUMMY_COS_URL);
-                      assertEquals(payload.getString(SUB), normalUser.getUserId());
-                      assertEquals(payload.getString(AUD), DUMMY_SERVER);
-                      assertEquals(payload.getString(IID), "rs:" + DUMMY_SERVER);
-                      assertEquals(
-                          payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
-                      assertTrue(payload.getJsonObject(CONS).isEmpty());
-                      assertNotNull(payload.getString(EXP));
+    tokenService
+        .validateToken(mapToInspctToken(token))
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                          JsonObject payload = response.getJsonObject("results");
+                          assertEquals(payload.getString(SUB), normalUser.getUserId());
+                          assertEquals(payload.getString(ISS), DUMMY_COS_URL);
+                          assertEquals(payload.getString(SUB), normalUser.getUserId());
+                          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+                          assertEquals(payload.getString(IID), "rs:" + DUMMY_SERVER);
+                          assertEquals(
+                              payload.getString(ROLE), Roles.CONSUMER.toString().toLowerCase());
+                          assertTrue(payload.getJsonObject(CONS).isEmpty());
+                          assertNotNull(payload.getString(EXP));
 
-                      assertTrue(payload.getJsonObject(INTROSPECT_USERINFO).containsKey("email"));
-                      assertTrue(payload.getJsonObject(INTROSPECT_USERINFO).containsKey("name"));
-                      testContext.completeNow();
-                    })));
+                          assertTrue(
+                              payload.getJsonObject(INTROSPECT_USERINFO).containsKey("email"));
+                          assertTrue(
+                              payload.getJsonObject(INTROSPECT_USERINFO).containsKey("name"));
+                          testContext.completeNow();
+                        })));
   }
 
   @DisplayName("validateToken resource server token - registration service fails [Fail]")
@@ -1619,15 +1618,16 @@ public class TokenServiceTest {
     token.remove("expiry");
     token.remove("server");
 
-    tokenService.validateToken(
-        mapToInspctToken(token),
-        testContext.failing(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals("Internal error", response.getMessage());
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .validateToken(mapToInspctToken(token))
+        .onComplete(
+            testContext.failing(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals("Internal error", response.getMessage());
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -1647,42 +1647,44 @@ public class TokenServiceTest {
     JsonObject invalidToken =
         new JsonObject().put("accessToken", token.getString("accessToken") + "abc");
 
-    tokenService.validateToken(
-        mapToInspctToken(invalidToken),
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_INVALID_AUTH_TOKEN.toString(), response.getString(TYPE));
-                      assertTrue(
-                          response
-                              .getJsonArray("results")
-                              .getJsonObject(0)
-                              .getString(STATUS)
-                              .equals(DENY));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .validateToken(mapToInspctToken(invalidToken))
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_INVALID_AUTH_TOKEN.toString(), response.getString(TYPE));
+                          assertTrue(
+                              response
+                                  .getJsonArray("results")
+                                  .getJsonObject(0)
+                                  .getString(STATUS)
+                                  .equals(DENY));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
   @DisplayName("validateToken [Failed-03 expiredToken]")
   void validateTokenFailed03(VertxTestContext testContext) {
 
-    tokenService.validateToken(
-        mapToInspctToken(expiredTipPayload),
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_INVALID_AUTH_TOKEN.toString(), response.getString(TYPE));
-                      assertTrue(
-                          response
-                              .getJsonArray("results")
-                              .getJsonObject(0)
-                              .getString(STATUS)
-                              .equals(DENY));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .validateToken(mapToInspctToken(expiredTipPayload))
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_INVALID_AUTH_TOKEN.toString(), response.getString(TYPE));
+                          assertTrue(
+                              response
+                                  .getJsonArray("results")
+                                  .getJsonObject(0)
+                                  .getString(STATUS)
+                                  .equals(DENY));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -1691,36 +1693,38 @@ public class TokenServiceTest {
 
     IntrospectToken introspect = new IntrospectToken();
 
-    tokenService.validateToken(
-        introspect,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_MISSING_INFO.toString(), response.getString("type"));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .validateToken(introspect)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_MISSING_INFO.toString(), response.getString("type"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
   @DisplayName("validateToken [Failed-05 randomToken]")
   void validateTokenFailed05(VertxTestContext testContext) {
 
-    tokenService.validateToken(
-        mapToInspctToken(randomToken),
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_INVALID_AUTH_TOKEN.toString(), response.getString(TYPE));
-                      assertTrue(
-                          response
-                              .getJsonArray("results")
-                              .getJsonObject(0)
-                              .getString(STATUS)
-                              .equals(DENY));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .validateToken(mapToInspctToken(randomToken))
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_INVALID_AUTH_TOKEN.toString(), response.getString(TYPE));
+                          assertTrue(
+                              response
+                                  .getJsonArray("results")
+                                  .getJsonObject(0)
+                                  .getString(STATUS)
+                                  .equals(DENY));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -1742,29 +1746,30 @@ public class TokenServiceTest {
     /* The JWT response has the key `apdToken`, introspect expects `accessToken`*/
     token.put(ACCESS_TOKEN, token.remove(APD_TOKEN));
 
-    tokenService.validateToken(
-        mapToInspctToken(token),
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-                      JsonObject payload = response.getJsonObject("results");
-                      assertEquals(payload.getString(SUB), normalUser.getUserId());
-                      assertEquals(payload.getString(ISS), DUMMY_COS_URL);
-                      assertEquals(payload.getString(SUB), normalUser.getUserId());
-                      assertEquals(payload.getString(AUD), DUMMY_SERVER);
-                      assertEquals(payload.getString(SID), sessId);
-                      assertEquals(payload.getString(LINK), DUMMY_SERVER + "/apd");
-                      assertNotNull(payload.getString(EXP));
+    tokenService
+        .validateToken(mapToInspctToken(token))
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                          JsonObject payload = response.getJsonObject("results");
+                          assertEquals(payload.getString(SUB), normalUser.getUserId());
+                          assertEquals(payload.getString(ISS), DUMMY_COS_URL);
+                          assertEquals(payload.getString(SUB), normalUser.getUserId());
+                          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+                          assertEquals(payload.getString(SID), sessId);
+                          assertEquals(payload.getString(LINK), DUMMY_SERVER + "/apd");
+                          assertNotNull(payload.getString(EXP));
 
-                      assertTrue(!payload.containsKey(CONS));
-                      assertTrue(!payload.containsKey(ROLE));
-                      assertTrue(!payload.containsKey(IID));
-                      assertTrue(!payload.containsKey(INTROSPECT_USERINFO));
+                          assertTrue(!payload.containsKey(CONS));
+                          assertTrue(!payload.containsKey(ROLE));
+                          assertTrue(!payload.containsKey(IID));
+                          assertTrue(!payload.containsKey(INTROSPECT_USERINFO));
 
-                      testContext.completeNow();
-                    })));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -1782,42 +1787,44 @@ public class TokenServiceTest {
     token.remove("expiry");
     token.remove("server");
 
-    tokenService.validateToken(
-        mapToInspctToken(token),
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-                      JsonObject payload = response.getJsonObject("results");
-                      assertEquals(payload.getString(SUB), DUMMY_COS_URL);
-                      assertEquals(payload.getString(ISS), DUMMY_COS_URL);
-                      assertEquals(payload.getString(AUD), DUMMY_SERVER);
-                      assertEquals(payload.getString(IID), "null:");
-                      assertEquals(payload.getString(ROLE), "");
-                      assertTrue(payload.getJsonObject(CONS).isEmpty());
-                      assertNotNull(payload.getString(EXP));
-                      assertTrue(!payload.containsKey(INTROSPECT_USERINFO));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .validateToken(mapToInspctToken(token))
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                          JsonObject payload = response.getJsonObject("results");
+                          assertEquals(payload.getString(SUB), DUMMY_COS_URL);
+                          assertEquals(payload.getString(ISS), DUMMY_COS_URL);
+                          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+                          assertEquals(payload.getString(IID), "null:");
+                          assertEquals(payload.getString(ROLE), "");
+                          assertTrue(payload.getJsonObject(CONS).isEmpty());
+                          assertNotNull(payload.getString(EXP));
+                          assertTrue(!payload.containsKey(INTROSPECT_USERINFO));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
   @DisplayName("Test Auth Server Token flow")
   void authServerToken(VertxTestContext testContext) {
 
-    tokenService.getAuthServerToken(
-        DUMMY_SERVER,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      JsonObject payload = getJwtPayload(response.getString(ACCESS_TOKEN));
-                      assertEquals(payload.getString(SUB), DUMMY_COS_URL);
-                      assertEquals(payload.getString(ISS), DUMMY_COS_URL);
-                      assertEquals(payload.getString(AUD), DUMMY_SERVER);
-                      assertNotNull(payload.getString(EXP));
-                      testContext.completeNow();
-                    })));
+    tokenService
+        .getAuthServerToken(DUMMY_SERVER)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          JsonObject payload = getJwtPayload(response.getString(ACCESS_TOKEN));
+                          assertEquals(payload.getString(SUB), DUMMY_COS_URL);
+                          assertEquals(payload.getString(ISS), DUMMY_COS_URL);
+                          assertEquals(payload.getString(AUD), DUMMY_SERVER);
+                          assertNotNull(payload.getString(EXP));
+                          testContext.completeNow();
+                        })));
   }
 }
