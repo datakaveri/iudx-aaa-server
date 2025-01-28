@@ -20,9 +20,7 @@ import static iudx.aaa.server.auditing.util.Constants.USERID_COLUMN_INDEX;
 import static iudx.aaa.server.auditing.util.Constants.USERID_NOT_FOUND;
 import static iudx.aaa.server.auditing.util.Constants.USER_ID;
 
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
@@ -84,8 +82,9 @@ public class AuditingServiceImpl implements AuditingService {
   }
 
   @Override
-  public AuditingService executeWriteQuery(
-      JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> executeWriteQuery(JsonObject request) {
+    Promise<JsonObject> promiseHandler = Promise.promise();
+
     request.put(DATABASE_TABLE_NAME, databaseTableName);
     query = queryBuilder.buildWritingQuery(request);
 
@@ -93,34 +92,34 @@ public class AuditingServiceImpl implements AuditingService {
       LOGGER.error("Fail: Query returned with an error: " + query.getString(ERROR));
       responseBuilder =
           new ResponseBuilder(FAILED).setTypeAndTitle(400).setMessage(query.getString(ERROR));
-      handler.handle(Future.failedFuture(responseBuilder.getResponse().toString()));
-      return null;
+      promiseHandler.fail(responseBuilder.getResponse().toString());
+      return promiseHandler.future();
     }
 
     Future<JsonObject> result = writeInDatabase(query);
     result.onComplete(
         resultHandler -> {
           if (resultHandler.succeeded()) {
-            handler.handle(Future.succeededFuture(resultHandler.result()));
+            promiseHandler.complete(resultHandler.result());
           } else if (resultHandler.failed()) {
             LOGGER.error("failed ::" + resultHandler.cause());
-            handler.handle(Future.failedFuture(resultHandler.cause().getMessage()));
+            promiseHandler.fail(resultHandler.cause().getMessage());
           }
         });
-    return this;
+    return promiseHandler.future();
   }
 
   @Override
-  public AuditingService executeReadQuery(
-      JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> executeReadQuery(JsonObject request) {
     LOGGER.debug("Info: Read Query" + request.toString());
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     if (!request.containsKey(USER_ID)) {
       LOGGER.debug("Info: " + USERID_NOT_FOUND);
       responseBuilder =
           new ResponseBuilder(FAILED).setTypeAndTitle(400).setMessage(USERID_NOT_FOUND);
-      handler.handle(Future.failedFuture(responseBuilder.getResponse().toString()));
-      return null;
+      promiseHandler.fail(responseBuilder.getResponse().toString());
+      return promiseHandler.future();
     }
     request.put(DATABASE_TABLE_NAME, databaseTableName);
     query = queryBuilder.buildReadingQuery(request);
@@ -129,26 +128,26 @@ public class AuditingServiceImpl implements AuditingService {
       LOGGER.error("Fail: Query returned with an error: " + query.getString(ERROR));
       responseBuilder =
           new ResponseBuilder(FAILED).setTypeAndTitle(400).setMessage(query.getString(ERROR));
-      handler.handle(Future.failedFuture(responseBuilder.getResponse().toString()));
-      return null;
+      promiseHandler.fail(responseBuilder.getResponse().toString());
+      return promiseHandler.future();
     }
     LOGGER.debug("Info: Query constructed: " + query.getString(QUERY_KEY));
 
-    Future<JsonObject> result = executeReadQuery(query);
+    Future<JsonObject> result = runReadQuery(query);
     result.onComplete(
         resultHandler -> {
           if (resultHandler.succeeded()) {
             LOGGER.info("Read from DB succeeded.");
-            handler.handle(Future.succeededFuture(resultHandler.result()));
+            promiseHandler.complete(resultHandler.result());
           } else if (resultHandler.failed()) {
             LOGGER.error("Read from DB failed:" + resultHandler.cause());
-            handler.handle(Future.failedFuture(resultHandler.cause().getMessage()));
+            promiseHandler.fail(resultHandler.cause().getMessage());
           }
         });
-    return this;
+    return promiseHandler.future();
   }
 
-  private Future<JsonObject> executeReadQuery(JsonObject query) {
+  private Future<JsonObject> runReadQuery(JsonObject query) {
     Promise<JsonObject> promise = Promise.promise();
     JsonArray jsonArray = new JsonArray();
     pool.withConnection(connection -> connection.query(query.getString(QUERY_KEY)).execute())

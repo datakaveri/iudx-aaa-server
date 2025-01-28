@@ -58,10 +58,8 @@ import static iudx.aaa.server.registration.Constants.SUCC_TITLE_USER_FOUND;
 import static iudx.aaa.server.registration.Constants.SUCC_TITLE_USER_READ;
 import static iudx.aaa.server.registration.Constants.UUID_REGEX;
 
-import io.vertx.core.AsyncResult;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -132,10 +130,10 @@ public class RegistrationServiceImpl implements RegistrationService {
   }
 
   @Override
-  public RegistrationService addRoles(
-      AddRolesRequest request, User user, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> addRoles(AddRolesRequest request, User user) {
 
     LOGGER.debug("Info : {} : Request received", LOGGER.getName());
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     List<Roles> requestedRoles = request.getRolesToRegister();
     final String phoneInReq = request.getPhone();
@@ -168,8 +166,8 @@ public class RegistrationServiceImpl implements RegistrationService {
                     new JsonObject()
                         .put(ERR_CONTEXT_EXISTING_ROLE_FOR_RS, new JsonArray(duplicateProviderRs)))
                 .build();
-        handler.handle(Future.succeededFuture(r.toJson()));
-        return this;
+        promiseHandler.complete(r.toJson());
+        return promiseHandler.future();
       }
     }
 
@@ -190,8 +188,8 @@ public class RegistrationServiceImpl implements RegistrationService {
                     new JsonObject()
                         .put(ERR_CONTEXT_EXISTING_ROLE_FOR_RS, new JsonArray(duplicateConsumerRs)))
                 .build();
-        handler.handle(Future.succeededFuture(r.toJson()));
-        return this;
+        promiseHandler.complete(r.toJson());
+        return promiseHandler.future();
       }
     }
 
@@ -432,7 +430,7 @@ public class RegistrationServiceImpl implements RegistrationService {
                       .status(200)
                       .objectResults(payload)
                       .build();
-              handler.handle(Future.succeededFuture(r.toJson()));
+              promiseHandler.complete(r.toJson());
 
               LOGGER.info("Added roles {} for {}", requestedRoles, user.getUserId());
             })
@@ -440,20 +438,21 @@ public class RegistrationServiceImpl implements RegistrationService {
             e -> {
               if (e instanceof ComposeException) {
                 ComposeException exp = (ComposeException) e;
-                handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                promiseHandler.complete(exp.getResponse().toJson());
                 return;
               }
 
               LOGGER.error(e.getMessage());
-              handler.handle(Future.failedFuture("Internal error"));
+              promiseHandler.fail("Internal error");
             });
 
-    return this;
+    return promiseHandler.future();
   }
 
   @Override
-  public RegistrationService listUser(User user, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> listUser(User user) {
     LOGGER.debug("Info : {} : Request received", LOGGER.getName());
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     if (user.getRoles().isEmpty()) {
       Response r =
@@ -463,8 +462,8 @@ public class RegistrationServiceImpl implements RegistrationService {
               .title(ERR_TITLE_NO_APPROVED_ROLES)
               .detail(ERR_DETAIL_NO_APPROVED_ROLES)
               .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
+      promiseHandler.complete(r.toJson());
+      return promiseHandler.future();
     }
 
     // cos admin may not have entry in DB, so if row count = 0, return phone w/ NIL_PHONE number
@@ -508,8 +507,7 @@ public class RegistrationServiceImpl implements RegistrationService {
                         .title(ERR_TITLE_USER_NOT_KC)
                         .detail(ERR_DETAIL_USER_NOT_KC)
                         .build();
-                handler.handle(Future.succeededFuture(r.toJson()));
-                return;
+                promiseHandler.complete(r.toJson());
               }
 
               JsonObject response = user.toJsonResponse();
@@ -531,27 +529,27 @@ public class RegistrationServiceImpl implements RegistrationService {
                       .status(200)
                       .objectResults(response)
                       .build();
-              handler.handle(Future.succeededFuture(r.toJson()));
+              promiseHandler.complete(r.toJson());
             })
         .onFailure(
             e -> {
               if (e instanceof ComposeException) {
                 ComposeException exp = (ComposeException) e;
-                handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                promiseHandler.complete(exp.getResponse().toJson());
                 return;
               }
 
               LOGGER.error(e.getMessage());
-              handler.handle(Future.failedFuture("Internal error"));
+              promiseHandler.fail("Internal error");
             });
 
-    return this;
+    return promiseHandler.future();
   }
 
   @Override
-  public RegistrationService resetClientSecret(
-      ResetClientSecretRequest request, User user, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> resetClientSecret(ResetClientSecretRequest request, User user) {
     LOGGER.debug("Info : {} : Request received", LOGGER.getName());
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     if (user.getRoles().isEmpty()) {
       Response r =
@@ -561,8 +559,8 @@ public class RegistrationServiceImpl implements RegistrationService {
               .title(ERR_TITLE_NO_APPROVED_ROLES)
               .detail(ERR_DETAIL_NO_APPROVED_ROLES)
               .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
+      promiseHandler.complete(r.toJson());
+      return promiseHandler.future();
     }
 
     Promise<JsonObject> modification = Promise.promise();
@@ -648,25 +646,26 @@ public class RegistrationServiceImpl implements RegistrationService {
                       .status(200)
                       .objectResults(response)
                       .build();
-              handler.handle(Future.succeededFuture(r.toJson()));
+              promiseHandler.complete(r.toJson());
             })
         .onFailure(
             e -> {
               if (e instanceof ComposeException) {
                 ComposeException exp = (ComposeException) e;
-                handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                promiseHandler.complete(exp.getResponse().toJson());
                 return;
               }
               LOGGER.error(e.getMessage());
-              handler.handle(Future.failedFuture("Internal error"));
+              promiseHandler.fail("Internal error");
             });
 
-    return this;
+    return promiseHandler.future();
   }
 
   @Override
-  public RegistrationService listResourceServer(Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> listResourceServer() {
     LOGGER.debug("Info : {} : Request received", LOGGER.getName());
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     Collector<Row, ?, List<JsonObject>> orgCollect =
         Collectors.mapping(row -> row.toJson(), Collectors.toList());
@@ -682,12 +681,10 @@ public class RegistrationServiceImpl implements RegistrationService {
     Future<JsonObject> ownerFuture =
         rsFuture.compose(
             res -> {
-              Promise<JsonObject> promise = Promise.promise();
               List<String> ownerIds =
                   res.stream().map(obj -> obj.getString("owner_id")).collect(Collectors.toList());
 
-              getUserDetails(ownerIds, promise);
-              return promise.future();
+              return getUserDetails(ownerIds);
             });
 
     Future<JsonArray> result =
@@ -716,32 +713,33 @@ public class RegistrationServiceImpl implements RegistrationService {
                       .status(200)
                       .arrayResults(res)
                       .build();
-              handler.handle(Future.succeededFuture(r.toJson()));
+              promiseHandler.complete(r.toJson());
             })
         .onFailure(
             e -> {
               LOGGER.error(e.getMessage());
-              handler.handle(Future.failedFuture("Internal error"));
+              promiseHandler.fail("Internal error");
             });
 
-    return this;
+    return promiseHandler.future();
   }
 
   @Override
-  public RegistrationService getUserDetails(
-      List<String> userIds, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> getUserDetails(List<String> userIds) {
     LOGGER.debug("Info : {} : Request received", LOGGER.getName());
+    Promise<JsonObject> promiseHandler = Promise.promise();
+
     if (userIds.isEmpty()) {
-      handler.handle(Future.succeededFuture(new JsonObject()));
-      return this;
+      promiseHandler.complete(new JsonObject());
+      return promiseHandler.future();
     }
 
     Set<UUID> unique = new HashSet<UUID>();
 
     for (String id : userIds) {
       if (id == null || !id.matches(UUID_REGEX)) {
-        handler.handle(Future.failedFuture("Invalid UUID"));
-        return this;
+        promiseHandler.fail("Invalid UUID");
+        return promiseHandler.future();
       }
       unique.add(UUID.fromString(id));
     }
@@ -756,19 +754,19 @@ public class RegistrationServiceImpl implements RegistrationService {
               JsonObject userDetails = new JsonObject();
 
               idToDetails.forEach((uid, jsonDet) -> userDetails.put(uid, jsonDet));
-              handler.handle(Future.succeededFuture(userDetails));
+              promiseHandler.complete(userDetails);
             })
         .onFailure(
             e -> {
               if (e instanceof ComposeException) {
-                handler.handle(Future.failedFuture(e.getMessage()));
+                promiseHandler.fail(e.getMessage());
                 return;
               }
               LOGGER.error(e.getMessage());
-              handler.handle(Future.failedFuture("Internal error"));
+              promiseHandler.fail("Internal error");
             });
 
-    return this;
+    return promiseHandler.future();
   }
 
   /**
@@ -902,11 +900,9 @@ public class RegistrationServiceImpl implements RegistrationService {
    */
   private Future<Boolean> callTokenRevoke(User user, RevokeToken request) {
     Promise<Boolean> response = Promise.promise();
-    Promise<JsonObject> promise = Promise.promise();
 
-    tokenService.revokeToken(request, user, promise);
-    promise
-        .future()
+    tokenService
+        .revokeToken(request, user)
         .onSuccess(
             resp -> {
               if (resp.getString("type").equals(URN_SUCCESS.toString())) {
@@ -925,12 +921,13 @@ public class RegistrationServiceImpl implements RegistrationService {
   }
 
   @Override
-  public RegistrationService findUserByEmail(
-      Set<String> emailIds, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> findUserByEmail(Set<String> emailIds) {
+
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     if (emailIds.isEmpty()) {
-      handler.handle(Future.succeededFuture(new JsonObject()));
-      return this;
+      promiseHandler.complete(new JsonObject());
+      return promiseHandler.future();
     }
 
     Map<String, Future<JsonObject>> kcInfoMap =
@@ -1013,20 +1010,20 @@ public class RegistrationServiceImpl implements RegistrationService {
                   (emailId, fut) -> {
                     result.put(emailId, fut.result());
                   });
-              handler.handle(Future.succeededFuture(result));
+              promiseHandler.complete(result);
             })
         .onFailure(
             err -> {
-              handler.handle(Future.failedFuture(err));
+              promiseHandler.fail(err);
             });
 
-    return this;
+    return promiseHandler.future();
   }
 
   @Override
-  public RegistrationService getDefaultClientCredentials(
-      User user, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> getDefaultClientCredentials(User user) {
     LOGGER.debug("Info : {} : Request received", LOGGER.getName());
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     if (user.getRoles().isEmpty()) {
       Response r =
@@ -1036,8 +1033,8 @@ public class RegistrationServiceImpl implements RegistrationService {
               .title(ERR_TITLE_NO_APPROVED_ROLES)
               .detail(ERR_DETAIL_NO_APPROVED_ROLES)
               .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
+      promiseHandler.complete(r.toJson());
+      return promiseHandler.future();
     }
 
     UUID userId = UUID.fromString(user.getUserId());
@@ -1128,7 +1125,7 @@ public class RegistrationServiceImpl implements RegistrationService {
                       .status(201)
                       .objectResults(creds)
                       .build();
-              handler.handle(Future.succeededFuture(r.toJson()));
+              promiseHandler.complete(r.toJson());
 
               LOGGER.info("Created default client credentials for {}", userId);
             })
@@ -1136,25 +1133,22 @@ public class RegistrationServiceImpl implements RegistrationService {
             e -> {
               if (e instanceof ComposeException) {
                 ComposeException exp = (ComposeException) e;
-                handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                promiseHandler.complete(exp.getResponse().toJson());
                 return;
               }
 
               LOGGER.error(e.getMessage());
-              handler.handle(Future.failedFuture("Internal error"));
+              promiseHandler.fail("Internal error");
             });
 
-    return this;
+    return promiseHandler.future();
   }
 
   @Override
-  public RegistrationService searchUser(
-      User user,
-      String searchString,
-      Roles role,
-      String resourceServerUrl,
-      Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> searchUser(
+      User user, String searchString, Roles role, String resourceServerUrl) {
     LOGGER.debug("Info : {} : Request received", LOGGER.getName());
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     if (!user.getRoles().contains(Roles.TRUSTEE)) {
       Response r =
@@ -1164,8 +1158,8 @@ public class RegistrationServiceImpl implements RegistrationService {
               .title(ERR_TITLE_NOT_TRUSTEE)
               .detail(ERR_DETAIL_NOT_TRUSTEE)
               .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
+      promiseHandler.complete(r.toJson());
+      return promiseHandler.future();
     }
 
     /* Create error denoting email / userID + role does not exist */
@@ -1245,19 +1239,19 @@ public class RegistrationServiceImpl implements RegistrationService {
                       .objectResults(res)
                       .build();
 
-              handler.handle(Future.succeededFuture(r.toJson()));
+              promiseHandler.complete(r.toJson());
             })
         .onFailure(
             e -> {
               if (e instanceof ComposeException) {
                 ComposeException exp = (ComposeException) e;
-                handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                promiseHandler.complete(exp.getResponse().toJson());
                 return;
               }
               LOGGER.error(e.getMessage());
-              handler.handle(Future.failedFuture("Internal error"));
+              promiseHandler.fail("Internal error");
             });
 
-    return this;
+    return promiseHandler.future();
   }
 }

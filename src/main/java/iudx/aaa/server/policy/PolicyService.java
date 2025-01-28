@@ -1,11 +1,9 @@
 package iudx.aaa.server.policy;
 
-import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.ProxyGen;
 import io.vertx.codegen.annotations.VertxGen;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.apiserver.CreateDelegationRequest;
@@ -46,18 +44,13 @@ public interface PolicyService {
   }
 
   /**
-   * The verifyPolicy implements the policy list operation.
+   * The verifyResourceAccess implements the resource access operation.
    *
    * @param request which is a JsonObject
-   * @param handler which is a Request Handler
-   * @return PolicyService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  PolicyService verifyResourceAccess(
-      RequestToken request,
-      DelegationInformation delegInfo,
-      User user,
-      Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> verifyResourceAccess(
+      RequestToken request, DelegationInformation delegInfo, User user);
 
   /**
    * listDelegation implements the ability for a provider/consumer to view the delegations they have
@@ -65,11 +58,9 @@ public interface PolicyService {
    * providers/consumers.
    *
    * @param user which is a {@link User} DataObject
-   * @param handler which is a Request Handler
-   * @return PolicyService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  PolicyService listDelegation(User user, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> listDelegation(User user);
 
   /**
    * deleteDelegation implements the ability for a provider/consumer to delete the delegations they
@@ -77,24 +68,18 @@ public interface PolicyService {
    *
    * @param request which is a list of DeleteDelegationRequest objects
    * @param user which is a {@link User} DataObject an auth delegate
-   * @param handler which is a Request Handler
-   * @return PolicyService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  PolicyService deleteDelegation(
-      List<DeleteDelegationRequest> request, User user, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> deleteDelegation(List<DeleteDelegationRequest> request, User user);
 
   /**
    * createDelegation implements the ability for a provider/consumer to create delegations.
    *
    * @param request which is a list of CreateDelegationRequest objects
    * @param user which is a {@link User} DataObject an auth delegate
-   * @param handler which is a Request Handler
-   * @return PolicyService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  PolicyService createDelegation(
-      List<CreateDelegationRequest> request, User user, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> createDelegation(List<CreateDelegationRequest> request, User user);
 
   /**
    * getDelegateEmails allows a trustee user to get all email addresses of valid delegates for user,
@@ -104,14 +89,8 @@ public interface PolicyService {
    * @param delegatorUserId the delegator's user ID
    * @param delegatedRole the delegated role
    * @param delegatedRsUrl the delegated RS URL
-   * @param handler
-   * @return
+   * @return Future of type JsonObject
    */
-  @Fluent
-  PolicyService getDelegateEmails(
-      User user,
-      String delegatorUserId,
-      Roles delegatedRole,
-      String delegatedRsUrl,
-      Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> getDelegateEmails(
+      User user, String delegatorUserId, Roles delegatedRole, String delegatedRsUrl);
 }

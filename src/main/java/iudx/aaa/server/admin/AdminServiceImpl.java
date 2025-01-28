@@ -25,9 +25,7 @@ import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
 import static iudx.aaa.server.apiserver.util.Urn.URN_SUCCESS;
 
 import com.google.common.net.InternetDomainName;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -83,9 +81,9 @@ public class AdminServiceImpl implements AdminService {
   }
 
   @Override
-  public AdminService getProviderRegistrations(
-      RoleStatus filter, User user, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> getProviderRegistrations(RoleStatus filter, User user) {
     LOGGER.debug("Info : {} : Request received", LOGGER.getName());
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     if (!user.getRoles().contains(Roles.ADMIN)) {
       Response r =
@@ -95,8 +93,8 @@ public class AdminServiceImpl implements AdminService {
               .title(ERR_TITLE_NOT_ADMIN)
               .detail(ERR_DETAIL_NOT_ADMIN)
               .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
+      promiseHandler.complete(r.toJson());
+      return promiseHandler.future();
     }
 
     List<String> resServersAdmin = user.getResServersForRole(Roles.ADMIN);
@@ -166,26 +164,28 @@ public class AdminServiceImpl implements AdminService {
                       .status(200)
                       .arrayResults(resp)
                       .build();
-              handler.handle(Future.succeededFuture(r.toJson()));
+              promiseHandler.complete(r.toJson());
             })
         .onFailure(
             e -> {
               if (e instanceof ComposeException) {
                 ComposeException exp = (ComposeException) e;
-                handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                promiseHandler.complete(exp.getResponse().toJson());
                 return;
               }
               LOGGER.error(e.getMessage());
-              handler.handle(Future.failedFuture("Internal error"));
+              promiseHandler.fail("Internal error");
             });
 
-    return this;
+    return promiseHandler.future();
   }
 
   @Override
-  public AdminService updateProviderRegistrationStatus(
-      List<ProviderUpdateRequest> request, User user, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> updateProviderRegistrationStatus(
+      List<ProviderUpdateRequest> request, User user) {
     LOGGER.debug("Info : {} : Request received", LOGGER.getName());
+
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     if (!user.getRoles().contains(Roles.ADMIN)) {
       Response r =
@@ -195,8 +195,8 @@ public class AdminServiceImpl implements AdminService {
               .title(ERR_TITLE_NOT_ADMIN)
               .detail(ERR_DETAIL_NOT_ADMIN)
               .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
+      promiseHandler.complete(r.toJson());
+      return promiseHandler.future();
     }
 
     /*
@@ -221,8 +221,8 @@ public class AdminServiceImpl implements AdminService {
               .detail(firstOffendingId)
               .status(400)
               .build();
-      handler.handle(Future.succeededFuture(resp.toJson()));
-      return this;
+      promiseHandler.complete(resp.toJson());
+      return promiseHandler.future();
     }
 
     List<String> resServersAdmin = user.getResServersForRole(Roles.ADMIN);
@@ -305,26 +305,27 @@ public class AdminServiceImpl implements AdminService {
                       .title(SUCC_TITLE_PROV_STATUS_UPDATE)
                       .arrayResults(resp)
                       .build();
-              handler.handle(Future.succeededFuture(r.toJson()));
+              promiseHandler.complete(r.toJson());
             })
         .onFailure(
             e -> {
               if (e instanceof ComposeException) {
                 ComposeException exp = (ComposeException) e;
-                handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                promiseHandler.complete(exp.getResponse().toJson());
                 return;
               }
               LOGGER.error(e.getMessage());
-              handler.handle(Future.failedFuture("Internal error"));
+              promiseHandler.fail("Internal error");
             });
 
-    return this;
+    return promiseHandler.future();
   }
 
   @Override
-  public AdminService createResourceServer(
-      CreateRsRequest request, User user, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> createResourceServer(CreateRsRequest request, User user) {
     LOGGER.debug("Info : {} : Request received", LOGGER.getName());
+
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     if (!user.getRoles().contains(Roles.COS_ADMIN)) {
       Response r =
@@ -334,8 +335,8 @@ public class AdminServiceImpl implements AdminService {
               .title(ERR_TITLE_NO_COS_ADMIN_ROLE)
               .detail(ERR_DETAIL_NO_COS_ADMIN_ROLE)
               .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
+      promiseHandler.complete(r.toJson());
+      return promiseHandler.future();
     }
 
     String name = request.getName();
@@ -355,13 +356,11 @@ public class AdminServiceImpl implements AdminService {
               .title(ERR_TITLE_INVALID_DOMAIN)
               .detail(ERR_DETAIL_INVALID_DOMAIN)
               .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
+      promiseHandler.complete(r.toJson());
+      return promiseHandler.future();
     }
 
-    Promise<JsonObject> promise = Promise.promise();
-    registrationService.findUserByEmail(Set.of(ownerEmail), promise);
-    Future<JsonObject> adminInfo = promise.future();
+    Future<JsonObject> adminInfo = registrationService.findUserByEmail(Set.of(ownerEmail));
 
     Future<UUID> fut =
         adminInfo.compose(
@@ -416,20 +415,20 @@ public class AdminServiceImpl implements AdminService {
                       + " (resource server ID {})",
                   url,
                   id);
-              handler.handle(Future.succeededFuture(r.toJson()));
+              promiseHandler.complete(r.toJson());
             })
         .onFailure(
             e -> {
               if (e instanceof ComposeException) {
                 ComposeException exp = (ComposeException) e;
-                handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                promiseHandler.complete(exp.getResponse().toJson());
                 return;
               }
 
               LOGGER.error(e.getMessage());
-              handler.handle(Future.failedFuture("Internal error"));
+              promiseHandler.fail("Internal error");
             });
 
-    return this;
+    return promiseHandler.future();
   }
 }

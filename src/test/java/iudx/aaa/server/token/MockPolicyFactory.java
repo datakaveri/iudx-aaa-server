@@ -2,7 +2,7 @@ package iudx.aaa.server.token;
 
 import static iudx.aaa.server.apiserver.util.Urn.*;
 
-import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -11,7 +11,6 @@ import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.policy.PolicyServiceImpl;
 import java.util.UUID;
 import org.mockito.Mockito;
-import org.mockito.stubbing.Answer;
 
 /**
  * Mocks, stubs the PolicyService. Implements the {@link
@@ -22,23 +21,11 @@ import org.mockito.stubbing.Answer;
 public class MockPolicyFactory {
 
   private static PolicyService policyService;
-  AsyncResult<JsonObject> asyncResult;
 
-  @SuppressWarnings("unchecked")
   public MockPolicyFactory() {
     if (policyService == null) {
       policyService = Mockito.mock(PolicyServiceImpl.class);
     }
-
-    asyncResult = Mockito.mock(AsyncResult.class);
-    Mockito.doAnswer(
-            (Answer<AsyncResult<JsonObject>>)
-                arguments -> {
-                  ((Handler<AsyncResult<JsonObject>>) arguments.getArgument(3)).handle(asyncResult);
-                  return null;
-                })
-        .when(policyService)
-        .verifyResourceAccess(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
   }
 
   public PolicyService getInstance() {
@@ -54,16 +41,16 @@ public class MockPolicyFactory {
     JsonObject response = new JsonObject();
     if ("valid".equals(status)) {
       response.put("status", "success");
-      Mockito.when(asyncResult.result()).thenReturn(response);
-      Mockito.when(asyncResult.failed()).thenReturn(false);
-      Mockito.when(asyncResult.succeeded()).thenReturn(true);
+
+      Mockito.when(policyService.verifyResourceAccess(Mockito.any(), Mockito.any(), Mockito.any()))
+          .thenReturn(Future.succeededFuture(response));
     } else {
       response.put("status", "failed");
       ComposeException exp =
           new ComposeException(403, URN_INVALID_INPUT, "Evaluation failed", "Evaluation failed");
-      Mockito.when(asyncResult.cause()).thenReturn(exp);
-      Mockito.when(asyncResult.succeeded()).thenReturn(false);
-      Mockito.when(asyncResult.failed()).thenReturn(true);
+
+      Mockito.when(policyService.verifyResourceAccess(Mockito.any(), Mockito.any(), Mockito.any()))
+          .thenReturn(Future.failedFuture(exp));
     }
   }
 
@@ -81,24 +68,23 @@ public class MockPolicyFactory {
       response.put("cat_id", itemorApdLink);
       response.put("url", url);
       response.put("constraints", new JsonObject().put("access", new JsonArray().add("api")));
-      Mockito.when(asyncResult.result()).thenReturn(response);
-      Mockito.when(asyncResult.failed()).thenReturn(false);
-      Mockito.when(asyncResult.succeeded()).thenReturn(true);
+
+      Mockito.when(policyService.verifyResourceAccess(Mockito.any(), Mockito.any(), Mockito.any()))
+          .thenReturn(Future.succeededFuture(response));
     } else if ("apd-interaction".equals(status)) {
       JsonObject response = new JsonObject();
       response.put("status", "apd-interaction");
       response.put("sessionId", UUID.randomUUID().toString());
       response.put("link", itemorApdLink);
       response.put("url", url);
-      Mockito.when(asyncResult.result()).thenReturn(response);
-      Mockito.when(asyncResult.failed()).thenReturn(false);
-      Mockito.when(asyncResult.succeeded()).thenReturn(true);
+
+      Mockito.when(policyService.verifyResourceAccess(Mockito.any(), Mockito.any(), Mockito.any()))
+          .thenReturn(Future.succeededFuture(response));
     }
   }
 
   public void setResponse(JsonObject response) {
-    Mockito.when(asyncResult.result()).thenReturn(response);
-    Mockito.when(asyncResult.failed()).thenReturn(false);
-    Mockito.when(asyncResult.succeeded()).thenReturn(true);
+    Mockito.when(policyService.verifyResourceAccess(Mockito.any(), Mockito.any(), Mockito.any()))
+        .thenReturn(Future.succeededFuture(response));
   }
 }

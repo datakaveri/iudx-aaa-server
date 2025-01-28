@@ -129,19 +129,20 @@ public class GetProviderRegistrationsTest {
 
     User user = new UserBuilder().userId(UUID.randomUUID()).name("aa", "bb").build();
 
-    adminService.getProviderRegistrations(
-        RoleStatus.PENDING,
-        user,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 401);
-                      assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-                      assertEquals(Constants.ERR_TITLE_NOT_ADMIN, response.getString("title"));
-                      assertEquals(Constants.ERR_DETAIL_NOT_ADMIN, response.getString("detail"));
-                      testContext.completeNow();
-                    })));
+    adminService
+        .getProviderRegistrations(RoleStatus.PENDING, user)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 401);
+                          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                          assertEquals(Constants.ERR_TITLE_NOT_ADMIN, response.getString("title"));
+                          assertEquals(
+                              Constants.ERR_DETAIL_NOT_ADMIN, response.getString("detail"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -162,53 +163,56 @@ public class GetProviderRegistrationsTest {
 
     setup.onSuccess(
         succ -> {
-          adminService.getProviderRegistrations(
-              RoleStatus.PENDING,
-              adminUser,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(response.getInteger("status"), 200);
-                            assertEquals(response.getString("type"), URN_SUCCESS.toString());
-                            assertEquals(
-                                response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
-                            JsonArray res = response.getJsonArray("results");
-                            assertTrue(res.isEmpty());
-                            pendingEmpty.flag();
-                          })));
+          adminService
+              .getProviderRegistrations(RoleStatus.PENDING, adminUser)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(response.getInteger("status"), 200);
+                                assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                                assertEquals(
+                                    response.getString("title"),
+                                    Constants.SUCC_TITLE_PROVIDER_REGS);
+                                JsonArray res = response.getJsonArray("results");
+                                assertTrue(res.isEmpty());
+                                pendingEmpty.flag();
+                              })));
 
-          adminService.getProviderRegistrations(
-              RoleStatus.REJECTED,
-              adminUser,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(response.getInteger("status"), 200);
-                            assertEquals(response.getString("type"), URN_SUCCESS.toString());
-                            assertEquals(
-                                response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
-                            JsonArray res = response.getJsonArray("results");
-                            assertTrue(res.isEmpty());
-                            rejectedEmpty.flag();
-                          })));
+          adminService
+              .getProviderRegistrations(RoleStatus.REJECTED, adminUser)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(response.getInteger("status"), 200);
+                                assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                                assertEquals(
+                                    response.getString("title"),
+                                    Constants.SUCC_TITLE_PROVIDER_REGS);
+                                JsonArray res = response.getJsonArray("results");
+                                assertTrue(res.isEmpty());
+                                rejectedEmpty.flag();
+                              })));
 
-          adminService.getProviderRegistrations(
-              RoleStatus.APPROVED,
-              adminUser,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(response.getInteger("status"), 200);
-                            assertEquals(response.getString("type"), URN_SUCCESS.toString());
-                            assertEquals(
-                                response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
-                            JsonArray res = response.getJsonArray("results");
-                            assertTrue(res.isEmpty());
-                            approvedEmpty.flag();
-                          })));
+          adminService
+              .getProviderRegistrations(RoleStatus.APPROVED, adminUser)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(response.getInteger("status"), 200);
+                                assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                                assertEquals(
+                                    response.getString("title"),
+                                    Constants.SUCC_TITLE_PROVIDER_REGS);
+                                JsonArray res = response.getJsonArray("results");
+                                assertTrue(res.isEmpty());
+                                approvedEmpty.flag();
+                              })));
         });
   }
 
@@ -255,50 +259,53 @@ public class GetProviderRegistrationsTest {
                   utils.getKcAdminJson(providerB));
           Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
 
-          adminService.getProviderRegistrations(
-              RoleStatus.PENDING,
-              adminUser,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(response.getInteger("status"), 200);
-                            assertEquals(response.getString("type"), URN_SUCCESS.toString());
-                            assertEquals(
-                                response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
-                            JsonArray res = response.getJsonArray("results");
-                            assertTrue(res.size() == 2);
+          adminService
+              .getProviderRegistrations(RoleStatus.PENDING, adminUser)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(response.getInteger("status"), 200);
+                                assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                                assertEquals(
+                                    response.getString("title"),
+                                    Constants.SUCC_TITLE_PROVIDER_REGS);
+                                JsonArray res = response.getJsonArray("results");
+                                assertTrue(res.size() == 2);
 
-                            res.forEach(
-                                i -> {
-                                  JsonObject j = (JsonObject) i;
+                                res.forEach(
+                                    i -> {
+                                      JsonObject j = (JsonObject) i;
 
-                                  assertEquals(
-                                      j.getString(Constants.RESP_STATUS),
-                                      RoleStatus.PENDING.name().toLowerCase());
-                                  assertEquals(j.getString("rsUrl"), SERVER_URL);
+                                      assertEquals(
+                                          j.getString(Constants.RESP_STATUS),
+                                          RoleStatus.PENDING.name().toLowerCase());
+                                      assertEquals(j.getString("rsUrl"), SERVER_URL);
 
-                                  if (j.getString("id").equals(providerAPendingId.toString())) {
-                                    assertEquals(
-                                        j.getString("email"), utils.getDetails(providerA).email);
-                                    assertEquals(j.getString("userId"), providerA.getUserId());
-                                    assertEquals(
-                                        j.getJsonObject("userInfo"),
-                                        utils.getDetails(providerA).userInfo);
-                                    sawProviderA.flag();
-                                  }
+                                      if (j.getString("id").equals(providerAPendingId.toString())) {
+                                        assertEquals(
+                                            j.getString("email"),
+                                            utils.getDetails(providerA).email);
+                                        assertEquals(j.getString("userId"), providerA.getUserId());
+                                        assertEquals(
+                                            j.getJsonObject("userInfo"),
+                                            utils.getDetails(providerA).userInfo);
+                                        sawProviderA.flag();
+                                      }
 
-                                  if (j.getString("id").equals(providerBPendingId.toString())) {
-                                    assertEquals(
-                                        j.getString("email"), utils.getDetails(providerB).email);
-                                    assertEquals(j.getString("userId"), providerB.getUserId());
-                                    assertEquals(
-                                        j.getJsonObject("userInfo"),
-                                        utils.getDetails(providerB).userInfo);
-                                    sawProviderB.flag();
-                                  }
-                                });
-                          })));
+                                      if (j.getString("id").equals(providerBPendingId.toString())) {
+                                        assertEquals(
+                                            j.getString("email"),
+                                            utils.getDetails(providerB).email);
+                                        assertEquals(j.getString("userId"), providerB.getUserId());
+                                        assertEquals(
+                                            j.getJsonObject("userInfo"),
+                                            utils.getDetails(providerB).userInfo);
+                                        sawProviderB.flag();
+                                      }
+                                    });
+                              })));
         });
   }
 
@@ -345,49 +352,52 @@ public class GetProviderRegistrationsTest {
                   utils.getKcAdminJson(providerB));
           Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
 
-          adminService.getProviderRegistrations(
-              RoleStatus.APPROVED,
-              adminUser,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(response.getInteger("status"), 200);
-                            assertEquals(response.getString("type"), URN_SUCCESS.toString());
-                            assertEquals(
-                                response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
-                            JsonArray res = response.getJsonArray("results");
-                            assertTrue(res.size() == 2);
+          adminService
+              .getProviderRegistrations(RoleStatus.APPROVED, adminUser)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(response.getInteger("status"), 200);
+                                assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                                assertEquals(
+                                    response.getString("title"),
+                                    Constants.SUCC_TITLE_PROVIDER_REGS);
+                                JsonArray res = response.getJsonArray("results");
+                                assertTrue(res.size() == 2);
 
-                            res.forEach(
-                                i -> {
-                                  JsonObject j = (JsonObject) i;
-                                  assertEquals(
-                                      j.getString(Constants.RESP_STATUS),
-                                      RoleStatus.APPROVED.name().toLowerCase());
-                                  assertEquals(j.getString("rsUrl"), SERVER_URL);
+                                res.forEach(
+                                    i -> {
+                                      JsonObject j = (JsonObject) i;
+                                      assertEquals(
+                                          j.getString(Constants.RESP_STATUS),
+                                          RoleStatus.APPROVED.name().toLowerCase());
+                                      assertEquals(j.getString("rsUrl"), SERVER_URL);
 
-                                  if (j.getString("id").equals(providerAPendingId.toString())) {
-                                    assertEquals(
-                                        j.getString("email"), utils.getDetails(providerA).email);
-                                    assertEquals(j.getString("userId"), providerA.getUserId());
-                                    assertEquals(
-                                        j.getJsonObject("userInfo"),
-                                        utils.getDetails(providerA).userInfo);
-                                    sawProviderA.flag();
-                                  }
+                                      if (j.getString("id").equals(providerAPendingId.toString())) {
+                                        assertEquals(
+                                            j.getString("email"),
+                                            utils.getDetails(providerA).email);
+                                        assertEquals(j.getString("userId"), providerA.getUserId());
+                                        assertEquals(
+                                            j.getJsonObject("userInfo"),
+                                            utils.getDetails(providerA).userInfo);
+                                        sawProviderA.flag();
+                                      }
 
-                                  if (j.getString("id").equals(providerBPendingId.toString())) {
-                                    assertEquals(
-                                        j.getString("email"), utils.getDetails(providerB).email);
-                                    assertEquals(j.getString("userId"), providerB.getUserId());
-                                    assertEquals(
-                                        j.getJsonObject("userInfo"),
-                                        utils.getDetails(providerB).userInfo);
-                                    sawProviderB.flag();
-                                  }
-                                });
-                          })));
+                                      if (j.getString("id").equals(providerBPendingId.toString())) {
+                                        assertEquals(
+                                            j.getString("email"),
+                                            utils.getDetails(providerB).email);
+                                        assertEquals(j.getString("userId"), providerB.getUserId());
+                                        assertEquals(
+                                            j.getJsonObject("userInfo"),
+                                            utils.getDetails(providerB).userInfo);
+                                        sawProviderB.flag();
+                                      }
+                                    });
+                              })));
         });
   }
 
@@ -434,49 +444,52 @@ public class GetProviderRegistrationsTest {
                   utils.getKcAdminJson(providerB));
           Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
 
-          adminService.getProviderRegistrations(
-              RoleStatus.REJECTED,
-              adminUser,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(response.getInteger("status"), 200);
-                            assertEquals(response.getString("type"), URN_SUCCESS.toString());
-                            assertEquals(
-                                response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
-                            JsonArray res = response.getJsonArray("results");
-                            assertTrue(res.size() == 2);
+          adminService
+              .getProviderRegistrations(RoleStatus.REJECTED, adminUser)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(response.getInteger("status"), 200);
+                                assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                                assertEquals(
+                                    response.getString("title"),
+                                    Constants.SUCC_TITLE_PROVIDER_REGS);
+                                JsonArray res = response.getJsonArray("results");
+                                assertTrue(res.size() == 2);
 
-                            res.forEach(
-                                i -> {
-                                  JsonObject j = (JsonObject) i;
-                                  assertEquals(
-                                      j.getString(Constants.RESP_STATUS),
-                                      RoleStatus.REJECTED.name().toLowerCase());
-                                  assertEquals(j.getString("rsUrl"), SERVER_URL);
+                                res.forEach(
+                                    i -> {
+                                      JsonObject j = (JsonObject) i;
+                                      assertEquals(
+                                          j.getString(Constants.RESP_STATUS),
+                                          RoleStatus.REJECTED.name().toLowerCase());
+                                      assertEquals(j.getString("rsUrl"), SERVER_URL);
 
-                                  if (j.getString("id").equals(providerAPendingId.toString())) {
-                                    assertEquals(
-                                        j.getString("email"), utils.getDetails(providerA).email);
-                                    assertEquals(j.getString("userId"), providerA.getUserId());
-                                    assertEquals(
-                                        j.getJsonObject("userInfo"),
-                                        utils.getDetails(providerA).userInfo);
-                                    sawProviderA.flag();
-                                  }
+                                      if (j.getString("id").equals(providerAPendingId.toString())) {
+                                        assertEquals(
+                                            j.getString("email"),
+                                            utils.getDetails(providerA).email);
+                                        assertEquals(j.getString("userId"), providerA.getUserId());
+                                        assertEquals(
+                                            j.getJsonObject("userInfo"),
+                                            utils.getDetails(providerA).userInfo);
+                                        sawProviderA.flag();
+                                      }
 
-                                  if (j.getString("id").equals(providerBPendingId.toString())) {
-                                    assertEquals(
-                                        j.getString("email"), utils.getDetails(providerB).email);
-                                    assertEquals(j.getString("userId"), providerB.getUserId());
-                                    assertEquals(
-                                        j.getJsonObject("userInfo"),
-                                        utils.getDetails(providerB).userInfo);
-                                    sawProviderB.flag();
-                                  }
-                                });
-                          })));
+                                      if (j.getString("id").equals(providerBPendingId.toString())) {
+                                        assertEquals(
+                                            j.getString("email"),
+                                            utils.getDetails(providerB).email);
+                                        assertEquals(j.getString("userId"), providerB.getUserId());
+                                        assertEquals(
+                                            j.getJsonObject("userInfo"),
+                                            utils.getDetails(providerB).userInfo);
+                                        sawProviderB.flag();
+                                      }
+                                    });
+                              })));
         });
   }
 
@@ -554,52 +567,55 @@ public class GetProviderRegistrationsTest {
                   utils.getKcAdminJson(providerB));
           Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
 
-          adminService.getProviderRegistrations(
-              RoleStatus.PENDING,
-              adminUser,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(response.getInteger("status"), 200);
-                            assertEquals(response.getString("type"), URN_SUCCESS.toString());
-                            assertEquals(
-                                response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
-                            JsonArray res = response.getJsonArray("results");
-                            assertTrue(res.size() == 2);
+          adminService
+              .getProviderRegistrations(RoleStatus.PENDING, adminUser)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(response.getInteger("status"), 200);
+                                assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                                assertEquals(
+                                    response.getString("title"),
+                                    Constants.SUCC_TITLE_PROVIDER_REGS);
+                                JsonArray res = response.getJsonArray("results");
+                                assertTrue(res.size() == 2);
 
-                            res.forEach(
-                                i -> {
-                                  JsonObject j = (JsonObject) i;
-                                  assertEquals(
-                                      j.getString(Constants.RESP_STATUS),
-                                      RoleStatus.PENDING.name().toLowerCase());
+                                res.forEach(
+                                    i -> {
+                                      JsonObject j = (JsonObject) i;
+                                      assertEquals(
+                                          j.getString(Constants.RESP_STATUS),
+                                          RoleStatus.PENDING.name().toLowerCase());
 
-                                  if (j.getString("id")
-                                      .equals(providerAPendingIdOnServerOne.toString())) {
-                                    assertEquals(j.getString("rsUrl"), SERVER_URL_ONE);
-                                    assertEquals(
-                                        j.getString("email"), utils.getDetails(providerA).email);
-                                    assertEquals(j.getString("userId"), providerA.getUserId());
-                                    assertEquals(
-                                        j.getJsonObject("userInfo"),
-                                        utils.getDetails(providerA).userInfo);
-                                    sawProviderA.flag();
-                                  }
+                                      if (j.getString("id")
+                                          .equals(providerAPendingIdOnServerOne.toString())) {
+                                        assertEquals(j.getString("rsUrl"), SERVER_URL_ONE);
+                                        assertEquals(
+                                            j.getString("email"),
+                                            utils.getDetails(providerA).email);
+                                        assertEquals(j.getString("userId"), providerA.getUserId());
+                                        assertEquals(
+                                            j.getJsonObject("userInfo"),
+                                            utils.getDetails(providerA).userInfo);
+                                        sawProviderA.flag();
+                                      }
 
-                                  if (j.getString("id")
-                                      .equals(providerBPendingIdOnServerTwo.toString())) {
-                                    assertEquals(j.getString("rsUrl"), SERVER_URL_TWO);
-                                    assertEquals(
-                                        j.getString("email"), utils.getDetails(providerB).email);
-                                    assertEquals(j.getString("userId"), providerB.getUserId());
-                                    assertEquals(
-                                        j.getJsonObject("userInfo"),
-                                        utils.getDetails(providerB).userInfo);
-                                    sawProviderB.flag();
-                                  }
-                                });
-                          })));
+                                      if (j.getString("id")
+                                          .equals(providerBPendingIdOnServerTwo.toString())) {
+                                        assertEquals(j.getString("rsUrl"), SERVER_URL_TWO);
+                                        assertEquals(
+                                            j.getString("email"),
+                                            utils.getDetails(providerB).email);
+                                        assertEquals(j.getString("userId"), providerB.getUserId());
+                                        assertEquals(
+                                            j.getJsonObject("userInfo"),
+                                            utils.getDetails(providerB).userInfo);
+                                        sawProviderB.flag();
+                                      }
+                                    });
+                              })));
         });
   }
 
@@ -680,52 +696,55 @@ public class GetProviderRegistrationsTest {
                   utils.getKcAdminJson(providerB));
           Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(mockKcResp));
 
-          adminService.getProviderRegistrations(
-              RoleStatus.PENDING,
-              adminOfOne,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(response.getInteger("status"), 200);
-                            assertEquals(response.getString("type"), URN_SUCCESS.toString());
-                            assertEquals(
-                                response.getString("title"), Constants.SUCC_TITLE_PROVIDER_REGS);
-                            JsonArray res = response.getJsonArray("results");
-                            assertTrue(res.size() == 2);
+          adminService
+              .getProviderRegistrations(RoleStatus.PENDING, adminOfOne)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(response.getInteger("status"), 200);
+                                assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                                assertEquals(
+                                    response.getString("title"),
+                                    Constants.SUCC_TITLE_PROVIDER_REGS);
+                                JsonArray res = response.getJsonArray("results");
+                                assertTrue(res.size() == 2);
 
-                            res.forEach(
-                                i -> {
-                                  JsonObject j = (JsonObject) i;
-                                  assertEquals(
-                                      j.getString(Constants.RESP_STATUS),
-                                      RoleStatus.PENDING.name().toLowerCase());
+                                res.forEach(
+                                    i -> {
+                                      JsonObject j = (JsonObject) i;
+                                      assertEquals(
+                                          j.getString(Constants.RESP_STATUS),
+                                          RoleStatus.PENDING.name().toLowerCase());
 
-                                  if (j.getString("id")
-                                      .equals(providerAPendingIdOnServerOne.toString())) {
-                                    assertEquals(j.getString("rsUrl"), SERVER_URL_ONE);
-                                    assertEquals(
-                                        j.getString("email"), utils.getDetails(providerA).email);
-                                    assertEquals(j.getString("userId"), providerA.getUserId());
-                                    assertEquals(
-                                        j.getJsonObject("userInfo"),
-                                        utils.getDetails(providerA).userInfo);
-                                    sawProviderA.flag();
-                                  }
+                                      if (j.getString("id")
+                                          .equals(providerAPendingIdOnServerOne.toString())) {
+                                        assertEquals(j.getString("rsUrl"), SERVER_URL_ONE);
+                                        assertEquals(
+                                            j.getString("email"),
+                                            utils.getDetails(providerA).email);
+                                        assertEquals(j.getString("userId"), providerA.getUserId());
+                                        assertEquals(
+                                            j.getJsonObject("userInfo"),
+                                            utils.getDetails(providerA).userInfo);
+                                        sawProviderA.flag();
+                                      }
 
-                                  if (j.getString("id")
-                                      .equals(providerBPendingIdOnServerOne.toString())) {
-                                    assertEquals(j.getString("rsUrl"), SERVER_URL_ONE);
-                                    assertEquals(
-                                        j.getString("email"), utils.getDetails(providerB).email);
-                                    assertEquals(j.getString("userId"), providerB.getUserId());
-                                    assertEquals(
-                                        j.getJsonObject("userInfo"),
-                                        utils.getDetails(providerB).userInfo);
-                                    sawProviderB.flag();
-                                  }
-                                });
-                          })));
+                                      if (j.getString("id")
+                                          .equals(providerBPendingIdOnServerOne.toString())) {
+                                        assertEquals(j.getString("rsUrl"), SERVER_URL_ONE);
+                                        assertEquals(
+                                            j.getString("email"),
+                                            utils.getDetails(providerB).email);
+                                        assertEquals(j.getString("userId"), providerB.getUserId());
+                                        assertEquals(
+                                            j.getJsonObject("userInfo"),
+                                            utils.getDetails(providerB).userInfo);
+                                        sawProviderB.flag();
+                                      }
+                                    });
+                              })));
         });
   }
 }

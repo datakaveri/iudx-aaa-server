@@ -12,7 +12,6 @@ import static iudx.aaa.server.policy.Constants.ERR_TITLE_RS_NOT_EXIST_OR_USER_NO
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -166,19 +165,20 @@ public class CreateDelegationTest {
             .build();
 
     List<CreateDelegationRequest> req = new ArrayList<>();
-    policyService.createDelegation(
-        req,
-        dummyUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-                      assertEquals(ERR_TITLE_INVALID_ROLES, response.getString("title"));
-                      assertEquals(ERR_DETAIL_CREATE_DELEGATE_ROLES, response.getString("detail"));
-                      assertEquals(401, response.getInteger("status"));
-                      testContext.completeNow();
-                    })));
+    policyService
+        .createDelegation(req, dummyUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                          assertEquals(ERR_TITLE_INVALID_ROLES, response.getString("title"));
+                          assertEquals(
+                              ERR_DETAIL_CREATE_DELEGATE_ROLES, response.getString("detail"));
+                          assertEquals(401, response.getInteger("status"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -218,30 +218,30 @@ public class CreateDelegationTest {
               List<CreateDelegationRequest> req =
                   CreateDelegationRequest.jsonArrayToList(new JsonArray().add(obj));
 
-              policyService.createDelegation(
-                  req,
-                  consumerUser,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(
-                                    URN_INVALID_INPUT.toString(), response.getString("type"));
-                                assertEquals(
-                                    ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
-                                    response.getString("title"));
-                                assertEquals(
-                                    ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
-                                    response.getString("detail"));
-                                assertEquals(
-                                    new JsonArray(List.of(FAKE_SERVER)),
-                                    response
-                                        .getJsonObject("context")
-                                        .getJsonArray(
-                                            ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE));
-                                assertEquals(400, response.getInteger("status"));
-                                testContext.completeNow();
-                              })));
+              policyService
+                  .createDelegation(req, consumerUser)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(
+                                        URN_INVALID_INPUT.toString(), response.getString("type"));
+                                    assertEquals(
+                                        ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
+                                        response.getString("title"));
+                                    assertEquals(
+                                        ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
+                                        response.getString("detail"));
+                                    assertEquals(
+                                        new JsonArray(List.of(FAKE_SERVER)),
+                                        response
+                                            .getJsonObject("context")
+                                            .getJsonArray(
+                                                ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE));
+                                    assertEquals(400, response.getInteger("status"));
+                                    testContext.completeNow();
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
@@ -292,30 +292,30 @@ public class CreateDelegationTest {
               List<CreateDelegationRequest> providerDelegReq =
                   CreateDelegationRequest.jsonArrayToList(new JsonArray().add(providerDelegObj));
 
-              policyService.createDelegation(
-                  providerDelegReq,
-                  consumerUser,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(
-                                    URN_INVALID_INPUT.toString(), response.getString("type"));
-                                assertEquals(
-                                    ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
-                                    response.getString("title"));
-                                assertEquals(
-                                    ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
-                                    response.getString("detail"));
-                                assertEquals(
-                                    new JsonArray(List.of(DUMMY_SERVER)),
-                                    response
-                                        .getJsonObject("context")
-                                        .getJsonArray(
-                                            ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE));
-                                assertEquals(400, response.getInteger("status"));
-                                providerDelegByConsFails.flag();
-                              })));
+              policyService
+                  .createDelegation(providerDelegReq, consumerUser)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(
+                                        URN_INVALID_INPUT.toString(), response.getString("type"));
+                                    assertEquals(
+                                        ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
+                                        response.getString("title"));
+                                    assertEquals(
+                                        ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
+                                        response.getString("detail"));
+                                    assertEquals(
+                                        new JsonArray(List.of(DUMMY_SERVER)),
+                                        response
+                                            .getJsonObject("context")
+                                            .getJsonArray(
+                                                ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE));
+                                    assertEquals(400, response.getInteger("status"));
+                                    providerDelegByConsFails.flag();
+                                  })));
 
               JsonObject consumerDelegObj =
                   new JsonObject()
@@ -326,30 +326,30 @@ public class CreateDelegationTest {
               List<CreateDelegationRequest> consumerDelegReq =
                   CreateDelegationRequest.jsonArrayToList(new JsonArray().add(consumerDelegObj));
 
-              policyService.createDelegation(
-                  consumerDelegReq,
-                  providerUser,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(
-                                    URN_INVALID_INPUT.toString(), response.getString("type"));
-                                assertEquals(
-                                    ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
-                                    response.getString("title"));
-                                assertEquals(
-                                    ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
-                                    response.getString("detail"));
-                                assertEquals(
-                                    new JsonArray(List.of(DUMMY_SERVER)),
-                                    response
-                                        .getJsonObject("context")
-                                        .getJsonArray(
-                                            ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE));
-                                assertEquals(400, response.getInteger("status"));
-                                consumerDelegByProvFails.flag();
-                              })));
+              policyService
+                  .createDelegation(consumerDelegReq, providerUser)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(
+                                        URN_INVALID_INPUT.toString(), response.getString("type"));
+                                    assertEquals(
+                                        ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
+                                        response.getString("title"));
+                                    assertEquals(
+                                        ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
+                                        response.getString("detail"));
+                                    assertEquals(
+                                        new JsonArray(List.of(DUMMY_SERVER)),
+                                        response
+                                            .getJsonObject("context")
+                                            .getJsonArray(
+                                                ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE));
+                                    assertEquals(400, response.getInteger("status"));
+                                    consumerDelegByProvFails.flag();
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
@@ -409,30 +409,30 @@ public class CreateDelegationTest {
               List<CreateDelegationRequest> providerDelegReq =
                   CreateDelegationRequest.jsonArrayToList(new JsonArray().add(providerDelegObj));
 
-              policyService.createDelegation(
-                  providerDelegReq,
-                  providerUser,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(
-                                    URN_INVALID_INPUT.toString(), response.getString("type"));
-                                assertEquals(
-                                    ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
-                                    response.getString("title"));
-                                assertEquals(
-                                    ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
-                                    response.getString("detail"));
-                                assertEquals(
-                                    new JsonArray(List.of(DUMMY_SERVER_TWO)),
-                                    response
-                                        .getJsonObject("context")
-                                        .getJsonArray(
-                                            ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE));
-                                assertEquals(400, response.getInteger("status"));
-                                providerDelegFails.flag();
-                              })));
+              policyService
+                  .createDelegation(providerDelegReq, providerUser)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(
+                                        URN_INVALID_INPUT.toString(), response.getString("type"));
+                                    assertEquals(
+                                        ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
+                                        response.getString("title"));
+                                    assertEquals(
+                                        ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
+                                        response.getString("detail"));
+                                    assertEquals(
+                                        new JsonArray(List.of(DUMMY_SERVER_TWO)),
+                                        response
+                                            .getJsonObject("context")
+                                            .getJsonArray(
+                                                ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE));
+                                    assertEquals(400, response.getInteger("status"));
+                                    providerDelegFails.flag();
+                                  })));
 
               JsonObject consumerDelegObj =
                   new JsonObject()
@@ -443,30 +443,30 @@ public class CreateDelegationTest {
               List<CreateDelegationRequest> consumerDelegReq =
                   CreateDelegationRequest.jsonArrayToList(new JsonArray().add(consumerDelegObj));
 
-              policyService.createDelegation(
-                  consumerDelegReq,
-                  consumerUser,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(
-                                    URN_INVALID_INPUT.toString(), response.getString("type"));
-                                assertEquals(
-                                    ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
-                                    response.getString("title"));
-                                assertEquals(
-                                    ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
-                                    response.getString("detail"));
-                                assertEquals(
-                                    new JsonArray(List.of(DUMMY_SERVER_TWO)),
-                                    response
-                                        .getJsonObject("context")
-                                        .getJsonArray(
-                                            ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE));
-                                assertEquals(400, response.getInteger("status"));
-                                consumerDelegFails.flag();
-                              })));
+              policyService
+                  .createDelegation(consumerDelegReq, consumerUser)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(
+                                        URN_INVALID_INPUT.toString(), response.getString("type"));
+                                    assertEquals(
+                                        ERR_TITLE_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
+                                        response.getString("title"));
+                                    assertEquals(
+                                        ERR_DETAIL_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE,
+                                        response.getString("detail"));
+                                    assertEquals(
+                                        new JsonArray(List.of(DUMMY_SERVER_TWO)),
+                                        response
+                                            .getJsonObject("context")
+                                            .getJsonArray(
+                                                ERR_CONTEXT_RS_NOT_EXIST_OR_USER_NO_HAVE_ROLE));
+                                    assertEquals(400, response.getInteger("status"));
+                                    consumerDelegFails.flag();
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
@@ -498,15 +498,13 @@ public class CreateDelegationTest {
             succ -> {
               Mockito.doAnswer(
                       i -> {
-                        Promise<JsonObject> p = i.getArgument(1);
                         Set<String> emails = i.getArgument(0);
-                        p.fail(
+                        return Future.failedFuture(
                             new ComposeException(
                                 400, Urn.URN_INVALID_INPUT, "Email not exist", emails.toString()));
-                        return i.getMock();
                       })
                   .when(registrationService)
-                  .findUserByEmail(Mockito.eq(Set.of(notFoundEmail)), Mockito.any());
+                  .findUserByEmail(Mockito.eq(Set.of(notFoundEmail)));
 
               JsonObject providerDelegObj =
                   new JsonObject()
@@ -517,18 +515,18 @@ public class CreateDelegationTest {
               List<CreateDelegationRequest> providerDelegReq =
                   CreateDelegationRequest.jsonArrayToList(new JsonArray().add(providerDelegObj));
 
-              policyService.createDelegation(
-                  providerDelegReq,
-                  providerUser,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(response.getInteger("status"), 400);
-                                assertEquals(
-                                    response.getString("type"), URN_INVALID_INPUT.toString());
-                                testContext.completeNow();
-                              })));
+              policyService
+                  .createDelegation(providerDelegReq, providerUser)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(response.getInteger("status"), 400);
+                                    assertEquals(
+                                        response.getString("type"), URN_INVALID_INPUT.toString());
+                                    testContext.completeNow();
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
@@ -561,19 +559,16 @@ public class CreateDelegationTest {
             succ -> {
               Mockito.doAnswer(
                       i -> {
-                        Promise<JsonObject> p = i.getArgument(1);
                         Set<String> emails = i.getArgument(0);
 
                         String delegateEmail = new ArrayList<String>(emails).get(0);
 
                         JsonObject resp = utils.getKcAdminJson(delegateUser);
 
-                        p.complete(new JsonObject().put(delegateEmail, resp));
-                        return i.getMock();
+                        return Future.succeededFuture(new JsonObject().put(delegateEmail, resp));
                       })
                   .when(registrationService)
-                  .findUserByEmail(
-                      Mockito.eq(Set.of(utils.getDetails(delegateUser).email)), Mockito.any());
+                  .findUserByEmail(Mockito.eq(Set.of(utils.getDetails(delegateUser).email)));
 
               JsonObject providerDelegObj =
                   new JsonObject()
@@ -584,18 +579,18 @@ public class CreateDelegationTest {
               List<CreateDelegationRequest> providerDelegReq =
                   CreateDelegationRequest.jsonArrayToList(new JsonArray().add(providerDelegObj));
 
-              policyService.createDelegation(
-                  providerDelegReq,
-                  providerUser,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(
-                                    Urn.URN_SUCCESS.toString(), response.getString("type"));
-                                assertEquals(201, response.getInteger("status"));
-                                testContext.completeNow();
-                              })));
+              policyService
+                  .createDelegation(providerDelegReq, providerUser)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(
+                                        Urn.URN_SUCCESS.toString(), response.getString("type"));
+                                    assertEquals(201, response.getInteger("status"));
+                                    testContext.completeNow();
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
@@ -628,19 +623,16 @@ public class CreateDelegationTest {
             succ -> {
               Mockito.doAnswer(
                       i -> {
-                        Promise<JsonObject> p = i.getArgument(1);
                         Set<String> emails = i.getArgument(0);
 
                         String delegateEmail = new ArrayList<String>(emails).get(0);
 
                         JsonObject resp = utils.getKcAdminJson(delegateUser);
 
-                        p.complete(new JsonObject().put(delegateEmail, resp));
-                        return i.getMock();
+                        return Future.succeededFuture(new JsonObject().put(delegateEmail, resp));
                       })
                   .when(registrationService)
-                  .findUserByEmail(
-                      Mockito.eq(Set.of(utils.getDetails(delegateUser).email)), Mockito.any());
+                  .findUserByEmail(Mockito.eq(Set.of(utils.getDetails(delegateUser).email)));
 
               JsonObject consumerDelegObj =
                   new JsonObject()
@@ -651,18 +643,18 @@ public class CreateDelegationTest {
               List<CreateDelegationRequest> consumerDelegReq =
                   CreateDelegationRequest.jsonArrayToList(new JsonArray().add(consumerDelegObj));
 
-              policyService.createDelegation(
-                  consumerDelegReq,
-                  consumerUser,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(
-                                    Urn.URN_SUCCESS.toString(), response.getString("type"));
-                                assertEquals(201, response.getInteger("status"));
-                                testContext.completeNow();
-                              })));
+              policyService
+                  .createDelegation(consumerDelegReq, consumerUser)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(
+                                        Urn.URN_SUCCESS.toString(), response.getString("type"));
+                                    assertEquals(201, response.getInteger("status"));
+                                    testContext.completeNow();
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
@@ -698,19 +690,16 @@ public class CreateDelegationTest {
             succ -> {
               Mockito.doAnswer(
                       i -> {
-                        Promise<JsonObject> p = i.getArgument(1);
                         Set<String> emails = i.getArgument(0);
 
                         String delegateEmail = new ArrayList<String>(emails).get(0);
 
                         JsonObject resp = utils.getKcAdminJson(delegateUser);
 
-                        p.complete(new JsonObject().put(delegateEmail, resp));
-                        return i.getMock();
+                        return Future.succeededFuture(new JsonObject().put(delegateEmail, resp));
                       })
                   .when(registrationService)
-                  .findUserByEmail(
-                      Mockito.eq(Set.of(utils.getDetails(delegateUser).email)), Mockito.any());
+                  .findUserByEmail(Mockito.eq(Set.of(utils.getDetails(delegateUser).email)));
 
               JsonObject consumerDelegObj =
                   new JsonObject()
@@ -721,38 +710,39 @@ public class CreateDelegationTest {
               List<CreateDelegationRequest> consumerDelegReq =
                   CreateDelegationRequest.jsonArrayToList(new JsonArray().add(consumerDelegObj));
 
-              policyService.createDelegation(
-                  consumerDelegReq,
-                  consumerUser,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(
-                                    Urn.URN_SUCCESS.toString(), response.getString("type"));
-                                assertEquals(201, response.getInteger("status"));
-                                created.flag();
+              policyService
+                  .createDelegation(consumerDelegReq, consumerUser)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(
+                                        Urn.URN_SUCCESS.toString(), response.getString("type"));
+                                    assertEquals(201, response.getInteger("status"));
+                                    created.flag();
 
-                                policyService.createDelegation(
-                                    consumerDelegReq,
-                                    consumerUser,
-                                    testContext.succeeding(
-                                        resp ->
-                                            testContext.verify(
-                                                () -> {
-                                                  assertEquals(
-                                                      Urn.URN_ALREADY_EXISTS.toString(),
-                                                      resp.getString("type"));
-                                                  assertEquals(
-                                                      ERR_TITLE_DUPLICATE_DELEGATION,
-                                                      resp.getString("title"));
-                                                  assertEquals(
-                                                      ERR_DETAIL_DUPLICATE_DELEGATION,
-                                                      resp.getString("detail"));
-                                                  assertEquals(409, resp.getInteger("status"));
-                                                  alreadyExists.flag();
-                                                })));
-                              })));
+                                    policyService
+                                        .createDelegation(consumerDelegReq, consumerUser)
+                                        .onComplete(
+                                            testContext.succeeding(
+                                                resp ->
+                                                    testContext.verify(
+                                                        () -> {
+                                                          assertEquals(
+                                                              Urn.URN_ALREADY_EXISTS.toString(),
+                                                              resp.getString("type"));
+                                                          assertEquals(
+                                                              ERR_TITLE_DUPLICATE_DELEGATION,
+                                                              resp.getString("title"));
+                                                          assertEquals(
+                                                              ERR_DETAIL_DUPLICATE_DELEGATION,
+                                                              resp.getString("detail"));
+                                                          assertEquals(
+                                                              409, resp.getInteger("status"));
+                                                          alreadyExists.flag();
+                                                        })));
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
@@ -799,28 +789,22 @@ public class CreateDelegationTest {
     create
         .onSuccess(
             succ -> {
-              Mockito.doAnswer(
-                      i -> {
-                        Promise<JsonObject> p = i.getArgument(1);
+              JsonObject userDetails =
+                  new JsonObject()
+                      .put(
+                          utils.getDetails(providerDelegateUser).email,
+                          utils.getKcAdminJson(providerDelegateUser))
+                      .put(
+                          utils.getDetails(consumerDelegateUser).email,
+                          utils.getKcAdminJson(consumerDelegateUser));
 
-                        p.complete(
-                            new JsonObject()
-                                .put(
-                                    utils.getDetails(providerDelegateUser).email,
-                                    utils.getKcAdminJson(providerDelegateUser))
-                                .put(
-                                    utils.getDetails(consumerDelegateUser).email,
-                                    utils.getKcAdminJson(consumerDelegateUser)));
-
-                        return i.getMock();
-                      })
-                  .when(registrationService)
-                  .findUserByEmail(
-                      Mockito.eq(
-                          Set.of(
-                              utils.getDetails(providerDelegateUser).email,
-                              utils.getDetails(consumerDelegateUser).email)),
-                      Mockito.any());
+              Mockito.when(
+                      registrationService.findUserByEmail(
+                          Mockito.eq(
+                              Set.of(
+                                  utils.getDetails(providerDelegateUser).email,
+                                  utils.getDetails(consumerDelegateUser).email))))
+                  .thenReturn(Future.succeededFuture(userDetails));
 
               JsonObject providerDelegObj =
                   new JsonObject()
@@ -838,18 +822,18 @@ public class CreateDelegationTest {
                   CreateDelegationRequest.jsonArrayToList(
                       new JsonArray().add(providerDelegObj).add(consumerDelegObj));
 
-              policyService.createDelegation(
-                  req,
-                  consProvUser,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(
-                                    Urn.URN_SUCCESS.toString(), response.getString("type"));
-                                assertEquals(201, response.getInteger("status"));
-                                testContext.completeNow();
-                              })));
+              policyService
+                  .createDelegation(req, consProvUser)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(
+                                        Urn.URN_SUCCESS.toString(), response.getString("type"));
+                                    assertEquals(201, response.getInteger("status"));
+                                    testContext.completeNow();
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }

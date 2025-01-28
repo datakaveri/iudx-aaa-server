@@ -189,29 +189,31 @@ public class GetUserDetailsTest {
     resp.put(userOneDetails.getString("keycloakId"), userOneDetails);
     Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
 
-    registrationService.getUserDetails(
-        List.of("12345678"),
-        testContext.failing(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals("Invalid UUID", response.getMessage());
-                      string.flag();
-                    })));
+    registrationService
+        .getUserDetails(List.of("12345678"))
+        .onComplete(
+            testContext.failing(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals("Invalid UUID", response.getMessage());
+                          string.flag();
+                        })));
 
     List<String> list = new ArrayList<String>();
     list.add(null);
     list.add(userOne.getUserId());
 
-    registrationService.getUserDetails(
-        list,
-        testContext.failing(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals("Invalid UUID", response.getMessage());
-                      nulls.flag();
-                    })));
+    registrationService
+        .getUserDetails(list)
+        .onComplete(
+            testContext.failing(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals("Invalid UUID", response.getMessage());
+                          nulls.flag();
+                        })));
   }
 
   @Test
@@ -222,15 +224,16 @@ public class GetUserDetailsTest {
     resp.put(userOneDetails.getString("keycloakId"), userOneDetails);
     Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
 
-    registrationService.getUserDetails(
-        new ArrayList<String>(),
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertTrue(response.isEmpty());
-                      testContext.completeNow();
-                    })));
+    registrationService
+        .getUserDetails(new ArrayList<String>())
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertTrue(response.isEmpty());
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -245,17 +248,18 @@ public class GetUserDetailsTest {
 
     Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
 
-    registrationService.getUserDetails(
-        List.of(UUID.randomUUID().toString()),
-        testContext.succeeding(
-            jsonResult ->
-                testContext.verify(
-                    () -> {
-                      Map<String, JsonObject> response = jsonObjectToMap.apply(jsonResult);
+    registrationService
+        .getUserDetails(List.of(UUID.randomUUID().toString()))
+        .onComplete(
+            testContext.succeeding(
+                jsonResult ->
+                    testContext.verify(
+                        () -> {
+                          Map<String, JsonObject> response = jsonObjectToMap.apply(jsonResult);
 
-                      assertTrue(response.get(nonExistentUserId).isEmpty());
-                      testContext.completeNow();
-                    })));
+                          assertTrue(response.get(nonExistentUserId).isEmpty());
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -263,15 +267,16 @@ public class GetUserDetailsTest {
   void userEmailFail(VertxTestContext testContext) {
     Mockito.when(kc.getDetails(any())).thenReturn(Future.failedFuture("fail"));
 
-    registrationService.getUserDetails(
-        List.of(userOne.getUserId()),
-        testContext.failing(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals("Internal error", response.getMessage());
-                      testContext.completeNow();
-                    })));
+    registrationService
+        .getUserDetails(List.of(userOne.getUserId()))
+        .onComplete(
+            testContext.failing(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals("Internal error", response.getMessage());
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -287,33 +292,36 @@ public class GetUserDetailsTest {
 
     Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
 
-    registrationService.getUserDetails(
-        List.of(userOne.getUserId(), userTwo.getUserId()),
-        testContext.succeeding(
-            jsonResult ->
-                testContext.verify(
-                    () -> {
-                      Map<String, JsonObject> response = jsonObjectToMap.apply(jsonResult);
+    registrationService
+        .getUserDetails(List.of(userOne.getUserId(), userTwo.getUserId()))
+        .onComplete(
+            testContext.succeeding(
+                jsonResult ->
+                    testContext.verify(
+                        () -> {
+                          Map<String, JsonObject> response = jsonObjectToMap.apply(jsonResult);
 
-                      JsonObject one = response.get(userOne.getUserId());
-                      assertNotNull(one);
-                      assertEquals(one.getString("email"), userOneDetails.getString("email"));
-                      JsonObject name1 = one.getJsonObject("name");
-                      assertNotNull(name1);
-                      assertEquals(
-                          name1.getString("firstName"), userOne.getName().get("firstName"));
-                      assertEquals(name1.getString("lastName"), userOne.getName().get("lastName"));
+                          JsonObject one = response.get(userOne.getUserId());
+                          assertNotNull(one);
+                          assertEquals(one.getString("email"), userOneDetails.getString("email"));
+                          JsonObject name1 = one.getJsonObject("name");
+                          assertNotNull(name1);
+                          assertEquals(
+                              name1.getString("firstName"), userOne.getName().get("firstName"));
+                          assertEquals(
+                              name1.getString("lastName"), userOne.getName().get("lastName"));
 
-                      JsonObject two = response.get(userTwo.getUserId());
-                      assertNotNull(two);
-                      assertEquals(two.getString("email"), userTwoDetails.getString("email"));
-                      JsonObject name2 = two.getJsonObject("name");
-                      assertNotNull(name2);
-                      assertEquals(
-                          name2.getString("firstName"), userTwo.getName().get("firstName"));
-                      assertEquals(name2.getString("lastName"), userTwo.getName().get("lastName"));
-                      testContext.completeNow();
-                    })));
+                          JsonObject two = response.get(userTwo.getUserId());
+                          assertNotNull(two);
+                          assertEquals(two.getString("email"), userTwoDetails.getString("email"));
+                          JsonObject name2 = two.getJsonObject("name");
+                          assertNotNull(name2);
+                          assertEquals(
+                              name2.getString("firstName"), userTwo.getName().get("firstName"));
+                          assertEquals(
+                              name2.getString("lastName"), userTwo.getName().get("lastName"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -324,24 +332,27 @@ public class GetUserDetailsTest {
     resp.put(userOneDetails.getString("keycloakId"), userOneDetails);
     Mockito.when(kc.getDetails(any())).thenReturn(Future.succeededFuture(resp));
 
-    registrationService.getUserDetails(
-        List.of(userOne.getUserId(), userOne.getUserId()),
-        testContext.succeeding(
-            jsonResult ->
-                testContext.verify(
-                    () -> {
-                      Map<String, JsonObject> response = jsonObjectToMap.apply(jsonResult);
+    registrationService
+        .getUserDetails(List.of(userOne.getUserId(), userOne.getUserId()))
+        .onComplete(
+            testContext.succeeding(
+                jsonResult ->
+                    testContext.verify(
+                        () -> {
+                          Map<String, JsonObject> response = jsonObjectToMap.apply(jsonResult);
 
-                      assertTrue(response.size() == 1);
-                      JsonObject obj = response.get(userOne.getUserId());
-                      assertNotNull(obj);
-                      assertEquals(obj.getString("email"), userOneDetails.getString("email"));
-                      JsonObject name = obj.getJsonObject("name");
-                      assertNotNull(name);
-                      assertEquals(name.getString("firstName"), userOne.getName().get("firstName"));
-                      assertEquals(name.getString("lastName"), userOne.getName().get("lastName"));
+                          assertTrue(response.size() == 1);
+                          JsonObject obj = response.get(userOne.getUserId());
+                          assertNotNull(obj);
+                          assertEquals(obj.getString("email"), userOneDetails.getString("email"));
+                          JsonObject name = obj.getJsonObject("name");
+                          assertNotNull(name);
+                          assertEquals(
+                              name.getString("firstName"), userOne.getName().get("firstName"));
+                          assertEquals(
+                              name.getString("lastName"), userOne.getName().get("lastName"));
 
-                      testContext.completeNow();
-                    })));
+                          testContext.completeNow();
+                        })));
   }
 }

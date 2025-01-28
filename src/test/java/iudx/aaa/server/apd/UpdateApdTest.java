@@ -214,33 +214,33 @@ public class UpdateApdTest {
             Roles.ADMIN.toString(),
             new JsonArray().add("some-url.com")));
 
-    apdService.updateApd(
-        List.of(),
-        provConsAdminUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 401);
-                      assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-                      assertEquals(ERR_TITLE_NO_COS_ADMIN_ROLE, response.getString("title"));
-                      assertEquals(ERR_DETAIL_NO_COS_ADMIN_ROLE, response.getString("detail"));
-                      adminProvConsNotAllowed.flag();
-                    })));
+    apdService
+        .updateApd(List.of(), provConsAdminUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 401);
+                          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                          assertEquals(ERR_TITLE_NO_COS_ADMIN_ROLE, response.getString("title"));
+                          assertEquals(ERR_DETAIL_NO_COS_ADMIN_ROLE, response.getString("detail"));
+                          adminProvConsNotAllowed.flag();
+                        })));
 
-    apdService.updateApd(
-        List.of(),
-        trusteeAUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 401);
-                      assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-                      assertEquals(ERR_TITLE_NO_COS_ADMIN_ROLE, response.getString("title"));
-                      assertEquals(ERR_DETAIL_NO_COS_ADMIN_ROLE, response.getString("detail"));
-                      trusteeNotAllowed.flag();
-                    })));
+    apdService
+        .updateApd(List.of(), trusteeAUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 401);
+                          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                          assertEquals(ERR_TITLE_NO_COS_ADMIN_ROLE, response.getString("title"));
+                          assertEquals(ERR_DETAIL_NO_COS_ADMIN_ROLE, response.getString("detail"));
+                          trusteeNotAllowed.flag();
+                        })));
   }
 
   @Order(2)
@@ -257,19 +257,19 @@ public class UpdateApdTest {
             .add(new JsonObject().put("id", randUuid).put("status", "active"));
     List<ApdUpdateRequest> request = ApdUpdateRequest.jsonArrayToList(req);
 
-    apdService.updateApd(
-        request,
-        cosAdmin,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 400);
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                      assertEquals(ERR_TITLE_INVALID_APDID, response.getString("title"));
-                      assertEquals(randUuid, response.getString("detail"));
-                      testContext.completeNow();
-                    })));
+    apdService
+        .updateApd(request, cosAdmin)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 400);
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          assertEquals(ERR_TITLE_INVALID_APDID, response.getString("title"));
+                          assertEquals(randUuid, response.getString("detail"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Order(3)
@@ -284,19 +284,19 @@ public class UpdateApdTest {
             .add(new JsonObject().put("id", inActiveAId).put("status", "inactive"));
     List<ApdUpdateRequest> request = ApdUpdateRequest.jsonArrayToList(req);
 
-    apdService.updateApd(
-        request,
-        cosAdmin,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 400);
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                      assertEquals(ERR_TITLE_DUPLICATE_REQ, response.getString("title"));
-                      assertEquals(inActiveAId, response.getString("detail"));
-                      testContext.completeNow();
-                    })));
+    apdService
+        .updateApd(request, cosAdmin)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 400);
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          assertEquals(ERR_TITLE_DUPLICATE_REQ, response.getString("title"));
+                          assertEquals(inActiveAId, response.getString("detail"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Order(4)
@@ -312,19 +312,20 @@ public class UpdateApdTest {
             .add(new JsonObject().put("id", inActiveBId).put("status", "active"));
     List<ApdUpdateRequest> request = ApdUpdateRequest.jsonArrayToList(req);
 
-    apdService.updateApd(
-        request,
-        cosAdmin,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 403);
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                      assertEquals(ERR_TITLE_CANT_CHANGE_APD_STATUS, response.getString("title"));
-                      assertEquals(activeBId, response.getString("detail"));
-                      testContext.completeNow();
-                    })));
+    apdService
+        .updateApd(request, cosAdmin)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 403);
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          assertEquals(
+                              ERR_TITLE_CANT_CHANGE_APD_STATUS, response.getString("title"));
+                          assertEquals(activeBId, response.getString("detail"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Order(5)
@@ -341,19 +342,20 @@ public class UpdateApdTest {
             .add(new JsonObject().put("id", inActiveBId).put("status", "inactive"));
     List<ApdUpdateRequest> request = ApdUpdateRequest.jsonArrayToList(req);
 
-    apdService.updateApd(
-        request,
-        cosAdmin,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 403);
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                      assertEquals(ERR_TITLE_CANT_CHANGE_APD_STATUS, response.getString("title"));
-                      assertEquals(inActiveBId, response.getString("detail"));
-                      testContext.completeNow();
-                    })));
+    apdService
+        .updateApd(request, cosAdmin)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 403);
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          assertEquals(
+                              ERR_TITLE_CANT_CHANGE_APD_STATUS, response.getString("title"));
+                          assertEquals(inActiveBId, response.getString("detail"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Order(6)
@@ -366,26 +368,26 @@ public class UpdateApdTest {
         new JsonArray().add(new JsonObject().put("id", inActiveAId).put("status", "active"));
     List<ApdUpdateRequest> request = ApdUpdateRequest.jsonArrayToList(req);
 
-    apdService.updateApd(
-        request,
-        cosAdmin,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 200);
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                      assertEquals(SUCC_TITLE_UPDATED_APD, response.getString("title"));
-                      JsonObject result = response.getJsonArray("results").getJsonObject(0);
-                      assertEquals(INACTIVE_A + "name", result.getString(RESP_APD_NAME));
-                      assertEquals(INACTIVE_A, result.getString(RESP_APD_URL));
-                      assertEquals(
-                          ApdStatus.ACTIVE.toString().toLowerCase(),
-                          result.getString(RESP_APD_STATUS));
-                      assertTrue(result.containsKey(RESP_APD_ID));
+    apdService
+        .updateApd(request, cosAdmin)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 200);
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                          assertEquals(SUCC_TITLE_UPDATED_APD, response.getString("title"));
+                          JsonObject result = response.getJsonArray("results").getJsonObject(0);
+                          assertEquals(INACTIVE_A + "name", result.getString(RESP_APD_NAME));
+                          assertEquals(INACTIVE_A, result.getString(RESP_APD_URL));
+                          assertEquals(
+                              ApdStatus.ACTIVE.toString().toLowerCase(),
+                              result.getString(RESP_APD_STATUS));
+                          assertTrue(result.containsKey(RESP_APD_ID));
 
-                      testContext.completeNow();
-                    })));
+                          testContext.completeNow();
+                        })));
   }
 
   @Order(7)
@@ -402,40 +404,40 @@ public class UpdateApdTest {
             .add(new JsonObject().put("id", inActiveBId).put("status", "active"));
     List<ApdUpdateRequest> request = ApdUpdateRequest.jsonArrayToList(req);
 
-    apdService.updateApd(
-        request,
-        cosAdmin,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 200);
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                      assertEquals(SUCC_TITLE_UPDATED_APD, response.getString("title"));
+    apdService
+        .updateApd(request, cosAdmin)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 200);
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                          assertEquals(SUCC_TITLE_UPDATED_APD, response.getString("title"));
 
-                      JsonObject resultA = response.getJsonArray("results").getJsonObject(0);
-                      JsonObject resultB = response.getJsonArray("results").getJsonObject(1);
+                          JsonObject resultA = response.getJsonArray("results").getJsonObject(0);
+                          JsonObject resultB = response.getJsonArray("results").getJsonObject(1);
 
-                      if (!resultA.getString(RESP_APD_URL).equals(ACTIVE_A)) {
-                        resultA = response.getJsonArray("results").getJsonObject(1);
-                        resultB = response.getJsonArray("results").getJsonObject(0);
-                      }
+                          if (!resultA.getString(RESP_APD_URL).equals(ACTIVE_A)) {
+                            resultA = response.getJsonArray("results").getJsonObject(1);
+                            resultB = response.getJsonArray("results").getJsonObject(0);
+                          }
 
-                      assertEquals(ACTIVE_A + "name", resultA.getString(RESP_APD_NAME));
-                      assertEquals(ACTIVE_A, resultA.getString(RESP_APD_URL));
-                      assertEquals(
-                          ApdStatus.INACTIVE.toString().toLowerCase(),
-                          resultA.getString(RESP_APD_STATUS));
-                      assertTrue(resultA.containsKey(RESP_APD_ID));
+                          assertEquals(ACTIVE_A + "name", resultA.getString(RESP_APD_NAME));
+                          assertEquals(ACTIVE_A, resultA.getString(RESP_APD_URL));
+                          assertEquals(
+                              ApdStatus.INACTIVE.toString().toLowerCase(),
+                              resultA.getString(RESP_APD_STATUS));
+                          assertTrue(resultA.containsKey(RESP_APD_ID));
 
-                      assertEquals(INACTIVE_B + "name", resultB.getString(RESP_APD_NAME));
-                      assertEquals(INACTIVE_B, resultB.getString(RESP_APD_URL));
-                      assertEquals(
-                          ApdStatus.ACTIVE.toString().toLowerCase(),
-                          resultB.getString(RESP_APD_STATUS));
-                      assertTrue(resultB.containsKey(RESP_APD_ID));
+                          assertEquals(INACTIVE_B + "name", resultB.getString(RESP_APD_NAME));
+                          assertEquals(INACTIVE_B, resultB.getString(RESP_APD_URL));
+                          assertEquals(
+                              ApdStatus.ACTIVE.toString().toLowerCase(),
+                              resultB.getString(RESP_APD_STATUS));
+                          assertTrue(resultB.containsKey(RESP_APD_ID));
 
-                      testContext.completeNow();
-                    })));
+                          testContext.completeNow();
+                        })));
   }
 }

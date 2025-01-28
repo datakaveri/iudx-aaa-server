@@ -25,11 +25,8 @@ import static iudx.aaa.server.policy.Constants.URL;
 import static iudx.aaa.server.token.Constants.ACCESS_DENIED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -172,23 +169,22 @@ public class VerifyResourceAccessTest {
             .put("role", Roles.COS_ADMIN.toString().toLowerCase());
     RequestToken cosAdminReq = new RequestToken(cosAdminJsonReq);
 
-    policyService.verifyResourceAccess(
-        cosAdminReq,
-        null,
-        dummyUser,
-        testContext.failing(
-            fail ->
-                testContext.verify(
-                    () -> {
-                      assertTrue(fail instanceof ComposeException);
-                      ComposeException exp = (ComposeException) fail;
-                      Response resp = exp.getResponse();
-                      assertEquals(resp.getStatus(), 403);
-                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                      assertEquals(resp.getTitle(), ACCESS_DENIED);
-                      assertEquals(resp.getDetail(), INVALID_ROLE);
-                      cosAdminFail.flag();
-                    })));
+    policyService
+        .verifyResourceAccess(cosAdminReq, null, dummyUser)
+        .onComplete(
+            testContext.failing(
+                fail ->
+                    testContext.verify(
+                        () -> {
+                          assertTrue(fail instanceof ComposeException);
+                          ComposeException exp = (ComposeException) fail;
+                          Response resp = exp.getResponse();
+                          assertEquals(resp.getStatus(), 403);
+                          assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                          assertEquals(resp.getTitle(), ACCESS_DENIED);
+                          assertEquals(resp.getDetail(), INVALID_ROLE);
+                          cosAdminFail.flag();
+                        })));
 
     JsonObject adminJsonReq =
         new JsonObject()
@@ -197,23 +193,22 @@ public class VerifyResourceAccessTest {
             .put("role", Roles.ADMIN.toString().toLowerCase());
     RequestToken adminReq = new RequestToken(adminJsonReq);
 
-    policyService.verifyResourceAccess(
-        adminReq,
-        null,
-        dummyUser,
-        testContext.failing(
-            fail ->
-                testContext.verify(
-                    () -> {
-                      assertTrue(fail instanceof ComposeException);
-                      ComposeException exp = (ComposeException) fail;
-                      Response resp = exp.getResponse();
-                      assertEquals(resp.getStatus(), 403);
-                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                      assertEquals(resp.getTitle(), ACCESS_DENIED);
-                      assertEquals(resp.getDetail(), INVALID_ROLE);
-                      adminFail.flag();
-                    })));
+    policyService
+        .verifyResourceAccess(adminReq, null, dummyUser)
+        .onComplete(
+            testContext.failing(
+                fail ->
+                    testContext.verify(
+                        () -> {
+                          assertTrue(fail instanceof ComposeException);
+                          ComposeException exp = (ComposeException) fail;
+                          Response resp = exp.getResponse();
+                          assertEquals(resp.getStatus(), 403);
+                          assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                          assertEquals(resp.getTitle(), ACCESS_DENIED);
+                          assertEquals(resp.getDetail(), INVALID_ROLE);
+                          adminFail.flag();
+                        })));
   }
 
   @Test
@@ -250,23 +245,22 @@ public class VerifyResourceAccessTest {
                   .put("role", role.toString().toLowerCase());
           RequestToken req = new RequestToken(jsonReq);
 
-          policyService.verifyResourceAccess(
-              req,
-              null,
-              dummyUser,
-              testContext.failing(
-                  fail ->
-                      testContext.verify(
-                          () -> {
-                            assertTrue(fail instanceof ComposeException);
-                            ComposeException exp = (ComposeException) fail;
-                            Response resp = exp.getResponse();
-                            assertEquals(resp.getStatus(), 400);
-                            assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                            assertEquals(resp.getTitle(), INVALID_INPUT);
-                            assertEquals(resp.getDetail(), INCORRECT_ITEM_ID);
-                            checkpoints.get(role).flag();
-                          })));
+          policyService
+              .verifyResourceAccess(req, null, dummyUser)
+              .onComplete(
+                  testContext.failing(
+                      fail ->
+                          testContext.verify(
+                              () -> {
+                                assertTrue(fail instanceof ComposeException);
+                                ComposeException exp = (ComposeException) fail;
+                                Response resp = exp.getResponse();
+                                assertEquals(resp.getStatus(), 400);
+                                assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                                assertEquals(resp.getTitle(), INVALID_INPUT);
+                                assertEquals(resp.getDetail(), INCORRECT_ITEM_ID);
+                                checkpoints.get(role).flag();
+                              })));
         });
 
     JsonObject delegateJsonReq =
@@ -284,41 +278,39 @@ public class VerifyResourceAccessTest {
         new DelegationInformation(
             UUID.randomUUID(), UUID.randomUUID(), Roles.PROVIDER, DUMMY_SERVER);
 
-    policyService.verifyResourceAccess(
-        delegateReq,
-        consDelegInfo,
-        dummyUser,
-        testContext.failing(
-            fail ->
-                testContext.verify(
-                    () -> {
-                      assertTrue(fail instanceof ComposeException);
-                      ComposeException exp = (ComposeException) fail;
-                      Response resp = exp.getResponse();
-                      assertEquals(resp.getStatus(), 400);
-                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                      assertEquals(resp.getTitle(), INVALID_INPUT);
-                      assertEquals(resp.getDetail(), INCORRECT_ITEM_ID);
-                      consDelegCheck.flag();
-                    })));
+    policyService
+        .verifyResourceAccess(delegateReq, consDelegInfo, dummyUser)
+        .onComplete(
+            testContext.failing(
+                fail ->
+                    testContext.verify(
+                        () -> {
+                          assertTrue(fail instanceof ComposeException);
+                          ComposeException exp = (ComposeException) fail;
+                          Response resp = exp.getResponse();
+                          assertEquals(resp.getStatus(), 400);
+                          assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                          assertEquals(resp.getTitle(), INVALID_INPUT);
+                          assertEquals(resp.getDetail(), INCORRECT_ITEM_ID);
+                          consDelegCheck.flag();
+                        })));
 
-    policyService.verifyResourceAccess(
-        delegateReq,
-        provDelegInfo,
-        dummyUser,
-        testContext.failing(
-            fail ->
-                testContext.verify(
-                    () -> {
-                      assertTrue(fail instanceof ComposeException);
-                      ComposeException exp = (ComposeException) fail;
-                      Response resp = exp.getResponse();
-                      assertEquals(resp.getStatus(), 400);
-                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                      assertEquals(resp.getTitle(), INVALID_INPUT);
-                      assertEquals(resp.getDetail(), INCORRECT_ITEM_ID);
-                      provDelegCheck.flag();
-                    })));
+    policyService
+        .verifyResourceAccess(delegateReq, provDelegInfo, dummyUser)
+        .onComplete(
+            testContext.failing(
+                fail ->
+                    testContext.verify(
+                        () -> {
+                          assertTrue(fail instanceof ComposeException);
+                          ComposeException exp = (ComposeException) fail;
+                          Response resp = exp.getResponse();
+                          assertEquals(resp.getStatus(), 400);
+                          assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                          assertEquals(resp.getTitle(), INVALID_INPUT);
+                          assertEquals(resp.getDetail(), INCORRECT_ITEM_ID);
+                          provDelegCheck.flag();
+                        })));
   }
 
   @Test
@@ -361,23 +353,22 @@ public class VerifyResourceAccessTest {
                   .put("role", role.toString().toLowerCase());
           RequestToken req = new RequestToken(jsonReq);
 
-          policyService.verifyResourceAccess(
-              req,
-              null,
-              dummyUser,
-              testContext.failing(
-                  fail ->
-                      testContext.verify(
-                          () -> {
-                            assertTrue(fail instanceof ComposeException);
-                            ComposeException exp = (ComposeException) fail;
-                            Response resp = exp.getResponse();
-                            assertEquals(resp.getStatus(), 400);
-                            assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                            assertEquals(resp.getTitle(), "Fail");
-                            assertEquals(resp.getDetail(), "Fail");
-                            checkpoints.get(role).flag();
-                          })));
+          policyService
+              .verifyResourceAccess(req, null, dummyUser)
+              .onComplete(
+                  testContext.failing(
+                      fail ->
+                          testContext.verify(
+                              () -> {
+                                assertTrue(fail instanceof ComposeException);
+                                ComposeException exp = (ComposeException) fail;
+                                Response resp = exp.getResponse();
+                                assertEquals(resp.getStatus(), 400);
+                                assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                                assertEquals(resp.getTitle(), "Fail");
+                                assertEquals(resp.getDetail(), "Fail");
+                                checkpoints.get(role).flag();
+                              })));
         });
 
     JsonObject delegateJsonReq =
@@ -396,41 +387,39 @@ public class VerifyResourceAccessTest {
         new DelegationInformation(
             UUID.randomUUID(), UUID.randomUUID(), Roles.PROVIDER, DUMMY_SERVER);
 
-    policyService.verifyResourceAccess(
-        delegateReq,
-        consDelegInfo,
-        dummyUser,
-        testContext.failing(
-            fail ->
-                testContext.verify(
-                    () -> {
-                      assertTrue(fail instanceof ComposeException);
-                      ComposeException exp = (ComposeException) fail;
-                      Response resp = exp.getResponse();
-                      assertEquals(resp.getStatus(), 400);
-                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                      assertEquals(resp.getTitle(), "Fail");
-                      assertEquals(resp.getDetail(), "Fail");
-                      consDelegCheck.flag();
-                    })));
+    policyService
+        .verifyResourceAccess(delegateReq, consDelegInfo, dummyUser)
+        .onComplete(
+            testContext.failing(
+                fail ->
+                    testContext.verify(
+                        () -> {
+                          assertTrue(fail instanceof ComposeException);
+                          ComposeException exp = (ComposeException) fail;
+                          Response resp = exp.getResponse();
+                          assertEquals(resp.getStatus(), 400);
+                          assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                          assertEquals(resp.getTitle(), "Fail");
+                          assertEquals(resp.getDetail(), "Fail");
+                          consDelegCheck.flag();
+                        })));
 
-    policyService.verifyResourceAccess(
-        delegateReq,
-        provDelegInfo,
-        dummyUser,
-        testContext.failing(
-            fail ->
-                testContext.verify(
-                    () -> {
-                      assertTrue(fail instanceof ComposeException);
-                      ComposeException exp = (ComposeException) fail;
-                      Response resp = exp.getResponse();
-                      assertEquals(resp.getStatus(), 400);
-                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                      assertEquals(resp.getTitle(), "Fail");
-                      assertEquals(resp.getDetail(), "Fail");
-                      provDelegCheck.flag();
-                    })));
+    policyService
+        .verifyResourceAccess(delegateReq, provDelegInfo, dummyUser)
+        .onComplete(
+            testContext.failing(
+                fail ->
+                    testContext.verify(
+                        () -> {
+                          assertTrue(fail instanceof ComposeException);
+                          ComposeException exp = (ComposeException) fail;
+                          Response resp = exp.getResponse();
+                          assertEquals(resp.getStatus(), 400);
+                          assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                          assertEquals(resp.getTitle(), "Fail");
+                          assertEquals(resp.getDetail(), "Fail");
+                          provDelegCheck.flag();
+                        })));
   }
 
   @Test
@@ -473,23 +462,22 @@ public class VerifyResourceAccessTest {
             .put("role", Roles.CONSUMER.toString().toLowerCase());
     RequestToken consReq = new RequestToken(consJsonReq);
 
-    policyService.verifyResourceAccess(
-        consReq,
-        null,
-        dummyUser,
-        testContext.failing(
-            fail ->
-                testContext.verify(
-                    () -> {
-                      assertTrue(fail instanceof ComposeException);
-                      ComposeException exp = (ComposeException) fail;
-                      Response resp = exp.getResponse();
-                      assertEquals(resp.getStatus(), 403);
-                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                      assertEquals(resp.getTitle(), ACCESS_DENIED);
-                      assertEquals(resp.getDetail(), ERR_DETAIL_CONSUMER_DOESNT_HAVE_RS_ROLE);
-                      consumerFails.flag();
-                    })));
+    policyService
+        .verifyResourceAccess(consReq, null, dummyUser)
+        .onComplete(
+            testContext.failing(
+                fail ->
+                    testContext.verify(
+                        () -> {
+                          assertTrue(fail instanceof ComposeException);
+                          ComposeException exp = (ComposeException) fail;
+                          Response resp = exp.getResponse();
+                          assertEquals(resp.getStatus(), 403);
+                          assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                          assertEquals(resp.getTitle(), ACCESS_DENIED);
+                          assertEquals(resp.getDetail(), ERR_DETAIL_CONSUMER_DOESNT_HAVE_RS_ROLE);
+                          consumerFails.flag();
+                        })));
 
     JsonObject provJsonReq =
         new JsonObject()
@@ -498,23 +486,22 @@ public class VerifyResourceAccessTest {
             .put("role", Roles.PROVIDER.toString().toLowerCase());
     RequestToken provReq = new RequestToken(provJsonReq);
 
-    policyService.verifyResourceAccess(
-        provReq,
-        null,
-        dummyUser,
-        testContext.failing(
-            fail ->
-                testContext.verify(
-                    () -> {
-                      assertTrue(fail instanceof ComposeException);
-                      ComposeException exp = (ComposeException) fail;
-                      Response resp = exp.getResponse();
-                      assertEquals(resp.getStatus(), 403);
-                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                      assertEquals(resp.getTitle(), ACCESS_DENIED);
-                      assertEquals(resp.getDetail(), ERR_DETAIL_PROVIDER_DOESNT_HAVE_RS_ROLE);
-                      providerFails.flag();
-                    })));
+    policyService
+        .verifyResourceAccess(provReq, null, dummyUser)
+        .onComplete(
+            testContext.failing(
+                fail ->
+                    testContext.verify(
+                        () -> {
+                          assertTrue(fail instanceof ComposeException);
+                          ComposeException exp = (ComposeException) fail;
+                          Response resp = exp.getResponse();
+                          assertEquals(resp.getStatus(), 403);
+                          assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                          assertEquals(resp.getTitle(), ACCESS_DENIED);
+                          assertEquals(resp.getDetail(), ERR_DETAIL_PROVIDER_DOESNT_HAVE_RS_ROLE);
+                          providerFails.flag();
+                        })));
   }
 
   @Test
@@ -566,41 +553,41 @@ public class VerifyResourceAccessTest {
 
     RequestToken req = new RequestToken(jsonReq);
 
-    policyService.verifyResourceAccess(
-        req,
-        consDelegInfo,
-        dummyUser,
-        testContext.failing(
-            fail ->
-                testContext.verify(
-                    () -> {
-                      assertTrue(fail instanceof ComposeException);
-                      ComposeException exp = (ComposeException) fail;
-                      Response resp = exp.getResponse();
-                      assertEquals(resp.getStatus(), 403);
-                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                      assertEquals(resp.getTitle(), ACCESS_DENIED);
-                      assertEquals(resp.getDetail(), ERR_DETAIL_DELEGATED_RS_URL_NOT_MATCH_ITEM_RS);
-                      consDelegateFail.flag();
-                    })));
+    policyService
+        .verifyResourceAccess(req, consDelegInfo, dummyUser)
+        .onComplete(
+            testContext.failing(
+                fail ->
+                    testContext.verify(
+                        () -> {
+                          assertTrue(fail instanceof ComposeException);
+                          ComposeException exp = (ComposeException) fail;
+                          Response resp = exp.getResponse();
+                          assertEquals(resp.getStatus(), 403);
+                          assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                          assertEquals(resp.getTitle(), ACCESS_DENIED);
+                          assertEquals(
+                              resp.getDetail(), ERR_DETAIL_DELEGATED_RS_URL_NOT_MATCH_ITEM_RS);
+                          consDelegateFail.flag();
+                        })));
 
-    policyService.verifyResourceAccess(
-        req,
-        provDelegInfo,
-        dummyUser,
-        testContext.failing(
-            fail ->
-                testContext.verify(
-                    () -> {
-                      assertTrue(fail instanceof ComposeException);
-                      ComposeException exp = (ComposeException) fail;
-                      Response resp = exp.getResponse();
-                      assertEquals(resp.getStatus(), 403);
-                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                      assertEquals(resp.getTitle(), ACCESS_DENIED);
-                      assertEquals(resp.getDetail(), ERR_DETAIL_DELEGATED_RS_URL_NOT_MATCH_ITEM_RS);
-                      provDelegateFail.flag();
-                    })));
+    policyService
+        .verifyResourceAccess(req, provDelegInfo, dummyUser)
+        .onComplete(
+            testContext.failing(
+                fail ->
+                    testContext.verify(
+                        () -> {
+                          assertTrue(fail instanceof ComposeException);
+                          ComposeException exp = (ComposeException) fail;
+                          Response resp = exp.getResponse();
+                          assertEquals(resp.getStatus(), 403);
+                          assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                          assertEquals(resp.getTitle(), ACCESS_DENIED);
+                          assertEquals(
+                              resp.getDetail(), ERR_DETAIL_DELEGATED_RS_URL_NOT_MATCH_ITEM_RS);
+                          provDelegateFail.flag();
+                        })));
   }
 
   @Test
@@ -640,23 +627,22 @@ public class VerifyResourceAccessTest {
 
     RequestToken req = new RequestToken(jsonReq);
 
-    policyService.verifyResourceAccess(
-        req,
-        null,
-        providerUser,
-        testContext.failing(
-            fail ->
-                testContext.verify(
-                    () -> {
-                      assertTrue(fail instanceof ComposeException);
-                      ComposeException exp = (ComposeException) fail;
-                      Response resp = exp.getResponse();
-                      assertEquals(resp.getStatus(), 403);
-                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                      assertEquals(resp.getTitle(), ACCESS_DENIED);
-                      assertEquals(resp.getDetail(), NOT_RES_OWNER);
-                      testContext.completeNow();
-                    })));
+    policyService
+        .verifyResourceAccess(req, null, providerUser)
+        .onComplete(
+            testContext.failing(
+                fail ->
+                    testContext.verify(
+                        () -> {
+                          assertTrue(fail instanceof ComposeException);
+                          ComposeException exp = (ComposeException) fail;
+                          Response resp = exp.getResponse();
+                          assertEquals(resp.getStatus(), 403);
+                          assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                          assertEquals(resp.getTitle(), ACCESS_DENIED);
+                          assertEquals(resp.getDetail(), NOT_RES_OWNER);
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -696,23 +682,22 @@ public class VerifyResourceAccessTest {
 
     RequestToken req = new RequestToken(jsonReq);
 
-    policyService.verifyResourceAccess(
-        req,
-        null,
-        providerUser,
-        testContext.failing(
-            fail ->
-                testContext.verify(
-                    () -> {
-                      assertTrue(fail instanceof ComposeException);
-                      ComposeException exp = (ComposeException) fail;
-                      Response resp = exp.getResponse();
-                      assertEquals(resp.getStatus(), 403);
-                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                      assertEquals(resp.getTitle(), ACCESS_DENIED);
-                      assertEquals(resp.getDetail(), ERR_DETAIL_PROVIDER_CANNOT_ACCESS_PII_RES);
-                      testContext.completeNow();
-                    })));
+    policyService
+        .verifyResourceAccess(req, null, providerUser)
+        .onComplete(
+            testContext.failing(
+                fail ->
+                    testContext.verify(
+                        () -> {
+                          assertTrue(fail instanceof ComposeException);
+                          ComposeException exp = (ComposeException) fail;
+                          Response resp = exp.getResponse();
+                          assertEquals(resp.getStatus(), 403);
+                          assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                          assertEquals(resp.getTitle(), ACCESS_DENIED);
+                          assertEquals(resp.getDetail(), ERR_DETAIL_PROVIDER_CANNOT_ACCESS_PII_RES);
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -759,23 +744,22 @@ public class VerifyResourceAccessTest {
         new DelegationInformation(
             UUID.randomUUID(), providerDelegatorUserId, Roles.PROVIDER, DUMMY_SERVER);
 
-    policyService.verifyResourceAccess(
-        req,
-        provDelegInfo,
-        delegateUser,
-        testContext.failing(
-            fail ->
-                testContext.verify(
-                    () -> {
-                      assertTrue(fail instanceof ComposeException);
-                      ComposeException exp = (ComposeException) fail;
-                      Response resp = exp.getResponse();
-                      assertEquals(resp.getStatus(), 403);
-                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                      assertEquals(resp.getTitle(), ACCESS_DENIED);
-                      assertEquals(resp.getDetail(), NOT_RES_OWNER);
-                      testContext.completeNow();
-                    })));
+    policyService
+        .verifyResourceAccess(req, provDelegInfo, delegateUser)
+        .onComplete(
+            testContext.failing(
+                fail ->
+                    testContext.verify(
+                        () -> {
+                          assertTrue(fail instanceof ComposeException);
+                          ComposeException exp = (ComposeException) fail;
+                          Response resp = exp.getResponse();
+                          assertEquals(resp.getStatus(), 403);
+                          assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                          assertEquals(resp.getTitle(), ACCESS_DENIED);
+                          assertEquals(resp.getDetail(), NOT_RES_OWNER);
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -822,23 +806,22 @@ public class VerifyResourceAccessTest {
         new DelegationInformation(
             UUID.randomUUID(), providerDelegatorUserId, Roles.PROVIDER, DUMMY_SERVER);
 
-    policyService.verifyResourceAccess(
-        req,
-        provDelegInfo,
-        delegateUser,
-        testContext.failing(
-            fail ->
-                testContext.verify(
-                    () -> {
-                      assertTrue(fail instanceof ComposeException);
-                      ComposeException exp = (ComposeException) fail;
-                      Response resp = exp.getResponse();
-                      assertEquals(resp.getStatus(), 403);
-                      assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
-                      assertEquals(resp.getTitle(), ACCESS_DENIED);
-                      assertEquals(resp.getDetail(), ERR_DETAIL_PROVIDER_CANNOT_ACCESS_PII_RES);
-                      testContext.completeNow();
-                    })));
+    policyService
+        .verifyResourceAccess(req, provDelegInfo, delegateUser)
+        .onComplete(
+            testContext.failing(
+                fail ->
+                    testContext.verify(
+                        () -> {
+                          assertTrue(fail instanceof ComposeException);
+                          ComposeException exp = (ComposeException) fail;
+                          Response resp = exp.getResponse();
+                          assertEquals(resp.getStatus(), 403);
+                          assertEquals(resp.getType(), Urn.URN_INVALID_INPUT.toString());
+                          assertEquals(resp.getTitle(), ACCESS_DENIED);
+                          assertEquals(resp.getDetail(), ERR_DETAIL_PROVIDER_CANNOT_ACCESS_PII_RES);
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -878,20 +861,19 @@ public class VerifyResourceAccessTest {
 
     RequestToken req = new RequestToken(jsonReq);
 
-    policyService.verifyResourceAccess(
-        req,
-        null,
-        providerUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getString(STATUS), SUCCESS);
-                      assertEquals(response.getString(CAT_ID), resId.toString());
-                      assertEquals(response.getString(CREATE_TOKEN_RG), resGroupId.toString());
-                      assertEquals(response.getString(URL), DUMMY_SERVER);
-                      testContext.completeNow();
-                    })));
+    policyService
+        .verifyResourceAccess(req, null, providerUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getString(STATUS), SUCCESS);
+                          assertEquals(response.getString(CAT_ID), resId.toString());
+                          assertEquals(response.getString(CREATE_TOKEN_RG), resGroupId.toString());
+                          assertEquals(response.getString(URL), DUMMY_SERVER);
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -938,24 +920,25 @@ public class VerifyResourceAccessTest {
         new DelegationInformation(
             UUID.randomUUID(), providerDelegatorUserId, Roles.PROVIDER, DUMMY_SERVER);
 
-    policyService.verifyResourceAccess(
-        req,
-        provDelegInfo,
-        delegateUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getString(STATUS), SUCCESS);
-                      assertEquals(response.getString(CAT_ID), resId.toString());
-                      assertEquals(response.getString(CREATE_TOKEN_RG), resGroupId.toString());
-                      assertEquals(response.getString(URL), DUMMY_SERVER);
+    policyService
+        .verifyResourceAccess(req, provDelegInfo, delegateUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getString(STATUS), SUCCESS);
+                          assertEquals(response.getString(CAT_ID), resId.toString());
+                          assertEquals(response.getString(CREATE_TOKEN_RG), resGroupId.toString());
+                          assertEquals(response.getString(URL), DUMMY_SERVER);
 
-                      assertEquals(
-                          response.getString(CREATE_TOKEN_DID), providerDelegatorUserId.toString());
-                      assertEquals(response.getString(CREATE_TOKEN_DRL), Roles.PROVIDER.toString());
-                      testContext.completeNow();
-                    })));
+                          assertEquals(
+                              response.getString(CREATE_TOKEN_DID),
+                              providerDelegatorUserId.toString());
+                          assertEquals(
+                              response.getString(CREATE_TOKEN_DRL), Roles.PROVIDER.toString());
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -1003,14 +986,8 @@ public class VerifyResourceAccessTest {
      * Since verifyPolicy does not check the response of callApd, we just send an empty JSON object
      * as the mocked response for callApd here.
      */
-    Mockito.doAnswer(
-            i -> {
-              Promise<JsonObject> promise = i.getArgument(1);
-              promise.complete(new JsonObject());
-              return i.getMock();
-            })
-        .when(apdService)
-        .callApd(eq(apdContext), any());
+    Mockito.when(apdService.callApd(apdContext))
+        .thenReturn(Future.succeededFuture(new JsonObject()));
 
     JsonObject jsonReq =
         new JsonObject()
@@ -1021,17 +998,16 @@ public class VerifyResourceAccessTest {
 
     RequestToken req = new RequestToken(jsonReq);
 
-    policyService.verifyResourceAccess(
-        req,
-        null,
-        consumerUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getString(CREATE_TOKEN_RG), resGroupId.toString());
-                      testContext.completeNow();
-                    })));
+    policyService
+        .verifyResourceAccess(req, null, consumerUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getString(CREATE_TOKEN_RG), resGroupId.toString());
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -1082,14 +1058,8 @@ public class VerifyResourceAccessTest {
      * Since verifyResourceAccess does not check the response of callApd, we just send an empty JSON object
      * as the mocked response for callApd here.
      */
-    Mockito.doAnswer(
-            i -> {
-              Promise<JsonObject> promise = i.getArgument(1);
-              promise.complete(new JsonObject());
-              return i.getMock();
-            })
-        .when(apdService)
-        .callApd(eq(apdContext), any());
+    Mockito.when(apdService.callApd(apdContext))
+        .thenReturn(Future.succeededFuture(new JsonObject()));
 
     JsonObject jsonReq =
         new JsonObject()
@@ -1104,19 +1074,20 @@ public class VerifyResourceAccessTest {
         new DelegationInformation(
             UUID.randomUUID(), consumerDelegatorUserId, Roles.CONSUMER, DUMMY_SERVER);
 
-    policyService.verifyResourceAccess(
-        req,
-        consDelegInfo,
-        delegateUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getString(CREATE_TOKEN_RG), resGroupId.toString());
-                      assertEquals(
-                          response.getString(CREATE_TOKEN_DID), consumerDelegatorUserId.toString());
-                      assertEquals(response.getString(CREATE_TOKEN_DRL), Roles.CONSUMER.toString());
-                      testContext.completeNow();
-                    })));
+    policyService
+        .verifyResourceAccess(req, consDelegInfo, delegateUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getString(CREATE_TOKEN_RG), resGroupId.toString());
+                          assertEquals(
+                              response.getString(CREATE_TOKEN_DID),
+                              consumerDelegatorUserId.toString());
+                          assertEquals(
+                              response.getString(CREATE_TOKEN_DRL), Roles.CONSUMER.toString());
+                          testContext.completeNow();
+                        })));
   }
 }
