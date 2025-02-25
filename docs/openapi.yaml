@@ -1,12 +1,12 @@
 openapi: 3.0.0
 info:
-  title: IUDX-AAA-Server
-  version: 5.5.0
-  description: 'API specification for IUDX AAA Server. These APIs are used by users manage tokens, policy etc. These APIs requires valid token or client details for authentication.'
+  title: DX Authentication, Authorization, and Accounting (AAA) Server
+  version: 5.6.0
+  description: 'API specification for DX AAA Server. These APIs are used by users manage tokens, policy etc. These APIs requires valid token or client details for authentication.'
   license:
     name: Apache 2.0
   contact:
-    name: For support contact IUDX Team at
+    name: For support contact DX Team at
     email: support@iudx.org.in
 servers:
   - url: 'https://cos.iudx.org.in'
@@ -319,9 +319,9 @@ paths:
           ## JWT Access Token Response Structure
            The JWT is signed using the ES256 algorithm (`alg:ES256`).
 
-           A valid IUDX AAA access token contains the following fields:
+           A valid DX AAA access token contains the following fields:
            - `sub` : `userId` of the user for whom the token is issued
-           - `iss` : this tag contains the url of the server from the where the token was issued(IUDX auth server)
+           - `iss` : this tag contains the url of the server from the where the token was issued(DX auth server)
            - `aud` : the 'audience' tag contains the url of the server for which the token is valid
            - `exp` : when the token will expire in Unix format
            - `iat` : indicates when the token was issued in Unix format
@@ -349,9 +349,9 @@ paths:
         ## JWT APD Token Response Structure
           The JWT is signed using the ES256 algorithm (`alg:ES256`).
 
-         A valid IUDX AAA APD token contains the following fields:
+         A valid DX AAA APD token contains the following fields:
          - `sub` : `userId` of the user for whom the token is issued
-         - `iss` : this tag contains the url of the server from the where the token was issued(IUDX auth server)
+         - `iss` : this tag contains the url of the server from the where the token was issued(DX auth server)
          - `aud` : the 'audience' tag contains the url of the server for which the token is valid - in this case, will be the APD URL
          - `exp` : when the token will expire in Unix format
          - `iat` : indicates when the token was issued in unix format
@@ -468,7 +468,7 @@ paths:
         '400':
           description: |-
             - Missing/malformed token
-            - The token has not been issued by the IUDX AAA server
+            - The token has not been issued by the DX AAA server
             - The token is expired
           content:
             application/json:
@@ -533,7 +533,7 @@ paths:
       description: |-
         Introspect a JWT token obtained from the AAA server. The API:
         - validates the token structure
-        - checks if the token has been issued by the IUDX AAA server
+        - checks if the token has been issued by the DX AAA server
         - checks if the token is expired
         If all checks pass, the decoded token is returned
 
@@ -644,7 +644,7 @@ paths:
                 value:
                   rsUrl: rs.iudx.org.in
         required: true
-        description: '`rsUrl` is the URL/domain of a server that is recognised by the IUDX AAA '
+        description: '`rsUrl` is the URL/domain of a server that is recognised by the DX AAA '
       security:
         - authorization: []
     parameters: []
@@ -759,7 +759,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+                $ref: '#/components/schemas/DX-AAA-Server_Error-Response'
               examples:
                 Invalid roles array:
                   value:
@@ -1132,7 +1132,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+                $ref: '#/components/schemas/DX-AAA-Server_Error-Response'
               examples:
                 Invalid email:
                   value:
@@ -1480,7 +1480,7 @@ paths:
         A user may regenerate a client secret corresponding to a client ID in case they have lost the client secret or it has been compromised. A new client secret will be generated and sent as part of the output **and will not be shown again.** 
 
         ## Token revocation before regeneration
-        In addition to regenerating the client secret, **the AAA server notifies all servers - resource servers and APDs - recognized by IUDX to revoke all tokens issued in the user's name (with the user's credentials) before the regeneration request was made**. The AAA server is effectively calling the `POST /auth/v1/token/revoke` API for all servers on behalf of the user. This is done to account for the scenario where the client secret has been compromised and tokens have been issued by a malicious user. 
+        In addition to regenerating the client secret, **the AAA server notifies all servers - resource servers and APDs - recognized by DX to revoke all tokens issued in the user's name (with the user's credentials) before the regeneration request was made**. The AAA server is effectively calling the `POST /auth/v1/token/revoke` API for all servers on behalf of the user. This is done to account for the scenario where the client secret has been compromised and tokens have been issued by a malicious user. 
       parameters:
         - schema:
             type: string
@@ -3038,7 +3038,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+                $ref: '#/components/schemas/DX-AAA-Server_Error-Response'
               examples:
                 Invalid token:
                   value:
@@ -3169,7 +3169,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+                $ref: '#/components/schemas/DX-AAA-Server_Error-Response'
               examples:
                 Invalid url:
                   value:
@@ -3206,7 +3206,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+                $ref: '#/components/schemas/DX-AAA-Server_Error-Response'
               examples:
                 Example:
                   value:
@@ -3355,7 +3355,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+                $ref: '#/components/schemas/DX-AAA-Server_Error-Response'
               examples:
                 Invalid APD ID:
                   value:
@@ -3372,7 +3372,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+                $ref: '#/components/schemas/DX-AAA-Server_Error-Response'
               examples:
                 Invalid/expired token:
                   value:
@@ -3390,7 +3390,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IUDX-AAA-Server_Error-Response'
+                $ref: '#/components/schemas/DX-AAA-Server_Error-Response'
               examples:
                 Cannot change status of an APD:
                   value:
@@ -3583,7 +3583,7 @@ components:
         - type
         - title
         - detail
-    IUDX-AAA-Server_Error-Response:
+    DX-AAA-Server_Error-Response:
       title: Error-Response
       type: object
       x-examples: {}
