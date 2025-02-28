@@ -428,19 +428,14 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     DelegationInformation delegationInfo = context.get(DELEGATION_INFO);
 
-    tokenService.createToken(
-        requestTokenDTO,
-        delegationInfo,
-        user,
-        handler -> {
-          if (handler.succeeded()) {
-            JsonObject result = handler.result();
-            Future.future(future -> handleAuditLogs(context, result));
-            processResponse(context.response(), result);
-          } else {
-            processResponse(context.response(), handler.cause().getLocalizedMessage());
-          }
-        });
+    tokenService
+        .createToken(requestTokenDTO, delegationInfo, user)
+        .onSuccess(
+            result -> {
+              Future.future(future -> handleAuditLogs(context, result));
+              processResponse(context.response(), result);
+            })
+        .onFailure(failure -> processResponse(context.response(), failure.getLocalizedMessage()));
   }
 
   /**
@@ -452,15 +447,10 @@ public class ApiServerVerticle extends AbstractVerticle {
     JsonObject tokenRequestJson = context.body().asJsonObject();
     IntrospectToken introspectToken = tokenRequestJson.mapTo(IntrospectToken.class);
 
-    tokenService.validateToken(
-        introspectToken,
-        handler -> {
-          if (handler.succeeded()) {
-            processResponse(context.response(), handler.result());
-          } else {
-            processResponse(context.response(), handler.cause().getLocalizedMessage());
-          }
-        });
+    tokenService
+        .validateToken(introspectToken)
+        .onSuccess(result -> processResponse(context.response(), result))
+        .onFailure(failure -> processResponse(context.response(), failure.getLocalizedMessage()));
   }
 
   /**
@@ -475,18 +465,14 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     User user = context.get(USER);
 
-    tokenService.revokeToken(
-        revokeTokenDTO,
-        user,
-        handler -> {
-          if (handler.succeeded()) {
-            JsonObject result = handler.result();
-            Future.future(future -> handleAuditLogs(context, result));
-            processResponse(context.response(), handler.result());
-          } else {
-            processResponse(context.response(), handler.cause().getLocalizedMessage());
-          }
-        });
+    tokenService
+        .revokeToken(revokeTokenDTO, user)
+        .onSuccess(
+            result -> {
+              Future.future(future -> handleAuditLogs(context, result));
+              processResponse(context.response(), result);
+            })
+        .onFailure(failure -> processResponse(context.response(), failure.getLocalizedMessage()));
   }
 
   /**
@@ -499,18 +485,14 @@ public class ApiServerVerticle extends AbstractVerticle {
     AddRolesRequest request = new AddRolesRequest(jsonRequest);
     User user = context.get(USER);
 
-    registrationService.addRoles(
-        request,
-        user,
-        handler -> {
-          if (handler.succeeded()) {
-            JsonObject result = handler.result();
-            Future.future(future -> handleAuditLogs(context, result));
-            processResponse(context.response(), handler.result());
-          } else {
-            processResponse(context.response(), handler.cause().getLocalizedMessage());
-          }
-        });
+    registrationService
+        .addRoles(request, user)
+        .onSuccess(
+            result -> {
+              Future.future(future -> handleAuditLogs(context, result));
+              processResponse(context.response(), result);
+            })
+        .onFailure(failure -> processResponse(context.response(), failure.getLocalizedMessage()));
   }
 
   /**
@@ -521,15 +503,10 @@ public class ApiServerVerticle extends AbstractVerticle {
   private void listUserProfileHandler(RoutingContext context) {
     User user = context.get(USER);
 
-    registrationService.listUser(
-        user,
-        handler -> {
-          if (handler.succeeded()) {
-            processResponse(context.response(), handler.result());
-          } else {
-            processResponse(context.response(), handler.cause().getLocalizedMessage());
-          }
-        });
+    registrationService
+        .listUser(user)
+        .onSuccess(result -> processResponse(context.response(), result))
+        .onFailure(failure -> processResponse(context.response(), failure.getLocalizedMessage()));
   }
 
   /**
@@ -542,18 +519,14 @@ public class ApiServerVerticle extends AbstractVerticle {
     ResetClientSecretRequest request = new ResetClientSecretRequest(jsonRequest);
     User user = context.get(USER);
 
-    registrationService.resetClientSecret(
-        request,
-        user,
-        handler -> {
-          if (handler.succeeded()) {
-            JsonObject result = handler.result();
-            Future.future(future -> handleAuditLogs(context, result));
-            processResponse(context.response(), handler.result());
-          } else {
-            processResponse(context.response(), handler.cause().getLocalizedMessage());
-          }
-        });
+    registrationService
+        .resetClientSecret(request, user)
+        .onSuccess(
+            result -> {
+              Future.future(future -> handleAuditLogs(context, result));
+              processResponse(context.response(), result);
+            })
+        .onFailure(failure -> processResponse(context.response(), failure.getLocalizedMessage()));
   }
 
   /**
@@ -562,14 +535,10 @@ public class ApiServerVerticle extends AbstractVerticle {
    * @param context
    */
   private void listResourceServersHandler(RoutingContext context) {
-    registrationService.listResourceServer(
-        handler -> {
-          if (handler.succeeded()) {
-            processResponse(context.response(), handler.result());
-          } else {
-            processResponse(context.response(), handler.cause().getLocalizedMessage());
-          }
-        });
+    registrationService
+        .listResourceServer()
+        .onSuccess(result -> processResponse(context.response(), result))
+        .onFailure(failure -> processResponse(context.response(), failure.getLocalizedMessage()));
   }
 
   /**
@@ -582,16 +551,14 @@ public class ApiServerVerticle extends AbstractVerticle {
     CreateRsRequest request = new CreateRsRequest(jsonRequest);
     User user = context.get(USER);
 
-    adminService.createResourceServer(
-        request,
-        user,
-        handler -> {
-          if (handler.succeeded()) {
-            processResponse(context.response(), handler.result());
-          } else {
-            processResponse(context.response(), handler.cause().getLocalizedMessage());
-          }
-        });
+    adminService
+        .createResourceServer(request, user)
+        .onSuccess(
+            result -> {
+              Future.future(future -> handleAuditLogs(context, result));
+              processResponse(context.response(), result);
+            })
+        .onFailure(failure -> processResponse(context.response(), failure.getLocalizedMessage()));
   }
 
   /**
@@ -615,16 +582,10 @@ public class ApiServerVerticle extends AbstractVerticle {
     }
 
     User user = context.get(USER);
-    adminService.getProviderRegistrations(
-        filter,
-        user,
-        handler -> {
-          if (handler.succeeded()) {
-            processResponse(context.response(), handler.result());
-          } else {
-            processResponse(context.response(), handler.cause().getLocalizedMessage());
-          }
-        });
+    adminService
+        .getProviderRegistrations(filter, user)
+        .onSuccess(result -> processResponse(context.response(), result))
+        .onFailure(failure -> processResponse(context.response(), failure.getLocalizedMessage()));
   }
 
   /**
@@ -638,18 +599,14 @@ public class ApiServerVerticle extends AbstractVerticle {
     List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(arr);
 
     User user = context.get(USER);
-    adminService.updateProviderRegistrationStatus(
-        request,
-        user,
-        handler -> {
-          if (handler.succeeded()) {
-            JsonObject result = handler.result();
-            Future.future(future -> handleAuditLogs(context, result));
-            processResponse(context.response(), handler.result());
-          } else {
-            processResponse(context.response(), handler.cause().getLocalizedMessage());
-          }
-        });
+    adminService
+        .updateProviderRegistrationStatus(request, user)
+        .onSuccess(
+            result -> {
+              Future.future(future -> handleAuditLogs(context, result));
+              processResponse(context.response(), result);
+            })
+        .onFailure(failure -> processResponse(context.response(), failure.getLocalizedMessage()));
   }
 
   /**
@@ -661,18 +618,15 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     User user = context.get(USER);
 
-    policyService.listDelegation(
-        user,
-        handler -> {
-          if (handler.succeeded()) {
-            processResponse(context.response(), handler.result());
-          } else {
-            processResponse(context.response(), handler.cause().getLocalizedMessage());
-          }
-        });
+    policyService
+        .listDelegation(user)
+        .onSuccess(result -> processResponse(context.response(), result))
+        .onFailure(failure -> processResponse(context.response(), failure.getLocalizedMessage()));
   }
 
-  /** @param context */
+  /**
+   * @param context
+   */
   private void deleteDelegationsHandler(RoutingContext context) {
 
     JsonObject jsonRequest = context.body().asJsonObject();
@@ -681,21 +635,19 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     User user = context.get(USER);
 
-    policyService.deleteDelegation(
-        request,
-        user,
-        handler -> {
-          if (handler.succeeded()) {
-            JsonObject result = handler.result();
-            Future.future(future -> handleAuditLogs(context, result));
-            processResponse(context.response(), handler.result());
-          } else {
-            processResponse(context.response(), handler.cause().getLocalizedMessage());
-          }
-        });
+    policyService
+        .deleteDelegation(request, user)
+        .onSuccess(
+            result -> {
+              Future.future(future -> handleAuditLogs(context, result));
+              processResponse(context.response(), result);
+            })
+        .onFailure(failure -> processResponse(context.response(), failure.getLocalizedMessage()));
   }
 
-  /** @param context */
+  /**
+   * @param context
+   */
   private void getDelegateEmailsHandler(RoutingContext context) {
 
     User user = context.get(USER);
@@ -708,18 +660,10 @@ public class ApiServerVerticle extends AbstractVerticle {
     Roles delegatedRole = Roles.valueOf(roleList.get(0).toUpperCase());
     String delegatedRsUrl = rsList.get(0).toLowerCase();
 
-    policyService.getDelegateEmails(
-        user,
-        delegatorUserId,
-        delegatedRole,
-        delegatedRsUrl,
-        handler -> {
-          if (handler.succeeded()) {
-            processResponse(context.response(), handler.result());
-          } else {
-            processResponse(context.response(), handler.cause().getLocalizedMessage());
-          }
-        });
+    policyService
+        .getDelegateEmails(user, delegatorUserId, delegatedRole, delegatedRsUrl)
+        .onSuccess(result -> processResponse(context.response(), result))
+        .onFailure(failure -> processResponse(context.response(), failure.getLocalizedMessage()));
   }
 
   /**
@@ -734,18 +678,14 @@ public class ApiServerVerticle extends AbstractVerticle {
     List<CreateDelegationRequest> request = CreateDelegationRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
 
-    policyService.createDelegation(
-        request,
-        user,
-        handler -> {
-          if (handler.succeeded()) {
-            JsonObject result = handler.result();
-            Future.future(future -> handleAuditLogs(context, result));
-            processResponse(context.response(), handler.result());
-          } else {
-            processResponse(context.response(), handler.cause().getLocalizedMessage());
-          }
-        });
+    policyService
+        .createDelegation(request, user)
+        .onSuccess(
+            result -> {
+              Future.future(future -> handleAuditLogs(context, result));
+              processResponse(context.response(), result);
+            })
+        .onFailure(failure -> processResponse(context.response(), failure.getLocalizedMessage()));
   }
 
   /**
@@ -759,18 +699,14 @@ public class ApiServerVerticle extends AbstractVerticle {
     CreateApdRequest request = new CreateApdRequest(jsonRequest);
     User user = context.get(USER);
 
-    apdService.createApd(
-        request,
-        user,
-        handler -> {
-          if (handler.succeeded()) {
-            JsonObject result = handler.result();
-            Future.future(future -> handleAuditLogs(context, result));
-            processResponse(context.response(), handler.result());
-          } else {
-            processResponse(context.response(), handler.cause().getLocalizedMessage());
-          }
-        });
+    apdService
+        .createApd(request, user)
+        .onSuccess(
+            result -> {
+              Future.future(future -> handleAuditLogs(context, result));
+              processResponse(context.response(), result);
+            })
+        .onFailure(failure -> processResponse(context.response(), failure.getLocalizedMessage()));
   }
 
   /**
@@ -782,15 +718,10 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     User user = context.get(USER);
 
-    apdService.listApd(
-        user,
-        handler -> {
-          if (handler.succeeded()) {
-            processResponse(context.response(), handler.result());
-          } else {
-            processResponse(context.response(), handler.cause().getLocalizedMessage());
-          }
-        });
+    apdService
+        .listApd(user)
+        .onSuccess(result -> processResponse(context.response(), result))
+        .onFailure(failure -> processResponse(context.response(), failure.getLocalizedMessage()));
   }
 
   /**
@@ -805,18 +736,14 @@ public class ApiServerVerticle extends AbstractVerticle {
     List<ApdUpdateRequest> request = ApdUpdateRequest.jsonArrayToList(jsonRequest);
     User user = context.get(USER);
 
-    apdService.updateApd(
-        request,
-        user,
-        handler -> {
-          if (handler.succeeded()) {
-            JsonObject result = handler.result();
-            Future.future(future -> handleAuditLogs(context, result));
-            processResponse(context.response(), handler.result());
-          } else {
-            processResponse(context.response(), handler.cause().getLocalizedMessage());
-          }
-        });
+    apdService
+        .updateApd(request, user)
+        .onSuccess(
+            result -> {
+              Future.future(future -> handleAuditLogs(context, result));
+              processResponse(context.response(), result);
+            })
+        .onFailure(failure -> processResponse(context.response(), failure.getLocalizedMessage()));
   }
 
   /**
@@ -828,15 +755,10 @@ public class ApiServerVerticle extends AbstractVerticle {
 
     User user = context.get(USER);
 
-    registrationService.getDefaultClientCredentials(
-        user,
-        handler -> {
-          if (handler.succeeded()) {
-            processResponse(context.response(), handler.result());
-          } else {
-            processResponse(context.response(), handler.cause().getLocalizedMessage());
-          }
-        });
+    registrationService
+        .getDefaultClientCredentials(user)
+        .onSuccess(result -> processResponse(context.response(), result))
+        .onFailure(failure -> processResponse(context.response(), failure.getLocalizedMessage()));
   }
 
   /**
@@ -870,18 +792,10 @@ public class ApiServerVerticle extends AbstractVerticle {
     Roles role = Roles.valueOf(roleList.get(0).toUpperCase());
     String resourceServerUrl = rsList.get(0).toLowerCase();
 
-    registrationService.searchUser(
-        user,
-        searchString,
-        role,
-        resourceServerUrl,
-        handler -> {
-          if (handler.succeeded()) {
-            processResponse(context.response(), handler.result());
-          } else {
-            processResponse(context.response(), handler.cause().getLocalizedMessage());
-          }
-        });
+    registrationService
+        .searchUser(user, searchString, role, resourceServerUrl)
+        .onSuccess(result -> processResponse(context.response(), result))
+        .onFailure(failure -> processResponse(context.response(), failure.getLocalizedMessage()));
   }
 
   /**
@@ -913,6 +827,7 @@ public class ApiServerVerticle extends AbstractVerticle {
       processResponse(context.response(), KS_PARSE_ERROR);
     }
   }
+
   /**
    * Loads the keystore using the provided path and password, and retrieves the public key
    * information.
@@ -995,17 +910,18 @@ public class ApiServerVerticle extends AbstractVerticle {
     auditLog.put(METHOD, request.method().toString());
     auditLog.put(USER_ID, userId);
 
-    auditingService.executeWriteQuery(
-        auditLog,
-        handler -> {
-          if (handler.succeeded()) {
-            LOGGER.info("{}; {}", SUCC_AUDIT_UPDATE, handler.result());
-            promise.complete();
-          } else {
-            LOGGER.error("{}; {}", ERR_AUDIT_UPDATE, handler.cause().getLocalizedMessage());
-            promise.complete();
-          }
-        });
+    auditingService
+        .executeWriteQuery(auditLog)
+        .onSuccess(
+            succ -> {
+              LOGGER.info("{}; {}", SUCC_AUDIT_UPDATE, succ);
+              promise.complete();
+            })
+        .onFailure(
+            fail -> {
+              LOGGER.error("{}; {}", ERR_AUDIT_UPDATE, fail.getLocalizedMessage());
+              promise.complete();
+            });
 
     return promise.future();
   }

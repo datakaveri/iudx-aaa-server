@@ -1,11 +1,9 @@
 package iudx.aaa.server.auditing;
 
-import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.ProxyGen;
 import io.vertx.codegen.annotations.VertxGen;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 
@@ -30,9 +28,7 @@ public interface AuditingService {
     return new AuditingServiceVertxEBProxy(vertx, address);
   }
 
-  @Fluent
-  AuditingService executeWriteQuery(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> executeWriteQuery(JsonObject request);
 
-  @Fluent
-  AuditingService executeReadQuery(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> executeReadQuery(JsonObject request);
 }

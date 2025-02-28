@@ -158,17 +158,18 @@ public class GetDefaultClientCredentialsTest {
 
     Mockito.when(kc.getEmailId(any())).thenReturn(Future.succeededFuture("email@gmail.com"));
 
-    registrationService.getDefaultClientCredentials(
-        user,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(404, response.getInteger("status"));
-                      assertEquals(ERR_TITLE_NO_APPROVED_ROLES, response.getString("title"));
-                      assertEquals(ERR_DETAIL_NO_APPROVED_ROLES, response.getString("detail"));
-                      testContext.completeNow();
-                    })));
+    registrationService
+        .getDefaultClientCredentials(user)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(404, response.getInteger("status"));
+                          assertEquals(ERR_TITLE_NO_APPROVED_ROLES, response.getString("title"));
+                          assertEquals(ERR_DETAIL_NO_APPROVED_ROLES, response.getString("detail"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -191,31 +192,33 @@ public class GetDefaultClientCredentialsTest {
           Mockito.when(kc.getEmailId(any()))
               .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
 
-          registrationService.getDefaultClientCredentials(
-              user,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(201, response.getInteger("status"));
-                            assertEquals(
-                                SUCC_TITLE_CREATED_DEFAULT_CLIENT, response.getString("title"));
-                            assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+          registrationService
+              .getDefaultClientCredentials(user)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(201, response.getInteger("status"));
+                                assertEquals(
+                                    SUCC_TITLE_CREATED_DEFAULT_CLIENT, response.getString("title"));
+                                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-                            JsonObject result = response.getJsonObject("results");
+                                JsonObject result = response.getJsonObject("results");
 
-                            assertTrue(result.containsKey(RESP_CLIENT_NAME));
-                            assertTrue(result.getString(RESP_CLIENT_NAME).equals(DEFAULT_CLIENT));
-                            assertTrue(result.containsKey(RESP_CLIENT_ID));
-                            String clientId = result.getString(RESP_CLIENT_ID);
-                            assertTrue(clientId.matches(UUID_REGEX));
+                                assertTrue(result.containsKey(RESP_CLIENT_NAME));
+                                assertTrue(
+                                    result.getString(RESP_CLIENT_NAME).equals(DEFAULT_CLIENT));
+                                assertTrue(result.containsKey(RESP_CLIENT_ID));
+                                String clientId = result.getString(RESP_CLIENT_ID);
+                                assertTrue(clientId.matches(UUID_REGEX));
 
-                            assertTrue(result.containsKey(RESP_CLIENT_SC));
-                            String clientSec = result.getString(RESP_CLIENT_SC);
-                            assertTrue(clientSec.matches(CLIENT_SECRET_REGEX));
+                                assertTrue(result.containsKey(RESP_CLIENT_SC));
+                                String clientSec = result.getString(RESP_CLIENT_SC);
+                                assertTrue(clientSec.matches(CLIENT_SECRET_REGEX));
 
-                            testContext.completeNow();
-                          })));
+                                testContext.completeNow();
+                              })));
         });
   }
 
@@ -239,56 +242,61 @@ public class GetDefaultClientCredentialsTest {
           Mockito.when(kc.getEmailId(any()))
               .thenReturn(Future.succeededFuture(utils.getDetails(user).email));
 
-          registrationService.getDefaultClientCredentials(
-              user,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(201, response.getInteger("status"));
-                            assertEquals(
-                                SUCC_TITLE_CREATED_DEFAULT_CLIENT, response.getString("title"));
-                            assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+          registrationService
+              .getDefaultClientCredentials(user)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(201, response.getInteger("status"));
+                                assertEquals(
+                                    SUCC_TITLE_CREATED_DEFAULT_CLIENT, response.getString("title"));
+                                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-                            JsonObject result = response.getJsonObject("results");
+                                JsonObject result = response.getJsonObject("results");
 
-                            assertTrue(result.containsKey(RESP_CLIENT_NAME));
-                            assertTrue(result.getString(RESP_CLIENT_NAME).equals(DEFAULT_CLIENT));
-                            assertTrue(result.containsKey(RESP_CLIENT_ID));
-                            String clientId = result.getString(RESP_CLIENT_ID);
-                            assertTrue(clientId.matches(UUID_REGEX));
+                                assertTrue(result.containsKey(RESP_CLIENT_NAME));
+                                assertTrue(
+                                    result.getString(RESP_CLIENT_NAME).equals(DEFAULT_CLIENT));
+                                assertTrue(result.containsKey(RESP_CLIENT_ID));
+                                String clientId = result.getString(RESP_CLIENT_ID);
+                                assertTrue(clientId.matches(UUID_REGEX));
 
-                            assertTrue(result.containsKey(RESP_CLIENT_SC));
-                            String clientSec = result.getString(RESP_CLIENT_SC);
-                            assertTrue(clientSec.matches(CLIENT_SECRET_REGEX));
+                                assertTrue(result.containsKey(RESP_CLIENT_SC));
+                                String clientSec = result.getString(RESP_CLIENT_SC);
+                                assertTrue(clientSec.matches(CLIENT_SECRET_REGEX));
 
-                            registrationService.getDefaultClientCredentials(
-                                user,
-                                testContext.succeeding(
-                                    failResponse ->
-                                        testContext.verify(
-                                            () -> {
-                                              assertEquals(409, failResponse.getInteger("status"));
-                                              assertEquals(
-                                                  ERR_TITLE_DEFAULT_CLIENT_EXISTS,
-                                                  failResponse.getString("title"));
-                                              assertEquals(
-                                                  ERR_DETAIL_DEFAULT_CLIENT_EXISTS,
-                                                  failResponse.getString("detail"));
-                                              assertEquals(
-                                                  URN_ALREADY_EXISTS.toString(),
-                                                  failResponse.getString("type"));
+                                registrationService
+                                    .getDefaultClientCredentials(user)
+                                    .onComplete(
+                                        testContext.succeeding(
+                                            failResponse ->
+                                                testContext.verify(
+                                                    () -> {
+                                                      assertEquals(
+                                                          409, failResponse.getInteger("status"));
+                                                      assertEquals(
+                                                          ERR_TITLE_DEFAULT_CLIENT_EXISTS,
+                                                          failResponse.getString("title"));
+                                                      assertEquals(
+                                                          ERR_DETAIL_DEFAULT_CLIENT_EXISTS,
+                                                          failResponse.getString("detail"));
+                                                      assertEquals(
+                                                          URN_ALREADY_EXISTS.toString(),
+                                                          failResponse.getString("type"));
 
-                                              assertTrue(failResponse.containsKey("context"));
-                                              JsonObject context =
-                                                  failResponse.getJsonObject("context");
-                                              assertTrue(
-                                                  context
-                                                      .getString(RESP_CLIENT_ID)
-                                                      .equals(clientId));
-                                              testContext.completeNow();
-                                            })));
-                          })));
+                                                      assertTrue(
+                                                          failResponse.containsKey("context"));
+                                                      JsonObject context =
+                                                          failResponse.getJsonObject("context");
+                                                      assertTrue(
+                                                          context
+                                                              .getString(RESP_CLIENT_ID)
+                                                              .equals(clientId));
+                                                      testContext.completeNow();
+                                                    })));
+                              })));
         });
   }
 
@@ -335,46 +343,51 @@ public class GetDefaultClientCredentialsTest {
             })
         .map(
             next ->
-                registrationService.getDefaultClientCredentials(
-                    cosAdminUser,
-                    testContext.succeeding(
-                        response ->
-                            testContext.verify(
-                                () -> {
-                                  assertEquals(201, response.getInteger("status"));
-                                  assertEquals(
-                                      SUCC_TITLE_CREATED_DEFAULT_CLIENT,
-                                      response.getString("title"));
-                                  assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                registrationService
+                    .getDefaultClientCredentials(cosAdminUser)
+                    .onComplete(
+                        testContext.succeeding(
+                            response ->
+                                testContext.verify(
+                                    () -> {
+                                      assertEquals(201, response.getInteger("status"));
+                                      assertEquals(
+                                          SUCC_TITLE_CREATED_DEFAULT_CLIENT,
+                                          response.getString("title"));
+                                      assertEquals(
+                                          URN_SUCCESS.toString(), response.getString("type"));
 
-                                  JsonObject result = response.getJsonObject("results");
+                                      JsonObject result = response.getJsonObject("results");
 
-                                  assertTrue(result.containsKey(RESP_CLIENT_NAME));
-                                  assertTrue(
-                                      result.getString(RESP_CLIENT_NAME).equals(DEFAULT_CLIENT));
-                                  assertTrue(result.containsKey(RESP_CLIENT_ID));
-                                  String clientId = result.getString(RESP_CLIENT_ID);
-                                  assertTrue(clientId.matches(UUID_REGEX));
+                                      assertTrue(result.containsKey(RESP_CLIENT_NAME));
+                                      assertTrue(
+                                          result
+                                              .getString(RESP_CLIENT_NAME)
+                                              .equals(DEFAULT_CLIENT));
+                                      assertTrue(result.containsKey(RESP_CLIENT_ID));
+                                      String clientId = result.getString(RESP_CLIENT_ID);
+                                      assertTrue(clientId.matches(UUID_REGEX));
 
-                                  assertTrue(result.containsKey(RESP_CLIENT_SC));
-                                  String clientSec = result.getString(RESP_CLIENT_SC);
-                                  assertTrue(clientSec.matches(CLIENT_SECRET_REGEX));
+                                      assertTrue(result.containsKey(RESP_CLIENT_SC));
+                                      String clientSec = result.getString(RESP_CLIENT_SC);
+                                      assertTrue(clientSec.matches(CLIENT_SECRET_REGEX));
 
-                                  clientCreated.flag();
-                                  pool.withConnection(
-                                          conn ->
-                                              conn.preparedQuery(
-                                                      "SELECT id FROM users WHERE id = $1::UUID")
-                                                  .execute(Tuple.of(cosAdminUser.getUserId())))
-                                      .onSuccess(
-                                          rows -> {
-                                            if (rows.rowCount() == 1) {
-                                              entryMadeInDb.flag();
-                                            } else {
-                                              testContext.failNow("failed");
-                                            }
-                                          })
-                                      .onFailure(fail -> testContext.failNow(fail.getMessage()));
-                                }))));
+                                      clientCreated.flag();
+                                      pool.withConnection(
+                                              conn ->
+                                                  conn.preparedQuery(
+                                                          "SELECT id FROM users WHERE id = $1::UUID")
+                                                      .execute(Tuple.of(cosAdminUser.getUserId())))
+                                          .onSuccess(
+                                              rows -> {
+                                                if (rows.rowCount() == 1) {
+                                                  entryMadeInDb.flag();
+                                                } else {
+                                                  testContext.failNow("failed");
+                                                }
+                                              })
+                                          .onFailure(
+                                              fail -> testContext.failNow(fail.getMessage()));
+                                    }))));
   }
 }

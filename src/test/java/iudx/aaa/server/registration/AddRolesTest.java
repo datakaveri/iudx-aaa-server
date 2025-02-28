@@ -177,46 +177,46 @@ public class AddRolesTest {
 
     User user = new UserBuilder().userId(userId).name("aa", "bb").build();
 
-    registrationService.addRoles(
-        request,
-        user,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(200, response.getInteger("status"));
-                      JsonObject result = response.getJsonObject("results");
+    registrationService
+        .addRoles(request, user)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(200, response.getInteger("status"));
+                          JsonObject result = response.getJsonObject("results");
 
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                      assertEquals(SUCC_TITLE_ADDED_ROLES, response.getString("title"));
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                          assertEquals(SUCC_TITLE_ADDED_ROLES, response.getString("title"));
 
-                      assertTrue(
-                          result
-                              .getJsonArray("roles")
-                              .getList()
-                              .contains(Roles.CONSUMER.name().toLowerCase()));
+                          assertTrue(
+                              result
+                                  .getJsonArray("roles")
+                                  .getList()
+                                  .contains(Roles.CONSUMER.name().toLowerCase()));
 
-                      assertEquals(result.getString("email"), email);
-                      assertTrue(result.getString("userId").equals(userId));
-                      assertEquals(result.getJsonObject("name").getString("firstName"), "aa");
-                      assertEquals(result.getJsonObject("name").getString("lastName"), "bb");
-                      assertEquals(result.getString("phone"), phone);
+                          assertEquals(result.getString("email"), email);
+                          assertTrue(result.getString("userId").equals(userId));
+                          assertEquals(result.getJsonObject("name").getString("firstName"), "aa");
+                          assertEquals(result.getJsonObject("name").getString("lastName"), "bb");
+                          assertEquals(result.getString("phone"), phone);
 
-                      assertTrue(
-                          result
-                              .getJsonObject("rolesToRsMapping")
-                              .containsKey(Roles.CONSUMER.toString().toLowerCase()));
-                      JsonArray rsForConsumerRole =
-                          result
-                              .getJsonObject("rolesToRsMapping")
-                              .getJsonArray(Roles.CONSUMER.toString().toLowerCase());
-                      assertTrue(rsForConsumerRole.contains(DUMMY_SERVER_ONE));
-                      assertTrue(rsForConsumerRole.contains(DUMMY_SERVER_TWO));
+                          assertTrue(
+                              result
+                                  .getJsonObject("rolesToRsMapping")
+                                  .containsKey(Roles.CONSUMER.toString().toLowerCase()));
+                          JsonArray rsForConsumerRole =
+                              result
+                                  .getJsonObject("rolesToRsMapping")
+                                  .getJsonArray(Roles.CONSUMER.toString().toLowerCase());
+                          assertTrue(rsForConsumerRole.contains(DUMMY_SERVER_ONE));
+                          assertTrue(rsForConsumerRole.contains(DUMMY_SERVER_TWO));
 
-                      assertFalse(result.containsKey(RESP_CLIENT_ARR));
+                          assertFalse(result.containsKey(RESP_CLIENT_ARR));
 
-                      testContext.completeNow();
-                    })));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -238,35 +238,35 @@ public class AddRolesTest {
 
     User user = new UserBuilder().userId(userId).name("aa", "bb").build();
 
-    registrationService.addRoles(
-        request,
-        user,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(200, response.getInteger("status"));
-                      JsonObject result = response.getJsonObject("results");
+    registrationService
+        .addRoles(request, user)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(200, response.getInteger("status"));
+                          JsonObject result = response.getJsonObject("results");
 
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                      assertEquals(
-                          SUCC_TITLE_ADDED_ROLES + PROVIDER_PENDING_MESG,
-                          response.getString("title"));
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                          assertEquals(
+                              SUCC_TITLE_ADDED_ROLES + PROVIDER_PENDING_MESG,
+                              response.getString("title"));
 
-                      assertTrue(result.getJsonArray("roles").isEmpty());
+                          assertTrue(result.getJsonArray("roles").isEmpty());
 
-                      assertEquals(result.getString("email"), email);
-                      assertTrue(result.getString("userId").equals(userId));
-                      assertEquals(result.getJsonObject("name").getString("firstName"), "aa");
-                      assertEquals(result.getJsonObject("name").getString("lastName"), "bb");
-                      assertFalse(result.containsKey(RESP_PHONE));
+                          assertEquals(result.getString("email"), email);
+                          assertTrue(result.getString("userId").equals(userId));
+                          assertEquals(result.getJsonObject("name").getString("firstName"), "aa");
+                          assertEquals(result.getJsonObject("name").getString("lastName"), "bb");
+                          assertFalse(result.containsKey(RESP_PHONE));
 
-                      assertTrue(result.getJsonObject("rolesToRsMapping").isEmpty());
+                          assertTrue(result.getJsonObject("rolesToRsMapping").isEmpty());
 
-                      assertFalse(result.containsKey(RESP_CLIENT_ARR));
+                          assertFalse(result.containsKey(RESP_CLIENT_ARR));
 
-                      testContext.completeNow();
-                    })));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -302,70 +302,71 @@ public class AddRolesTest {
 
               AddRolesRequest request = new AddRolesRequest(jsonReq);
 
-              registrationService.addRoles(
-                  request,
-                  user,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(200, response.getInteger("status"));
-                                JsonObject result = response.getJsonObject("results");
+              registrationService
+                  .addRoles(request, user)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(200, response.getInteger("status"));
+                                    JsonObject result = response.getJsonObject("results");
 
-                                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                                assertEquals(
-                                    SUCC_TITLE_ADDED_ROLES + PROVIDER_PENDING_MESG,
-                                    response.getString("title"));
+                                    assertEquals(
+                                        URN_SUCCESS.toString(), response.getString("type"));
+                                    assertEquals(
+                                        SUCC_TITLE_ADDED_ROLES + PROVIDER_PENDING_MESG,
+                                        response.getString("title"));
 
-                                assertEquals(
-                                    result.getString("email"), utils.getDetails(user).email);
-                                assertTrue(result.getString("userId").equals(user.getUserId()));
-                                assertEquals(
-                                    result.getJsonObject("name").getString("firstName"), "aa");
-                                assertEquals(
-                                    result.getJsonObject("name").getString("lastName"), "bb");
+                                    assertEquals(
+                                        result.getString("email"), utils.getDetails(user).email);
+                                    assertTrue(result.getString("userId").equals(user.getUserId()));
+                                    assertEquals(
+                                        result.getJsonObject("name").getString("firstName"), "aa");
+                                    assertEquals(
+                                        result.getJsonObject("name").getString("lastName"), "bb");
 
-                                assertFalse(result.containsKey(RESP_PHONE));
+                                    assertFalse(result.containsKey(RESP_PHONE));
 
-                                assertTrue(
-                                    result
-                                        .getJsonArray("roles")
-                                        .getList()
-                                        .contains(Roles.CONSUMER.name().toLowerCase()));
-                                assertTrue(
-                                    result
-                                        .getJsonArray("roles")
-                                        .getList()
-                                        .contains(Roles.PROVIDER.name().toLowerCase()));
+                                    assertTrue(
+                                        result
+                                            .getJsonArray("roles")
+                                            .getList()
+                                            .contains(Roles.CONSUMER.name().toLowerCase()));
+                                    assertTrue(
+                                        result
+                                            .getJsonArray("roles")
+                                            .getList()
+                                            .contains(Roles.PROVIDER.name().toLowerCase()));
 
-                                assertTrue(
-                                    result
-                                        .getJsonObject("rolesToRsMapping")
-                                        .containsKey(Roles.CONSUMER.toString().toLowerCase()));
-                                JsonArray rsForConsumerRole =
-                                    result
-                                        .getJsonObject("rolesToRsMapping")
-                                        .getJsonArray(Roles.CONSUMER.toString().toLowerCase());
-                                assertTrue(rsForConsumerRole.contains(DUMMY_SERVER_ONE));
-                                assertTrue(rsForConsumerRole.contains(DUMMY_SERVER_TWO));
+                                    assertTrue(
+                                        result
+                                            .getJsonObject("rolesToRsMapping")
+                                            .containsKey(Roles.CONSUMER.toString().toLowerCase()));
+                                    JsonArray rsForConsumerRole =
+                                        result
+                                            .getJsonObject("rolesToRsMapping")
+                                            .getJsonArray(Roles.CONSUMER.toString().toLowerCase());
+                                    assertTrue(rsForConsumerRole.contains(DUMMY_SERVER_ONE));
+                                    assertTrue(rsForConsumerRole.contains(DUMMY_SERVER_TWO));
 
-                                assertTrue(
-                                    result
-                                        .getJsonObject("rolesToRsMapping")
-                                        .containsKey(Roles.PROVIDER.toString().toLowerCase()));
-                                JsonArray rsForProviderRole =
-                                    result
-                                        .getJsonObject("rolesToRsMapping")
-                                        .getJsonArray(Roles.PROVIDER.toString().toLowerCase());
-                                assertTrue(rsForProviderRole.contains(DUMMY_SERVER_ONE));
+                                    assertTrue(
+                                        result
+                                            .getJsonObject("rolesToRsMapping")
+                                            .containsKey(Roles.PROVIDER.toString().toLowerCase()));
+                                    JsonArray rsForProviderRole =
+                                        result
+                                            .getJsonObject("rolesToRsMapping")
+                                            .getJsonArray(Roles.PROVIDER.toString().toLowerCase());
+                                    assertTrue(rsForProviderRole.contains(DUMMY_SERVER_ONE));
 
-                                // does not have the provider role for the new server yet
-                                assertFalse(rsForProviderRole.contains(DUMMY_SERVER_TWO));
+                                    // does not have the provider role for the new server yet
+                                    assertFalse(rsForProviderRole.contains(DUMMY_SERVER_TWO));
 
-                                assertFalse(result.containsKey(RESP_CLIENT_ARR));
+                                    assertFalse(result.containsKey(RESP_CLIENT_ARR));
 
-                                testContext.completeNow();
-                              })));
+                                    testContext.completeNow();
+                                  })));
             })
         .onFailure(res -> testContext.failNow("failed"));
   }
@@ -389,26 +390,26 @@ public class AddRolesTest {
 
     User user = new UserBuilder().userId(userId).name("aa", "bb").build();
 
-    registrationService.addRoles(
-        request,
-        user,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(400, response.getInteger("status"));
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                      assertEquals(ERR_TITLE_RS_NO_EXIST, response.getString("title"));
-                      assertEquals(ERR_DETAIL_RS_NO_EXIST, response.getString("detail"));
+    registrationService
+        .addRoles(request, user)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(400, response.getInteger("status"));
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          assertEquals(ERR_TITLE_RS_NO_EXIST, response.getString("title"));
+                          assertEquals(ERR_DETAIL_RS_NO_EXIST, response.getString("detail"));
 
-                      assertTrue(
-                          response
-                              .getJsonObject("context")
-                              .getJsonArray(ERR_CONTEXT_NOT_FOUND_RS_URLS)
-                              .contains(badRs));
+                          assertTrue(
+                              response
+                                  .getJsonObject("context")
+                                  .getJsonArray(ERR_CONTEXT_NOT_FOUND_RS_URLS)
+                                  .contains(badRs));
 
-                      testContext.completeNow();
-                    })));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -441,26 +442,27 @@ public class AddRolesTest {
 
     AddRolesRequest consRequest = new AddRolesRequest(jsonConsReq);
 
-    registrationService.addRoles(
-        consRequest,
-        user,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(409, response.getInteger("status"));
-                      assertEquals(URN_ALREADY_EXISTS.toString(), response.getString("type"));
-                      assertEquals(ERR_TITLE_ROLE_FOR_RS_EXISTS, response.getString("title"));
-                      assertEquals(ERR_DETAIL_CONSUMER_FOR_RS_EXISTS, response.getString("detail"));
+    registrationService
+        .addRoles(consRequest, user)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(409, response.getInteger("status"));
+                          assertEquals(URN_ALREADY_EXISTS.toString(), response.getString("type"));
+                          assertEquals(ERR_TITLE_ROLE_FOR_RS_EXISTS, response.getString("title"));
+                          assertEquals(
+                              ERR_DETAIL_CONSUMER_FOR_RS_EXISTS, response.getString("detail"));
 
-                      assertTrue(
-                          response
-                              .getJsonObject("context")
-                              .getJsonArray(ERR_CONTEXT_EXISTING_ROLE_FOR_RS)
-                              .contains(DUMMY_SERVER_ONE));
+                          assertTrue(
+                              response
+                                  .getJsonObject("context")
+                                  .getJsonArray(ERR_CONTEXT_EXISTING_ROLE_FOR_RS)
+                                  .contains(DUMMY_SERVER_ONE));
 
-                      failsConsumer.flag();
-                    })));
+                          failsConsumer.flag();
+                        })));
 
     JsonObject jsonProvReq =
         new JsonObject()
@@ -470,25 +472,26 @@ public class AddRolesTest {
 
     AddRolesRequest provRequest = new AddRolesRequest(jsonProvReq);
 
-    registrationService.addRoles(
-        provRequest,
-        user,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(409, response.getInteger("status"));
-                      assertEquals(URN_ALREADY_EXISTS.toString(), response.getString("type"));
-                      assertEquals(ERR_TITLE_ROLE_FOR_RS_EXISTS, response.getString("title"));
-                      assertEquals(ERR_DETAIL_PROVIDER_FOR_RS_EXISTS, response.getString("detail"));
+    registrationService
+        .addRoles(provRequest, user)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(409, response.getInteger("status"));
+                          assertEquals(URN_ALREADY_EXISTS.toString(), response.getString("type"));
+                          assertEquals(ERR_TITLE_ROLE_FOR_RS_EXISTS, response.getString("title"));
+                          assertEquals(
+                              ERR_DETAIL_PROVIDER_FOR_RS_EXISTS, response.getString("detail"));
 
-                      assertTrue(
-                          response
-                              .getJsonObject("context")
-                              .getJsonArray(ERR_CONTEXT_EXISTING_ROLE_FOR_RS)
-                              .contains(DUMMY_SERVER_ONE));
-                      failsProvider.flag();
-                    })));
+                          assertTrue(
+                              response
+                                  .getJsonObject("context")
+                                  .getJsonArray(ERR_CONTEXT_EXISTING_ROLE_FOR_RS)
+                                  .contains(DUMMY_SERVER_ONE));
+                          failsProvider.flag();
+                        })));
   }
 
   @Test
@@ -521,31 +524,32 @@ public class AddRolesTest {
 
               AddRolesRequest request = new AddRolesRequest(jsonReq);
 
-              registrationService.addRoles(
-                  request,
-                  user,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(403, response.getInteger("status"));
-                                assertEquals(
-                                    URN_INVALID_INPUT.toString(), response.getString("type"));
-                                assertEquals(
-                                    ERR_TITLE_PENDING_REJECTED_PROVIDER_RS_REG_EXISTS,
-                                    response.getString("title"));
-                                assertEquals(
-                                    ERR_DETAIL_PENDING_REJECTED_PROVIDER_RS_REG_EXISTS,
-                                    response.getString("detail"));
+              registrationService
+                  .addRoles(request, user)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(403, response.getInteger("status"));
+                                    assertEquals(
+                                        URN_INVALID_INPUT.toString(), response.getString("type"));
+                                    assertEquals(
+                                        ERR_TITLE_PENDING_REJECTED_PROVIDER_RS_REG_EXISTS,
+                                        response.getString("title"));
+                                    assertEquals(
+                                        ERR_DETAIL_PENDING_REJECTED_PROVIDER_RS_REG_EXISTS,
+                                        response.getString("detail"));
 
-                                assertTrue(
-                                    response
-                                        .getJsonObject("context")
-                                        .getJsonArray(RoleStatus.PENDING.toString().toLowerCase())
-                                        .contains(DUMMY_SERVER_ONE));
+                                    assertTrue(
+                                        response
+                                            .getJsonObject("context")
+                                            .getJsonArray(
+                                                RoleStatus.PENDING.toString().toLowerCase())
+                                            .contains(DUMMY_SERVER_ONE));
 
-                                testContext.completeNow();
-                              })));
+                                    testContext.completeNow();
+                                  })));
             });
   }
 
@@ -578,85 +582,86 @@ public class AddRolesTest {
 
               AddRolesRequest request = new AddRolesRequest(jsonReq);
 
-              registrationService.addRoles(
-                  request,
-                  user,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(200, response.getInteger("status"));
-                                JsonObject result = response.getJsonObject("results");
+              registrationService
+                  .addRoles(request, user)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(200, response.getInteger("status"));
+                                    JsonObject result = response.getJsonObject("results");
 
-                                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                                assertEquals(
-                                    SUCC_TITLE_ADDED_ROLES + PROVIDER_PENDING_MESG,
-                                    response.getString("title"));
+                                    assertEquals(
+                                        URN_SUCCESS.toString(), response.getString("type"));
+                                    assertEquals(
+                                        SUCC_TITLE_ADDED_ROLES + PROVIDER_PENDING_MESG,
+                                        response.getString("title"));
 
-                                assertEquals(
-                                    result.getString("email"), utils.getDetails(user).email);
-                                assertTrue(result.getString("userId").equals(user.getUserId()));
-                                assertEquals(
-                                    result.getJsonObject("name").getString("firstName"), "aa");
-                                assertEquals(
-                                    result.getJsonObject("name").getString("lastName"), "bb");
+                                    assertEquals(
+                                        result.getString("email"), utils.getDetails(user).email);
+                                    assertTrue(result.getString("userId").equals(user.getUserId()));
+                                    assertEquals(
+                                        result.getJsonObject("name").getString("firstName"), "aa");
+                                    assertEquals(
+                                        result.getJsonObject("name").getString("lastName"), "bb");
 
-                                assertFalse(result.containsKey(RESP_PHONE));
+                                    assertFalse(result.containsKey(RESP_PHONE));
 
-                                assertTrue(
-                                    result
-                                        .getJsonArray("roles")
-                                        .getList()
-                                        .contains(Roles.CONSUMER.name().toLowerCase()));
-                                assertTrue(
-                                    result
-                                        .getJsonArray("roles")
-                                        .getList()
-                                        .contains(Roles.ADMIN.name().toLowerCase()));
+                                    assertTrue(
+                                        result
+                                            .getJsonArray("roles")
+                                            .getList()
+                                            .contains(Roles.CONSUMER.name().toLowerCase()));
+                                    assertTrue(
+                                        result
+                                            .getJsonArray("roles")
+                                            .getList()
+                                            .contains(Roles.ADMIN.name().toLowerCase()));
 
-                                assertFalse(
-                                    result
-                                        .getJsonArray("roles")
-                                        .getList()
-                                        .contains(Roles.PROVIDER.name().toLowerCase()));
+                                    assertFalse(
+                                        result
+                                            .getJsonArray("roles")
+                                            .getList()
+                                            .contains(Roles.PROVIDER.name().toLowerCase()));
 
-                                assertTrue(
-                                    result
-                                        .getJsonObject("rolesToRsMapping")
-                                        .containsKey(Roles.CONSUMER.toString().toLowerCase()));
-                                JsonArray rsForConsumerRole =
-                                    result
-                                        .getJsonObject("rolesToRsMapping")
-                                        .getJsonArray(Roles.CONSUMER.toString().toLowerCase());
-                                assertTrue(rsForConsumerRole.contains(DUMMY_SERVER_ONE));
-                                assertTrue(rsForConsumerRole.contains(DUMMY_SERVER_TWO));
+                                    assertTrue(
+                                        result
+                                            .getJsonObject("rolesToRsMapping")
+                                            .containsKey(Roles.CONSUMER.toString().toLowerCase()));
+                                    JsonArray rsForConsumerRole =
+                                        result
+                                            .getJsonObject("rolesToRsMapping")
+                                            .getJsonArray(Roles.CONSUMER.toString().toLowerCase());
+                                    assertTrue(rsForConsumerRole.contains(DUMMY_SERVER_ONE));
+                                    assertTrue(rsForConsumerRole.contains(DUMMY_SERVER_TWO));
 
-                                assertFalse(
-                                    result
-                                        .getJsonObject("rolesToRsMapping")
-                                        .containsKey(Roles.PROVIDER.toString().toLowerCase()));
+                                    assertFalse(
+                                        result
+                                            .getJsonObject("rolesToRsMapping")
+                                            .containsKey(Roles.PROVIDER.toString().toLowerCase()));
 
-                                assertTrue(
-                                    result
-                                        .getJsonObject("rolesToRsMapping")
-                                        .containsKey(Roles.ADMIN.toString().toLowerCase()));
-                                JsonArray rsForAdminRole =
-                                    result
-                                        .getJsonObject("rolesToRsMapping")
-                                        .getJsonArray(Roles.ADMIN.toString().toLowerCase());
-                                assertTrue(rsForAdminRole.contains(DUMMY_SERVER_ONE));
-                                assertFalse(rsForAdminRole.contains(DUMMY_SERVER_TWO));
+                                    assertTrue(
+                                        result
+                                            .getJsonObject("rolesToRsMapping")
+                                            .containsKey(Roles.ADMIN.toString().toLowerCase()));
+                                    JsonArray rsForAdminRole =
+                                        result
+                                            .getJsonObject("rolesToRsMapping")
+                                            .getJsonArray(Roles.ADMIN.toString().toLowerCase());
+                                    assertTrue(rsForAdminRole.contains(DUMMY_SERVER_ONE));
+                                    assertFalse(rsForAdminRole.contains(DUMMY_SERVER_TWO));
 
-                                assertTrue(result.containsKey(RESP_CLIENT_ARR));
-                                assertTrue(
-                                    result
-                                        .getJsonArray(RESP_CLIENT_ARR)
-                                        .getJsonObject(0)
-                                        .getString(RESP_CLIENT_ID)
-                                        .equals(utils.getDetails(user).clientId));
+                                    assertTrue(result.containsKey(RESP_CLIENT_ARR));
+                                    assertTrue(
+                                        result
+                                            .getJsonArray(RESP_CLIENT_ARR)
+                                            .getJsonObject(0)
+                                            .getString(RESP_CLIENT_ID)
+                                            .equals(utils.getDetails(user).clientId));
 
-                                testContext.completeNow();
-                              })));
+                                    testContext.completeNow();
+                                  })));
             })
         .onFailure(res -> testContext.failNow("failed"));
   }
@@ -680,18 +685,18 @@ public class AddRolesTest {
 
     User user = new UserBuilder().userId(userId).name("aa", "bb").build();
 
-    registrationService.addRoles(
-        request,
-        user,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                      assertEquals(400, response.getInteger("status"));
-                      assertEquals(ERR_DETAIL_USER_NOT_KC, response.getString("detail"));
-                      assertEquals(ERR_TITLE_USER_NOT_KC, response.getString("title"));
-                      testContext.completeNow();
-                    })));
+    registrationService
+        .addRoles(request, user)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          assertEquals(400, response.getInteger("status"));
+                          assertEquals(ERR_DETAIL_USER_NOT_KC, response.getString("detail"));
+                          assertEquals(ERR_TITLE_USER_NOT_KC, response.getString("title"));
+                          testContext.completeNow();
+                        })));
   }
 }

@@ -55,9 +55,7 @@ import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NOT_TRUSTEE;
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_NOT_TRUSTEE;
 import static iudx.aaa.server.token.Constants.ACCESS_DENIED;
 
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -142,8 +140,6 @@ public class PolicyServiceImpl implements PolicyService {
    */
   Future<JsonObject> verifyConsumerAccess(User user, RequestToken request, ResourceObj resource) {
 
-    Promise<JsonObject> p = Promise.promise();
-
     if (!user.getResServersForRole(Roles.CONSUMER).contains(resource.getResServerUrl())) {
       Response r =
           new ResponseBuilder()
@@ -152,8 +148,7 @@ public class PolicyServiceImpl implements PolicyService {
               .title(ACCESS_DENIED)
               .detail(ERR_DETAIL_CONSUMER_DOESNT_HAVE_RS_ROLE)
               .build();
-      p.fail(new ComposeException(r));
-      return p.future();
+      return Future.failedFuture(new ComposeException(r));
     }
 
     /*
@@ -170,8 +165,7 @@ public class PolicyServiceImpl implements PolicyService {
         .put(CALL_APD_OWNERID, resource.getOwnerId().toString())
         .put(CALL_APD_CONTEXT, request.getContext());
 
-    apdService.callApd(apdContext, p);
-    return p.future();
+    return apdService.callApd(apdContext);
   }
 
   /**
@@ -300,12 +294,10 @@ public class PolicyServiceImpl implements PolicyService {
   }
 
   @Override
-  public PolicyService verifyResourceAccess(
-      RequestToken request,
-      DelegationInformation delegInfo,
-      User user,
-      Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> verifyResourceAccess(
+      RequestToken request, DelegationInformation delegInfo, User user) {
     LOGGER.debug("Info : {} : Request received", LOGGER.getName());
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     String itemIdStr = request.getItemId();
     Roles role = request.getRole();
@@ -318,8 +310,8 @@ public class PolicyServiceImpl implements PolicyService {
               .title(ACCESS_DENIED)
               .detail(INVALID_ROLE)
               .build();
-      handler.handle(Future.failedFuture(new ComposeException(r)));
-      return this;
+      promiseHandler.fail(new ComposeException(r));
+      return promiseHandler.future();
     }
 
     if (!itemIdStr.matches(UUID_REGEX)) {
@@ -330,8 +322,8 @@ public class PolicyServiceImpl implements PolicyService {
               .title(INVALID_INPUT)
               .detail(INCORRECT_ITEM_ID)
               .build();
-      handler.handle(Future.failedFuture(new ComposeException(r)));
-      return this;
+      promiseHandler.fail(new ComposeException(r));
+      return promiseHandler.future();
     }
 
     UUID itemId = UUID.fromString(itemIdStr);
@@ -356,25 +348,26 @@ public class PolicyServiceImpl implements PolicyService {
         .onSuccess(
             s -> {
               s.put(CREATE_TOKEN_RG, resourceDetails.result().getResGrpId().toString());
-              handler.handle(Future.succeededFuture(s));
+              promiseHandler.complete(s);
             })
         .onFailure(
             e -> {
               if (e instanceof ComposeException) {
-                handler.handle(Future.failedFuture(e));
+                promiseHandler.fail(e);
                 return;
               }
 
               LOGGER.error("Access evaluation failed : {}", e.getMessage());
-              handler.handle(Future.failedFuture(INTERNALERROR));
+              promiseHandler.fail(INTERNALERROR);
             });
 
-    return this;
+    return promiseHandler.future();
   }
 
   @Override
-  public PolicyService listDelegation(User user, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> listDelegation(User user) {
     LOGGER.debug("Info : {} : Request received", LOGGER.getName());
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     if (!(user.getRoles().contains(Roles.PROVIDER)
         || user.getRoles().contains(Roles.CONSUMER)
@@ -386,8 +379,8 @@ public class PolicyServiceImpl implements PolicyService {
               .detail(ERR_DETAIL_LIST_DELEGATE_ROLES)
               .status(401)
               .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
+      promiseHandler.complete(r.toJson());
+      return promiseHandler.future();
     }
 
     Collector<Row, ?, List<JsonObject>> collect =
@@ -411,9 +404,7 @@ public class PolicyServiceImpl implements PolicyService {
                     ss.add(obj.getString("user_id"));
                   });
 
-              Promise<JsonObject> userDetails = Promise.promise();
-              registrationService.getUserDetails(new ArrayList<String>(ss), userDetails);
-              return userDetails.future();
+              return registrationService.getUserDetails(new ArrayList<String>(ss));
             });
 
     userInfo
@@ -440,20 +431,20 @@ public class PolicyServiceImpl implements PolicyService {
                       .arrayResults(new JsonArray(deleRes))
                       .status(200)
                       .build();
-              handler.handle(Future.succeededFuture(r.toJson()));
+              promiseHandler.complete(r.toJson());
             })
         .onFailure(
             e -> {
               LOGGER.error(e.getMessage());
-              handler.handle(Future.failedFuture("Internal error"));
+              promiseHandler.fail("Internal error");
             });
-    return this;
+    return promiseHandler.future();
   }
 
   @Override
-  public PolicyService deleteDelegation(
-      List<DeleteDelegationRequest> request, User user, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> deleteDelegation(List<DeleteDelegationRequest> request, User user) {
     LOGGER.debug("Info : {} : Request received", LOGGER.getName());
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     if (!user.getRoles().contains(Roles.PROVIDER) && !user.getRoles().contains(Roles.CONSUMER)) {
       Response r =
@@ -463,8 +454,8 @@ public class PolicyServiceImpl implements PolicyService {
               .detail(ERR_DETAIL_DEL_DELEGATE_ROLES)
               .status(401)
               .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
+      promiseHandler.complete(r.toJson());
+      return promiseHandler.future();
     }
 
     // ids will be unique - OpenAPI takes care of duplicates
@@ -515,27 +506,27 @@ public class PolicyServiceImpl implements PolicyService {
                       .objectResults(new JsonObject())
                       .status(200)
                       .build();
-              handler.handle(Future.succeededFuture(r.toJson()));
+              promiseHandler.complete(r.toJson());
               LOGGER.info("Deleted delegations {}", ids.toString());
             })
         .onFailure(
             e -> {
               if (e instanceof ComposeException) {
                 ComposeException exp = (ComposeException) e;
-                handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                promiseHandler.complete(exp.getResponse().toJson());
                 return;
               }
               LOGGER.error(e.getMessage());
-              handler.handle(Future.failedFuture("Internal error"));
+              promiseHandler.fail("Internal error");
             });
 
-    return this;
+    return promiseHandler.future();
   }
 
   @Override
-  public PolicyService createDelegation(
-      List<CreateDelegationRequest> request, User user, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> createDelegation(List<CreateDelegationRequest> request, User user) {
     LOGGER.debug("Info : {} : Request received", LOGGER.getName());
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     if (!(user.getRoles().contains(Roles.PROVIDER) || user.getRoles().contains(Roles.CONSUMER))) {
       Response r =
@@ -545,8 +536,8 @@ public class PolicyServiceImpl implements PolicyService {
               .detail(ERR_DETAIL_CREATE_DELEGATE_ROLES)
               .status(401)
               .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
+      promiseHandler.complete(r.toJson());
+      return promiseHandler.future();
     }
 
     // check if the (role + resource server) for a delegation is owned by the user
@@ -569,8 +560,8 @@ public class PolicyServiceImpl implements PolicyService {
                           new JsonArray(rsRoleNotOwnedByUser)))
               .status(400)
               .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
+      promiseHandler.complete(r.toJson());
+      return promiseHandler.future();
     }
 
     Set<String> userEmails =
@@ -579,9 +570,7 @@ public class PolicyServiceImpl implements PolicyService {
     List<String> requestedResServers =
         request.stream().map(obj -> obj.getResSerUrl()).collect(Collectors.toList());
 
-    Promise<JsonObject> usersExistProm = Promise.promise();
-    registrationService.findUserByEmail(userEmails, usersExistProm);
-    Future<JsonObject> checkUsersExist = usersExistProm.future();
+    Future<JsonObject> checkUsersExist = registrationService.findUserByEmail(userEmails);
 
     Collector<Row, ?, Map<Pair<Roles, String>, UUID>> roleRsToRoleIdCollector =
         Collectors.toMap(
@@ -680,30 +669,28 @@ public class PolicyServiceImpl implements PolicyService {
                       .title("added delegations")
                       .status(201)
                       .build();
-              handler.handle(Future.succeededFuture(r.toJson()));
+              promiseHandler.complete(r.toJson());
             })
         .onFailure(
             obj -> {
               if (obj instanceof ComposeException) {
                 ComposeException e = (ComposeException) obj;
-                handler.handle(Future.succeededFuture(e.getResponse().toJson()));
+                promiseHandler.complete(e.getResponse().toJson());
                 return;
               }
 
               LOGGER.error("Create delegation failed : {}", obj.getMessage());
-              handler.handle(Future.failedFuture(INTERNALERROR));
+              promiseHandler.fail(INTERNALERROR);
             });
 
-    return this;
+    return promiseHandler.future();
   }
 
   @Override
-  public PolicyService getDelegateEmails(
-      User user,
-      String delegatorUserId,
-      Roles delegatedRole,
-      String delegatedRsUrl,
-      Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> getDelegateEmails(
+      User user, String delegatorUserId, Roles delegatedRole, String delegatedRsUrl) {
+
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     if (!user.getRoles().contains(Roles.TRUSTEE)) {
       Response r =
@@ -713,8 +700,8 @@ public class PolicyServiceImpl implements PolicyService {
               .title(ERR_TITLE_NOT_TRUSTEE)
               .detail(ERR_DETAIL_NOT_TRUSTEE)
               .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
+      promiseHandler.complete(r.toJson());
+      return promiseHandler.future();
     }
 
     Collector<Row, ?, Set<UUID>> delegateUserIdCollector =
@@ -751,12 +738,7 @@ public class PolicyServiceImpl implements PolicyService {
             });
 
     Future<JsonObject> getDelegatesInfo =
-        uniqDelegIds.compose(
-            ids -> {
-              Promise<JsonObject> userDetails = Promise.promise();
-              registrationService.getUserDetails(ids, userDetails);
-              return userDetails.future();
-            });
+        uniqDelegIds.compose(ids -> registrationService.getUserDetails(ids));
 
     Future<JsonArray> delegEmails =
         getDelegatesInfo.compose(
@@ -779,19 +761,19 @@ public class PolicyServiceImpl implements PolicyService {
                       .title(SUCC_TITLE_DELEG_EMAILS)
                       .objectResults(new JsonObject().put("delegateEmails", res))
                       .build();
-              handler.handle(Future.succeededFuture(resp.toJson()));
+              promiseHandler.complete(resp.toJson());
             })
         .onFailure(
             e -> {
               if (e instanceof ComposeException) {
                 ComposeException exp = (ComposeException) e;
-                handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                promiseHandler.complete(exp.getResponse().toJson());
                 return;
               }
               LOGGER.error(e.getMessage());
-              handler.handle(Future.failedFuture("Internal error"));
+              promiseHandler.fail("Internal error");
             });
 
-    return this;
+    return promiseHandler.future();
   }
 }

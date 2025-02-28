@@ -16,7 +16,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -185,107 +184,136 @@ public class CreateApdTest {
 
     CreateApdRequest request = new CreateApdRequest(jsonRequest);
 
-    apdService.createApd(
-        request,
-        provConsAdminUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 401);
-                      assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-                      testContext.completeNow();
-                    })));
+    apdService
+        .createApd(request, provConsAdminUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 401);
+                          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                          testContext.completeNow();
+                        })));
   }
 
-    @Test
-    @DisplayName("Test various invalid domains")
-    void invalidDomain(VertxTestContext testContext) {
-        // Checkpoints for each test case
-        Checkpoint test1 = testContext.checkpoint();
-        Checkpoint test2 = testContext.checkpoint();
-        Checkpoint test3 = testContext.checkpoint();
-        Checkpoint test4 = testContext.checkpoint();
-        Checkpoint test5 = testContext.checkpoint();
+  @Test
+  @DisplayName("Test various invalid domains")
+  void invalidDomain(VertxTestContext testContext) {
+    // Checkpoints for each test case
+    Checkpoint test1 = testContext.checkpoint();
+    Checkpoint test2 = testContext.checkpoint();
+    Checkpoint test3 = testContext.checkpoint();
+    Checkpoint test4 = testContext.checkpoint();
+    Checkpoint test5 = testContext.checkpoint();
 
-        // Test Case 1
-        JsonObject jsonRequest1 = new JsonObject()
-                .put("name", "something")
-                .put("url", "https://something.com")
-                .put("owner", utils.getDetails(trusteeUser).email);
+    // Test Case 1
+    JsonObject jsonRequest1 =
+        new JsonObject()
+            .put("name", "something")
+            .put("url", "https://something.com")
+            .put("owner", utils.getDetails(trusteeUser).email);
 
-        apdService.createApd(new CreateApdRequest(jsonRequest1), cosAdmin, testContext.succeeding(response ->
-                testContext.verify(() -> {
-                    assertEquals(response.getInteger("status"), 400);
-                    assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                    assertEquals(ERR_TITLE_INVALID_DOMAIN, response.getString("title"));
-                    assertEquals(ERR_DETAIL_INVALID_DOMAIN, response.getString("detail"));
-                    test1.flag(); // Flag the completion of test1
-                })));
+    apdService
+        .createApd(new CreateApdRequest(jsonRequest1), cosAdmin)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 400);
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          assertEquals(ERR_TITLE_INVALID_DOMAIN, response.getString("title"));
+                          assertEquals(ERR_DETAIL_INVALID_DOMAIN, response.getString("detail"));
+                          test1.flag(); // Flag the completion of test1
+                        })));
 
-        // Test Case 2
-        JsonObject jsonRequest2 = new JsonObject()
-                .put("name", "something")
-                .put("url", "something.com:8080")
-                .put("owner", utils.getDetails(trusteeUser).email);
+    // Test Case 2
+    JsonObject jsonRequest2 =
+        new JsonObject()
+            .put("name", "something")
+            .put("url", "something.com:8080")
+            .put("owner", utils.getDetails(trusteeUser).email);
 
-        apdService.createApd(new CreateApdRequest(jsonRequest2), cosAdmin, testContext.succeeding(response ->
-                testContext.verify(() -> {
-                    assertEquals(response.getInteger("status"), 400);
-                    assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                    assertEquals(ERR_TITLE_INVALID_DOMAIN, response.getString("title"));
-                    assertEquals(ERR_DETAIL_INVALID_DOMAIN, response.getString("detail"));
-                    test2.flag(); // Flag the completion of test2
-                })));
+    apdService
+        .createApd(new CreateApdRequest(jsonRequest2), cosAdmin)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 400);
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          assertEquals(ERR_TITLE_INVALID_DOMAIN, response.getString("title"));
+                          assertEquals(ERR_DETAIL_INVALID_DOMAIN, response.getString("detail"));
+                          test2.flag(); // Flag the completion of test2
+                        })));
 
-        // Test Case 3
-        JsonObject jsonRequest3 = new JsonObject()
-                .put("name", "something")
-                .put("url", "#*(@)(84jndjhda.com")
-                .put("owner", utils.getDetails(trusteeUser).email);
+    // Test Case 3
+    JsonObject jsonRequest3 =
+        new JsonObject()
+            .put("name", "something")
+            .put("url", "#*(@)(84jndjhda.com")
+            .put("owner", utils.getDetails(trusteeUser).email);
 
-        apdService.createApd(new CreateApdRequest(jsonRequest3), cosAdmin, testContext.succeeding(response ->
-                testContext.verify(() -> {
-                    assertEquals(response.getInteger("status"), 400);
-                    assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                    assertEquals(ERR_TITLE_INVALID_DOMAIN, response.getString("title"));
-                    assertEquals(ERR_DETAIL_INVALID_DOMAIN, response.getString("detail"));
-                    test3.flag(); // Flag the completion of test3
-                })));
+    apdService
+        .createApd(new CreateApdRequest(jsonRequest3), cosAdmin)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 400);
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          assertEquals(ERR_TITLE_INVALID_DOMAIN, response.getString("title"));
+                          assertEquals(ERR_DETAIL_INVALID_DOMAIN, response.getString("detail"));
+                          test3.flag(); // Flag the completion of test3
+                        })));
 
-        // Test Case 4
-        JsonObject jsonRequest4 = new JsonObject()
-                .put("name", "something")
-                .put("url", "something.com/api/readuserclass")
-                .put("owner", utils.getDetails(trusteeUser).email);
+    // Test Case 4
+    JsonObject jsonRequest4 =
+        new JsonObject()
+            .put("name", "something")
+            .put("url", "something.com/api/readuserclass")
+            .put("owner", utils.getDetails(trusteeUser).email);
 
-        apdService.createApd(new CreateApdRequest(jsonRequest4), cosAdmin, testContext.succeeding(response ->
-                testContext.verify(() -> {
-                    assertEquals(response.getInteger("status"), 400);
-                    assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                    assertEquals(ERR_TITLE_INVALID_DOMAIN, response.getString("title"));
-                    assertEquals(ERR_DETAIL_INVALID_DOMAIN, response.getString("detail"));
-                    test4.flag(); // Flag the completion of test4
-                })));
+    apdService
+        .createApd(new CreateApdRequest(jsonRequest4), cosAdmin)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 400);
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          assertEquals(ERR_TITLE_INVALID_DOMAIN, response.getString("title"));
+                          assertEquals(ERR_DETAIL_INVALID_DOMAIN, response.getString("detail"));
+                          test4.flag(); // Flag the completion of test4
+                        })));
 
-        // Test Case 5
-        JsonObject jsonRequest5 = new JsonObject()
-                .put("name", "something")
-                .put("url", "something.com?id=1234")
-                .put("owner", utils.getDetails(trusteeUser).email);
+    // Test Case 5
+    JsonObject jsonRequest5 =
+        new JsonObject()
+            .put("name", "something")
+            .put("url", "something.com?id=1234")
+            .put("owner", utils.getDetails(trusteeUser).email);
 
-        apdService.createApd(new CreateApdRequest(jsonRequest5), cosAdmin, testContext.succeeding(response ->
-                testContext.verify(() -> {
-                    assertEquals(response.getInteger("status"), 400);
-                    assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                    assertEquals(ERR_TITLE_INVALID_DOMAIN, response.getString("title"));
-                    assertEquals(ERR_DETAIL_INVALID_DOMAIN, response.getString("detail"));
-                    test5.flag(); // Flag the completion of test5
-                })));
-    }
+    apdService
+        .createApd(new CreateApdRequest(jsonRequest5), cosAdmin)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 400);
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          assertEquals(ERR_TITLE_INVALID_DOMAIN, response.getString("title"));
+                          assertEquals(ERR_DETAIL_INVALID_DOMAIN, response.getString("detail"));
+                          test5.flag(); // Flag the completion of test5
+                        })));
+  }
 
-
-    @Test
+  @Test
   @DisplayName("Test successful APD registration")
   void successfulApdReg(VertxTestContext testContext) {
     String name = RandomStringUtils.randomAlphabetic(5).toLowerCase();
@@ -299,54 +327,52 @@ public class CreateApdTest {
 
     Mockito.doAnswer(
             i -> {
-              Promise<JsonObject> p = i.getArgument(1);
               Set<String> emails = i.getArgument(0);
               String email = new ArrayList<String>(emails).get(0);
 
               JsonObject resp = utils.getKcAdminJson(trusteeUser);
 
-              p.complete(new JsonObject().put(email, resp));
-              return i.getMock();
+              return Future.succeededFuture(new JsonObject().put(email, resp));
             })
         .when(registrationService)
-        .findUserByEmail(Mockito.anySet(), Mockito.any());
+        .findUserByEmail(Mockito.anySet());
 
-    apdService.createApd(
-        new CreateApdRequest(jsonRequest),
-        cosAdmin,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 201);
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                      assertEquals(SUCC_TITLE_REGISTERED_APD, response.getString("title"));
+    apdService
+        .createApd(new CreateApdRequest(jsonRequest), cosAdmin)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 201);
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                          assertEquals(SUCC_TITLE_REGISTERED_APD, response.getString("title"));
 
-                      JsonObject result = response.getJsonObject("results");
-                      assertEquals(name, result.getString(RESP_APD_NAME));
-                      assertEquals(url, result.getString(RESP_APD_URL));
-                      assertEquals("active", result.getString(RESP_APD_STATUS));
-                      assertTrue(result.containsKey(RESP_APD_ID));
+                          JsonObject result = response.getJsonObject("results");
+                          assertEquals(name, result.getString(RESP_APD_NAME));
+                          assertEquals(url, result.getString(RESP_APD_URL));
+                          assertEquals("active", result.getString(RESP_APD_STATUS));
+                          assertTrue(result.containsKey(RESP_APD_ID));
 
-                      assertTrue(result.containsKey(RESP_APD_OWNER));
+                          assertTrue(result.containsKey(RESP_APD_OWNER));
 
-                      JsonObject ownerDets = result.getJsonObject(RESP_APD_OWNER);
-                      assertEquals(
-                          trusteeUser.getUserId(), ownerDets.getString(RESP_OWNER_USER_ID));
-                      assertEquals(
-                          trusteeUser.getName().get("firstName"),
-                          ownerDets.getJsonObject("name").getString("firstName"));
-                      assertEquals(
-                          trusteeUser.getName().get("lastName"),
-                          ownerDets.getJsonObject("name").getString("lastName"));
-                      assertEquals(
-                          utils.getDetails(trusteeUser).email, ownerDets.getString("email"));
+                          JsonObject ownerDets = result.getJsonObject(RESP_APD_OWNER);
+                          assertEquals(
+                              trusteeUser.getUserId(), ownerDets.getString(RESP_OWNER_USER_ID));
+                          assertEquals(
+                              trusteeUser.getName().get("firstName"),
+                              ownerDets.getJsonObject("name").getString("firstName"));
+                          assertEquals(
+                              trusteeUser.getName().get("lastName"),
+                              ownerDets.getJsonObject("name").getString("lastName"));
+                          assertEquals(
+                              utils.getDetails(trusteeUser).email, ownerDets.getString("email"));
 
-                      // add to apdmap for deletion
-                      utils.apdMap.put(url, UUID.fromString(result.getString(RESP_APD_ID)));
+                          // add to apdmap for deletion
+                          utils.apdMap.put(url, UUID.fromString(result.getString(RESP_APD_ID)));
 
-                      testContext.completeNow();
-                    })));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -363,54 +389,55 @@ public class CreateApdTest {
 
     Mockito.doAnswer(
             i -> {
-              Promise<JsonObject> p = i.getArgument(1);
               Set<String> emails = i.getArgument(0);
               String email = new ArrayList<String>(emails).get(0);
 
               JsonObject resp = utils.getKcAdminJson(trusteeUser);
 
-              p.complete(new JsonObject().put(email, resp));
-              return i.getMock();
+              return Future.succeededFuture(new JsonObject().put(email, resp));
             })
         .when(registrationService)
-        .findUserByEmail(Mockito.anySet(), Mockito.any());
+        .findUserByEmail(Mockito.anySet());
 
     Checkpoint created = testContext.checkpoint();
     Checkpoint existing = testContext.checkpoint();
 
-    apdService.createApd(
-        new CreateApdRequest(jsonRequest),
-        cosAdmin,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 201);
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                      assertEquals(SUCC_TITLE_REGISTERED_APD, response.getString("title"));
-                      created.flag();
+    apdService
+        .createApd(new CreateApdRequest(jsonRequest), cosAdmin)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 201);
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                          assertEquals(SUCC_TITLE_REGISTERED_APD, response.getString("title"));
+                          created.flag();
 
-                      // add to apdmap for deletion
-                      JsonObject result = response.getJsonObject("results");
-                      utils.apdMap.put(url, UUID.fromString(result.getString(RESP_APD_ID)));
+                          // add to apdmap for deletion
+                          JsonObject result = response.getJsonObject("results");
+                          utils.apdMap.put(url, UUID.fromString(result.getString(RESP_APD_ID)));
 
-                      apdService.createApd(
-                          new CreateApdRequest(jsonRequest),
-                          cosAdmin,
-                          testContext.succeeding(
-                              fail ->
-                                  testContext.verify(
-                                      () -> {
-                                        assertEquals(fail.getInteger("status"), 409);
-                                        assertEquals(
-                                            URN_ALREADY_EXISTS.toString(), fail.getString("type"));
-                                        assertEquals(
-                                            ERR_TITLE_EXISTING_DOMAIN, fail.getString("title"));
-                                        assertEquals(
-                                            ERR_DETAIL_EXISTING_DOMAIN, fail.getString("detail"));
-                                        existing.flag();
-                                      })));
-                    })));
+                          apdService
+                              .createApd(new CreateApdRequest(jsonRequest), cosAdmin)
+                              .onComplete(
+                                  testContext.succeeding(
+                                      fail ->
+                                          testContext.verify(
+                                              () -> {
+                                                assertEquals(fail.getInteger("status"), 409);
+                                                assertEquals(
+                                                    URN_ALREADY_EXISTS.toString(),
+                                                    fail.getString("type"));
+                                                assertEquals(
+                                                    ERR_TITLE_EXISTING_DOMAIN,
+                                                    fail.getString("title"));
+                                                assertEquals(
+                                                    ERR_DETAIL_EXISTING_DOMAIN,
+                                                    fail.getString("detail"));
+                                                existing.flag();
+                                              })));
+                        })));
   }
 
   @Test
@@ -427,31 +454,29 @@ public class CreateApdTest {
 
     Mockito.doAnswer(
             i -> {
-              Promise<JsonObject> p = i.getArgument(1);
               Set<String> emails = i.getArgument(0);
 
-              p.fail(
+              return Future.failedFuture(
                   new ComposeException(
                       400, URN_MISSING_INFO, "Some emails don't exist", emails.toString()));
-              return i.getMock();
             })
         .when(registrationService)
-        .findUserByEmail(Mockito.anySet(), Mockito.any());
+        .findUserByEmail(Mockito.anySet());
 
-    apdService.createApd(
-        new CreateApdRequest(jsonRequest),
-        cosAdmin,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 400);
-                      assertEquals(URN_MISSING_INFO.toString(), response.getString("type"));
-                      assertTrue(
-                          response
-                              .getString("detail")
-                              .contains(utils.getDetails(trusteeUser).email));
-                      testContext.completeNow();
-                    })));
+    apdService
+        .createApd(new CreateApdRequest(jsonRequest), cosAdmin)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 400);
+                          assertEquals(URN_MISSING_INFO.toString(), response.getString("type"));
+                          assertTrue(
+                              response
+                                  .getString("detail")
+                                  .contains(utils.getDetails(trusteeUser).email));
+                          testContext.completeNow();
+                        })));
   }
 }
