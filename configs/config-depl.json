@@ -86,6 +86,13 @@
       "poolSize": "5",
       "serverTimeoutMs": 5000,
       "corsRegexString": "*"
-    }
+    },
+    ,
+{
+"id": "iudx.aaa.server.organization.OrganizationVerticle",
+"verticleInstances": 1,
+"required":["postgresOptions"],
+"poolSize": "5"
+}
   ]
 }

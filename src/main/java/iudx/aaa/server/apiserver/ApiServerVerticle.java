@@ -1,6 +1,7 @@
 package iudx.aaa.server.apiserver;
 
 import static iudx.aaa.server.apiserver.util.Constants.*;
+import static iudx.aaa.server.util.Constants.ORGANIZATION_SERVICE_ADDRESS;
 
 import com.nimbusds.jose.jwk.ECKey;
 import io.vertx.core.AbstractVerticle;
@@ -33,6 +34,7 @@ import iudx.aaa.server.apiserver.util.FailureHandler;
 import iudx.aaa.server.apiserver.util.FetchRoles;
 import iudx.aaa.server.apiserver.util.OIDCAuthentication;
 import iudx.aaa.server.auditing.AuditingService;
+import iudx.aaa.server.organization.service.OrganizationService;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.registration.RegistrationService;
 import iudx.aaa.server.token.TokenService;
@@ -99,6 +101,7 @@ public class ApiServerVerticle extends AbstractVerticle {
   private AdminService adminService;
   private AuditingService auditingService;
   private ApdService apdService;
+  private OrganizationService organizationService;
 
   /**
    * This method is used to start the Verticle. It deploys a verticle in a cluster, reads the
@@ -411,6 +414,8 @@ public class ApiServerVerticle extends AbstractVerticle {
               adminService = AdminService.createProxy(vertx, ADMIN_SERVICE_ADDRESS);
               auditingService = AuditingService.createProxy(vertx, AUDITING_SERVICE_ADDRESS);
               apdService = ApdService.createProxy(vertx, APD_SERVICE_ADDRESS);
+              organizationService = OrganizationService.createProxy(vertx,ORGANIZATION_SERVICE_ADDRESS);
+
             });
   }
 

@@ -1,91 +1,87 @@
 {
-  "version": "1.0",
-  "zookeepers": [
-    "zookeeper"
-  ],
-  "clusterId": "iudx-aaa-cluster",
-  "options":{
-    "postgresOptions": {
-      "databaseIP": "139.59.80.176",
-      "databasePort": "5432",
-      "databaseName": "iudx",
-      "databaseSchema":"test",
-      "databaseUserName": "iudx_user",
-      "databasePassword": "iudx@123"
-    },
-    "commonOptions":{
-      "cosDomain":"auth.test.com",
-      "cosAdminUserId": "a74792c1-a86d-48e4-b4f0-544585981718"
-    },
-    "keycloakOptions":{
-      "keycloakRealm": "some-realm",
-      "keycloakUrl": "{{protocol}}://{{keycloakHost}}:{{keycloakPort}}/auth",
-      "keycloakAdminClientId": "some-admin-client-id",
-      "keycloakAdminClientSecret": "f5800be0-258a-4cd2-820f-8128818ed70a",
-      "keycloakAdminPoolSize": "10",
-      "keycloakJwtLeeway": 90
-    },
-    "jwtKeystoreOptions":{
-      "keystorePath": "configs/keystore.jks",
-      "keystorePassword": "secret"
-    }
-  },
-  "modules": [
-    {
-      "id": "iudx.aaa.server.policy.PolicyVerticle",
-      "verticleInstances": 1,
-      "required":["postgresOptions", "commonOptions"],
-      "poolSize": "25",
-      "catalogueOptions": {
-        "catServerHost": "api.catalogue.iudx.io",
-        "catServerPort": "443",
-        "catServerBasePath": "/iudx/cat/v1"
-      }
-    },
-    {
-      "id": "iudx.aaa.server.registration.RegistrationVerticle",
-      "verticleInstances": 1,
-      "required":["postgresOptions", "keycloakOptions", "commonOptions"],
-      "serversOmittedFromRevoke":[],
-      "poolSize": "25"
-    },
-    {
-      "id": "iudx.aaa.server.token.TokenVerticle",
-      "verticleInstances": 1,
-      "required":["postgresOptions", "commonOptions", "jwtKeystoreOptions"],
-      "poolSize": "5"
-    },
-    {
-      "id": "iudx.aaa.server.admin.AdminVerticle",
-      "verticleInstances": 1,
-      "required":["postgresOptions", "commonOptions", "keycloakOptions"],
-      "poolSize": "25"
-    },
-    {
-      "id": "iudx.aaa.server.apd.ApdVerticle",
-      "verticleInstances": 1,
-      "required":["postgresOptions", "commonOptions"],
-      "webClientTimeoutMs": 4000,
-      "poolSize": "25"
-    },
-    {
-      "id": "iudx.aaa.server.auditing.AuditingVerticle",
-      "verticleInstances": 1,
-      "auditingDatabaseIP": "",
-      "auditingDatabasePort": 0,
-      "auditingDatabaseName": "",
-      "auditingDatabaseUserName": "",
-      "auditingDatabasePassword": "",
-      "auditingDatabaseTableName": "",
-      "auditingPoolSize": 25
-    },
-    {
-      "id": "iudx.aaa.server.apiserver.ApiServerVerticle",
-      "verticleInstances": 1,
-      "required":["postgresOptions", "commonOptions", "keycloakOptions", "jwtKeystoreOptions"],
-      "poolSize": "5",
-      "serverTimeoutMs": 5000,
-      "corsRegexString": "*"
-    }
-  ]
+"version": "1.0",
+"zookeepers": [
+"127.0.0.1"
+],
+"clusterId": "iudx-aaa-cluster",
+"options":{
+"postgresOptions": {
+"databaseIP": "localhost",
+"databasePort": "5433",
+"databaseName": "iudx_auth",
+"databaseSchema":"tgai",
+"databaseUserName": "iudx_auth_user",
+"databasePassword": "979ce418362d856ad688"
+},
+"commonOptions":{
+"cosDomain":"authvertx.iudx.io",
+"cosAdminUserId": "1c8a6bfc-abb0-49a7-bcba-77630c8ce4a6"
+},
+"keycloakOptions":{
+"keycloakRealm": "tgai",
+"keycloakUrl": "https://keycloak-update.iudx.io/auth",
+"keycloakAdminClientId": "keycloak-admin",
+"keycloakAdminClientSecret": "LzDVf0WfYSPHCqzpZmjcTyK3Wv7DTLzd",
+"keycloakAdminPoolSize": "10",
+"keycloakJwtLeeway": 90
+},
+"jwtKeystoreOptions":{
+"keystorePath": "configs/keystore.jks",
+"keystorePassword": "secret"
+}
+},
+"modules": [
+{
+"id": "iudx.aaa.server.policy.PolicyVerticle",
+"verticleInstances": 1,
+"required":["postgresOptions", "commonOptions"],
+"poolSize": "25",
+"catalogueOptions": {
+"catServerHost": "api.cat-test.iudx.io",
+"catServerPort": "443",
+"catServerBasePath": "/iudx/cat/v1"
+}
+},
+{
+"id": "iudx.aaa.server.registration.RegistrationVerticle",
+"verticleInstances": 1,
+"required":["postgresOptions", "keycloakOptions", "commonOptions"],
+"serversOmittedFromRevoke":["cat-test.iudx.io", "cat-sandbox.iudx.io", "authenclave.iudx.io"],
+"poolSize": "25"
+},
+{
+"id": "iudx.aaa.server.token.TokenVerticle",
+"verticleInstances": 1,
+"required":["postgresOptions", "commonOptions", "jwtKeystoreOptions"],
+"poolSize": "5"
+},
+{
+"id": "iudx.aaa.server.admin.AdminVerticle",
+"verticleInstances": 1,
+"required":["postgresOptions", "commonOptions", "keycloakOptions"],
+"poolSize": "25"
+},
+{
+"id": "iudx.aaa.server.apd.ApdVerticle",
+"verticleInstances": 1,
+"required":["postgresOptions", "commonOptions"],
+"webClientTimeoutMs": 4000,
+"poolSize": "25"
+},
+{
+"id": "iudx.aaa.server.apiserver.ApiServerVerticle",
+"verticleInstances": 1,
+"httpPort":8443,
+"required":["postgresOptions", "commonOptions", "keycloakOptions", "jwtKeystoreOptions"],
+"poolSize": "5",
+"serverTimeoutMs": 30000,
+"corsRegexString":"^https://.+\\.iudx\\.org\\.in$"
+},
+{
+"id": "iudx.aaa.server.organization.OrganizationVerticle",
+"verticleInstances": 1,
+"required":["postgresOptions"],
+"poolSize": "5"
+}
+]
 }
