@@ -159,19 +159,19 @@ public class DeleteDelegationTest {
 
     List<DeleteDelegationRequest> req = new ArrayList<DeleteDelegationRequest>();
 
-    policyService.deleteDelegation(
-        req,
-        dummyUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-                      assertEquals(ERR_TITLE_INVALID_ROLES, response.getString("title"));
-                      assertEquals(ERR_DETAIL_DEL_DELEGATE_ROLES, response.getString("detail"));
-                      assertEquals(401, response.getInteger("status"));
-                      testContext.completeNow();
-                    })));
+    policyService
+        .deleteDelegation(req, dummyUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                          assertEquals(ERR_TITLE_INVALID_ROLES, response.getString("title"));
+                          assertEquals(ERR_DETAIL_DEL_DELEGATE_ROLES, response.getString("detail"));
+                          assertEquals(401, response.getInteger("status"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -217,21 +217,22 @@ public class DeleteDelegationTest {
                       .add(new JsonObject().put("id", inValidDelegationId.toString()));
               List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(req);
 
-              policyService.deleteDelegation(
-                  request,
-                  consumerUser,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(
-                                    URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                                assertEquals(ERR_TITLE_INVALID_ID, response.getString("title"));
-                                assertEquals(
-                                    inValidDelegationId.toString(), response.getString("detail"));
-                                assertEquals(400, response.getInteger("status"));
-                                testContext.completeNow();
-                              })));
+              policyService
+                  .deleteDelegation(request, consumerUser)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(
+                                        URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                                    assertEquals(ERR_TITLE_INVALID_ID, response.getString("title"));
+                                    assertEquals(
+                                        inValidDelegationId.toString(),
+                                        response.getString("detail"));
+                                    assertEquals(400, response.getInteger("status"));
+                                    testContext.completeNow();
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
@@ -286,21 +287,22 @@ public class DeleteDelegationTest {
                       .add(new JsonObject().put("id", deletedDelegationId.toString()));
               List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(req);
 
-              policyService.deleteDelegation(
-                  request,
-                  consumerUser,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(
-                                    URN_INVALID_INPUT.toString(), response.getString(TYPE));
-                                assertEquals(ERR_TITLE_INVALID_ID, response.getString("title"));
-                                assertEquals(
-                                    deletedDelegationId.toString(), response.getString("detail"));
-                                assertEquals(400, response.getInteger("status"));
-                                testContext.completeNow();
-                              })));
+              policyService
+                  .deleteDelegation(request, consumerUser)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(
+                                        URN_INVALID_INPUT.toString(), response.getString(TYPE));
+                                    assertEquals(ERR_TITLE_INVALID_ID, response.getString("title"));
+                                    assertEquals(
+                                        deletedDelegationId.toString(),
+                                        response.getString("detail"));
+                                    assertEquals(400, response.getInteger("status"));
+                                    testContext.completeNow();
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
@@ -343,18 +345,19 @@ public class DeleteDelegationTest {
                   new JsonArray().add(new JsonObject().put("id", consumersDelegationId.toString()));
               List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(req);
 
-              policyService.deleteDelegation(
-                  request,
-                  consumerUser,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-                                assertEquals(SUCC_TITLE_DELETE_DELE, response.getString("title"));
-                                assertEquals(200, response.getInteger("status"));
-                                testContext.completeNow();
-                              })));
+              policyService
+                  .deleteDelegation(request, consumerUser)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                                    assertEquals(
+                                        SUCC_TITLE_DELETE_DELE, response.getString("title"));
+                                    assertEquals(200, response.getInteger("status"));
+                                    testContext.completeNow();
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
@@ -397,18 +400,19 @@ public class DeleteDelegationTest {
                   new JsonArray().add(new JsonObject().put("id", providersDelegationId.toString()));
               List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(req);
 
-              policyService.deleteDelegation(
-                  request,
-                  providerUser,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-                                assertEquals(SUCC_TITLE_DELETE_DELE, response.getString("title"));
-                                assertEquals(200, response.getInteger("status"));
-                                testContext.completeNow();
-                              })));
+              policyService
+                  .deleteDelegation(request, providerUser)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                                    assertEquals(
+                                        SUCC_TITLE_DELETE_DELE, response.getString("title"));
+                                    assertEquals(200, response.getInteger("status"));
+                                    testContext.completeNow();
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
@@ -454,38 +458,40 @@ public class DeleteDelegationTest {
                   new JsonArray().add(new JsonObject().put("id", providersDelegationId.toString()));
               List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(req);
 
-              policyService.deleteDelegation(
-                  request,
-                  providerUser,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-                                assertEquals(SUCC_TITLE_DELETE_DELE, response.getString("title"));
-                                assertEquals(200, response.getInteger("status"));
-                                deleted.flag();
+              policyService
+                  .deleteDelegation(request, providerUser)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                                    assertEquals(
+                                        SUCC_TITLE_DELETE_DELE, response.getString("title"));
+                                    assertEquals(200, response.getInteger("status"));
+                                    deleted.flag();
 
-                                policyService.deleteDelegation(
-                                    request,
-                                    providerUser,
-                                    testContext.succeeding(
-                                        resp ->
-                                            testContext.verify(
-                                                () -> {
-                                                  assertEquals(
-                                                      URN_INVALID_INPUT.toString(),
-                                                      resp.getString(TYPE));
-                                                  assertEquals(
-                                                      ERR_TITLE_INVALID_ID,
-                                                      resp.getString("title"));
-                                                  assertEquals(
-                                                      providersDelegationId.toString(),
-                                                      resp.getString("detail"));
-                                                  assertEquals(400, resp.getInteger("status"));
-                                                  cannotDelete.flag();
-                                                })));
-                              })));
+                                    policyService
+                                        .deleteDelegation(request, providerUser)
+                                        .onComplete(
+                                            testContext.succeeding(
+                                                resp ->
+                                                    testContext.verify(
+                                                        () -> {
+                                                          assertEquals(
+                                                              URN_INVALID_INPUT.toString(),
+                                                              resp.getString(TYPE));
+                                                          assertEquals(
+                                                              ERR_TITLE_INVALID_ID,
+                                                              resp.getString("title"));
+                                                          assertEquals(
+                                                              providersDelegationId.toString(),
+                                                              resp.getString("detail"));
+                                                          assertEquals(
+                                                              400, resp.getInteger("status"));
+                                                          cannotDelete.flag();
+                                                        })));
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
@@ -552,18 +558,19 @@ public class DeleteDelegationTest {
                       .add(new JsonObject().put("id", providerDelegationId.toString()));
               List<DeleteDelegationRequest> request = DeleteDelegationRequest.jsonArrayToList(req);
 
-              policyService.deleteDelegation(
-                  request,
-                  consProvUser,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
-                                assertEquals(SUCC_TITLE_DELETE_DELE, response.getString("title"));
-                                assertEquals(200, response.getInteger("status"));
-                                testContext.completeNow();
-                              })));
+              policyService
+                  .deleteDelegation(request, consProvUser)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(URN_SUCCESS.toString(), response.getString(TYPE));
+                                    assertEquals(
+                                        SUCC_TITLE_DELETE_DELE, response.getString("title"));
+                                    assertEquals(200, response.getInteger("status"));
+                                    testContext.completeNow();
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }

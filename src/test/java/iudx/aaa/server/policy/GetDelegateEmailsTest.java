@@ -193,71 +193,69 @@ public class GetDelegateEmailsTest {
             .name("aa", "bb")
             .build();
 
-    policyService.getDelegateEmails(
-        dummyUser,
-        UUID.randomUUID().toString(),
-        Roles.CONSUMER,
-        DUMMY_SERVER,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(401, response.getInteger("status"));
-                      assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-                      assertEquals(ERR_TITLE_NOT_TRUSTEE, response.getString("title"));
-                      assertEquals(ERR_DETAIL_NOT_TRUSTEE, response.getString("detail"));
-                      testContext.completeNow();
-                    })));
+    policyService
+        .getDelegateEmails(dummyUser, UUID.randomUUID().toString(), Roles.CONSUMER, DUMMY_SERVER)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(401, response.getInteger("status"));
+                          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                          assertEquals(ERR_TITLE_NOT_TRUSTEE, response.getString("title"));
+                          assertEquals(ERR_DETAIL_NOT_TRUSTEE, response.getString("detail"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
   @DisplayName("User ID does not exist on COS")
   void userIdDoesNotExist(VertxTestContext testContext) {
 
-    policyService.getDelegateEmails(
-        trusteeUser,
-        UUID.randomUUID().toString(),
-        Roles.CONSUMER,
-        DUMMY_SERVER,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(200, response.getInteger("status"));
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                      assertEquals(SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
-                      assertTrue(
-                          response
-                              .getJsonObject("results")
-                              .getJsonArray(RESP_DELEG_EMAILS)
-                              .isEmpty());
-                      testContext.completeNow();
-                    })));
+    policyService
+        .getDelegateEmails(trusteeUser, UUID.randomUUID().toString(), Roles.CONSUMER, DUMMY_SERVER)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(200, response.getInteger("status"));
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                          assertEquals(SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
+                          assertTrue(
+                              response
+                                  .getJsonObject("results")
+                                  .getJsonArray(RESP_DELEG_EMAILS)
+                                  .isEmpty());
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
   @DisplayName("User ID AND RS does not exist on COS")
   void userIdAndRsDoesNotExist(VertxTestContext testContext) {
 
-    policyService.getDelegateEmails(
-        trusteeUser,
-        UUID.randomUUID().toString(),
-        Roles.CONSUMER,
-        RandomStringUtils.randomAlphabetic(10).toLowerCase(),
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(200, response.getInteger("status"));
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                      assertEquals(SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
-                      assertTrue(
-                          response
-                              .getJsonObject("results")
-                              .getJsonArray(RESP_DELEG_EMAILS)
-                              .isEmpty());
-                      testContext.completeNow();
-                    })));
+    policyService
+        .getDelegateEmails(
+            trusteeUser,
+            UUID.randomUUID().toString(),
+            Roles.CONSUMER,
+            RandomStringUtils.randomAlphabetic(10).toLowerCase())
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(200, response.getInteger("status"));
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+                          assertEquals(SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
+                          assertTrue(
+                              response
+                                  .getJsonObject("results")
+                                  .getJsonArray(RESP_DELEG_EMAILS)
+                                  .isEmpty());
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -278,25 +276,29 @@ public class GetDelegateEmailsTest {
     create
         .onSuccess(
             res -> {
-              policyService.getDelegateEmails(
-                  trusteeUser,
-                  user.getUserId(),
-                  Roles.CONSUMER,
-                  RandomStringUtils.randomAlphabetic(10).toLowerCase(),
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(200, response.getInteger("status"));
-                                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                                assertEquals(SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
-                                assertTrue(
-                                    response
-                                        .getJsonObject("results")
-                                        .getJsonArray(RESP_DELEG_EMAILS)
-                                        .isEmpty());
-                                testContext.completeNow();
-                              })));
+              policyService
+                  .getDelegateEmails(
+                      trusteeUser,
+                      user.getUserId(),
+                      Roles.CONSUMER,
+                      RandomStringUtils.randomAlphabetic(10).toLowerCase())
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(200, response.getInteger("status"));
+                                    assertEquals(
+                                        URN_SUCCESS.toString(), response.getString("type"));
+                                    assertEquals(
+                                        SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
+                                    assertTrue(
+                                        response
+                                            .getJsonObject("results")
+                                            .getJsonArray(RESP_DELEG_EMAILS)
+                                            .isEmpty());
+                                    testContext.completeNow();
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
@@ -319,25 +321,25 @@ public class GetDelegateEmailsTest {
     create
         .onSuccess(
             res -> {
-              policyService.getDelegateEmails(
-                  trusteeUser,
-                  user.getUserId(),
-                  Roles.PROVIDER,
-                  DUMMY_SERVER,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(200, response.getInteger("status"));
-                                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                                assertEquals(SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
-                                assertTrue(
-                                    response
-                                        .getJsonObject("results")
-                                        .getJsonArray(RESP_DELEG_EMAILS)
-                                        .isEmpty());
-                                testContext.completeNow();
-                              })));
+              policyService
+                  .getDelegateEmails(trusteeUser, user.getUserId(), Roles.PROVIDER, DUMMY_SERVER)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(200, response.getInteger("status"));
+                                    assertEquals(
+                                        URN_SUCCESS.toString(), response.getString("type"));
+                                    assertEquals(
+                                        SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
+                                    assertTrue(
+                                        response
+                                            .getJsonObject("results")
+                                            .getJsonArray(RESP_DELEG_EMAILS)
+                                            .isEmpty());
+                                    testContext.completeNow();
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
@@ -360,25 +362,29 @@ public class GetDelegateEmailsTest {
     create
         .onSuccess(
             res -> {
-              policyService.getDelegateEmails(
-                  trusteeUser,
-                  user.getUserId(),
-                  Roles.CONSUMER,
-                  DUMMY_SERVER_THAT_NO_ONE_HAS_ROLES_FOR,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(200, response.getInteger("status"));
-                                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                                assertEquals(SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
-                                assertTrue(
-                                    response
-                                        .getJsonObject("results")
-                                        .getJsonArray(RESP_DELEG_EMAILS)
-                                        .isEmpty());
-                                testContext.completeNow();
-                              })));
+              policyService
+                  .getDelegateEmails(
+                      trusteeUser,
+                      user.getUserId(),
+                      Roles.CONSUMER,
+                      DUMMY_SERVER_THAT_NO_ONE_HAS_ROLES_FOR)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(200, response.getInteger("status"));
+                                    assertEquals(
+                                        URN_SUCCESS.toString(), response.getString("type"));
+                                    assertEquals(
+                                        SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
+                                    assertTrue(
+                                        response
+                                            .getJsonObject("results")
+                                            .getJsonArray(RESP_DELEG_EMAILS)
+                                            .isEmpty());
+                                    testContext.completeNow();
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
@@ -401,25 +407,25 @@ public class GetDelegateEmailsTest {
     create
         .onSuccess(
             res -> {
-              policyService.getDelegateEmails(
-                  trusteeUser,
-                  user.getUserId(),
-                  Roles.CONSUMER,
-                  DUMMY_SERVER,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(200, response.getInteger("status"));
-                                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                                assertEquals(SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
-                                assertTrue(
-                                    response
-                                        .getJsonObject("results")
-                                        .getJsonArray(RESP_DELEG_EMAILS)
-                                        .isEmpty());
-                                testContext.completeNow();
-                              })));
+              policyService
+                  .getDelegateEmails(trusteeUser, user.getUserId(), Roles.CONSUMER, DUMMY_SERVER)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(200, response.getInteger("status"));
+                                    assertEquals(
+                                        URN_SUCCESS.toString(), response.getString("type"));
+                                    assertEquals(
+                                        SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
+                                    assertTrue(
+                                        response
+                                            .getJsonObject("results")
+                                            .getJsonArray(RESP_DELEG_EMAILS)
+                                            .isEmpty());
+                                    testContext.completeNow();
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
@@ -462,25 +468,25 @@ public class GetDelegateEmailsTest {
     create
         .onSuccess(
             res -> {
-              policyService.getDelegateEmails(
-                  trusteeUser,
-                  user.getUserId(),
-                  Roles.CONSUMER,
-                  DUMMY_SERVER,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(200, response.getInteger("status"));
-                                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                                assertEquals(SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
-                                assertTrue(
-                                    response
-                                        .getJsonObject("results")
-                                        .getJsonArray(RESP_DELEG_EMAILS)
-                                        .isEmpty());
-                                testContext.completeNow();
-                              })));
+              policyService
+                  .getDelegateEmails(trusteeUser, user.getUserId(), Roles.CONSUMER, DUMMY_SERVER)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(200, response.getInteger("status"));
+                                    assertEquals(
+                                        URN_SUCCESS.toString(), response.getString("type"));
+                                    assertEquals(
+                                        SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
+                                    assertTrue(
+                                        response
+                                            .getJsonObject("results")
+                                            .getJsonArray(RESP_DELEG_EMAILS)
+                                            .isEmpty());
+                                    testContext.completeNow();
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
@@ -547,32 +553,34 @@ public class GetDelegateEmailsTest {
 
               mockRegistrationFactory.setResponse(regServiceResponse);
 
-              policyService.getDelegateEmails(
-                  trusteeUser,
-                  user.getUserId(),
-                  Roles.CONSUMER,
-                  DUMMY_SERVER,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(200, response.getInteger("status"));
-                                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                                assertEquals(SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
+              policyService
+                  .getDelegateEmails(trusteeUser, user.getUserId(), Roles.CONSUMER, DUMMY_SERVER)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(200, response.getInteger("status"));
+                                    assertEquals(
+                                        URN_SUCCESS.toString(), response.getString("type"));
+                                    assertEquals(
+                                        SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
 
-                                JsonArray sentEmails =
-                                    response
-                                        .getJsonObject("results")
-                                        .getJsonArray(RESP_DELEG_EMAILS);
+                                    JsonArray sentEmails =
+                                        response
+                                            .getJsonObject("results")
+                                            .getJsonArray(RESP_DELEG_EMAILS);
 
-                                assertEquals(sentEmails.size(), 2);
+                                    assertEquals(sentEmails.size(), 2);
 
-                                assertTrue(
-                                    sentEmails.contains(utils.getDetails(delegateUserOne).email));
-                                assertTrue(
-                                    sentEmails.contains(utils.getDetails(delegateUserTwo).email));
-                                testContext.completeNow();
-                              })));
+                                    assertTrue(
+                                        sentEmails.contains(
+                                            utils.getDetails(delegateUserOne).email));
+                                    assertTrue(
+                                        sentEmails.contains(
+                                            utils.getDetails(delegateUserTwo).email));
+                                    testContext.completeNow();
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
@@ -639,32 +647,34 @@ public class GetDelegateEmailsTest {
 
               mockRegistrationFactory.setResponse(regServiceResponse);
 
-              policyService.getDelegateEmails(
-                  trusteeUser,
-                  user.getUserId(),
-                  Roles.PROVIDER,
-                  DUMMY_SERVER,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(200, response.getInteger("status"));
-                                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                                assertEquals(SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
+              policyService
+                  .getDelegateEmails(trusteeUser, user.getUserId(), Roles.PROVIDER, DUMMY_SERVER)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(200, response.getInteger("status"));
+                                    assertEquals(
+                                        URN_SUCCESS.toString(), response.getString("type"));
+                                    assertEquals(
+                                        SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
 
-                                JsonArray sentEmails =
-                                    response
-                                        .getJsonObject("results")
-                                        .getJsonArray(RESP_DELEG_EMAILS);
+                                    JsonArray sentEmails =
+                                        response
+                                            .getJsonObject("results")
+                                            .getJsonArray(RESP_DELEG_EMAILS);
 
-                                assertEquals(sentEmails.size(), 2);
+                                    assertEquals(sentEmails.size(), 2);
 
-                                assertTrue(
-                                    sentEmails.contains(utils.getDetails(delegateUserOne).email));
-                                assertTrue(
-                                    sentEmails.contains(utils.getDetails(delegateUserTwo).email));
-                                testContext.completeNow();
-                              })));
+                                    assertTrue(
+                                        sentEmails.contains(
+                                            utils.getDetails(delegateUserOne).email));
+                                    assertTrue(
+                                        sentEmails.contains(
+                                            utils.getDetails(delegateUserTwo).email));
+                                    testContext.completeNow();
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }
@@ -742,57 +752,57 @@ public class GetDelegateEmailsTest {
 
               mockRegistrationFactory.setResponse(regServiceResponse);
 
-              policyService.getDelegateEmails(
-                  trusteeUser,
-                  user.getUserId(),
-                  Roles.CONSUMER,
-                  DUMMY_SERVER,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(200, response.getInteger("status"));
-                                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                                assertEquals(SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
+              policyService
+                  .getDelegateEmails(trusteeUser, user.getUserId(), Roles.CONSUMER, DUMMY_SERVER)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(200, response.getInteger("status"));
+                                    assertEquals(
+                                        URN_SUCCESS.toString(), response.getString("type"));
+                                    assertEquals(
+                                        SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
 
-                                JsonArray sentEmails =
-                                    response
-                                        .getJsonObject("results")
-                                        .getJsonArray(RESP_DELEG_EMAILS);
+                                    JsonArray sentEmails =
+                                        response
+                                            .getJsonObject("results")
+                                            .getJsonArray(RESP_DELEG_EMAILS);
 
-                                assertEquals(sentEmails.size(), 1);
+                                    assertEquals(sentEmails.size(), 1);
 
-                                assertTrue(
-                                    sentEmails.contains(
-                                        utils.getDetails(consumerDelegateUser).email));
-                                getConsumerDelegateEmail.flag();
-                              })));
+                                    assertTrue(
+                                        sentEmails.contains(
+                                            utils.getDetails(consumerDelegateUser).email));
+                                    getConsumerDelegateEmail.flag();
+                                  })));
 
-              policyService.getDelegateEmails(
-                  trusteeUser,
-                  user.getUserId(),
-                  Roles.PROVIDER,
-                  DUMMY_SERVER,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(200, response.getInteger("status"));
-                                assertEquals(URN_SUCCESS.toString(), response.getString("type"));
-                                assertEquals(SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
+              policyService
+                  .getDelegateEmails(trusteeUser, user.getUserId(), Roles.PROVIDER, DUMMY_SERVER)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(200, response.getInteger("status"));
+                                    assertEquals(
+                                        URN_SUCCESS.toString(), response.getString("type"));
+                                    assertEquals(
+                                        SUCC_TITLE_DELEG_EMAILS, response.getString("title"));
 
-                                JsonArray sentEmails =
-                                    response
-                                        .getJsonObject("results")
-                                        .getJsonArray(RESP_DELEG_EMAILS);
+                                    JsonArray sentEmails =
+                                        response
+                                            .getJsonObject("results")
+                                            .getJsonArray(RESP_DELEG_EMAILS);
 
-                                assertEquals(sentEmails.size(), 1);
+                                    assertEquals(sentEmails.size(), 1);
 
-                                assertTrue(
-                                    sentEmails.contains(
-                                        utils.getDetails(providerDelegateUser).email));
-                                getProviderDelegateEmail.flag();
-                              })));
+                                    assertTrue(
+                                        sentEmails.contains(
+                                            utils.getDetails(providerDelegateUser).email));
+                                    getProviderDelegateEmail.flag();
+                                  })));
             })
         .onFailure(fail -> testContext.failNow(fail.getMessage()));
   }

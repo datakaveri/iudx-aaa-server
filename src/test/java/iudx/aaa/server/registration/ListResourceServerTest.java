@@ -178,40 +178,42 @@ public class ListResourceServerTest {
         .when(kc)
         .getDetails(Mockito.anyList());
 
-    registrationService.listResourceServer(
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(SUCC_TITLE_RS_READ, response.getString("title"));
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+    registrationService
+        .listResourceServer()
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(SUCC_TITLE_RS_READ, response.getString("title"));
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-                      @SuppressWarnings("unchecked")
-                      List<JsonObject> list = response.getJsonArray("results").getList();
+                          @SuppressWarnings("unchecked")
+                          List<JsonObject> list = response.getJsonArray("results").getList();
 
-                      Boolean oneExists =
-                          list.stream()
-                              .anyMatch(
-                                  obj -> {
-                                    return (obj.getString("url").equals(DUMMY_SERVER_ONE)
-                                        && obj.getJsonObject("owner")
-                                            .getString("id")
-                                            .equals(adminOneUser.getUserId()));
-                                  });
+                          Boolean oneExists =
+                              list.stream()
+                                  .anyMatch(
+                                      obj -> {
+                                        return (obj.getString("url").equals(DUMMY_SERVER_ONE)
+                                            && obj.getJsonObject("owner")
+                                                .getString("id")
+                                                .equals(adminOneUser.getUserId()));
+                                      });
 
-                      Boolean twoExists =
-                          list.stream()
-                              .anyMatch(
-                                  obj -> {
-                                    return (obj.getString("url").equals(DUMMY_SERVER_TWO)
-                                        && obj.getJsonObject("owner")
-                                            .getString("id")
-                                            .equals(adminTwoUser.getUserId()));
-                                  });
+                          Boolean twoExists =
+                              list.stream()
+                                  .anyMatch(
+                                      obj -> {
+                                        return (obj.getString("url").equals(DUMMY_SERVER_TWO)
+                                            && obj.getJsonObject("owner")
+                                                .getString("id")
+                                                .equals(adminTwoUser.getUserId()));
+                                      });
 
-                      assertTrue(oneExists);
-                      assertTrue(twoExists);
-                      testContext.completeNow();
-                    })));
+                          assertTrue(oneExists);
+                          assertTrue(twoExists);
+                          testContext.completeNow();
+                        })));
   }
 }

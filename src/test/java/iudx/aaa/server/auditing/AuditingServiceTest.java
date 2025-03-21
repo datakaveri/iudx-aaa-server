@@ -16,7 +16,6 @@ import static iudx.aaa.server.auditing.util.Constants.USER_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
@@ -78,16 +77,18 @@ public class AuditingServiceTest {
     JsonObject jsonObject = writeRequest();
     jsonObject.remove(API);
 
-    auditingService.executeWriteQuery(
-        jsonObject,
-        vertxTestContext.failing(
-            response ->
-                vertxTestContext.verify(
-                    () -> {
-                      assertEquals(
-                          DATA_NOT_FOUND, new JsonObject(response.getMessage()).getString(DETAIL));
-                      vertxTestContext.completeNow();
-                    })));
+    auditingService
+        .executeWriteQuery(jsonObject)
+        .onComplete(
+            vertxTestContext.failing(
+                response ->
+                    vertxTestContext.verify(
+                        () -> {
+                          assertEquals(
+                              DATA_NOT_FOUND,
+                              new JsonObject(response.getMessage()).getString(DETAIL));
+                          vertxTestContext.completeNow();
+                        })));
   }
 
   @Test
@@ -96,16 +97,18 @@ public class AuditingServiceTest {
     JsonObject jsonObject = writeRequest();
     jsonObject.remove(BODY);
 
-    auditingService.executeWriteQuery(
-        jsonObject,
-        vertxTestContext.failing(
-            response ->
-                vertxTestContext.verify(
-                    () -> {
-                      assertEquals(
-                          DATA_NOT_FOUND, new JsonObject(response.getMessage()).getString(DETAIL));
-                      vertxTestContext.completeNow();
-                    })));
+    auditingService
+        .executeWriteQuery(jsonObject)
+        .onComplete(
+            vertxTestContext.failing(
+                response ->
+                    vertxTestContext.verify(
+                        () -> {
+                          assertEquals(
+                              DATA_NOT_FOUND,
+                              new JsonObject(response.getMessage()).getString(DETAIL));
+                          vertxTestContext.completeNow();
+                        })));
   }
 
   @Test
@@ -114,16 +117,18 @@ public class AuditingServiceTest {
     JsonObject jsonObject = writeRequest();
     jsonObject.remove(USER_ID);
 
-    auditingService.executeWriteQuery(
-        jsonObject,
-        vertxTestContext.failing(
-            response ->
-                vertxTestContext.verify(
-                    () -> {
-                      assertEquals(
-                          DATA_NOT_FOUND, new JsonObject(response.getMessage()).getString(DETAIL));
-                      vertxTestContext.completeNow();
-                    })));
+    auditingService
+        .executeWriteQuery(jsonObject)
+        .onComplete(
+            vertxTestContext.failing(
+                response ->
+                    vertxTestContext.verify(
+                        () -> {
+                          assertEquals(
+                              DATA_NOT_FOUND,
+                              new JsonObject(response.getMessage()).getString(DETAIL));
+                          vertxTestContext.completeNow();
+                        })));
   }
 
   @Test
@@ -132,16 +137,18 @@ public class AuditingServiceTest {
     JsonObject jsonObject = writeRequest();
     jsonObject.remove(METHOD);
 
-    auditingService.executeWriteQuery(
-        jsonObject,
-        vertxTestContext.failing(
-            response ->
-                vertxTestContext.verify(
-                    () -> {
-                      assertEquals(
-                          DATA_NOT_FOUND, new JsonObject(response.getMessage()).getString(DETAIL));
-                      vertxTestContext.completeNow();
-                    })));
+    auditingService
+        .executeWriteQuery(jsonObject)
+        .onComplete(
+            vertxTestContext.failing(
+                response ->
+                    vertxTestContext.verify(
+                        () -> {
+                          assertEquals(
+                              DATA_NOT_FOUND,
+                              new JsonObject(response.getMessage()).getString(DETAIL));
+                          vertxTestContext.completeNow();
+                        })));
   }
 
   @Test
@@ -149,15 +156,16 @@ public class AuditingServiceTest {
   void writeData(VertxTestContext vertxTestContext) {
     JsonObject jsonObject = writeRequest();
 
-    auditingService.executeWriteQuery(
-        jsonObject,
-        vertxTestContext.succeeding(
-            response ->
-                vertxTestContext.verify(
-                    () -> {
-                      assertTrue(response.getString("title").equals("Success"));
-                      vertxTestContext.completeNow();
-                    })));
+    auditingService
+        .executeWriteQuery(jsonObject)
+        .onComplete(
+            vertxTestContext.succeeding(
+                response ->
+                    vertxTestContext.verify(
+                        () -> {
+                          assertTrue(response.getString("title").equals("Success"));
+                          vertxTestContext.completeNow();
+                        })));
   }
 
   private JsonObject readRequest() {
@@ -179,25 +187,23 @@ public class AuditingServiceTest {
      */
     JsonObject dataToWrite = writeRequest();
 
-    Promise<JsonObject> promise = Promise.promise();
-    auditingService.executeWriteQuery(dataToWrite, promise);
-
-    promise
-        .future()
+    auditingService
+        .executeWriteQuery(dataToWrite)
         .onComplete(
             written -> {
               // create readRequest here so that query endTime is
               // only after the write is done
               JsonObject jsonObject = readRequest();
-              auditingService.executeReadQuery(
-                  jsonObject,
-                  vertxTestContext.succeeding(
-                      response ->
-                          vertxTestContext.verify(
-                              () -> {
-                                assertTrue(response.getString("title").equals("Success"));
-                                vertxTestContext.completeNow();
-                              })));
+              auditingService
+                  .executeReadQuery(jsonObject)
+                  .onComplete(
+                      vertxTestContext.succeeding(
+                          response ->
+                              vertxTestContext.verify(
+                                  () -> {
+                                    assertTrue(response.getString("title").equals("Success"));
+                                    vertxTestContext.completeNow();
+                                  })));
             });
   }
 
@@ -207,17 +213,18 @@ public class AuditingServiceTest {
     JsonObject jsonObject = readRequest();
     jsonObject.remove(USER_ID);
 
-    auditingService.executeReadQuery(
-        jsonObject,
-        vertxTestContext.failing(
-            response ->
-                vertxTestContext.verify(
-                    () -> {
-                      assertEquals(
-                          USERID_NOT_FOUND,
-                          new JsonObject(response.getMessage()).getString(DETAIL));
-                      vertxTestContext.completeNow();
-                    })));
+    auditingService
+        .executeReadQuery(jsonObject)
+        .onComplete(
+            vertxTestContext.failing(
+                response ->
+                    vertxTestContext.verify(
+                        () -> {
+                          assertEquals(
+                              USERID_NOT_FOUND,
+                              new JsonObject(response.getMessage()).getString(DETAIL));
+                          vertxTestContext.completeNow();
+                        })));
   }
 
   @Test
@@ -226,17 +233,18 @@ public class AuditingServiceTest {
     JsonObject jsonObject = readRequest();
     jsonObject.remove(START_TIME);
 
-    auditingService.executeReadQuery(
-        jsonObject,
-        vertxTestContext.failing(
-            response ->
-                vertxTestContext.verify(
-                    () -> {
-                      assertEquals(
-                          MISSING_START_TIME,
-                          new JsonObject(response.getMessage()).getString(DETAIL));
-                      vertxTestContext.completeNow();
-                    })));
+    auditingService
+        .executeReadQuery(jsonObject)
+        .onComplete(
+            vertxTestContext.failing(
+                response ->
+                    vertxTestContext.verify(
+                        () -> {
+                          assertEquals(
+                              MISSING_START_TIME,
+                              new JsonObject(response.getMessage()).getString(DETAIL));
+                          vertxTestContext.completeNow();
+                        })));
   }
 
   @Test
@@ -245,17 +253,18 @@ public class AuditingServiceTest {
     JsonObject jsonObject = readRequest();
     jsonObject.remove(END_TIME);
 
-    auditingService.executeReadQuery(
-        jsonObject,
-        vertxTestContext.failing(
-            response ->
-                vertxTestContext.verify(
-                    () -> {
-                      assertEquals(
-                          MISSING_END_TIME,
-                          new JsonObject(response.getMessage()).getString(DETAIL));
-                      vertxTestContext.completeNow();
-                    })));
+    auditingService
+        .executeReadQuery(jsonObject)
+        .onComplete(
+            vertxTestContext.failing(
+                response ->
+                    vertxTestContext.verify(
+                        () -> {
+                          assertEquals(
+                              MISSING_END_TIME,
+                              new JsonObject(response.getMessage()).getString(DETAIL));
+                          vertxTestContext.completeNow();
+                        })));
   }
 
   @Test
@@ -266,16 +275,18 @@ public class AuditingServiceTest {
     jsonObject.put(START_TIME, jsonObject.getString(END_TIME));
     jsonObject.put(END_TIME, temp);
 
-    auditingService.executeReadQuery(
-        jsonObject,
-        vertxTestContext.failing(
-            response ->
-                vertxTestContext.verify(
-                    () -> {
-                      assertEquals(
-                          INVALID_TIME, new JsonObject(response.getMessage()).getString(DETAIL));
-                      vertxTestContext.completeNow();
-                    })));
+    auditingService
+        .executeReadQuery(jsonObject)
+        .onComplete(
+            vertxTestContext.failing(
+                response ->
+                    vertxTestContext.verify(
+                        () -> {
+                          assertEquals(
+                              INVALID_TIME,
+                              new JsonObject(response.getMessage()).getString(DETAIL));
+                          vertxTestContext.completeNow();
+                        })));
   }
 
   @Test
@@ -284,16 +295,17 @@ public class AuditingServiceTest {
     JsonObject jsonObject = readRequest();
     String temp = "1970-01-0105:30:00+05:30[Asia/Kolkata]";
     jsonObject.put(START_TIME, temp);
-    auditingService.executeReadQuery(
-        jsonObject,
-        vertxTestContext.failing(
-            response ->
-                vertxTestContext.verify(
-                    () -> {
-                      assertEquals(
-                          INVALID_DATE_TIME,
-                          new JsonObject(response.getMessage()).getString(DETAIL));
-                      vertxTestContext.completeNow();
-                    })));
+    auditingService
+        .executeReadQuery(jsonObject)
+        .onComplete(
+            vertxTestContext.failing(
+                response ->
+                    vertxTestContext.verify(
+                        () -> {
+                          assertEquals(
+                              INVALID_DATE_TIME,
+                              new JsonObject(response.getMessage()).getString(DETAIL));
+                          vertxTestContext.completeNow();
+                        })));
   }
 }

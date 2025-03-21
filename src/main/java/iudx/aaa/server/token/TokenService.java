@@ -1,11 +1,9 @@
 package iudx.aaa.server.token;
 
-import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.ProxyGen;
 import io.vertx.codegen.annotations.VertxGen;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.apiserver.DelegationInformation;
@@ -36,7 +34,7 @@ public interface TokenService {
    *
    * @param vertx which is the vertx instance
    * @param address which is the proxy address
-   * @return TokenServiceVertxEBProxy which is a service proxy
+   * @return Future of type JsonObject
    */
   @GenIgnore
   static TokenService createProxy(Vertx vertx, String address) {
@@ -49,38 +47,27 @@ public interface TokenService {
    * @param requestToken which is a RequestToken
    * @param delegationInfo which contains info if delegate called the API, else is null
    * @param user which is User Object
-   * @param handler which is a Request Handler
-   * @return TokenService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  TokenService createToken(
-      RequestToken requestToken,
-      DelegationInformation delegationInfo,
-      User user,
-      Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> createToken(
+      RequestToken requestToken, DelegationInformation delegationInfo, User user);
 
   /**
    * The revokeToken implements the token revocation operation.
    *
    * @param revokeToken which is a RevokeToken Object
    * @param user which is User Object
-   * @param handler which is a Request Handler
-   * @return TokenService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  TokenService revokeToken(
-      RevokeToken revokeToken, User user, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> revokeToken(RevokeToken revokeToken, User user);
 
   /**
    * The validateToken implements the token validation / introspect operation with the database.
    *
    * @param introspectToken which is a IntrospectToken object
-   * @param handler which is a Request Handler
-   * @return TokenService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  TokenService validateToken(
-      IntrospectToken introspectToken, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> validateToken(IntrospectToken introspectToken);
 
   /**
    * Get an auth server JWT token. This token is used by the Auth server when calling other servers
@@ -88,9 +75,7 @@ public interface TokenService {
    *
    * @param audienceUrl the URL of the server to be called. The <i>aud</i> field in the token will
    *     contain this URL.
-   * @param handler which is a Request Handler
-   * @return TokenService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  TokenService getAuthServerToken(String audienceUrl, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> getAuthServerToken(String audienceUrl);
 }

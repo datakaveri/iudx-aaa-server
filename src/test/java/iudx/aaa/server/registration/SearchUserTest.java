@@ -187,21 +187,19 @@ public class SearchUserTest {
   @DisplayName("Test user does not have trustee role")
   void userDoesNothaveTrusteeRole(VertxTestContext testContext) {
 
-    registrationService.searchUser(
-        consumerUser,
-        UUID.randomUUID().toString(),
-        Roles.CONSUMER,
-        DUMMY_SERVER,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(401, response.getInteger("status"));
-                      assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-                      assertEquals(ERR_TITLE_NOT_TRUSTEE, response.getString("title"));
-                      assertEquals(ERR_DETAIL_NOT_TRUSTEE, response.getString("detail"));
-                      testContext.completeNow();
-                    })));
+    registrationService
+        .searchUser(consumerUser, UUID.randomUUID().toString(), Roles.CONSUMER, DUMMY_SERVER)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(401, response.getInteger("status"));
+                          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                          assertEquals(ERR_TITLE_NOT_TRUSTEE, response.getString("title"));
+                          assertEquals(ERR_DETAIL_NOT_TRUSTEE, response.getString("detail"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -213,32 +211,30 @@ public class SearchUserTest {
     Mockito.when(kc.findUserByEmail(consumerUserEmail))
         .thenReturn(Future.succeededFuture(utils.getKcAdminJson(consumerUser)));
 
-    registrationService.searchUser(
-        trusteeUser,
-        consumerUserEmail,
-        Roles.CONSUMER,
-        DUMMY_SERVER,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(200, response.getInteger("status"));
-                      assertEquals(SUCC_TITLE_USER_FOUND, response.getString("title"));
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+    registrationService
+        .searchUser(trusteeUser, consumerUserEmail, Roles.CONSUMER, DUMMY_SERVER)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(200, response.getInteger("status"));
+                          assertEquals(SUCC_TITLE_USER_FOUND, response.getString("title"));
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-                      JsonObject result = response.getJsonObject("results");
+                          JsonObject result = response.getJsonObject("results");
 
-                      JsonObject name = result.getJsonObject("name");
-                      assertEquals(
-                          name.getString("firstName"), consumerUser.getName().get("firstName"));
-                      assertEquals(
-                          name.getString("lastName"), consumerUser.getName().get("lastName"));
+                          JsonObject name = result.getJsonObject("name");
+                          assertEquals(
+                              name.getString("firstName"), consumerUser.getName().get("firstName"));
+                          assertEquals(
+                              name.getString("lastName"), consumerUser.getName().get("lastName"));
 
-                      assertEquals(result.getString("userId"), consumerUser.getUserId());
-                      assertEquals(result.getString("email"), consumerUserEmail);
+                          assertEquals(result.getString("userId"), consumerUser.getUserId());
+                          assertEquals(result.getString("email"), consumerUserEmail);
 
-                      testContext.completeNow();
-                    })));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -250,32 +246,30 @@ public class SearchUserTest {
     Mockito.when(kc.findUserByEmail(providerUserEmail))
         .thenReturn(Future.succeededFuture(utils.getKcAdminJson(providerUser)));
 
-    registrationService.searchUser(
-        trusteeUser,
-        providerUserEmail,
-        Roles.PROVIDER,
-        DUMMY_SERVER,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(200, response.getInteger("status"));
-                      assertEquals(SUCC_TITLE_USER_FOUND, response.getString("title"));
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+    registrationService
+        .searchUser(trusteeUser, providerUserEmail, Roles.PROVIDER, DUMMY_SERVER)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(200, response.getInteger("status"));
+                          assertEquals(SUCC_TITLE_USER_FOUND, response.getString("title"));
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-                      JsonObject result = response.getJsonObject("results");
+                          JsonObject result = response.getJsonObject("results");
 
-                      JsonObject name = result.getJsonObject("name");
-                      assertEquals(
-                          name.getString("firstName"), providerUser.getName().get("firstName"));
-                      assertEquals(
-                          name.getString("lastName"), providerUser.getName().get("lastName"));
+                          JsonObject name = result.getJsonObject("name");
+                          assertEquals(
+                              name.getString("firstName"), providerUser.getName().get("firstName"));
+                          assertEquals(
+                              name.getString("lastName"), providerUser.getName().get("lastName"));
 
-                      assertEquals(result.getString("userId"), providerUser.getUserId());
-                      assertEquals(result.getString("email"), providerUserEmail);
+                          assertEquals(result.getString("userId"), providerUser.getUserId());
+                          assertEquals(result.getString("email"), providerUserEmail);
 
-                      testContext.completeNow();
-                    })));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -287,21 +281,19 @@ public class SearchUserTest {
     Mockito.when(kc.findUserByEmail(providerUserEmail))
         .thenReturn(Future.succeededFuture(utils.getKcAdminJson(providerUser)));
 
-    registrationService.searchUser(
-        trusteeUser,
-        providerUserEmail,
-        Roles.CONSUMER,
-        DUMMY_SERVER,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(404, response.getInteger("status"));
-                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
-                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                      testContext.completeNow();
-                    })));
+    registrationService
+        .searchUser(trusteeUser, providerUserEmail, Roles.CONSUMER, DUMMY_SERVER)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(404, response.getInteger("status"));
+                          assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                          assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -320,21 +312,19 @@ public class SearchUserTest {
                         "name",
                         new JsonObject().put("firstName", "rand").put("lastName", "rand"))));
 
-    registrationService.searchUser(
-        trusteeUser,
-        randUserEmail,
-        Roles.CONSUMER,
-        DUMMY_SERVER,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(404, response.getInteger("status"));
-                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
-                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                      testContext.completeNow();
-                    })));
+    registrationService
+        .searchUser(trusteeUser, randUserEmail, Roles.CONSUMER, DUMMY_SERVER)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(404, response.getInteger("status"));
+                          assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                          assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -346,21 +336,20 @@ public class SearchUserTest {
     Mockito.when(kc.findUserByEmail(providerUserEmail))
         .thenReturn(Future.succeededFuture(utils.getKcAdminJson(providerUser)));
 
-    registrationService.searchUser(
-        trusteeUser,
-        providerUserEmail,
-        Roles.PROVIDER,
-        DUMMY_SERVER_THAT_NO_ONE_HAS_ROLES_FOR,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(404, response.getInteger("status"));
-                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
-                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                      testContext.completeNow();
-                    })));
+    registrationService
+        .searchUser(
+            trusteeUser, providerUserEmail, Roles.PROVIDER, DUMMY_SERVER_THAT_NO_ONE_HAS_ROLES_FOR)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(404, response.getInteger("status"));
+                          assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                          assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -372,21 +361,23 @@ public class SearchUserTest {
     Mockito.when(kc.findUserByEmail(providerUserEmail))
         .thenReturn(Future.succeededFuture(utils.getKcAdminJson(providerUser)));
 
-    registrationService.searchUser(
-        trusteeUser,
-        providerUserEmail,
-        Roles.PROVIDER,
-        RandomStringUtils.randomAlphabetic(10) + ".com",
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(404, response.getInteger("status"));
-                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
-                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                      testContext.completeNow();
-                    })));
+    registrationService
+        .searchUser(
+            trusteeUser,
+            providerUserEmail,
+            Roles.PROVIDER,
+            RandomStringUtils.randomAlphabetic(10) + ".com")
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(404, response.getInteger("status"));
+                          assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                          assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -398,21 +389,19 @@ public class SearchUserTest {
     Mockito.when(kc.findUserByEmail(providerUserEmail))
         .thenReturn(Future.succeededFuture(new JsonObject()));
 
-    registrationService.searchUser(
-        trusteeUser,
-        providerUserEmail,
-        Roles.PROVIDER,
-        DUMMY_SERVER,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(404, response.getInteger("status"));
-                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
-                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                      testContext.completeNow();
-                    })));
+    registrationService
+        .searchUser(trusteeUser, providerUserEmail, Roles.PROVIDER, DUMMY_SERVER)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(404, response.getInteger("status"));
+                          assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                          assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -425,32 +414,31 @@ public class SearchUserTest {
         .thenReturn(
             Future.succeededFuture(Map.of(consumerUserId, utils.getKcAdminJson(consumerUser))));
 
-    registrationService.searchUser(
-        trusteeUser,
-        consumerUserId,
-        Roles.CONSUMER,
-        DUMMY_SERVER,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(200, response.getInteger("status"));
-                      assertEquals(SUCC_TITLE_USER_FOUND, response.getString("title"));
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+    registrationService
+        .searchUser(trusteeUser, consumerUserId, Roles.CONSUMER, DUMMY_SERVER)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(200, response.getInteger("status"));
+                          assertEquals(SUCC_TITLE_USER_FOUND, response.getString("title"));
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-                      JsonObject result = response.getJsonObject("results");
+                          JsonObject result = response.getJsonObject("results");
 
-                      JsonObject name = result.getJsonObject("name");
-                      assertEquals(
-                          name.getString("firstName"), consumerUser.getName().get("firstName"));
-                      assertEquals(
-                          name.getString("lastName"), consumerUser.getName().get("lastName"));
+                          JsonObject name = result.getJsonObject("name");
+                          assertEquals(
+                              name.getString("firstName"), consumerUser.getName().get("firstName"));
+                          assertEquals(
+                              name.getString("lastName"), consumerUser.getName().get("lastName"));
 
-                      assertEquals(result.getString("userId"), consumerUserId);
-                      assertEquals(result.getString("email"), utils.getDetails(consumerUser).email);
+                          assertEquals(result.getString("userId"), consumerUserId);
+                          assertEquals(
+                              result.getString("email"), utils.getDetails(consumerUser).email);
 
-                      testContext.completeNow();
-                    })));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -463,32 +451,31 @@ public class SearchUserTest {
         .thenReturn(
             Future.succeededFuture(Map.of(providerUserId, utils.getKcAdminJson(providerUser))));
 
-    registrationService.searchUser(
-        trusteeUser,
-        providerUserId,
-        Roles.PROVIDER,
-        DUMMY_SERVER,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(200, response.getInteger("status"));
-                      assertEquals(SUCC_TITLE_USER_FOUND, response.getString("title"));
-                      assertEquals(URN_SUCCESS.toString(), response.getString("type"));
+    registrationService
+        .searchUser(trusteeUser, providerUserId, Roles.PROVIDER, DUMMY_SERVER)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(200, response.getInteger("status"));
+                          assertEquals(SUCC_TITLE_USER_FOUND, response.getString("title"));
+                          assertEquals(URN_SUCCESS.toString(), response.getString("type"));
 
-                      JsonObject result = response.getJsonObject("results");
+                          JsonObject result = response.getJsonObject("results");
 
-                      JsonObject name = result.getJsonObject("name");
-                      assertEquals(
-                          name.getString("firstName"), providerUser.getName().get("firstName"));
-                      assertEquals(
-                          name.getString("lastName"), providerUser.getName().get("lastName"));
+                          JsonObject name = result.getJsonObject("name");
+                          assertEquals(
+                              name.getString("firstName"), providerUser.getName().get("firstName"));
+                          assertEquals(
+                              name.getString("lastName"), providerUser.getName().get("lastName"));
 
-                      assertEquals(result.getString("userId"), providerUserId);
-                      assertEquals(result.getString("email"), utils.getDetails(providerUser).email);
+                          assertEquals(result.getString("userId"), providerUserId);
+                          assertEquals(
+                              result.getString("email"), utils.getDetails(providerUser).email);
 
-                      testContext.completeNow();
-                    })));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -509,21 +496,19 @@ public class SearchUserTest {
                             "name",
                             new JsonObject().put("firstName", "rand").put("lastName", "rand")))));
 
-    registrationService.searchUser(
-        trusteeUser,
-        randUserId,
-        Roles.CONSUMER,
-        DUMMY_SERVER,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(404, response.getInteger("status"));
-                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
-                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                      testContext.completeNow();
-                    })));
+    registrationService
+        .searchUser(trusteeUser, randUserId, Roles.CONSUMER, DUMMY_SERVER)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(404, response.getInteger("status"));
+                          assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                          assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -536,21 +521,19 @@ public class SearchUserTest {
         .thenReturn(
             Future.succeededFuture(Map.of(providerUserId, utils.getKcAdminJson(providerUser))));
 
-    registrationService.searchUser(
-        trusteeUser,
-        providerUserId,
-        Roles.CONSUMER,
-        DUMMY_SERVER,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(404, response.getInteger("status"));
-                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
-                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                      testContext.completeNow();
-                    })));
+    registrationService
+        .searchUser(trusteeUser, providerUserId, Roles.CONSUMER, DUMMY_SERVER)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(404, response.getInteger("status"));
+                          assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                          assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -563,21 +546,20 @@ public class SearchUserTest {
         .thenReturn(
             Future.succeededFuture(Map.of(providerUserId, utils.getKcAdminJson(providerUser))));
 
-    registrationService.searchUser(
-        trusteeUser,
-        providerUserId,
-        Roles.PROVIDER,
-        DUMMY_SERVER_THAT_NO_ONE_HAS_ROLES_FOR,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(404, response.getInteger("status"));
-                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
-                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                      testContext.completeNow();
-                    })));
+    registrationService
+        .searchUser(
+            trusteeUser, providerUserId, Roles.PROVIDER, DUMMY_SERVER_THAT_NO_ONE_HAS_ROLES_FOR)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(404, response.getInteger("status"));
+                          assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                          assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -590,21 +572,23 @@ public class SearchUserTest {
         .thenReturn(
             Future.succeededFuture(Map.of(providerUserId, utils.getKcAdminJson(providerUser))));
 
-    registrationService.searchUser(
-        trusteeUser,
-        providerUserId,
-        Roles.PROVIDER,
-        RandomStringUtils.randomAlphabetic(10) + ".com",
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(404, response.getInteger("status"));
-                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
-                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                      testContext.completeNow();
-                    })));
+    registrationService
+        .searchUser(
+            trusteeUser,
+            providerUserId,
+            Roles.PROVIDER,
+            RandomStringUtils.randomAlphabetic(10) + ".com")
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(404, response.getInteger("status"));
+                          assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                          assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -616,21 +600,19 @@ public class SearchUserTest {
     Mockito.when(kc.getDetails(List.of(providerUserId)))
         .thenReturn(Future.succeededFuture(Map.of(providerUserId, new JsonObject())));
 
-    registrationService.searchUser(
-        trusteeUser,
-        providerUserId,
-        Roles.PROVIDER,
-        DUMMY_SERVER,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(404, response.getInteger("status"));
-                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
-                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                      testContext.completeNow();
-                    })));
+    registrationService
+        .searchUser(trusteeUser, providerUserId, Roles.PROVIDER, DUMMY_SERVER)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(404, response.getInteger("status"));
+                          assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                          assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -642,21 +624,19 @@ public class SearchUserTest {
     // this is called only if the email flow is taken
     Mockito.when(kc.findUserByEmail(notAUuid)).thenReturn(Future.succeededFuture(new JsonObject()));
 
-    registrationService.searchUser(
-        trusteeUser,
-        notAUuid,
-        Roles.PROVIDER,
-        DUMMY_SERVER,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(404, response.getInteger("status"));
-                      assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
-                      assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                      testContext.completeNow();
-                    })));
+    registrationService
+        .searchUser(trusteeUser, notAUuid, Roles.PROVIDER, DUMMY_SERVER)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(404, response.getInteger("status"));
+                          assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                          assertEquals(ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -682,23 +662,22 @@ public class SearchUserTest {
                       Future.succeededFuture(
                           Map.of(pendingUserId, utils.getKcAdminJson(pendingUser))));
 
-              registrationService.searchUser(
-                  trusteeUser,
-                  pendingUserId,
-                  Roles.PROVIDER,
-                  DUMMY_SERVER,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(404, response.getInteger("status"));
-                                assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
-                                assertEquals(
-                                    ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
-                                assertEquals(
-                                    URN_INVALID_INPUT.toString(), response.getString("type"));
-                                pendingProviderNotFound.flag();
-                              })));
+              registrationService
+                  .searchUser(trusteeUser, pendingUserId, Roles.PROVIDER, DUMMY_SERVER)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(404, response.getInteger("status"));
+                                    assertEquals(
+                                        ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                                    assertEquals(
+                                        ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                                    assertEquals(
+                                        URN_INVALID_INPUT.toString(), response.getString("type"));
+                                    pendingProviderNotFound.flag();
+                                  })));
             });
 
     String rejectedUserId = UUID.randomUUID().toString();
@@ -717,23 +696,22 @@ public class SearchUserTest {
                       Future.succeededFuture(
                           Map.of(rejectedUserId, utils.getKcAdminJson(pendingUser))));
 
-              registrationService.searchUser(
-                  trusteeUser,
-                  rejectedUserId,
-                  Roles.PROVIDER,
-                  DUMMY_SERVER,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(404, response.getInteger("status"));
-                                assertEquals(ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
-                                assertEquals(
-                                    ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
-                                assertEquals(
-                                    URN_INVALID_INPUT.toString(), response.getString("type"));
-                                rejectedProviderNotFound.flag();
-                              })));
+              registrationService
+                  .searchUser(trusteeUser, rejectedUserId, Roles.PROVIDER, DUMMY_SERVER)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(404, response.getInteger("status"));
+                                    assertEquals(
+                                        ERR_TITLE_USER_NOT_FOUND, response.getString("title"));
+                                    assertEquals(
+                                        ERR_DETAIL_USER_NOT_FOUND, response.getString("detail"));
+                                    assertEquals(
+                                        URN_INVALID_INPUT.toString(), response.getString("type"));
+                                    rejectedProviderNotFound.flag();
+                                  })));
             });
   }
 }

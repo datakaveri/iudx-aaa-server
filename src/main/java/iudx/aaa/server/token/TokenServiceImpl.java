@@ -5,9 +5,7 @@ import static iudx.aaa.server.registration.Constants.ERR_DETAIL_NO_APPROVED_ROLE
 import static iudx.aaa.server.registration.Constants.ERR_TITLE_NO_APPROVED_ROLES;
 import static iudx.aaa.server.token.Constants.*;
 
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -69,12 +67,11 @@ public class TokenServiceImpl implements TokenService {
 
   /** {@inheritDoc} */
   @Override
-  public TokenService createToken(
-      RequestToken request,
-      DelegationInformation delegationInfo,
-      User user,
-      Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> createToken(
+      RequestToken request, DelegationInformation delegationInfo, User user) {
     LOGGER.debug(REQ_RECEIVED);
+
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     Roles role = request.getRole();
     ItemType itemType = request.getItemType();
@@ -93,8 +90,8 @@ public class TokenServiceImpl implements TokenService {
               .title(ERR_TITLE_NO_APPROVED_ROLES)
               .detail(ERR_DETAIL_NO_APPROVED_ROLES)
               .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
+      promiseHandler.complete(r.toJson());
+      return promiseHandler.future();
     }
 
     /* Verify that the user has the requested role - the resource server check is later */
@@ -106,8 +103,8 @@ public class TokenServiceImpl implements TokenService {
               .title(ERR_TITLE_ROLE_NOT_OWNED)
               .detail(ERR_DETAIL_ROLE_NOT_OWNED)
               .build();
-      handler.handle(Future.succeededFuture(resp.toJson()));
-      return this;
+      promiseHandler.complete(resp.toJson());
+      return promiseHandler.future();
     }
 
     if (role.equals(Roles.DELEGATE) && delegationInfo == null) {
@@ -118,8 +115,8 @@ public class TokenServiceImpl implements TokenService {
               .title(ERR_TITLE_DELEGATION_INFO_MISSING)
               .detail(ERR_DETAIL_DELEGATION_INFO_MISSING)
               .build();
-      handler.handle(Future.succeededFuture(resp.toJson()));
-      return this;
+      promiseHandler.complete(resp.toJson());
+      return promiseHandler.future();
     }
 
     if (itemType.equals(ItemType.RESOURCE_GROUP)) {
@@ -130,8 +127,8 @@ public class TokenServiceImpl implements TokenService {
               .title(ERR_TITLE_NO_RES_GRP_TOKEN)
               .detail(ERR_DETAIL_NO_RES_GRP_TOKEN)
               .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
+      promiseHandler.complete(r.toJson());
+      return promiseHandler.future();
     } else if (itemType.equals(ItemType.COS)) {
       if (!request.getRole().equals(Roles.COS_ADMIN)) {
         Response r =
@@ -141,8 +138,8 @@ public class TokenServiceImpl implements TokenService {
                 .title(ERR_TITLE_INVALID_ROLE_FOR_COS)
                 .detail(ERR_DETAIL_INVALID_ROLE_FOR_COS)
                 .build();
-        handler.handle(Future.succeededFuture(r.toJson()));
-        return this;
+        promiseHandler.complete(r.toJson());
+        return promiseHandler.future();
       }
 
       if (!request.getItemId().equals(CLAIM_ISSUER)) {
@@ -153,8 +150,8 @@ public class TokenServiceImpl implements TokenService {
                 .title(ERR_TITLE_INVALID_COS_URL)
                 .detail(ERR_DETAIL_INVALID_COS_URL)
                 .build();
-        handler.handle(Future.succeededFuture(r.toJson()));
-        return this;
+        promiseHandler.complete(r.toJson());
+        return promiseHandler.future();
       }
 
       jsonRequest.put(URL, request.getItemId());
@@ -169,7 +166,7 @@ public class TokenServiceImpl implements TokenService {
               .title(TOKEN_SUCCESS)
               .objectResults(jwt)
               .build();
-      handler.handle(Future.succeededFuture(resp.toJson()));
+      promiseHandler.complete(resp.toJson());
     } else if (itemType.equals(ItemType.RESOURCE_SERVER)) {
       Future<JsonObject> checkIdenToken =
           validateForIdentityToken(request.getItemId(), role, delegationInfo, user);
@@ -189,25 +186,23 @@ public class TokenServiceImpl implements TokenService {
                         .title(TOKEN_SUCCESS)
                         .objectResults(jwt)
                         .build();
-                handler.handle(Future.succeededFuture(resp.toJson()));
+                promiseHandler.complete(resp.toJson());
                 return;
               })
           .onFailure(
               fail -> {
                 if (fail instanceof ComposeException) {
                   ComposeException exp = (ComposeException) fail;
-                  handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                  promiseHandler.complete(exp.getResponse().toJson());
                   return;
                 }
                 LOGGER.error(fail.getMessage());
-                handler.handle(Future.failedFuture("Internal error"));
+                promiseHandler.fail("Internal error");
               });
     } else if (itemType.equals(ItemType.RESOURCE)) {
-      Promise<JsonObject> policyHandler = Promise.promise();
-      policyService.verifyResourceAccess(request, delegationInfo, user, policyHandler);
 
-      policyHandler
-          .future()
+      policyService
+          .verifyResourceAccess(request, delegationInfo, user)
           .onSuccess(
               result -> {
                 jsonRequest.mergeIn(result, true);
@@ -223,7 +218,7 @@ public class TokenServiceImpl implements TokenService {
                           .objectResults(jwt)
                           .build();
 
-                  handler.handle(Future.succeededFuture(resp.toJson()));
+                  promiseHandler.complete(resp.toJson());
                 } else if (jsonRequest.getString(STATUS).equals(APD_INTERACTION)) {
 
                   JsonObject apdJwt = getApdJwt(jsonRequest);
@@ -237,7 +232,7 @@ public class TokenServiceImpl implements TokenService {
                           .errorContext(apdJwt)
                           .build();
 
-                  handler.handle(Future.succeededFuture(resp.toJson()));
+                  promiseHandler.complete(resp.toJson());
                 }
 
                 LOGGER.info(LOG_TOKEN_SUCC);
@@ -246,23 +241,23 @@ public class TokenServiceImpl implements TokenService {
               fail -> {
                 if (fail instanceof ComposeException) {
                   ComposeException exp = (ComposeException) fail;
-                  handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                  promiseHandler.complete(exp.getResponse().toJson());
                   return;
                 }
                 LOGGER.error(fail.getMessage());
-                handler.handle(Future.failedFuture("Internal error"));
+                promiseHandler.fail("Internal error");
               });
     }
 
-    return this;
+    return promiseHandler.future();
   }
 
   /** {@inheritDoc} */
   @Override
-  public TokenService revokeToken(
-      RevokeToken revokeToken, User user, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> revokeToken(RevokeToken revokeToken, User user) {
 
     LOGGER.debug(REQ_RECEIVED);
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     /* Verify the user has some roles */
     if (user.getRoles().isEmpty()) {
@@ -273,8 +268,8 @@ public class TokenServiceImpl implements TokenService {
               .title(ERR_TITLE_NO_APPROVED_ROLES)
               .detail(ERR_DETAIL_NO_APPROVED_ROLES)
               .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
+      promiseHandler.complete(r.toJson());
+      return promiseHandler.future();
     }
 
     String rsUrl = revokeToken.getRsUrl();
@@ -288,8 +283,8 @@ public class TokenServiceImpl implements TokenService {
               .title(CANNOT_REVOKE_ON_AUTH)
               .detail(CANNOT_REVOKE_ON_AUTH)
               .build();
-      handler.handle(Future.succeededFuture(resp.toJson()));
-      return this;
+      promiseHandler.complete(resp.toJson());
+      return promiseHandler.future();
     }
 
     Tuple tuple = Tuple.of(rsUrl);
@@ -299,7 +294,7 @@ public class TokenServiceImpl implements TokenService {
             dbHandler -> {
               if (dbHandler.failed()) {
                 LOGGER.error(LOG_DB_ERROR, dbHandler.cause());
-                handler.handle(Future.failedFuture(INTERNAL_SVR_ERR));
+                promiseHandler.fail(INTERNAL_SVR_ERR);
                 return;
               }
 
@@ -316,7 +311,7 @@ public class TokenServiceImpl implements TokenService {
                           .title(ERR_TITLE_INVALID_RS_APD_REVOKE)
                           .detail(ERR_DETAIL_INVALID_RS_APD_REVOKE)
                           .build();
-                  handler.handle(Future.succeededFuture(resp.toJson()));
+                  promiseHandler.complete(resp.toJson());
                   return;
                 }
                 LOGGER.debug("Info: ResourceServer URL validated");
@@ -342,46 +337,46 @@ public class TokenServiceImpl implements TokenService {
                         .put(ITEM_ID, "");
                 String adminToken = getJwt(adminTokenReq).getString(ACCESS_TOKEN);
 
-                revokeService.httpRevokeRequest(
-                    revokePayload,
-                    adminToken,
-                    result -> {
-                      if (result.succeeded()) {
-                        LOGGER.info(LOG_REVOKE_REQ);
-                        Response resp =
-                            new ResponseBuilder()
-                                .status(200)
-                                .type(URN_SUCCESS)
-                                .title(TOKEN_REVOKED)
-                                .arrayResults(new JsonArray())
-                                .build();
-                        handler.handle(Future.succeededFuture(resp.toJson()));
-                        return;
-                      } else {
-                        LOGGER.error("Fail: {}; {}", FAILED_REVOKE, result.cause());
-                        Response resp =
-                            new ResponseBuilder()
-                                .status(400)
-                                .type(URN_INVALID_INPUT)
-                                .title(FAILED_REVOKE)
-                                .detail(FAILED_REVOKE)
-                                .build();
-                        handler.handle(Future.succeededFuture(resp.toJson()));
-                        return;
-                      }
-                    });
+                revokeService
+                    .httpRevokeRequest(revokePayload, adminToken)
+                    .onComplete(
+                        result -> {
+                          if (result.succeeded()) {
+                            LOGGER.info(LOG_REVOKE_REQ);
+                            Response resp =
+                                new ResponseBuilder()
+                                    .status(200)
+                                    .type(URN_SUCCESS)
+                                    .title(TOKEN_REVOKED)
+                                    .arrayResults(new JsonArray())
+                                    .build();
+                            promiseHandler.complete(resp.toJson());
+                            return;
+                          } else {
+                            LOGGER.error("Fail: {}; {}", FAILED_REVOKE, result.cause());
+                            Response resp =
+                                new ResponseBuilder()
+                                    .status(400)
+                                    .type(URN_INVALID_INPUT)
+                                    .title(FAILED_REVOKE)
+                                    .detail(FAILED_REVOKE)
+                                    .build();
+                            promiseHandler.complete(resp.toJson());
+                            return;
+                          }
+                        });
               }
             });
 
-    return this;
+    return promiseHandler.future();
   }
 
   /** {@inheritDoc} */
   @Override
-  public TokenService validateToken(
-      IntrospectToken introspectToken, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> validateToken(IntrospectToken introspectToken) {
 
     LOGGER.debug(REQ_RECEIVED);
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     String accessToken = introspectToken.getAccessToken();
     if (accessToken == null || accessToken.isBlank()) {
@@ -393,8 +388,8 @@ public class TokenServiceImpl implements TokenService {
               .title(MISSING_TOKEN)
               .detail(MISSING_TOKEN)
               .build();
-      handler.handle(Future.succeededFuture(resp.toJson()));
-      return this;
+      promiseHandler.complete(resp.toJson());
+      return promiseHandler.future();
     }
 
     TokenCredentials authInfo = new TokenCredentials(accessToken);
@@ -436,20 +431,20 @@ public class TokenServiceImpl implements TokenService {
                       .title(TOKEN_AUTHENTICATED)
                       .objectResults(res)
                       .build();
-              handler.handle(Future.succeededFuture(resp.toJson()));
+              promiseHandler.complete(resp.toJson());
             })
         .onFailure(
             fail -> {
               if (fail instanceof ComposeException) {
                 ComposeException exp = (ComposeException) fail;
-                handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                promiseHandler.complete(exp.getResponse().toJson());
                 return;
               }
               LOGGER.error(fail.getMessage());
-              handler.handle(Future.failedFuture("Internal error"));
+              promiseHandler.fail("Internal error");
             });
 
-    return this;
+    return promiseHandler.future();
   }
 
   /**
@@ -474,11 +469,9 @@ public class TokenServiceImpl implements TokenService {
     }
 
     String userId = decodedToken.getString(SUB);
-    Promise<JsonObject> regPromise = Promise.promise();
 
-    registrationService.getUserDetails(List.of(userId), regPromise);
-    regPromise
-        .future()
+    registrationService
+        .getUserDetails(List.of(userId))
         .onSuccess(
             userInfo -> {
               decodedToken.put(INTROSPECT_USERINFO, userInfo.getJsonObject(userId));
@@ -583,8 +576,7 @@ public class TokenServiceImpl implements TokenService {
 
   /** {@inheritDoc} */
   @Override
-  public TokenService getAuthServerToken(
-      String audienceUrl, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> getAuthServerToken(String audienceUrl) {
     JsonObject adminTokenReq =
         new JsonObject()
             .put(USER_ID, CLAIM_ISSUER)
@@ -592,8 +584,7 @@ public class TokenServiceImpl implements TokenService {
             .put(ROLE, "")
             .put(ITEM_TYPE, "")
             .put(ITEM_ID, "");
-    handler.handle(Future.succeededFuture(getJwt(adminTokenReq)));
-    return this;
+    return Future.succeededFuture(getJwt(adminTokenReq));
   }
 
   /**

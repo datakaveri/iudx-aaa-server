@@ -144,19 +144,19 @@ public class UpdateProviderRegistrationStatusTest {
 
     List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-    adminService.updateProviderRegistrationStatus(
-        request,
-        user,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 401);
-                      assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-                      assertEquals(ERR_TITLE_NOT_ADMIN, response.getString("title"));
-                      assertEquals(ERR_DETAIL_NOT_ADMIN, response.getString("detail"));
-                      testContext.completeNow();
-                    })));
+    adminService
+        .updateProviderRegistrationStatus(request, user)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 401);
+                          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                          assertEquals(ERR_TITLE_NOT_ADMIN, response.getString("title"));
+                          assertEquals(ERR_DETAIL_NOT_ADMIN, response.getString("detail"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -182,19 +182,19 @@ public class UpdateProviderRegistrationStatusTest {
 
     List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-    adminService.updateProviderRegistrationStatus(
-        request,
-        fakeAdminUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 400);
-                      assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
-                      assertEquals(ERR_TITLE_DUPLICATE_REQ, response.getString("title"));
-                      assertEquals(duplicateId.toString(), response.getString("detail"));
-                      testContext.completeNow();
-                    })));
+    adminService
+        .updateProviderRegistrationStatus(request, fakeAdminUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 400);
+                          assertEquals(URN_INVALID_INPUT.toString(), response.getString("type"));
+                          assertEquals(ERR_TITLE_DUPLICATE_REQ, response.getString("title"));
+                          assertEquals(duplicateId.toString(), response.getString("detail"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -233,31 +233,34 @@ public class UpdateProviderRegistrationStatusTest {
                           .put("status", "approved"));
           List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-          adminService.updateProviderRegistrationStatus(
-              request,
-              adminUser,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(response.getInteger("status"), 200);
-                            assertEquals(response.getString("type"), URN_SUCCESS.toString());
-                            assertEquals(
-                                response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
-                            JsonArray res = response.getJsonArray("results");
-                            assertTrue(res.size() == 1);
+          adminService
+              .updateProviderRegistrationStatus(request, adminUser)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(response.getInteger("status"), 200);
+                                assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                                assertEquals(
+                                    response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
+                                JsonArray res = response.getJsonArray("results");
+                                assertTrue(res.size() == 1);
 
-                            JsonObject j = res.getJsonObject(0);
-                            assertEquals(j.getString("id"), providerAPendingId.toString());
-                            assertEquals(
-                                j.getString(RESP_STATUS), RoleStatus.APPROVED.name().toLowerCase());
+                                JsonObject j = res.getJsonObject(0);
+                                assertEquals(j.getString("id"), providerAPendingId.toString());
+                                assertEquals(
+                                    j.getString(RESP_STATUS),
+                                    RoleStatus.APPROVED.name().toLowerCase());
 
-                            assertEquals(j.getString("email"), utils.getDetails(providerA).email);
-                            assertEquals(j.getString("userId"), providerA.getUserId());
-                            assertEquals(
-                                j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
-                            testContext.completeNow();
-                          })));
+                                assertEquals(
+                                    j.getString("email"), utils.getDetails(providerA).email);
+                                assertEquals(j.getString("userId"), providerA.getUserId());
+                                assertEquals(
+                                    j.getJsonObject("userInfo"),
+                                    utils.getDetails(providerA).userInfo);
+                                testContext.completeNow();
+                              })));
         });
   }
 
@@ -297,31 +300,34 @@ public class UpdateProviderRegistrationStatusTest {
                           .put("status", "rejected"));
           List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-          adminService.updateProviderRegistrationStatus(
-              request,
-              adminUser,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(response.getInteger("status"), 200);
-                            assertEquals(response.getString("type"), URN_SUCCESS.toString());
-                            assertEquals(
-                                response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
-                            JsonArray res = response.getJsonArray("results");
-                            assertTrue(res.size() == 1);
+          adminService
+              .updateProviderRegistrationStatus(request, adminUser)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(response.getInteger("status"), 200);
+                                assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                                assertEquals(
+                                    response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
+                                JsonArray res = response.getJsonArray("results");
+                                assertTrue(res.size() == 1);
 
-                            JsonObject j = res.getJsonObject(0);
-                            assertEquals(j.getString("id"), providerAPendingId.toString());
-                            assertEquals(
-                                j.getString(RESP_STATUS), RoleStatus.REJECTED.name().toLowerCase());
+                                JsonObject j = res.getJsonObject(0);
+                                assertEquals(j.getString("id"), providerAPendingId.toString());
+                                assertEquals(
+                                    j.getString(RESP_STATUS),
+                                    RoleStatus.REJECTED.name().toLowerCase());
 
-                            assertEquals(j.getString("email"), utils.getDetails(providerA).email);
-                            assertEquals(j.getString("userId"), providerA.getUserId());
-                            assertEquals(
-                                j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
-                            testContext.completeNow();
-                          })));
+                                assertEquals(
+                                    j.getString("email"), utils.getDetails(providerA).email);
+                                assertEquals(j.getString("userId"), providerA.getUserId());
+                                assertEquals(
+                                    j.getJsonObject("userInfo"),
+                                    utils.getDetails(providerA).userInfo);
+                                testContext.completeNow();
+                              })));
         });
   }
 
@@ -367,20 +373,22 @@ public class UpdateProviderRegistrationStatusTest {
                           .put("status", "approved"));
           List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-          adminService.updateProviderRegistrationStatus(
-              request,
-              adminUser,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(response.getInteger("status"), 400);
-                            assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
-                            assertEquals(
-                                response.getString("title"), ERR_TITLE_INVALID_PROV_REG_ID);
-                            assertEquals(response.getString("detail"), nonExistentId.toString());
-                            testContext.completeNow();
-                          })));
+          adminService
+              .updateProviderRegistrationStatus(request, adminUser)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(response.getInteger("status"), 400);
+                                assertEquals(
+                                    response.getString("type"), URN_INVALID_INPUT.toString());
+                                assertEquals(
+                                    response.getString("title"), ERR_TITLE_INVALID_PROV_REG_ID);
+                                assertEquals(
+                                    response.getString("detail"), nonExistentId.toString());
+                                testContext.completeNow();
+                              })));
         });
   }
 
@@ -435,21 +443,23 @@ public class UpdateProviderRegistrationStatusTest {
                           .put("status", "rejected"));
           List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-          adminService.updateProviderRegistrationStatus(
-              request,
-              adminOfOne,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(response.getInteger("status"), 400);
-                            assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
-                            assertEquals(
-                                response.getString("title"), ERR_TITLE_INVALID_PROV_REG_ID);
-                            assertEquals(
-                                response.getString("detail"), providerAPendingIdOnTwo.toString());
-                            testContext.completeNow();
-                          })));
+          adminService
+              .updateProviderRegistrationStatus(request, adminOfOne)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(response.getInteger("status"), 400);
+                                assertEquals(
+                                    response.getString("type"), URN_INVALID_INPUT.toString());
+                                assertEquals(
+                                    response.getString("title"), ERR_TITLE_INVALID_PROV_REG_ID);
+                                assertEquals(
+                                    response.getString("detail"),
+                                    providerAPendingIdOnTwo.toString());
+                                testContext.completeNow();
+                              })));
         });
   }
 
@@ -511,55 +521,57 @@ public class UpdateProviderRegistrationStatusTest {
                           .put("status", "rejected"));
           List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-          adminService.updateProviderRegistrationStatus(
-              request,
-              adminUser,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(response.getInteger("status"), 200);
-                            assertEquals(response.getString("type"), URN_SUCCESS.toString());
-                            assertEquals(
-                                response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
-                            JsonArray res = response.getJsonArray("results");
-                            assertTrue(res.size() == 2);
+          adminService
+              .updateProviderRegistrationStatus(request, adminUser)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(response.getInteger("status"), 200);
+                                assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                                assertEquals(
+                                    response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
+                                JsonArray res = response.getJsonArray("results");
+                                assertTrue(res.size() == 2);
 
-                            res.forEach(
-                                i -> {
-                                  JsonObject j = (JsonObject) i;
+                                res.forEach(
+                                    i -> {
+                                      JsonObject j = (JsonObject) i;
 
-                                  if (j.getString("id")
-                                      .equals(providerAPendingIdOnOne.toString())) {
-                                    assertEquals(
-                                        j.getString(Constants.RESP_STATUS),
-                                        RoleStatus.APPROVED.name().toLowerCase());
-                                    assertEquals(j.getString("rsUrl"), SERVER_URL_ONE);
-                                    assertEquals(
-                                        j.getString("email"), utils.getDetails(providerA).email);
-                                    assertEquals(j.getString("userId"), providerA.getUserId());
-                                    assertEquals(
-                                        j.getJsonObject("userInfo"),
-                                        utils.getDetails(providerA).userInfo);
-                                    sawProviderA.flag();
-                                  }
+                                      if (j.getString("id")
+                                          .equals(providerAPendingIdOnOne.toString())) {
+                                        assertEquals(
+                                            j.getString(Constants.RESP_STATUS),
+                                            RoleStatus.APPROVED.name().toLowerCase());
+                                        assertEquals(j.getString("rsUrl"), SERVER_URL_ONE);
+                                        assertEquals(
+                                            j.getString("email"),
+                                            utils.getDetails(providerA).email);
+                                        assertEquals(j.getString("userId"), providerA.getUserId());
+                                        assertEquals(
+                                            j.getJsonObject("userInfo"),
+                                            utils.getDetails(providerA).userInfo);
+                                        sawProviderA.flag();
+                                      }
 
-                                  if (j.getString("id")
-                                      .equals(providerBPendingIdOnTwo.toString())) {
-                                    assertEquals(
-                                        j.getString(Constants.RESP_STATUS),
-                                        RoleStatus.REJECTED.name().toLowerCase());
-                                    assertEquals(j.getString("rsUrl"), SERVER_URL_TWO);
-                                    assertEquals(
-                                        j.getString("email"), utils.getDetails(providerB).email);
-                                    assertEquals(j.getString("userId"), providerB.getUserId());
-                                    assertEquals(
-                                        j.getJsonObject("userInfo"),
-                                        utils.getDetails(providerB).userInfo);
-                                    sawProviderB.flag();
-                                  }
-                                });
-                          })));
+                                      if (j.getString("id")
+                                          .equals(providerBPendingIdOnTwo.toString())) {
+                                        assertEquals(
+                                            j.getString(Constants.RESP_STATUS),
+                                            RoleStatus.REJECTED.name().toLowerCase());
+                                        assertEquals(j.getString("rsUrl"), SERVER_URL_TWO);
+                                        assertEquals(
+                                            j.getString("email"),
+                                            utils.getDetails(providerB).email);
+                                        assertEquals(j.getString("userId"), providerB.getUserId());
+                                        assertEquals(
+                                            j.getJsonObject("userInfo"),
+                                            utils.getDetails(providerB).userInfo);
+                                        sawProviderB.flag();
+                                      }
+                                    });
+                              })));
         });
   }
 
@@ -602,62 +614,65 @@ public class UpdateProviderRegistrationStatusTest {
                           .put("status", "approved"));
           List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-          adminService.updateProviderRegistrationStatus(
-              request,
-              adminUser,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(response.getInteger("status"), 200);
-                            assertEquals(response.getString("type"), URN_SUCCESS.toString());
-                            assertEquals(
-                                response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
-                            JsonArray res = response.getJsonArray("results");
-                            assertTrue(res.size() == 1);
+          adminService
+              .updateProviderRegistrationStatus(request, adminUser)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(response.getInteger("status"), 200);
+                                assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                                assertEquals(
+                                    response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
+                                JsonArray res = response.getJsonArray("results");
+                                assertTrue(res.size() == 1);
 
-                            JsonObject j = res.getJsonObject(0);
-                            assertEquals(j.getString("id"), providerAPendingId.toString());
-                            assertEquals(
-                                j.getString(RESP_STATUS), RoleStatus.APPROVED.name().toLowerCase());
+                                JsonObject j = res.getJsonObject(0);
+                                assertEquals(j.getString("id"), providerAPendingId.toString());
+                                assertEquals(
+                                    j.getString(RESP_STATUS),
+                                    RoleStatus.APPROVED.name().toLowerCase());
 
-                            assertEquals(j.getString("email"), utils.getDetails(providerA).email);
-                            assertEquals(j.getString("userId"), providerA.getUserId());
-                            assertEquals(
-                                j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
+                                assertEquals(
+                                    j.getString("email"), utils.getDetails(providerA).email);
+                                assertEquals(j.getString("userId"), providerA.getUserId());
+                                assertEquals(
+                                    j.getJsonObject("userInfo"),
+                                    utils.getDetails(providerA).userInfo);
 
-                            approveSuccessfully.flag();
+                                approveSuccessfully.flag();
 
-                            JsonArray badReq =
-                                new JsonArray()
-                                    .add(
-                                        new JsonObject()
-                                            .put("id", providerAPendingId.toString())
-                                            .put("status", "approved"));
-                            List<ProviderUpdateRequest> badRequest =
-                                ProviderUpdateRequest.jsonArrayToList(badReq);
+                                JsonArray badReq =
+                                    new JsonArray()
+                                        .add(
+                                            new JsonObject()
+                                                .put("id", providerAPendingId.toString())
+                                                .put("status", "approved"));
+                                List<ProviderUpdateRequest> badRequest =
+                                    ProviderUpdateRequest.jsonArrayToList(badReq);
 
-                            adminService.updateProviderRegistrationStatus(
-                                badRequest,
-                                adminUser,
-                                testContext.succeeding(
-                                    resp ->
-                                        testContext.verify(
-                                            () -> {
-                                              assertEquals(resp.getInteger("status"), 400);
-                                              assertEquals(
-                                                  resp.getString("type"),
-                                                  URN_INVALID_INPUT.toString());
-                                              assertEquals(
-                                                  resp.getString("title"),
-                                                  ERR_TITLE_INVALID_PROV_REG_ID);
-                                              assertEquals(
-                                                  resp.getString("detail"),
-                                                  providerAPendingId.toString());
+                                adminService
+                                    .updateProviderRegistrationStatus(badRequest, adminUser)
+                                    .onComplete(
+                                        testContext.succeeding(
+                                            resp ->
+                                                testContext.verify(
+                                                    () -> {
+                                                      assertEquals(resp.getInteger("status"), 400);
+                                                      assertEquals(
+                                                          resp.getString("type"),
+                                                          URN_INVALID_INPUT.toString());
+                                                      assertEquals(
+                                                          resp.getString("title"),
+                                                          ERR_TITLE_INVALID_PROV_REG_ID);
+                                                      assertEquals(
+                                                          resp.getString("detail"),
+                                                          providerAPendingId.toString());
 
-                                              failApprove.flag();
-                                            })));
-                          })));
+                                                      failApprove.flag();
+                                                    })));
+                              })));
         });
   }
 
@@ -700,62 +715,65 @@ public class UpdateProviderRegistrationStatusTest {
                           .put("status", "rejected"));
           List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-          adminService.updateProviderRegistrationStatus(
-              request,
-              adminUser,
-              testContext.succeeding(
-                  response ->
-                      testContext.verify(
-                          () -> {
-                            assertEquals(response.getInteger("status"), 200);
-                            assertEquals(response.getString("type"), URN_SUCCESS.toString());
-                            assertEquals(
-                                response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
-                            JsonArray res = response.getJsonArray("results");
-                            assertTrue(res.size() == 1);
+          adminService
+              .updateProviderRegistrationStatus(request, adminUser)
+              .onComplete(
+                  testContext.succeeding(
+                      response ->
+                          testContext.verify(
+                              () -> {
+                                assertEquals(response.getInteger("status"), 200);
+                                assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                                assertEquals(
+                                    response.getString("title"), SUCC_TITLE_PROV_STATUS_UPDATE);
+                                JsonArray res = response.getJsonArray("results");
+                                assertTrue(res.size() == 1);
 
-                            JsonObject j = res.getJsonObject(0);
-                            assertEquals(j.getString("id"), providerAPendingId.toString());
-                            assertEquals(
-                                j.getString(RESP_STATUS), RoleStatus.REJECTED.name().toLowerCase());
+                                JsonObject j = res.getJsonObject(0);
+                                assertEquals(j.getString("id"), providerAPendingId.toString());
+                                assertEquals(
+                                    j.getString(RESP_STATUS),
+                                    RoleStatus.REJECTED.name().toLowerCase());
 
-                            assertEquals(j.getString("email"), utils.getDetails(providerA).email);
-                            assertEquals(j.getString("userId"), providerA.getUserId());
-                            assertEquals(
-                                j.getJsonObject("userInfo"), utils.getDetails(providerA).userInfo);
+                                assertEquals(
+                                    j.getString("email"), utils.getDetails(providerA).email);
+                                assertEquals(j.getString("userId"), providerA.getUserId());
+                                assertEquals(
+                                    j.getJsonObject("userInfo"),
+                                    utils.getDetails(providerA).userInfo);
 
-                            rejectSuccessfully.flag();
+                                rejectSuccessfully.flag();
 
-                            JsonArray badReq =
-                                new JsonArray()
-                                    .add(
-                                        new JsonObject()
-                                            .put("id", providerAPendingId.toString())
-                                            .put("status", "approved"));
-                            List<ProviderUpdateRequest> badRequest =
-                                ProviderUpdateRequest.jsonArrayToList(badReq);
+                                JsonArray badReq =
+                                    new JsonArray()
+                                        .add(
+                                            new JsonObject()
+                                                .put("id", providerAPendingId.toString())
+                                                .put("status", "approved"));
+                                List<ProviderUpdateRequest> badRequest =
+                                    ProviderUpdateRequest.jsonArrayToList(badReq);
 
-                            adminService.updateProviderRegistrationStatus(
-                                badRequest,
-                                adminUser,
-                                testContext.succeeding(
-                                    resp ->
-                                        testContext.verify(
-                                            () -> {
-                                              assertEquals(resp.getInteger("status"), 400);
-                                              assertEquals(
-                                                  resp.getString("type"),
-                                                  URN_INVALID_INPUT.toString());
-                                              assertEquals(
-                                                  resp.getString("title"),
-                                                  ERR_TITLE_INVALID_PROV_REG_ID);
-                                              assertEquals(
-                                                  resp.getString("detail"),
-                                                  providerAPendingId.toString());
+                                adminService
+                                    .updateProviderRegistrationStatus(badRequest, adminUser)
+                                    .onComplete(
+                                        testContext.succeeding(
+                                            resp ->
+                                                testContext.verify(
+                                                    () -> {
+                                                      assertEquals(resp.getInteger("status"), 400);
+                                                      assertEquals(
+                                                          resp.getString("type"),
+                                                          URN_INVALID_INPUT.toString());
+                                                      assertEquals(
+                                                          resp.getString("title"),
+                                                          ERR_TITLE_INVALID_PROV_REG_ID);
+                                                      assertEquals(
+                                                          resp.getString("detail"),
+                                                          providerAPendingId.toString());
 
-                                              failApprove.flag();
-                                            })));
-                          })));
+                                                      failApprove.flag();
+                                                    })));
+                              })));
         });
   }
 
@@ -798,58 +816,62 @@ public class UpdateProviderRegistrationStatusTest {
                           .put("status", "approved"));
           List<ProviderUpdateRequest> request = ProviderUpdateRequest.jsonArrayToList(req);
 
-          adminService.updateProviderRegistrationStatus(
-              request,
-              adminUser,
-              testContext.failing(
-                  err ->
-                      testContext.verify(
-                          () -> {
-                            keycloakFailed.flag();
+          adminService
+              .updateProviderRegistrationStatus(request, adminUser)
+              .onComplete(
+                  testContext.failing(
+                      err ->
+                          testContext.verify(
+                              () -> {
+                                keycloakFailed.flag();
 
-                            // mock correct KC behaviour
-                            Map<String, JsonObject> mockKcResp =
-                                Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
-                            Mockito.when(kc.getDetails(any()))
-                                .thenReturn(Future.succeededFuture(mockKcResp));
+                                // mock correct KC behaviour
+                                Map<String, JsonObject> mockKcResp =
+                                    Map.of(providerA.getUserId(), utils.getKcAdminJson(providerA));
+                                Mockito.when(kc.getDetails(any()))
+                                    .thenReturn(Future.succeededFuture(mockKcResp));
 
-                            // request should succeed because of rollback
-                            adminService.updateProviderRegistrationStatus(
-                                request,
-                                adminUser,
-                                testContext.succeeding(
-                                    response ->
-                                        testContext.verify(
-                                            () -> {
-                                              assertEquals(response.getInteger("status"), 200);
-                                              assertEquals(
-                                                  response.getString("type"),
-                                                  URN_SUCCESS.toString());
-                                              assertEquals(
-                                                  response.getString("title"),
-                                                  SUCC_TITLE_PROV_STATUS_UPDATE);
-                                              JsonArray res = response.getJsonArray("results");
-                                              assertTrue(res.size() == 1);
+                                // request should succeed because of rollback
+                                adminService
+                                    .updateProviderRegistrationStatus(request, adminUser)
+                                    .onComplete(
+                                        testContext.succeeding(
+                                            response ->
+                                                testContext.verify(
+                                                    () -> {
+                                                      assertEquals(
+                                                          response.getInteger("status"), 200);
+                                                      assertEquals(
+                                                          response.getString("type"),
+                                                          URN_SUCCESS.toString());
+                                                      assertEquals(
+                                                          response.getString("title"),
+                                                          SUCC_TITLE_PROV_STATUS_UPDATE);
+                                                      JsonArray res =
+                                                          response.getJsonArray("results");
+                                                      assertTrue(res.size() == 1);
 
-                                              JsonObject j = res.getJsonObject(0);
-                                              assertEquals(
-                                                  j.getString("id"), providerAPendingId.toString());
-                                              assertEquals(
-                                                  j.getString(RESP_STATUS),
-                                                  RoleStatus.APPROVED.name().toLowerCase());
+                                                      JsonObject j = res.getJsonObject(0);
+                                                      assertEquals(
+                                                          j.getString("id"),
+                                                          providerAPendingId.toString());
+                                                      assertEquals(
+                                                          j.getString(RESP_STATUS),
+                                                          RoleStatus.APPROVED.name().toLowerCase());
 
-                                              assertEquals(
-                                                  j.getString("email"),
-                                                  utils.getDetails(providerA).email);
-                                              assertEquals(
-                                                  j.getString("userId"), providerA.getUserId());
-                                              assertEquals(
-                                                  j.getJsonObject("userInfo"),
-                                                  utils.getDetails(providerA).userInfo);
+                                                      assertEquals(
+                                                          j.getString("email"),
+                                                          utils.getDetails(providerA).email);
+                                                      assertEquals(
+                                                          j.getString("userId"),
+                                                          providerA.getUserId());
+                                                      assertEquals(
+                                                          j.getJsonObject("userInfo"),
+                                                          utils.getDetails(providerA).userInfo);
 
-                                              rollBackSuccess.flag();
-                                            })));
-                          })));
+                                                      rollBackSuccess.flag();
+                                                    })));
+                              })));
         });
   }
 }

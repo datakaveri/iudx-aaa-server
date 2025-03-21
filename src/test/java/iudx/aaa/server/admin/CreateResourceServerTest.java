@@ -195,21 +195,21 @@ public class CreateResourceServerTest {
 
     User user = new UserBuilder().userId(UUID.randomUUID()).roles(List.of(Roles.ADMIN)).build();
 
-    adminService.createResourceServer(
-        request,
-        user,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 401);
-                      assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
-                      assertEquals(
-                          Constants.ERR_TITLE_NO_COS_ADMIN_ROLE, response.getString("title"));
-                      assertEquals(
-                          Constants.ERR_DETAIL_NO_COS_ADMIN_ROLE, response.getString("detail"));
-                      testContext.completeNow();
-                    })));
+    adminService
+        .createResourceServer(request, user)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 401);
+                          assertEquals(URN_INVALID_ROLE.toString(), response.getString("type"));
+                          assertEquals(
+                              Constants.ERR_TITLE_NO_COS_ADMIN_ROLE, response.getString("title"));
+                          assertEquals(
+                              Constants.ERR_DETAIL_NO_COS_ADMIN_ROLE, response.getString("detail"));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -226,57 +226,60 @@ public class CreateResourceServerTest {
             .put("owner", "email@email.com");
     CreateRsRequest request = new CreateRsRequest(json);
 
-    adminService.createResourceServer(
-        request,
-        cosAdminUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 400);
-                      assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
-                      assertEquals(response.getString("title"), Constants.ERR_TITLE_INVALID_DOMAIN);
-                      assertEquals(
-                          response.getString("detail"), Constants.ERR_DETAIL_INVALID_DOMAIN);
-                      protocolInUrl.flag();
-                    })));
+    adminService
+        .createResourceServer(request, cosAdminUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 400);
+                          assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
+                          assertEquals(
+                              response.getString("title"), Constants.ERR_TITLE_INVALID_DOMAIN);
+                          assertEquals(
+                              response.getString("detail"), Constants.ERR_DETAIL_INVALID_DOMAIN);
+                          protocolInUrl.flag();
+                        })));
 
     json.clear()
         .put("url", "example.com/path/1/2")
         .put("name", "bar")
         .put("owner", "email@email.com");
     request = new CreateRsRequest(json);
-    adminService.createResourceServer(
-        request,
-        cosAdminUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 400);
-                      assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
-                      assertEquals(response.getString("title"), Constants.ERR_TITLE_INVALID_DOMAIN);
-                      assertEquals(
-                          response.getString("detail"), Constants.ERR_DETAIL_INVALID_DOMAIN);
-                      pathInUrl.flag();
-                    })));
+    adminService
+        .createResourceServer(request, cosAdminUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 400);
+                          assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
+                          assertEquals(
+                              response.getString("title"), Constants.ERR_TITLE_INVALID_DOMAIN);
+                          assertEquals(
+                              response.getString("detail"), Constants.ERR_DETAIL_INVALID_DOMAIN);
+                          pathInUrl.flag();
+                        })));
 
     json.clear().put("url", "example#@.abcd").put("name", "bar").put("owner", "email@email.com");
     request = new CreateRsRequest(json);
-    adminService.createResourceServer(
-        request,
-        cosAdminUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 400);
-                      assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
-                      assertEquals(response.getString("title"), Constants.ERR_TITLE_INVALID_DOMAIN);
-                      assertEquals(
-                          response.getString("detail"), Constants.ERR_DETAIL_INVALID_DOMAIN);
-                      specialChars.flag();
-                    })));
+    adminService
+        .createResourceServer(request, cosAdminUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 400);
+                          assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
+                          assertEquals(
+                              response.getString("title"), Constants.ERR_TITLE_INVALID_DOMAIN);
+                          assertEquals(
+                              response.getString("detail"), Constants.ERR_DETAIL_INVALID_DOMAIN);
+                          specialChars.flag();
+                        })));
   }
 
   @Test
@@ -292,27 +295,25 @@ public class CreateResourceServerTest {
 
     Mockito.doAnswer(
             i -> {
-              Promise<JsonObject> p = i.getArgument(1);
               Set<String> emails = i.getArgument(0);
-              p.fail(
+              return Future.failedFuture(
                   new ComposeException(
                       400, Urn.URN_INVALID_INPUT, "Email not exist", emails.toString()));
-              return i.getMock();
             })
         .when(registrationService)
-        .findUserByEmail(Mockito.anySet(), Mockito.any());
+        .findUserByEmail(Mockito.anySet());
 
-    adminService.createResourceServer(
-        request,
-        cosAdminUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 400);
-                      assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
-                      testContext.completeNow();
-                    })));
+    adminService
+        .createResourceServer(request, cosAdminUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 400);
+                          assertEquals(response.getString("type"), URN_INVALID_INPUT.toString());
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -327,41 +328,40 @@ public class CreateResourceServerTest {
 
     Mockito.doAnswer(
             i -> {
-              Promise<JsonObject> p = i.getArgument(1);
               Set<String> emails = i.getArgument(0);
               String email = new ArrayList<String>(emails).get(0);
 
               JsonObject resp = utils.getKcAdminJson(adminUser);
 
-              p.complete(new JsonObject().put(email, resp));
-              return i.getMock();
+              return Future.succeededFuture(new JsonObject().put(email, resp));
             })
         .when(registrationService)
-        .findUserByEmail(Mockito.anySet(), Mockito.any());
+        .findUserByEmail(Mockito.anySet());
 
-    adminService.createResourceServer(
-        request,
-        cosAdminUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 201);
-                      assertEquals(response.getString("type"), URN_SUCCESS.toString());
-                      assertEquals(response.getString("title"), Constants.SUCC_TITLE_CREATED_RS);
-                      JsonObject result = response.getJsonObject("results");
-                      assertEquals(result.getString("name"), name);
-                      assertEquals(result.getString("url"), url.toLowerCase());
+    adminService
+        .createResourceServer(request, cosAdminUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 201);
+                          assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                          assertEquals(
+                              response.getString("title"), Constants.SUCC_TITLE_CREATED_RS);
+                          JsonObject result = response.getJsonObject("results");
+                          assertEquals(result.getString("name"), name);
+                          assertEquals(result.getString("url"), url.toLowerCase());
 
-                      assertTrue(result.containsKey("owner"));
-                      assertTrue(result.getJsonObject("owner").containsKey("email"));
-                      assertTrue(result.getJsonObject("owner").containsKey("id"));
-                      assertTrue(result.getJsonObject("owner").containsKey("name"));
+                          assertTrue(result.containsKey("owner"));
+                          assertTrue(result.getJsonObject("owner").containsKey("email"));
+                          assertTrue(result.getJsonObject("owner").containsKey("id"));
+                          assertTrue(result.getJsonObject("owner").containsKey("name"));
 
-                      assertTrue(result.getString("id").matches(UUID_REGEX));
-                      createdRsIds.add(UUID.fromString(result.getString("id")));
-                      testContext.completeNow();
-                    })));
+                          assertTrue(result.getString("id").matches(UUID_REGEX));
+                          createdRsIds.add(UUID.fromString(result.getString("id")));
+                          testContext.completeNow();
+                        })));
   }
 
   @Test
@@ -379,62 +379,62 @@ public class CreateResourceServerTest {
 
     Mockito.doAnswer(
             i -> {
-              Promise<JsonObject> p = i.getArgument(1);
               Set<String> emails = i.getArgument(0);
               String email = new ArrayList<String>(emails).get(0);
 
               JsonObject resp = utils.getKcAdminJson(adminUser);
 
-              p.complete(new JsonObject().put(email, resp));
-              return i.getMock();
+              return Future.succeededFuture(new JsonObject().put(email, resp));
             })
         .when(registrationService)
-        .findUserByEmail(Mockito.anySet(), Mockito.any());
+        .findUserByEmail(Mockito.anySet());
 
-    adminService.createResourceServer(
-        request,
-        cosAdminUser,
-        testContext.succeeding(
-            response ->
-                testContext.verify(
-                    () -> {
-                      assertEquals(response.getInteger("status"), 201);
-                      assertEquals(response.getString("type"), URN_SUCCESS.toString());
-                      assertEquals(response.getString("title"), Constants.SUCC_TITLE_CREATED_RS);
-                      JsonObject result = response.getJsonObject("results");
-                      assertEquals(result.getString("name"), name);
-                      assertEquals(result.getString("url"), url.toLowerCase());
+    adminService
+        .createResourceServer(request, cosAdminUser)
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertEquals(response.getInteger("status"), 201);
+                          assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                          assertEquals(
+                              response.getString("title"), Constants.SUCC_TITLE_CREATED_RS);
+                          JsonObject result = response.getJsonObject("results");
+                          assertEquals(result.getString("name"), name);
+                          assertEquals(result.getString("url"), url.toLowerCase());
 
-                      assertTrue(result.containsKey("owner"));
-                      assertTrue(result.getJsonObject("owner").containsKey("email"));
-                      assertTrue(result.getJsonObject("owner").containsKey("id"));
-                      assertTrue(result.getJsonObject("owner").containsKey("name"));
+                          assertTrue(result.containsKey("owner"));
+                          assertTrue(result.getJsonObject("owner").containsKey("email"));
+                          assertTrue(result.getJsonObject("owner").containsKey("id"));
+                          assertTrue(result.getJsonObject("owner").containsKey("name"));
 
-                      assertTrue(result.getString("id").matches(UUID_REGEX));
-                      createdRsIds.add(UUID.fromString(result.getString("id")));
-                      p1.complete();
-                    })));
+                          assertTrue(result.getString("id").matches(UUID_REGEX));
+                          createdRsIds.add(UUID.fromString(result.getString("id")));
+                          p1.complete();
+                        })));
 
     p1.future()
         .onSuccess(
             succ -> {
-              adminService.createResourceServer(
-                  request,
-                  cosAdminUser,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(response.getInteger("status"), 409);
-                                assertEquals(
-                                    response.getString("type"), URN_ALREADY_EXISTS.toString());
-                                assertEquals(
-                                    response.getString("title"), Constants.ERR_TITLE_DOMAIN_EXISTS);
-                                assertEquals(
-                                    response.getString("detail"),
-                                    Constants.ERR_DETAIL_DOMAIN_EXISTS);
-                                testContext.completeNow();
-                              })));
+              adminService
+                  .createResourceServer(request, cosAdminUser)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(response.getInteger("status"), 409);
+                                    assertEquals(
+                                        response.getString("type"), URN_ALREADY_EXISTS.toString());
+                                    assertEquals(
+                                        response.getString("title"),
+                                        Constants.ERR_TITLE_DOMAIN_EXISTS);
+                                    assertEquals(
+                                        response.getString("detail"),
+                                        Constants.ERR_DETAIL_DOMAIN_EXISTS);
+                                    testContext.completeNow();
+                                  })));
             });
   }
 
@@ -453,29 +453,26 @@ public class CreateResourceServerTest {
 
     Mockito.doAnswer(
             i -> {
-              Promise<JsonObject> p = i.getArgument(1);
-              p.fail("Internal error!");
-              return i.getMock();
+              return Future.failedFuture("Internal error!");
             })
         .when(registrationService)
-        .findUserByEmail(Mockito.anySet(), Mockito.any());
+        .findUserByEmail(Mockito.anySet());
 
-    adminService.createResourceServer(
-        request,
-        cosAdminUser,
-        testContext.failing(
-            response ->
-                testContext.verify(
-                    () -> {
-                      p1.complete();
-                    })));
+    adminService
+        .createResourceServer(request, cosAdminUser)
+        .onComplete(
+            testContext.failing(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          p1.complete();
+                        })));
 
     p1.future()
         .onSuccess(
             succ -> {
               Mockito.doAnswer(
                       i -> {
-                        Promise<JsonObject> p = i.getArgument(1);
                         Set<String> emails = i.getArgument(0);
                         String email = new ArrayList<String>(emails).get(0);
 
@@ -484,36 +481,37 @@ public class CreateResourceServerTest {
                          */
                         JsonObject resp = utils.getKcAdminJson(adminUser);
 
-                        p.complete(new JsonObject().put(email, resp));
-                        return i.getMock();
+                        return Future.succeededFuture(new JsonObject().put(email, resp));
                       })
                   .when(registrationService)
-                  .findUserByEmail(Mockito.anySet(), Mockito.any());
+                  .findUserByEmail(Mockito.anySet());
 
-              adminService.createResourceServer(
-                  request,
-                  cosAdminUser,
-                  testContext.succeeding(
-                      response ->
-                          testContext.verify(
-                              () -> {
-                                assertEquals(response.getInteger("status"), 201);
-                                assertEquals(response.getString("type"), URN_SUCCESS.toString());
-                                assertEquals(
-                                    response.getString("title"), Constants.SUCC_TITLE_CREATED_RS);
-                                JsonObject result = response.getJsonObject("results");
-                                assertEquals(result.getString("name"), name);
-                                assertEquals(result.getString("url"), url.toLowerCase());
+              adminService
+                  .createResourceServer(request, cosAdminUser)
+                  .onComplete(
+                      testContext.succeeding(
+                          response ->
+                              testContext.verify(
+                                  () -> {
+                                    assertEquals(response.getInteger("status"), 201);
+                                    assertEquals(
+                                        response.getString("type"), URN_SUCCESS.toString());
+                                    assertEquals(
+                                        response.getString("title"),
+                                        Constants.SUCC_TITLE_CREATED_RS);
+                                    JsonObject result = response.getJsonObject("results");
+                                    assertEquals(result.getString("name"), name);
+                                    assertEquals(result.getString("url"), url.toLowerCase());
 
-                                assertTrue(result.containsKey("owner"));
-                                assertTrue(result.getJsonObject("owner").containsKey("email"));
-                                assertTrue(result.getJsonObject("owner").containsKey("id"));
-                                assertTrue(result.getJsonObject("owner").containsKey("name"));
+                                    assertTrue(result.containsKey("owner"));
+                                    assertTrue(result.getJsonObject("owner").containsKey("email"));
+                                    assertTrue(result.getJsonObject("owner").containsKey("id"));
+                                    assertTrue(result.getJsonObject("owner").containsKey("name"));
 
-                                assertTrue(result.getString("id").matches(UUID_REGEX));
-                                createdRsIds.add(UUID.fromString(result.getString("id")));
-                                testContext.completeNow();
-                              })));
+                                    assertTrue(result.getString("id").matches(UUID_REGEX));
+                                    createdRsIds.add(UUID.fromString(result.getString("id")));
+                                    testContext.completeNow();
+                                  })));
             });
   }
 
@@ -531,17 +529,15 @@ public class CreateResourceServerTest {
 
     Mockito.doAnswer(
             i -> {
-              Promise<JsonObject> p = i.getArgument(1);
               Set<String> emails = i.getArgument(0);
               String email = new ArrayList<String>(emails).get(0);
 
               JsonObject resp = utils.getKcAdminJson(adminUser);
 
-              p.complete(new JsonObject().put(email, resp));
-              return i.getMock();
+              return Future.succeededFuture(new JsonObject().put(email, resp));
             })
         .when(registrationService)
-        .findUserByEmail(Mockito.anySet(), Mockito.any());
+        .findUserByEmail(Mockito.anySet());
 
     Future<Void> roleCheckBeforeCreation =
         pool.withConnection(
@@ -558,36 +554,37 @@ public class CreateResourceServerTest {
 
     roleCheckBeforeCreation.map(
         res ->
-            adminService.createResourceServer(
-                request,
-                cosAdminUser,
-                testContext.succeeding(
-                    response ->
-                        testContext.verify(
-                            () -> {
-                              assertEquals(response.getInteger("status"), 201);
-                              assertEquals(response.getString("type"), URN_SUCCESS.toString());
-                              assertEquals(
-                                  response.getString("title"), Constants.SUCC_TITLE_CREATED_RS);
-                              JsonObject result = response.getJsonObject("results");
-                              createdRsIds.add(UUID.fromString(result.getString("id")));
+            adminService
+                .createResourceServer(request, cosAdminUser)
+                .onComplete(
+                    testContext.succeeding(
+                        response ->
+                            testContext.verify(
+                                () -> {
+                                  assertEquals(response.getInteger("status"), 201);
+                                  assertEquals(response.getString("type"), URN_SUCCESS.toString());
+                                  assertEquals(
+                                      response.getString("title"), Constants.SUCC_TITLE_CREATED_RS);
+                                  JsonObject result = response.getJsonObject("results");
+                                  createdRsIds.add(UUID.fromString(result.getString("id")));
 
-                              pool.withConnection(
-                                      conn ->
-                                          conn.preparedQuery(SQL_CHECK_APPROVED_ROLES_FOR_RS)
-                                              .execute(
-                                                  Tuple.of(
-                                                      roleTestUser.getUserId(), url.toLowerCase())))
-                                  .onSuccess(
-                                      rows -> {
-                                        if (rows.rowCount() == 1
-                                            && rows.iterator()
-                                                .next()
-                                                .get(Roles.class, "role")
-                                                .equals(Roles.CONSUMER)) {
-                                          userHasNewConsumerRoleForNewRs.flag();
-                                        }
-                                      });
-                            }))));
+                                  pool.withConnection(
+                                          conn ->
+                                              conn.preparedQuery(SQL_CHECK_APPROVED_ROLES_FOR_RS)
+                                                  .execute(
+                                                      Tuple.of(
+                                                          roleTestUser.getUserId(),
+                                                          url.toLowerCase())))
+                                      .onSuccess(
+                                          rows -> {
+                                            if (rows.rowCount() == 1
+                                                && rows.iterator()
+                                                    .next()
+                                                    .get(Roles.class, "role")
+                                                    .equals(Roles.CONSUMER)) {
+                                              userHasNewConsumerRoleForNewRs.flag();
+                                            }
+                                          });
+                                }))));
   }
 }

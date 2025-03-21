@@ -64,10 +64,8 @@ import static iudx.aaa.server.apiserver.util.Urn.URN_MISSING_INFO;
 import static iudx.aaa.server.apiserver.util.Urn.URN_SUCCESS;
 
 import com.google.common.net.InternetDomainName;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -140,16 +138,18 @@ public class ApdServiceImpl implements ApdService {
 
   /**
    * Determines what kind of state changes each user can make. See javadoc for {@link
-   * #updateApd(List, User, Handler)} for allowed states. Currently, each starting state is present
-   * only once, so we can have Map<{@link ApdStatus}, {@link ApdStatus}>. If this changes, we can
-   * have Map<{@link ApdStatus}, Set<{@link ApdStatus}>>. Since we use '==' for equality checking of
+   * #updateApd(List, User)} for allowed states. Currently, each starting state is present only
+   * once, so we can have Map<{@link ApdStatus}, {@link ApdStatus}>. If this changes, we can have
+   * Map<{@link ApdStatus}, Set<{@link ApdStatus}>>. Since we use '==' for equality checking of
    * {@link ApdStatus} enum, no NPE is thrown.
    */
   private static Map<ApdStatus, ApdStatus> authAdminStates =
       Map.of(ApdStatus.ACTIVE, ApdStatus.INACTIVE, ApdStatus.INACTIVE, ApdStatus.ACTIVE);
 
   @Override
-  public ApdService listApd(User user, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> listApd(User user) {
+    Promise<JsonObject> promiseHandler = Promise.promise();
+
     if (user.getRoles().isEmpty()) {
       Response r =
           new ResponseBuilder()
@@ -158,8 +158,8 @@ public class ApdServiceImpl implements ApdService {
               .title(ERR_TITLE_NO_APPROVED_ROLES)
               .detail(ERR_DETAIL_NO_APPROVED_ROLES)
               .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
+      promiseHandler.complete(r.toJson());
+      return promiseHandler.future();
     }
 
     String query;
@@ -187,17 +187,7 @@ public class ApdServiceImpl implements ApdService {
                 return Future.succeededFuture(new JsonObject());
               }
 
-              Promise<JsonObject> response = Promise.promise();
-              Promise<JsonObject> promise = Promise.promise();
-              getApdDetails(new ArrayList<>(), ids, promise);
-              promise
-                  .future()
-                  .onComplete(
-                      ar -> {
-                        response.complete(ar.result());
-                      });
-
-              return response.future();
+              return getApdDetails(new ArrayList<>(), ids);
             });
 
     apdDetails
@@ -225,27 +215,27 @@ public class ApdServiceImpl implements ApdService {
                       .title(SUCC_TITLE_APD_READ)
                       .arrayResults(ar)
                       .build();
-              handler.handle(Future.succeededFuture(resp.toJson()));
+              promiseHandler.complete(resp.toJson());
             })
         .onFailure(
             e -> {
               if (e instanceof ComposeException) {
                 ComposeException exp = (ComposeException) e;
-                handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                promiseHandler.complete(exp.getResponse().toJson());
                 return;
               }
               LOGGER.error(e.getMessage());
-              handler.handle(Future.failedFuture("Internal error"));
+              promiseHandler.fail("Internal error");
             });
 
-    return this;
+    return promiseHandler.future();
   }
 
   @Override
-  public ApdService updateApd(
-      List<ApdUpdateRequest> request, User user, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> updateApd(List<ApdUpdateRequest> request, User user) {
 
     LOGGER.debug("Info : {} : Request received", LOGGER.getName());
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     if (!user.getRoles().contains(Roles.COS_ADMIN)) {
       Response r =
@@ -255,8 +245,8 @@ public class ApdServiceImpl implements ApdService {
               .title(ERR_TITLE_NO_COS_ADMIN_ROLE)
               .detail(ERR_DETAIL_NO_COS_ADMIN_ROLE)
               .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
+      promiseHandler.complete(r.toJson());
+      return promiseHandler.future();
     }
 
     /*
@@ -278,8 +268,8 @@ public class ApdServiceImpl implements ApdService {
               .detail(firstOffendingId)
               .status(400)
               .build();
-      handler.handle(Future.succeededFuture(resp.toJson()));
-      return this;
+      promiseHandler.complete(resp.toJson());
+      return promiseHandler.future();
     }
 
     Collector<Row, ?, Map<UUID, JsonObject>> collector =
@@ -356,20 +346,20 @@ public class ApdServiceImpl implements ApdService {
                       .title(SUCC_TITLE_UPDATED_APD)
                       .arrayResults(response)
                       .build();
-              handler.handle(Future.succeededFuture(resp.toJson()));
+              promiseHandler.complete(resp.toJson());
             })
         .onFailure(
             e -> {
               if (e instanceof ComposeException) {
                 ComposeException exp = (ComposeException) e;
-                handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                promiseHandler.complete(exp.getResponse().toJson());
                 return;
               }
               LOGGER.error(e.getMessage());
-              handler.handle(Future.failedFuture("Internal error"));
+              promiseHandler.fail("Internal error");
             });
 
-    return this;
+    return promiseHandler.future();
   }
 
   /**
@@ -412,10 +402,10 @@ public class ApdServiceImpl implements ApdService {
   }
 
   @Override
-  public ApdService createApd(
-      CreateApdRequest request, User user, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> createApd(CreateApdRequest request, User user) {
 
     LOGGER.debug("Info : {} : Request received", LOGGER.getName());
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     if (!user.getRoles().contains(Roles.COS_ADMIN)) {
       Response r =
@@ -425,8 +415,8 @@ public class ApdServiceImpl implements ApdService {
               .title(ERR_TITLE_NO_COS_ADMIN_ROLE)
               .detail(ERR_DETAIL_NO_COS_ADMIN_ROLE)
               .build();
-      handler.handle(Future.succeededFuture(r.toJson()));
-      return this;
+      promiseHandler.complete(r.toJson());
+      return promiseHandler.future();
     }
 
     String url = request.getUrl();
@@ -441,13 +431,11 @@ public class ApdServiceImpl implements ApdService {
               .detail(ERR_DETAIL_INVALID_DOMAIN)
               .status(400)
               .build();
-      handler.handle(Future.succeededFuture(resp.toJson()));
-      return this;
+      promiseHandler.complete(resp.toJson());
+      return promiseHandler.future();
     }
 
-    Promise<JsonObject> promise = Promise.promise();
-    registrationService.findUserByEmail(Set.of(ownerEmail), promise);
-    Future<JsonObject> trusteeInfo = promise.future();
+    Future<JsonObject> trusteeInfo = registrationService.findUserByEmail(Set.of(ownerEmail));
 
     Future<UUID> apdId =
         trusteeInfo.compose(
@@ -497,20 +485,20 @@ public class ApdServiceImpl implements ApdService {
                       .title(SUCC_TITLE_REGISTERED_APD)
                       .objectResults(response)
                       .build();
-              handler.handle(Future.succeededFuture(resp.toJson()));
+              promiseHandler.complete(resp.toJson());
             })
         .onFailure(
             e -> {
               if (e instanceof ComposeException) {
                 ComposeException exp = (ComposeException) e;
-                handler.handle(Future.succeededFuture(exp.getResponse().toJson()));
+                promiseHandler.complete(exp.getResponse().toJson());
                 return;
               }
               LOGGER.error(e.getMessage());
-              handler.handle(Future.failedFuture("Internal error"));
+              promiseHandler.fail("Internal error");
             });
 
-    return this;
+    return promiseHandler.future();
   }
 
   /**
@@ -519,9 +507,9 @@ public class ApdServiceImpl implements ApdService {
    * value contains details.
    */
   @Override
-  public ApdService getApdDetails(
-      List<String> apdUrl, List<String> apdIds, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> getApdDetails(List<String> apdUrl, List<String> apdIds) {
     LOGGER.debug("Info : {} : Request received", LOGGER.getName());
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     String req;
     String query;
@@ -531,18 +519,17 @@ public class ApdServiceImpl implements ApdService {
     Set<String> uniqueUrl = new HashSet<>();
     // either apdUrl or apdId must be empty
     if (apdUrl.isEmpty() == apdIds.isEmpty()) {
-      handler.handle(Future.failedFuture(INTERNALERROR));
-      return this;
+      promiseHandler.fail(INTERNALERROR);
+      return promiseHandler.future();
     }
 
     if (!apdIds.isEmpty()) {
       for (String ids : apdIds) {
         if (ids == null || !ids.matches(UUID_REGEX)) {
-          handler.handle(
-              Future.failedFuture(
-                  new ComposeException(
-                      400, URN_INVALID_INPUT, ERR_TITLE_INVALID_REQUEST, ERR_DETAIL_INVALID_UUID)));
-          return this;
+          promiseHandler.fail(
+              new ComposeException(
+                  400, URN_INVALID_INPUT, ERR_TITLE_INVALID_REQUEST, ERR_DETAIL_INVALID_UUID));
+          return promiseHandler.future();
         }
         uniqueIds.add(UUID.fromString(ids));
       }
@@ -647,19 +634,19 @@ public class ApdServiceImpl implements ApdService {
     responseFuture
         .onSuccess(
             response -> {
-              handler.handle(Future.succeededFuture(response));
+              promiseHandler.complete(response);
             })
         .onFailure(
             e -> {
               if (e instanceof ComposeException) {
                 ComposeException exp = (ComposeException) e;
-                handler.handle(Future.failedFuture(exp));
+                promiseHandler.fail(exp);
                 return;
               }
               LOGGER.error(e.getMessage());
-              handler.handle(Future.failedFuture(INTERNALERROR));
+              promiseHandler.fail(INTERNALERROR);
             });
-    return this;
+    return promiseHandler.future();
   }
 
   /**
@@ -671,11 +658,9 @@ public class ApdServiceImpl implements ApdService {
    */
   private Future<Map<String, JsonObject>> getUserDetails(List<String> userIds) {
     Promise<Map<String, JsonObject>> promise = Promise.promise();
-    Promise<JsonObject> regServicePromise = Promise.promise();
-    Future<JsonObject> response = regServicePromise.future();
 
-    registrationService.getUserDetails(userIds, regServicePromise);
-    response
+    registrationService
+        .getUserDetails(userIds)
         .onSuccess(
             obj -> {
               Map<String, JsonObject> details =
@@ -695,9 +680,10 @@ public class ApdServiceImpl implements ApdService {
   }
 
   @Override
-  public ApdService callApd(JsonObject apdContext, Handler<AsyncResult<JsonObject>> handler) {
+  public Future<JsonObject> callApd(JsonObject apdContext) {
 
     LOGGER.debug("Info : {} : Request received", LOGGER.getName());
+    Promise<JsonObject> promiseHandler = Promise.promise();
 
     /* TODO: make apdContext a class */
     String apdUrl = apdContext.getString("apdUrl");
@@ -734,9 +720,7 @@ public class ApdServiceImpl implements ApdService {
                         ERR_DETAIL_APD_NOT_REGISTERED));
               }
 
-              Promise<JsonObject> promise = Promise.promise();
-              tokenService.getAuthServerToken(apdUrl, promise);
-              return promise.future();
+              return tokenService.getAuthServerToken(apdUrl);
             });
 
     Future<JsonObject> apdResponse =
@@ -818,7 +802,7 @@ public class ApdServiceImpl implements ApdService {
                     .put(CREATE_TOKEN_CAT_ID, itemId)
                     .put(CREATE_TOKEN_STATUS, CREATE_TOKEN_SUCCESS);
 
-                handler.handle(Future.succeededFuture(result));
+                promiseHandler.complete(result);
                 return;
               } else if (response.getString(APD_RESP_TYPE).equals(APD_URN_DENY_NEEDS_INT)) {
                 /*
@@ -831,7 +815,7 @@ public class ApdServiceImpl implements ApdService {
                     .put(CREATE_TOKEN_LINK, response.getString(APD_RESP_LINK, apdUrl))
                     .put(CREATE_TOKEN_STATUS, CREATE_TOKEN_APD_INTERAC);
 
-                handler.handle(Future.succeededFuture(result));
+                promiseHandler.complete(result);
                 return;
               } else if (response.getString(APD_RESP_TYPE).equals(APD_URN_DENY)) {
 
@@ -842,26 +826,25 @@ public class ApdServiceImpl implements ApdService {
                   apdNotActiveMesg = "";
                 }
 
-                handler.handle(
-                    Future.failedFuture(
-                        new ComposeException(
-                            403,
-                            URN_INVALID_INPUT,
-                            ERR_TITLE_APD_EVAL_FAILED,
-                            response.getString(APD_RESP_DETAIL) + apdNotActiveMesg)));
+                promiseHandler.fail(
+                    new ComposeException(
+                        403,
+                        URN_INVALID_INPUT,
+                        ERR_TITLE_APD_EVAL_FAILED,
+                        response.getString(APD_RESP_DETAIL) + apdNotActiveMesg));
                 return;
               }
             })
         .onFailure(
             e -> {
               if (e instanceof ComposeException) {
-                handler.handle(Future.failedFuture(e));
+                promiseHandler.fail(e);
                 return;
               }
               LOGGER.error(e.getMessage());
-              handler.handle(Future.failedFuture("Internal error"));
+              promiseHandler.fail("Internal error");
             });
 
-    return this;
+    return promiseHandler.future();
   }
 }

@@ -1,11 +1,9 @@
 package iudx.aaa.server.registration;
 
-import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.ProxyGen;
 import io.vertx.codegen.annotations.VertxGen;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.apiserver.AddRolesRequest;
@@ -37,7 +35,7 @@ public interface RegistrationService {
    *
    * @param vertx which is the vertx instance
    * @param address which is the proxy address
-   * @return RegistrationServiceVertxEBProxy which is a service proxy
+   * @return Future of type JsonObject
    */
   @GenIgnore
   static RegistrationService createProxy(Vertx vertx, String address) {
@@ -49,54 +47,41 @@ public interface RegistrationService {
    *
    * @param request the request body in the form of {@link AddRolesRequest} data object
    * @param user the User object i.e. the user calling the API
-   * @param handler the request handler which returns a JsonObject
-   * @return Registration Service which is a service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  RegistrationService addRoles(
-      AddRolesRequest request, User user, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> addRoles(AddRolesRequest request, User user);
 
   /**
    * The listUser implements the user list operation.
    *
    * @param user the User object i.e. the user calling the API
-   * @param handler the request handler which returns a JsonObject
-   * @return RegistrationService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  RegistrationService listUser(User user, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> listUser(User user);
 
   /**
    * The resetClientSecret implements client secret regeneration.
    *
    * @param request the request body in the form of UpdateProfileRequest data object
-   * @param handler the request handler which returns a JsonObject
-   * @return RegistrationService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  RegistrationService resetClientSecret(
-      ResetClientSecretRequest request, User user, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> resetClientSecret(ResetClientSecretRequest request, User user);
 
   /**
    * The listResourceServer implements listing resource servers.
    *
-   * @param handler the request handler which returns a JsonObject
-   * @return RegistrationService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  RegistrationService listResourceServer(Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> listResourceServer();
 
   /**
    * The getUserDetails implements getting user details. Other services may call this service to get
    * email and names of users based on their user ID.
    *
    * @param userIds list of user IDs as String in UUID format
-   * @param handler the request handler which returns a JsonObject
-   * @return RegistrationService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  RegistrationService getUserDetails(
-      List<String> userIds, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> getUserDetails(List<String> userIds);
 
   /**
    * The findUsersByEmail implements finding users by their email ID from Keycloak. Users who are
@@ -104,12 +89,9 @@ public interface RegistrationService {
    * users table).
    *
    * @param emailIds set of email IDs
-   * @param handler the request handler which returns a JsonObject
-   * @return RegistrationService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  RegistrationService findUserByEmail(
-      Set<String> emailIds, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> findUserByEmail(Set<String> emailIds);
 
   /**
    * Get default client credentials. A user can fetch their automatically created client ID and
@@ -117,12 +99,9 @@ public interface RegistrationService {
    * them, the client secret cannot be obtained again using this API.
    *
    * @param user the User object
-   * @param handler the request handler which returns a JsonObject
-   * @return RegistrationService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  RegistrationService getDefaultClientCredentials(
-      User user, Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> getDefaultClientCredentials(User user);
 
   /**
    * Search for a user done by trustee given email <b>OR</b> user ID, role and resource server
@@ -133,14 +112,8 @@ public interface RegistrationService {
    *     is being sent
    * @param role the role
    * @param resourceServerUrl the resource server associated with the rol
-   * @param handler the request handler which returns a JsonObject
-   * @return RegistrationService which is a Service
+   * @return Future of type JsonObject
    */
-  @Fluent
-  RegistrationService searchUser(
-      User user,
-      String searchString,
-      Roles role,
-      String resourceServerUrl,
-      Handler<AsyncResult<JsonObject>> handler);
+  Future<JsonObject> searchUser(
+      User user, String searchString, Roles role, String resourceServerUrl);
 }
