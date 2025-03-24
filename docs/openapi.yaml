@@ -9,7 +9,7 @@ info:
     name: For support contact DX Team at
     email: support@iudx.org.in
 servers:
-  - url: ''
+  - url: '/'
     description: Production
   - url: 'https://authvertx.iudx.io'
     description: Development
