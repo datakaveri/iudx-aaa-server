@@ -3,7 +3,7 @@ package iudx.aaa.server.registration;
 import static iudx.aaa.server.registration.Constants.NIL_PHONE;
 
 import io.vertx.core.json.JsonObject;
-import iudx.aaa.server.apiserver.Roles;
+import iudx.aaa.server.apiserver.models.Roles;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;

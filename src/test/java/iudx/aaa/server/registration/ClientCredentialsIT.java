@@ -9,7 +9,7 @@ import io.restassured.http.ContentType;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import iudx.aaa.server.apiserver.ItemType;
-import iudx.aaa.server.apiserver.Roles;
+import iudx.aaa.server.apiserver.models.Roles;
 import iudx.aaa.server.apiserver.util.Urn;
 import java.util.UUID;
 import org.apache.commons.codec.binary.Hex;

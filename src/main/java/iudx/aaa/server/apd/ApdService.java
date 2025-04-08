@@ -6,9 +6,9 @@ import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import iudx.aaa.server.apiserver.ApdUpdateRequest;
-import iudx.aaa.server.apiserver.CreateApdRequest;
-import iudx.aaa.server.apiserver.User;
+import iudx.aaa.server.apiserver.models.ApdUpdateRequest;
+import iudx.aaa.server.apiserver.models.CreateApdRequest;
+import iudx.aaa.server.apiserver.models.User;
 import java.util.List;
 
 /**

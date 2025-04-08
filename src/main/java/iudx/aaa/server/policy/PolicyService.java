@@ -6,12 +6,12 @@ import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import iudx.aaa.server.apiserver.CreateDelegationRequest;
-import iudx.aaa.server.apiserver.DelegationInformation;
-import iudx.aaa.server.apiserver.DeleteDelegationRequest;
-import iudx.aaa.server.apiserver.RequestToken;
-import iudx.aaa.server.apiserver.Roles;
-import iudx.aaa.server.apiserver.User;
+import iudx.aaa.server.apiserver.models.CreateDelegationRequest;
+import iudx.aaa.server.apiserver.models.DelegationInformation;
+import iudx.aaa.server.apiserver.models.DeleteDelegationRequest;
+import iudx.aaa.server.apiserver.models.RequestToken;
+import iudx.aaa.server.apiserver.models.Roles;
+import iudx.aaa.server.apiserver.models.User;
 import java.util.List;
 
 /**

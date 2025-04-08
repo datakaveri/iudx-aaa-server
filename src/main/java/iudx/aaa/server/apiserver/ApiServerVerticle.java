@@ -1,6 +1,7 @@
 package iudx.aaa.server.apiserver;
 
 import static iudx.aaa.server.apiserver.util.Constants.*;
+import static org.cdpg.dx.common.Constants.PG_SERVICE_ADDRESS;
 
 import com.nimbusds.jose.jwk.ECKey;
 import io.vertx.core.AbstractVerticle;
@@ -26,7 +27,8 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import iudx.aaa.server.admin.AdminService;
 import iudx.aaa.server.apd.ApdService;
-import iudx.aaa.server.apiserver.Response.ResponseBuilder;
+import iudx.aaa.server.apiserver.models.Response.ResponseBuilder;
+import iudx.aaa.server.apiserver.models.*;
 import iudx.aaa.server.apiserver.util.ClientAuthentication;
 import iudx.aaa.server.apiserver.util.DelegationIdAuthorization;
 import iudx.aaa.server.apiserver.util.FailureHandler;
@@ -45,6 +47,12 @@ import java.util.Set;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cdpg.dx.aaa.organization.dao.*;
+import org.cdpg.dx.aaa.organization.dao.impl.*;
+import org.cdpg.dx.aaa.organization.models.OrganizationCreateRequest;
+import org.cdpg.dx.aaa.organization.service.OrganizationService;
+import org.cdpg.dx.aaa.organization.service.OrganizationServiceImpl;
+import org.cdpg.dx.database.postgres.service.PostgresService;
 
 /**
  * The AAA Server API Verticle.
@@ -99,6 +107,12 @@ public class ApiServerVerticle extends AbstractVerticle {
   private AdminService adminService;
   private AuditingService auditingService;
   private ApdService apdService;
+    private PostgresService postgresService;
+    private OrganizationCreateRequestDAO organizationCreateRequestDAO;
+    private OrganizationDAO organizationDAO;
+    private OrganizationJoinRequestDAO organizationJoinRequestDAO;
+    private OrganizationUserDAO organizationUserDAO;
+    private OrganizationService organizationService;
 
   /**
    * This method is used to start the Verticle. It deploys a verticle in a cluster, reads the
@@ -176,7 +190,7 @@ public class ApiServerVerticle extends AbstractVerticle {
     DelegationIdAuthorization delegationAuth = new DelegationIdAuthorization(pgPool);
     FailureHandler failureHandler = new FailureHandler();
 
-    RouterBuilder.create(vertx, "docs/openapi.yaml")
+    RouterBuilder.create(vertx, "docs/old_openapi.yaml")
         .onFailure(Throwable::printStackTrace)
         .onSuccess(
             routerBuilder -> {
@@ -187,6 +201,55 @@ public class ApiServerVerticle extends AbstractVerticle {
               //  .setRequireSecurityHandlers(false);
               routerBuilder.setOptions(factoryOptions);
               routerBuilder.securityHandler("authorization", oidcFlow);
+
+                // Organisation Create Request
+                routerBuilder
+                        .operation("post-auth-v1-organisations-request")
+                        .handler(this::createOrganisationRequest)
+                        .failureHandler(failureHandler);
+
+                routerBuilder
+                        .operation("get-auth-v1-getAllOrgReq")
+                        .handler(this::getOrganisationRequest)
+                        .failureHandler(failureHandler);
+
+                routerBuilder
+                        .operation("post-auth-v1-approve-create_org")
+                        .handler(this::approveOrganisationRequest)
+                        .failureHandler(failureHandler);
+
+                // Organisation Joining
+
+                routerBuilder
+                        .operation("post-auth-v1-joinOrg")
+                        .handler(this::joinOrganisationRequest)
+                        .failureHandler(failureHandler);
+
+                routerBuilder
+                        .operation("get-auth-v1-organisations-join")
+                        .handler(this::getJoinOrganisationRequests)
+                        .failureHandler(failureHandler);
+
+                routerBuilder
+                        .operation("post-auth-v1-approve")
+                        .handler(this::approveJoinOrganisationRequests)
+                        .failureHandler(failureHandler);
+
+                // Organisation
+                routerBuilder
+                        .operation("get-auth-v1-org")
+                        .handler(this::listAllOrganisations)
+                        .failureHandler(failureHandler);
+
+                routerBuilder
+                        .operation("delete-auth-v1-organisations-id")
+                        .handler(this::deleteOrganisationById)
+                        .failureHandler(failureHandler);
+
+                routerBuilder
+                        .operation("put-auth-v1-organisations-id")
+                        .handler(this::updateOrganisationById)
+                        .failureHandler(failureHandler);
 
               // Post token create
               routerBuilder
@@ -379,6 +442,16 @@ public class ApiServerVerticle extends AbstractVerticle {
 
               HttpServerOptions serverOptions = new HttpServerOptions();
               LOGGER.debug("Info: Starting HTTP server");
+                postgresService = PostgresService.createProxy(vertx, PG_SERVICE_ADDRESS);
+                organizationCreateRequestDAO = new OrganizationCreateRequestDAOImpl(postgresService);
+                organizationUserDAO = new OrganizationUserDAOImpl(postgresService);
+                organizationJoinRequestDAO = new OrganizationJoinRequestDAOImpl(postgresService);
+                organizationDAO = new OrganizationDAOImpl(postgresService);
+                organizationService = new OrganizationServiceImpl(organizationCreateRequestDAO, organizationUserDAO, organizationDAO, organizationJoinRequestDAO);
+
+                router.getRoutes().forEach(route ->
+                        LOGGER.info("Registered Route: " + route.getPath())
+                );
 
               /*
                * Setup the HTTP server properties, APIs and port. Default port is 8080. If set through
@@ -411,10 +484,78 @@ public class ApiServerVerticle extends AbstractVerticle {
               adminService = AdminService.createProxy(vertx, ADMIN_SERVICE_ADDRESS);
               auditingService = AuditingService.createProxy(vertx, AUDITING_SERVICE_ADDRESS);
               apdService = ApdService.createProxy(vertx, APD_SERVICE_ADDRESS);
+
             });
   }
 
-  /**
+    private void updateOrganisationById(RoutingContext routingContext) {
+    }
+
+    private void deleteOrganisationById(RoutingContext routingContext) {
+
+    }
+
+    private void listAllOrganisations(RoutingContext routingContext) {
+
+    }
+
+    private void approveJoinOrganisationRequests(RoutingContext routingContext) {
+
+    }
+
+    private void getJoinOrganisationRequests(RoutingContext routingContext) {
+
+    }
+
+    private void joinOrganisationRequest(RoutingContext routingContext) {
+
+    }
+
+    private void approveOrganisationRequest(RoutingContext routingContext) {
+
+    }
+
+    private void getOrganisationRequest(RoutingContext routingContext) {
+
+    }
+
+    private void createOrganisationRequest(RoutingContext routingContext) {
+        JsonObject OrgRequestJson = routingContext.body().asJsonObject();
+        OrganizationCreateRequest organizationCreateRequest;
+        try {
+            organizationCreateRequest = new OrganizationCreateRequest(OrgRequestJson);
+        } catch (Exception e) {
+            routingContext.response()
+                    .setStatusCode(400)
+                    .putHeader("Content-Type", "application/json")
+                    .end(new JsonObject().put("error", "Invalid request payload: " + e.getMessage()).encode());
+            return;
+        }
+
+        organizationService.createOrganizationRequest(organizationCreateRequest)
+                .onSuccess(createdRequest -> {
+                    JsonObject response = new JsonObject()
+                            .put("success", true)
+                            .put("payload", createdRequest.toJson());
+
+                    routingContext.response()
+                            .setStatusCode(201)
+                            .putHeader("Content-Type", "application/json")
+                            .end(response.encode());
+                })
+                .onFailure(err -> {
+                    LOGGER.error("Failed to create organization request", err);
+                    routingContext.response()
+                            .setStatusCode(500)
+                            .putHeader("Content-Type", "application/json")
+                            .end(new JsonObject()
+                                    .put("success", false)
+                                    .put("error", "Internal Server Error")
+                                    .encode());
+                });
+    }
+
+    /**
    * Handler to handle create token request.
    *
    * @param context which is RoutingContext
@@ -715,7 +856,6 @@ public class ApiServerVerticle extends AbstractVerticle {
    * @param context
    */
   private void listApdHandler(RoutingContext context) {
-
     User user = context.get(USER);
 
     apdService

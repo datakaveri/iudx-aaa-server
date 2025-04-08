@@ -6,6 +6,9 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import iudx.aaa.server.apiserver.models.DelegationInformation;
+import iudx.aaa.server.apiserver.models.RequestToken;
+import iudx.aaa.server.apiserver.models.User;
 import iudx.aaa.server.apiserver.util.ComposeException;
 import iudx.aaa.server.policy.PolicyService;
 import iudx.aaa.server.policy.PolicyServiceImpl;
@@ -14,8 +17,8 @@ import org.mockito.Mockito;
 
 /**
  * Mocks, stubs the PolicyService. Implements the {@link
- * PolicyService#verifyResourceAccess(iudx.aaa.server.apiserver.RequestToken,
- * iudx.aaa.server.apiserver.DelegationInformation, iudx.aaa.server.apiserver.User, Handler)}
+ * PolicyService#verifyResourceAccess(RequestToken,
+ * DelegationInformation, User, Handler)}
  * method.
  */
 public class MockPolicyFactory {

@@ -4,7 +4,7 @@ import static io.restassured.RestAssured.*;
 import static iudx.aaa.server.registration.Constants.*;
 import static org.hamcrest.Matchers.*;
 
-import iudx.aaa.server.apiserver.Roles;
+import iudx.aaa.server.apiserver.models.Roles;
 import iudx.aaa.server.apiserver.util.Urn;
 import iudx.aaa.server.registration.IntegTestHelpers;
 import iudx.aaa.server.registration.KcAdminExtension;

@@ -1,8 +1,9 @@
-package iudx.aaa.server.apiserver;
+package iudx.aaa.server.apiserver.models;
 
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+
 import java.util.ArrayList;
 import java.util.List;
 
