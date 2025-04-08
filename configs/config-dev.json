@@ -1,27 +1,27 @@
 {
   "version": "1.0",
   "zookeepers": [
-    "zookeeper"
+    "127.0.0.1"
   ],
   "clusterId": "iudx-aaa-cluster",
   "options":{
     "postgresOptions": {
-      "databaseIP": "139.59.80.176",
-      "databasePort": "5432",
-      "databaseName": "iudx",
-      "databaseSchema":"test",
-      "databaseUserName": "iudx_user",
-      "databasePassword": "iudx@123"
+      "databaseIP": "database.iudx.io",
+      "databasePort": 5433,
+      "databaseName": "iudx_auth",
+      "databaseSchema":"tgai",
+      "databaseUserName": "iudx_auth_user",
+      "databasePassword": "979ce418362d856ad688"
     },
     "commonOptions":{
-      "cosDomain":"auth.test.com",
-      "cosAdminUserId": "a74792c1-a86d-48e4-b4f0-544585981718"
+      "cosDomain":"authvertx.iudx.io",
+      "cosAdminUserId": "1c8a6bfc-abb0-49a7-bcba-77630c8ce4a6"
     },
     "keycloakOptions":{
-      "keycloakRealm": "some-realm",
-      "keycloakUrl": "{{protocol}}://{{keycloakHost}}:{{keycloakPort}}/auth",
-      "keycloakAdminClientId": "some-admin-client-id",
-      "keycloakAdminClientSecret": "f5800be0-258a-4cd2-820f-8128818ed70a",
+      "keycloakRealm": "tgai",
+      "keycloakUrl": "https://keycloak-update.iudx.io/auth",
+      "keycloakAdminClientId": "keycloak-admin",
+      "keycloakAdminClientSecret": "LzDVf0WfYSPHCqzpZmjcTyK3Wv7DTLzd",
       "keycloakAdminPoolSize": "10",
       "keycloakJwtLeeway": 90
     },
@@ -37,7 +37,7 @@
       "required":["postgresOptions", "commonOptions"],
       "poolSize": "25",
       "catalogueOptions": {
-        "catServerHost": "api.catalogue.iudx.io",
+        "catServerHost": "api.cat-test.iudx.io",
         "catServerPort": "443",
         "catServerBasePath": "/iudx/cat/v1"
       }
@@ -46,7 +46,7 @@
       "id": "iudx.aaa.server.registration.RegistrationVerticle",
       "verticleInstances": 1,
       "required":["postgresOptions", "keycloakOptions", "commonOptions"],
-      "serversOmittedFromRevoke":[],
+      "serversOmittedFromRevoke":["cat-test.iudx.io", "cat-sandbox.iudx.io", "authenclave.iudx.io"],
       "poolSize": "25"
     },
     {
@@ -69,23 +69,19 @@
       "poolSize": "25"
     },
     {
-      "id": "iudx.aaa.server.auditing.AuditingVerticle",
-      "verticleInstances": 1,
-      "auditingDatabaseIP": "",
-      "auditingDatabasePort": 0,
-      "auditingDatabaseName": "",
-      "auditingDatabaseUserName": "",
-      "auditingDatabasePassword": "",
-      "auditingDatabaseTableName": "",
-      "auditingPoolSize": 25
-    },
-    {
       "id": "iudx.aaa.server.apiserver.ApiServerVerticle",
       "verticleInstances": 1,
+      "httpPort":8443,
       "required":["postgresOptions", "commonOptions", "keycloakOptions", "jwtKeystoreOptions"],
       "poolSize": "5",
-      "serverTimeoutMs": 5000,
-      "corsRegexString": "*"
+      "serverTimeoutMs": 30000,
+      "corsRegexString":"^https://.+\\.iudx\\.org\\.in$"
+    },
+    {
+      "id": "org.cdpg.dx.database.postgres.PostgresVerticle",
+      "verticleInstances": 1,
+      "required":["postgresOptions"],
+      "poolSize": 5
     }
   ]
 }

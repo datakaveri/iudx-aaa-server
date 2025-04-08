@@ -1,15 +1,11 @@
 package org.cdpg.dx.aaa.organization.service;
 
 import io.vertx.core.Future;
+import org.cdpg.dx.aaa.organization.models.*;
 import org.cdpg.dx.aaa.organization.dao.OrganizationCreateRequestDAO;
 import org.cdpg.dx.aaa.organization.dao.OrganizationDAO;
 import org.cdpg.dx.aaa.organization.dao.OrganizationJoinRequestDAO;
 import org.cdpg.dx.aaa.organization.dao.OrganizationUserDAO;
-import org.cdpg.dx.aaa.organization.models.OrganizationCreateRequest;
-import org.cdpg.dx.aaa.organization.models.OrganizationJoinRequest;
-import org.cdpg.dx.aaa.organization.models.OrganizationUser;
-import org.cdpg.dx.aaa.organization.models.UpdateOrgDTO;
-import org.cdpg.dx.aaa.organization.models.Organization;
 import org.cdpg.dx.aaa.organization.util.Role;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +43,7 @@ public OrganizationServiceImpl(OrganizationCreateRequestDAO organizationCreateRe
   {
      return organizationCreateRequestDAO.getAll();
   }
+
   @Override
   public Future<Boolean> approveOrganizationCreateRequest(UUID requestId, Status status)
   {
@@ -62,7 +59,8 @@ public OrganizationServiceImpl(OrganizationCreateRequestDAO organizationCreateRe
   @Override
   public Future<Boolean> updateUserRole(UUID orgId, UUID userId, Role role)
   {
-    return organizationUserDAO.update(orgId,userId,role);
+
+    return organizationUserDAO.updateRole(orgId,userId,role);
   }
 
   @Override

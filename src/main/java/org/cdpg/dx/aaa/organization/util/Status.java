@@ -2,7 +2,8 @@ package org.cdpg.dx.aaa.organization.util;
 
 public enum Status {
   PENDING("pending"),
-  USER("user");
+  REJECTED("rejected"),
+  ACCEPTED("accepted");
 
   private final String status;
 

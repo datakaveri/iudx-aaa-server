@@ -7,10 +7,7 @@ import org.cdpg.dx.aaa.organization.dao.OrganizationCreateRequestDAO;
 import org.cdpg.dx.aaa.organization.models.OrganizationCreateRequest;
 import org.cdpg.dx.aaa.organization.util.Constants;
 import org.cdpg.dx.aaa.organization.util.Status;
-import org.cdpg.dx.database.postgres.models.Condition;
-import org.cdpg.dx.database.postgres.models.InsertQuery;
-import org.cdpg.dx.database.postgres.models.SelectQuery;
-import org.cdpg.dx.database.postgres.models.UpdateQuery;
+import org.cdpg.dx.database.postgres.models.*;
 import org.cdpg.dx.database.postgres.service.PostgresService;
 
 import java.time.Instant;
@@ -32,6 +29,7 @@ public class OrganizationCreateRequestDAOImpl implements OrganizationCreateReque
   public Future<OrganizationCreateRequest> create(OrganizationCreateRequest organizationCreateRequest) {
     Map<String, Object> orgCreateRequestMap = organizationCreateRequest.toJson().getMap();
 
+    orgCreateRequestMap.put(Constants.STATUS,Status.PENDING);
     List<String> columns = orgCreateRequestMap.keySet().stream().toList();
     List<Object> values = orgCreateRequestMap.values().stream().toList();
 
@@ -96,7 +94,7 @@ public class OrganizationCreateRequestDAOImpl implements OrganizationCreateReque
     UpdateQuery query = new UpdateQuery(Constants.ORG_CREATE_REQUEST_TABLE, columns, values, condition, null, null);
 
     return postgresService.update(query)
-      .map(result->result.isRowsAffected())
+      .map(QueryResult::isRowsAffected)
       .recover(err->{
         System.out.println("Update failed: "+err.getMessage());
         return Future.succeededFuture(false);

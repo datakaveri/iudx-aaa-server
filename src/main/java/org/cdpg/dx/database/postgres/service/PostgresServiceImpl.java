@@ -43,9 +43,12 @@ public class PostgresServiceImpl implements PostgresService {
     System.out.println("Executing SQL: " + sql);
     System.out.println("With parameters: " + params);
 
+    for (Object param : params) {
+      System.out.println("Param type: " + param.getClass().getSimpleName() + ", value: " + param);
+    }
 
     return client
-      .preparedQuery("SELECT * org_requests")
+      .preparedQuery("INSERT INTO organization_create_requests (description, document_path, name, status) VALUES (?, ?, ?, ?)")
       .execute(Tuple.from(params))
       .onFailure(err -> {
         System.err.println("SQL execution error: " + err.getMessage());
@@ -56,6 +59,7 @@ public class PostgresServiceImpl implements PostgresService {
 
         return Future.failedFuture(err);
       });
+
   }
 
 //    private Future<QueryResult> executeQuery(String sql, List<Object> params) {

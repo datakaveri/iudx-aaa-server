@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface OrganizationUserDAO {
 
-  Future<Boolean>  update(UUID orgId, UUID userId, Role role);
+  Future<Boolean>  updateRole(UUID orgId, UUID userId, Role role);
 
 
   Future<Boolean> delete(UUID orgId, UUID userId);

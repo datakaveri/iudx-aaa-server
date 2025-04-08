@@ -82,7 +82,12 @@
     {
       "id": "iudx.aaa.server.apiserver.ApiServerVerticle",
       "verticleInstances": 1,
-      "required":["postgresOptions", "commonOptions", "keycloakOptions", "jwtKeystoreOptions"],
+      "required": [
+        "postgresOptions",
+        "commonOptions",
+        "keycloakOptions",
+        "jwtKeystoreOptions"
+      ],
       "poolSize": "5",
       "serverTimeoutMs": 5000,
       "corsRegexString": "*"
