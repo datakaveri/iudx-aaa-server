@@ -3,7 +3,6 @@ package org.cdpg.dx.aaa.organization.service;
 
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
-import org.apache.maven.model.Organization;
 import org.cdpg.dx.aaa.organization.models.*;
 import org.cdpg.dx.aaa.organization.util.Role;
 import org.cdpg.dx.aaa.organization.util.Status;

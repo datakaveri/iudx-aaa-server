@@ -1,7 +1,6 @@
 package org.cdpg.dx.aaa.organization.service;
 
 import io.vertx.core.Future;
-import org.apache.maven.model.Organization;
 import org.cdpg.dx.aaa.organization.dao.OrganizationCreateRequestDAO;
 import org.cdpg.dx.aaa.organization.dao.OrganizationDAO;
 import org.cdpg.dx.aaa.organization.dao.OrganizationJoinRequestDAO;
@@ -10,6 +9,7 @@ import org.cdpg.dx.aaa.organization.models.OrganizationCreateRequest;
 import org.cdpg.dx.aaa.organization.models.OrganizationJoinRequest;
 import org.cdpg.dx.aaa.organization.models.OrganizationUser;
 import org.cdpg.dx.aaa.organization.models.UpdateOrgDTO;
+import org.cdpg.dx.aaa.organization.models.Organization;
 import org.cdpg.dx.aaa.organization.util.Role;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

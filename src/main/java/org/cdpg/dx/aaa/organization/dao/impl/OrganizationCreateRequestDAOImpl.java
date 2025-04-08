@@ -102,6 +102,11 @@ public class OrganizationCreateRequestDAOImpl implements OrganizationCreateReque
         return Future.succeededFuture(false);
       });
   }
+
+  @Override
+  public Future<List<OrganizationCreateRequest>> getAll() {
+    return null;
+  }
 }
 
 

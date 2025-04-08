@@ -75,7 +75,7 @@ public class OrganizationDAOImpl implements OrganizationDAO {
   }
 
   @Override
-  public Future<Organization> getById(UUID id) {
+  public Future<Organization> get(UUID id) {
 
     List<String> columns = Constants.ALL_ORG_FIELDS;;
     // Create Condition for WHERE clause
@@ -118,5 +118,12 @@ public class OrganizationDAOImpl implements OrganizationDAO {
         System.err.println("Error updating policy: "+ id.toString() + " msg:"+ err.getMessage());
         return Future.failedFuture(err);
       });
+  }
+
+  @Override
+  public Future<List<Organization>> getAll() {
+    // Replace with actual fetch logic, e.g., from DB
+    List<Organization> organizations = List.of(); // empty list for now
+    return Future.succeededFuture(organizations);
   }
 }
