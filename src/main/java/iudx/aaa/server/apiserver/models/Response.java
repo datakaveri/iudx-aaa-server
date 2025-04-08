@@ -1,4 +1,4 @@
-package iudx.aaa.server.apiserver;
+package iudx.aaa.server.apiserver.models;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;

@@ -1,4 +1,4 @@
-package iudx.aaa.server.apiserver;
+package iudx.aaa.server.apiserver.models;
 
 import java.util.Arrays;
 import java.util.List;

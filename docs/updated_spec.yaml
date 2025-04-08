@@ -9,7 +9,7 @@ info:
     name: For support contact DX Team at
     email: support@iudx.org.in
 servers:
-  - url: '/'
+  - url: 'https://cos.iudx.org.in'
     description: Production
   - url: 'https://authvertx.iudx.io'
     description: Development
@@ -896,6 +896,43 @@ paths:
         - User APIs
       security:
         - authorization: []
+    put:
+      summary: Update User Role
+      tags:
+        - User APIs
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not Found
+      operationId: put-auth-v1-user-roles
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: Authorization
+          description: Keycloak Issued Token
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                  x-stoplight:
+                    id: 8ep6brolpijy0
+                role:
+                  type: string
+                  x-stoplight:
+                    id: ooj0suxufai4o
+                org_id:
+                  type: string
+                  x-stoplight:
+                    id: rsrdhwzns1nq3
     get:
       summary: List User Roles
       operationId: get-auth-v1-user-roles
@@ -3479,6 +3516,1342 @@ paths:
         - authorization: []
       tags:
         - Access Policy Domain (APD) APIs
+  /auth/v1/organisations/requests:
+    get:
+      summary: Get all organisation creation requests
+      tags:
+        - Organisation APIs
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: 7q9mp74ovs00p
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: 84dpnj7j7fgec
+                  results:
+                    type: array
+                    x-stoplight:
+                      id: iqqhihoum18ll
+                    items:
+                      x-stoplight:
+                        id: 9k3xftqxgfqfr
+                      type: object
+                      properties:
+                        org_id:
+                          type: string
+                          x-stoplight:
+                            id: ad2kwiqt3gf0x
+                        user_id:
+                          type: string
+                          x-stoplight:
+                            id: cxikbckn7c02v
+                        status:
+                          type: string
+                          x-stoplight:
+                            id: b0msag250xk42
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: Organisation Joining Requests
+                    results:
+                      - org_id: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                        user_id: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                        status: Pending
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - type
+                  - title
+                  - detail
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: wryqyab0ia55b
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: s5ix6uyvf02y6
+                  detail:
+                    type: string
+                    x-stoplight:
+                      id: n7cqv95ogdboo
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: hmywovy3990xb
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: 9ob7pmmtusmjo
+                  detail:
+                    type: string
+                    x-stoplight:
+                      id: 3hvi1807bvjlq
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:MissingInformation'
+                    title: Joining requests not found
+                    detail: No joining requests
+      operationId: get-auth-v1-getAllOrgReq
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: Authorization
+          description: Keycloak Issued Token
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                org_name:
+                  type: string
+                  x-stoplight:
+                    id: k8rx1p0nm2eur
+    parameters: []
+    post:
+      summary: New organisation creation request
+      tags:
+        - Organisation APIs
+      responses: {}
+      operationId: post-auth-v1-organisations-request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                org_name:
+                  type: string
+                  x-stoplight:
+                    id: 4uskplc3wo6gu
+                document_path:
+                  type: string
+                  x-stoplight:
+                    id: p3sv37f8ag6p8
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: Authorisation
+          required: true
+          description: Keycloak Issued Token
+  /auth/v1/organisations/requests/approve:
+    post:
+      summary: Approve creation of new organisation
+      tags:
+        - Organisation APIs
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: 3xk955kfbcvzv
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: bjl3657k9lfne
+                  results:
+                    type: object
+                    x-stoplight:
+                      id: 317hv8oa7cp5k
+                    properties:
+                      req_id:
+                        type: string
+                        x-stoplight:
+                          id: 4xfk7muyxvfi1
+                      org_name:
+                        type: string
+                        x-stoplight:
+                          id: dfzpf836dhfeo
+                      user_id:
+                        type: string
+                        x-stoplight:
+                          id: jy1dd1q3w6eot
+                      document_path:
+                        type: string
+                        x-stoplight:
+                          id: 7e2sktgy6am6p
+                      status:
+                        type: string
+                        x-stoplight:
+                          id: wb8lrqfe46k0u
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: Organisation Creation Approved
+                    results:
+                      req_id: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                      org_name: Data Kaveri
+                      user_id: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                      document_path: /tmp/
+                      status: Approved
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: 8mwan6a4rudya
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: 9w5xzqrq9x19k
+                  detail:
+                    type: string
+                    x-stoplight:
+                      id: qlvemu921kdlk
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Invalid Request
+                    detail: The Joining Request ID is invalid
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: nt8j2b9frgg5r
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: lyqb3fbie5u7k
+                  detail:
+                    type: string
+                    x-stoplight:
+                      id: kf7uun4lxc5os
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: 0f1x03q0j8o00
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: qyo2ele3ov18a
+                  '':
+                    type: string
+                    x-stoplight:
+                      id: 88tmiotxgp7lb
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:AlreadyExists'
+                    title: Approval Already exists
+                    detail: The request is already approved
+      operationId: post-auth-v1-approve-create_org
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: Authorisation
+          description: Keycloak Issued Token
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                req_id:
+                  type: string
+                  x-stoplight:
+                    id: zub3jg9z34a4p
+                status:
+                  type: string
+                  x-stoplight:
+                    id: pz5gx6wsffeut
+    parameters: []
+  /auth/v1/organisations/join:
+    post:
+      summary: Create Request to Join an Organisation
+      tags:
+        - Organisation APIs
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: 29nep4apwm32a
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: nzvperaf96ag6
+                  results:
+                    type: object
+                    x-stoplight:
+                      id: n7sdof0ycwr0m
+                    properties:
+                      org_name:
+                        type: string
+                        x-stoplight:
+                          id: vzb0nmd3r0r8m
+                      user_id:
+                        type: string
+                        x-stoplight:
+                          id: 3hodrex14oq7g
+                      status:
+                        type: string
+                        x-stoplight:
+                          id: iy6ve6ip5uu69
+                      req_id:
+                        type: string
+                        x-stoplight:
+                          id: n5icpu9dhpz6h
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: Request has been created to join the organisation
+                    results:
+                      org_name: Data Kaveri
+                      user_id: string
+                      status: Pending
+                      req_id: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: vugk6ilg26a7a
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: 0nehty79al40z
+                  '':
+                    type: string
+                    x-stoplight:
+                      id: a0ccu7f7eoujm
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Invalid Organisation
+                    detail: The Organisation is invalid
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: ez0mbo8avj6am
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: ipq7cxbadj5tu
+                  detail:
+                    type: string
+                    x-stoplight:
+                      id: eoitel89s12bg
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: oyd38jyazdo3g
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: 6wpuh9er6my8z
+                  detail:
+                    type: string
+                    x-stoplight:
+                      id: ivd2l6mxpmzzc
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:AlreadyExists'
+                    title: User Already Exists
+                    detail: User has already raised a joining request
+      operationId: post-auth-v1-joinOrg
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: Authorization
+          description: Keycloak Issued Token
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                org_id:
+                  type: string
+                  x-stoplight:
+                    id: u1mdnw61cyv6c
+                role:
+                  x-stoplight:
+                    id: u3n9nnqgrnbot
+                  type: string
+    parameters: []
+    get:
+      summary: Get all organisation joining requests
+      tags:
+        - Organisation APIs
+      responses: {}
+      operationId: get-auth-v1-organisations-join
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: Authorisation
+          description: Keycloak Issue Token
+          required: true
+  /auth/v1/organisations/join/approve:
+    post:
+      summary: Approve joining of organisation
+      tags:
+        - Organisation APIs
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: gp03khyhh5c15
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: 4934w90038aay
+                  results:
+                    type: object
+                    x-stoplight:
+                      id: zcmg487q11vfd
+                    properties:
+                      req_id:
+                        type: string
+                        x-stoplight:
+                          id: q132as9t5ckah
+                      org_name:
+                        type: string
+                        x-stoplight:
+                          id: h5qnxrahmfqkc
+                      user_id:
+                        type: string
+                        x-stoplight:
+                          id: 85vnrq6bqahkn
+                      status:
+                        type: string
+                        x-stoplight:
+                          id: qxas02r7bp6so
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: Approved Joining Request
+                    results:
+                      req_id: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                      org_name: Data Kaveri
+                      user_id: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                      status: Approved
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: jcbkvzja20kdo
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: 5qlzji4c0b9ig
+                  detail:
+                    type: string
+                    x-stoplight:
+                      id: 3a1egn3yechbe
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Invalid Request
+                    detail: The Joining Request ID is invalid
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: qe8tz0rg0869s
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: emqse0raw08i3
+                  detail:
+                    type: string
+                    x-stoplight:
+                      id: 26ia4reuqvlwr
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: f7uxokmsi0xy1
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: crw2v0ktljwbg
+                  detail:
+                    type: string
+                    x-stoplight:
+                      id: cscy5166k3wuf
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:AlreadyExists'
+                    title: Approval Already exists
+                    detail: The request is already approved
+      operationId: post-auth-v1-approve
+      parameters:
+        - schema:
+            type: string
+          in: header
+          description: Keycloak Issued Token
+          name: Authorization
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                req_id:
+                  type: string
+                  x-stoplight:
+                    id: d7z9d52u19okv
+                status:
+                  type: string
+                  x-stoplight:
+                    id: nnm4o84vmjrho
+    parameters: []
+  /auth/v1/organisations:
+    delete:
+      summary: Delete Organisations
+      tags:
+        - Organisation APIs
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: t601ui36mkn3q
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: hc8b54f3axwlt
+                  results:
+                    type: array
+                    x-stoplight:
+                      id: 20z8tqf5psts3
+                    items: {}
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: Deleted requested organisation
+                    results: {}
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: d8khgv0hlz8tt
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: 7dscafziq1oo6
+                  detail:
+                    type: string
+                    x-stoplight:
+                      id: cxlvi2vl14b70
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Invalid Organisation ID
+                    detail: 5dd1c776-8ba6-4272-b157-0a5de2035355
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: wnl6cmzk57yow
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: 8ckryn6x0z4f2
+                  detail:
+                    type: string
+                    x-stoplight:
+                      id: vepxxu18i2fge
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
+      operationId: delete-auth-v1-deleteOrg
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                x-stoplight:
+                  id: ferkmsv16hg56
+                type: string
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: Authorization
+          description: Keycloak Issued Token
+          required: true
+    get:
+      summary: List All Organisations
+      tags:
+        - Organisation APIs
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: gvwzdaige7g6y
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: eqamz2eiu5uwt
+                  results:
+                    type: array
+                    x-stoplight:
+                      id: aa2va41g7vk1k
+                    items:
+                      x-stoplight:
+                        id: zs6hweats6l8t
+                      type: object
+                      properties:
+                        org_id:
+                          type: string
+                          x-stoplight:
+                            id: b7nbqcc1cuh2e
+                        org_name:
+                          type: string
+                          x-stoplight:
+                            id: zxiimmeicuqj5
+                        document_path:
+                          type: string
+                          x-stoplight:
+                            id: qsfbqirfq5gfn
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: Organisations
+                    results:
+                      - org_id: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                        org_name: Data Kaveri
+                        document_path: /tmp/
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: 9wrbsxlphpksr
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: r7kv2o5mhdmrk
+                  detail:
+                    type: string
+                    x-stoplight:
+                      id: eavbt2unc332t
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: 0d521fniq5ryq
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: coae2yhcsmxkx
+                  detail:
+                    type: string
+                    x-stoplight:
+                      id: pwpn3m1hrm4f7
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:MissingInformation'
+                    title: No Organisations Found
+                    detail: No Organisations Found
+      operationId: get-auth-v1-org
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: Authorization
+          description: Keycloak Issued Token
+          required: true
+    parameters: []
+    put:
+      summary: Update Organisations
+      tags:
+        - Organisation APIs
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: l5wwtu4a6bojr
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: wk92i9hnz88xe
+                  results:
+                    type: object
+                    x-stoplight:
+                      id: tcgnox88tle13
+                    properties:
+                      org_id:
+                        type: string
+                        x-stoplight:
+                          id: k52p4dosgkkh5
+                      org_name:
+                        type: string
+                        x-stoplight:
+                          id: qmjx5nj2m8vcd
+                      document_path:
+                        type: string
+                        x-stoplight:
+                          id: 4c07k5l1hlh94
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: Organisation Details Updated
+                    results:
+                      org_id: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                      org_name: Data Kaveri
+                      document_path: /tmp/
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: 7ttkbacxac576
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: gxirc40fz3tvo
+                  detail:
+                    type: string
+                    x-stoplight:
+                      id: 0un66o5nsns9e
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
+      operationId: put-auth-v1-org
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                x-stoplight:
+                  id: 3dhd4hmt81phg
+                type: object
+                properties:
+                  id:
+                    type: string
+                    x-stoplight:
+                      id: yit5681v6ix18
+                  name:
+                    type: string
+                    x-stoplight:
+                      id: 594f83jyrfdtz
+                  document_path:
+                    type: string
+                    x-stoplight:
+                      id: eb80z6g0gnqis
+            examples:
+              Example 1:
+                value:
+                  org_id: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                  org_name: Data Kaveri
+                  document_path: /tmp/
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: Authorisation
+          description: Keycloak Issued Token
+          required: true
+  '/auth/v1/organisations/{id}':
+    get:
+      summary: List organisation by ID
+      tags:
+        - Organisation APIs
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: gvwzdaige7g6y
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: eqamz2eiu5uwt
+                  results:
+                    type: array
+                    x-stoplight:
+                      id: aa2va41g7vk1k
+                    items:
+                      x-stoplight:
+                        id: zs6hweats6l8t
+                      type: object
+                      properties:
+                        org_id:
+                          type: string
+                          x-stoplight:
+                            id: b7nbqcc1cuh2e
+                        org_name:
+                          type: string
+                          x-stoplight:
+                            id: zxiimmeicuqj5
+                        document_path:
+                          type: string
+                          x-stoplight:
+                            id: qsfbqirfq5gfn
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: Organisations
+                    results:
+                      - org_id: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                        org_name: Data Kaveri
+                        document_path: /tmp/
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: 9wrbsxlphpksr
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: r7kv2o5mhdmrk
+                  detail:
+                    type: string
+                    x-stoplight:
+                      id: eavbt2unc332t
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: 0d521fniq5ryq
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: coae2yhcsmxkx
+                  detail:
+                    type: string
+                    x-stoplight:
+                      id: pwpn3m1hrm4f7
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:MissingInformation'
+                    title: No Organisations Found
+                    detail: No Organisations Found
+      operationId: get-auth-v1-org
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: Authorization
+          description: Keycloak Issued Token
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    delete:
+      summary: Delete organisation by ID
+      tags:
+        - Organisation APIs
+      responses: {}
+      operationId: delete-auth-v1-organisations-id
+    put:
+      summary: Update Organisation by ID
+      tags:
+        - Organisation APIs
+      responses: {}
+      operationId: put-auth-v1-organisations-id
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: Authorisation
+          description: Keycloak Issued Token
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                org_name:
+                  type: string
+                  x-stoplight:
+                    id: amwnghki9g15y
+                document_path:
+                  type: string
+                  x-stoplight:
+                    id: aicq0bnwnqk88
+  /auth/v1/organisations/users:
+    delete:
+      summary: Delete Organisation Users
+      tags:
+        - Organisation APIs
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: rbsnf9pjauzyu
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: pmrg433b19eht
+                  results:
+                    type: object
+                    x-stoplight:
+                      id: y0qbdlfenuecf
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: Deleted requested ORG ADMIN
+                    results: {}
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: bg0ko62a4qao7
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: udhn20vbh9ah3
+                  detail:
+                    type: string
+                    x-stoplight:
+                      id: 0qmafri4h8m52
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:InvalidInput'
+                    title: Invalid Organisation/ User ID
+                    detail: 5dd1c776-8ba6-4272-b157-0a5de2035355
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: 29449qtuajjrf
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: z1g7fi05pr5cy
+                  detail:
+                    type: string
+                    x-stoplight:
+                      id: r3vkvb1cux1wt
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
+      operationId: delete-auth-v1-deleteOrgAdmin
+      parameters:
+        - schema:
+            type: string
+          in: header
+          required: true
+          name: Authorisation
+          description: Platform Admin Token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                x-stoplight:
+                  id: n6xkk3559ckck
+                type: object
+                properties:
+                  org_id:
+                    type: string
+                    x-stoplight:
+                      id: 4dkcpxygpzavl
+                  user_id:
+                    type: string
+                    x-stoplight:
+                      id: d94r5d9gjeakc
+    parameters: []
+    get:
+      summary: List organisation Users
+      tags:
+        - Organisation APIs
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: a7vtx6rs4m0ff
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: xzscsryvdk9uc
+                  results:
+                    type: array
+                    x-stoplight:
+                      id: oledqptz2ehx6
+                    items:
+                      x-stoplight:
+                        id: ktffw4vaox9io
+                      type: object
+                      properties:
+                        org_id:
+                          type: string
+                          x-stoplight:
+                            id: a7gu8pg6fxu2h
+                        user_id:
+                          type: string
+                          x-stoplight:
+                            id: yhzlt4lwonart
+                        role:
+                          type: string
+                          x-stoplight:
+                            id: 4a5vbkzoauznr
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:Success'
+                    title: Organisation Admins
+                    results:
+                      - org_id: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                        user_id: 5d019ee7-e1d4-4f65-9a14-2e3b656b7296
+                        role: Explorer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    x-stoplight:
+                      id: ki8ptrubbpfo4
+                  title:
+                    type: string
+                    x-stoplight:
+                      id: cy2up8v8a5pd0
+                  detail:
+                    type: string
+                    x-stoplight:
+                      id: 67gt97omjofae
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:InvalidAuthenticationToken'
+                    title: Token authentication failed
+                    detail: Inactive Token
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+              examples:
+                Example 1:
+                  value:
+                    type: 'urn:dx:as:MissingInformation'
+                    title: Admins not found
+                    detail: No Organisation Admins Found
+      operationId: get-auth-v1-org-admin
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: Authorization
+          description: Keycloak Issued Token
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: org_id
+          description: Organisation ID
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                org_id:
+                  type: string
+                  x-stoplight:
+                    id: z7isw244eassj
+  '/auth/v1/organisations/users/{id}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: List User by ID
+      tags:
+        - Organisation APIs
+      responses: {}
+      operationId: get-auth-v1-organisations-users-id
+    delete:
+      summary: Delete User by ID
+      tags:
+        - Organisation APIs
+      responses: {}
+      operationId: delete-auth-v1-organisations-users-id
 components:
   schemas:
     RequestToken:

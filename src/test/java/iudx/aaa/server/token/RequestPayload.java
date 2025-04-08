@@ -2,11 +2,11 @@ package iudx.aaa.server.token;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import iudx.aaa.server.apiserver.IntrospectToken;
-import iudx.aaa.server.apiserver.RevokeToken;
-import iudx.aaa.server.apiserver.Roles;
-import iudx.aaa.server.apiserver.User;
-import iudx.aaa.server.apiserver.User.UserBuilder;
+import iudx.aaa.server.apiserver.models.IntrospectToken;
+import iudx.aaa.server.apiserver.models.RevokeToken;
+import iudx.aaa.server.apiserver.models.Roles;
+import iudx.aaa.server.apiserver.models.User;
+import iudx.aaa.server.apiserver.models.User.UserBuilder;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;

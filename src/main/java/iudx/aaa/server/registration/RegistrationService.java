@@ -6,10 +6,10 @@ import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import iudx.aaa.server.apiserver.AddRolesRequest;
-import iudx.aaa.server.apiserver.ResetClientSecretRequest;
-import iudx.aaa.server.apiserver.Roles;
-import iudx.aaa.server.apiserver.User;
+import iudx.aaa.server.apiserver.models.AddRolesRequest;
+import iudx.aaa.server.apiserver.models.ResetClientSecretRequest;
+import iudx.aaa.server.apiserver.models.Roles;
+import iudx.aaa.server.apiserver.models.User;
 import java.util.List;
 import java.util.Set;
 

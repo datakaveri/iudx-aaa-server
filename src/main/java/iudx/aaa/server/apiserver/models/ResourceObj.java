@@ -1,4 +1,6 @@
-package iudx.aaa.server.apiserver;
+package iudx.aaa.server.apiserver.models;
+
+import iudx.aaa.server.apiserver.ItemType;
 
 import java.util.UUID;
 

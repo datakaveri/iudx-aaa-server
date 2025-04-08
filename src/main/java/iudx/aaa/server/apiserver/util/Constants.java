@@ -82,6 +82,20 @@ public class Constants {
   public static final String SEARCH_USER = "get-auth-v1-user-search";
   public static final String TOKEN_ROUTE = "/auth/v1/token";
 
+  /* Organisation Creation Routes */
+  public static final String GET_ORGANISATION_REQUESTS = "get-auth-v1-getAllOrgReq";
+  public static final String CREATE_ORGANISATION_REQUESTS = "post-auth-v1-organisations-request";
+  public static final String APPROVE_ORGANISATION_REQUESTS = "post-auth-v1-approve-create_org";
+
+  /* Organisation Joining Routes */
+  public static final String GET_ORG_JOIN_REQUESTS = "get-auth-v1-organisations-join";
+  public static final String CREATE_ORG_JOIN_REQUESTS = "post-auth-v1-joinOrg";
+  public static final String APPROVE_ORG_JOIN_REQUESTS = "post-auth-v1-approve";
+
+  /* Organisation Routes */
+  public static final String DELETE_ORGANISATIONS = "delete-auth-v1-deleteOrg";
+  public static final String GET_ORGANISATIONS = "get-auth-v1-org";
+
   /* Query Params */
   public static final String QUERY_FILTER = "filter";
   public static final String QUERY_EMAIL = "email";

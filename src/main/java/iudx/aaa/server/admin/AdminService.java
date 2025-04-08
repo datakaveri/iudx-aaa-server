@@ -6,10 +6,10 @@ import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import iudx.aaa.server.apiserver.CreateRsRequest;
-import iudx.aaa.server.apiserver.ProviderUpdateRequest;
-import iudx.aaa.server.apiserver.RoleStatus;
-import iudx.aaa.server.apiserver.User;
+import iudx.aaa.server.apiserver.models.CreateRsRequest;
+import iudx.aaa.server.apiserver.models.ProviderUpdateRequest;
+import iudx.aaa.server.apiserver.models.RoleStatus;
+import iudx.aaa.server.apiserver.models.User;
 import java.util.List;
 
 /**

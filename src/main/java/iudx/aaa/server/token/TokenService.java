@@ -6,11 +6,11 @@ import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import iudx.aaa.server.apiserver.DelegationInformation;
-import iudx.aaa.server.apiserver.IntrospectToken;
-import iudx.aaa.server.apiserver.RequestToken;
-import iudx.aaa.server.apiserver.RevokeToken;
-import iudx.aaa.server.apiserver.User;
+import iudx.aaa.server.apiserver.models.DelegationInformation;
+import iudx.aaa.server.apiserver.models.IntrospectToken;
+import iudx.aaa.server.apiserver.models.RequestToken;
+import iudx.aaa.server.apiserver.models.RevokeToken;
+import iudx.aaa.server.apiserver.models.User;
 
 /**
  * The Token Service.
