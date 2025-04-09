@@ -523,7 +523,8 @@ public class ApiServerVerticle extends AbstractVerticle {
         JsonObject OrgRequestJson = routingContext.body().asJsonObject();
         OrganizationCreateRequest organizationCreateRequest;
         try {
-            organizationCreateRequest = new OrganizationCreateRequest(OrgRequestJson);
+//            organizationCreateRequest = new OrganizationCreateRequest(OrgRequestJson);
+              organizationCreateRequest = OrganizationCreateRequest.fromJson(OrgRequestJson);
         } catch (Exception e) {
             routingContext.response()
                     .setStatusCode(400)

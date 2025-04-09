@@ -52,7 +52,7 @@ public final class Constants {
   public static final String ROLE="role";
 
   public static final String ORG_CREATE_ID="id";
-  public static final String ORG_CREATE_REQUEST_TABLE = "organization_create_requests";
+  public static final String ORG_CREATE_REQUEST_TABLE = "tgai.organization_create_requests";
   public static final String REQUESTED_BY="requested_by";
 
   public static final List<String> ALL_ORG_CREATE_REQUEST_FIELDS = List.of(
@@ -66,5 +66,8 @@ public final class Constants {
     CREATED_AT,
     UPDATED_AT
   );
+
+  public static final String ORG_USER_TABLE = "organization_users";
+
 
 }

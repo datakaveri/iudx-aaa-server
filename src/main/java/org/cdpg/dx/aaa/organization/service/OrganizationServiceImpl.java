@@ -72,7 +72,7 @@ public OrganizationServiceImpl(OrganizationCreateRequestDAO organizationCreateRe
   @Override
   public Future<List<OrganizationJoinRequest>> getOrganizationJoinRequests(UUID orgId)
   {
-    return organizationJoinRequestDAO.getRequests(orgId);
+    return organizationJoinRequestDAO.getAll(orgId);
   }
 
   @Override
@@ -120,7 +120,7 @@ public OrganizationServiceImpl(OrganizationCreateRequestDAO organizationCreateRe
   @Override
   public Future<List<OrganizationUser>> getOrganizationUsers(UUID orgId)
   {
-    return organizationUserDAO.get(orgId);
+    return organizationUserDAO.getAll(orgId);
   }
 
 

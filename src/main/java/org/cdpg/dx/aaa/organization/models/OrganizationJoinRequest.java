@@ -22,13 +22,14 @@ public record OrganizationJoinRequest(Optional<UUID> id, UUID organizationId, UU
   }
 
   public JsonObject toJson() {
-    return new JsonObject()
-      .put(Constants.ORG_JOIN_ID, id.map(UUID::toString).orElse(null))
-      .put(Constants.ORGANIZATION_ID, organizationId.toString())
+    JsonObject json =  new JsonObject();
+      id.ifPresent(value -> json.put(Constants.ORG_CREATE_ID,value));
+      json.put(Constants.ORGANIZATION_ID, organizationId.toString())
       .put(Constants.USER_ID, userId.toString())
       .put(Constants.STATUS, status)
       .put(Constants.REQUESTED_AT, requestedAt)
       .put(Constants.PROCESSED_AT, processedAt.orElse(null));
+      return json;
   }
 
   public Map<String, Object> toNonEmptyFieldsMap() {

@@ -4,8 +4,11 @@ import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.cdpg.dx.aaa.organization.dao.OrganizationJoinRequestDAO;
+import org.cdpg.dx.aaa.organization.models.OrganizationCreateRequest;
 import org.cdpg.dx.aaa.organization.models.OrganizationJoinRequest;
+import org.cdpg.dx.aaa.organization.models.OrganizationUser;
 import org.cdpg.dx.aaa.organization.util.Constants;
+import org.cdpg.dx.aaa.organization.util.Role;
 import org.cdpg.dx.aaa.organization.util.Status;
 import org.cdpg.dx.database.postgres.models.Condition;
 import org.cdpg.dx.database.postgres.models.InsertQuery;
@@ -27,25 +30,26 @@ public class OrganizationJoinRequestDAOImpl implements OrganizationJoinRequestDA
 
 
   @Override
-  public Future<List<OrganizationJoinRequest>> getRequests(UUID orgId)
+  public Future<List<OrganizationJoinRequest>> getAll(UUID orgId)
   {
-    SelectQuery query = new SelectQuery(Constants.ORG_JOIN_REQUEST_TABLE,null,null,null,null,null,null);
+
+    SelectQuery query = new SelectQuery(Constants.ORG_JOIN_REQUEST_TABLE,List.of("*"),null,null,null,null,null);
 
     return postgresService.select(query)
-      .compose(result -> {
+      .compose(result->
+      {
         if (result.getRows().isEmpty()) {
-          return Future.failedFuture("Select query returned no rows");
+          return Future.failedFuture("select query returned no rows.");
         }
-        JsonArray rows = result.getRows();
-        List<OrganizationJoinRequest> requests = new ArrayList<>();
-
-        for (int i = 0; i < rows.size(); i++) {
-          JsonObject row = rows.getJsonObject(i);
-          requests.add(OrganizationJoinRequest.fromJson(row));
-        }
-
+        List<OrganizationJoinRequest> requests = result.getRows()
+          .stream()
+          .map(obj -> OrganizationJoinRequest.fromJson((JsonObject) obj))
+          .collect(Collectors.toList());
         return Future.succeededFuture(requests);
-
+      })
+      .recover(err -> {
+        System.err.println("Error inserting create request: " + err.getMessage());
+        return Future.failedFuture(err);
       });
 
   }
@@ -53,15 +57,15 @@ public class OrganizationJoinRequestDAOImpl implements OrganizationJoinRequestDA
   @Override
   public Future<OrganizationJoinRequest>  join(UUID organizationId, UUID userId)
   {
-      Map<String,Object> updateFields = new HashMap<>();
+      Map<String,Object> insertFields = new HashMap<>();
 
-      updateFields.put(Constants.ORGANIZATION_ID,organizationId);
-      updateFields.put(Constants.USER_ID,userId);
-      updateFields.put(Constants.STATUS,"pending");
-      updateFields.put(Constants.REQUESTED_AT, Instant.now().toString());
+    insertFields.put(Constants.ORGANIZATION_ID,organizationId);
+    insertFields.put(Constants.USER_ID,userId);
+    insertFields.put(Constants.STATUS,"pending");
+    insertFields.put(Constants.REQUESTED_AT, Instant.now().toString());
 
-      List<String> columns = updateFields.keySet().stream().toList();
-      List<Object> values = updateFields.values().stream().toList();
+      List<String> columns = insertFields.keySet().stream().toList();
+      List<Object> values = insertFields.values().stream().toList();
 
     InsertQuery query = new InsertQuery(Constants.ORG_JOIN_REQUEST_TABLE,columns,values);
 
@@ -82,7 +86,9 @@ public class OrganizationJoinRequestDAOImpl implements OrganizationJoinRequestDA
 
   @Override
   public Future<Boolean> approve(UUID requestId, Status status) {
+
   return null;
+
   }
 
 }
