@@ -44,42 +44,37 @@ public class OrganizationDAOImpl implements OrganizationDAO {
 
   //UPDATE ORG TABLE , ORG USER TABLE , ORG JOIN REQUEST
   @Override
-  public Future<Organization> update(UUID id, UpdateOrgDTO updateOrgDTO) {
-    Map<String, Object> feildsMap = updateOrgDTO.toNonEmptyFieldsMap();
+  public  Future<Organization> update(UUID id, UpdateOrgDTO updateOrgDTO) {
+    Map<String, Object> updateFields = updateOrgDTO.toNonEmptyFieldsMap();
 
-    if (feildsMap.isEmpty()) {
-      return Future.failedFuture(new IllegalArgumentException("No fields to update"));
-    }
+    List<String> columns = updateFields.keySet().stream().toList();
+    List<Object> values = updateFields.values().stream().toList();
 
-    List<String> columns = List.copyOf(feildsMap.keySet());
-    List<Object> values = List.copyOf(feildsMap.values());
-
-    // Create Condition for WHERE clause
     Condition condition = new Condition(Constants.ORG_ID, Condition.Operator.EQUALS, List.of(id));
 
     // Build the UpdateQuery
     UpdateQuery query = new UpdateQuery(Constants.ORGANIZATION_TABLE, columns, values, condition, null, null);
 
-
-    return postgresService.update(query)
-      .compose(result -> {
+    return postgresService.update(query).compose(result -> {
         if (result.getRows().isEmpty()) {
-          return Future.failedFuture("select query returned no rows.");
+          return Future.failedFuture("Selected query returned no rows");
         }
         return Future.succeededFuture(Organization.fromJson(result.getRows().getJsonObject(0)));
       })
       .recover(err -> {
-        System.err.println("Error inserting policy: " + err.getMessage());
+        System.out.println("Error inserting policy " + err.getMessage());
         return Future.failedFuture(err);
       });
+
   }
 
+
   @Override
-  public Future<Organization> get(UUID id) {
+  public Future<Organization> get(UUID orgId) {
 
     List<String> columns = Constants.ALL_ORG_FIELDS;;
     // Create Condition for WHERE clause
-    Condition condition = new Condition(Constants.ORG_ID, Condition.Operator.EQUALS, List.of(id));
+    Condition condition = new Condition(Constants.ORG_ID, Condition.Operator.EQUALS, List.of(orgId));
 
 
     SelectQuery query = new SelectQuery(Constants.ORGANIZATION_TABLE, columns,condition,null, null,null,null);
@@ -92,7 +87,7 @@ public class OrganizationDAOImpl implements OrganizationDAO {
         return Future.succeededFuture(Organization.fromJson(result.getRows().getJsonObject(0)));
       })
       .recover(err -> {
-        System.err.println("Error inserting policy: " + err.getMessage());
+        System.err.println("Error getting organization: " + err.getMessage());
         return Future.failedFuture(err);
       });
   }

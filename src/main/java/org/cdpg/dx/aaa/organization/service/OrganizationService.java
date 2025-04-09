@@ -14,6 +14,8 @@ import java.util.UUID;
 public interface OrganizationService {
 
 
+
+  // ************ ORGANIZATION CREATE REQUEST *********
   Future<OrganizationCreateRequest> getOrganizationCreateRequests(UUID requestId);
 
   Future<List<OrganizationCreateRequest>> getAllOrganizationCreateRequests();
@@ -24,7 +26,7 @@ public interface OrganizationService {
   // update orgUser role
   Future<Boolean> approveOrganizationCreateRequest(UUID requestId, Status status);
 
-  Future<Boolean> updateUserRole(UUID orgId, UUID userId, Role Role);
+//   ************ ORGANIZATION JOIN REQUEST *********
 
   Future<OrganizationJoinRequest> joinOrganizationRequest(UUID organizationId, UUID userId);
 
@@ -32,6 +34,7 @@ public interface OrganizationService {
 
   Future<Boolean> approveOrganizationJoinRequest(UUID requestId,Status Status);
 
+  // ************ ORGANIZATION *********
   Future<Boolean> deleteOrganization(UUID orgId);
 
   Future<List<Organization>> getOrganizations();
@@ -41,6 +44,8 @@ public interface OrganizationService {
   //update organization
   Future<Organization> updateOrganizationById(UUID orgId,UpdateOrgDTO updateOrgDTO);
 
+  // ************ ORGANIZATION USERS *********
+
   //delete from orgUser Table
   Future<Boolean> deleteOrganizationUser(UUID orgId,UUID userId);
 
@@ -48,6 +53,8 @@ public interface OrganizationService {
   Future<Boolean> deleteOrganizationUsers(UUID orgId,List<UUID> userId);
 
   Future<List<OrganizationUser>> getOrganizationUsers(UUID orgId);
+
+  Future<Boolean> updateUserRole(UUID orgId, UUID userId, Role Role);
 
   // to check - info about the users
  // Future<OrganizationUser> getOrganizationUserById(UUID userId);
