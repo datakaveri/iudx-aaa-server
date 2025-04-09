@@ -38,6 +38,7 @@ public class OrganizationCreateRequestDAOImpl implements OrganizationCreateReque
     System.out.println("toJson() output: " + organizationCreateRequest.toJson().encodePrettily());
 
     orgCreateRequestMap.put(Constants.STATUS,"pending");
+
     List<String> columns = orgCreateRequestMap.keySet().stream().toList();
     List<Object> values = orgCreateRequestMap.values().stream().toList();
 

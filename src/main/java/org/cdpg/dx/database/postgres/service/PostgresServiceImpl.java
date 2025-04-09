@@ -71,7 +71,6 @@ public class PostgresServiceImpl implements PostgresService {
   }
 
 
-
 //    private Future<QueryResult> executeQuery(String sql, List<Object> params) {
 //      System.out.println("SQL: "+sql);
 //      try

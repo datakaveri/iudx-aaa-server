@@ -87,7 +87,7 @@ public class OrganizationJoinRequestDAOImpl implements OrganizationJoinRequestDA
   @Override
   public Future<Boolean> approve(UUID requestId, Status status) {
 
-  return null;
+       return null;
 
   }
 

@@ -60,7 +60,9 @@ public class OrganizationDAOImpl implements OrganizationDAO {
 
     return postgresService.update(query).compose(result -> {
         if (result.getRows().isEmpty()) {
+
           return Future.failedFuture("Update query returned no rows");
+
         }
         return Future.succeededFuture(Organization.fromJson(result.getRows().getJsonObject(0)));
       })
