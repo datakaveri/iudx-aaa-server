@@ -44,17 +44,21 @@ public class InsertQuery implements Query {
     public List<Object> getValues() { return values; }
     public void setValues(List<Object> values) { this.values = values; }
 
-    @Override
-    public String toSQL() {
-//        String placeholders = "?,".repeat(columns.size()).replaceAll(",$", "");
-//        return "INSERT INTO " + table + " (" + String.join(", ", columns) + ") VALUES (" + placeholders + ")";
 
-      String placeholders = columns.stream().map(col -> "?").collect(Collectors.joining(", "));
-      System.out.println("Placeholders: "+placeholders);
-      String finalQuery= "INSERT INTO " + table + " (" + String.join(", ", columns) + ") VALUES (" + placeholders + ")";
-      System.out.println("Final Query: "+finalQuery);
-      return finalQuery;
-    }
+@Override
+public String toSQL() {
+  String placeholders =
+    java.util.stream.IntStream.range(0, columns.size())
+      .mapToObj(i -> "$"+(i+1))
+      .collect(Collectors.joining(", "));
+
+  String finalQuery = "INSERT INTO " + table +
+    " (" + String.join(", ", columns) + ") " +
+    "VALUES (" + placeholders + ") RETURNING *"; // ADD THIS
+  System.out.println("Final Query: " + finalQuery);
+  return finalQuery;
+}
+
 
     @Override
     public List<Object> getQueryParams() {

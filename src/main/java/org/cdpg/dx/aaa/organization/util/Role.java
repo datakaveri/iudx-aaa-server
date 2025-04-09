@@ -3,7 +3,7 @@ package org.cdpg.dx.aaa.organization.util;
 
 public enum Role {
   ADMIN("admin"),
-  USER("user");
+  USER("member");
 
   private final String roleName;
 
@@ -19,10 +19,10 @@ public enum Role {
   public static Role fromString(String roleStr) {
     for (Role role : Role.values()) {
       if (role.getRoleName().equalsIgnoreCase(roleStr))
-        temp=role;
+       return role;
     }
 
-    return temp;
+    throw new IllegalArgumentException("Invalid role: " + roleStr);
 
   }
 

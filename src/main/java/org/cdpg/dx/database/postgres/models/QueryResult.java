@@ -1,10 +1,12 @@
 package org.cdpg.dx.database.postgres.models;
 
 import io.vertx.codegen.annotations.DataObject;
+import io.vertx.codegen.json.annotations.JsonGen;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
 
 @DataObject(generateConverter = true)
+@JsonGen(inheritConverter = true, publicConverter = false)
 public class QueryResult {
     private JsonArray rows;
     private int totalCount;
@@ -29,6 +31,7 @@ public class QueryResult {
     public JsonObject toJson() {
         JsonObject json = new JsonObject();
         QueryResultConverter.toJson(this, json);
+//        json.put("key","value");
         return json;
     }
 

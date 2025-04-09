@@ -10,7 +10,10 @@ import org.cdpg.dx.database.postgres.models.*;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
 
+import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,24 +46,30 @@ public class PostgresServiceImpl implements PostgresService {
     System.out.println("Executing SQL: " + sql);
     System.out.println("With parameters: " + params);
 
-    for (Object param : params) {
-      System.out.println("Param type: " + param.getClass().getSimpleName() + ", value: " + param);
+    try {
+      // Print param types for debug
+      for (Object param : params) {
+        System.out.println("Param type: " + (param != null ? param.getClass().getSimpleName() : "null") + ", value: " + param);
+      }
+
+      Tuple tuple = Tuple.from(params);
+
+      return client
+        .preparedQuery(sql)
+        .execute(tuple)
+        .map(this::convertToQueryResult)
+        .onFailure(err -> {
+          System.err.println("SQL execution error: " + err.getMessage());
+          err.printStackTrace();
+        });
+
+    } catch (Exception e) {
+      System.err.println("Exception while building Tuple or executing query: " + e.getMessage());
+      e.printStackTrace();
+      return Future.failedFuture("Error in PostgresServiceImpl: " + e.getMessage());
     }
-
-    return client
-      .preparedQuery("INSERT INTO organization_create_requests (description, document_path, name, status) VALUES (?, ?, ?, ?)")
-      .execute(Tuple.from(params))
-      .onFailure(err -> {
-        System.err.println("SQL execution error: " + err.getMessage());
-        err.printStackTrace();
-      })
-      .map(this::convertToQueryResult)
-      .recover(err -> {
-
-        return Future.failedFuture(err);
-      });
-
   }
+
 
 //    private Future<QueryResult> executeQuery(String sql, List<Object> params) {
 //      System.out.println("SQL: "+sql);

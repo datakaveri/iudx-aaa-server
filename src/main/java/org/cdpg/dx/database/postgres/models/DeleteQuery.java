@@ -16,13 +16,13 @@ import org.slf4j.LoggerFactory;
 public class DeleteQuery implements Query {
     private static final Logger LOG = LoggerFactory.getLogger(DeleteQuery.class);
     private  String table;
-    private  Condition condition;
+    private  ConditionComponent condition;
     private  List<OrderBy> orderBy;
     private  Integer limit; // Optional, so keep as Integer
 
     public DeleteQuery(){}
     // Constructor (OrderBy & Limit are optional)
-    public DeleteQuery(String table, Condition condition, List<OrderBy> orderBy, Integer limit) {
+    public DeleteQuery(String table, ConditionComponent condition, List<OrderBy> orderBy, Integer limit) {
         this.table = Objects.requireNonNull(table, "Table name cannot be null");
         this.condition = condition;
         this.orderBy = orderBy != null ? List.copyOf(orderBy) : List.of();
@@ -61,7 +61,7 @@ public class DeleteQuery implements Query {
         this.table = table;
     }
 
-    public void setCondition(Condition condition) {
+    public void setCondition(ConditionComponent condition) {
         this.condition = condition;
     }
 
@@ -81,7 +81,7 @@ public class DeleteQuery implements Query {
     }
 
     public String getTable() { return table; }
-    public Condition getCondition() {
+    public ConditionComponent getCondition() {
         return condition;
     }
     public List<OrderBy> getOrderBy() { return orderBy; }

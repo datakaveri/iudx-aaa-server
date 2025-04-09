@@ -1,8 +1,10 @@
 package org.cdpg.dx.aaa.organization.dao.impl;
 
 import io.vertx.core.Future;
+import io.vertx.core.json.JsonObject;
 import org.cdpg.dx.aaa.organization.dao.OrganizationDAO;
 import org.cdpg.dx.aaa.organization.models.Organization;
+import org.cdpg.dx.aaa.organization.models.OrganizationCreateRequest;
 import org.cdpg.dx.aaa.organization.models.UpdateOrgDTO;
 import org.cdpg.dx.aaa.organization.util.Constants;
 import org.cdpg.dx.database.postgres.models.*;
@@ -11,6 +13,7 @@ import org.cdpg.dx.database.postgres.service.PostgresService;
 import java.util.Map;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class OrganizationDAOImpl implements OrganizationDAO {
 
@@ -57,7 +60,9 @@ public class OrganizationDAOImpl implements OrganizationDAO {
 
     return postgresService.update(query).compose(result -> {
         if (result.getRows().isEmpty()) {
-          return Future.failedFuture("Selected query returned no rows");
+
+          return Future.failedFuture("Update query returned no rows");
+
         }
         return Future.succeededFuture(Organization.fromJson(result.getRows().getJsonObject(0)));
       })
@@ -117,8 +122,24 @@ public class OrganizationDAOImpl implements OrganizationDAO {
 
   @Override
   public Future<List<Organization>> getAll() {
-    // Replace with actual fetch logic, e.g., from DB
-    List<Organization> organizations = List.of(); // empty list for now
-    return Future.succeededFuture(organizations);
+    SelectQuery query = new SelectQuery(Constants.ORGANIZATION_TABLE,List.of("*"),null,null,null,null,null);
+
+    return postgresService.select(query)
+      .compose(result->
+      {
+        if (result.getRows().isEmpty()) {
+          return Future.failedFuture("select query returned no rows.");
+        }
+        List<Organization> requests = result.getRows()
+          .stream()
+          .map(obj -> Organization.fromJson((JsonObject) obj))
+          .collect(Collectors.toList());
+        return Future.succeededFuture(requests);
+      })
+      .recover(err -> {
+        System.err.println("Error inserting create request: " + err.getMessage());
+        return Future.failedFuture(err);
+      });
   }
+
 }

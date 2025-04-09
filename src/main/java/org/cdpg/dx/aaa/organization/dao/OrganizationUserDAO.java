@@ -18,5 +18,5 @@ public interface OrganizationUserDAO {
 
   Future<Boolean> deleteUsersByOrgId(UUID orgId, ArrayList<UUID> uuids);
 
-  Future<List<OrganizationUser>> get(UUID orgId);
+  Future<List<OrganizationUser>> getAll(UUID orgId);
 }

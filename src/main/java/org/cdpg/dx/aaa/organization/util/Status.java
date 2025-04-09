@@ -19,10 +19,10 @@ public enum Status {
   public static Status fromString(String statusStr) {
     for (Status status: Status.values()) {
       if (status.getStatus().equalsIgnoreCase(statusStr))
-        temp=status;
+       return status;
     }
 
-    return temp;
+    throw new IllegalArgumentException("Invalid status: " + statusStr);
 
   }
 

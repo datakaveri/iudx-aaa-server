@@ -491,7 +491,6 @@ public class ApiServerVerticle extends AbstractVerticle {
   }
 
 
-
     /**
    * Handler to handle create token request.
    *
