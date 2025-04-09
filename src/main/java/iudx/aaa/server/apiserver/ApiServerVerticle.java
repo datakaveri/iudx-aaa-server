@@ -189,6 +189,13 @@ public class ApiServerVerticle extends AbstractVerticle {
     ClientAuthentication clientFlow = new ClientAuthentication(pgPool);
     DelegationIdAuthorization delegationAuth = new DelegationIdAuthorization(pgPool);
     FailureHandler failureHandler = new FailureHandler();
+      postgresService = PostgresService.createProxy(vertx, PG_SERVICE_ADDRESS);
+      organizationCreateRequestDAO = new OrganizationCreateRequestDAOImpl(postgresService);
+      organizationUserDAO = new OrganizationUserDAOImpl(postgresService);
+      organizationJoinRequestDAO = new OrganizationJoinRequestDAOImpl(postgresService);
+      organizationDAO = new OrganizationDAOImpl(postgresService);
+      organizationService = new OrganizationServiceImpl(organizationCreateRequestDAO, organizationUserDAO, organizationDAO, organizationJoinRequestDAO);
+    OrganizationHandler organizationHandler = new OrganizationHandler(organizationService);
 
     RouterBuilder.create(vertx, "docs/old_openapi.yaml")
         .onFailure(Throwable::printStackTrace)
@@ -205,50 +212,50 @@ public class ApiServerVerticle extends AbstractVerticle {
                 // Organisation Create Request
                 routerBuilder
                         .operation("post-auth-v1-organisations-request")
-                        .handler(this::createOrganisationRequest)
+                        .handler(organizationHandler::createOrganisationRequest)
                         .failureHandler(failureHandler);
 
                 routerBuilder
                         .operation("get-auth-v1-getAllOrgReq")
-                        .handler(this::getOrganisationRequest)
+                        .handler(organizationHandler::getOrganisationRequest)
                         .failureHandler(failureHandler);
 
                 routerBuilder
                         .operation("post-auth-v1-approve-create_org")
-                        .handler(this::approveOrganisationRequest)
+                        .handler(organizationHandler::approveOrganisationRequest)
                         .failureHandler(failureHandler);
 
                 // Organisation Joining
 
                 routerBuilder
                         .operation("post-auth-v1-joinOrg")
-                        .handler(this::joinOrganisationRequest)
+                        .handler(organizationHandler::joinOrganisationRequest)
                         .failureHandler(failureHandler);
 
                 routerBuilder
                         .operation("get-auth-v1-organisations-join")
-                        .handler(this::getJoinOrganisationRequests)
+                        .handler(organizationHandler::getJoinOrganisationRequests)
                         .failureHandler(failureHandler);
 
                 routerBuilder
                         .operation("post-auth-v1-approve")
-                        .handler(this::approveJoinOrganisationRequests)
+                        .handler(organizationHandler::approveJoinOrganisationRequests)
                         .failureHandler(failureHandler);
 
                 // Organisation
                 routerBuilder
                         .operation("get-auth-v1-org")
-                        .handler(this::listAllOrganisations)
+                        .handler(organizationHandler::listAllOrganisations)
                         .failureHandler(failureHandler);
 
                 routerBuilder
                         .operation("delete-auth-v1-organisations-id")
-                        .handler(this::deleteOrganisationById)
+                        .handler(organizationHandler::deleteOrganisationById)
                         .failureHandler(failureHandler);
 
                 routerBuilder
                         .operation("put-auth-v1-organisations-id")
-                        .handler(this::updateOrganisationById)
+                        .handler(organizationHandler::updateOrganisationById)
                         .failureHandler(failureHandler);
 
               // Post token create
@@ -442,12 +449,7 @@ public class ApiServerVerticle extends AbstractVerticle {
 
               HttpServerOptions serverOptions = new HttpServerOptions();
               LOGGER.debug("Info: Starting HTTP server");
-                postgresService = PostgresService.createProxy(vertx, PG_SERVICE_ADDRESS);
-                organizationCreateRequestDAO = new OrganizationCreateRequestDAOImpl(postgresService);
-                organizationUserDAO = new OrganizationUserDAOImpl(postgresService);
-                organizationJoinRequestDAO = new OrganizationJoinRequestDAOImpl(postgresService);
-                organizationDAO = new OrganizationDAOImpl(postgresService);
-                organizationService = new OrganizationServiceImpl(organizationCreateRequestDAO, organizationUserDAO, organizationDAO, organizationJoinRequestDAO);
+
 
                 router.getRoutes().forEach(route ->
                         LOGGER.info("Registered Route: " + route.getPath())
@@ -488,72 +490,7 @@ public class ApiServerVerticle extends AbstractVerticle {
             });
   }
 
-    private void updateOrganisationById(RoutingContext routingContext) {
-    }
 
-    private void deleteOrganisationById(RoutingContext routingContext) {
-
-    }
-
-    private void listAllOrganisations(RoutingContext routingContext) {
-
-    }
-
-    private void approveJoinOrganisationRequests(RoutingContext routingContext) {
-
-    }
-
-    private void getJoinOrganisationRequests(RoutingContext routingContext) {
-
-    }
-
-    private void joinOrganisationRequest(RoutingContext routingContext) {
-
-    }
-
-    private void approveOrganisationRequest(RoutingContext routingContext) {
-
-    }
-
-    private void getOrganisationRequest(RoutingContext routingContext) {
-
-    }
-
-    private void createOrganisationRequest(RoutingContext routingContext) {
-        JsonObject OrgRequestJson = routingContext.body().asJsonObject();
-        OrganizationCreateRequest organizationCreateRequest;
-        try {
-            organizationCreateRequest = new OrganizationCreateRequest(OrgRequestJson);
-        } catch (Exception e) {
-            routingContext.response()
-                    .setStatusCode(400)
-                    .putHeader("Content-Type", "application/json")
-                    .end(new JsonObject().put("error", "Invalid request payload: " + e.getMessage()).encode());
-            return;
-        }
-
-        organizationService.createOrganizationRequest(organizationCreateRequest)
-                .onSuccess(createdRequest -> {
-                    JsonObject response = new JsonObject()
-                            .put("success", true)
-                            .put("payload", createdRequest.toJson());
-
-                    routingContext.response()
-                            .setStatusCode(201)
-                            .putHeader("Content-Type", "application/json")
-                            .end(response.encode());
-                })
-                .onFailure(err -> {
-                    LOGGER.error("Failed to create organization request", err);
-                    routingContext.response()
-                            .setStatusCode(500)
-                            .putHeader("Content-Type", "application/json")
-                            .end(new JsonObject()
-                                    .put("success", false)
-                                    .put("error", "Internal Server Error")
-                                    .encode());
-                });
-    }
 
     /**
    * Handler to handle create token request.
