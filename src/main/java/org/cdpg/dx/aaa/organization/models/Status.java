@@ -1,4 +1,4 @@
-package org.cdpg.dx.aaa.organization.util;
+package org.cdpg.dx.aaa.organization.models;
 
 public enum Status {
   PENDING("pending"),

@@ -1,7 +1,6 @@
 package org.cdpg.dx.aaa.organization.models;
 
 import org.cdpg.dx.aaa.organization.util.Constants;
-import org.cdpg.dx.aaa.organization.util.Role;
 
 import java.util.HashMap;
 import java.util.Map;

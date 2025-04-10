@@ -108,10 +108,7 @@ public class ApiServerVerticle extends AbstractVerticle {
   private AuditingService auditingService;
   private ApdService apdService;
     private PostgresService postgresService;
-    private OrganizationCreateRequestDAO organizationCreateRequestDAO;
-    private OrganizationDAO organizationDAO;
-    private OrganizationJoinRequestDAO organizationJoinRequestDAO;
-    private OrganizationUserDAO organizationUserDAO;
+    private OrganizationDAOFactory organizationDAOFactory;
     private OrganizationService organizationService;
 
   /**
@@ -190,11 +187,9 @@ public class ApiServerVerticle extends AbstractVerticle {
     DelegationIdAuthorization delegationAuth = new DelegationIdAuthorization(pgPool);
     FailureHandler failureHandler = new FailureHandler();
       postgresService = PostgresService.createProxy(vertx, PG_SERVICE_ADDRESS);
-      organizationCreateRequestDAO = new OrganizationCreateRequestDAOImpl(postgresService);
-      organizationUserDAO = new OrganizationUserDAOImpl(postgresService);
-      organizationJoinRequestDAO = new OrganizationJoinRequestDAOImpl(postgresService);
-      organizationDAO = new OrganizationDAOImpl(postgresService);
-      organizationService = new OrganizationServiceImpl(organizationCreateRequestDAO, organizationUserDAO, organizationDAO, organizationJoinRequestDAO);
+
+      organizationDAOFactory = new OrganizationDAOFactory(postgresService);
+      organizationService = new OrganizationServiceImpl(organizationDAOFactory);
     OrganizationHandler organizationHandler = new OrganizationHandler(organizationService);
 
     RouterBuilder.create(vertx, "docs/old_openapi.yaml")

@@ -1,18 +1,14 @@
 package org.cdpg.dx.aaa.organization.dao.impl;
 
-import io.vertx.codegen.annotations.ProxyGen;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import org.cdpg.dx.aaa.organization.dao.OrganizationUserDAO;
-import org.cdpg.dx.aaa.organization.models.Organization;
-import org.cdpg.dx.aaa.organization.models.OrganizationJoinRequest;
 import org.cdpg.dx.aaa.organization.models.OrganizationUser;
 import org.cdpg.dx.aaa.organization.util.Constants;
-import org.cdpg.dx.aaa.organization.util.Role;
+import org.cdpg.dx.aaa.organization.models.Role;
 import org.cdpg.dx.database.postgres.models.*;
 import org.cdpg.dx.database.postgres.service.PostgresService;
 
-import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -26,7 +22,6 @@ public class OrganizationUserDAOImpl implements OrganizationUserDAO{
   public Future<Boolean> updateRole(UUID orgId, UUID userId, Role role) {
     Map<String, Object> updateFields = new HashMap<>();
     updateFields.put(Constants.ROLE, role.getRoleName());
-    updateFields.put(Constants.UPDATED_AT, Instant.now().toString());
 
     List<String> columns = updateFields.keySet().stream().toList();
     List<Object> values = updateFields.values().stream().toList();

@@ -38,7 +38,29 @@ public class PostgresVerticleTest {
     }
 
     @BeforeEach
-    void deploy_verticle(Vertx vertx, VertxTestContext testContext) {
+    void setup(Vertx vertx, VertxTestContext testContext) {
+        // Step 1: Create table using JDBC
+        String jdbcUrl = POSTGRES.getJdbcUrl();
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, POSTGRES.getUsername(), POSTGRES.getPassword());
+             Statement stmt = conn.createStatement()) {
+
+            String createTableSql = """
+                CREATE TABLE IF NOT EXISTS organization_create_requests (
+                    id SERIAL PRIMARY KEY,
+                    description TEXT,
+                    document_path TEXT,
+                    name TEXT,
+                    status TEXT
+                );
+                """;
+
+            stmt.execute(createTableSql);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create table", e);
+        }
+
+        // Step 2: Deploy PostgresVerticle with the config
         JsonObject config = new JsonObject()
                 .put("databaseIP", POSTGRES.getHost())
                 .put("databasePort", POSTGRES.getMappedPort(5432))
@@ -62,44 +84,20 @@ public class PostgresVerticleTest {
 
     @Test
     void test_insert_query(Vertx vertx, VertxTestContext testContext) {
-        // ✅ Create test table using JDBC
-        String jdbcUrl = POSTGRES.getJdbcUrl();
-        try (Connection conn = DriverManager.getConnection(jdbcUrl, POSTGRES.getUsername(), POSTGRES.getPassword());
-             Statement stmt = conn.createStatement()) {
+        PostgresService postgresService = PostgresService.createProxy(vertx, PG_SERVICE_ADDRESS);
 
-            String createTableSql = """
-                CREATE TABLE IF NOT EXISTS organization_create_requests (
-                    id SERIAL PRIMARY KEY,
-                    description TEXT,
-                    document_path TEXT,
-                    name TEXT,
-                    status TEXT
-                );
-                """;
+        InsertQuery query = new InsertQuery();
+        query.setTable("organization_create_requests");
+        query.setColumns(List.of("description", "document_path", "name", "status"));
+        query.setValues(List.of("Test description", "/docs/test.pdf", "Test Org", "ACTIVE"));
 
-            stmt.execute(createTableSql);
-
-        } catch (Exception e) {
-            testContext.failNow(e);
-            return;
-        }
-
-        vertx.setTimer(500, id -> {
-            PostgresService postgresService = PostgresService.createProxy(vertx, PG_SERVICE_ADDRESS);
-
-            InsertQuery query = new InsertQuery();
-            query.setTable("organization_create_requests");
-            query.setColumns(List.of("description", "document_path", "name", "status"));
-            query.setValues(List.of("Test description", "/docs/test.pdf", "Test Org", "ACTIVE"));
-
-            postgresService.insert(query).onComplete(ar -> {
-                if (ar.succeeded()) {
-                    Assertions.assertTrue(ar.result().isRowsAffected(), "Insert should affect at least 1 row");
-                    testContext.completeNow();
-                } else {
-                    testContext.failNow(ar.cause());
-                }
-            });
+        postgresService.insert(query).onComplete(ar -> {
+            if (ar.succeeded()) {
+                Assertions.assertTrue(ar.result().isRowsAffected(), "Insert should affect at least 1 row");
+                testContext.completeNow();
+            } else {
+                testContext.failNow(ar.cause());
+            }
         });
     }
 }

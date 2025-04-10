@@ -8,7 +8,7 @@ import org.cdpg.dx.aaa.organization.service.OrganizationService;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cdpg.dx.aaa.organization.util.Status;
+import org.cdpg.dx.aaa.organization.models.Status;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -152,7 +152,7 @@ public class OrganizationHandler {
         JsonObject OrgRequestJson = routingContext.body().asJsonObject();
         OrganizationCreateRequest organizationCreateRequest;
         try {
-            organizationCreateRequest = new OrganizationCreateRequest(OrgRequestJson);
+            organizationCreateRequest = OrganizationCreateRequest.fromJson(OrgRequestJson);
         } catch (Exception e) {
             routingContext.response()
                     .setStatusCode(400)

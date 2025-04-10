@@ -2,7 +2,7 @@ package org.cdpg.dx.aaa.organization.dao;
 
 import io.vertx.core.Future;
 import org.cdpg.dx.aaa.organization.models.OrganizationUser;
-import org.cdpg.dx.aaa.organization.util.Role;
+import org.cdpg.dx.aaa.organization.models.Role;
 
 import java.util.ArrayList;
 import java.util.List;

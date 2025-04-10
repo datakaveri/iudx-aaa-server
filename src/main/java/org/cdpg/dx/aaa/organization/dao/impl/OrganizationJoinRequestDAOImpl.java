@@ -1,19 +1,13 @@
 package org.cdpg.dx.aaa.organization.dao.impl;
 
 import io.vertx.core.Future;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.cdpg.dx.aaa.organization.dao.OrganizationJoinRequestDAO;
-import org.cdpg.dx.aaa.organization.models.OrganizationCreateRequest;
 import org.cdpg.dx.aaa.organization.models.OrganizationJoinRequest;
-import org.cdpg.dx.aaa.organization.models.OrganizationUser;
 import org.cdpg.dx.aaa.organization.util.Constants;
-import org.cdpg.dx.aaa.organization.util.Role;
-import org.cdpg.dx.aaa.organization.util.Status;
-import org.cdpg.dx.database.postgres.models.Condition;
+import org.cdpg.dx.aaa.organization.models.Status;
 import org.cdpg.dx.database.postgres.models.InsertQuery;
 import org.cdpg.dx.database.postgres.models.SelectQuery;
-import org.cdpg.dx.database.postgres.models.UpdateQuery;
 import org.cdpg.dx.database.postgres.service.PostgresService;
 
 import java.time.Instant;

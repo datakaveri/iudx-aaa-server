@@ -2,7 +2,7 @@ package org.cdpg.dx.aaa.organization.dao;
 
 import io.vertx.core.Future;
 import org.cdpg.dx.aaa.organization.models.OrganizationJoinRequest;
-import org.cdpg.dx.aaa.organization.util.Status;
+import org.cdpg.dx.aaa.organization.models.Status;
 
 import java.util.List;
 import java.util.UUID;
