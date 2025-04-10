@@ -30,7 +30,11 @@ public class OrganizationDAOImpl implements OrganizationDAO {
     List<String> columns = organizationMap.keySet().stream().toList();
     List<Object> values = organizationMap.values().stream().toList();
 
-    InsertQuery query = new InsertQuery(Constants.ORGANIZATION_TABLE, columns, values);
+    InsertQuery query = new InsertQuery();
+    query.setTable(Constants.ORGANIZATION_TABLE);
+    query.setValues(values);
+    query.setColumns(columns);
+    //InsertQuery query = new InsertQuery(Constants.ORGANIZATION_TABLE, columns, values);
 
     return postgresService.insert(query)
       .compose(result -> {

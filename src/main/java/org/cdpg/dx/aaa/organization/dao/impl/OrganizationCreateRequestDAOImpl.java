@@ -5,12 +5,15 @@ import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cdpg.dx.aaa.organization.dao.OrganizationCreateRequestDAO;
+import org.cdpg.dx.aaa.organization.models.Organization;
 import org.cdpg.dx.aaa.organization.models.OrganizationCreateRequest;
 import org.cdpg.dx.aaa.organization.util.Constants;
 import org.cdpg.dx.aaa.organization.models.Status;
 import org.cdpg.dx.database.postgres.models.*;
 import org.cdpg.dx.database.postgres.service.PostgresService;
 
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -42,7 +45,11 @@ public class OrganizationCreateRequestDAOImpl implements OrganizationCreateReque
     System.out.println("Column Count: " + columns.size());
     System.out.println("Value Count: " + values.size());
 
-   InsertQuery query = new InsertQuery(Constants.ORG_CREATE_REQUEST_TABLE, columns, values);
+    InsertQuery query = new InsertQuery();
+    query.setTable(Constants.ORG_CREATE_REQUEST_TABLE);
+    query.setValues(values);
+    query.setColumns(columns);
+   //InsertQuery query = new InsertQuery(Constants.ORG_CREATE_REQUEST_TABLE, columns, values);
 
     System.out.println("!!! "+query.toSQL());
     System.out.println("$$$$ "+query.getQueryParams());
@@ -55,7 +62,7 @@ public class OrganizationCreateRequestDAOImpl implements OrganizationCreateReque
         return Future.succeededFuture(OrganizationCreateRequest.fromJson(result.getRows().getJsonObject(0)));
       })
       .recover(err -> {
-        System.err.println("Error inserting create request: " + err.getMessage());
+        LOGGER.error("Error inserting create request: " + err.getMessage());
         return io.vertx.core.Future.failedFuture(err);
       });
 
@@ -88,9 +95,30 @@ public class OrganizationCreateRequestDAOImpl implements OrganizationCreateReque
   @Override
   public Future<Boolean> approve(UUID requestId, Status status) {
 
-   return null;
+    Map<String, Object> updateFields = new HashMap<>();
 
+    updateFields.put(Constants.STATUS, status);
+    updateFields.put(Constants.UPDATED_AT, Instant.now().toString()); // Optional: Track the update time
+
+
+    Condition condition = new Condition(Constants.ORG_CREATE_ID, Condition.Operator.EQUALS, List.of(requestId));
+    List<String> columns = updateFields.keySet().stream().toList();
+    List<Object> values = updateFields.values().stream().toList();
+    UpdateQuery query = new UpdateQuery(Constants.ORG_CREATE_REQUEST_TABLE, columns, values, condition, null, null);
+
+
+    return postgresService.update(query).compose(result -> {
+        if (result.getRows().isEmpty()) {
+          return Future.failedFuture("Update query returned no rows");
+        }
+        return Future.succeededFuture(true);
+        })
+      .recover(err -> {
+        System.out.println("Error inserting policy " + err.getMessage());
+        return Future.failedFuture(err);
+      });
   }
+
 
   @Override
   public Future<List<OrganizationCreateRequest>> getAll() {

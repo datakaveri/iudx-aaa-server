@@ -27,19 +27,46 @@ public class PostgresServiceImpl implements PostgresService {
     }
 
     private QueryResult convertToQueryResult(RowSet<Row> rowSet) {
-        JsonArray jsonArray = new JsonArray();
+      System.out.println("Inside convertToQueryResult");
+      JsonArray jsonArray = new JsonArray();
 
         for (Row row : rowSet) {
-            JsonObject json = new JsonObject();
+          JsonObject json = new JsonObject();
             for (int i = 0; i < row.size(); i++) {
-                json.put(row.getColumnName(i), row.getValue(i));
+               // json.put(row.getColumnName(i), row.getValue(i));
+              Object value = row.getValue(i);
+              if (value instanceof UUID) {
+                json.put(row.getColumnName(i), value.toString());
+              } else if (value instanceof java.time.LocalDateTime) {
+                json.put(row.getColumnName(i), value.toString());  // or format if needed
+              } else {
+                json.put(row.getColumnName(i), value);
+              }
             }
-            jsonArray.add(json);
+          jsonArray.add(json);
         }
 
-        boolean rowsAffected = rowSet.rowCount() > 0; // Check if any rows were affected
 
-        return new QueryResult(jsonArray, jsonArray.size(), false, rowsAffected);
+
+        boolean rowsAffected = rowSet.rowCount() > 0; // Check if any rows were affected
+        if(rowsAffected)
+      {
+        System.out.println("Rows affected :"+rowSet.rowCount());
+      }
+      else
+      {
+        System.out.println("Rows unaffected");
+      }
+      System.out.println("Returned rows: " + jsonArray.encodePrettily());
+
+      QueryResult queryResult = new QueryResult();
+      queryResult.setRows(jsonArray);
+      queryResult.setTotalCount(rowSet.rowCount());
+      queryResult.setHasMore(false);
+      queryResult.setRowsAffected(rowsAffected);
+      //return new QueryResult(jsonArray, jsonArray.size(), false, rowsAffected);
+
+      return queryResult;
     }
 
   private Future<QueryResult> executeQuery(String sql, List<Object> params) {
@@ -57,12 +84,20 @@ public class PostgresServiceImpl implements PostgresService {
       return client
         .preparedQuery(sql)
         .execute(tuple)
-        .map(this::convertToQueryResult)
+        .map(rowSet -> {
+          try {
+            System.out.println("Query executed successfully.");
+            return convertToQueryResult(rowSet);
+          } catch (Exception ex) {
+            System.out.println("Exception inside map(): " + ex.getMessage());
+            ex.printStackTrace();
+            throw ex;
+          }
+        })
         .onFailure(err -> {
           System.err.println("SQL execution error: " + err.getMessage());
           err.printStackTrace();
         });
-
     } catch (Exception e) {
       System.err.println("Exception while building Tuple or executing query: " + e.getMessage());
       e.printStackTrace();
