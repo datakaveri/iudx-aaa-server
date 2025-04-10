@@ -113,7 +113,7 @@ public class OrganizationHandler {
 
     public void approveOrganisationRequest(RoutingContext routingContext) {
         JsonObject OrgRequestJson = routingContext.body().asJsonObject();
-
+        System.out.println(OrgRequestJson);
         UUID requestId;
         Status status;
 
@@ -152,7 +152,7 @@ public class OrganizationHandler {
         JsonObject OrgRequestJson = routingContext.body().asJsonObject();
         OrganizationCreateRequest organizationCreateRequest;
         try {
-            organizationCreateRequest = OrganizationCreateRequest.fromJson(OrgRequestJson);
+          organizationCreateRequest = OrganizationCreateRequest.fromJson(OrgRequestJson);
         } catch (Exception e) {
             routingContext.response()
                     .setStatusCode(400)
@@ -165,7 +165,7 @@ public class OrganizationHandler {
                 .onSuccess(createdRequest -> {
                     JsonObject response = new JsonObject()
                             .put("success", true)
-                            .put("payload", createdRequest.toJson());
+                            .put("payload",  new JsonObject(createdRequest.toNonEmptyFieldsMap()));
 
                     routingContext.response()
                             .setStatusCode(201)

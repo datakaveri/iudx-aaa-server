@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS organizations (
+    id UUID DEFAULT public.gen_random_uuid() PRIMARY KEY,
+    name VARCHAR NOT NULL UNIQUE,
+    description TEXT,
+    document_path TEXT,
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+

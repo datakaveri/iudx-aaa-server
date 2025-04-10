@@ -6,8 +6,10 @@ import org.cdpg.dx.aaa.organization.dao.OrganizationJoinRequestDAO;
 import org.cdpg.dx.aaa.organization.models.OrganizationJoinRequest;
 import org.cdpg.dx.aaa.organization.util.Constants;
 import org.cdpg.dx.aaa.organization.models.Status;
+import org.cdpg.dx.database.postgres.models.Condition;
 import org.cdpg.dx.database.postgres.models.InsertQuery;
 import org.cdpg.dx.database.postgres.models.SelectQuery;
+import org.cdpg.dx.database.postgres.models.UpdateQuery;
 import org.cdpg.dx.database.postgres.service.PostgresService;
 
 import java.time.Instant;
@@ -61,7 +63,11 @@ public class OrganizationJoinRequestDAOImpl implements OrganizationJoinRequestDA
       List<String> columns = insertFields.keySet().stream().toList();
       List<Object> values = insertFields.values().stream().toList();
 
-    InsertQuery query = new InsertQuery(Constants.ORG_JOIN_REQUEST_TABLE,columns,values);
+    InsertQuery query = new InsertQuery();
+    query.setTable(Constants.ORG_JOIN_REQUEST_TABLE);
+    query.setValues(values);
+    query.setColumns(columns);
+      //InsertQuery query = new InsertQuery(Constants.ORG_JOIN_REQUEST_TABLE,columns,values);
 
     return postgresService.insert(query)
       .compose(result->{
@@ -81,7 +87,28 @@ public class OrganizationJoinRequestDAOImpl implements OrganizationJoinRequestDA
   @Override
   public Future<Boolean> approve(UUID requestId, Status status) {
 
-       return null;
+    Map<String, Object> updateFields = new HashMap<>();
+
+    updateFields.put(Constants.STATUS, status);
+    updateFields.put(Constants.PROCESSED_AT, Instant.now().toString()); // Optional: Track the update time
+
+
+    Condition condition = new Condition(Constants.ORG_JOIN_ID, Condition.Operator.EQUALS, List.of(requestId));
+    List<String> columns = updateFields.keySet().stream().toList();
+    List<Object> values = updateFields.values().stream().toList();
+    UpdateQuery query = new UpdateQuery(Constants.ORG_JOIN_REQUEST_TABLE, columns, values, condition, null, null);
+
+
+    return postgresService.update(query).compose(result -> {
+        if (result.getRows().isEmpty()) {
+          return Future.failedFuture("Update query returned no rows");
+        }
+        return Future.succeededFuture(true);
+      })
+      .recover(err -> {
+        System.out.println("Error inserting policy " + err.getMessage());
+        return Future.failedFuture(err);
+      });
 
   }
 

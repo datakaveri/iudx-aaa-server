@@ -1,9 +1,12 @@
 package org.cdpg.dx.aaa.organization.service;
 
 import io.vertx.core.Future;
+import io.vertx.core.json.JsonObject;
 import org.cdpg.dx.aaa.organization.dao.*;
 import org.cdpg.dx.aaa.organization.models.*;
 import org.cdpg.dx.aaa.organization.models.Role;
+import org.cdpg.dx.aaa.organization.util.Constants;
+import org.glassfish.jaxb.runtime.v2.runtime.reflect.opt.Const;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.cdpg.dx.aaa.organization.models.Status;
@@ -40,7 +43,32 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     @Override
     public Future<Boolean> approveOrganizationCreateRequest(UUID requestId, Status status) {
-        return organizationCreateRequestDAO.approve(requestId, status);
+      return organizationCreateRequestDAO.approve(requestId, status)
+      .compose(updated->{
+        if(!updated)
+        {
+          return Future.succeededFuture(false);
+        }
+        if(status.getStatus().equalsIgnoreCase("approved"))
+        {
+          return organizationCreateRequestDAO.getById(requestId)
+          .compose(createRequest->{
+
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.put(Constants.ORG_NAME,createRequest.name());
+            jsonObject.put(Constants.ORG_DESCRIPTION,createRequest.description());
+            jsonObject.put(Constants.DOCUMENTS_PATH,createRequest.documentPath());
+
+            Organization organization = Organization.fromJson(jsonObject);
+
+            return organizationDAO.create(organization)
+              .map(org -> true);
+          });
+        }
+        else {
+          return Future.succeededFuture(true);
+        }
+      });
     }
 
     @Override
@@ -66,7 +94,7 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     @Override
     public Future<Boolean> approveOrganizationJoinRequest(UUID requestId, Status status) {
-        return organizationJoinRequestDAO.approve(requestId, status);
+       return organizationJoinRequestDAO.approve(requestId, status);
     }
 
     @Override
