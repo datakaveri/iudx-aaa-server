@@ -2,7 +2,6 @@ package org.cdpg.dx.database.postgres.models;
 
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -12,18 +11,16 @@ public class ConditionGroup implements ConditionComponent {
     private  List<ConditionComponent> conditions;
     private  LogicalOperator operator;
 
-    public enum LogicalOperator {
-        AND("AND"), OR("OR");
-
-        private final String symbol;
-        LogicalOperator(String symbol) { this.symbol = symbol; }
-        public String getSymbol() { return symbol; }
+    public ConditionGroup(ConditionGroup other) {
+        this.conditions = other.getConditions();
+        this.operator = other.getOperator();
     }
 
     public ConditionGroup(List<ConditionComponent> conditions, LogicalOperator operator) {
         this.conditions = Objects.requireNonNull(conditions, "Conditions cannot be null");
         this.operator = Objects.requireNonNull(operator, "Operator cannot be null");
     }
+
 
     public ConditionGroup(JsonObject json) {
         ConditionGroupConverter.fromJson(json, this);
@@ -55,12 +52,12 @@ public class ConditionGroup implements ConditionComponent {
         this.conditions = conditions;
     }
 
-    public void setOperator(LogicalOperator operator) {
-        this.operator = operator;
-    }
-
     public LogicalOperator getOperator() {
         return operator;
+    }
+
+    public void setOperator(LogicalOperator operator) {
+        this.operator = operator;
     }
 
     @Override
@@ -68,5 +65,13 @@ public class ConditionGroup implements ConditionComponent {
         return conditions.stream()
                 .flatMap(condition -> condition.getQueryParams().stream())
                 .toList();
+    }
+
+    public enum LogicalOperator {
+        AND("AND"), OR("OR");
+
+        private final String symbol;
+        LogicalOperator(String symbol) { this.symbol = symbol; }
+        public String getSymbol() { return symbol; }
     }
 }

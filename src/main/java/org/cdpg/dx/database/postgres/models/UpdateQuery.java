@@ -9,12 +9,22 @@ import java.util.stream.Collectors;
 
 @DataObject(generateConverter = true)
 public class UpdateQuery implements Query {
-    private final String table;
-    private final List<String> columns;
-    private final List<Object> values;
-    private final ConditionComponent condition;
-    private final List<OrderBy> orderBy;
-    private final Integer limit;
+    private  String table;
+    private List<String> columns;
+    private  List<Object> values;
+    private  ConditionComponent condition;
+    private  List<OrderBy> orderBy;
+    private  Integer limit;
+
+    //    public UpdateQuery(String table, List<String> columns, List<Object> values,
+//                       ConditionComponent condition, List<OrderBy> orderBy, Integer limit) {
+//        this.table = Objects.requireNonNull(table, "Table name cannot be null");
+//        this.columns = Objects.requireNonNull(columns, "Columns cannot be null");
+//        this.values = Objects.requireNonNull(values, "Values cannot be null");
+//        this.condition = condition;
+//        this.orderBy = orderBy;
+//        this.limit = limit;
+//    }
 
     public UpdateQuery(String table, List<String> columns, List<Object> values,
                        ConditionComponent condition, List<OrderBy> orderBy, Integer limit) {
@@ -25,6 +35,16 @@ public class UpdateQuery implements Query {
         this.orderBy = orderBy;
         this.limit = limit;
     }
+
+    public UpdateQuery(UpdateQuery other) {
+        this.table = other.getTable();
+        this.columns = other.getColumns();
+        this.values = other.getValues();
+        this.condition = other.getCondition();
+        this.orderBy = other.getOrderBy();
+        this.limit = other.getLimit();
+    }
+    public UpdateQuery(){}
 
     public UpdateQuery(JsonObject json) {
         UpdateQueryConverter.fromJson(json, this);
@@ -64,5 +84,53 @@ public class UpdateQuery implements Query {
         List<Object> params = values;
         if (condition != null) params.addAll(condition.getQueryParams());
         return params;
+    }
+
+    public String getTable() {
+        return table;
+    }
+
+    public void setTable(String table) {
+        this.table = table;
+    }
+
+    public List<String> getColumns() {
+        return columns;
+    }
+
+    public void setColumns(List<String> columns) {
+        this.columns = columns;
+    }
+
+    public List<Object> getValues() {
+        return values;
+    }
+
+    public void setValues(List<Object> values) {
+        this.values = values;
+    }
+
+    public ConditionComponent getCondition() {
+        return condition;
+    }
+
+    public void setCondition(ConditionComponent condition) {
+        this.condition = condition;
+    }
+
+    public Integer getLimit() {
+        return limit;
+    }
+
+    public void setLimit(Integer limit) {
+        this.limit = limit;
+    }
+
+    public List<OrderBy> getOrderBy() {
+        return orderBy;
+    }
+
+    public void setOrderBy(List<OrderBy> orderBy) {
+        this.orderBy = orderBy;
     }
 }

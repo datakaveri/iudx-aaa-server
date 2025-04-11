@@ -3,11 +3,9 @@ package org.cdpg.dx.database.postgres.models;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.codegen.json.annotations.JsonGen;
 import io.vertx.core.json.JsonObject;
-
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.Objects;
-import org.cdpg.dx.database.postgres.service.PostgresServiceImpl;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,13 +14,13 @@ import org.slf4j.LoggerFactory;
 public class DeleteQuery implements Query {
     private static final Logger LOG = LoggerFactory.getLogger(DeleteQuery.class);
     private  String table;
-    private  ConditionComponent condition;
+    private  Condition condition;
     private  List<OrderBy> orderBy;
     private  Integer limit; // Optional, so keep as Integer
 
     public DeleteQuery(){}
     // Constructor (OrderBy & Limit are optional)
-    public DeleteQuery(String table, ConditionComponent condition, List<OrderBy> orderBy, Integer limit) {
+    public DeleteQuery(String table, Condition condition, List<OrderBy> orderBy, Integer limit) {
         this.table = Objects.requireNonNull(table, "Table name cannot be null");
         this.condition = condition;
         this.orderBy = orderBy != null ? List.copyOf(orderBy) : List.of();
@@ -57,22 +55,6 @@ public class DeleteQuery implements Query {
         DeleteQueryConverter.fromJson(json, this);
     }
 
-    public void setTable(String table) {
-        this.table = table;
-    }
-
-    public void setCondition(ConditionComponent condition) {
-        this.condition = condition;
-    }
-
-    public void setOrderBy(List<OrderBy> orderBy) {
-        this.orderBy = orderBy;
-    }
-
-    public void setLimit(Integer limit) {
-        this.limit = limit;
-    }
-
     // Convert to JSON
     public JsonObject toJson() {
         JsonObject json = new JsonObject();
@@ -81,11 +63,30 @@ public class DeleteQuery implements Query {
     }
 
     public String getTable() { return table; }
-    public ConditionComponent getCondition() {
+
+    public void setTable(String table) {
+        this.table = table;
+    }
+
+    public Condition getCondition() {
         return condition;
     }
+
+    public void setCondition(Condition condition) {
+        this.condition = condition;
+    }
+
     public List<OrderBy> getOrderBy() { return orderBy; }
+
+    public void setOrderBy(List<OrderBy> orderBy) {
+        this.orderBy = orderBy;
+    }
+
     public Integer getLimit() { return limit; }
+
+    public void setLimit(Integer limit) {
+        this.limit = limit;
+    }
 
     @Override
     public String toSQL() {
@@ -102,7 +103,7 @@ public class DeleteQuery implements Query {
             query.append(" LIMIT ").append(limit);
         }
         if(condition.getQueryParams()!= null){
-          query = new StringBuilder(query.toString().replace("$1", "$1::UUID"));
+            query = new StringBuilder(query.toString().replace("$1", "$1::UUID"));
         }
 
         return query.toString();

@@ -2,7 +2,6 @@ package org.cdpg.dx.database.postgres.models;
 
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,10 +15,8 @@ public class SelectQuery implements Query {
     private Integer limit;
     private Integer offset;
 
-    // Default constructor (Needed for deserialization)
     public SelectQuery() {}
 
-    // Constructor
     public SelectQuery(String table, List<String> columns, ConditionComponent condition, List<String> groupBy,
                        List<OrderBy> orderBy, Integer limit, Integer offset) {
         this.table = table;
@@ -31,39 +28,82 @@ public class SelectQuery implements Query {
         this.offset = offset;
     }
 
-    // JSON Constructor
-    public SelectQuery(JsonObject json) {
-        SelectQueryConverter.fromJson(json, this);  // Use the generated converter
+
+    public SelectQuery(SelectQuery other){
+        this.table = other.getTable();
+        this.columns = other.getColumns();
+        this.condition = other.getCondition();
+        this.groupBy = other.getGroupBy();
+        this.orderBy = other.getOrderBy();
+        this.limit = other.getLimit();
+        this.offset = other.getOffset();
     }
 
-    // Convert to JSON
+    public SelectQuery(JsonObject json) {
+        SelectQueryConverter.fromJson(json, this); // Use the generated converter
+    }
+
     public JsonObject toJson() {
         JsonObject json = new JsonObject();
         SelectQueryConverter.toJson(this, json);
         return json;
     }
 
-    // Getters & Setters
-    public String getTable() { return table; }
-    public void setTable(String table) { this.table = table; }
+    public String getTable() {
+        return table;
+    }
 
-    public List<String> getColumns() { return columns; }
-    public void setColumns(List<String> columns) { this.columns = columns; }
+    public void setTable(String table) {
+        this.table = table;
+    }
 
-    public ConditionComponent getCondition() { return condition; }
-    public void setCondition(ConditionComponent condition) { this.condition = condition; }
+    public List<String> getColumns() {
+        return columns;
+    }
 
-    public List<String> getGroupBy() { return groupBy; }
-    public void setGroupBy(List<String> groupBy) { this.groupBy = groupBy; }
+    public void setColumns(List<String> columns) {
+        this.columns = columns;
+    }
 
-    public List<OrderBy> getOrderBy() { return orderBy; }
-    public void setOrderBy(List<OrderBy> orderBy) { this.orderBy = orderBy; }
+    public ConditionComponent getCondition() {
+        return condition;
+    }
 
-    public Integer getLimit() { return limit; }
-    public void setLimit(Integer limit) { this.limit = limit; }
+    public void setCondition(ConditionComponent condition) {
+        this.condition = condition;
+    }
 
-    public Integer getOffset() { return offset; }
-    public void setOffset(Integer offset) { this.offset = offset; }
+    public List<String> getGroupBy() {
+        return groupBy;
+    }
+
+    public void setGroupBy(List<String> groupBy) {
+        this.groupBy = groupBy;
+    }
+
+    public List<OrderBy> getOrderBy() {
+        return orderBy;
+    }
+
+    public void setOrderBy(List<OrderBy> orderBy) {
+        this.orderBy = orderBy;
+    }
+
+    public Integer getLimit() {
+        return limit;
+    }
+
+    public void setLimit(Integer limit) {
+        this.limit = limit;
+    }
+
+    public Integer getOffset() {
+        return offset;
+    }
+
+    public void setOffset(Integer offset) {
+        this.offset = offset;
+    }
 
     @Override
     public String toSQL() {
@@ -79,9 +119,9 @@ public class SelectQuery implements Query {
         }
 
         if (orderBy != null && !orderBy.isEmpty()) {
-            query.append(" ORDER BY ").append(orderBy.stream()
-                    .map(OrderBy::toSQL)
-                    .collect(Collectors.joining(", ")));
+            query
+                    .append(" ORDER BY ")
+                    .append(orderBy.stream().map(OrderBy::toSQL).collect(Collectors.joining(", ")));
         }
 
         if (limit != null) {

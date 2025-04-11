@@ -63,7 +63,7 @@ public class OrganizationUserDAOImpl implements OrganizationUserDAO {
             Constants.ORG_USER_TABLE,
             List.of(Constants.ROLE),
             List.of(role.getRoleName()),
-            conditions,
+            new Condition(Constants.ORGANIZATION_ID, Condition.Operator.EQUALS, List.of(orgId)), //TODO: need to change
             null,
             null
     );
@@ -86,7 +86,7 @@ public class OrganizationUserDAOImpl implements OrganizationUserDAO {
             ConditionGroup.LogicalOperator.AND
     );
 
-    DeleteQuery query = new DeleteQuery(Constants.ORG_USER_TABLE, conditions, null, null);
+    DeleteQuery query = new DeleteQuery(Constants.ORG_USER_TABLE,  new Condition(Constants.ORGANIZATION_ID, Condition.Operator.EQUALS, List.of(orgId)), null, null);
 
     return postgresService.delete(query)
             .map(QueryResult::isRowsAffected)
@@ -110,7 +110,7 @@ public class OrganizationUserDAOImpl implements OrganizationUserDAO {
             ConditionGroup.LogicalOperator.AND
     );
 
-    DeleteQuery query = new DeleteQuery(Constants.ORG_USER_TABLE, conditions, null, null);
+    DeleteQuery query = new DeleteQuery(Constants.ORG_USER_TABLE,  new Condition(Constants.ORGANIZATION_ID, Condition.Operator.EQUALS, List.of(orgId)), null, null);
 
     return postgresService.delete(query)
             .map(QueryResult::isRowsAffected)
