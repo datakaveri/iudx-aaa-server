@@ -5,7 +5,7 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import org.cdpg.dx.database.postgres.models.InsertQuery;
+import org.cdpg.dx.database.postgres.models.*;
 import org.cdpg.dx.database.postgres.service.PostgresService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -99,5 +99,37 @@ public class PostgresVerticleTest {
                 testContext.failNow(ar.cause());
             }
         });
+
+//        SelectQuery selectQuery = new SelectQuery();
+//
+//        selectQuery.setTable("organization_create_requests");
+//        selectQuery.setColumns(List.of("*"));
+//
+//        ConditionComponent condition = new Condition("id", Condition.Operator.EQUALS , List.of("asdadasd"));
+//        selectQuery.setCondition(condition);
+//        postgresService.select(selectQuery).onComplete(ar -> {
+//            if (ar.succeeded()) {
+//                Assertions.assertTrue(ar.result().isRowsAffected(), "Insert should affect at least 1 row");
+//                testContext.completeNow();
+//            } else {
+//                testContext.failNow(ar.cause());
+//            }
+//        });
+
+
+//        DeleteQuery deleteQuery = new DeleteQuery();
+//
+//        deleteQuery.setTable("organization_create_requests");
+//
+//        ConditionComponent delConditon = new Condition("id", Condition.Operator.EQUALS , List.of("asdadasd"));
+//        deleteQuery.setCondition(delConditon);
+//        postgresService.delete(deleteQuery).onComplete(ar -> {
+//            if (ar.succeeded()) {
+//                Assertions.assertTrue(ar.result().isRowsAffected(), "Insert should affect at least 1 row");
+//                testContext.completeNow();
+//            } else {
+//                testContext.failNow(ar.cause());
+//            }
+//        });
     }
 }
