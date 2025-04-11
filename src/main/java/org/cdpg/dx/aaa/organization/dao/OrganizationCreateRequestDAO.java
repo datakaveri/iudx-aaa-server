@@ -14,7 +14,7 @@ public interface OrganizationCreateRequestDAO {
 
   Future<OrganizationCreateRequest> getById(UUID requestId);
 
-  Future<Boolean> approve(UUID id, Status status);
+  Future<Boolean> updateStatus(UUID id, Status status);
 
-  Future<List<OrganizationCreateRequest>> getAll();
+  Future<List<OrganizationCreateRequest>> getAllByStatus(Status status);
 }

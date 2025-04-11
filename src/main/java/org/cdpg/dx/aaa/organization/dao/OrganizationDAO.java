@@ -18,6 +18,4 @@ public interface OrganizationDAO {
 
   Future<Organization> get(UUID orgId);
 
-
-
 }

@@ -2,120 +2,139 @@ package org.cdpg.dx.aaa.organization.dao.impl;
 
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.cdpg.dx.aaa.organization.dao.OrganizationJoinRequestDAO;
+import org.cdpg.dx.aaa.organization.models.OrganizationCreateRequest;
 import org.cdpg.dx.aaa.organization.models.OrganizationJoinRequest;
-import org.cdpg.dx.aaa.organization.util.Constants;
 import org.cdpg.dx.aaa.organization.models.Status;
-import org.cdpg.dx.database.postgres.models.Condition;
-import org.cdpg.dx.database.postgres.models.InsertQuery;
-import org.cdpg.dx.database.postgres.models.SelectQuery;
-import org.cdpg.dx.database.postgres.models.UpdateQuery;
+import org.cdpg.dx.aaa.organization.util.Constants;
+import org.cdpg.dx.database.postgres.models.*;
 import org.cdpg.dx.database.postgres.service.PostgresService;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
-public class OrganizationJoinRequestDAOImpl implements OrganizationJoinRequestDAO{
-  private final PostgresService postgresService;
+public class OrganizationJoinRequestDAOImpl implements OrganizationJoinRequestDAO {
 
-  public OrganizationJoinRequestDAOImpl(PostgresService postgresService) {
-    this.postgresService = postgresService;
-  }
+    private static final Logger LOGGER = LogManager.getLogger(OrganizationJoinRequestDAOImpl.class);
+    private final PostgresService postgresService;
 
+    public OrganizationJoinRequestDAOImpl(PostgresService postgresService) {
+        this.postgresService = postgresService;
+    }
 
+    @Override
+    public Future<OrganizationJoinRequest> getById(UUID id) {
+        SelectQuery selectQuery = new SelectQuery(
+                Constants.ORG_JOIN_REQUEST_TABLE,
+                List.of("*"),
+                new Condition(Constants.ORG_JOIN_ID, Condition.Operator.EQUALS, List.of(id.toString())),
+                null, null, null, null
+        );
 
-  @Override
-  public Future<List<OrganizationJoinRequest>> getAll(UUID orgId)
-  {
+        return postgresService.select(selectQuery)
+                .compose(result -> {
+                    if (result.getRows().isEmpty()) {
+                        return Future.failedFuture("No request found with the given ID.");
+                    }
+                    return Future.succeededFuture(OrganizationJoinRequest.fromJson(result.getRows().getJsonObject(0)));
+                })
+                .recover(err -> {
+                    LOGGER.error("Error fetching request by ID: {}", err.getMessage(), err);
+                    return Future.failedFuture(err);
+                });
+    }
 
-    SelectQuery query = new SelectQuery(Constants.ORG_JOIN_REQUEST_TABLE,List.of("*"),null,null,null,null,null);
+    @Override
+    public Future<List<OrganizationJoinRequest>> getAll(UUID orgId, Status status) {
+        ConditionGroup conditions = new ConditionGroup(
+                List.of(
+                        new Condition(Constants.ORGANIZATION_ID, Condition.Operator.EQUALS, List.of(orgId)),
+                        new Condition(Constants.STATUS, Condition.Operator.EQUALS, List.of(status.getStatus()))
+                ),
+                ConditionGroup.LogicalOperator.AND
+        );
+        SelectQuery query = new SelectQuery(
+                Constants.ORG_JOIN_REQUEST_TABLE,
+                List.of("*"),
+                conditions,
+                null,
+                null,
+                null,
+                null
+        );
 
-    return postgresService.select(query)
-      .compose(result->
-      {
-        if (result.getRows().isEmpty()) {
-          return Future.failedFuture("select query returned no rows.");
-        }
-        List<OrganizationJoinRequest> requests = result.getRows()
-          .stream()
-          .map(obj -> OrganizationJoinRequest.fromJson((JsonObject) obj))
-          .collect(Collectors.toList());
-        return Future.succeededFuture(requests);
-      })
-      .recover(err -> {
-        System.err.println("Error inserting create request: " + err.getMessage());
-        return Future.failedFuture(err);
-      });
+        return postgresService.select(query)
+                .compose(result -> {
+                    List<OrganizationJoinRequest> requests = result.getRows().stream()
+                            .map(row -> OrganizationJoinRequest.fromJson((JsonObject) row))
+                            .collect(Collectors.toList());
+                    return Future.succeededFuture(requests);
+                })
+                .recover(err -> {
+                    LOGGER.error("Error fetching join requests: {}", err.getMessage(), err);
+                    return Future.failedFuture(err);
+                });
+    }
 
-  }
+    @Override
+    public Future<OrganizationJoinRequest> join(UUID organizationId, UUID userId) {
+        Map<String, Object> insertFields = Map.of(
+                Constants.ORGANIZATION_ID, organizationId,
+                Constants.USER_ID, userId,
+                Constants.STATUS, "pending",
+                Constants.REQUESTED_AT, Instant.now().toString()
+        );
 
-  @Override
-  public Future<OrganizationJoinRequest>  join(UUID organizationId, UUID userId)
-  {
-      Map<String,Object> insertFields = new HashMap<>();
+        List<String> columns = List.copyOf(insertFields.keySet());
+        List<Object> values = List.copyOf(insertFields.values());
 
-    insertFields.put(Constants.ORGANIZATION_ID,organizationId);
-    insertFields.put(Constants.USER_ID,userId);
-    insertFields.put(Constants.STATUS,"pending");
-    insertFields.put(Constants.REQUESTED_AT, Instant.now().toString());
+        InsertQuery query = new InsertQuery();
+        query.setTable(Constants.ORG_JOIN_REQUEST_TABLE);
+        query.setColumns(columns);
+        query.setValues(values);
 
-      List<String> columns = insertFields.keySet().stream().toList();
-      List<Object> values = insertFields.values().stream().toList();
+        return postgresService.insert(query)
+                .compose(result -> {
+                    if (result.getRows().isEmpty()) {
+                        return Future.failedFuture("Insert query failed.");
+                    }
+                    return Future.succeededFuture(OrganizationJoinRequest.fromJson(result.getRows().getJsonObject(0)));
+                })
+                .recover(err -> {
+                    LOGGER.error("Error inserting join request: {}", err.getMessage(), err);
+                    return Future.failedFuture(err);
+                });
+    }
 
-    InsertQuery query = new InsertQuery();
-    query.setTable(Constants.ORG_JOIN_REQUEST_TABLE);
-    query.setValues(values);
-    query.setColumns(columns);
-      //InsertQuery query = new InsertQuery(Constants.ORG_JOIN_REQUEST_TABLE,columns,values);
+    @Override
+    public Future<Boolean> updateStatus(UUID requestId, Status status) {
+        Map<String, Object> updateFields = Map.of(
+                Constants.STATUS, status,
+                Constants.PROCESSED_AT, Instant.now().toString()
+        );
 
-    return postgresService.insert(query)
-      .compose(result->{
-        if(result.getRows().isEmpty())
-        {
-          return Future.failedFuture("Insert query failed");
-        }
-        return Future.succeededFuture(OrganizationJoinRequest.fromJson(result.getRows().getJsonObject(0)));
-      })
-      .recover(err->{
-        System.err.println("Error inserting create request: " + err.getMessage());
-        return Future.failedFuture(err);
-      });
+        List<String> columns = List.copyOf(updateFields.keySet());
+        List<Object> values = List.copyOf(updateFields.values());
 
-  }
+        Condition condition = new Condition(Constants.ORG_JOIN_ID, Condition.Operator.EQUALS, List.of(requestId));
+        UpdateQuery query = new UpdateQuery(Constants.ORG_JOIN_REQUEST_TABLE, columns, values, condition, null, null);
 
-  @Override
-  public Future<Boolean> approve(UUID requestId, Status status) {
-
-    Map<String, Object> updateFields = new HashMap<>();
-
-    updateFields.put(Constants.STATUS, status);
-    updateFields.put(Constants.PROCESSED_AT, Instant.now().toString()); // Optional: Track the update time
-
-
-    Condition condition = new Condition(Constants.ORG_JOIN_ID, Condition.Operator.EQUALS, List.of(requestId));
-    List<String> columns = updateFields.keySet().stream().toList();
-    List<Object> values = updateFields.values().stream().toList();
-    UpdateQuery query = new UpdateQuery(Constants.ORG_JOIN_REQUEST_TABLE, columns, values, condition, null, null);
-
-
-    return postgresService.update(query).compose(result -> {
-        if (result.getRows().isEmpty()) {
-          return Future.failedFuture("Update query returned no rows");
-        }
-        return Future.succeededFuture(true);
-      })
-      .recover(err -> {
-        System.out.println("Error inserting policy " + err.getMessage());
-        return Future.failedFuture(err);
-      });
-
-  }
-
+        return postgresService.update(query)
+                .compose(result -> {
+                    if (result.getRows().isEmpty()) {
+                        return Future.failedFuture("Update query returned no rows.");
+                    }
+                    return Future.succeededFuture(true);
+                })
+                .recover(err -> {
+                    LOGGER.error("Error updating join request status for request {}: {}", requestId, err.getMessage(), err);
+                    return Future.failedFuture(err);
+                });
+    }
 }
-
-
-
-
-
-

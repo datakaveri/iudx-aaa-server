@@ -17,21 +17,21 @@ public interface OrganizationService {
   // ************ ORGANIZATION CREATE REQUEST *********
   Future<OrganizationCreateRequest> getOrganizationCreateRequests(UUID requestId);
 
-  Future<List<OrganizationCreateRequest>> getAllOrganizationCreateRequests();
+  Future<List<OrganizationCreateRequest>> getAllPendingOrganizationCreateRequests();
 
   Future<OrganizationCreateRequest> createOrganizationRequest(OrganizationCreateRequest organizationCreateRequest);
 
   // status enum , adding a new org entry and updating orgCreateRequest
   // update orgUser role
-  Future<Boolean> approveOrganizationCreateRequest(UUID requestId, Status status);
+  Future<Boolean> updateOrganizationCreateRequestStatus(UUID requestId, Status status);
 
 //   ************ ORGANIZATION JOIN REQUEST *********
 
   Future<OrganizationJoinRequest> joinOrganizationRequest(UUID organizationId, UUID userId);
 
-  Future<List<OrganizationJoinRequest>> getOrganizationJoinRequests(UUID orgId);
+  Future<List<OrganizationJoinRequest>> getOrganizationPendingJoinRequests(UUID orgId);
 
-  Future<Boolean> approveOrganizationJoinRequest(UUID requestId,Status Status);
+  Future<Boolean> updateOrganizationJoinRequestStatus(UUID requestId, Status Status);
 
   // ************ ORGANIZATION *********
   Future<Boolean> deleteOrganization(UUID orgId);

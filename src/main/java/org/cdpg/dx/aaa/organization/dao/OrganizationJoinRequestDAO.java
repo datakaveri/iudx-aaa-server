@@ -8,9 +8,11 @@ import java.util.List;
 import java.util.UUID;
 
 public interface OrganizationJoinRequestDAO {
-  Future<OrganizationJoinRequest>  join(UUID organizationId, UUID userId);
+    Future<OrganizationJoinRequest> getById(UUID Id);
 
-  Future<List<OrganizationJoinRequest>> getAll(UUID orgId);
+    Future<OrganizationJoinRequest> join(UUID organizationId, UUID userId);
 
-  Future<Boolean> approve(UUID requestId, Status status);
+    Future<List<OrganizationJoinRequest>> getAll(UUID orgId, Status status);
+
+    Future<Boolean> updateStatus(UUID requestId, Status status);
 }

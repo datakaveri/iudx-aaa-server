@@ -120,7 +120,7 @@ public class OrganizationHandler {
         requestId = UUID.fromString(OrgRequestJson.getString("req_id"));
         status = Status.fromString(OrgRequestJson.getString("status"));
 
-        organizationService.approveOrganizationCreateRequest(requestId, status)
+        organizationService.updateOrganizationCreateRequestStatus(requestId, status)
                 .onSuccess(approved -> {
                     JsonObject response = new JsonObject()
                             .put("success", approved)
