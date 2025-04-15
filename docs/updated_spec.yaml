@@ -285,20 +285,20 @@ paths:
         An Identity token is used by a user to identify themself to a resource server or APD.
           - Valid item types - `resource_server`, `cos` in case of COS admin
           - Item ID - URL of the resource server or COS
-        
+
         ## Conditions    
           - If role is `admin`, the user must own/be the admin of the resource server.
           - If role is `cos_admin`, the user must be the COS Admin and the `itemId` must be the COS URL.
           - For any other role, the user must have the role for the particular resource server. 
           - Users can be permitted to obtain identity tokens with the `admin` role if required.**
-        
+
         # Access Token
         An Access token is used to gain access to an Item on a resource server.
 
           ## Tokens for providers
            - Valid item types - `resource`, `resource_group` 
            - Users with the `provider` role can get tokens for all of the resources that belong to them without having to set any specific policies to access them.
-        
+
           ## Tokens for delegates
           ### Delegation ID header
           - **The `delegationId` header must be included - the ID can be obtained by calling the GET /delegations API**
@@ -312,10 +312,10 @@ paths:
           ## Tokens for consumers
           - Valid item types - `resource`, `resource_group`
           - Consumers are granted tokens if there is a successful APD verification for the requested item and associated consumer
-        
+
           ## Tokens for admins
            **Admins are only permitted to get identity tokens.**
-        
+
           ## JWT Access Token Response Structure
            The JWT is signed using the ES256 algorithm (`alg:ES256`).
 
@@ -331,9 +331,9 @@ paths:
            - `rg` : when the requested item is a resource, this field exists containing the associated resource group ID
            - `did` : when role is `delegate`, contains the user ID of the delegator
            - `drl` : when the role is `delegate`, contains the role for which the delegated action is made
-        
+
           # APD Verification 
-        
+
         For all access token requests for a consumer, the AAA server queries the APD associated with the requested item  with relevant information to verify if the consumer has access to the item. The APD may respond in three ways:
         - **Allow** : The user has access. The AAA server generates the access token based on the constraints defined in the policy and sends it back.
             - In case the APD send constraints, these constraints will be put into the `apd` key in the JWT token in a JSON object called `apdConstraints`  
@@ -356,8 +356,7 @@ paths:
          - `exp` : when the token will expire in Unix format
          - `iat` : indicates when the token was issued in unix format
          - `sid` : a session ID sent by the APD
-         - `link` : a link to which the user can interact with the APD 
-
+         - `link` : a link to which the user can interact with the APD
       tags:
         - Token APIs
       security:
@@ -818,7 +817,7 @@ paths:
         Add roles tied to a particular resource server in the COS. Current valid roles are:
         - **consumer**, which allows users to access to secure resources on the associated resource server
         - **provider**, which allows users to manage their resources on the particular resource server
-        
+
         ## Provider registration
         **Once a provider role has been added for a resource server, the role request is subject to approval by the associated resource server admin**. The role for that resource server will be considered _pending_ till approved.
 
@@ -3960,6 +3959,11 @@ paths:
           name: Authorisation
           description: Keycloak Issue Token
           required: true
+        - schema:
+            type: string
+          in: query
+          name: org_id
+          description: Organisation ID
   /auth/v1/organisations/join/approve:
     post:
       summary: Approve joining of organisation
@@ -4220,7 +4224,7 @@ paths:
           description: Keycloak Issued Token
           required: true
     parameters: []
-  /auth/v1/organisations/{id}:
+  '/auth/v1/organisations/{id}':
     parameters:
       - schema:
           type: string
