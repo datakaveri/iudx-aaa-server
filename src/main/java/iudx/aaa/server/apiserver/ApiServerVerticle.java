@@ -192,7 +192,7 @@ public class ApiServerVerticle extends AbstractVerticle {
       organizationService = new OrganizationServiceImpl(organizationDAOFactory);
     OrganizationHandler organizationHandler = new OrganizationHandler(organizationService);
 
-    RouterBuilder.create(vertx, "docs/old_openapi.yaml")
+    RouterBuilder.create(vertx, "docs/updated_spec.yaml")
         .onFailure(Throwable::printStackTrace)
         .onSuccess(
             routerBuilder -> {

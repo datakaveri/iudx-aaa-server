@@ -1,5 +1,8 @@
 package iudx.aaa.server.apiserver;
 
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import io.vertx.core.Future;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
@@ -11,6 +14,8 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.Optional;
 import java.util.UUID;
+
+import static java.util.Collections.copy;
 
 public class OrganizationHandler {
 
@@ -39,29 +44,8 @@ public class OrganizationHandler {
         );
 
         organizationService.updateOrganizationById(orgId, updateOrgDTO)
-                .onSuccess(updatedOrg -> {
-                    JsonObject response = new JsonObject()
-                            .put("success", true)
-                            .put("payload", updatedOrg.toJson());
-
-                    routingContext.response()
-                            .setStatusCode(200)
-                            .putHeader("Content-Type", "application/json")
-                            .end(response.encode());
-                })
-                .onFailure(err -> {
-                    LOGGER.error("Failed to update organization with ID: " + orgId, err);
-                    routingContext.response()
-                            .setStatusCode(500)
-                            .putHeader("Content-Type", "application/json")
-                            .end(new JsonObject()
-                                    .put("success", false)
-                                    .put("error", "Internal Server Error")
-                                    .encode());
-                });
-
-
-
+                .onSuccess(updatedOrg -> processSuccess(routingContext, updatedOrg.toJson(), 200, "Updated Organisation Successfully"))
+                .onFailure(err -> processFailure(routingContext, 500, "Failed to Update Organisation"));
     }
 
     public void deleteOrganisationById(RoutingContext routingContext) {
@@ -70,27 +54,18 @@ public class OrganizationHandler {
 
         orgId = UUID.fromString(idParam);
 
+        JsonObject responseObject = new JsonObject();
+
         organizationService.deleteOrganization(orgId)
                 .onSuccess(deleted -> {
-                    JsonObject response = new JsonObject()
-                            .put("success", deleted)
-                            .put("message", deleted ? "Organization deleted successfully" : "Deletion failed");
-
-                    routingContext.response()
-                            .setStatusCode(200)
-                            .putHeader("Content-Type", "application/json")
-                            .end(response.encode());
+                    if(deleted){
+                        processSuccess(routingContext, responseObject, 200, "Deleted Organisation");
+                    }
+                    else {
+                        processFailure(routingContext, 400, "Organisation Not Found");
+                    }
                 })
-                .onFailure(err -> {
-                    LOGGER.error("Failed to delete organization with ID: " + idParam, err);
-                    routingContext.response()
-                            .setStatusCode(500)
-                            .putHeader("Content-Type", "application/json")
-                            .end(new JsonObject()
-                                    .put("success", false)
-                                    .put("error", "Internal Server Error")
-                                    .encode());
-                });
+                .onFailure(err -> processFailure(routingContext, 500, "Failed to Delete Organisation"));
 
     }
 
@@ -102,19 +77,9 @@ public class OrganizationHandler {
                     for (Organization req : requests) {
                         jsonArray.add(req.toJson());
                     }
-                    routingContext.response()
-                            .setStatusCode(200)
-                            .putHeader("Content-Type", "application/json")
-                            .end(jsonArray.encode());
+                    processSuccess(routingContext, jsonArray, 200, "Retrieved Organisations");
                 })
-                .onFailure(err -> {
-                    LOGGER.error("Failed to fetch all org", err);
-                    routingContext.response()
-                            .setStatusCode(500)
-                            .putHeader("Content-Type", "application/json")
-                            .end(new JsonObject().put("error", "Failed to fetch records").encode());
-                });
-
+                .onFailure(err -> processFailure(routingContext, 500, "Failed to fetch organisations"));
 
     }
 
@@ -128,28 +93,18 @@ public class OrganizationHandler {
         requestId = UUID.fromString(OrgRequestJson.getString("req_id"));
         status = Status.fromString(OrgRequestJson.getString("status"));
 
+        JsonObject responseObject = (JsonObject) OrgRequestJson.copy().remove("status");
+
         organizationService.updateOrganizationJoinRequestStatus(requestId, status)
                 .onSuccess(approved -> {
-                    JsonObject response = new JsonObject()
-                            .put("success", approved)
-                            .put("message", approved ? "Request approved successfully" : "Request could not be approved");
-
-                    routingContext.response()
-                            .setStatusCode(200)
-                            .putHeader("Content-Type", "application/json")
-                            .end(response.encode());
+                    if(approved){
+                        processSuccess(routingContext, responseObject, 200, "Approved Organisation Join Request");
+                    }
+                    else {
+                        processFailure(routingContext, 400, "Request Not Found");
+                    }
                 })
-                .onFailure(err -> {
-                    LOGGER.error("Failed to approve organization creation request", err);
-                    routingContext.response()
-                            .setStatusCode(500)
-                            .putHeader("Content-Type", "application/json")
-                            .end(new JsonObject()
-                                    .put("success", false)
-                                    .put("error", "Internal Server Error")
-                                    .encode());
-                });
-
+                .onFailure(err -> processFailure(routingContext, 500, "Failed to approve Organisation Join Request"));
 
     }
 
@@ -166,19 +121,9 @@ public class OrganizationHandler {
                     for (OrganizationJoinRequest req : requests) {
                         jsonArray.add(req.toJson());
                     }
-                    routingContext.response()
-                            .setStatusCode(200)
-                            .putHeader("Content-Type", "application/json")
-                            .end(jsonArray.encode());
+                    processSuccess(routingContext, jsonArray, 200, "Retrieved Pending Join Requests");
                 })
-                .onFailure(err -> {
-                    LOGGER.error("Failed to fetch all org join requests", err);
-                    routingContext.response()
-                            .setStatusCode(500)
-                            .putHeader("Content-Type", "application/json")
-                            .end(new JsonObject().put("error", "Failed to fetch records").encode());
-                });
-
+                .onFailure(err -> processFailure(routingContext, 500, "Failed to fetch pending join requests"));
 
     }
 
@@ -194,28 +139,8 @@ public class OrganizationHandler {
         UserID = UUID.fromString(OrgRequestJson.getString("user_id"));
 
         organizationService.joinOrganizationRequest(OrgID, UserID)
-                .onSuccess(createdRequest -> {
-                    JsonObject response = new JsonObject()
-                            .put("success", true)
-                            .put("payload", createdRequest.toJson());
-
-                    routingContext.response()
-                            .setStatusCode(201)
-                            .putHeader("Content-Type", "application/json")
-                            .end(response.encode());
-                })
-                .onFailure(err -> {
-                    LOGGER.error("Failed to create organization join request", err);
-                    routingContext.response()
-                            .setStatusCode(500)
-                            .putHeader("Content-Type", "application/json")
-                            .end(new JsonObject()
-                                    .put("success", false)
-                                    .put("error", "Internal Server Error")
-                                    .encode());
-                });
-
-
+                .onSuccess(createdRequest -> processSuccess(routingContext, createdRequest.toJson(), 201, "Created Join request"))
+                .onFailure(err -> processFailure(routingContext, 500, "Internal Server Error: Failed to create Join request"));
     }
 
     public void approveOrganisationRequest(RoutingContext routingContext) {
@@ -227,27 +152,18 @@ public class OrganizationHandler {
         requestId = UUID.fromString(OrgRequestJson.getString("req_id"));
         status = Status.fromString(OrgRequestJson.getString("status"));
 
+        JsonObject responseObject = (JsonObject) OrgRequestJson.copy().remove("status");
+
         organizationService.updateOrganizationCreateRequestStatus(requestId, status)
                 .onSuccess(approved -> {
-                    JsonObject response = new JsonObject()
-                            .put("success", approved)
-                            .put("message", approved ? "Request approved successfully" : "Request could not be approved");
-
-                    routingContext.response()
-                            .setStatusCode(200)
-                            .putHeader("Content-Type", "application/json")
-                            .end(response.encode());
+                    if(approved){
+                        processSuccess(routingContext, responseObject, 200, "Approved Organisation Create Request");
+                    }
+                    else {
+                        processFailure(routingContext, 400, "Request Not Found");
+                    }
                 })
-                .onFailure(err -> {
-                    LOGGER.error("Failed to approve organization creation request", err);
-                    routingContext.response()
-                            .setStatusCode(500)
-                            .putHeader("Content-Type", "application/json")
-                            .end(new JsonObject()
-                                    .put("success", false)
-                                    .put("error", "Internal Server Error")
-                                    .encode());
-                });
+                .onFailure(err -> processFailure(routingContext, 500, "Internal Server Error"));
 
     }
 
@@ -259,18 +175,9 @@ public class OrganizationHandler {
                     for (OrganizationCreateRequest req : requests) {
                         jsonArray.add(req.toJson());
                     }
-                    routingContext.response()
-                            .setStatusCode(200)
-                            .putHeader("Content-Type", "application/json")
-                            .end(jsonArray.encode());
+                    processSuccess(routingContext, jsonArray, 200, "Retrieved Pending Create Requests");
                 })
-                .onFailure(err -> {
-                    LOGGER.error("Failed to fetch all org create requests", err);
-                    routingContext.response()
-                            .setStatusCode(500)
-                            .putHeader("Content-Type", "application/json")
-                            .end(new JsonObject().put("error", "Failed to fetch records").encode());
-                });
+                .onFailure(err -> processFailure(routingContext, 500, "Failed to fetch pending create requests"));
 
     }
 
@@ -280,33 +187,64 @@ public class OrganizationHandler {
         try {
           organizationCreateRequest = OrganizationCreateRequest.fromJson(OrgRequestJson);
         } catch (Exception e) {
-            routingContext.response()
-                    .setStatusCode(400)
-                    .putHeader("Content-Type", "application/json")
-                    .end(new JsonObject().put("error", "Invalid request payload: " + e.getMessage()).encode());
+            processFailure(routingContext, 400, "Invalid request payload: " + e.getMessage());
             return;
         }
-
         organizationService.createOrganizationRequest(organizationCreateRequest)
-                .onSuccess(createdRequest -> {
-                    JsonObject response = new JsonObject()
-                            .put("success", true)
-                            .put("payload",  new JsonObject(createdRequest.toNonEmptyFieldsMap()));
+                .onSuccess(createdRequest -> processSuccess(routingContext, createdRequest.toJson(), 201, "Organisation Successfully Created"))
+                .onFailure(err -> processFailure(routingContext, 500, "Internal Server Error"));
+    }
 
-                    routingContext.response()
-                            .setStatusCode(201)
-                            .putHeader("Content-Type", "application/json")
-                            .end(response.encode());
-                })
-                .onFailure(err -> {
-                    LOGGER.error("Failed to create organization request", err);
-                    routingContext.response()
-                            .setStatusCode(500)
-                            .putHeader("Content-Type", "application/json")
-                            .end(new JsonObject()
-                                    .put("success", false)
-                                    .put("error", "Internal Server Error")
-                                    .encode());
-                });
+    private Future<Void> processFailure(RoutingContext routingContext, int statusCode, String msg){
+        
+        if(statusCode == 400) {
+
+            return routingContext.response()
+                    .setStatusCode(statusCode)
+                    .putHeader("Content-Type", "application/json")
+                    .end(new JsonObject()
+                            .put("type", "urn:dx:as:MissingInformation")
+                            .put("title", "Not Found")
+                            .put("detail", msg)
+                            .encode());
+        } else if (statusCode == 401) {
+            return routingContext.response()
+                    .setStatusCode(statusCode)
+                    .putHeader("Content-Type", "application/json")
+                    .end(new JsonObject()
+                            .put("type", "urn:dx:as:InvalidAuthenticationToken")
+                            .put("title", "Token Authentication Failed")
+                            .put("detail", msg)
+                            .encode());
+        }
+        else {
+            return null;
+        }
+    }
+
+    private Future<Void> processSuccess(RoutingContext routingContext, JsonObject results, int statusCode, String msg){
+
+        JsonObject response = new JsonObject()
+                .put("type", "urn:dx:as:Success")
+                .put("title",  msg)
+                .put("results",  results);
+
+        return routingContext.response()
+                .setStatusCode(statusCode)
+                .putHeader("Content-Type", "application/json")
+                .end(response.encode());
+    }
+
+    private Future<Void> processSuccess(RoutingContext routingContext, JsonArray results, int statusCode, String msg){
+
+        JsonObject response = new JsonObject()
+                .put("type", "urn:dx:as:Success")
+                .put("title",  msg)
+                .put("results",  results);
+
+        return routingContext.response()
+                .setStatusCode(statusCode)
+                .putHeader("Content-Type", "application/json")
+                .end(response.encode());
     }
 }
