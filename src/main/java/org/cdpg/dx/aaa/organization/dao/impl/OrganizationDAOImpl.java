@@ -8,11 +8,7 @@ import org.cdpg.dx.aaa.organization.dao.OrganizationDAO;
 import org.cdpg.dx.aaa.organization.models.Organization;
 import org.cdpg.dx.aaa.organization.models.UpdateOrgDTO;
 import org.cdpg.dx.aaa.organization.util.Constants;
-import org.cdpg.dx.database.postgres.models.Condition;
-import org.cdpg.dx.database.postgres.models.SelectQuery;
-import org.cdpg.dx.database.postgres.models.DeleteQuery;
-import org.cdpg.dx.database.postgres.models.InsertQuery;
-import org.cdpg.dx.database.postgres.models.UpdateQuery;
+import org.cdpg.dx.database.postgres.models.*;
 import org.cdpg.dx.database.postgres.service.PostgresService;
 
 import java.util.List;
@@ -40,9 +36,6 @@ public class OrganizationDAOImpl implements OrganizationDAO {
         query.setColumns(columns);
         query.setValues(values);
 
-        LOGGER.debug("Insert Query: {}", query.toSQL());
-        LOGGER.debug("Query Params: {}", query.getQueryParams());
-
         return postgresService.insert(query)
                 .compose(result -> {
                     if (result.getRows().isEmpty()) {
@@ -62,10 +55,10 @@ public class OrganizationDAOImpl implements OrganizationDAO {
         List<String> columns = List.copyOf(updateFields.keySet());
         List<Object> values = List.copyOf(updateFields.values());
 
-        Condition condition = new Condition(Constants.ORG_ID, Condition.Operator.EQUALS, List.of(id));
-        UpdateQuery query = new UpdateQuery(Constants.ORGANIZATION_TABLE, columns, values, condition, null, null);
+      Condition condition = new Condition(Constants.ORG_ID, Condition.Operator.EQUALS, List.of(id.toString()));
+      UpdateQuery query = new UpdateQuery(Constants.ORGANIZATION_TABLE, columns, values, condition, null, null);
 
-        return postgresService.update(query)
+      return postgresService.update(query)
                 .compose(result -> {
                     if (result.getRows().isEmpty()) {
                         return Future.failedFuture("Update query returned no rows.");
@@ -83,7 +76,7 @@ public class OrganizationDAOImpl implements OrganizationDAO {
         SelectQuery query = new SelectQuery(
                 Constants.ORGANIZATION_TABLE,
                 Constants.ALL_ORG_FIELDS,
-                new Condition(Constants.ORG_ID, Condition.Operator.EQUALS, List.of(orgId)),
+                new Condition(Constants.ORG_ID, Condition.Operator.EQUALS, List.of(orgId.toString())),
                 null, null, null, null
         );
 
@@ -102,7 +95,7 @@ public class OrganizationDAOImpl implements OrganizationDAO {
 
     @Override
     public Future<Boolean> delete(UUID id) {
-        Condition condition = new Condition(Constants.ORG_ID, Condition.Operator.EQUALS, List.of(id));
+      Condition condition = new Condition(Constants.ORG_ID, Condition.Operator.EQUALS, List.of(id.toString()));
         DeleteQuery query = new DeleteQuery(Constants.ORGANIZATION_TABLE, condition, null, null);
 
         return postgresService.delete(query)

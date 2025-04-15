@@ -9,7 +9,7 @@ public final class Constants {
   {
 
   }
-  public static final String ORGANIZATION_TABLE="organization";
+  public static final String ORGANIZATION_TABLE="tgai.organizations";
   public static final String ORG_ID = "id";
   public static final String ORG_NAME = "name";
   public static final String ORG_DESCRIPTION = "description";
@@ -34,7 +34,7 @@ public final class Constants {
     return ALL_ORG_FIELDS;
   }
 
-  public static final String ORG_JOIN_REQUEST_TABLE = "organization_join_requests";
+  public static final String ORG_JOIN_REQUEST_TABLE = "tgai.organization_join_requests";
 
   public static final String ORG_JOIN_ID = "id";
   public static final String ORGANIZATION_ID = "organization_id";
@@ -57,7 +57,6 @@ public final class Constants {
 
   public static final List<String> ALL_ORG_CREATE_REQUEST_FIELDS = List.of(
     ORG_CREATE_ID,
-    ORG_CREATE_REQUEST_TABLE,
     REQUESTED_BY,
     ORG_NAME,
     ORG_DESCRIPTION,
@@ -67,7 +66,7 @@ public final class Constants {
     UPDATED_AT
   );
 
-  public static final String ORG_USER_TABLE = "organization_users";
+  public static final String ORG_USER_TABLE = "tgai.organization_users";
 
 
 }

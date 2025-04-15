@@ -17,6 +17,7 @@ import org.cdpg.dx.database.postgres.service.PostgresService;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -32,7 +33,7 @@ public class OrganizationCreateRequestDAOImpl implements OrganizationCreateReque
     @Override
     public Future<OrganizationCreateRequest> create(OrganizationCreateRequest request) {
         // Get columns and values directly from the DTO map
-        InsertQuery insertQuery = new InsertQuery();
+      InsertQuery insertQuery = new InsertQuery();
         insertQuery.setTable(Constants.ORG_CREATE_REQUEST_TABLE);
         insertQuery.setColumns(List.copyOf(request.toNonEmptyFieldsMap().keySet()));
         insertQuery.setValues(List.copyOf(request.toNonEmptyFieldsMap().values()));
@@ -53,12 +54,13 @@ public class OrganizationCreateRequestDAOImpl implements OrganizationCreateReque
                 });
     }
 
+
     @Override
     public Future<OrganizationCreateRequest> getById(UUID id) {
         SelectQuery selectQuery = new SelectQuery(
                 Constants.ORG_CREATE_REQUEST_TABLE,
                 Constants.ALL_ORG_CREATE_REQUEST_FIELDS,
-                new Condition(Constants.ORG_CREATE_ID, Condition.Operator.EQUALS, List.of(id)),
+                new Condition(Constants.ORG_CREATE_ID, Condition.Operator.EQUALS, List.of(id.toString())),
                 null, null, null, null
         );
 
@@ -77,11 +79,11 @@ public class OrganizationCreateRequestDAOImpl implements OrganizationCreateReque
 
     @Override
     public Future<Boolean> updateStatus(UUID requestId, Status status) {
-        UpdateQuery updateQuery = new UpdateQuery(
+      UpdateQuery updateQuery = new UpdateQuery(
                 Constants.ORG_CREATE_REQUEST_TABLE,
                 List.of(Constants.STATUS, Constants.UPDATED_AT),
-                List.of(status.toString(), Instant.now().toString()),
-                new Condition(Constants.ORG_CREATE_ID, Condition.Operator.EQUALS, List.of(requestId)),
+                List.of(status.getStatus(), Instant.now().toString()),
+                new Condition(Constants.ORG_CREATE_ID, Condition.Operator.EQUALS, List.of(requestId.toString())),
                 null,
                 null
         );
@@ -104,7 +106,7 @@ public class OrganizationCreateRequestDAOImpl implements OrganizationCreateReque
         SelectQuery query = new SelectQuery(
                 Constants.ORG_CREATE_REQUEST_TABLE,
                 List.of("*"),
-                new Condition(Constants.STATUS, Condition.Operator.EQUALS, List.of(status.toString())),
+                new Condition(Constants.STATUS, Condition.Operator.EQUALS, List.of(status.getStatus())),
                 null, null, null, null
         );
 
