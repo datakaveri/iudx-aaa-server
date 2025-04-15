@@ -30,13 +30,14 @@ public class OrganizationHandler {
 
     public void updateOrganisationById(RoutingContext routingContext) {
         JsonObject OrgRequestJson = routingContext.body().asJsonObject();
+        String idParam = String.valueOf(routingContext.pathParam("id"));
         UUID orgId;
+
+        orgId = UUID.fromString(idParam);
         UpdateOrgDTO updateOrgDTO;
 
-        orgId = UUID.fromString(OrgRequestJson.getString("org_id"));
-
         updateOrgDTO = new UpdateOrgDTO(
-                UUID.fromString(OrgRequestJson.getString("org_id")),
+                orgId,
                 Optional.ofNullable(OrgRequestJson.getString("description")),
                 OrgRequestJson.getString("org_name"),
                 OrgRequestJson.getString("document_path"),
@@ -49,7 +50,8 @@ public class OrganizationHandler {
     }
 
     public void deleteOrganisationById(RoutingContext routingContext) {
-        String idParam = String.valueOf(routingContext.queryParam("id"));
+
+        String idParam = String.valueOf(routingContext.pathParam("id"));
         UUID orgId;
 
         orgId = UUID.fromString(idParam);

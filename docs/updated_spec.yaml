@@ -3636,7 +3636,7 @@ paths:
         - schema:
             type: string
           in: header
-          name: Authorisation
+          name: Authorization
           required: true
           description: Keycloak Issued Token
   /auth/v1/organisations/requests/approve:
@@ -3776,7 +3776,7 @@ paths:
         - schema:
             type: string
           in: header
-          name: Authorisation
+          name: Authorization
           description: Keycloak Issued Token
           required: true
       requestBody:
@@ -3956,7 +3956,7 @@ paths:
         - schema:
             type: string
           in: header
-          name: Authorisation
+          name: Authorization
           description: Keycloak Issue Token
           required: true
         - schema:
@@ -4251,7 +4251,7 @@ paths:
         - schema:
             type: string
           in: header
-          name: Authorisation
+          name: Authorization
           description: Keycloak Issued Token
           required: true
       requestBody:
@@ -4355,7 +4355,7 @@ paths:
             type: string
           in: header
           required: true
-          name: Authorisation
+          name: Authorization
           description: Platform Admin Token
     parameters: []
     get:
