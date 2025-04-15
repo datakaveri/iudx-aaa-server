@@ -51,19 +51,19 @@ public class OrganizationUserDAOImpl implements OrganizationUserDAO {
 
   @Override
   public Future<Boolean> updateRole(UUID orgId, UUID userId, Role role) {
-    ConditionGroup conditions = new ConditionGroup(
+    Condition conditions = new Condition(
             List.of(
-                    new Condition(Constants.ORGANIZATION_ID, Condition.Operator.EQUALS, List.of(orgId)),
-                    new Condition(Constants.USER_ID, Condition.Operator.EQUALS, List.of(userId))
+                    new Condition(Constants.ORGANIZATION_ID, Condition.Operator.EQUALS, List.of(orgId.toString())),
+                    new Condition(Constants.USER_ID, Condition.Operator.EQUALS, List.of(userId.toString()))
             ),
-            ConditionGroup.LogicalOperator.AND
+            Condition.LogicalOperator.AND
     );
 
     UpdateQuery query = new UpdateQuery(
             Constants.ORG_USER_TABLE,
             List.of(Constants.ROLE),
             List.of(role.getRoleName()),
-            new Condition(Constants.ORGANIZATION_ID, Condition.Operator.EQUALS, List.of(orgId)), //TODO: need to change
+            new Condition(Constants.ORGANIZATION_ID, Condition.Operator.EQUALS, List.of(orgId.toString())), //TODO: need to change
             null,
             null
     );
@@ -78,15 +78,15 @@ public class OrganizationUserDAOImpl implements OrganizationUserDAO {
 
   @Override
   public Future<Boolean> delete(UUID orgId, UUID userId) {
-    ConditionGroup conditions = new ConditionGroup(
+    Condition conditions = new Condition(
             List.of(
-                    new Condition(Constants.ORGANIZATION_ID, Condition.Operator.EQUALS, List.of(orgId)),
-                    new Condition(Constants.USER_ID, Condition.Operator.EQUALS, List.of(userId))
+                    new Condition(Constants.ORGANIZATION_ID, Condition.Operator.EQUALS, List.of(orgId.toString())),
+                    new Condition(Constants.USER_ID, Condition.Operator.EQUALS, List.of(userId.toString()))
             ),
-            ConditionGroup.LogicalOperator.AND
+            Condition.LogicalOperator.AND
     );
 
-    DeleteQuery query = new DeleteQuery(Constants.ORG_USER_TABLE,  new Condition(Constants.ORGANIZATION_ID, Condition.Operator.EQUALS, List.of(orgId)), null, null);
+    DeleteQuery query = new DeleteQuery(Constants.ORG_USER_TABLE,  new Condition(Constants.ORGANIZATION_ID, Condition.Operator.EQUALS, List.of(orgId.toString())), null, null);
 
     return postgresService.delete(query)
             .map(QueryResult::isRowsAffected)
@@ -102,12 +102,12 @@ public class OrganizationUserDAOImpl implements OrganizationUserDAO {
       return Future.failedFuture("User IDs list is empty");
     }
 
-    ConditionGroup conditions = new ConditionGroup(
+    Condition conditions = new Condition(
             List.of(
-                    new Condition(Constants.ORGANIZATION_ID, Condition.Operator.EQUALS, List.of(orgId)),
+                    new Condition(Constants.ORGANIZATION_ID, Condition.Operator.EQUALS, List.of(orgId.toString())),
                     new Condition(Constants.USER_ID, Condition.Operator.IN, new ArrayList<>(uuids))
             ),
-            ConditionGroup.LogicalOperator.AND
+            Condition.LogicalOperator.AND
     );
 
     DeleteQuery query = new DeleteQuery(Constants.ORG_USER_TABLE,  new Condition(Constants.ORGANIZATION_ID, Condition.Operator.EQUALS, List.of(orgId)), null, null);
