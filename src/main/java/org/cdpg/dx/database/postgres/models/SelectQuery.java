@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 public class SelectQuery implements Query {
     private String table;
     private List<String> columns;
-    private ConditionComponent condition;
+    private Condition condition;
     private List<String> groupBy;
     private List<OrderBy> orderBy;
     private Integer limit;
@@ -17,7 +17,7 @@ public class SelectQuery implements Query {
 
     public SelectQuery() {}
 
-    public SelectQuery(String table, List<String> columns, ConditionComponent condition, List<String> groupBy,
+    public SelectQuery(String table, List<String> columns, Condition condition, List<String> groupBy,
                        List<OrderBy> orderBy, Integer limit, Integer offset) {
         this.table = table;
         this.columns = columns;
@@ -65,11 +65,11 @@ public class SelectQuery implements Query {
         this.columns = columns;
     }
 
-    public ConditionComponent getCondition() {
+    public Condition getCondition() {
         return condition;
     }
 
-    public void setCondition(ConditionComponent condition) {
+    public void setCondition(Condition condition) {
         this.condition = condition;
     }
 
@@ -112,6 +112,10 @@ public class SelectQuery implements Query {
 
         if (condition != null) {
             query.append(" WHERE ").append(condition.toSQL());
+        }
+        else
+        {
+          System.out.println("Condition is null inside selectQuery");
         }
 
         if (groupBy != null && !groupBy.isEmpty()) {

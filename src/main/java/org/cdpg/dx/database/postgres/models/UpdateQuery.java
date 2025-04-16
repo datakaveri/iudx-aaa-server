@@ -3,6 +3,7 @@ package org.cdpg.dx.database.postgres.models;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -12,22 +13,12 @@ public class UpdateQuery implements Query {
     private  String table;
     private List<String> columns;
     private  List<Object> values;
-    private  ConditionComponent condition;
+    private  Condition condition;
     private  List<OrderBy> orderBy;
     private  Integer limit;
 
-    //    public UpdateQuery(String table, List<String> columns, List<Object> values,
-//                       ConditionComponent condition, List<OrderBy> orderBy, Integer limit) {
-//        this.table = Objects.requireNonNull(table, "Table name cannot be null");
-//        this.columns = Objects.requireNonNull(columns, "Columns cannot be null");
-//        this.values = Objects.requireNonNull(values, "Values cannot be null");
-//        this.condition = condition;
-//        this.orderBy = orderBy;
-//        this.limit = limit;
-//    }
-
     public UpdateQuery(String table, List<String> columns, List<Object> values,
-                       ConditionComponent condition, List<OrderBy> orderBy, Integer limit) {
+                       Condition condition, List<OrderBy> orderBy, Integer limit) {
         this.table = Objects.requireNonNull(table, "Table name cannot be null");
         this.columns = Objects.requireNonNull(columns, "Columns cannot be null");
         this.values = Objects.requireNonNull(values, "Values cannot be null");
@@ -47,15 +38,7 @@ public class UpdateQuery implements Query {
     public UpdateQuery(){}
 
     public UpdateQuery(JsonObject json) {
-        UpdateQueryConverter.fromJson(json, this);
-        this.table = json.getString("table");
-        this.columns = json.getJsonArray("columns").getList();
-        this.values = json.getJsonArray("values").getList();
-        this.condition = json.containsKey("condition") ? new Condition(json.getJsonObject("condition")) : null;
-        this.orderBy = json.containsKey("orderBy") ? json.getJsonArray("orderBy").stream()
-                .map(obj -> new OrderBy((JsonObject) obj))
-                .collect(Collectors.toList()) : null;
-        this.limit = json.getInteger("limit");
+      UpdateQueryConverter.fromJson(json, this);
     }
 
     public JsonObject toJson() {
@@ -64,26 +47,66 @@ public class UpdateQuery implements Query {
         return json;
     }
 
-    @Override
-    public String toSQL() {
-        StringBuilder query = new StringBuilder("UPDATE ").append(table).append(" SET ");
-        query.append(columns.stream().map(column -> column + " = ?").collect(Collectors.joining(", ")));
+//    @Override
+//    public String toSQL() {
+//        StringBuilder query = new StringBuilder("UPDATE ").append(table).append(" SET ");
+//        query.append(columns.stream().map(column -> column + " = ?").collect(Collectors.joining(", ")));
+//
+//        if (condition != null) query.append(" WHERE ").append(condition.toSQL());
+//
+//        if (orderBy != null && !orderBy.isEmpty()) {
+//            query.append(" ORDER BY ")
+//                    .append(orderBy.stream().map(OrderBy::toSQL).collect(Collectors.joining(", ")));
+//        }
+//        if (limit != null) query.append(" LIMIT ").append(limit);
+//
+//        return query.toString();
+//    }
 
-        if (condition != null) query.append(" WHERE ").append(condition.toSQL());
-        if (orderBy != null && !orderBy.isEmpty()) {
-            query.append(" ORDER BY ")
-                    .append(orderBy.stream().map(OrderBy::toSQL).collect(Collectors.joining(", ")));
-        }
-        if (limit != null) query.append(" LIMIT ").append(limit);
+  @Override
+  public String toSQL() {
+    StringBuilder query = new StringBuilder("UPDATE ").append(table).append(" SET ");
 
-        return query.toString();
+    // Use indexed placeholders for each SET column: $1, $2, $3, ...
+    for (int i = 0; i < columns.size(); i++) {
+      query.append(columns.get(i)).append(" = $").append(i + 1);
+      if (i < columns.size() - 1) {
+        query.append(", ");
+      }
     }
 
-    @Override
+    // Append condition if present, adjusting its placeholder index
+    if (condition != null) {
+      // Hacky but safe: replace $1 in condition SQL with correct index
+      int condParamIndex = columns.size() + 1;
+      String condSql = condition.toSQL().replace("$1", "$" + condParamIndex);
+      query.append(" WHERE ").append(condSql);
+    }
+
+    if (orderBy != null && !orderBy.isEmpty()) {
+      query.append(" ORDER BY ")
+        .append(orderBy.stream().map(OrderBy::toSQL).collect(Collectors.joining(", ")));
+    }
+
+    if (limit != null) {
+      query.append(" LIMIT ").append(limit);
+    }
+
+    query.append(" RETURNING *");
+
+    return query.toString();
+  }
+
+
+
+  @Override
     public List<Object> getQueryParams() {
-        List<Object> params = values;
-        if (condition != null) params.addAll(condition.getQueryParams());
-        return params;
+//      List<Object> params = values;
+      List<Object> params = new ArrayList<>(values);  // Make a mutable copy
+      if (condition != null) {
+        params.addAll(condition.getQueryParams());
+      }
+      return params;
     }
 
     public String getTable() {
@@ -110,11 +133,11 @@ public class UpdateQuery implements Query {
         this.values = values;
     }
 
-    public ConditionComponent getCondition() {
+    public Condition getCondition() {
         return condition;
     }
 
-    public void setCondition(ConditionComponent condition) {
+    public void setCondition(Condition condition) {
         this.condition = condition;
     }
 

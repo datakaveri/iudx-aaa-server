@@ -50,14 +50,15 @@ public class OrganizationJoinRequestDAOImpl implements OrganizationJoinRequestDA
                 });
     }
 
+
     @Override
     public Future<List<OrganizationJoinRequest>> getAll(UUID orgId, Status status) {
-        ConditionGroup conditions = new ConditionGroup(
+        Condition conditions = new Condition(
                 List.of(
-                        new Condition(Constants.ORGANIZATION_ID, Condition.Operator.EQUALS, List.of(orgId)),
+                        new Condition(Constants.ORGANIZATION_ID, Condition.Operator.EQUALS, List.of(orgId.toString())),
                         new Condition(Constants.STATUS, Condition.Operator.EQUALS, List.of(status.getStatus()))
                 ),
-                ConditionGroup.LogicalOperator.AND
+                Condition.LogicalOperator.AND
         );
         SelectQuery query = new SelectQuery(
                 Constants.ORG_JOIN_REQUEST_TABLE,
@@ -85,10 +86,10 @@ public class OrganizationJoinRequestDAOImpl implements OrganizationJoinRequestDA
     @Override
     public Future<OrganizationJoinRequest> join(UUID organizationId, UUID userId) {
         Map<String, Object> insertFields = Map.of(
-                Constants.ORGANIZATION_ID, organizationId,
-                Constants.USER_ID, userId,
-                Constants.STATUS, "pending",
-                Constants.REQUESTED_AT, Instant.now().toString()
+                Constants.ORGANIZATION_ID, organizationId.toString(),
+                Constants.USER_ID, userId.toString(),
+                Constants.REQUESTED_AT, Instant.now().toString(),
+                Constants.STATUS , Status.PENDING.getStatus()
         );
 
         List<String> columns = List.copyOf(insertFields.keySet());
@@ -98,7 +99,7 @@ public class OrganizationJoinRequestDAOImpl implements OrganizationJoinRequestDA
         query.setTable(Constants.ORG_JOIN_REQUEST_TABLE);
         query.setColumns(columns);
         query.setValues(values);
-
+        
         return postgresService.insert(query)
                 .compose(result -> {
                     if (result.getRows().isEmpty()) {
@@ -115,14 +116,14 @@ public class OrganizationJoinRequestDAOImpl implements OrganizationJoinRequestDA
     @Override
     public Future<Boolean> updateStatus(UUID requestId, Status status) {
         Map<String, Object> updateFields = Map.of(
-                Constants.STATUS, status,
+                Constants.STATUS, status.getStatus(),
                 Constants.PROCESSED_AT, Instant.now().toString()
         );
 
         List<String> columns = List.copyOf(updateFields.keySet());
         List<Object> values = List.copyOf(updateFields.values());
 
-        Condition condition = new Condition(Constants.ORG_JOIN_ID, Condition.Operator.EQUALS, List.of(requestId));
+        Condition condition = new Condition(Constants.ORG_JOIN_ID, Condition.Operator.EQUALS, List.of(requestId.toString()));
         UpdateQuery query = new UpdateQuery(Constants.ORG_JOIN_REQUEST_TABLE, columns, values, condition, null, null);
 
         return postgresService.update(query)

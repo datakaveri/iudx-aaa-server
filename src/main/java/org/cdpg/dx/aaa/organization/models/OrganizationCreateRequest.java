@@ -27,11 +27,13 @@ public record OrganizationCreateRequest(Optional<UUID> id, UUID requestedBy, Str
   public JsonObject toJson() {
     JsonObject json = new JsonObject();
       id.ifPresent(value -> json.put(Constants.ORG_CREATE_ID,value));
-    json.put(Constants.REQUESTED_BY, requestedBy.toString())
+      json.put(Constants.REQUESTED_BY, requestedBy.toString())
       .put(Constants.ORG_NAME, name)
       .put(Constants.ORG_DESCRIPTION, description)
       .put(Constants.DOCUMENTS_PATH, documentPath)
-      .put(Constants.STATUS, status);
+      .put(Constants.STATUS, Optional.ofNullable(status)
+        .filter(s -> !s.isEmpty())
+        .orElse(Status.PENDING.getStatus()));
     createdAt.ifPresent(value-> json.put(Constants.CREATED_AT,value));
     updatedAt.ifPresent(value -> json.put(Constants.UPDATED_AT, value));
     return json;
@@ -51,3 +53,4 @@ public record OrganizationCreateRequest(Optional<UUID> id, UUID requestedBy, Str
   }
 
 }
+

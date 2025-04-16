@@ -43,18 +43,18 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     @Override
     public Future<Boolean> updateOrganizationCreateRequestStatus(UUID requestId, Status status) {
-        return createRequestDAO.updateStatus(requestId, status)
+      return createRequestDAO.updateStatus(requestId, status)
                 .compose(approved -> {
                     if (!approved) return Future.succeededFuture(false);
-                    if (Status.ACCEPTED.equals(status)) {
-                        return createOrganizationFromRequest(requestId);
+                    if (Status.APPROVED.getStatus().equals(status.getStatus())) {
+                      return createOrganizationFromRequest(requestId);
                     }
                     return Future.succeededFuture(true);
                 });
     }
 
     private Future<Boolean> createOrganizationFromRequest(UUID requestId) {
-        return createRequestDAO.getById(requestId)
+      return createRequestDAO.getById(requestId)
                 .compose(request -> {
                     Organization org = new Organization(
                             Optional.empty(),
@@ -85,7 +85,7 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     @Override
     public Future<Boolean> deleteOrganization(UUID orgId) {
-        return orgDAO.delete(orgId);
+      return orgDAO.delete(orgId);
     }
 
     @Override
@@ -99,15 +99,15 @@ public class OrganizationServiceImpl implements OrganizationService {
         return joinRequestDAO.updateStatus(requestId, status)
                 .compose(approved -> {
                     if (!approved) return Future.succeededFuture(false);
-                    if (Status.ACCEPTED.equals(status)) {
-                        return createOrganizationFromRequest(requestId);
+                    if (Status.APPROVED.getStatus().equals(status.getStatus())) {
+                        return addUserToOrganizationFromRequest(requestId);
                     }
                     return Future.succeededFuture(true);
                 });
     }
 
     private Future<Boolean> addUserToOrganizationFromRequest(UUID requestId) {
-        return joinRequestDAO.getById(requestId)
+      return joinRequestDAO.getById(requestId)
                 .compose(request -> {
                     OrganizationUser orgUser = new OrganizationUser(
                             Optional.empty(),
