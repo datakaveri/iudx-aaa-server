@@ -37,11 +37,10 @@ public class OrganizationHandler {
         UpdateOrgDTO updateOrgDTO;
 
         updateOrgDTO = new UpdateOrgDTO(
-                orgId,
                 Optional.ofNullable(OrgRequestJson.getString("description")),
                 OrgRequestJson.getString("org_name"),
                 OrgRequestJson.getString("document_path"),
-                Optional.ofNullable(OrgRequestJson.getString("updated_at"))
+                Optional.empty()
         );
 
         organizationService.updateOrganizationById(orgId, updateOrgDTO)

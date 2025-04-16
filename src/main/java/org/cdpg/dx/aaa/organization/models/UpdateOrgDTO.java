@@ -7,13 +7,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-public record UpdateOrgDTO(UUID orgId,Optional<String>description, String orgName, String documentPath,
+public record UpdateOrgDTO(Optional<String>description, String orgName, String documentPath,
                            Optional<String> updatedAt) {
 
   public Map<String, Object> toNonEmptyFieldsMap() {
     HashMap<String,Object> map = new HashMap<>();
 
-    map.put(Constants.ORG_ID, orgId.toString());
     description.ifPresent(desc->map.put(Constants.ORG_DESCRIPTION,desc));
     if(orgName!=null && !orgName.isEmpty())
       map.put(Constants.ORG_NAME,orgName);
