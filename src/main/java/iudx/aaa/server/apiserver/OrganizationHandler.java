@@ -88,21 +88,25 @@ public class OrganizationHandler {
     public void approveJoinOrganisationRequests(RoutingContext routingContext) {
 
         JsonObject OrgRequestJson = routingContext.body().asJsonObject();
-        System.out.println(OrgRequestJson);
+
         UUID requestId;
         Status status;
+
+        JsonObject responseObject = OrgRequestJson.copy();
+        responseObject.remove("status");
 
         requestId = UUID.fromString(OrgRequestJson.getString("req_id"));
         status = Status.fromString(OrgRequestJson.getString("status"));
 
-        JsonObject responseObject = (JsonObject) OrgRequestJson.copy().remove("status");
 
         organizationService.updateOrganizationJoinRequestStatus(requestId, status)
                 .onSuccess(approved -> {
                     if(approved){
+
                         processSuccess(routingContext, responseObject, 200, "Approved Organisation Join Request");
                     }
                     else {
+
                         processFailure(routingContext, 400, "Request Not Found");
                     }
                 })
@@ -147,14 +151,15 @@ public class OrganizationHandler {
 
     public void approveOrganisationRequest(RoutingContext routingContext) {
         JsonObject OrgRequestJson = routingContext.body().asJsonObject();
-        System.out.println(OrgRequestJson);
+
         UUID requestId;
         Status status;
 
         requestId = UUID.fromString(OrgRequestJson.getString("req_id"));
         status = Status.fromString(OrgRequestJson.getString("status"));
 
-        JsonObject responseObject = (JsonObject) OrgRequestJson.copy().remove("status");
+        JsonObject responseObject = OrgRequestJson.copy();
+        responseObject.remove("status");
 
         organizationService.updateOrganizationCreateRequestStatus(requestId, status)
                 .onSuccess(approved -> {
@@ -188,17 +193,19 @@ public class OrganizationHandler {
         OrganizationCreateRequest organizationCreateRequest;
         try {
           organizationCreateRequest = OrganizationCreateRequest.fromJson(OrgRequestJson);
+
         } catch (Exception e) {
             processFailure(routingContext, 400, "Invalid request payload: " + e.getMessage());
             return;
         }
+
         organizationService.createOrganizationRequest(organizationCreateRequest)
                 .onSuccess(createdRequest -> processSuccess(routingContext, createdRequest.toJson(), 201, "Organisation Successfully Created"))
                 .onFailure(err -> processFailure(routingContext, 500, "Internal Server Error"));
     }
 
     private Future<Void> processFailure(RoutingContext routingContext, int statusCode, String msg){
-        
+
         if(statusCode == 400) {
 
             return routingContext.response()
@@ -220,11 +227,19 @@ public class OrganizationHandler {
                             .encode());
         }
         else {
-            return null;
+            return routingContext.response()
+                    .setStatusCode(statusCode)
+                    .putHeader("Content-Type", "application/json")
+                    .end(new JsonObject()
+                            .put("type", "urn:dx:as:InternalServerError")
+                            .put("title", "Internal Server Error")
+                            .put("detail", msg)
+                            .encode());
         }
     }
 
     private Future<Void> processSuccess(RoutingContext routingContext, JsonObject results, int statusCode, String msg){
+
 
         JsonObject response = new JsonObject()
                 .put("type", "urn:dx:as:Success")
@@ -238,6 +253,7 @@ public class OrganizationHandler {
     }
 
     private Future<Void> processSuccess(RoutingContext routingContext, JsonArray results, int statusCode, String msg){
+
 
         JsonObject response = new JsonObject()
                 .put("type", "urn:dx:as:Success")
