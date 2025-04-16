@@ -36,11 +36,10 @@ public class OrganizationHandler {
         orgId = UUID.fromString(OrgRequestJson.getString("org_id"));
 
         updateOrgDTO = new UpdateOrgDTO(
-                UUID.fromString(OrgRequestJson.getString("org_id")),
                 Optional.ofNullable(OrgRequestJson.getString("description")),
                 OrgRequestJson.getString("org_name"),
                 OrgRequestJson.getString("document_path"),
-                Optional.ofNullable(OrgRequestJson.getString("updated_at"))
+                Optional.empty()
         );
 
         organizationService.updateOrganizationById(orgId, updateOrgDTO)
