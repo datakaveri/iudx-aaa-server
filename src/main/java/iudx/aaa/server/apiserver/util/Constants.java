@@ -208,6 +208,12 @@ public class Constants {
       "SELECT 'ADMIN'::text AS role, array_agg(url) AS rs_urls"
           + " FROM resource_server WHERE owner_id = $1::uuid HAVING array_agg(url) <> '{}'";
 
+  public static final String SQL_GET_ORG_ADMIN_ROLE =
+      "SELECT 'ADMIN'::text AS role, array_agg(organization_id)::text[] AS org_ids" +
+              " FROM tgai.organization_users" +
+              " WHERE user_id = $1::uuid AND role = 'admin'" +
+              " HAVING array_agg(organization_id) <> '{}'";
+
   public static final String SQL_GET_TRUSTEE_ROLE =
       "SELECT 'TRUSTEE'::text AS role, array_agg(url) AS rs_urls"
           + " FROM apds WHERE owner_id = $1::uuid AND status = 'ACTIVE' HAVING array_agg(url) <> '{}'";

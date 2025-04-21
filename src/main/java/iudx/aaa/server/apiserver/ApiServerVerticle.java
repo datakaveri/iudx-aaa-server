@@ -191,6 +191,7 @@ public class ApiServerVerticle extends AbstractVerticle {
       organizationDAOFactory = new OrganizationDAOFactory(postgresService);
       organizationService = new OrganizationServiceImpl(organizationDAOFactory);
     OrganizationHandler organizationHandler = new OrganizationHandler(organizationService);
+    RoleAuthorisationHandler roleAuthorisationHandler = new RoleAuthorisationHandler();
 
     RouterBuilder.create(vertx, "docs/updated_spec.yaml")
         .onFailure(Throwable::printStackTrace)
@@ -207,16 +208,22 @@ public class ApiServerVerticle extends AbstractVerticle {
                 // Organisation Create Request
                 routerBuilder
                         .operation("post-auth-v1-organisations-request")
+                        .handler(ctx -> fetchRoles.fetch(ctx, Set.of()))
+                        .handler(ctx -> roleAuthorisationHandler.validateRole(ctx, Set.of()))
                         .handler(organizationHandler::createOrganisationRequest)
                         .failureHandler(failureHandler);
 
                 routerBuilder
                         .operation("get-auth-v1-getAllOrgReq")
+                        .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.COS_ADMIN, Roles.ADMIN)))
+                        .handler(ctx -> roleAuthorisationHandler.validateRole(ctx, Set.of(Roles.COS_ADMIN, Roles.ADMIN)))
                         .handler(organizationHandler::getOrganisationRequest)
                         .failureHandler(failureHandler);
 
                 routerBuilder
                         .operation("post-auth-v1-approve-create_org")
+                        .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.COS_ADMIN)))
+                        .handler(ctx -> roleAuthorisationHandler.validateRole(ctx, Set.of(Roles.COS_ADMIN)))
                         .handler(organizationHandler::approveOrganisationRequest)
                         .failureHandler(failureHandler);
 
@@ -224,33 +231,67 @@ public class ApiServerVerticle extends AbstractVerticle {
 
                 routerBuilder
                         .operation("post-auth-v1-joinOrg")
+                        .handler(ctx -> fetchRoles.fetch(ctx, Set.of()))
+                        .handler(ctx -> roleAuthorisationHandler.validateRole(ctx, Set.of()))
                         .handler(organizationHandler::joinOrganisationRequest)
                         .failureHandler(failureHandler);
 
                 routerBuilder
                         .operation("get-auth-v1-organisations-join")
+                        .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.ADMIN)))
+                        .handler(ctx -> roleAuthorisationHandler.validateRole(ctx, Set.of(Roles.ADMIN)))
                         .handler(organizationHandler::getJoinOrganisationRequests)
                         .failureHandler(failureHandler);
 
                 routerBuilder
                         .operation("post-auth-v1-approve")
+                        .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.ADMIN)))
+                        .handler(ctx -> roleAuthorisationHandler.validateRole(ctx, Set.of(Roles.ADMIN)))
                         .handler(organizationHandler::approveJoinOrganisationRequests)
                         .failureHandler(failureHandler);
 
                 // Organisation
                 routerBuilder
                         .operation("get-auth-v1-org")
+                        .handler(ctx -> fetchRoles.fetch(ctx, Set.of()))
+                        .handler(ctx -> roleAuthorisationHandler.validateRole(ctx, Set.of()))
                         .handler(organizationHandler::listAllOrganisations)
                         .failureHandler(failureHandler);
 
                 routerBuilder
                         .operation("delete-auth-v1-organisations-id")
+                        .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.COS_ADMIN)))
+                        .handler(ctx -> roleAuthorisationHandler.validateRole(ctx, Set.of(Roles.COS_ADMIN)))
                         .handler(organizationHandler::deleteOrganisationById)
                         .failureHandler(failureHandler);
 
                 routerBuilder
                         .operation("put-auth-v1-organisations-id")
+                        .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.COS_ADMIN)))
+                        .handler(ctx -> roleAuthorisationHandler.validateRole(ctx, Set.of(Roles.COS_ADMIN)))
                         .handler(organizationHandler::updateOrganisationById)
+                        .failureHandler(failureHandler);
+
+                //Organization User
+                routerBuilder
+                        .operation("get-auth-v1-organisations-users-id")
+                        .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.COS_ADMIN, Roles.ADMIN)))
+                        .handler(ctx -> roleAuthorisationHandler.validateRole(ctx, Set.of(Roles.COS_ADMIN, Roles.ADMIN)))
+                        .handler(organizationHandler::getOrganisationUsers)
+                        .failureHandler(failureHandler);
+
+                routerBuilder
+                        .operation("delete-auth-v1-organisations-users-id")
+                        .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.COS_ADMIN, Roles.ADMIN)))
+                        .handler(ctx -> roleAuthorisationHandler.validateRole(ctx, Set.of(Roles.COS_ADMIN, Roles.ADMIN)))
+                        .handler(organizationHandler::deleteOrganisationUserById)
+                        .failureHandler(failureHandler);
+
+                routerBuilder
+                        .operation("put-auth-v1-organization-users-role")
+                        .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.COS_ADMIN, Roles.ADMIN)))
+                        .handler(ctx -> roleAuthorisationHandler.validateRole(ctx, Set.of(Roles.COS_ADMIN, Roles.ADMIN)))
+                        .handler(organizationHandler::updateOrganisationUserRole)
                         .failureHandler(failureHandler);
 
               // Post token create
@@ -416,7 +457,7 @@ public class ApiServerVerticle extends AbstractVerticle {
                   .handler(
                       routingContext -> {
                         HttpServerResponse response = routingContext.response();
-                        response.sendFile("docs/openapi.yaml");
+                        response.sendFile("docs/updated_spec.yaml");
                       });
 
               // Get redoc
