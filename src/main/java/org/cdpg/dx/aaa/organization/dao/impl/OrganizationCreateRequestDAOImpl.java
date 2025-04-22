@@ -12,12 +12,10 @@ import org.cdpg.dx.database.postgres.models.Condition;
 import org.cdpg.dx.database.postgres.models.SelectQuery;
 import org.cdpg.dx.database.postgres.models.UpdateQuery;
 import org.cdpg.dx.database.postgres.models.InsertQuery;
-import org.cdpg.dx.database.postgres.models.QueryResult;
 import org.cdpg.dx.database.postgres.service.PostgresService;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -33,7 +31,7 @@ public class OrganizationCreateRequestDAOImpl implements OrganizationCreateReque
     @Override
     public Future<OrganizationCreateRequest> create(OrganizationCreateRequest request) {
         // Get columns and values directly from the DTO map
-      InsertQuery insertQuery = new InsertQuery();
+        InsertQuery insertQuery = new InsertQuery();
         insertQuery.setTable(Constants.ORG_CREATE_REQUEST_TABLE);
         insertQuery.setColumns(List.copyOf(request.toNonEmptyFieldsMap().keySet()));
         insertQuery.setValues(List.copyOf(request.toNonEmptyFieldsMap().values()));

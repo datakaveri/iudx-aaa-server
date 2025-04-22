@@ -6,7 +6,6 @@ import org.cdpg.dx.aaa.credit.dao.impl.UserCreditDAOImpl;
 import org.cdpg.dx.aaa.organization.dao.OrganizationDAO;
 import org.cdpg.dx.aaa.organization.dao.impl.OrganizationDAOImpl;
 import org.cdpg.dx.database.postgres.service.PostgresService;
-import org.glassfish.jaxb.core.v2.schemagen.episode.Package;
 
 public class CreditDAOFactory {
   private final PostgresService postgresService;
