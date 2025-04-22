@@ -122,10 +122,8 @@ public class OrganizationHandler {
 
     public void getJoinOrganisationRequests(RoutingContext routingContext) {
 
-        String idParam = String.valueOf(routingContext.queryParam("id"));
-        UUID orgId;
-
-        orgId = UUID.fromString(idParam);
+        String idParam = routingContext.request().getParam("id");
+        UUID orgId = UUID.fromString(idParam);
 
         organizationService.getOrganizationPendingJoinRequests(orgId)
                 .onSuccess(requests -> {

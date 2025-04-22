@@ -13,12 +13,12 @@ public record OrganizationCreateRequest(Optional<UUID> id, UUID requestedBy, Str
                                         String status, Optional<String> createdAt, Optional<String> updatedAt) {
   public static OrganizationCreateRequest fromJson(JsonObject json) {
     return new OrganizationCreateRequest(
-      Optional.ofNullable(json.getString(Constants.ORG_JOIN_ID)).map(UUID::fromString),
+      Optional.ofNullable(json.getString(Constants.ORG_CREATE_ID)).map(UUID::fromString),
       UUID.fromString(json.getString(Constants.REQUESTED_BY)),
       json.getString(Constants.ORG_NAME),
       json.getString(Constants.ORG_DESCRIPTION),
       json.getString(Constants.DOCUMENTS_PATH),
-      json.getString(Constants.STATUS),
+      Status.PENDING.getStatus(),
       Optional.ofNullable(json.getString(Constants.CREATED_AT)),
       Optional.ofNullable(json.getString(Constants.UPDATED_AT))
     );

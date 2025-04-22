@@ -2,6 +2,8 @@ package org.cdpg.dx.database.postgres.models;
 
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -105,41 +107,39 @@ public class SelectQuery implements Query {
         this.offset = offset;
     }
 
-    @Override
-    public String toSQL() {
-        String columnNames = String.join(", ", columns);
-        StringBuilder query = new StringBuilder("SELECT " + columnNames + " FROM " + table);
+  private List<Object> queryParams = new ArrayList<>();
 
-        if (condition != null) {
-            query.append(" WHERE ").append(condition.toSQL());
-        }
-        else
-        {
-          System.out.println("Condition is null inside selectQuery");
-        }
+  @Override
+  public String toSQL() {
+    queryParams.clear(); // clear old params
+    String columnNames = String.join(", ", columns);
+    StringBuilder query = new StringBuilder("SELECT " + columnNames + " FROM " + table);
 
-        if (groupBy != null && !groupBy.isEmpty()) {
-            query.append(" GROUP BY ").append(String.join(", ", groupBy));
-        }
-
-        if (orderBy != null && !orderBy.isEmpty()) {
-            query
-                    .append(" ORDER BY ")
-                    .append(orderBy.stream().map(OrderBy::toSQL).collect(Collectors.joining(", ")));
-        }
-
-        if (limit != null) {
-            query.append(" LIMIT ").append(limit);
-        }
-
-        if (offset != null) {
-            query.append(" OFFSET ").append(offset);
-        }
-
-        return query.toString();
+    if (condition != null) {
+      query.append(" WHERE ").append(condition.toSQL(queryParams));
     }
 
-    @Override
+    if (groupBy != null && !groupBy.isEmpty()) {
+      query.append(" GROUP BY ").append(String.join(", ", groupBy));
+    }
+
+    if (orderBy != null && !orderBy.isEmpty()) {
+      query.append(" ORDER BY ")
+        .append(orderBy.stream().map(OrderBy::toSQL).collect(Collectors.joining(", ")));
+    }
+
+    if (limit != null) {
+      query.append(" LIMIT ").append(limit);
+    }
+
+    if (offset != null) {
+      query.append(" OFFSET ").append(offset);
+    }
+
+    return query.toString();
+  }
+
+  @Override
     public List<Object> getQueryParams() {
         return condition != null ? condition.getQueryParams() : List.of();
     }

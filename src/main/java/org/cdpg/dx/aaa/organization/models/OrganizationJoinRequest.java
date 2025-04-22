@@ -23,7 +23,7 @@ public record OrganizationJoinRequest(Optional<UUID> id, UUID organizationId, UU
 
   public JsonObject toJson() {
     JsonObject json =  new JsonObject();
-      id.ifPresent(value -> json.put(Constants.ORG_CREATE_ID,value));
+      id.ifPresent(value -> json.put(Constants.ORG_JOIN_ID,value.toString()));
       json.put(Constants.ORGANIZATION_ID, organizationId.toString())
       .put(Constants.USER_ID, userId.toString())
         .put(Constants.STATUS,status)
