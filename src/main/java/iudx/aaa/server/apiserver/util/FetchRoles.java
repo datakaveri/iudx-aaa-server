@@ -1,16 +1,5 @@
 package iudx.aaa.server.apiserver.util;
 
-import static iudx.aaa.server.apiserver.util.Constants.INTERNAL_SVR_ERR;
-import static iudx.aaa.server.apiserver.util.Constants.KC_FAMILY_NAME;
-import static iudx.aaa.server.apiserver.util.Constants.KC_GIVEN_NAME;
-import static iudx.aaa.server.apiserver.util.Constants.OBTAINED_USER_ID;
-import static iudx.aaa.server.apiserver.util.Constants.SQL_GET_ADMIN_ROLE;
-import static iudx.aaa.server.apiserver.util.Constants.SQL_GET_DELEGATE_ROLE;
-import static iudx.aaa.server.apiserver.util.Constants.SQL_GET_PROVIDER_CONSUMER_ROLES;
-import static iudx.aaa.server.apiserver.util.Constants.SQL_GET_TRUSTEE_ROLE;
-import static iudx.aaa.server.apiserver.util.Constants.SQL_UNION;
-import static iudx.aaa.server.apiserver.util.Constants.USER;
-
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -34,6 +23,8 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import static iudx.aaa.server.apiserver.util.Constants.*;
 
 /**
  * Fetch roles and resource servers associated with the roles (if applicable). The roles and RSs are
@@ -73,6 +64,8 @@ public class FetchRoles {
     UUID userId = UUID.fromString(ctx.get(OBTAINED_USER_ID));
     String firstName = ctx.get(KC_GIVEN_NAME, "");
     String lastName = ctx.get(KC_FAMILY_NAME, "");
+
+    System.out.println(userId);
 
     User.UserBuilder userBuilder = new UserBuilder();
 
@@ -117,6 +110,7 @@ public class FetchRoles {
 
     if (requestedRoles.contains(Roles.ADMIN)) {
       queries.add(SQL_GET_ADMIN_ROLE);
+      queries.add(SQL_GET_ORG_ADMIN_ROLE);
     }
 
     if (queries.isEmpty()) {

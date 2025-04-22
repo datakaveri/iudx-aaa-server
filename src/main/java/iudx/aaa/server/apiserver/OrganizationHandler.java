@@ -6,6 +6,9 @@ import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+import iudx.aaa.server.apiserver.models.Response;
+import iudx.aaa.server.apiserver.models.Roles;
+import iudx.aaa.server.apiserver.models.User;
 import org.cdpg.dx.aaa.organization.models.*;
 import org.cdpg.dx.aaa.organization.service.OrganizationService;
 
@@ -15,6 +18,10 @@ import org.apache.logging.log4j.Logger;
 import java.util.Optional;
 import java.util.UUID;
 
+import static iudx.aaa.server.admin.Constants.ERR_DETAIL_NO_COS_ADMIN_ROLE;
+import static iudx.aaa.server.admin.Constants.ERR_TITLE_NO_COS_ADMIN_ROLE;
+import static iudx.aaa.server.apiserver.util.Constants.USER;
+import static iudx.aaa.server.apiserver.util.Urn.URN_INVALID_ROLE;
 import static java.util.Collections.copy;
 
 public class OrganizationHandler {
@@ -203,7 +210,77 @@ public class OrganizationHandler {
                 .onFailure(err -> processFailure(routingContext, 500, "Internal Server Error"));
     }
 
-    private Future<Void> processFailure(RoutingContext routingContext, int statusCode, String msg){
+    public void deleteOrganisationUserById(RoutingContext routingContext) {
+
+        String idParam = String.valueOf(routingContext.pathParam("id"));
+        UUID orgId;
+
+        orgId = UUID.fromString(idParam);
+
+        User user = routingContext.get(USER);
+
+        JsonObject responseObject = new JsonObject();
+
+        organizationService.deleteOrganizationUser(orgId, UUID.fromString(user.getUserId()))
+                .onSuccess(deleted -> {
+                    if(deleted){
+                        processSuccess(routingContext, responseObject, 200, "Deleted Organisation User");
+                    }
+                    else {
+                        processFailure(routingContext, 400, "Organisation User Not Found");
+                    }
+                })
+                .onFailure(err -> processFailure(routingContext, 500, "Failed to Delete Organisation User"));
+
+    }
+
+    public void getOrganisationUsers(RoutingContext routingContext) {
+
+        String idParam = String.valueOf(routingContext.pathParam("id"));
+        UUID orgId;
+
+        orgId = UUID.fromString(idParam);
+
+        organizationService.getOrganizationUsers(orgId)
+                .onSuccess(requests -> {
+                    JsonArray jsonArray = new JsonArray();
+                    for (OrganizationUser req : requests) {
+                        jsonArray.add(req.toJson());
+                    }
+                    processSuccess(routingContext, jsonArray, 200, "Retrieved Organisation Users");
+                })
+                .onFailure(err -> processFailure(routingContext, 500, "Failed to fetch organisation users"));
+
+    }
+
+    public void updateOrganisationUserRole(RoutingContext routingContext) {
+
+        String idParam = String.valueOf(routingContext.pathParam("id"));
+        UUID orgId;
+
+        orgId = UUID.fromString(idParam);
+
+        JsonObject OrgRequestJson = routingContext.body().asJsonObject();
+
+        Role role;
+        role = Role.fromString(OrgRequestJson.getString("role"));
+
+        User user = routingContext.get(USER);
+
+        organizationService.updateUserRole(orgId, UUID.fromString(user.getUserId()), role)
+                .onSuccess(updated -> {
+                    if(updated){
+                        processSuccess(routingContext, new JsonObject(), 200, "Updated Organisation User Role");
+                    }
+                    else {
+                        processFailure(routingContext, 400, "Organisation User Not Found");
+                    }
+                })
+                .onFailure(err -> processFailure(routingContext, 500, "Failed to Update Organisation User Role"));
+
+    }
+
+    public Future<Void> processFailure(RoutingContext routingContext, int statusCode, String msg){
 
         if(statusCode == 400) {
 
@@ -237,7 +314,7 @@ public class OrganizationHandler {
         }
     }
 
-    private Future<Void> processSuccess(RoutingContext routingContext, JsonObject results, int statusCode, String msg){
+    public Future<Void> processSuccess(RoutingContext routingContext, JsonObject results, int statusCode, String msg){
 
 
         JsonObject response = new JsonObject()
@@ -251,7 +328,7 @@ public class OrganizationHandler {
                 .end(response.encode());
     }
 
-    private Future<Void> processSuccess(RoutingContext routingContext, JsonArray results, int statusCode, String msg){
+    public Future<Void> processSuccess(RoutingContext routingContext, JsonArray results, int statusCode, String msg){
 
 
         JsonObject response = new JsonObject()
