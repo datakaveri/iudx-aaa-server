@@ -47,6 +47,9 @@ import java.util.Set;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cdpg.dx.aaa.credit.dao.CreditDAOFactory;
+import org.cdpg.dx.aaa.credit.service.CreditService;
+import org.cdpg.dx.aaa.credit.service.CreditServiceImpl;
 import org.cdpg.dx.aaa.organization.dao.*;
 import org.cdpg.dx.aaa.organization.dao.impl.*;
 import org.cdpg.dx.aaa.organization.models.OrganizationCreateRequest;
@@ -110,6 +113,8 @@ public class ApiServerVerticle extends AbstractVerticle {
     private PostgresService postgresService;
     private OrganizationDAOFactory organizationDAOFactory;
     private OrganizationService organizationService;
+    private CreditDAOFactory creditDaoFactory;
+    private CreditService creditService;
 
   /**
    * This method is used to start the Verticle. It deploys a verticle in a cluster, reads the
@@ -192,6 +197,10 @@ public class ApiServerVerticle extends AbstractVerticle {
       organizationService = new OrganizationServiceImpl(organizationDAOFactory);
     OrganizationHandler organizationHandler = new OrganizationHandler(organizationService);
     RoleAuthorisationHandler roleAuthorisationHandler = new RoleAuthorisationHandler();
+    creditDaoFactory = new CreditDAOFactory(postgresService);
+    creditService = new CreditServiceImpl(creditDaoFactory);
+    CreditHandler creditHandler = new CreditHandler(creditService);
+
 
     RouterBuilder.create(vertx, "docs/updated_spec.yaml")
         .onFailure(Throwable::printStackTrace)
@@ -292,6 +301,49 @@ public class ApiServerVerticle extends AbstractVerticle {
                         .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.COS_ADMIN, Roles.ADMIN)))
                         .handler(ctx -> roleAuthorisationHandler.validateRole(ctx, Set.of(Roles.COS_ADMIN, Roles.ADMIN)))
                         .handler(organizationHandler::updateOrganisationUserRole)
+                        .failureHandler(failureHandler);
+
+                //Credit APIs
+                routerBuilder
+                        .operation("get-auth-v1-credit")
+                        .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.COS_ADMIN)))
+                        .handler(ctx -> roleAuthorisationHandler.validateRole(ctx, Set.of(Roles.COS_ADMIN)))
+                        .handler(creditHandler::getCreditRequestByStatus)
+                        .failureHandler(failureHandler);
+
+                routerBuilder
+                        .operation("post-auth-v1-credit-request")
+                        .handler(ctx -> fetchRoles.fetch(ctx, Set.of()))
+                        .handler(ctx -> roleAuthorisationHandler.validateRole(ctx, Set.of()))
+                        .handler(creditHandler::CreateCreditRequest)
+                        .failureHandler(failureHandler);
+
+                routerBuilder
+                        .operation("put-auth-v1-credit-request")
+                        .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.COS_ADMIN)))
+                        .handler(ctx -> roleAuthorisationHandler.validateRole(ctx, Set.of(Roles.COS_ADMIN)))
+                        .handler(creditHandler::UpdateCreditRequest)
+                        .failureHandler(failureHandler);
+
+                routerBuilder
+                        .operation("get-auth-v1-user-credit")
+                        .handler(ctx -> fetchRoles.fetch(ctx, Set.of()))
+                        .handler(ctx -> roleAuthorisationHandler.validateRole(ctx, Set.of()))
+                        .handler(creditHandler::GetUserCreditBalance)
+                        .failureHandler(failureHandler);
+
+                routerBuilder
+                        .operation("put-auth-v1-user-credit")
+                        .handler(ctx -> fetchRoles.fetch(ctx, Set.of(Roles.COS_ADMIN)))
+                        .handler(ctx -> roleAuthorisationHandler.validateRole(ctx, Set.of(Roles.COS_ADMIN)))
+                        .handler(creditHandler::DeductUserCredit)
+                        .failureHandler(failureHandler);
+
+                routerBuilder
+                        .operation("get-auth-v1-user-credit-id")
+                        .handler(ctx -> fetchRoles.fetch(ctx, Set.of()))
+                        .handler(ctx -> roleAuthorisationHandler.validateRole(ctx, Set.of(Roles.COS_ADMIN)))
+                        .handler(creditHandler::GetOtherUserCreditBalance)
                         .failureHandler(failureHandler);
 
               // Post token create

@@ -4509,7 +4509,7 @@ paths:
       operationId: delete-auth-v1-organisations-users-id
       security:
         - authorization: []
-  /auth/v1/organization/users/role/{id}:
+  '/auth/v1/organization/users/role/{id}':
     parameters:
       - schema:
           type: string
@@ -4518,7 +4518,8 @@ paths:
         required: true
     put:
       summary: Update Organization User Role
-      tags: [Organisation APIs]
+      tags:
+        - Organisation APIs
       responses:
         '200':
           description: OK
@@ -4535,6 +4536,121 @@ paths:
                   type: string
                   x-stoplight:
                     id: 35dhxezcb35eq
+  /auth/v1/credit/request:
+    get:
+      summary: Get all credit requests by status
+      tags:
+        - Credit APIs
+      responses:
+        '200':
+          description: OK
+      operationId: get-auth-v1-credit
+      security:
+        - authorization: []
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: status
+          description: Status of Credit Request
+          required: true
+    parameters: []
+    post:
+      summary: Create Credit Request
+      tags:
+        - Credit APIs
+      responses:
+        '200':
+          description: OK
+      operationId: post-auth-v1-credit-request
+      security:
+        - authorization: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: string
+                  x-stoplight:
+                    id: 37g76x7a4vgf8
+    put:
+      summary: Update Credit Request Status
+      tags:
+        - Credit APIs
+      responses:
+        '200':
+          description: OK
+      operationId: put-auth-v1-credit-request
+      security:
+        - authorization: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                req_id:
+                  type: string
+                  x-stoplight:
+                    id: jbgy3jvpgjyyv
+                status:
+                  type: string
+                  x-stoplight:
+                    id: d2cd0vtwz5hv1
+  /auth/v1/user/credit:
+    get:
+      summary: Get User Credit Balance
+      tags:
+        - Credit APIs
+      responses:
+        '200':
+          description: OK
+      operationId: get-auth-v1-user-credit
+      security:
+        - authorization: []
+    put:
+      summary: Deduct User Credit (COS ADMIN)
+      tags:
+        - Credit APIs
+      responses:
+        '200':
+          description: OK
+      operationId: put-auth-v1-user-credit
+      security:
+        - authorization: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: string
+                  x-stoplight:
+                    id: 62wmfshusogai
+                user_id:
+                  type: string
+                  x-stoplight:
+                    id: 1k9c4h2fbv6g4
+  '/auth/v1/user/credit/{id}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get Other Users Credit Balance (COS ADMIN)
+      tags:
+        - Credit APIs
+      responses:
+        '200':
+          description: OK
+      operationId: get-auth-v1-user-credit-id
+      security:
+        - authorization: []
 components:
   schemas:
     RequestToken:

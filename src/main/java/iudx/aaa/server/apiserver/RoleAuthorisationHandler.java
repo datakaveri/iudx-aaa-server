@@ -19,6 +19,12 @@ public class RoleAuthorisationHandler implements Handler<RoutingContext> {
     public void validateRole(RoutingContext routingContext, Set<Roles> requestedRoles) {
         User user = routingContext.get(USER);
 
+        if (requestedRoles.isEmpty()) {
+            System.out.println("No roles requested, allowing access");
+            routingContext.next();
+            return;
+        }
+
         if (user.getRoles().stream().noneMatch(requestedRoles::contains)) {
             System.out.println("Role not authorised");
             routingContext.fail(403);
