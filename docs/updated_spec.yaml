@@ -3609,6 +3609,8 @@ paths:
             type: string
           in: query
           name: org_id
+      security:
+        - authorization: []
     parameters: []
     post:
       summary: New organisation creation request
@@ -3639,6 +3641,8 @@ paths:
           name: Authorization
           required: true
           description: Keycloak Issued Token
+      security:
+        - authorization: []
   /auth/v1/organisations/requests/approve:
     post:
       summary: Approve creation of new organisation
@@ -3793,6 +3797,8 @@ paths:
                   type: string
                   x-stoplight:
                     id: pz5gx6wsffeut
+      security:
+        - authorization: []
     parameters: []
   /auth/v1/organisations/join:
     post:
@@ -3943,6 +3949,8 @@ paths:
                   x-stoplight:
                     id: u3n9nnqgrnbot
                   type: string
+      security:
+        - authorization: []
     parameters: []
     get:
       summary: Get all organisation joining requests
@@ -3964,6 +3972,8 @@ paths:
           in: query
           name: org_id
           description: Organisation ID
+      security:
+        - authorization: []
   /auth/v1/organisations/join/approve:
     post:
       summary: Approve joining of organisation
@@ -4113,6 +4123,8 @@ paths:
                   type: string
                   x-stoplight:
                     id: nnm4o84vmjrho
+      security:
+        - authorization: []
     parameters: []
   /auth/v1/organisations:
     get:
@@ -4223,6 +4235,8 @@ paths:
           name: Authorization
           description: Keycloak Issued Token
           required: true
+      security:
+        - authorization: []
     parameters: []
   '/auth/v1/organisations/{id}':
     parameters:
@@ -4239,6 +4253,8 @@ paths:
         '200':
           description: OK
       operationId: delete-auth-v1-organisations-id
+      security:
+        - authorization: []
     put:
       summary: Update Organisation by ID
       tags:
@@ -4268,6 +4284,8 @@ paths:
                   type: string
                   x-stoplight:
                     id: aicq0bnwnqk88
+      security:
+        - authorization: []
   /auth/v1/organisations/users:
     delete:
       summary: Delete Organisation Users
@@ -4357,6 +4375,8 @@ paths:
           required: true
           name: Authorization
           description: Platform Admin Token
+      security:
+        - authorization: []
     parameters: []
     get:
       summary: List organisation Users
@@ -4460,6 +4480,8 @@ paths:
           name: org_id
           description: Organisation ID
           required: true
+      security:
+        - authorization: []
   '/auth/v1/organisations/users/{id}':
     parameters:
       - schema:
@@ -4468,13 +4490,15 @@ paths:
         in: path
         required: true
     get:
-      summary: List User by ID
+      summary: List User by Org ID
       tags:
         - Organisation APIs
       responses:
         '200':
           description: OK
       operationId: get-auth-v1-organisations-users-id
+      security:
+        - authorization: []
     delete:
       summary: Delete User by ID
       tags:
@@ -4483,6 +4507,34 @@ paths:
         '200':
           description: OK
       operationId: delete-auth-v1-organisations-users-id
+      security:
+        - authorization: []
+  /auth/v1/organization/users/role/{id}:
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    put:
+      summary: Update Organization User Role
+      tags: [Organisation APIs]
+      responses:
+        '200':
+          description: OK
+      operationId: put-auth-v1-organization-users-role
+      security:
+        - authorization: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  x-stoplight:
+                    id: 35dhxezcb35eq
 components:
   schemas:
     RequestToken:
