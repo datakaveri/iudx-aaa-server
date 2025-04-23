@@ -36,10 +36,10 @@ public class SelectQuery implements Query {
         this.joins = joins != null ? joins : new ArrayList<>();
     }
 
-    public SelectQuery(String table, String tableAlias, List<String> columns, Condition condition, List<String> groupBy,
+    public SelectQuery(String table, List<String> columns, Condition condition, List<String> groupBy,
                        List<OrderBy> orderBy, Integer limit, Integer offset) {
         this.table = table;
-        this.tableAlias = tableAlias;
+        this.tableAlias = null;
         this.columns = columns;
         this.condition = condition;
         this.groupBy = groupBy;
