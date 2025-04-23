@@ -23,8 +23,8 @@ public class SelectQuery implements Query {
     public SelectQuery() {}
 
     // Constructor including table alias and joins
-    public SelectQuery(String table, String tableAlias, List<String> columns, Condition condition, List<String> groupBy,
-                       List<OrderBy> orderBy, Integer limit, Integer offset, List<Join> joins) {
+    public SelectQuery(String table, String tableAlias, List<String> columns, List<Join> joins, Condition condition, List<String> groupBy,
+                       List<OrderBy> orderBy, Integer limit, Integer offset) {
         this.table = table;
         this.tableAlias = tableAlias;
         this.columns = columns;
@@ -34,6 +34,19 @@ public class SelectQuery implements Query {
         this.limit = limit;
         this.offset = offset;
         this.joins = joins != null ? joins : new ArrayList<>();
+    }
+
+    public SelectQuery(String table, String tableAlias, List<String> columns, Condition condition, List<String> groupBy,
+                       List<OrderBy> orderBy, Integer limit, Integer offset) {
+        this.table = table;
+        this.tableAlias = tableAlias;
+        this.columns = columns;
+        this.condition = condition;
+        this.groupBy = groupBy;
+        this.orderBy = orderBy;
+        this.limit = limit;
+        this.offset = offset;
+        this.joins = null;
     }
 
     // Copy constructor

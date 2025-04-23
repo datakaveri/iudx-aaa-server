@@ -127,7 +127,11 @@ public class PostgresVerticleTest {
             join.setOnColumn("ocr.organization_id"); // from 'ocr'
 
             query.setJoins(List.of(join));
-            query.setCondition(new Condition("ocr.id", Condition.Operator.EQUALS, List.of(requestId.toString())));
+            Condition cond1 = new Condition("ocr.id", Condition.Operator.EQUALS, List.of(requestId.toString()));
+            Condition cond2 = new Condition("ocr.name", Condition.Operator.EQUALS, List.of("test name"));
+            
+            query.setCondition(new Condition(List.of(cond1, cond2), Condition.LogicalOperator.AND));
+
 
             return postgresService.select(query);
         }).onComplete(ar -> {
