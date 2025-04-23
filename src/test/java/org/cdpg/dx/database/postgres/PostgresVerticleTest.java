@@ -14,7 +14,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,28 +40,32 @@ public class PostgresVerticleTest {
 
     @BeforeEach
     void setup(Vertx vertx, VertxTestContext testContext) {
-        // Step 1: Create table using JDBC
         String jdbcUrl = POSTGRES.getJdbcUrl();
         try (Connection conn = DriverManager.getConnection(jdbcUrl, POSTGRES.getUsername(), POSTGRES.getPassword());
              Statement stmt = conn.createStatement()) {
 
-            String createTableSql = """
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS organizations (
+                    id UUID PRIMARY KEY,
+                    name TEXT
+                );
+            """);
+
+            stmt.execute("""
                 CREATE TABLE IF NOT EXISTS organization_create_requests (
                     id UUID PRIMARY KEY,
+                    organization_id UUID,
                     description TEXT,
                     document_path TEXT,
                     name TEXT,
                     status TEXT
                 );
-                """;
-
-            stmt.execute(createTableSql);
+            """);
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to create table", e);
+            throw new RuntimeException("Failed to create tables", e);
         }
 
-        // Step 2: Deploy PostgresVerticle with the config
         JsonObject config = new JsonObject()
                 .put("databaseIP", POSTGRES.getHost())
                 .put("databasePort", POSTGRES.getMappedPort(5432))
@@ -85,56 +88,56 @@ public class PostgresVerticleTest {
     }
 
     @Test
-    void test_insert_query(Vertx vertx, VertxTestContext testContext) {
+    void test_select_with_join(Vertx vertx, VertxTestContext testContext) {
         PostgresService postgresService = PostgresService.createProxy(vertx, PG_SERVICE_ADDRESS);
 
-//        InsertQuery query = new InsertQuery();
-//        query.setTable("organization_create_requests");
-//        query.setColumns(List.of("description", "document_path", "name", "status"));
-//        query.setValues(List.of("Test description", "/docs/test.pdf", "Test Org", "ACTIVE"));
-//
-//        postgresService.insert(query).onComplete(ar -> {
-//            if (ar.succeeded()) {
-//                Assertions.assertTrue(ar.result().isRowsAffected(), "Insert should affect at least 1 row");
-//                testContext.completeNow();
-//            } else {
-//                testContext.failNow(ar.cause());
-//            }
-//        });
+        UUID orgId = UUID.randomUUID();
+        UUID requestId = UUID.randomUUID();
 
-        SelectQuery selectQuery = new SelectQuery();
+        // Insert org
+        InsertQuery insertOrg = new InsertQuery();
+        insertOrg.setTable("organizations");
+        insertOrg.setColumns(List.of("id", "name"));
+        insertOrg.setValues(List.of(orgId.toString(), "Test Organization"));
 
-        selectQuery.setTable("organization_create_requests");
-        selectQuery.setColumns(List.of("*"));
+        // Insert request
+        InsertQuery insertRequest = new InsertQuery();
+        insertRequest.setTable("organization_create_requests");
+        insertRequest.setColumns(List.of("id", "organization_id", "description", "document_path", "name", "status"));
+        insertRequest.setValues(List.of(requestId.toString(), orgId.toString(), "Join test", "/path/doc.pdf", "Req Name", "ACTIVE"));
 
-        ConditionComponent condition = new Condition("id", Condition.Operator.EQUALS , List.of(UUID.randomUUID().toString()));
-        selectQuery.setCondition(condition);
-        postgresService.select(selectQuery).onComplete(ar -> {
+        // Chain both inserts before running the join select
+        postgresService.insert(insertOrg).compose(orgRes -> {
+            Assertions.assertTrue(orgRes.isRowsAffected());
+            return postgresService.insert(insertRequest);
+        }).compose(reqRes -> {
+            Assertions.assertTrue(reqRes.isRowsAffected());
+
+            // Now perform the JOIN
+            SelectQuery query = new SelectQuery();
+            query.setTable("organization_create_requests");
+            query.setTableAlias("ocr");
+            query.setColumns(List.of("ocr.id", "ocr.name", "orgs.name AS organization_name"));
+
+            Join join = new Join();
+            join.setJoinType(Join.JoinType.INNER);
+            join.setTable("organizations");
+            join.setTableAlias("orgs");
+            join.setJoinColumn("id");        // from 'organizations'
+            join.setOnColumn("ocr.organization_id"); // from 'ocr'
+
+            query.setJoins(List.of(join));
+            query.setCondition(new Condition("ocr.id", Condition.Operator.EQUALS, List.of(requestId.toString())));
+
+            return postgresService.select(query);
+        }).onComplete(ar -> {
             if (ar.succeeded()) {
-                Assertions.assertTrue(ar.result().isRowsAffected(), "Insert should affect at least 1 row");
+                System.out.println("Join Select Result: " + ar.result().getRows());
+                Assertions.assertFalse(ar.result().getRows().isEmpty(), "Expected result from join query");
                 testContext.completeNow();
             } else {
                 testContext.failNow(ar.cause());
             }
         });
-
-
-//        DeleteQuery deleteQuery = new DeleteQuery();
-//
-//        deleteQuery.setTable("organization_create_requests");
-//
-//        Condition delConditon = new Condition("id", Condition.Operator.EQUALS , List.of(UUID.randomUUID().toString()));
-//        deleteQuery.setCondition(delConditon);
-//        deleteQuery.setLimit(null);
-//        deleteQuery.setOrderBy(new ArrayList<>());
-//        System.out.println(deleteQuery.toSQL());
-//        postgresService.delete(deleteQuery).onComplete(ar -> {
-//            if (ar.succeeded()) {
-//                Assertions.assertTrue(ar.result().isRowsAffected(), "Insert should affect at least 1 row");
-//                testContext.completeNow();
-//            } else {
-//                testContext.failNow(ar.cause());
-//            }
-//        });
     }
 }
