@@ -195,6 +195,11 @@ public class OrganizationHandler {
     public void createOrganisationRequest(RoutingContext routingContext) {
         JsonObject OrgRequestJson = routingContext.body().asJsonObject();
         OrganizationCreateRequest organizationCreateRequest;
+
+        User user = routingContext.get(USER);
+
+        OrgRequestJson.put("requested_by", user.getUserId());
+
         try {
           organizationCreateRequest = OrganizationCreateRequest.fromJson(OrgRequestJson);
 

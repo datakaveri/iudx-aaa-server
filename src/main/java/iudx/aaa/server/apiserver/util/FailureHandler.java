@@ -32,6 +32,19 @@ public class FailureHandler implements Handler<RoutingContext> {
     HttpServerResponse response = context.response();
     response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON);
 
+    System.out.println(context.statusCode());
+
+    if (context.statusCode() == 403) {
+      JsonObject errorResponse = new JsonObject()
+              .put("type", "urn:dx:as:Forbidden")
+              .put("title", "Forbidden")
+              .put("detail", "You do not have the required permissions to access this resource.");
+      response.setStatusCode(403)
+              .putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+              .end(errorResponse.encode());
+      return;
+    }
+
     /* If timeout handler is triggered */
     if (context.failure() == null && context.statusCode() == 503) {
       LOGGER.error("Fail: Handling unexpected error: Timeout for {}", context.normalizedPath());
