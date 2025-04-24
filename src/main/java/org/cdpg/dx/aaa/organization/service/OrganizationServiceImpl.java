@@ -137,8 +137,8 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
   @Override
-  public Future<Boolean> is_org_admin(UUID orgid, UUID userid) {
-    return orgUserDAO.is_org_admin(orgid,userid);
+  public Future<Boolean> isOrgAdmin(UUID orgid, UUID userid) {
+    return orgUserDAO.isOrgAdmin(orgid,userid);
   }
 
   @Override

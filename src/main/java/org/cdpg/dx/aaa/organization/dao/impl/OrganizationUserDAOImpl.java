@@ -138,7 +138,7 @@ public class OrganizationUserDAOImpl implements OrganizationUserDAO {
   }
 
   @Override
-  public Future<Boolean> is_org_admin(UUID orgid, UUID userid) {
+  public Future<Boolean> isOrgAdmin(UUID orgid, UUID userid) {
     Condition conditions = new Condition(
       List.of(
         new Condition(Constants.ORGANIZATION_ID, Condition.Operator.EQUALS, List.of(orgid.toString())),
