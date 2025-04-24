@@ -55,6 +55,8 @@ public interface OrganizationService {
 
   Future<Boolean> updateUserRole(UUID orgId, UUID userId, Role Role);
 
+  Future<Boolean> isOrgAdmin (UUID orgid, UUID userid);
+
   // to check - info about the users
  // Future<OrganizationUser> getOrganizationUserById(UUID userId);
 

@@ -20,4 +20,6 @@ public interface OrganizationUserDAO {
     Future<Boolean> deleteUsersByOrgId(UUID orgId, List<UUID> uuids);
 
     Future<List<OrganizationUser>> getAll(UUID orgId);
+
+    Future<Boolean> isOrgAdmin(UUID orgid, UUID userid);
 }
