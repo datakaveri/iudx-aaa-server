@@ -21,7 +21,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.UUID;
 
-import static org.cdpg.dx.common.Constants.PG_SERVICE_ADDRESS;
+import static org.cdpg.dx.common.util.ProxyAdressConstants.PG_SERVICE_ADDRESS;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(VertxExtension.class)

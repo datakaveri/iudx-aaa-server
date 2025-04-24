@@ -1,7 +1,7 @@
 package iudx.aaa.server.apiserver;
 
 import static iudx.aaa.server.apiserver.util.Constants.*;
-import static org.cdpg.dx.common.Constants.PG_SERVICE_ADDRESS;
+import static org.cdpg.dx.common.util.ProxyAdressConstants.PG_SERVICE_ADDRESS;
 
 import com.nimbusds.jose.jwk.ECKey;
 import io.vertx.core.AbstractVerticle;

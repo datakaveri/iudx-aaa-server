@@ -11,13 +11,13 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.containers.PostgreSQLContainer;
 
+import static org.cdpg.dx.common.util.ProxyAdressConstants.PG_SERVICE_ADDRESS;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.List;
 import java.util.UUID;
-
-import static org.cdpg.dx.common.Constants.PG_SERVICE_ADDRESS;
 
 @ExtendWith(VertxExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

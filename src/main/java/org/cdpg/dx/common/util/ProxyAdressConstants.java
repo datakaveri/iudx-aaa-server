@@ -1,5 +1,5 @@
-package org.cdpg.dx.common;
+package org.cdpg.dx.common.util;
 
-public class Constants {
+public class ProxyAdressConstants {
   public static final String PG_SERVICE_ADDRESS = "org.cdpg.dx.database.postgres";
 }
