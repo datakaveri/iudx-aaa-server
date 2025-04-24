@@ -136,7 +136,12 @@ public class OrganizationServiceImpl implements OrganizationService {
         return orgUserDAO.updateRole(orgId, userId, role);
     }
 
-    @Override
+  @Override
+  public Future<Boolean> is_org_admin(UUID orgid, UUID userid) {
+    return orgUserDAO.is_org_admin(orgid,userid);
+  }
+
+  @Override
     public Future<Boolean> deleteOrganizationUser(UUID orgId, UUID userId) {
         return orgUserDAO.delete(orgId, userId);
     }
