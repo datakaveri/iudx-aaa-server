@@ -220,11 +220,12 @@ public class OrganizationHandler {
 
         orgId = UUID.fromString(idParam);
 
-        User user = routingContext.get(USER);
+        JsonObject jsonRequest = routingContext.body().asJsonObject();
+        UUID userId = UUID.fromString(jsonRequest.getString("user_id"));
 
         JsonObject responseObject = new JsonObject();
 
-        organizationService.deleteOrganizationUser(orgId, UUID.fromString(user.getUserId()))
+        organizationService.deleteOrganizationUser(orgId, userId)
                 .onSuccess(deleted -> {
                     if(deleted){
                         processSuccess(routingContext, responseObject, 200, "Deleted Organisation User");
@@ -263,14 +264,15 @@ public class OrganizationHandler {
 
         orgId = UUID.fromString(idParam);
 
-        JsonObject OrgRequestJson = routingContext.body().asJsonObject();
+        JsonObject orgRequestJson = routingContext.body().asJsonObject();
 
         Role role;
-        role = Role.fromString(OrgRequestJson.getString("role"));
+        role = Role.fromString(orgRequestJson.getString("role"));
 
-        User user = routingContext.get(USER);
+        UUID userId = UUID.fromString(orgRequestJson.getString("user_id"));
 
-        organizationService.updateUserRole(orgId, UUID.fromString(user.getUserId()), role)
+
+      organizationService.updateUserRole(orgId,userId, role)
                 .onSuccess(updated -> {
                     if(updated){
                         processSuccess(routingContext, new JsonObject(), 200, "Updated Organisation User Role");
