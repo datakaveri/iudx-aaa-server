@@ -1,7 +1,9 @@
 package iudx.aaa.server.apiserver;
 
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -15,6 +17,8 @@ import org.cdpg.dx.aaa.organization.service.OrganizationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -28,10 +32,12 @@ public class OrganizationHandler {
 
     private static final Logger LOGGER = LogManager.getLogger(OrganizationHandler.class);
     private final OrganizationService organizationService;
+    private final KeycloakHandler keycloakHandler;
 
-    public OrganizationHandler(OrganizationService organizationService){
+    public OrganizationHandler(OrganizationService organizationService, KeycloakHandler keycloakHandler){
 
         this.organizationService = organizationService;
+        this.keycloakHandler = keycloakHandler;
 
     }
 
@@ -128,10 +134,25 @@ public class OrganizationHandler {
         organizationService.getOrganizationPendingJoinRequests(orgId)
                 .onSuccess(requests -> {
                     JsonArray jsonArray = new JsonArray();
+                    List<Future> futures = new ArrayList<>();
                     for (OrganizationJoinRequest req : requests) {
-                        jsonArray.add(req.toJson());
+                        JsonObject requestJson = req.toJson();
+                        String keycloak_id = requestJson.getString("user_id");
+
+                        Future<Void> future = keycloakHandler.getUsernameByKeycloakId(keycloak_id)
+                                .onSuccess(username -> {
+                                    requestJson.put("requested_by_username", username);
+                                })
+                                .onFailure(err -> {
+                                    LOGGER.error("Failed to fetch username for keycloak id: " + keycloak_id);
+                                })
+                                .mapEmpty();
+                        futures.add(future);
+                        jsonArray.add(requestJson);
                     }
-                    processSuccess(routingContext, jsonArray, 200, "Retrieved Pending Join Requests");
+                    CompositeFuture.all(futures)
+                            .onSuccess(v -> processSuccess(routingContext, jsonArray, 200, "Retrieved Pending Join Requests"))
+                            .onFailure(err -> processFailure(routingContext, 500, "Failed to fetch usernames for pending join requests"));
                 })
                 .onFailure(err -> processFailure(routingContext, 500, "Failed to fetch pending join requests"));
 
@@ -145,8 +166,10 @@ public class OrganizationHandler {
         UUID OrgID;
         UUID UserID;
 
+        User user = routingContext.get(USER);
+
         OrgID = UUID.fromString(OrgRequestJson.getString("org_id"));
-        UserID = UUID.fromString(OrgRequestJson.getString("user_id"));
+        UserID = UUID.fromString(user.getUserId());
 
         organizationService.joinOrganizationRequest(OrgID, UserID)
                 .onSuccess(createdRequest -> processSuccess(routingContext, createdRequest.toJson(), 201, "Created Join request"))
@@ -164,6 +187,7 @@ public class OrganizationHandler {
 
         JsonObject responseObject = OrgRequestJson.copy();
         responseObject.remove("status");
+
 
         organizationService.updateOrganizationCreateRequestStatus(requestId, status)
                 .onSuccess(approved -> {
@@ -183,10 +207,28 @@ public class OrganizationHandler {
         organizationService.getAllPendingOrganizationCreateRequests()
                 .onSuccess(requests -> {
                     JsonArray jsonArray = new JsonArray();
+                    List<Future> futures = new ArrayList<>();
+
                     for (OrganizationCreateRequest req : requests) {
-                        jsonArray.add(req.toJson());
+                        JsonObject requestJson = req.toJson();
+                        String keycloak_id = requestJson.getString("requested_by");
+
+                        Future<Void> future = keycloakHandler.getUsernameByKeycloakId(keycloak_id)
+                                .onSuccess(username -> {
+                                    requestJson.put("requested_by_username", username);
+                                })
+                                .onFailure(err -> {
+                                    LOGGER.error("Failed to fetch username for keycloak id: " + keycloak_id);
+                                })
+                                .mapEmpty();
+                        futures.add(future);
+                        jsonArray.add(requestJson);
                     }
-                    processSuccess(routingContext, jsonArray, 200, "Retrieved Pending Create Requests");
+
+                    CompositeFuture.all(futures)
+                            .onSuccess(v -> processSuccess(routingContext, jsonArray, 200, "Retrieved Pending Create Requests"))
+                            .onFailure(err -> processFailure(routingContext, 500, "Failed to fetch usernames for pending create requests"));
+
                 })
                 .onFailure(err -> processFailure(routingContext, 500, "Failed to fetch pending create requests"));
 
@@ -258,19 +300,25 @@ public class OrganizationHandler {
 
     public void updateOrganisationUserRole(RoutingContext routingContext) {
 
-        String idParam = String.valueOf(routingContext.pathParam("id"));
+        JsonObject OrgRequestJson = routingContext.body().asJsonObject();
+
+        String OrgidParam = String.valueOf(OrgRequestJson.getString("org_id"));
         UUID orgId;
 
-        orgId = UUID.fromString(idParam);
+        orgId = UUID.fromString(OrgidParam);
 
-        JsonObject OrgRequestJson = routingContext.body().asJsonObject();
+        String UseridParam = String.valueOf(OrgRequestJson.getString("user_id"));
+        UUID user_id;
+
+        user_id = UUID.fromString(UseridParam);
+
 
         Role role;
         role = Role.fromString(OrgRequestJson.getString("role"));
 
         User user = routingContext.get(USER);
 
-        organizationService.updateUserRole(orgId, UUID.fromString(user.getUserId()), role)
+        organizationService.updateUserRole(orgId,user_id, role)
                 .onSuccess(updated -> {
                     if(updated){
                         processSuccess(routingContext, new JsonObject(), 200, "Updated Organisation User Role");

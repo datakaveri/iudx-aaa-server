@@ -4,6 +4,7 @@ import static iudx.aaa.server.apiserver.util.Constants.*;
 import static iudx.aaa.server.apiserver.util.Urn.*;
 
 import io.vertx.core.Future;
+import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
@@ -15,6 +16,7 @@ import io.vertx.ext.auth.oauth2.OAuth2Auth;
 import io.vertx.ext.auth.oauth2.OAuth2Options;
 import io.vertx.ext.auth.oauth2.providers.KeycloakAuth;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.handler.AuthenticationHandler;
 import iudx.aaa.server.apiserver.models.Response;
 import iudx.aaa.server.apiserver.models.Response.ResponseBuilder;
@@ -193,4 +195,48 @@ public class OIDCAuthentication implements AuthenticationHandler {
           }
         });
   }
+
+  public Future<String> getUsernameByKeycloakId(String keycloakId) {
+    String adminUrl = keycloakOptions.getString(KEYCLOAK_URL) + "/admin/realms/" + keycloakOptions.getString(KEYCLOAK_REALM) + "/users/" + keycloakId;
+
+    return getAccessToken()
+            .compose(accessToken -> {
+              return WebClient.create(vertx)
+                      .getAbs(adminUrl)
+                      .bearerTokenAuthentication(accessToken)
+                      .send()
+                      .compose(response -> {
+                        if (response.statusCode() == 200) {
+                          JsonObject userDetails = response.bodyAsJsonObject();
+                          return Future.succeededFuture(userDetails.getString("username"));
+                        } else {
+                          LOGGER.error("Failed to fetch user details: {}", response.bodyAsString());
+                          return Future.failedFuture("Failed to fetch user details");
+                        }
+                      });
+            });
+  }
+
+  private Future<String> getAccessToken() {
+    String tokenUrl = keycloakOptions.getString(KEYCLOAK_URL) + "/realms/" + keycloakOptions.getString(KEYCLOAK_REALM) + "/protocol/openid-connect/token";
+
+    MultiMap form = MultiMap.caseInsensitiveMultiMap();
+    form.add("client_id", keycloakOptions.getString(KEYCLOAK_ADMIN_CLIENT_ID));
+    form.add("client_secret", keycloakOptions.getString(KEYCLOAK_ADMIN_CLIENT_SECRET));
+    form.add("grant_type", "client_credentials");
+
+    return WebClient.create(vertx)
+            .postAbs(tokenUrl)
+            .sendForm(form)
+            .compose(response -> {
+              if (response.statusCode() == 200) {
+                return Future.succeededFuture(response.bodyAsJsonObject().getString("access_token"));
+              } else {
+                LOGGER.error("Failed to fetch access token: {}", response.bodyAsString());
+                return Future.failedFuture("Failed to fetch access token");
+              }
+            });
+  }
+
+
 }
