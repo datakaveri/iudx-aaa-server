@@ -78,15 +78,8 @@ public class OrganizationUserDAOImpl implements OrganizationUserDAO {
 
   @Override
   public Future<Boolean> delete(UUID orgId, UUID userId) {
-    Condition conditions = new Condition(
-            List.of(
-                    new Condition(Constants.ORGANIZATION_ID, Condition.Operator.EQUALS, List.of(orgId.toString())),
-                    new Condition(Constants.USER_ID, Condition.Operator.EQUALS, List.of(userId.toString()))
-            ),
-            Condition.LogicalOperator.AND
-    );
 
-    DeleteQuery query = new DeleteQuery(Constants.ORG_USER_TABLE,  new Condition(Constants.ORGANIZATION_ID, Condition.Operator.EQUALS, List.of(orgId.toString())), null, null);
+    DeleteQuery query = new DeleteQuery(Constants.ORG_USER_TABLE,  new Condition(Constants.USER_ID, Condition.Operator.EQUALS, List.of(userId.toString())), null, null);
 
     return postgresService.delete(query)
             .map(QueryResult::isRowsAffected)
@@ -122,7 +115,8 @@ public class OrganizationUserDAOImpl implements OrganizationUserDAO {
 
   @Override
   public Future<List<OrganizationUser>> getAll(UUID orgId) {
-    SelectQuery query = new SelectQuery(Constants.ORG_USER_TABLE, List.of("*"), null, null, null, null, null);
+    Condition condition = new Condition(Constants.ORGANIZATION_ID,Condition.Operator.EQUALS,List.of(orgId.toString()));
+    SelectQuery query = new SelectQuery(Constants.ORG_USER_TABLE, List.of("*"), condition, null, null, null, null);
 
     return postgresService.select(query)
             .compose(result -> {
