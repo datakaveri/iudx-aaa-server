@@ -6,6 +6,7 @@ import org.cdpg.dx.aaa.organization.models.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -55,17 +56,31 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     private Future<Boolean> createOrganizationFromRequest(UUID requestId) {
       return createRequestDAO.getById(requestId)
-                .compose(request -> {
-                    Organization org = new Organization(
-                            Optional.empty(),
-                            Optional.ofNullable(request.description()),
-                            request.name(),
-                            request.documentPath(),
-                            Optional.empty(),
-                            Optional.empty()
-                    );
-                    return orgDAO.create(org).map(created -> true);
-                });
+        .compose(request -> {
+          Organization org = new Organization(
+            Optional.empty(),
+            Optional.ofNullable(request.description()),
+            request.name(),
+            request.documentPath(),
+            Optional.empty(),
+            Optional.empty()
+          );
+          return orgDAO.create(org)
+            .compose(createdOrg ->
+            {
+              OrganizationUser orgUser = new OrganizationUser(
+                Optional.empty(),
+                createdOrg.id().get(),
+                request.requestedBy(),
+                Role.ADMIN,
+                Optional.empty(),
+                Optional.empty()
+              );
+
+              return orgUserDAO.create(orgUser).map(user -> true);
+
+            });
+        });
     }
 
     @Override
