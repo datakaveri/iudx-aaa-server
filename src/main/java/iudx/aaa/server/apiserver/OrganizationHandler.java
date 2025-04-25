@@ -314,9 +314,9 @@ public class OrganizationHandler {
         user_id = UUID.fromString(UseridParam);
 
         Role role;
-        role = Role.fromString(orgRequestJson.getString("role"));
+        role = Role.fromString(OrgRequestJson.getString("role"));
 
-        UUID userId = UUID.fromString(orgRequestJson.getString("user_id"));
+        UUID userId = UUID.fromString(OrgRequestJson.getString("user_id"));
 
 
       organizationService.updateUserRole(orgId,userId, role)
