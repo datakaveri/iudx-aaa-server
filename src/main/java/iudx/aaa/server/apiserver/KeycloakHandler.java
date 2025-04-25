@@ -191,7 +191,7 @@ public class KeycloakHandler implements AuthenticationHandler {
                     });
         }
 
-        public Future<String> getUsernameByKeycloakId(String keycloakId) {
+        public Future<JsonObject> getUsernameByKeycloakId(String keycloakId) {
             String adminUrl = keycloakOptions.getString(KEYCLOAK_URL) + "/admin/realms/" + keycloakOptions.getString(KEYCLOAK_REALM) + "/users/" + keycloakId;
 
             return getAccessToken()
@@ -203,7 +203,8 @@ public class KeycloakHandler implements AuthenticationHandler {
                                 .compose(response -> {
                                     if (response.statusCode() == 200) {
                                         JsonObject userDetails = response.bodyAsJsonObject();
-                                        return Future.succeededFuture(userDetails.getString("username"));
+                                        System.out.println("userDetails = " + userDetails);
+                                        return Future.succeededFuture(userDetails);
                                     } else {
                                         LOGGER.error("Failed to fetch user details: {}", response.bodyAsString());
                                         return Future.failedFuture("Failed to fetch user details");

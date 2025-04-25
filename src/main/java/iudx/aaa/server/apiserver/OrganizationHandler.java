@@ -140,8 +140,9 @@ public class OrganizationHandler {
                         String keycloak_id = requestJson.getString("user_id");
 
                         Future<Void> future = keycloakHandler.getUsernameByKeycloakId(keycloak_id)
-                                .onSuccess(username -> {
-                                    requestJson.put("requested_by_username", username);
+                                .onSuccess(userdetails -> {
+                                    requestJson.put("requested_by_username", userdetails.getString("username"));
+                                    requestJson.put("requested_by_email", userdetails.getString("email"));
                                 })
                                 .onFailure(err -> {
                                     LOGGER.error("Failed to fetch username for keycloak id: " + keycloak_id);
@@ -214,8 +215,9 @@ public class OrganizationHandler {
                         String keycloak_id = requestJson.getString("requested_by");
 
                         Future<Void> future = keycloakHandler.getUsernameByKeycloakId(keycloak_id)
-                                .onSuccess(username -> {
-                                    requestJson.put("requested_by_username", username);
+                                .onSuccess(userdetails -> {
+                                    requestJson.put("requested_by_username", userdetails.getString("username"));
+                                    requestJson.put("requested_by_email", userdetails.getString("email"));
                                 })
                                 .onFailure(err -> {
                                     LOGGER.error("Failed to fetch username for keycloak id: " + keycloak_id);
