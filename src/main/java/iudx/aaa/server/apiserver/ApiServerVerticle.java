@@ -7,6 +7,7 @@ import com.nimbusds.jose.jwk.ECKey;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
@@ -195,11 +196,14 @@ public class ApiServerVerticle extends AbstractVerticle {
 
       organizationDAOFactory = new OrganizationDAOFactory(postgresService);
       organizationService = new OrganizationServiceImpl(organizationDAOFactory);
-    OrganizationHandler organizationHandler = new OrganizationHandler(organizationService);
+      KeycloakHandler keycloakHandler = new KeycloakHandler(vertx, config());
+    OrganizationHandler organizationHandler = new OrganizationHandler(organizationService, keycloakHandler);
     RoleAuthorisationHandler roleAuthorisationHandler = new RoleAuthorisationHandler();
     creditDaoFactory = new CreditDAOFactory(postgresService);
     creditService = new CreditServiceImpl(creditDaoFactory);
     CreditHandler creditHandler = new CreditHandler(creditService);
+
+
 
 
     RouterBuilder.create(vertx, "docs/updated_spec.yaml")
