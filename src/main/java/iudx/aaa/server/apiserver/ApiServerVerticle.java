@@ -339,12 +339,12 @@ public class ApiServerVerticle extends AbstractVerticle {
                         .handler(creditHandler::DeductUserCredit)
                         .failureHandler(failureHandler);
 
-                routerBuilder
-                        .operation("get-auth-v1-user-credit-id")
-                        .handler(ctx -> fetchRoles.fetch(ctx, Set.of()))
-                        .handler(ctx -> roleAuthorisationHandler.validateRole(ctx, Set.of(Roles.COS_ADMIN)))
-                        .handler(creditHandler::GetOtherUserCreditBalance)
-                        .failureHandler(failureHandler);
+//                routerBuilder
+//                        .operation("get-auth-v1-user-credit-id")
+//                        .handler(ctx -> fetchRoles.fetch(ctx, Set.of()))
+//                        .handler(ctx -> roleAuthorisationHandler.validateRole(ctx, Set.of(Roles.COS_ADMIN)))
+//                        .handler(creditHandler::GetOtherUserCreditBalance)
+//                        .failureHandler(failureHandler);
 
               // Post token create
               routerBuilder

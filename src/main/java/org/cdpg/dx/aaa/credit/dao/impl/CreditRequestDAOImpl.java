@@ -6,7 +6,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cdpg.dx.aaa.credit.dao.CreditRequestDAO;
 import org.cdpg.dx.aaa.credit.models.CreditRequest;
+import org.cdpg.dx.aaa.credit.models.CreditRequestDTO;
 import org.cdpg.dx.aaa.credit.models.Status;
+import org.cdpg.dx.aaa.credit.models.UserCreditDTO;
 import org.cdpg.dx.aaa.credit.util.Constants;
 import org.cdpg.dx.aaa.organization.dao.impl.OrganizationCreateRequestDAOImpl;
 import org.cdpg.dx.aaa.organization.models.Organization;
@@ -33,11 +35,14 @@ public class CreditRequestDAOImpl implements CreditRequestDAO {
   }
 
   @Override
-  public Future<CreditRequest> create(UUID userId, double amount) {
+  public Future<CreditRequest> create(CreditRequest creditRequest) {
+    UUID userId = creditRequest.userId();
+    double amount = creditRequest.amount();
+
     InsertQuery insertQuery = new InsertQuery(
       Constants.CREDIT_REQUEST_TABLE,
-      List.of(Constants.USER_ID, Constants.AMOUNT,Constants.STATUS),
-      List.of(userId.toString(), amount,"pending"));
+      List.of(Constants.USER_ID, Constants.AMOUNT,Constants.STATUS,Constants.REQUESTED_AT),
+      List.of(userId.toString(), amount,"pending",Instant.now().toString()));
 
 
     LOGGER.debug("Insert Query: {}", insertQuery.toSQL());
@@ -56,28 +61,6 @@ public class CreditRequestDAOImpl implements CreditRequestDAO {
       });
   }
 
-
-  @Override
-  public Future<CreditRequest> getById(UUID requestId) {
-    SelectQuery selectQuery = new SelectQuery(
-      Constants.CREDIT_REQUEST_TABLE,
-      Constants.ALL_CREDIT_REQUEST_FIELDS,
-      new Condition(Constants.CREDIT_REQUEST_ID, Condition.Operator.EQUALS, List.of(requestId.toString())),
-      null, null, null, null
-    );
-
-    return postgresService.select(selectQuery)
-      .compose(result -> {
-        if (result.getRows().isEmpty()) {
-          return Future.failedFuture("No request found with the given ID.");
-        }
-        return Future.succeededFuture(CreditRequest.fromJson(result.getRows().getJsonObject(0)));
-      })
-      .recover(err -> {
-        LOGGER.error("Error fetching request by ID: {}", err.getMessage(), err);
-        return Future.failedFuture(err);
-      });
-  }
 
   @Override
   public Future<List<CreditRequest>> getAll(Status status) {
@@ -107,7 +90,7 @@ public class CreditRequestDAOImpl implements CreditRequestDAO {
   public Future<Boolean> updateStatus(UUID requestId, Status status) {
     UpdateQuery updateQuery = new UpdateQuery(
       Constants.CREDIT_REQUEST_TABLE,
-      List.of(Constants.STATUS, Constants.UPDATED_AT),
+      List.of(Constants.STATUS,Constants.PROCESSED_AT),
       List.of(status.getStatus(), Instant.now().toString()),
       new Condition(Constants.CREDIT_REQUEST_ID, Condition.Operator.EQUALS, List.of(requestId.toString())),
       null,
@@ -126,4 +109,51 @@ public class CreditRequestDAOImpl implements CreditRequestDAO {
         return Future.failedFuture(err);
       });
   }
+
+  @Override
+  public Future<CreditRequest> getCreditRequestById(UUID requestId) {
+    Condition condition = new Condition(Constants.CREDIT_REQUEST_ID , Condition.Operator.EQUALS, List.of(requestId.toString()));
+
+    SelectQuery query = new SelectQuery(
+      Constants.CREDIT_REQUEST_TABLE,
+      List.of("*"),
+      condition, null, null, null, null
+    );
+
+    return postgresService.select(query)
+      .compose(result -> {
+        CreditRequest creditRequest = CreditRequest.fromJson(result.getRows().getJsonObject(0));
+        return Future.succeededFuture(creditRequest);
+      })
+      .recover(err -> {
+        LOGGER.error("Error fetching all organizations: {}", err.getMessage(), err);
+        return Future.failedFuture(err);
+      });
+  }
+
+//  @Override
+//  public Future<UserCreditDTO> getUserCreditDTOFromRequestId(UUID requestId) {
+//    Condition condition = new Condition(Constants.CREDIT_REQUEST_ID , Condition.Operator.EQUALS, List.of(requestId.toString()));
+//
+//    SelectQuery query = new SelectQuery(
+//      Constants.CREDIT_REQUEST_TABLE,
+//      List.of(Constants.USER_ID,Constants.AMOUNT),
+//      condition, null, null, null, null
+//    );
+//
+//    return postgresService.select(query)
+//      .compose(result -> {
+//        if (result.getRows().isEmpty()) {
+//          return Future.failedFuture("No user found for requestId: " + requestId);
+//        }
+//        JsonObject row = result.getRows().getJsonObject(0);
+//        UUID userId = UUID.fromString(row.getString(Constants.USER_ID));
+//        double amount = row.getDouble(Constants.AMOUNT);
+//        return Future.succeededFuture(new UserCreditDTO(userId,amount));
+//      })
+//      .recover(err -> {
+//        LOGGER.error("Error fetching all organizations: {}", err.getMessage(), err);
+//        return Future.failedFuture(err);
+//      });
+//  }
 }

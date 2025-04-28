@@ -8,13 +8,9 @@ import java.util.UUID;
 
 public interface UserCreditDAO {
 
-  Future<UserCredit> getById(UUID userId);
 
-  Future<Boolean> add(UUID userId, double amount);
 
-  Future<Boolean> deduct(UUID userId, double amount);
+  Future<Double> getBalance(UUID userId);
 
-  Future<Boolean> update(UserCreditDTO userCreditDTO);
-
-  Future<UserCredit> get(UUID userId);
+  Future<Boolean> updateBalance(UUID userId, double updatedAmount);
 }

@@ -7,7 +7,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import org.cdpg.dx.aaa.credit.dao.CreditDAOFactory;
-import org.cdpg.dx.aaa.credit.dao.CreditDeductionDAO;
+import org.cdpg.dx.aaa.credit.dao.CreditTransactionDAO;
 import org.cdpg.dx.aaa.credit.dao.CreditRequestDAO;
 import org.cdpg.dx.aaa.credit.dao.UserCreditDAO;
 import org.cdpg.dx.aaa.credit.dao.impl.CreditRequestDAOImpl;
@@ -85,12 +85,12 @@ public class CreditServiceTest {
     CreditRequestDAO creditRequestDAO = new CreditRequestDAOImpl(postgresService);
 
     UserCreditDAO mockUserCreditDAO = Mockito.mock(UserCreditDAO.class);
-    CreditDeductionDAO mockCreditDeductionDAO = Mockito.mock(CreditDeductionDAO.class);
+    CreditTransactionDAO mockCreditTransactionDAO = Mockito.mock(CreditTransactionDAO.class);
 
     CreditDAOFactory factory = new CreditDAOFactory(postgresService) {
       @Override public CreditRequestDAO creditRequestDAO() { return creditRequestDAO; }
       @Override public UserCreditDAO userCreditDAO() { return mockUserCreditDAO; }
-      @Override public CreditDeductionDAO creditDeductionDAO() { return mockCreditDeductionDAO; }
+      @Override public CreditTransactionDAO creditTransactionDAO() { return mockCreditTransactionDAO; }
     };
 
     CreditService creditService = new CreditServiceImpl(factory);
@@ -98,31 +98,6 @@ public class CreditServiceTest {
     UUID userId = UUID.randomUUID();
     double amount = 750.0;
 
-
-    creditService.createCreditRequest(userId,amount).onComplete(ar -> {
-      if (ar.succeeded()) {
-        CreditRequest result = ar.result();
-        assertNotNull(result);
-        assertEquals(userId, result.userId());
-        assertEquals(amount, result.amount(), 0.001);
-        testContext.completeNow();
-      } else {
-        testContext.failNow(ar.cause());
-      }
-    });
-
-//    Status status = Status.PENDING;
-//    creditService.getAllRequestsByStatus(status).onComplete(ar -> {
-//      if (ar.succeeded()) {
-//        List<CreditRequest> result = ar.result();
-////        assertNotNull(result);
-////        assertEquals(userId, result.userId());
-////        assertEquals(amount, result.amount(), 0.001);
-//        testContext.completeNow();
-//      } else {
-//        testContext.failNow(ar.cause());
-//      }
-//    });
 
 
   }

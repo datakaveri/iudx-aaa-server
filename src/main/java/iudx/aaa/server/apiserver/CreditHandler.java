@@ -8,8 +8,10 @@ import iudx.aaa.server.apiserver.models.User;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cdpg.dx.aaa.credit.models.CreditRequest;
+import org.cdpg.dx.aaa.credit.models.CreditTransaction;
 import org.cdpg.dx.aaa.credit.models.Status;
 import org.cdpg.dx.aaa.credit.service.CreditService;
+import org.cdpg.dx.aaa.organization.models.OrganizationCreateRequest;
 import org.cdpg.dx.aaa.organization.models.OrganizationUser;
 import org.cdpg.dx.aaa.organization.service.OrganizationService;
 
@@ -38,7 +40,7 @@ public class CreditHandler {
             return;
         }
 
-        creditService.getAllRequestsByStatus(Status.fromString(status))
+        creditService.getAllPendingRequests()
                 .onComplete(ar -> {
                     if (ar.succeeded()) {
                         JsonArray jsonArray = new JsonArray();
@@ -54,18 +56,21 @@ public class CreditHandler {
     }
 
     public void CreateCreditRequest(RoutingContext routingContext) {
-        JsonObject requestBody = routingContext.getBodyAsJson();
-        LOGGER.info("Received request to create credit request: {}", requestBody);
+        JsonObject creditRequestJson = routingContext.getBodyAsJson();
+        LOGGER.info("Received request to create credit request: {}", creditRequestJson);
 
-        if (requestBody == null || !requestBody.containsKey("amount")) {
+        if (creditRequestJson == null || !creditRequestJson.containsKey("amount")) {
             LOGGER.error("Invalid request body");
             processFailure(routingContext, 400, "Invalid request body");
             return;
         }
 
         User user = routingContext.get(USER);
+        creditRequestJson.put("user_id", user.getUserId());
 
-        String amountStr = requestBody.getString("amount");
+
+      CreditRequest creditRequest = CreditRequest.fromJson(creditRequestJson);
+      String amountStr = creditRequestJson.getString("amount");
 
         if (amountStr == null || amountStr.isEmpty()) {
             LOGGER.error("Amount is missing or empty in the request body");
@@ -82,7 +87,7 @@ public class CreditHandler {
             return;
         }
 
-        creditService.createCreditRequest(UUID.fromString(user.getUserId()), amount)
+        creditService.createCreditRequest(creditRequest)
                 .onComplete(ar -> {
                     if (ar.succeeded()) {
                         processSuccess(routingContext, ar.result().toJson(), 201, "Credit request created successfully");
@@ -103,6 +108,9 @@ public class CreditHandler {
             return;
         }
 
+        User transactedByUser = routingContext.get(USER);
+
+        String transactedByIdStr = transactedByUser.getUserId();
         String requestIdStr = requestBody.getString("req_id");
         String statusStr = requestBody.getString("status");
 
@@ -112,16 +120,17 @@ public class CreditHandler {
             return;
         }
 
-        UUID requestId;
+        UUID requestId,transactedById;
         try {
             requestId = UUID.fromString(requestIdStr);
+            transactedById = UUID.fromString(transactedByIdStr);
         } catch (IllegalArgumentException e) {
             LOGGER.error("Invalid request ID format: {}", requestIdStr);
             processFailure(routingContext, 400, "Request ID must be a valid UUID");
             return;
         }
 
-        creditService.updateCreditRequestStatus(requestId, Status.fromString(statusStr))
+        creditService.updateCreditRequestStatus(requestId, Status.fromString(statusStr),transactedById)
                 .onComplete(ar -> {
                     if (ar.succeeded()) {
                         processSuccess(routingContext, new JsonObject().put("updated", ar.result()), 200, "Credit request updated successfully");
@@ -135,10 +144,10 @@ public class CreditHandler {
     public void GetUserCreditBalance(RoutingContext routingContext) {
         String idParam = String.valueOf(routingContext.pathParam("id"));
 
-        creditService.getCreditByUserId(UUID.fromString(idParam))
+        creditService.getBalance(UUID.fromString(idParam))
                 .onComplete(ar -> {
                     if (ar.succeeded()) {
-                        processSuccess(routingContext, ar.result().toJson(), 200, "User credit balance fetched successfully");
+                        processSuccess(routingContext,new JsonObject().put("balance", ar.result()), 200, "User credit balance fetched successfully");
                     } else {
                         LOGGER.error("Failed to get user credit balance: {}", ar.cause().getMessage());
                         processFailure(routingContext, 500, ar.cause().getMessage());
@@ -157,24 +166,26 @@ public class CreditHandler {
         }
 
         String amountStr = requestBody.getString("amount");
-        String userIdStr = requestBody.getString("user_id");
+
+        User user = routingContext.get(USER);
+        requestBody.put("transacted_by",user.getUserId());
+
+        CreditTransaction creditTransaction = CreditTransaction.fromJson(requestBody);
+
 
         if (amountStr == null || amountStr.isEmpty()) {
             LOGGER.error("Amount is missing or empty in the request body");
             processFailure(routingContext, 400, "Amount is required and must be a valid number");
             return;
         }
-
-        double amount;
         try {
-            amount = Double.parseDouble(amountStr);
         } catch (NumberFormatException e) {
             LOGGER.error("Invalid amount format: {}", amountStr);
             processFailure(routingContext, 400, "Amount must be a valid number");
             return;
         }
 
-        creditService.deductCredits(UUID.fromString(userIdStr), amount)
+        creditService.deductCredits(creditTransaction)
                 .onComplete(ar -> {
                     if (ar.succeeded()) {
                         processSuccess(routingContext, new JsonObject(), 200, "Credit deducted successfully");
@@ -185,34 +196,34 @@ public class CreditHandler {
                 });
     }
 
-    public void GetOtherUserCreditBalance(RoutingContext routingContext) {
-        JsonObject requestBody = routingContext.getBodyAsJson();
-        LOGGER.info("Received request to get other user credit balance: {}", requestBody);
-
-        if (requestBody == null || !requestBody.containsKey("user_id")) {
-            LOGGER.error("Invalid request body");
-            processFailure(routingContext, 400, "Invalid request body");
-            return;
-        }
-
-        String userIdStr = requestBody.getString("user_id");
-
-        if (userIdStr == null || userIdStr.isEmpty()) {
-            LOGGER.error("User ID is missing or empty in the request body");
-            processFailure(routingContext, 400, "User ID is required");
-            return;
-        }
-
-        creditService.getCreditByUserId(UUID.fromString(userIdStr))
-                .onComplete(ar -> {
-                    if (ar.succeeded()) {
-                        processSuccess(routingContext, ar.result().toJson(), 200, "Other user credit balance fetched successfully");
-                    } else {
-                        LOGGER.error("Failed to get other user credit balance: {}", ar.cause().getMessage());
-                        processFailure(routingContext, 500, ar.cause().getMessage());
-                    }
-                });
-    }
+//    public void GetOtherUserCreditBalance(RoutingContext routingContext) {
+//        JsonObject requestBody = routingContext.getBodyAsJson();
+//        LOGGER.info("Received request to get other user credit balance: {}", requestBody);
+//
+//        if (requestBody == null || !requestBody.containsKey("user_id")) {
+//            LOGGER.error("Invalid request body");
+//            processFailure(routingContext, 400, "Invalid request body");
+//            return;
+//        }
+//
+//        String userIdStr = requestBody.getString("user_id");
+//
+//        if (userIdStr == null || userIdStr.isEmpty()) {
+//            LOGGER.error("User ID is missing or empty in the request body");
+//            processFailure(routingContext, 400, "User ID is required");
+//            return;
+//        }
+//
+//        creditService.getCreditByUserId(UUID.fromString(userIdStr))
+//                .onComplete(ar -> {
+//                    if (ar.succeeded()) {
+//                        processSuccess(routingContext, ar.result().toJson(), 200, "Other user credit balance fetched successfully");
+//                    } else {
+//                        LOGGER.error("Failed to get other user credit balance: {}", ar.cause().getMessage());
+//                        processFailure(routingContext, 500, ar.cause().getMessage());
+//                    }
+//                });
+//    }
 
     public Future<Void> processFailure(RoutingContext routingContext, int statusCode, String msg){
 
