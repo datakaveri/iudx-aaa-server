@@ -4509,13 +4509,7 @@ paths:
       operationId: delete-auth-v1-organisations-users-id
       security:
         - authorization: []
-  '/auth/v1/organization/users/role/{id}':
-    parameters:
-      - schema:
-          type: string
-        name: id
-        in: path
-        required: true
+  '/auth/v1/organization/users/role':
     put:
       summary: Update Organization User Role
       tags:
