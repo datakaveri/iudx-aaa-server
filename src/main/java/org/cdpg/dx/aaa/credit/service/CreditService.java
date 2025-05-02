@@ -21,4 +21,12 @@ public interface CreditService {
 
   Future<Double> getBalance(UUID userId);
 
+  // ************ COMPUTE ROLE **********
+
+  Future<ComputeRole> create(ComputeRole computeRole);
+
+  Future<List<ComputeRole>> getAll();
+
+  Future<Boolean> updateStatus(UUID requestId, Status status,UUID approvedBy);
+
 }

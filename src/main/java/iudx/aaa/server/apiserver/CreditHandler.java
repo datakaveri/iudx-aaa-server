@@ -31,14 +31,14 @@ public class CreditHandler {
     }
 
     public void getCreditRequestByStatus(RoutingContext routingContext){
-        String status = routingContext.queryParam("status").get(0);
-        LOGGER.info("Received request to get credit requests with status: {}", status);
-
-        if (status == null || status.isEmpty()) {
-            LOGGER.error("Status parameter is missing or empty");
-            processFailure(routingContext, 400 , "Status parameter is required");
-            return;
-        }
+//        String status = routingContext.queryParam("status").get(0);
+//        LOGGER.info("Received request to get credit requests with status: {}", status);
+//
+//        if (status == null || status.isEmpty()) {
+//            LOGGER.error("Status parameter is missing or empty");
+//            processFailure(routingContext, 400 , "Status parameter is required");
+//            return;
+//        }
 
         creditService.getAllPendingRequests()
                 .onComplete(ar -> {

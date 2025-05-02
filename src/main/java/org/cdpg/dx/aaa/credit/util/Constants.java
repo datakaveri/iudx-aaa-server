@@ -38,4 +38,8 @@ public class Constants {
   public static final String TRANSACTION_TYPE = "transaction_type";
 
 
+  public static final String COMPUTE_ROLE_TABLE="compute_role";
+  public static final String COMPUTE_ROLE_ID="id";
+  public static final String APPROVED_BY="approved_by";
+
 }

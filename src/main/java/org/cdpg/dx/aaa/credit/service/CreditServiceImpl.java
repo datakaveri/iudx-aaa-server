@@ -3,10 +3,7 @@ package org.cdpg.dx.aaa.credit.service;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
-import org.cdpg.dx.aaa.credit.dao.CreditDAOFactory;
-import org.cdpg.dx.aaa.credit.dao.CreditTransactionDAO;
-import org.cdpg.dx.aaa.credit.dao.CreditRequestDAO;
-import org.cdpg.dx.aaa.credit.dao.UserCreditDAO;
+import org.cdpg.dx.aaa.credit.dao.*;
 import org.cdpg.dx.aaa.credit.models.*;
 import org.cdpg.dx.aaa.organization.service.OrganizationServiceImpl;
 import org.postgresql.core.TransactionState;
@@ -25,12 +22,14 @@ public class CreditServiceImpl implements CreditService {
   private final CreditRequestDAO creditRequestDAO;
   private final UserCreditDAO userCreditDAO;
   private final CreditTransactionDAO creditTransactionDAO;
+  private final ComputeRoleDAO computeRoleDAO;
+
 
   public CreditServiceImpl(CreditDAOFactory factory) {
     this.creditRequestDAO = factory.creditRequestDAO();
     this.userCreditDAO = factory.userCreditDAO();
     this.creditTransactionDAO = factory.creditTransactionDAO();
-
+    this.computeRoleDAO = factory.computeRoleDAO();
   }
 
   @Override
@@ -88,6 +87,7 @@ public class CreditServiceImpl implements CreditService {
     return userCreditDAO.getBalance(userId);
   }
 
+
   @Override
   public Future<Boolean> deductCredits(CreditTransaction creditTransaction) {
     UUID userId = creditTransaction.userId();
@@ -115,6 +115,22 @@ public class CreditServiceImpl implements CreditService {
             .map(true);
         }
       });
+  }
+
+
+  @Override
+  public Future<ComputeRole> create(ComputeRole computeRole) {
+    return computeRoleDAO.create(computeRole);
+  }
+
+  @Override
+  public Future<List<ComputeRole>> getAll() {
+    return computeRoleDAO.getAll(Status.PENDING);
+  }
+
+  @Override
+  public Future<Boolean> updateStatus(UUID requestId, Status status,UUID approvedBy) {
+    return computeRoleDAO.updateStatus(requestId,status,approvedBy);
   }
 
 }
