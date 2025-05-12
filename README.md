@@ -4,15 +4,14 @@
 [![Security Tests](https://img.shields.io/jenkins/build?jobUrl=https%3A%2F%2Fjenkins.iudx.io%2Fjob%2Fiudx%2520aaa-server%2520%28master%29%2520pipeline%2F&label=security%20tests)](https://jenkins.iudx.io/job/iudx%20aaa-server%20(master)%20pipeline/lastBuild/zap/)
 [![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/6743/badge)](https://bestpractices.coreinfrastructure.org/projects/6743)
 
+<p align="center">
+<img src="./readme/images/cdpg.png" width="400"></br>
+<img src="./readme/images/iudx.png" width="400">
+</p>
 
-![IUDX](./readme/images/iudx.png)
 # DX Authentication, Authorization, and Accounting (AAA) Server
 
 DX-AAA is the Authentication, Authorization, and Accounting server for accessing [DX](https://www.iudx.org.in) services.
-
-<p align="center">
-<img src="./readme/images/cdpg.png">
-</p>
 
 ## Features
 
