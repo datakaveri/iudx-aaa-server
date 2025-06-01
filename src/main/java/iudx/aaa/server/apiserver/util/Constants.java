@@ -185,10 +185,10 @@ public class Constants {
           + " GROUP BY roles.role";
 
   public static final String SQL_GET_DELEGATE_ROLE =
-      "SELECT 'DELEGATE'::text AS role, array_agg(url) AS rs_urls FROM delegations"
+      "SELECT 'DELEGATE'::text AS role, array_agg(DISTINCT url) AS rs_urls FROM delegations"
           + " JOIN roles ON delegations.role_id = roles.id"
           + " JOIN resource_server on roles.resource_server_id = resource_server.id"
-          + " WHERE delegations.user_id = $1::uuid AND delegations.status = 'ACTIVE' HAVING array_agg(url) <> '{}'";
+          + " WHERE delegations.user_id = $1::uuid AND delegations.status = 'ACTIVE' HAVING array_agg(DISTINCT url) <> '{}'";
 
   public static final String SQL_GET_ADMIN_ROLE =
       "SELECT 'ADMIN'::text AS role, array_agg(url) AS rs_urls"
