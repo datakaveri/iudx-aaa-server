@@ -121,7 +121,8 @@ public class Constants {
   public static final String SQL_GET_RS_IDS_BY_URL =
       "SELECT id, url FROM resource_server WHERE url = ANY($1::text[])";
 
-  public static final String SQL_GET_ALL_RS = "SELECT id, name, url, owner_id FROM resource_server";
+  public static final String SQL_GET_ALL_RS =
+      "SELECT id, name, url, owner_id, created_at AS \"createdAt\" FROM resource_server";
 
   public static final String SQL_GET_CLIENTS_FORMATTED =
       "SELECT client_name as \"clientName\", client_id as \"clientId\" "

@@ -1555,6 +1555,8 @@ paths:
                           type: string
                         url:
                           type: string
+                        createdAt:
+                          type: string
                         owner:
                           type: object
                           required:
@@ -1593,6 +1595,7 @@ paths:
                       - id: bc51dfff-ee8b-4438-8c0c-5881a482e124
                         name: COP Resource Server
                         url: rs.cop.in
+                        createdAt: 2023-06-21T13:17:10.433408  
                         owner:
                           email: rs-admin@datakaveri.org
                           name:
@@ -2256,6 +2259,8 @@ paths:
                         role:
                           type: string
                           minLength: 1  
+                        createdAt:
+                          type: string
                         owner:
                           type: object
                           properties:
@@ -2324,6 +2329,7 @@ paths:
                         url: foobar.iudx.io
                         role: consumer  
                         server: Foobar
+                        createdAt: 2023-06-21T13:17:10.433408  
                         owner:
                           email: someone@example.com
                           name:
