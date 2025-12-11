@@ -88,6 +88,10 @@ pipeline {
               recordIssues enabledForFailure: true, tool: pmdParser(pattern: 'target/pmd.xml')
             }
             failure{
+              xunit (
+                thresholds: [ skipped(failureThreshold: '15'), failed(failureThreshold: '2') ],
+                tools: [ JUnit(pattern: 'target/surefire-reports/*.xml') ]
+              )
               error "Test failure. Stopping pipeline execution!"
             }
             cleanup{
