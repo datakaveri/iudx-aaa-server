@@ -3,6 +3,7 @@ package iudx.aaa.server.apiserver.util;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
 import io.vertx.core.json.JsonObject;
+import iudx.aaa.server.apiserver.Response;
 
 /**
  * Message codec for {@link iudx.aaa.server.apiserver.util.ComposeException}. This is used to decode
@@ -43,12 +44,7 @@ public class ComposeExceptionMessageCodec
     JsonObject contentJson = new JsonObject(jsonStr);
 
     // We can finally create custom message object
-    /* TODO: change this so that we use Response.fromJson() or something */
-    return new ComposeException(
-        contentJson.getInteger("status"),
-        contentJson.getString("type"),
-        contentJson.getString("title"),
-        contentJson.getString("detail"));
+    return new ComposeException(Response.fromJson(contentJson));
   }
 
   @Override
