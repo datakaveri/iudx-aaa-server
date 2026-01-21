@@ -86,8 +86,8 @@ public class Constants {
       "Requested resource is a PII resource - provider cannot access directly";
 
   public static final String LIST_DELEGATION_AS_DELEGATOR_OR_DELEGATE =
-      "SELECT d.id, d.user_id, url, roles.user_id AS delegator_id, lower(roles.role::text) AS role, name AS server "
-          + "FROM delegations AS d JOIN roles ON roles.id = d.role_id"
+      "SELECT d.id, d.user_id, url, roles.user_id AS delegator_id, lower(roles.role::text) AS role, name AS server"
+          + ", d.created_at AS \"createdAt\" FROM delegations AS d JOIN roles ON roles.id = d.role_id"
           + " JOIN resource_server ON"
           + " roles.resource_server_id = resource_server.id"
           + " WHERE d.status = 'ACTIVE' AND roles.status = 'APPROVED'"
